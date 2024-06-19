@@ -8,7 +8,6 @@ import {
   CardContent,
   CardHeader,
   Chip,
-  CircularProgress,
   Container,
   FormHelperText,
   Grid,
@@ -30,13 +29,9 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import {
-  listEnvironmentGroups,
-  listValidEnvironments,
-  searchGlossary,
-  useClient
-} from 'services';
+import { searchGlossary, useClient } from 'services';
 import { importDashboard } from '../services';
+import { EnvironmentTeamDropdown } from 'modules/Shared';
 
 const DashboardImportForm = (props) => {
   const navigate = useNavigate();
@@ -44,31 +39,8 @@ const DashboardImportForm = (props) => {
   const dispatch = useDispatch();
   const client = useClient();
   const { settings } = useSettings();
-  const [loading, setLoading] = useState(true);
-  const [groupOptions, setGroupOptions] = useState([]);
-  const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [selectableTerms, setSelectableTerms] = useState([]);
 
-  const fetchEnvironments = useCallback(async () => {
-    setLoading(true);
-    const response = await client.query(
-      listValidEnvironments({
-        filter: Defaults.selectListFilter
-      })
-    );
-    if (!response.errors) {
-      setEnvironmentOptions(
-        response.data.listValidEnvironments.nodes.map((e) => ({
-          ...e,
-          value: e.environmentUri,
-          label: e.label
-        }))
-      );
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-    setLoading(false);
-  }, [client, dispatch]);
   const fetchTerms = useCallback(async () => {
     const response = await client.query(
       searchGlossary(Defaults.selectListFilter)
@@ -94,37 +66,11 @@ const DashboardImportForm = (props) => {
   }, [client, dispatch]);
   useEffect(() => {
     if (client) {
-      fetchEnvironments().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
       fetchTerms().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, fetchTerms, fetchEnvironments, dispatch]);
-
-  const fetchGroups = async (environmentUri) => {
-    try {
-      const response = await client.query(
-        listEnvironmentGroups({
-          filter: Defaults.selectListFilter,
-          environmentUri
-        })
-      );
-      if (!response.errors) {
-        setGroupOptions(
-          response.data.listEnvironmentGroups.nodes.map((g) => ({
-            value: g.groupUri,
-            label: g.groupUri
-          }))
-        );
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-    } catch (e) {
-      dispatch({ type: SET_ERROR, error: e.message });
-    }
-  };
+  }, [client, fetchTerms, dispatch]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
@@ -135,7 +81,7 @@ const DashboardImportForm = (props) => {
             dashboardId: values.dashboardId,
             environmentUri: values.environment.environmentUri,
             description: values.description,
-            SamlGroupName: values.SamlGroupName,
+            SamlAdminGroupName: values.SamlAdminGroupName,
             tags: values.tags,
             terms: values.terms.nodes
               ? values.terms.nodes.map((t) => t.nodeUri)
@@ -166,9 +112,6 @@ const DashboardImportForm = (props) => {
       setSubmitting(false);
       dispatch({ type: SET_ERROR, error: err.message });
     }
-  }
-  if (loading) {
-    return <CircularProgress />;
   }
 
   return (
@@ -238,7 +181,7 @@ const DashboardImportForm = (props) => {
                 label: '',
                 dashboardId: '',
                 description: '',
-                SamlGroupName: '',
+                SamlAdminGroupName: '',
                 environment: '',
                 tags: [],
                 terms: []
@@ -251,7 +194,7 @@ const DashboardImportForm = (props) => {
                   .max(255)
                   .required('*QuickSight dashboard identifier is required'),
                 description: Yup.string().max(5000),
-                SamlGroupName: Yup.string()
+                SamlAdminGroupName: Yup.string()
                   .max(255)
                   .required('*Team is required'),
                 environment: Yup.object().required('*Environment is required'),
@@ -391,101 +334,13 @@ const DashboardImportForm = (props) => {
                       </Card>
                     </Grid>
                     <Grid item lg={5} md={6} xs={12}>
-                      <Card sx={{ mb: 3 }}>
-                        <CardHeader title="Deployment" />
-                        <CardContent>
-                          <Autocomplete
-                            id="environment"
-                            disablePortal
-                            options={environmentOptions.map((option) => option)}
-                            onChange={(event, value) => {
-                              setFieldValue('SamlGroupName', '');
-                              if (value && value.environmentUri) {
-                                setFieldValue('environment', value);
-                                fetchGroups(value.environmentUri).catch((e) =>
-                                  dispatch({
-                                    type: SET_ERROR,
-                                    error: e.message
-                                  })
-                                );
-                              } else {
-                                setFieldValue('environment', '');
-                                setGroupOptions([]);
-                              }
-                            }}
-                            renderInput={(params) => (
-                              <TextField
-                                {...params}
-                                fullWidth
-                                error={Boolean(
-                                  touched.environmentUri &&
-                                    errors.environmentUri
-                                )}
-                                helperText={
-                                  touched.environmentUri &&
-                                  errors.environmentUri
-                                }
-                                label="Environment"
-                                value={values.environment}
-                                onChange={handleChange}
-                                variant="outlined"
-                              />
-                            )}
-                          />
-                        </CardContent>
-                        <CardContent>
-                          <TextField
-                            disabled
-                            fullWidth
-                            label="Region"
-                            name="region"
-                            value={
-                              values.environment && values.environment.region
-                                ? values.environment.region
-                                : ''
-                            }
-                            variant="outlined"
-                          />
-                        </CardContent>
-                        <CardContent>
-                          <TextField
-                            disabled
-                            fullWidth
-                            label="Organization"
-                            name="organization"
-                            value={
-                              values.environment &&
-                              values.environment.organization
-                                ? values.environment.organization.label
-                                : ''
-                            }
-                            variant="outlined"
-                          />
-                        </CardContent>
-                        <CardContent>
-                          <Autocomplete
-                            id="SamlGroupName"
-                            disablePortal
-                            options={groupOptions.map((option) => option)}
-                            onChange={handleChange}
-                            renderInput={(params) => (
-                              <TextField
-                                {...params}
-                                fullWidth
-                                error={Boolean(
-                                  touched.SamlGroupName && errors.SamlGroupName
-                                )}
-                                helperText={
-                                  touched.SamlGroupName && errors.SamlGroupName
-                                }
-                                label="Team"
-                                onChange={handleChange}
-                                variant="outlined"
-                              />
-                            )}
-                          />
-                        </CardContent>
-                      </Card>
+                      <EnvironmentTeamDropdown
+                        setFieldValue={setFieldValue}
+                        handleChange={handleChange}
+                        values={values}
+                        touched={touched}
+                        errors={errors}
+                      />
                       {errors.submit && (
                         <Box sx={{ mt: 3 }}>
                           <FormHelperText error>{errors.submit}</FormHelperText>

@@ -14,22 +14,17 @@ import {
   FormHelperText,
   Grid,
   Link,
-  MenuItem,
   TextField,
   Typography
 } from '@mui/material';
 import { Helmet } from 'react-helmet-async';
 import { LoadingButton } from '@mui/lab';
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  useClient,
-  listEnvironmentGroups,
-  listValidEnvironments,
-  listS3DatasetsOwnedByEnvGroup
-} from 'services';
+import { useClient } from 'services';
 import { getOmicsWorkflow, createOmicsRun } from '../services';
-import { ArrowLeftIcon, ChevronRightIcon, Defaults, useSettings } from 'design';
+import { ArrowLeftIcon, ChevronRightIcon, useSettings } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
+import { EnvironmentTeamDatasetsDropdown } from 'modules/Shared';
 
 const OmicsRunCreateForm = (props) => {
   const params = useParams();
@@ -54,88 +49,6 @@ const OmicsRunCreateForm = (props) => {
     setLoading(false);
   }, [client, dispatch, params.uri]);
 
-  const [groupOptions, setGroupOptions] = useState([]);
-  const [environmentOptions, setEnvironmentOptions] = useState([]);
-  const [currentEnv, setCurrentEnv] = useState('');
-  const [datasetOptions, setDatasetOptions] = useState([]);
-  const fetchEnvironments = useCallback(async () => {
-    setLoading(true);
-    const response = await client.query(
-      listValidEnvironments({ filter: Defaults.SelectListFilter })
-    );
-    if (!response.errors) {
-      setEnvironmentOptions(
-        response.data.listValidEnvironments.nodes.map((e) => ({
-          ...e,
-          value: e.environmentUri,
-          label: e.label
-        }))
-      );
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-    setLoading(false);
-  }, [client, dispatch]);
-
-  const fetchGroups = async (environmentUri) => {
-    setCurrentEnv(environmentUri);
-    try {
-      const response = await client.query(
-        listEnvironmentGroups({
-          filter: Defaults.SelectListFilter,
-          environmentUri
-        })
-      );
-      if (!response.errors) {
-        setGroupOptions(
-          response.data.listEnvironmentGroups.nodes.map((g) => ({
-            value: g.groupUri,
-            label: g.groupUri
-          }))
-        );
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-    } catch (e) {
-      dispatch({ type: SET_ERROR, error: e.message });
-    }
-  };
-
-  const fetchDatasets = async (groupUri) => {
-    let ownedDatasets = [];
-    try {
-      const response = await client.query(
-        listS3DatasetsOwnedByEnvGroup({
-          filter: Defaults.SelectListFilter,
-          environmentUri: currentEnv,
-          groupUri: groupUri
-        })
-      );
-      if (!response.errors) {
-        ownedDatasets = response.data.listS3DatasetsOwnedByEnvGroup.nodes?.map(
-          (dataset) => ({
-            value: dataset.datasetUri,
-            label: dataset.label
-          })
-        );
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-    } catch (e) {
-      dispatch({ type: SET_ERROR, error: e.message });
-    }
-    setDatasetOptions(ownedDatasets);
-  };
-
-  useEffect(() => {
-    if (client) {
-      fetchEnvironments().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
-      fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
-    }
-  }, [client, dispatch, fetchEnvironments, fetchItem]);
-
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
@@ -151,7 +64,7 @@ const OmicsRunCreateForm = (props) => {
           workflowUri: omicsWorkflow.workflowUri,
           parameterTemplate: values.parameterTemplate,
           SamlAdminGroupName: values.SamlAdminGroupName,
-          destination: values.destination
+          dataset: values.dataset
         })
       );
       setStatus({ success: true });
@@ -252,7 +165,7 @@ const OmicsRunCreateForm = (props) => {
                 label: '',
                 SamlAdminGroupName: '',
                 environment: '',
-                destination: '',
+                dataset: '',
                 parameterTemplate: omicsWorkflow.parameterTemplate
               }}
               validationSchema={Yup.object().shape({
@@ -267,9 +180,7 @@ const OmicsRunCreateForm = (props) => {
                   .max(255)
                   .required('*Team is required'),
                 environment: Yup.object().required('*Environment is required'),
-                destination: Yup.string()
-                  .max(255)
-                  .required('*Destination is required')
+                dataset: Yup.string().max(255).required('*Dataset is required')
               })}
               onSubmit={async (
                 values,
@@ -316,114 +227,13 @@ const OmicsRunCreateForm = (props) => {
                             variant="outlined"
                           />
                         </CardContent>
-                        <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.environment && errors.environment
-                            )}
-                            helperText={
-                              touched.environment && errors.environment
-                            }
-                            label="Environment"
-                            name="environment"
-                            onChange={(event) => {
-                              setFieldValue('SamlAdminGroupName', '');
-                              fetchGroups(
-                                event.target.value.environmentUri
-                              ).catch((e) =>
-                                dispatch({ type: SET_ERROR, error: e.message })
-                              );
-                              setFieldValue('environment', event.target.value);
-                            }}
-                            select
-                            value={values.environment}
-                            variant="outlined"
-                          >
-                            {environmentOptions.map((environment) => (
-                              <MenuItem
-                                key={environment.environmentUri}
-                                value={environment}
-                              >
-                                {environment.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                        </CardContent>
-                        <CardContent>
-                          <TextField
-                            disabled
-                            fullWidth
-                            label="Region"
-                            name="region"
-                            value={
-                              values.environment
-                                ? values.environment.region
-                                : ''
-                            }
-                            variant="outlined"
-                          />
-                        </CardContent>
-                        <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.SamlAdminGroupName &&
-                                errors.SamlAdminGroupName
-                            )}
-                            helperText={
-                              touched.SamlAdminGroupName &&
-                              errors.SamlAdminGroupName
-                            }
-                            label="Owners"
-                            name="SamlAdminGroupName"
-                            onChange={(event) => {
-                              setFieldValue('destination', '');
-                              fetchDatasets(event.target.value).catch((e) =>
-                                dispatch({ type: SET_ERROR, error: e.message })
-                              );
-                              setFieldValue(
-                                'SamlAdminGroupName',
-                                event.target.value
-                              );
-                            }}
-                            select
-                            value={values.SamlAdminGroupName}
-                            variant="outlined"
-                          >
-                            {groupOptions.map((group) => (
-                              <MenuItem key={group.value} value={group.value}>
-                                {group.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                        </CardContent>
-                        <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.destination && errors.destination
-                            )}
-                            helperText={
-                              touched.destination && errors.destination
-                            }
-                            label="Select S3 Output Destination"
-                            name="destination"
-                            onChange={handleChange}
-                            select
-                            value={values.destination}
-                            variant="outlined"
-                          >
-                            {datasetOptions.map((dataset) => (
-                              <MenuItem
-                                key={dataset.value}
-                                value={dataset.value}
-                              >
-                                {dataset.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                        </CardContent>
+                        <EnvironmentTeamDatasetsDropdown
+                          setFieldValue={setFieldValue}
+                          handleChange={handleChange}
+                          values={values}
+                          touched={touched}
+                          errors={errors}
+                        />
                       </Card>
                     </Grid>
                     <Grid item lg={5} md={6} xs={12}>

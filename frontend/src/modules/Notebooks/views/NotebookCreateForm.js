@@ -394,45 +394,52 @@ const NotebookCreateForm = (props) => {
                       <Card sx={{ mb: 3 }}>
                         <CardHeader title="Deployment" />
                         <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.environment && errors.environment
-                            )}
-                            helperText={
-                              touched.environment && errors.environment
-                            }
-                            label="Environment"
-                            name="environment"
-                            onChange={(event) => {
+                          <Autocomplete
+                            id="environment"
+                            disablePortal
+                            options={environmentOptions.map((option) => option)}
+                            onChange={(event, value) => {
                               setFieldValue('SamlAdminGroupName', '');
-                              fetchGroups(
-                                event.target.value.environmentUri
-                              ).catch((e) =>
-                                dispatch({ type: SET_ERROR, error: e.message })
-                              );
-                              setFieldValue('environment', event.target.value);
-                              setVpcOptions(
-                                event.target.value.networks.map((v) => ({
-                                  ...v,
-                                  value: v,
-                                  label: v.VpcId
-                                }))
-                              );
+                              if (value && value.environmentUri) {
+                                setFieldValue('environment', value);
+                                fetchGroups(value.environmentUri).catch((e) =>
+                                  dispatch({
+                                    type: SET_ERROR,
+                                    error: e.message
+                                  })
+                                );
+                                setVpcOptions(
+                                  value.networks.map((v) => ({
+                                    ...v,
+                                    value: v,
+                                    label: v.VpcId
+                                  }))
+                                );
+                              } else {
+                                setFieldValue('environment', '');
+                                setVpcOptions([]);
+                                setGroupOptions([]);
+                              }
                             }}
-                            select
-                            value={values.environment}
-                            variant="outlined"
-                          >
-                            {environmentOptions.map((environment) => (
-                              <MenuItem
-                                key={environment.environmentUri}
-                                value={environment}
-                              >
-                                {environment.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                fullWidth
+                                error={Boolean(
+                                  touched.environmentUri &&
+                                    errors.environmentUri
+                                )}
+                                helperText={
+                                  touched.environmentUri &&
+                                  errors.environmentUri
+                                }
+                                label="Environment"
+                                value={values.environment}
+                                onChange={handleChange}
+                                variant="outlined"
+                              />
+                            )}
+                          />
                         </CardContent>
                         <CardContent>
                           <TextField
@@ -441,7 +448,7 @@ const NotebookCreateForm = (props) => {
                             label="Region"
                             name="region"
                             value={
-                              values.environment
+                              values.environment && values.environment.region
                                 ? values.environment.region
                                 : ''
                             }
@@ -455,7 +462,8 @@ const NotebookCreateForm = (props) => {
                             label="Organization"
                             name="organization"
                             value={
-                              values.environment
+                              values.environment &&
+                              values.environment.organization
                                 ? values.environment.organization.label
                                 : ''
                             }
@@ -463,29 +471,33 @@ const NotebookCreateForm = (props) => {
                           />
                         </CardContent>
                         <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.SamlAdminGroupName &&
-                                errors.SamlAdminGroupName
+                          <Autocomplete
+                            id="SamlAdminGroupName"
+                            disablePortal
+                            options={groupOptions.map((option) => option)}
+                            onChange={(event, value) => {
+                              if (value && value.value) {
+                                setFieldValue('SamlAdminGroupName', value.value);
+                              } else {
+                                setFieldValue('SamlAdminGroupName', '');
+                              }
+                            }}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                fullWidth
+                                error={Boolean(
+                                  touched.SamlAdminGroupName && errors.SamlAdminGroupName
+                                )}
+                                helperText={
+                                  touched.SamlAdminGroupName && errors.SamlAdminGroupName
+                                }
+                                label="Team"
+                                onChange={handleChange}
+                                variant="outlined"
+                              />
                             )}
-                            helperText={
-                              touched.SamlAdminGroupName &&
-                              errors.SamlAdminGroupName
-                            }
-                            label="Team"
-                            name="SamlAdminGroupName"
-                            onChange={handleChange}
-                            select
-                            value={values.SamlAdminGroupName}
-                            variant="outlined"
-                          >
-                            {groupOptions.map((group) => (
-                              <MenuItem key={group.value} value={group.value}>
-                                {group.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
+                          />
                         </CardContent>
                       </Card>
                       <Card sx={{ mt: 3 }}>
@@ -558,7 +570,6 @@ const NotebookCreateForm = (props) => {
                           </Box>
                         </Box>
                       </Card>
-
                       {errors.submit && (
                         <Box sx={{ mt: 3 }}>
                           <FormHelperText error>{errors.submit}</FormHelperText>
