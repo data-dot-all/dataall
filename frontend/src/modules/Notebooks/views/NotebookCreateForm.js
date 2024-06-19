@@ -477,7 +477,10 @@ const NotebookCreateForm = (props) => {
                             options={groupOptions.map((option) => option)}
                             onChange={(event, value) => {
                               if (value && value.value) {
-                                setFieldValue('SamlAdminGroupName', value.value);
+                                setFieldValue(
+                                  'SamlAdminGroupName',
+                                  value.value
+                                );
                               } else {
                                 setFieldValue('SamlAdminGroupName', '');
                               }
@@ -487,10 +490,12 @@ const NotebookCreateForm = (props) => {
                                 {...params}
                                 fullWidth
                                 error={Boolean(
-                                  touched.SamlAdminGroupName && errors.SamlAdminGroupName
+                                  touched.SamlAdminGroupName &&
+                                    errors.SamlAdminGroupName
                                 )}
                                 helperText={
-                                  touched.SamlAdminGroupName && errors.SamlAdminGroupName
+                                  touched.SamlAdminGroupName &&
+                                  errors.SamlAdminGroupName
                                 }
                                 label="Team"
                                 onChange={handleChange}
