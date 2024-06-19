@@ -25,8 +25,6 @@ class SharesBaseModuleInterface(ModuleInterface):
     def __init__(self):
         import dataall.modules.shares_base.services.shares_enums
         import dataall.modules.shares_base.services.share_permissions
-        import dataall.modules.shares_base.services.sharing_service
-        import dataall.modules.shares_base.handlers
 
 
 class SharesBaseAPIModuleInterface(ModuleInterface):
@@ -43,8 +41,7 @@ class SharesBaseAPIModuleInterface(ModuleInterface):
     def __init__(self):
         import dataall.modules.shares_base.services.shares_enums
         import dataall.modules.shares_base.services.share_permissions
-        import dataall.modules.shares_base.services.sharing_service
-        import dataall.modules.shares_base.handlers
+        import dataall.modules.shares_base.db.share_object_state_machines
         import dataall.modules.shares_base.api
 
 
@@ -62,6 +59,5 @@ class SharesBaseECSTaskModuleInterface(ModuleInterface):
     def __init__(self):
         import dataall.modules.shares_base.services.shares_enums
         import dataall.modules.shares_base.services.share_permissions
-        import dataall.modules.shares_base.services.sharing_service
 
         log.info('Sharing ECS task has been imported')

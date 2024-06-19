@@ -8,7 +8,6 @@ from sqlalchemy.orm import Query
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
-from dataall.core.organizations.db.organization_models import Organization
 from dataall.base.db import exceptions, paginate
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
@@ -29,28 +28,130 @@ logger = logging.getLogger(__name__)
 class ShareEnvironmentResource(EnvironmentResource):
     @staticmethod
     def count_resources(session, environment, group_uri) -> int:
-        return ShareObjectRepository.count_principal_shares(
+        return S3ShareObjectRepository.count_S3_principal_shares(
             session, group_uri, environment.environmentUri, PrincipalType.Group
         )
 
     @staticmethod
     def count_role_resources(session, role_uri):
-        return ShareObjectRepository.count_role_principal_shares(session, role_uri, PrincipalType.ConsumptionRole)
+        return S3ShareObjectRepository.count_S3_role_principal_shares(session, role_uri, PrincipalType.ConsumptionRole)
 
     @staticmethod
     def delete_env(session, environment):
-        ShareObjectRepository.delete_all_share_items(session, environment.environmentUri)
+        S3ShareObjectRepository.delete_all_S3_share_items(session, environment.environmentUri)
 
 
-class ShareObjectRepository:
+
+class S3ShareObjectRepository:
+
+    @staticmethod
+    def count_S3_principal_shares(session, principal_id: str, environment_uri: str, principal_type: PrincipalType):
+        return (
+            session.query(ShareObject)
+            .join(
+                ShareObjectItem,
+                ShareObjectItem.shareUri == ShareObject.shareUri,
+            )
+            .filter(
+                and_(
+                    ShareObject.principalId == principal_id,
+                    ShareObject.principalType == principal_type.value,
+                    ShareObject.environmentUri == environment_uri,
+                    ShareObjectItem.itemType.in_(
+                        [ShareableType.Table.value, ShareableType.S3Bucket.value, ShareableType.StorageLocation.value])
+                )
+            )
+            .count()
+        )
+
+    @staticmethod
+    def count_S3_role_principal_shares(session, principal_id: str, principal_type: PrincipalType):
+        return (
+            session.query(ShareObject)
+            .join(
+                ShareObjectItem,
+                ShareObjectItem.shareUri == ShareObject.shareUri,
+            )
+            .filter(
+                and_(
+                    ShareObject.principalId == principal_id,
+                    ShareObject.principalType == principal_type.value,
+                    ShareObjectItem.itemType.in_(
+                        [ShareableType.Table.value, ShareableType.S3Bucket.value, ShareableType.StorageLocation.value])
+                )
+            )
+            .count()
+        )
+
+    @staticmethod
+    def delete_all_S3_share_items(session, env_uri):
+        env_shared_with_objects = session.query(ShareObject).filter(ShareObject.environmentUri == env_uri).all()
+        for share in env_shared_with_objects:
+            (session.query(ShareObjectItem).filter(
+                and_(
+                    ShareObjectItem.shareUri == share.shareUri,
+                    ShareObjectItem.itemType.in_([ShareableType.Table.value, ShareableType.S3Bucket.value, ShareableType.StorageLocation.value])
+                )
+            ).delete())
+            session.delete(share)
+
+
+    @staticmethod
+    def find_all_other_share_items(
+        session, not_this_share_uri, item_uri, share_type, principal_type, principal_uri, item_status=None
+    ) -> List[ShareObjectItem]:
+        """
+        Find all shares from principal (principal_uri) to item (item_uri), that are not from specified share (not_this_share_uri)
+        """
+        query = (
+            session.query(ShareObjectItem)
+            .join(ShareObject, ShareObjectItem.shareUri == ShareObject.shareUri)
+            .filter(
+                (
+                    and_(
+                        ShareObjectItem.itemUri == item_uri,
+                        ShareObjectItem.itemType == share_type,
+                        ShareObject.principalType == principal_type,
+                        ShareObject.principalId == principal_uri,
+                        ShareObject.shareUri != not_this_share_uri,
+                    )
+                )
+            )
+        )
+        if item_status:
+            query = query.filter(ShareObjectItem.status.in_(item_status))
+        return query.all()
+
+    @staticmethod
+    def query_user_shared_datasets(session, username, groups) -> Query:
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        query = (
+            session.query(DatasetBase)
+            .outerjoin(
+                ShareObject,
+                ShareObject.datasetUri == DatasetBase.datasetUri,
+            )
+            .outerjoin(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
+            .filter(
+                or_(
+                    and_(
+                        ShareObject.principalId.in_(groups),
+                        ShareObjectItem.status.in_(share_item_shared_states),
+                    ),
+                    and_(
+                        ShareObject.owner == username,
+                        ShareObjectItem.status.in_(share_item_shared_states),
+                    ),
+                )
+            )
+        )
+        return query.distinct(DatasetBase.datasetUri)
+
+    #### todo VERIFY THE FOLLOWING ARE USED
     @staticmethod
     def save_and_commit(session, share):
         session.add(share)
         session.commit()
-
-    @staticmethod
-    def list_all_active_share_objects(session) -> [ShareObject]:  ## TODO: Already in shares_base
-        return session.query(ShareObject).filter(ShareObject.deleted.is_(None)).all()
 
     @staticmethod
     def find_share(session, dataset: DatasetBase, env, principal_id, group_uri) -> ShareObject:
@@ -68,22 +169,6 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def get_share_item(session, item_type, item_uri):
-        if item_type == ShareableType.Table.value:
-            return session.query(DatasetTable).get(item_uri)
-        if item_type == ShareableType.StorageLocation.value:
-            return session.query(DatasetStorageLocation).get(item_uri)
-        if item_type == ShareableType.S3Bucket.value:
-            return session.query(DatasetBucket).get(item_uri)
-
-    @staticmethod
-    def get_share_by_uri(session, uri):  ## TODO: Already in shares_base
-        share = session.query(ShareObject).get(uri)
-        if not share:
-            raise exceptions.ObjectNotFound('Share', uri)
-        return share
-
-    @staticmethod
     def get_share_by_dataset_attributes(session, dataset_uri, dataset_owner, groups=[]):
         share: ShareObject = (
             session.query(ShareObject)
@@ -93,25 +178,6 @@ class ShareObjectRepository:
         )
         return share
 
-    @staticmethod
-    def remove_share_object_item(session, share_item):
-        session.delete(share_item)
-        return True
-
-    @staticmethod
-    def check_existing_shared_items(session, uri):
-        share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
-        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
-        shared_items = (
-            session.query(ShareObjectItem)
-            .filter(
-                and_(ShareObjectItem.shareUri == share.shareUri, ShareObjectItem.status.in_(share_item_shared_states))
-            )
-            .all()
-        )
-        if shared_items:
-            return True
-        return False
 
     @staticmethod
     def count_sharable_items(session, uri, share_type):
@@ -124,19 +190,6 @@ class ShareObjectRepository:
                 )
             )
             .count()
-        )
-
-    @staticmethod
-    def find_sharable_item(session, share_uri, item_uri) -> ShareObjectItem:  ## TODO: Already in shares_base
-        return (
-            session.query(ShareObjectItem)
-            .filter(
-                and_(
-                    ShareObjectItem.itemUri == item_uri,
-                    ShareObjectItem.shareUri == share_uri,
-                )
-            )
-            .first()
         )
 
     @staticmethod
@@ -172,32 +225,7 @@ class ShareObjectRepository:
         return False
 
     @staticmethod
-    def check_pending_share_items(session, uri):  ## TODO: Already in shares_base
-        share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
-        shared_items = (
-            session.query(ShareObjectItem)
-            .filter(
-                and_(
-                    ShareObjectItem.shareUri == share.shareUri,
-                    ShareObjectItem.status.in_([ShareItemStatus.PendingApproval.value]),
-                )
-            )
-            .all()
-        )
-        if shared_items:
-            return True
-        return False
-
-    @staticmethod
-    def get_share_item_by_uri(session, uri):  ## TODO: Already in shares_base
-        share_item: ShareObjectItem = session.query(ShareObjectItem).get(uri)
-        if not share_item:
-            raise exceptions.ObjectNotFound('ShareObjectItem', uri)
-
-        return share_item
-
-    @staticmethod
-    def list_shareable_items(session, share, states, data):
+    def list_shareable_items(session, share, states, data): #TODO
         # All tables from dataset with a column isShared
         # marking the table as part of the shareObject
         tables = (
@@ -404,245 +432,12 @@ class ShareObjectRepository:
         return share
 
     @staticmethod
-    def update_share_object_status(
-        session, share_uri: str, status: str
-    ) -> ShareObject:  ## TODO: Already in shares_base
-        share = ShareObjectRepository.get_share_by_uri(session, share_uri)
-        share.status = status
-        session.commit()
-        return share
-
-    @staticmethod
-    def update_share_item_status(
-        session,
-        uri: str,
-        status: str,
-    ) -> ShareObjectItem:  ## TODO: Already in shares_base
-        share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
-        share_item.status = status
-        session.commit()
-        return share_item
-
-    @staticmethod
-    def update_share_item_health_status(
-        session,
-        share_item: ShareObjectItem,
-        healthStatus: str = None,
-        healthMessage: str = None,
-        timestamp: datetime = None,
-    ) -> ShareObjectItem:  ## TODO: Already in shares_base
-        share_item.healthStatus = healthStatus
-        share_item.healthMessage = healthMessage
-        share_item.lastVerificationTime = timestamp
-        session.commit()
-        return share_item
-
-    @staticmethod
-    def delete_share_item_status_batch(
-        session,
-        share_uri: str,
-        status: str,
-    ):  ## TODO: Already in shares_base
-        (
-            session.query(ShareObjectItem)
-            .filter(and_(ShareObjectItem.shareUri == share_uri, ShareObjectItem.status == status))
-            .delete()
-        )
-
-    @staticmethod
-    def update_share_item_health_status_batch(
-        session,
-        share_uri: str,
-        old_status: str,
-        new_status: str,
-    ) -> bool:  ## TODO: Already in shares_base
-        (
-            session.query(ShareObjectItem)
-            .filter(and_(ShareObjectItem.shareUri == share_uri, ShareObjectItem.healthStatus == old_status))
-            .update(
-                {
-                    ShareObjectItem.healthStatus: new_status,
-                }
-            )
-        )
-        return True
-
-    @staticmethod
-    def update_share_item_status_batch(
-        session,
-        share_uri: str,
-        old_status: str,
-        new_status: str,
-    ) -> bool:  ## TODO: Already in shares_base
-        (
-            session.query(ShareObjectItem)
-            .filter(and_(ShareObjectItem.shareUri == share_uri, ShareObjectItem.status == old_status))
-            .update(
-                {
-                    ShareObjectItem.status: new_status,
-                }
-            )
-        )
-        return True
-
-    @staticmethod
-    def get_share_data(session, share_uri):  ## TODO: Already in shares_base
-        share: ShareObject = ShareObjectRepository.get_share_by_uri(session, share_uri)
-
-        dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
-
-        source_environment: Environment = session.query(Environment).get(dataset.environmentUri)
-        if not source_environment:
-            raise exceptions.ObjectNotFound('SourceEnvironment', dataset.environmentUri)
-
-        target_environment: Environment = session.query(Environment).get(share.environmentUri)
-        if not target_environment:
-            raise exceptions.ObjectNotFound('TargetEnvironment', share.environmentUri)
-
-        env_group: EnvironmentGroup = (
-            session.query(EnvironmentGroup)
-            .filter(
-                and_(
-                    EnvironmentGroup.environmentUri == share.environmentUri,
-                    EnvironmentGroup.groupUri == share.groupUri,
-                )
-            )
-            .first()
-        )
-        if not env_group:
-            raise Exception(
-                f'Share object Team {share.groupUri} is not a member of the '
-                f'environment {target_environment.name}/{target_environment.AwsAccountId}'
-            )
-
-        source_env_group: EnvironmentGroup = (
-            session.query(EnvironmentGroup)
-            .filter(
-                and_(
-                    EnvironmentGroup.environmentUri == dataset.environmentUri,
-                    EnvironmentGroup.groupUri == dataset.SamlAdminGroupName,
-                )
-            )
-            .first()
-        )
-        if not source_env_group:
-            raise Exception(
-                f'Share object Team {dataset.SamlAdminGroupName} is not a member of the '
-                f'environment {dataset.environmentUri}'
-            )
-
-        return (
-            source_env_group,
-            env_group,
-            dataset,
-            share,
-            source_environment,
-            target_environment,
-        )
-
-    @staticmethod
-    def get_all_shareable_items(session, share_uri, status=None, healthStatus=None):  ## TODO: Already in shares_base
-        (tables, folders, buckets) = ShareObjectRepository.get_share_data_items(
-            session, share_uri, status, healthStatus
-        )
-        uris = []
-        uris.extend([table.tableUri for table in tables])
-        uris.extend([folder.locationUri for folder in folders])
-        uris.extend([bucket.bucketUri for bucket in buckets])
-        return (
-            session.query(ShareObjectItem)
-            .filter(
-                and_(
-                    ShareObjectItem.itemUri.in_(uris),
-                    ShareObjectItem.shareUri == share_uri,
-                )
-            )
-            .all()
-        )
-
-    @staticmethod
-    def get_share_data_items(session, share_uri, status=None, healthStatus=None):  ## TODO: Already in shares_base
-        share: ShareObject = ShareObjectRepository.get_share_by_uri(session, share_uri)
-
-        tables = ShareObjectRepository._find_all_share_item(
-            session, share, status, healthStatus, DatasetTable, DatasetTable.tableUri
-        )
-
-        folders = ShareObjectRepository._find_all_share_item(
-            session, share, status, healthStatus, DatasetStorageLocation, DatasetStorageLocation.locationUri
-        )
-
-        s3_buckets = ShareObjectRepository._find_all_share_item(
-            session, share, status, healthStatus, DatasetBucket, DatasetBucket.bucketUri
-        )
-
-        return (
-            tables,
-            folders,
-            s3_buckets,
-        )
-
-    @staticmethod
-    def _find_all_share_item(
-        session, share, status, healthStatus, share_type_model, share_type_uri
-    ):  ## TODO: Already in shares_base
-        query = (
-            session.query(share_type_model)
-            .join(
-                ShareObjectItem,
-                ShareObjectItem.itemUri == share_type_uri,
-            )
-            .join(
-                ShareObject,
-                ShareObject.shareUri == ShareObjectItem.shareUri,
-            )
-            .filter(
-                and_(
-                    ShareObject.datasetUri == share.datasetUri,
-                    ShareObject.environmentUri == share.environmentUri,
-                    ShareObject.shareUri == share.shareUri,
-                )
-            )
-        )
-        if status:
-            query = query.filter(ShareObjectItem.status == status)
-        if healthStatus:
-            query = query.filter(ShareObjectItem.healthStatus == healthStatus)
-        return query.all()
-
-    @staticmethod
     def find_all_share_items(session, share_uri, share_type, status=None):
         query = session.query(ShareObjectItem).filter(
             (and_(ShareObjectItem.shareUri == share_uri, ShareObjectItem.itemType == share_type))
         )
         if status:
             query = query.filter(ShareObjectItem.status.in_(status))
-        return query.all()
-
-    @staticmethod
-    def find_all_other_share_items(
-        session, not_this_share_uri, item_uri, share_type, principal_type, principal_uri, item_status=None
-    ) -> List[ShareObjectItem]:
-        """
-        Find all shares from principal (principal_uri) to item (item_uri), that are not from specified share (not_this_share_uri)
-        """
-        query = (
-            session.query(ShareObjectItem)
-            .join(ShareObject, ShareObjectItem.shareUri == ShareObject.shareUri)
-            .filter(
-                (
-                    and_(
-                        ShareObjectItem.itemUri == item_uri,
-                        ShareObjectItem.itemType == share_type,
-                        ShareObject.principalType == principal_type,
-                        ShareObject.principalId == principal_uri,
-                        ShareObject.shareUri != not_this_share_uri,
-                    )
-                )
-            )
-        )
-        if item_status:
-            query = query.filter(ShareObjectItem.status.in_(item_status))
         return query.all()
 
     @staticmethod
@@ -664,24 +459,6 @@ class ShareObjectRepository:
             )
             .first()
         )
-
-    @staticmethod
-    def get_share_items_states(session, share_uri, item_uris=None):
-        query = (
-            session.query(ShareObjectItem)
-            .join(
-                ShareObject,
-                ShareObjectItem.shareUri == ShareObject.shareUri,
-            )
-            .filter(
-                and_(
-                    ShareObject.shareUri == share_uri,
-                )
-            )
-        )
-        if item_uris:
-            query = query.filter(ShareObjectItem.shareItemUri.in_(item_uris))
-        return [item.status for item in query.distinct(ShareObjectItem.status)]
 
     @staticmethod
     def has_shared_items(session, item_uri: str) -> int:
@@ -717,31 +494,6 @@ class ShareObjectRepository:
 
             share_obj = session.query(ShareObject).filter(ShareObject.shareUri == share.shareUri).first()
             session.delete(share_obj)
-
-    @staticmethod
-    def query_user_shared_datasets(session, username, groups) -> Query:
-        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
-        query = (
-            session.query(DatasetBase)
-            .outerjoin(
-                ShareObject,
-                ShareObject.datasetUri == DatasetBase.datasetUri,
-            )
-            .outerjoin(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
-            .filter(
-                or_(
-                    and_(
-                        ShareObject.principalId.in_(groups),
-                        ShareObjectItem.status.in_(share_item_shared_states),
-                    ),
-                    and_(
-                        ShareObject.owner == username,
-                        ShareObjectItem.status.in_(share_item_shared_states),
-                    ),
-                )
-            )
-        )
-        return query.distinct(DatasetBase.datasetUri)
 
     @staticmethod
     def find_dataset_shares(session, dataset_uri):
@@ -803,76 +555,6 @@ class ShareObjectRepository:
             )
         return shares_datasets
 
-    @staticmethod
-    def delete_all_share_items(session, env_uri):
-        env_shared_with_objects = session.query(ShareObject).filter(ShareObject.environmentUri == env_uri).all()
-        for share in env_shared_with_objects:
-            (session.query(ShareObjectItem).filter(ShareObjectItem.shareUri == share.shareUri).delete())
-            session.delete(share)
-
-    @staticmethod
-    def paginate_shared_datasets(session, env_uri, data):
-        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
-        q = (
-            session.query(
-                ShareObjectItem.shareUri.label('shareUri'),
-                DatasetBase.datasetUri.label('datasetUri'),
-                DatasetBase.name.label('datasetName'),
-                DatasetBase.description.label('datasetDescription'),
-                Environment.environmentUri.label('environmentUri'),
-                Environment.name.label('environmentName'),
-                ShareObject.created.label('created'),
-                ShareObject.principalId.label('principalId'),
-                ShareObject.principalType.label('principalType'),
-                ShareObject.environmentUri.label('targetEnvironmentUri'),
-                ShareObjectItem.itemType.label('itemType'),
-                ShareObjectItem.itemName.label('itemName'),
-                Organization.organizationUri.label('organizationUri'),
-                Organization.name.label('organizationName'),
-            )
-            .join(
-                ShareObject,
-                ShareObject.shareUri == ShareObjectItem.shareUri,
-            )
-            .join(
-                DatasetBase,
-                ShareObject.datasetUri == DatasetBase.datasetUri,
-            )
-            .join(
-                Environment,
-                Environment.environmentUri == DatasetBase.environmentUri,
-            )
-            .join(
-                Organization,
-                Organization.organizationUri == Environment.organizationUri,
-            )
-            .filter(
-                and_(
-                    ShareObjectItem.status.in_(share_item_shared_states),
-                    ShareObject.environmentUri == env_uri,
-                )
-            )
-        )
-
-        if data.get('datasetUri'):
-            dataset_uri = data.get('datasetUri')
-            q = q.filter(ShareObject.datasetUri == dataset_uri)
-
-        if data.get('itemTypes', None):
-            item_types = data.get('itemTypes')
-            q = q.filter(or_(*[ShareObjectItem.itemType == t for t in item_types]))
-
-        if data.get('uniqueShares', False):
-            q = q.filter(ShareObject.principalType != PrincipalType.ConsumptionRole.value)
-            q = q.order_by(ShareObject.shareUri).distinct(ShareObject.shareUri)
-        else:
-            q = q.order_by(ShareObjectItem.itemName).distinct()
-
-        if data.get('term'):
-            term = data.get('term')
-            q = q.filter(ShareObjectItem.itemName.ilike('%' + term + '%'))
-
-        return paginate(query=q, page=data.get('page', 1), page_size=data.get('pageSize', 10)).to_dict()
 
     @staticmethod
     def find_share_items_by_item_uri(session, item_uri):
@@ -955,33 +637,6 @@ class ShareObjectRepository:
                 )
             )
         ).all()
-
-    @staticmethod
-    def count_principal_shares(session, principal_id: str, environment_uri: str, principal_type: PrincipalType):
-        return (
-            session.query(ShareObject)
-            .filter(
-                and_(
-                    ShareObject.principalId == principal_id,
-                    ShareObject.principalType == principal_type.value,
-                    ShareObject.environmentUri == environment_uri,
-                )
-            )
-            .count()
-        )
-
-    @staticmethod
-    def count_role_principal_shares(session, principal_id: str, principal_type: PrincipalType):
-        return (
-            session.query(ShareObject)
-            .filter(
-                and_(
-                    ShareObject.principalId == principal_id,
-                    ShareObject.principalType == principal_type.value,
-                )
-            )
-            .count()
-        )
 
     @staticmethod
     def query_dataset_tables_shared_with_env(
