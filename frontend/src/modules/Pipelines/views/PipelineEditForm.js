@@ -24,10 +24,11 @@ import {
   ArrowLeftIcon,
   ChevronRightIcon,
   ChipInput,
+  Defaults,
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { useClient } from 'services';
+import { listValidEnvironments, useClient } from 'services';
 import { getDataPipeline, updateDataPipeline } from '../services';
 import { PipelineEnvironmentEditForm } from '../components';
 
@@ -39,7 +40,9 @@ const PipelineEditForm = (props) => {
   const client = useClient();
   const { settings } = useSettings();
   const [loadingPipeline, setLoadingPipeline] = useState(true);
+  const [loadingEnvs, setLoadingEnvs] = useState(true);
   const [pipeline, setPipeline] = useState(null);
+  const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [triggerEnvSubmit, setTriggerEnvSubmit] = useState(false);
   const [countEnvironmentsValid, setCountEnvironmentsValid] = useState(false);
 
@@ -66,6 +69,33 @@ const PipelineEditForm = (props) => {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
     }
   }, [client, dispatch, fetchItem]);
+
+  const fetchEnvironments = useCallback(async () => {
+    setLoadingEnvs(true);
+    const response = await client.query(
+      listValidEnvironments({ filter: Defaults.selectListFilter })
+    );
+    if (!response.errors) {
+      setEnvironmentOptions(
+        response.data.listValidEnvironments.nodes.map((e) => ({
+          ...e,
+          value: e.environmentUri,
+          label: e.label
+        }))
+      );
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+    setLoadingEnvs(false);
+  }, [client, dispatch]);
+
+  useEffect(() => {
+    if (client) {
+      fetchEnvironments().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+    }
+  }, [client, dispatch, fetchEnvironments]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     if (!countEnvironmentsValid) {
@@ -113,7 +143,7 @@ const PipelineEditForm = (props) => {
     }
   }
 
-  if (loadingPipeline || (!pipeline && pipeline.environment)) {
+  if (loadingPipeline || loadingEnvs || (!pipeline && pipeline.environment)) {
     return <CircularProgress />;
   }
 
@@ -340,6 +370,7 @@ const PipelineEditForm = (props) => {
                     <Grid item lg={12} md={6} xs={12}>
                       <Box sx={{ mt: 3 }}>
                         <PipelineEnvironmentEditForm
+                          environmentOptions={environmentOptions}
                           triggerEnvSubmit={triggerEnvSubmit}
                           pipelineUri={pipeline.DataPipelineUri}
                           pipeline={pipeline}

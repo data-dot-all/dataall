@@ -17,23 +17,23 @@ import {
   TextField
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import {
-  listEnvironmentGroups,
-  listValidEnvironments,
-  useClient
-} from 'services';
+import { listEnvironmentGroups, useClient } from 'services';
 import { createDataPipelineEnvironment } from '../services';
 
 export const PipelineEnvironmentCreateForm = (props) => {
-  const { triggerEnvSubmit, pipelineUri, handleCountEnvironmentValid } = props;
+  const {
+    environmentOptions,
+    triggerEnvSubmit,
+    pipelineUri,
+    handleCountEnvironmentValid
+  } = props;
   const dispatch = useDispatch();
   const client = useClient();
   const [kvEnvs, setKeyValueEnvs] = useState([]);
   const [mapGroups, setMapGroups] = useState(new Map());
-  const [environmentOptions, setEnvironmentOptions] = useState([]);
   const stageOps = [
     { value: 'dev', label: 'dev' },
     { value: 'test', label: 'test' },
@@ -41,29 +41,21 @@ export const PipelineEnvironmentCreateForm = (props) => {
     { value: 'prod', label: 'prod' },
     { value: 'other', label: 'other' }
   ];
-  const fetchEnvironments = useCallback(async () => {
-    const response = await client.query(
-      listValidEnvironments({ filter: Defaults.selectListFilter })
-    );
-    if (!response.errors) {
-      setEnvironmentOptions(
-        response.data.listValidEnvironments.nodes.map((e) => ({
-          ...e,
-          value: e.environmentUri,
-          label: e.label
-        }))
-      );
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-  }, [client, dispatch]);
+
+  const environmentOps =
+    environmentOptions && environmentOptions.length > 0
+      ? environmentOptions
+      : [
+          { environmentUri: 'someUri', label: 'some' },
+          { environmentUri: 'someUri', label: 'some2' }
+        ];
 
   const fetchGroups = async (environment) => {
     try {
       const response = await client.query(
         listEnvironmentGroups({
           filter: Defaults.selectListFilter,
-          environmentUri: environment.value
+          environmentUri: environment.environmentUri
         })
       );
 
@@ -71,7 +63,7 @@ export const PipelineEnvironmentCreateForm = (props) => {
         setMapGroups(
           new Map(
             mapGroups.set(
-              environment.value,
+              environment.environmentUri,
               response.data.listEnvironmentGroups.nodes
             )
           )
@@ -83,14 +75,6 @@ export const PipelineEnvironmentCreateForm = (props) => {
       dispatch({ type: SET_ERROR, error: e.message });
     }
   };
-
-  useEffect(() => {
-    if (client) {
-      fetchEnvironments().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
-    }
-  }, [client, dispatch, fetchEnvironments]);
 
   const handleAddEnvRow = () => {
     if (kvEnvs.length <= 40) {
@@ -117,7 +101,7 @@ export const PipelineEnvironmentCreateForm = (props) => {
         rows[idx].stage = value;
       } else if (field === 'env') {
         rows[idx].environmentLabel = value.label;
-        rows[idx].environmentUri = value.value;
+        rows[idx].environmentUri = value.environmentUri;
       } else {
         rows[idx].samlGroupName = value;
       }
@@ -241,9 +225,9 @@ export const PipelineEnvironmentCreateForm = (props) => {
                                 select
                                 variant="outlined"
                               >
-                                {environmentOptions.map((environment) => (
+                                {environmentOps.map((environment) => (
                                   <MenuItem
-                                    key={environment.value}
+                                    key={environment.environmentUri}
                                     value={environment}
                                   >
                                     {environment.label}
@@ -301,8 +285,8 @@ export const PipelineEnvironmentCreateForm = (props) => {
     </>
   );
 };
-
 PipelineEnvironmentCreateForm.propTypes = {
+  environmentOptions: PropTypes.array.isRequired,
   triggerEnvSubmit: PropTypes.bool.isRequired,
   pipelineUri: PropTypes.string.isRequired,
   handleCountEnvironmentValid: PropTypes.func.isRequired
