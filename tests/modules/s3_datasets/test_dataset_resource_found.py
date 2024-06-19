@@ -61,7 +61,7 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
 
     response = client.query(
         """
-        mutation inviteGroupOnEnvironment($input:InviteGroupOnEnvironmentInput){
+        mutation inviteGroupOnEnvironment($input:InviteGroupOnEnvironmentInput!){
             inviteGroupOnEnvironment(input:$input){
                 environmentUri
             }
@@ -81,7 +81,7 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
 
     response = client.query(
         """
-        query getGroup($groupUri:String!, $environmentUri:String){
+        query getGroup($groupUri:String!, $environmentUri:String!){
             getGroup(groupUri:$groupUri){
                 environmentPermissions(environmentUri:$environmentUri){
                  name

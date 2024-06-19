@@ -105,7 +105,7 @@ def workflow1(omics_workflow_model: typing.Callable, env_fixture) -> OmicsWorkfl
 def run1(client, user, group, env_fixture, dataset1, workflow1, patch_aws) -> OmicsRun:
     response = client.query(
         """
-            mutation createOmicsRun($input: NewOmicsRunInput) {
+            mutation createOmicsRun($input: NewOmicsRunInput!) {
               createOmicsRun(input: $input) {
                 label
                 runUri

@@ -7,7 +7,7 @@ from dataall.core.vpc.db.vpc_models import Vpc
 def vpc(env_fixture, group, client) -> Vpc:
     response = client.query(
         """
-        mutation createNetwork($input:NewVpcInput){
+        mutation createNetwork($input:NewVpcInput!){
             createNetwork(input:$input){
                 vpcUri
                 label

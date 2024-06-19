@@ -11,7 +11,7 @@ export const listDatasetsCreatedInEnvironment = ({
   query: gql`
     query ListDatasetsCreatedInEnvironment(
       $filter: DatasetFilter
-      $environmentUri: String
+      $environmentUri: String!
     ) {
       listDatasetsCreatedInEnvironment(
         environmentUri: $environmentUri
