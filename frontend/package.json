@@ -71,6 +71,9 @@
     "braces": "3.0.3"
   },
   "overrides": {
+    "aws-amplify": {
+      "ws": "^6.2.3"
+    },
     "@appbaseio/reactivesearch": {
       "react-redux": "^7.2.6"
     },
@@ -79,7 +82,10 @@
     "merge": "2.1.1",
     "@babel/traverse": "7.23.2",
     "react-scripts": {
-      "resolve-url-loader": "5.0.0"
+      "resolve-url-loader": "5.0.0",
+      "webpack-dev-server": {
+        "ws": "^6.2.3"
+      }
     },
     "postcss": "8.4.31",
     "ip": "1.1.9",
@@ -100,7 +106,8 @@
     "follow-redirects": "1.15.6",
     "webpack-dev-middleware": "5.3.4",
     "express": "4.19.2",
-    "ejs": "3.1.10"
+    "ejs": "3.1.10",
+    "ws": "^8.17.1"
   },
   "devDependencies": {
     "env-cmd": "^10.1.0",
