@@ -26,21 +26,21 @@ class ManagedPolicy(ABC):
         """
         Returns string and needs to be implemented in the ManagedPolicies inherited classes
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def generate_policy_name(self) -> str:
         """
         Returns string and needs to be implemented in the ManagedPolicies inherited classes
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def generate_empty_policy(self) -> dict:
         """
         Returns dict and needs to be implemented in the ManagedPolicies inherited classes
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def create_managed_policy_from_inline_and_delete_inline(self) -> str:
@@ -48,7 +48,7 @@ class ManagedPolicy(ABC):
         Returns policy arn and needs to be implemented in the ManagedPolicies inherited classes
         It is used for backwards compatibility. It should be deprecated and removed in future releases.
         """
-        raise NotImplementedError
+        ...
 
     def check_if_policy_exists(self) -> bool:
         policy_name = self.generate_policy_name()
