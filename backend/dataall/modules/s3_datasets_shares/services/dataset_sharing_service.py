@@ -10,7 +10,8 @@ from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
 from dataall.modules.shares_base.services.share_permissions import SHARE_OBJECT_APPROVER, GET_SHARE_OBJECT
-from dataall.modules.s3_datasets_shares.services.share_item_service import ShareItemService
+from dataall.modules.s3_datasets_shares.services.share_item_service import S3ShareItemService
+from dataall.modules.shares_base.services.share_item_service import ShareItemService
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.s3_datasets.services.dataset_permissions import (
     MANAGE_DATASETS,
@@ -194,7 +195,7 @@ class DatasetSharingService(DatasetServiceInterface):
                     separator='-',
                 )
                 # Check if the share was made with a Glue Database
-                datasetGlueDatabase = ShareItemService._get_glue_database_for_share(
+                datasetGlueDatabase = S3ShareItemService.get_glue_database_for_share(
                     dataset.GlueDatabaseName, dataset.AwsAccountId, dataset.region
                 )
                 old_shared_db_name = f'{datasetGlueDatabase}_shared_{uri}'[:254]

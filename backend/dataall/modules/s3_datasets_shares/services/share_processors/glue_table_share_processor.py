@@ -16,7 +16,7 @@ from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleN
 from dataall.modules.s3_datasets_shares.services.share_managers import LFShareManager
 from dataall.modules.s3_datasets_shares.aws.ram_client import RamClient
 from dataall.modules.shares_base.services.share_object_service import ShareObjectService
-from dataall.modules.s3_datasets_shares.services.share_item_service import ShareItemService
+from dataall.modules.s3_datasets_shares.services.share_item_service import S3ShareItemService
 from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
 from dataall.modules.s3_datasets_shares.services.share_managers.share_manager_utils import ShareErrorFormatter
@@ -151,7 +151,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     manager.grant_principals_permissions_to_resource_link_table(table)
 
                     log.info('Attaching TABLE READ permissions...')
-                    ShareItemService.attach_dataset_table_read_permission(
+                    S3ShareItemService.attach_dataset_table_read_permission(
                         self.session, self.share_data.share, table.tableUri
                     )
 
@@ -273,7 +273,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         and self.share_data.share.groupUri != self.share_data.dataset.stewards
                     ):
                         log.info('Deleting TABLE READ permissions...')
-                        ShareItemService.delete_dataset_table_read_permission(
+                        S3ShareItemService.delete_dataset_table_read_permission(
                             self.session, self.share_data.share, table.tableUri
                         )
 
