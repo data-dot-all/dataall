@@ -5,7 +5,7 @@ from typing import List
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers import S3AccessPointShareManager
 from dataall.modules.shares_base.services.share_object_service import ShareObjectService
-from dataall.modules.s3_datasets_shares.services.share_item_service import ShareItemService
+from dataall.modules.s3_datasets_shares.services.share_item_service import S3ShareItemService
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
     ShareItemStatus,
@@ -74,7 +74,7 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                     manager.update_dataset_bucket_key_policy()
 
                 log.info('Attaching FOLDER READ permissions...')
-                ShareItemService.attach_dataset_folder_read_permission(
+                S3ShareItemService.attach_dataset_folder_read_permission(
                     self.session, self.share_data.share, folder.locationUri
                 )
 
@@ -143,7 +143,7 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                     and self.share_data.share.groupUri != self.share_data.dataset.stewards
                 ):
                     log.info(f'Deleting FOLDER READ permissions from {folder.locationUri}...')
-                    ShareItemService.delete_dataset_folder_read_permission(
+                    S3ShareItemService.delete_dataset_folder_read_permission(
                         self.session, manager.share, folder.locationUri
                     )
 
