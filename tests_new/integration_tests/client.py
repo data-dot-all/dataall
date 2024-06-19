@@ -3,8 +3,12 @@ import boto3
 import os
 from munch import DefaultMunch
 
-
 ENVNAME = os.getenv('ENVNAME', 'dev')
+
+
+class GqlError(RuntimeError):
+    def __init__(self, msg):
+        super().__init__(msg)
 
 
 class Client:
@@ -14,10 +18,12 @@ class Client:
         self.token = self._get_jwt_token()
 
     def query(self, query: str):
-        graphql_endpoint = f'{os.getenv("API_ENDPOINT", False)}graphql/api'
+        graphql_endpoint = os.path.join(os.environ['API_ENDPOINT'], 'graphql', 'api')
         headers = {'AccessKeyId': 'none', 'SecretKey': 'none', 'authorization': self.token}
         r = requests.post(graphql_endpoint, json=query, headers=headers)
         r.raise_for_status()
+        if errors := r.json().get('errors'):
+            raise GqlError(errors)
 
         return DefaultMunch.fromDict(r.json())
 

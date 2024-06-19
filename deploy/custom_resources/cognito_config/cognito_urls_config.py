@@ -103,11 +103,11 @@ def setup_cognito(
 
     if with_approval_tests == 'True':
         ssm = boto3.client('ssm', region_name=region)
-        users = json.loads(
-            ssm.get_parameter(Name=os.path.join('/dataall', envname, 'cognito-test-users'))['Parameter']['Value']
+        testdata = json.loads(
+            ssm.get_parameter(Name=os.path.join('/dataall', envname, 'testdata'))['Parameter']['Value']
         )
-        for username, data in users.items():
-            create_user(cognito, user_pool_id, username, data['password'], data['groups'])
+        for user_data in testdata['users'].values():
+            create_user(cognito, user_pool_id, user_data['username'], user_data['password'], user_data['groups'])
 
 
 def create_user(cognito, user_pool_id, username, password, groups=[]):
