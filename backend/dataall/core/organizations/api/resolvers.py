@@ -93,3 +93,7 @@ def resolve_organization_by_env(context, source, **kwargs):
 
 def list_group_organization_permissions(context, source, organizationUri, groupUri):
     return OrganizationService.list_group_organization_permissions(organizationUri, groupUri)
+
+
+def list_invited_organization_permissions_with_descriptions(context, source):
+    return OrganizationService.list_invited_organization_permissions_with_descriptions()

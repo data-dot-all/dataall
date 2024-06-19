@@ -6,6 +6,8 @@ from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.core.organizations.services.organizations_enums import OrganisationUserRole
 from dataall.core.organizations.db.organization_models import OrganizationGroup
 from dataall.core.organizations.db import organization_models as models
+from dataall.core.permissions.api.enums import PermissionType
+from dataall.core.permissions.db.permission.permission_repositories import PermissionRepository
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.permissions.services.tenant_permissions import MANAGE_ORGANIZATIONS
@@ -17,6 +19,7 @@ from dataall.core.permissions.services.organization_permissions import (
     REMOVE_ORGANIZATION_GROUP,
     DELETE_ORGANIZATION,
     ORGANIZATION_INVITED_READONLY,
+    ORGANIZATION_INVITED_DESCRIPTIONS,
 )
 
 
@@ -311,3 +314,14 @@ class OrganizationService:
             return ResourcePolicyService.get_resource_policy_permissions(
                 session=session, group_uri=groupUri, resource_uri=uri
             )
+
+    @staticmethod
+    def list_invited_organization_permissions_with_descriptions():
+        permissions = []
+        with get_context().db_engine.scoped_session() as session:
+            for p in ORGANIZATION_INVITED_DESCRIPTIONS:
+                if PermissionRepository.find_permission_by_name(
+                    session=session, permission_name=p, permission_type=PermissionType.RESOURCE.name
+                ):
+                    permissions.append({'name': p, 'description': ORGANIZATION_INVITED_DESCRIPTIONS[p]})
+        return permissions

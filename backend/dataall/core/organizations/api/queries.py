@@ -5,6 +5,7 @@ from .resolvers import (
     list_organization_groups,
     list_organizations,
     list_group_organization_permissions,
+    list_invited_organization_permissions_with_descriptions,
 )
 from .types import (
     Organization,
@@ -45,4 +46,10 @@ listOrganizationGroupPermissions = gql.QueryField(
         gql.Argument(name='groupUri', type=gql.NonNullableType(gql.String)),
     ],
     resolver=list_group_organization_permissions,
+)
+
+listInviteOrganizationPermissionsWithDescriptions = gql.QueryField(
+    name='listInviteOrganizationPermissionsWithDescriptions',
+    type=gql.ArrayType(gql.Ref('DescribedPermission')),
+    resolver=list_invited_organization_permissions_with_descriptions,
 )

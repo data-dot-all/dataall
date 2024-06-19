@@ -2,7 +2,6 @@ from dataall.base.api import gql
 from .resolvers import (
     list_tenant_groups,
     list_tenant_permissions,
-    list_invited_organization_permissions_with_descriptions,
 )
 
 listTenantPermissions = gql.QueryField(
@@ -18,10 +17,4 @@ listTenantGroups = gql.QueryField(
     ],
     type=gql.Ref('GroupSearchResult'),
     resolver=list_tenant_groups,
-)
-
-listInviteOrganizationPermissionsWithDescriptions = gql.QueryField(
-    name='listInviteOrganizationPermissionsWithDescriptions',
-    type=gql.ArrayType(gql.Ref('DescribedPermission')),
-    resolver=list_invited_organization_permissions_with_descriptions,
 )
