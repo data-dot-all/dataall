@@ -70,7 +70,7 @@ class ShareNotificationService:
 
         """
 
-        msg_end = f"""Your prompt attention to this matter is greatly appreciated. \n\n
+        msg_end = """Your prompt attention to this matter is greatly appreciated. \n\n
 
         Best regards,
         The Data.all Team
