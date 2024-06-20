@@ -336,7 +336,7 @@ class BackendStack(Stack):
         TriggerFunctionStack(
             self,
             'DataallMigrations',
-            handler='deployment_triggers.dataall_migrations_handler.handler',
+            handler='deployment_triggers.dataall_migrate_handler.handler',
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
