@@ -9,7 +9,7 @@ from dataall.base.aws.sts import SessionHelper
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.s3_datasets_shares.db.share_object_repositories import S3ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
+from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.services.share_permissions import SHARE_OBJECT_APPROVER, GET_SHARE_OBJECT
 from dataall.modules.s3_datasets_shares.services.share_item_service import S3ShareItemService
 from dataall.modules.shares_base.services.share_item_service import ShareItemService
@@ -50,14 +50,14 @@ class DatasetSharingService(DatasetServiceInterface):
         """Implemented as part of the DatasetServiceInterface"""
         action = kwargs.get('action')
         if action in [DELETE_DATASET_FOLDER, DELETE_DATASET_TABLE]:
-            has_share = S3ShareObjectRepository.has_shared_items(session, uri)
-            if has_share:
+            existing_s3_shared_items = S3ShareObjectRepository.check_existing_s3_shared_items(session, uri)
+            if existing_s3_shared_items:
                 raise exceptions.ResourceShared(
                     action=action,
                     message='Revoke all shares for this item before deletion',
                 )
         elif action in [DELETE_DATASET]:
-            shares = S3ShareObjectRepository.list_dataset_shares_with_existing_shared_items(
+            shares = S3ShareObjectRepository.list_s3_dataset_shares_with_existing_shared_items(
                 session=session, dataset_uri=uri
             )
             if shares:
@@ -74,9 +74,9 @@ class DatasetSharingService(DatasetServiceInterface):
         """Implemented as part of the DatasetServiceInterface"""
         action = kwargs.get('action')
         if action in [DELETE_DATASET_FOLDER, DELETE_DATASET_TABLE]:
-            S3ShareObjectRepository.delete_shares(session, uri)
+            S3ShareObjectRepository.delete_s3_share_item(session, uri)
         elif action in [DELETE_DATASET]:
-            S3ShareObjectRepository.delete_shares_with_no_shared_items(session, uri)
+            S3ShareObjectRepository.delete_s3_shares_with_no_shared_items(session, uri)
         else:
             raise exceptions.RequiredParameter('Delete action')
         return True
@@ -84,12 +84,12 @@ class DatasetSharingService(DatasetServiceInterface):
     @staticmethod
     def append_to_list_user_datasets(session, username, groups):
         """Implemented as part of the DatasetServiceInterface"""
-        return S3ShareObjectRepository.query_user_shared_datasets(session, username, groups)
+        return S3ShareObjectRepository.list_user_s3_shared_datasets(session, username, groups)
 
     @staticmethod
     def extend_attach_steward_permissions(session, dataset, new_stewards, **kwargs):
         """Implemented as part of the DatasetServiceInterface"""
-        dataset_shares = S3ShareObjectRepository.find_dataset_shares(session, dataset.datasetUri)
+        dataset_shares = S3ShareObjectRepository.find_s3_dataset_shares(session, dataset.datasetUri)
         if dataset_shares:
             for share in dataset_shares:
                 ResourcePolicyService.attach_resource_policy(
@@ -109,7 +109,7 @@ class DatasetSharingService(DatasetServiceInterface):
     @staticmethod
     def extend_delete_steward_permissions(session, dataset, **kwargs):
         """Implemented as part of the DatasetServiceInterface"""
-        dataset_shares = S3ShareObjectRepository.find_dataset_shares(session, dataset.datasetUri)
+        dataset_shares = S3ShareObjectRepository.find_s3_dataset_shares(session, dataset.datasetUri)
         if dataset_shares:
             for share in dataset_shares:
                 if dataset.stewards != dataset.SamlAdminGroupName:
@@ -122,14 +122,12 @@ class DatasetSharingService(DatasetServiceInterface):
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(UPDATE_DATASET)
-    def verify_dataset_share_objects(uri: str, share_uris: list):
+    def verify_dataset_share_objects(uri: str, share_uris: list):  # TODO: test
         with get_context().db_engine.scoped_session() as session:
             for share_uri in share_uris:
                 share = ShareObjectRepository.get_share_by_uri(session, share_uri)
-                states = ShareItemSM.get_share_item_revokable_states()
-                items = ShareObjectRepository.list_shareable_items(
-                    session, share, states, {'pageSize': 1000, 'isShared': True}
-                ) #TODO
+                states = ShareStatusRepository.get_share_item_revokable_states()
+                items = ShareObjectRepository.get_all_share_items_in_share(session, share, states)
                 item_uris = [item.shareItemUri for item in items.get('nodes', [])]
                 ShareItemService.verify_items_share_object(uri=share_uri, item_uris=item_uris)
         return True
@@ -140,7 +138,7 @@ class DatasetSharingService(DatasetServiceInterface):
         with context.db_engine.scoped_session() as session:
             return [
                 {'tableUri': t.tableUri, 'GlueTableName': t.GlueTableName}
-                for t in S3ShareObjectRepository.query_dataset_tables_shared_with_env(
+                for t in S3ShareObjectRepository.list_user_dataset_tables_shared_in_env(
                     session, env_uri, dataset_uri, context.username, context.groups
                 )
             ]
@@ -219,9 +217,9 @@ class DatasetSharingService(DatasetServiceInterface):
     def list_shared_databases_tables_with_env_group(environmentUri: str, groupUri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            return S3ShareObjectRepository.query_shared_glue_databases(
+            return S3ShareObjectRepository.list_user_glue_databases_shared_in_env(
                 session=session, groups=context.groups, env_uri=environmentUri, group_uri=groupUri
-            ).all()
+            )
 
     @staticmethod
     def resolve_shared_db_name(GlueDatabaseName: str, shareUri: str, targetEnvAwsAccountId: str, targetEnvRegion: str):

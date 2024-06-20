@@ -10,7 +10,7 @@ from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.db import get_engine
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem
-from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.s3_datasets_shares.db.share_object_repositories import S3ShareObjectRepository
 from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
 from dataall.modules.s3_datasets.aws.sns_dataset_client import SnsDatasetClient
 from dataall.modules.s3_datasets.db.dataset_location_repositories import DatasetLocationRepository
@@ -95,14 +95,14 @@ class DatasetSubscriptionService:
         dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, entity.datasetUri)
 
         log.info(f'Found dataset {dataset.datasetUri}|{dataset.environmentUri}|{dataset.AwsAccountId}')
-        share_items: [ShareObjectItem] = ShareObjectRepository.find_share_items_by_item_uri(session, entity.uri())
+        share_items: [ShareObjectItem] = S3ShareObjectRepository.find_share_items_by_item_uri(session, entity.uri())
         log.info(f'Found shared items for location {share_items}')
 
         return self.publish_sns_message(session, message, dataset, share_items, entity.S3Prefix, table)
 
     def publish_sns_message(self, session, message, dataset, share_items, prefix, table: DatasetTable = None):
         for item in share_items:
-            share_object = ShareObjectRepository.get_approved_share_object(session, item)
+            share_object = S3ShareObjectRepository.get_approved_share_object(session, item)
             if not share_object or not share_object.principalId:
                 log.error(f'Share Item with no share object or no principalId ? {item.shareItemUri}')
             else:

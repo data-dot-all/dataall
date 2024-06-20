@@ -7,9 +7,7 @@ from dataall.base.db import exceptions
 from dataall.core.stacks.aws.cloudwatch import CloudWatch
 
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
-from dataall.modules.s3_datasets_shares.db.share_object_repositories import (
-    ShareObjectRepository,
-)  # TODO: REPOSITORY TO SHARES_BASE
+from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 
 log = logging.getLogger(__name__)
 

@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 from sqlalchemy import and_, or_, func, case
 from sqlalchemy.orm import Query
 from typing import List
@@ -12,17 +11,45 @@ from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRep
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
-    ShareObjectStatus,
-    ShareItemStatus,
-    ShareableType,
     PrincipalType,
 )
-from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
 
 logger = logging.getLogger(__name__)
 
 
 class ShareObjectRepository:
+    @staticmethod
+    def save_and_commit(session, share):
+        session.add(share)
+        session.commit()
+
+    @staticmethod
+    def find_share(session, dataset: DatasetBase, env, principal_id, group_uri) -> ShareObject:
+        return (
+            session.query(ShareObject)
+            .filter(
+                and_(
+                    ShareObject.datasetUri == dataset.datasetUri,
+                    ShareObject.principalId == principal_id,
+                    ShareObject.environmentUri == env.environmentUri,
+                    ShareObject.groupUri == group_uri,
+                )
+            )
+            .first()
+        )
+
+    @staticmethod
+    def find_sharable_item(session, share_uri, item_uri) -> ShareObjectItem:
+        return (
+            session.query(ShareObjectItem)
+            .filter(
+                and_(
+                    ShareObjectItem.itemUri == item_uri,
+                    ShareObjectItem.shareUri == share_uri,
+                )
+            )
+            .first()
+        )
 
     @staticmethod
     def get_share_by_uri(session, uri):
@@ -40,83 +67,12 @@ class ShareObjectRepository:
         return share_item
 
     @staticmethod
-    def get_share_item_details(session, share_type_model, item_uri): #TODO CHECK THAT IT WORKS
+    def get_share_item_details(session, share_type_model, item_uri):  # TODO CHECK THAT IT WORKS
         return session.query(share_type_model).get(item_uri)
-
-    @staticmethod
-    def get_share_items_states(session, share_uri, item_uris=None):
-        query = (
-            session.query(ShareObjectItem)
-            .join(
-                ShareObject,
-                ShareObjectItem.shareUri == ShareObject.shareUri,
-            )
-            .filter(
-                and_(
-                    ShareObject.shareUri == share_uri,
-                )
-            )
-        )
-        if item_uris:
-            query = query.filter(ShareObjectItem.shareItemUri.in_(item_uris))
-        return [item.status for item in query.distinct(ShareObjectItem.status)]
-
-
-    @staticmethod
-    def update_share_object_status(session, share_uri: str, status: str) -> ShareObject:
-        share = ShareObjectRepository.get_share_by_uri(session, share_uri)
-        share.status = status
-        session.commit()
-        return share
-
-    @staticmethod
-    def update_share_item_status(
-        session,
-        uri: str,
-        status: str,
-    ) -> ShareObjectItem:
-        share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
-        share_item.status = status
-        session.commit()
-        return share_item
 
     @staticmethod
     def remove_share_object_item(session, share_item):
         session.delete(share_item)
-        return True
-
-
-    @staticmethod
-    def delete_share_item_status_batch(
-        session,
-        share_uri: str,
-        status: str,
-    ):
-        (
-            session.query(ShareObjectItem)
-            .filter(and_(ShareObjectItem.shareUri == share_uri, ShareObjectItem.status == status))
-            .delete()
-        )
-
-    @staticmethod
-    def update_share_item_status_batch(
-        session,
-        share_uri: str,
-        old_status: str,
-        new_status: str,
-        share_item_type: ShareableType = None,
-    ) -> bool:
-        query = session.query(ShareObjectItem).filter(
-            and_(ShareObjectItem.shareUri == share_uri, ShareObjectItem.status == old_status)
-        )
-        if share_item_type:
-            query = query.filter(ShareObjectItem.shareableType == share_item_type.value)
-
-        query.update(
-            {
-                ShareObjectItem.status: new_status,
-            }
-        )
         return True
 
     @staticmethod
@@ -201,19 +157,6 @@ class ShareObjectRepository:
         return query.all()
 
     @staticmethod
-    def find_sharable_item(session, share_uri, item_uri) -> ShareObjectItem:
-        return (
-            session.query(ShareObjectItem)
-            .filter(
-                and_(
-                    ShareObjectItem.itemUri == item_uri,
-                    ShareObjectItem.shareUri == share_uri,
-                )
-            )
-            .first()
-        )
-
-    @staticmethod
     def get_all_share_items_in_share(session, share_uri, status=None, healthStatus=None):
         query = (
             session.query(ShareObjectItem)
@@ -228,9 +171,9 @@ class ShareObjectRepository:
             )
         )
         if status:
-            query = query.filter(ShareObjectItem.status == status)
+            query = query.filter(ShareObjectItem.status.in_(status))
         if healthStatus:
-            query = query.filter(ShareObjectItem.healthStatus == healthStatus)
+            query = query.filter(ShareObjectItem.healthStatus.in_(healthStatus))
         return query.all()
 
     @staticmethod
@@ -238,68 +181,81 @@ class ShareObjectRepository:
         return session.query(ShareObject).filter(ShareObject.deleted.is_(None)).all()
 
     @staticmethod
-    def update_share_item_health_status_batch(
-        session,
-        share_uri: str,
-        old_status: str,
-        new_status: str,
-        message: str = None,
-    ) -> bool:
-        query = session.query(ShareObjectItem).filter(
-            and_(ShareObjectItem.shareUri == share_uri, ShareObjectItem.healthStatus == old_status)
-        )
-
-        if message:
-            query.update(
-                {
-                    ShareObjectItem.healthStatus: new_status,
-                    ShareObjectItem.healthMessage: message,
-                    ShareObjectItem.lastVerificationTime: datetime.now(),
-                }
+    def list_user_received_share_requests(session, username, groups, data=None):
+        query = (
+            session.query(ShareObject)
+            .join(
+                DatasetBase,
+                DatasetBase.datasetUri == ShareObject.datasetUri,
             )
-        else:
-            query.update(
-                {
-                    ShareObjectItem.healthStatus: new_status,
-                }
-            )
-        return True
-
-    @staticmethod
-    def check_pending_share_items(session, uri):
-        share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
-        shared_items = (
-            session.query(ShareObjectItem)
             .filter(
-                and_(
-                    ShareObjectItem.shareUri == share.shareUri,
-                    ShareObjectItem.status.in_([ShareItemStatus.PendingApproval.value]),
+                or_(
+                    DatasetBase.businessOwnerEmail == username,
+                    DatasetBase.businessOwnerDelegationEmails.contains(f'{{{username}}}'),
+                    DatasetBase.stewards.in_(groups),
+                    DatasetBase.SamlAdminGroupName.in_(groups),
                 )
             )
-            .all()
         )
-        if shared_items:
-            return True
-        return False
+
+        if data and data.get('status'):
+            if len(data.get('status')) > 0:
+                query = query.filter(ShareObject.status.in_(data.get('status')))
+        if data and data.get('dataset_owners'):
+            if len(data.get('dataset_owners')) > 0:
+                query = query.filter(DatasetBase.SamlAdminGroupName.in_(data.get('dataset_owners')))
+        if data and data.get('datasets_uris'):
+            if len(data.get('datasets_uris')) > 0:
+                query = query.filter(ShareObject.datasetUri.in_(data.get('datasets_uris')))
+        if data and data.get('share_requesters'):
+            if len(data.get('share_requesters')) > 0:
+                query = query.filter(ShareObject.groupUri.in_(data.get('share_requesters')))
+        if data and data.get('share_iam_roles'):
+            if len(data.get('share_iam_roles')) > 0:
+                query = query.filter(ShareObject.principalIAMRoleName.in_(data.get('share_iam_roles')))
+        return paginate(query.order_by(ShareObject.shareUri), data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
     @staticmethod
-    def check_existing_shared_items(session, uri):
-        share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
-        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
-        shared_items = (
-            session.query(ShareObjectItem)
-            .filter(
-                and_(ShareObjectItem.shareUri == share.shareUri, ShareObjectItem.status.in_(share_item_shared_states))
+    def list_user_sent_share_requests(session, username, groups, data=None):
+        query = (
+            session.query(ShareObject)
+            .join(
+                Environment,
+                Environment.environmentUri == ShareObject.environmentUri,
             )
-            .all()
+            .join(
+                DatasetBase,
+                DatasetBase.datasetUri == ShareObject.datasetUri,
+            )
+            .filter(
+                or_(
+                    ShareObject.owner == username,
+                    and_(
+                        ShareObject.groupUri.in_(groups),
+                        ShareObject.principalType.in_([PrincipalType.Group.value, PrincipalType.ConsumptionRole.value]),
+                    ),
+                )
+            )
         )
-        if shared_items:
-            return True
-        return False
+        if data and data.get('status'):
+            if len(data.get('status')) > 0:
+                query = query.filter(ShareObject.status.in_(data.get('status')))
+        if data and data.get('dataset_owners'):
+            if len(data.get('dataset_owners')) > 0:
+                query = query.filter(DatasetBase.SamlAdminGroupName.in_(data.get('dataset_owners')))
+        if data and data.get('datasets_uris'):
+            if len(data.get('datasets_uris')) > 0:
+                query = query.filter(ShareObject.datasetUri.in_(data.get('datasets_uris')))
+        if data and data.get('share_requesters'):
+            if len(data.get('share_requesters')) > 0:
+                query = query.filter(ShareObject.groupUri.in_(data.get('share_requesters')))
+        if data and data.get('share_iam_roles'):
+            if len(data.get('share_iam_roles')) > 0:
+                query = query.filter(ShareObject.principalIAMRoleName.in_(data.get('share_iam_roles')))
+        return paginate(query.order_by(ShareObject.shareUri), data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
     @staticmethod
-    def paginate_shared_datasets(session, env_uri, data):
-        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+    def paginate_shared_datasets(session, env_uri, data, share_item_shared_states):
         q = (
             session.query(
                 ShareObjectItem.shareUri.label('shareUri'),
@@ -361,12 +317,9 @@ class ShareObjectRepository:
 
         return paginate(query=q, page=data.get('page', 1), page_size=data.get('pageSize', 10)).to_dict()
 
-
-
-
-    #########
+    ######### TODO: TEST
     @staticmethod
-    def list_shareable_items_of_type(session, share, share_type_model, share_type_uri, status=None): #TODO
+    def list_shareable_items_of_type(session, share, share_type_model, share_type_uri, status=None):  # TODO
         logger.info(f'Getting all shareable items {status=}, for {share_type_model=}')
         query = (
             session.query(
@@ -374,7 +327,9 @@ class ShareObjectRepository:
                 share_type_uri.label('itemUri'),
                 func.coalesce(str(share_type_uri).split('.')[-1]).label('itemType'),
                 share_type_model.description.label('description'),
-                share_type_model.name.label('itemName'), #TODO: THE ONLY ITEM MISSING IS THE ITEMNAME - in reality it is the gluetablename, the s3prefix and the s3 bucket
+                share_type_model.name.label(
+                    'itemName'
+                ),  # TODO: THE ONLY ITEM MISSING IS THE ITEMNAME - in reality it is the gluetablename, the s3prefix and the s3 bucket
             )
             .outerjoin(
                 ShareObjectItem,
@@ -406,7 +361,7 @@ class ShareObjectRepository:
 
     @staticmethod
     def paginated_list_shareable_items(session, subqueries: List[Query], data: dict = None):
-        if len(subqueries)==1:
+        if len(subqueries) == 1:
             shareable_objects = subqueries[0].subquery('shareable_objects')
         else:
             shareable_objects = subqueries[0].union(*subqueries[1:]).subquery('shareable_objects')
@@ -434,7 +389,6 @@ class ShareObjectRepository:
         return paginate(
             query.order_by(shareable_objects.c.itemName).distinct(), data.get('page', 1), data.get('pageSize', 10)
         ).to_dict()
-
 
     # @staticmethod
     # def list_shareable_items(session, share, states, data): #TODO
