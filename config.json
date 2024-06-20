@@ -29,7 +29,7 @@
                 "auto_approval_for_confidentiality_level" : {
                     "Unclassified" : true,
                     "Official" : true,
-                    "Secret" : false
+                    "Secret" : true
                 }
             }
         },

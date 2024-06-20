@@ -192,6 +192,7 @@ class ContainerStack(pyNestedClass):
         self.add_share_management_task()
         self.add_share_verifier_task()
         self.add_share_reapplier_task()
+        self.add_omics_fetch_workflows_task()
         self.add_persistent_email_reminders_task()
 
     @run_if(['modules.s3_datasets.active', 'modules.dashboards.active'])
@@ -265,7 +266,7 @@ class ContainerStack(pyNestedClass):
             environment=self._create_env('INFO'),
             image_tag=self._cdkproxy_image_tag,
             log_group=self.create_log_group(self._envname, self._resource_prefix, log_group_name='share-verifier'),
-            schedule_expression=Schedule.expression('rate(1 day)'),  # YAHOO ONLY CHANGE
+            schedule_expression=Schedule.expression('rate(7 days)'),
             scheduled_task_id=f'{self._resource_prefix}-{self._envname}-share-verifier-schedule',
             task_id=f'{self._resource_prefix}-{self._envname}-share-verifier',
             task_role=self.task_role,
@@ -301,7 +302,7 @@ class ContainerStack(pyNestedClass):
         )
         self.ecs_task_definitions_families.append(share_reapplier_task_definition.family)
 
-    @run_if(['modules.s3_datasets.features.share_notifications.email.persistent_reminders'])
+    @run_if(['modules.dataset_base.features.share_notifications.email.persistent_reminders'])
     def add_persistent_email_reminders_task(self):
         persistent_email_reminders_task, persistent_email_reminders_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
