@@ -53,7 +53,7 @@ class ShareObjectRepository:
         return session.query(ShareObject).filter(ShareObject.deleted.is_(None)).all()
 
     @staticmethod
-    def find_share(session, dataset: S3Dataset, env, principal_id, group_uri) -> ShareObject:
+    def find_share(session, dataset: DatasetBase, env, principal_id, group_uri) -> ShareObject:
         return (
             session.query(ShareObject)
             .filter(
@@ -748,24 +748,6 @@ class ShareObjectRepository:
         return session.query(ShareObject).filter(ShareObject.datasetUri == dataset_uri).all()
 
     @staticmethod
-    def query_dataset_shares(session, dataset_uri) -> Query:
-        return (
-            session.query(ShareObject)
-            .filter(
-                and_(
-                    ShareObject.datasetUri == dataset_uri,
-                    ShareObject.deleted.is_(None),
-                )
-            )
-            .order_by(ShareObject.shareUri)
-        )
-
-    @staticmethod
-    def paginated_dataset_shares(session, uri, data=None) -> [ShareObject]:
-        query = ShareObjectRepository.query_dataset_shares(session, uri)
-        return paginate(query=query, page=data.get('page', 1), page_size=data.get('pageSize', 5)).to_dict()
-
-    @staticmethod
     def list_dataset_shares_with_existing_shared_items(
         session, dataset_uri, environment_uri=None, item_type=None
     ) -> [ShareObject]:
@@ -834,9 +816,9 @@ class ShareObjectRepository:
         q = (
             session.query(
                 ShareObjectItem.shareUri.label('shareUri'),
-                S3Dataset.datasetUri.label('datasetUri'),
-                S3Dataset.name.label('datasetName'),
-                S3Dataset.description.label('datasetDescription'),
+                DatasetBase.datasetUri.label('datasetUri'),
+                DatasetBase.name.label('datasetName'),
+                DatasetBase.description.label('datasetDescription'),
                 Environment.environmentUri.label('environmentUri'),
                 Environment.name.label('environmentName'),
                 ShareObject.created.label('created'),
@@ -845,51 +827,24 @@ class ShareObjectRepository:
                 ShareObject.environmentUri.label('targetEnvironmentUri'),
                 ShareObjectItem.itemType.label('itemType'),
                 ShareObjectItem.itemName.label('itemName'),
-                S3Dataset.GlueDatabaseName.label('GlueDatabaseName'),
-                DatasetTable.GlueTableName.label('GlueTableName'),
                 Organization.organizationUri.label('organizationUri'),
                 Organization.name.label('organizationName'),
-                case(
-                    [
-                        (
-                            ShareObjectItem.itemType == ShareableType.Table.value,
-                            func.concat(
-                                DatasetTable.GlueDatabaseName,
-                                '.',
-                                DatasetTable.GlueTableName,
-                            ),
-                        ),
-                        (
-                            ShareObjectItem.itemType == ShareableType.StorageLocation.value,
-                            func.concat(DatasetStorageLocation.name),
-                        ),
-                    ],
-                    else_='XXX XXXX',
-                ).label('itemAccess'),
             )
             .join(
                 ShareObject,
                 ShareObject.shareUri == ShareObjectItem.shareUri,
             )
             .join(
-                S3Dataset,
-                ShareObject.datasetUri == S3Dataset.datasetUri,
+                DatasetBase,
+                ShareObject.datasetUri == DatasetBase.datasetUri,
             )
             .join(
                 Environment,
-                Environment.environmentUri == S3Dataset.environmentUri,
+                Environment.environmentUri == DatasetBase.environmentUri,
             )
             .join(
                 Organization,
                 Organization.organizationUri == Environment.organizationUri,
-            )
-            .outerjoin(
-                DatasetTable,
-                ShareObjectItem.itemUri == DatasetTable.tableUri,
-            )
-            .outerjoin(
-                DatasetStorageLocation,
-                ShareObjectItem.itemUri == DatasetStorageLocation.locationUri,
             )
             .filter(
                 and_(
@@ -1064,3 +1019,53 @@ class ShareObjectRepository:
         )
 
         return env_tables_shared
+
+    @staticmethod
+    def query_shared_glue_databases(session, groups, env_uri, group_uri):
+        share_item_shared_states = ShareItemSM.get_share_item_shared_states()
+        q = (
+            session.query(
+                ShareObjectItem.shareUri.label('shareUri'),
+                S3Dataset.datasetUri.label('datasetUri'),
+                S3Dataset.name.label('datasetName'),
+                S3Dataset.name.label('sharedGlueDatabaseName'),
+                Environment.environmentUri.label('environmentUri'),
+                Environment.name.label('environmentName'),
+                Environment.AwsAccountId.label('targetEnvAwsAccountId'),
+                Environment.region.label('targetEnvRegion'),
+                ShareObject.created.label('created'),
+                ShareObject.principalId.label('principalId'),
+                ShareObject.principalType.label('principalType'),
+                ShareObject.environmentUri.label('targetEnvironmentUri'),
+                ShareObjectItem.itemType.label('itemType'),
+                ShareObjectItem.itemName.label('itemName'),
+                S3Dataset.GlueDatabaseName.label('GlueDatabaseName'),
+                DatasetTable.GlueTableName.label('GlueTableName'),
+            )
+            .join(
+                ShareObject,
+                ShareObject.shareUri == ShareObjectItem.shareUri,
+            )
+            .join(
+                S3Dataset,
+                ShareObject.datasetUri == S3Dataset.datasetUri,
+            )
+            .join(
+                Environment,
+                Environment.environmentUri == ShareObject.environmentUri,
+            )
+            .outerjoin(
+                DatasetTable,
+                ShareObjectItem.itemUri == DatasetTable.tableUri,
+            )
+            .filter(
+                and_(
+                    ShareObjectItem.status.in_(share_item_shared_states),
+                    ShareObject.environmentUri == env_uri,
+                    ShareObject.principalId == group_uri,
+                    ShareObject.groupUri.in_(groups),
+                    ShareObjectItem.itemType == ShareableType.Table.value,
+                )
+            )
+        )
+        return q.order_by(ShareObject.shareUri).distinct(ShareObject.shareUri)

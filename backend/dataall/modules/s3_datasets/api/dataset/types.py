@@ -107,16 +107,6 @@ Dataset = gql.ObjectType(
         gql.Field(name='topics', type=gql.ArrayType(gql.Ref('Topic'))),
         gql.Field(name='confidentiality', type=gql.String),
         gql.Field(name='language', type=gql.Ref('Language')),
-        gql.Field(
-            name='projectPermission',
-            args=[gql.Argument(name='projectUri', type=gql.NonNullableType(gql.String))],
-            type=gql.Ref('DatasetRole'),
-        ),
-        gql.Field(
-            name='isPublishedInEnvironment',
-            args=[gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String))],
-            type=gql.Boolean,
-        ),
         gql.Field(name='stack', type=gql.Ref('Stack'), resolver=resolve_dataset_stack),
         gql.Field(name='autoApprovalEnabled', type=gql.Boolean),
     ],

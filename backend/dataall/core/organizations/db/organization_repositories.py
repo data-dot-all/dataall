@@ -80,22 +80,6 @@ class OrganizationRepository:
         ).to_dict()
 
     @staticmethod
-    def find_group_membership(session, group, organization):
-        membership = (
-            session.query(models.OrganizationGroup)
-            .filter(
-                (
-                    and_(
-                        models.OrganizationGroup.groupUri == group,
-                        models.OrganizationGroup.organizationUri == organization.organizationUri,
-                    )
-                )
-            )
-            .first()
-        )
-        return membership
-
-    @staticmethod
     def query_organization_groups(session, uri, filter) -> Query:
         query = session.query(models.OrganizationGroup).filter(models.OrganizationGroup.organizationUri == uri)
         if filter and filter.get('term'):
@@ -129,15 +113,17 @@ class OrganizationRepository:
         return groups
 
     @staticmethod
-    def find_organization_membership(session, uri, groups) -> int:
-        groups = (
+    def find_group_membership(session, groups, organization):
+        membership = (
             session.query(models.OrganizationGroup)
             .filter(
-                and_(
-                    models.OrganizationGroup.organizationUri == uri,
-                    models.OrganizationGroup.groupUri.in_(groups),
+                (
+                    and_(
+                        models.OrganizationGroup.groupUri.in_(groups),
+                        models.OrganizationGroup.organizationUri == organization,
+                    )
                 )
             )
-            .count()
+            .first()
         )
-        return groups >= 1
+        return membership

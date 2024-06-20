@@ -1,6 +1,4 @@
 import os
-from datetime import datetime
-from warnings import warn
 
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.tasks.service_handlers import Worker
@@ -8,10 +6,8 @@ from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.services.environment_permissions import GET_ENVIRONMENT
+from dataall.core.environment.services.managed_iam_policies import PolicyManager
 from dataall.core.tasks.db.task_models import Task
-from dataall.base.db import utils
-from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db.exceptions import UnauthorizedOperation
 from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
@@ -21,15 +17,15 @@ from dataall.modules.shares_base.services.shares_enums import (
     PrincipalType,
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.s3_datasets_shares.db.share_object_repositories import (
+    ShareObjectRepository,
+)  # TODO: REPOSITORY TO SHARES_BASE
 from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
     ShareItemSM,
 )
 from dataall.modules.shares_base.services.share_exceptions import ShareItemsFound, PrincipalRoleNotFound
-from dataall.modules.s3_datasets_shares.services.share_item_service import ShareItemService
 from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
-from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import SharePolicyService
 from dataall.modules.shares_base.services.share_permissions import (
     REJECT_SHARE_OBJECT,
     APPROVE_SHARE_OBJECT,
@@ -40,16 +36,9 @@ from dataall.modules.shares_base.services.share_permissions import (
     DELETE_SHARE_OBJECT,
     GET_SHARE_OBJECT,
 )
-from dataall.modules.s3_datasets_shares.aws.glue_client import GlueClient
-from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset, DatasetStorageLocation
-from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ, DATASET_FOLDER_READ
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
+from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.base.aws.iam import IAM
-
-from dataall.base.utils import Parameter
-from dataall.base.db import exceptions
-from dataall.core.stacks.aws.cloudwatch import CloudWatch
-
 
 import logging
 
@@ -58,40 +47,12 @@ log = logging.getLogger(__name__)
 
 class ShareObjectService:
     @staticmethod
-    def check_view_log_permissions(username, groups, shareUri):
-        with get_context().db_engine.scoped_session() as session:
-            share = ShareObjectRepository.get_share_by_uri(session, shareUri)
-            ds = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
-            return ds.stewards in groups or ds.SamlAdminGroupName in groups or username == ds.owner
-
-    @staticmethod
     def verify_principal_role(session, share: ShareObject) -> bool:
         log.info('Verifying principal IAM role...')
         role_name = share.principalIAMRoleName
         env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
         principal_role = IAM.get_role_arn_by_name(account_id=env.AwsAccountId, region=env.region, role_name=role_name)
         return principal_role is not None
-
-    @staticmethod
-    def update_all_share_items_status(  # TODO: moved to ShareObject #Test removed for the moment
-        session, shareUri, new_health_status: str, message, previous_health_status: str = None
-    ):
-        for item in ShareObjectRepository.get_all_shareable_items(
-            session, shareUri, healthStatus=previous_health_status
-        ):
-            ShareObjectRepository.update_share_item_health_status(
-                session,
-                share_item=item,
-                healthStatus=new_health_status,
-                healthMessage=message,
-                timestamp=datetime.now(),
-            )
-
-    @staticmethod
-    @ResourcePolicyService.has_resource_permission(GET_ENVIRONMENT)
-    def get_share_object_in_environment(uri, shareUri):
-        with get_context().db_engine.scoped_session() as session:
-            return ShareObjectRepository.get_share_by_uri(session, shareUri)
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(GET_SHARE_OBJECT)
@@ -115,7 +76,7 @@ class ShareObjectService:
     ):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri)
+            dataset: DatasetBase = DatasetBaseRepository.get_dataset_by_uri(session, dataset_uri)
             environment = EnvironmentService.get_environment_by_uri(session, uri)
 
             if environment.region != dataset.region:
@@ -151,28 +112,32 @@ class ShareObjectService:
 
             cls._validate_group_membership(session, group_uri, environment.environmentUri)
 
-            share_policy_service = SharePolicyService(
-                account=environment.AwsAccountId,
-                region=environment.region,
+            share_policy_manager = PolicyManager(
                 role_name=principal_iam_role_name,
                 environmentUri=environment.environmentUri,
+                account=environment.AwsAccountId,
+                region=environment.region,
                 resource_prefix=environment.resourcePrefix,
             )
-            # Backwards compatibility
-            # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
-            # We create the policy from the inline statements
-            # In this case it could also happen that the role is the Admin of the environment
-            if not share_policy_service.check_if_policy_exists():
-                share_policy_service.create_managed_policy_from_inline_and_delete_inline()
-            # End of backwards compatibility
+            for Policy in [
+                Policy for Policy in share_policy_manager.initializedPolicies if Policy.policy_type == 'SharePolicy'
+            ]:
+                # Backwards compatibility
+                # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
+                # We create the policy from the inline statements
+                # In this case it could also happen that the role is the Admin of the environment
+                if not Policy.check_if_policy_exists():
+                    Policy.create_managed_policy_from_inline_and_delete_inline()
+                # End of backwards compatibility
 
-            attached = share_policy_service.check_if_policy_attached()
-            if not attached and not managed and not attachMissingPolicies:
-                raise Exception(
-                    f'Required customer managed policy {share_policy_service.generate_policy_name()} is not attached to role {principal_iam_role_name}'
-                )
-            elif not attached:
-                share_policy_service.attach_policy()
+                attached = Policy.check_if_policy_attached()
+                if not attached and not managed and not attachMissingPolicies:
+                    raise Exception(
+                        f'Required customer managed policy {Policy.generate_policy_name()} is not attached to role {principal_iam_role_name}'
+                    )
+                elif not attached:
+                    Policy.attach_policy()
+
             share = ShareObjectRepository.find_share(session, dataset, environment, principal_id, group_uri)
             already_existed = share is not None
             if not share:
@@ -192,14 +157,6 @@ class ShareObjectService:
             if item_uri:
                 item = ShareObjectRepository.get_share_item(session, item_type, item_uri)
                 share_item = ShareObjectRepository.find_sharable_item(session, share.shareUri, item_uri)
-
-                s3_access_point_name = utils.slugify(
-                    share.datasetUri + '-' + share.principalId,
-                    max_length=50,
-                    lowercase=True,
-                    regex_pattern='[^a-zA-Z0-9-]',
-                    separator='-',
-                )
 
                 if not share_item and item:
                     new_share_item: ShareObjectItem = ShareObjectItem(
@@ -274,15 +231,6 @@ class ShareObjectService:
                     action='Submit Share Object',
                     message='The request is empty of pending items. Add items to share request.',
                 )
-
-            env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
-            dashboard_enabled = EnvironmentService.get_boolean_env_param(session, env, 'dashboardsEnabled')
-            if dashboard_enabled:
-                share_table_items = ShareObjectRepository.find_all_share_items(session, uri, ShareableType.Table.value)
-                if share_table_items:
-                    QuicksightClient.check_quicksight_enterprise_subscription(
-                        AwsAccountId=env.AwsAccountId, region=env.region
-                    )
 
             cls._run_transitions(session, share, states, ShareObjectActions.Submit)
 
@@ -416,8 +364,6 @@ class ShareObjectService:
     @staticmethod
     def resolve_share_object_statistics(uri):
         with get_context().db_engine.scoped_session() as session:
-            tables = ShareObjectRepository.count_sharable_items(session, uri, 'DatasetTable')
-            locations = ShareObjectRepository.count_sharable_items(session, uri, 'DatasetStorageLocation')
             shared_items = ShareObjectRepository.count_items_in_states(
                 session, uri, ShareItemSM.get_share_item_shared_states()
             )
@@ -430,46 +376,10 @@ class ShareObjectService:
                 session, uri, [ShareItemStatus.PendingApproval.value]
             )
             return {
-                'tables': tables,
-                'locations': locations,
                 'sharedItems': shared_items,
                 'revokedItems': revoked_items,
                 'failedItems': failed_items,
                 'pendingItems': pending_items,
-            }
-
-    @staticmethod
-    def resolve_share_object_consumption_data(uri, datasetUri, principalId, environmentUri):
-        with get_context().db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, datasetUri)
-            if dataset:
-                environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
-                S3AccessPointName = utils.slugify(
-                    datasetUri + '-' + principalId,
-                    max_length=50,
-                    lowercase=True,
-                    regex_pattern='[^a-zA-Z0-9-]',
-                    separator='-',
-                )
-                # Check if the share was made with a Glue Database
-                datasetGlueDatabase = ShareItemService._get_glue_database_for_share(
-                    dataset.GlueDatabaseName, dataset.AwsAccountId, dataset.region
-                )
-                old_shared_db_name = f'{datasetGlueDatabase}_shared_{uri}'[:254]
-                database = GlueClient(
-                    account_id=environment.AwsAccountId, region=environment.region, database=old_shared_db_name
-                ).get_glue_database()
-                warn('old_shared_db_name will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
-                sharedGlueDatabase = old_shared_db_name if database else f'{datasetGlueDatabase}_shared'
-                return {
-                    's3AccessPointName': S3AccessPointName,
-                    'sharedGlueDatabase': sharedGlueDatabase,
-                    's3bucketName': dataset.S3BucketName,
-                }
-            return {
-                's3AccessPointName': 'Not Created',
-                'sharedGlueDatabase': 'Not Created',
-                's3bucketName': 'Not Created',
             }
 
     @staticmethod
@@ -510,7 +420,7 @@ class ShareObjectService:
     @staticmethod
     def _get_share_data(session, uri):
         share = ShareObjectRepository.get_share_by_uri(session, uri)
-        dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
+        dataset = DatasetBaseRepository.get_dataset_by_uri(session, share.datasetUri)
         share_items_states = ShareObjectRepository.get_share_items_states(session, uri)
         return share, dataset, share_items_states
 
@@ -530,55 +440,3 @@ class ShareObjectService:
                 action=CREATE_SHARE_OBJECT,
                 message=f'Team: {share_object_group} is not a member of the environment {environment_uri}',
             )
-
-    @staticmethod
-    def get_share_logs_name_query(shareUri):
-        log.info(f'Get share Logs stream name for share {shareUri}')
-
-        query = f"""fields @logStream
-                        |filter  @message like '{shareUri}'
-                        | sort @timestamp desc
-                        | limit 1
-                    """
-        return query
-
-    @staticmethod
-    def get_share_logs_query(log_stream_name):
-        query = f"""fields @timestamp, @message, @logStream, @log as @logGroup
-                    | sort @timestamp asc
-                    | filter @logStream like "{log_stream_name}"
-                    """
-        return query
-
-    @staticmethod
-    def get_share_logs(shareUri):
-        context = get_context()
-        if not ShareObjectService.check_view_log_permissions(context.username, context.groups, shareUri):
-            raise exceptions.ResourceUnauthorized(
-                username=context.username,
-                action='View Share Logs',
-                resource_uri=shareUri,
-            )
-
-        envname = os.getenv('envname', 'local')
-        log_group_name = f"/{Parameter().get_parameter(env=envname, path='resourcePrefix')}/{envname}/ecs/share-manager"
-
-        query_for_name = ShareObjectService.get_share_logs_name_query(shareUri=shareUri)
-        name_query_result = CloudWatch.run_query(
-            query=query_for_name,
-            log_group_name=log_group_name,
-            days=1,
-        )
-        if len(name_query_result) == 0:
-            return []
-
-        name = name_query_result[0]['logStream']
-
-        query = ShareObjectService.get_share_logs_query(log_stream_name=name)
-        results = CloudWatch.run_query(
-            query=query,
-            log_group_name=log_group_name,
-            days=1,
-        )
-        log.info(f'Running Logs query {query} for log_group_name={log_group_name}')
-        return results

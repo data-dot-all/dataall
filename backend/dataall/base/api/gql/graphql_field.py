@@ -52,11 +52,14 @@ class Field:
 
         description_str = f'"""{self.description}"""\n' if self.description else ''
 
+        args_list = []
         if self.args is not None:
             for a in self.args:
                 if not isinstance(a, Argument):
                     raise Exception(f'Found wrong argument in field {self.name}')
-            gql = f'{description_str}{self.name}({", ".join([a.name+":"+a.type.name for a in self.args])}) : {t}'
+                args_list.append(a.gql())
+
+            gql = f'{description_str}{self.name}({", ".join(args_list)}) : {t}'
         else:
             gql = f'{description_str}{self.name} : {t}'
 
