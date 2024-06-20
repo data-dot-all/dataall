@@ -333,6 +333,22 @@ class BackendStack(Stack):
             **kwargs,
         )
 
+        TriggerFunctionStack(
+            self,
+            'DataallMigrations',
+            handler='deployment_triggers.dataall_migrations_handler.handler',
+            envname=envname,
+            resource_prefix=resource_prefix,
+            vpc=vpc,
+            vpce_connection=vpce_connection,
+            image_tag=image_tag,
+            ecr_repository=repo,
+            execute_after=[db_migrations.trigger_function],
+            connectables=[aurora_stack.cluster],
+            env_var_encryption_key=lambda_env_key,
+            **kwargs,
+        )
+
         self.monitoring_stack = MonitoringStack(
             self,
             'CWDashboards',
