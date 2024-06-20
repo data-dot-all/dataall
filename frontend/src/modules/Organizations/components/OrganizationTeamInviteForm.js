@@ -26,12 +26,11 @@ import { listGroups, useClient } from 'services';
 import { inviteGroupToOrganization } from '../services';
 
 export const OrganizationTeamInviteForm = (props) => {
-  const { organization, onClose, open, reloadTeams, ...other } = props;
+  const { organization, permissions, onClose, open, reloadTeams, ...other } =
+    props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const client = useClient();
-  const [permissions, setPermissions] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [loadingGroups, setLoadingGroups] = useState(true);
   const [groupOptions, setGroupOptions] = useState([]);
 
@@ -62,43 +61,23 @@ export const OrganizationTeamInviteForm = (props) => {
     }
   }, [client, dispatch, organization.organizationUri]);
 
-  const fetchItems = useCallback(async () => {
-    try {
-      setLoading(true);
-      setPermissions([
-        {
-          name: 'LINK_ENVIRONMENTS',
-          description: 'Link environments to this organization'
-        },
-        {
-          name: 'INVITE_ENVIRONMENT_GROUP',
-          description: 'Invite teams to this organization'
-        }
-      ]);
-    } catch (e) {
-      dispatch({ type: SET_ERROR, error: e.message });
-    } finally {
-      setLoading(false);
-    }
-  }, [dispatch]);
-
   useEffect(() => {
     if (client) {
       fetchGroups().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
-      fetchItems().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
     }
-  }, [client, dispatch, fetchItems, fetchGroups]);
+  }, [client, dispatch, fetchGroups]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
       const response = await client.mutate(
         inviteGroupToOrganization({
           groupUri: values.groupUri,
-          organizationUri: organization.organizationUri
+          organizationUri: organization.organizationUri,
+          permissions: values.permissions
+            .filter((p) => p.selected)
+            .map((p) => p.name)
         })
       );
       if (!response.errors) {
@@ -133,7 +112,7 @@ export const OrganizationTeamInviteForm = (props) => {
     return null;
   }
 
-  if (loading || loadingGroups) {
+  if (loadingGroups) {
     return <CircularProgress size={10} />;
   }
 
@@ -166,7 +145,8 @@ export const OrganizationTeamInviteForm = (props) => {
           <Box sx={{ p: 3 }}>
             <Formik
               initialValues={{
-                groupUri: ''
+                groupUri: '',
+                permissions: permissions
               }}
               validationSchema={Yup.object().shape({
                 groupUri: Yup.string()
@@ -217,20 +197,22 @@ export const OrganizationTeamInviteForm = (props) => {
                       <CardHeader title="Organization Permissions" />
                       <Divider />
                       <CardContent sx={{ ml: 2 }}>
-                        {permissions.length > 0 ? (
-                          permissions.map((perm) => (
+                        {values.permissions.length > 0 ? (
+                          values.permissions.map((perm) => (
                             <Box>
                               <FormGroup>
                                 <FormControlLabel
                                   color="primary"
                                   control={
                                     <Switch
-                                      disabled
                                       defaultChecked
                                       color="primary"
                                       edge="start"
                                       name={perm.name}
                                       value={perm.name}
+                                      onChange={(evt) => {
+                                        perm.selected = evt.target.checked;
+                                      }}
                                     />
                                   }
                                   label={perm.description}
@@ -276,5 +258,6 @@ OrganizationTeamInviteForm.propTypes = {
   organization: PropTypes.object.isRequired,
   onClose: PropTypes.func,
   reloadTeams: PropTypes.func,
-  open: PropTypes.bool.isRequired
+  open: PropTypes.bool.isRequired,
+  permissions: PropTypes.any
 };

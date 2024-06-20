@@ -6,3 +6,6 @@ export * from './listOrganizationGroups';
 export * from './listOrganizations';
 export * from './removeGroup';
 export * from './updateOrganization';
+export * from './listOrganizationGroupPermissions';
+export * from './listInviteOrganizationPermissions';
+export * from './updateGroup';
