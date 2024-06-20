@@ -496,7 +496,7 @@ class ContainerStack(pyNestedClass):
         return cicd_stacks_updater_role
 
     def create_task_role(
-            self, envname, resource_prefix, pivot_role_name, email_custom_domain=None, ses_configuration_set=None
+        self, envname, resource_prefix, pivot_role_name, email_custom_domain=None, ses_configuration_set=None
     ):
         role_inline_policy = iam.Policy(
             self,
