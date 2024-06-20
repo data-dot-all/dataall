@@ -122,13 +122,15 @@ class DatasetSharingService(DatasetServiceInterface):
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(UPDATE_DATASET)
-    def verify_dataset_share_objects(uri: str, share_uris: list):  # TODO: test
+    def verify_dataset_share_objects(uri: str, share_uris: list):
         with get_context().db_engine.scoped_session() as session:
             for share_uri in share_uris:
                 share = ShareObjectRepository.get_share_by_uri(session, share_uri)
                 states = ShareStatusRepository.get_share_item_revokable_states()
-                items = ShareObjectRepository.get_all_share_items_in_share(session, share, states)
-                item_uris = [item.shareItemUri for item in items.get('nodes', [])]
+                items = ShareObjectRepository.get_all_share_items_in_share(
+                    session=session, share_uri=share.shareUri, status=states
+                )
+                item_uris = [item.shareItemUri for item in items]
                 ShareItemService.verify_items_share_object(uri=share_uri, item_uris=item_uris)
         return True
 
@@ -138,7 +140,7 @@ class DatasetSharingService(DatasetServiceInterface):
         with context.db_engine.scoped_session() as session:
             return [
                 {'tableUri': t.tableUri, 'GlueTableName': t.GlueTableName}
-                for t in S3ShareObjectRepository.list_user_dataset_tables_shared_in_env(
+                for t in S3ShareObjectRepository.query_dataset_tables_shared_with_env(
                     session, env_uri, dataset_uri, context.username, context.groups
                 )
             ]
@@ -217,7 +219,7 @@ class DatasetSharingService(DatasetServiceInterface):
     def list_shared_databases_tables_with_env_group(environmentUri: str, groupUri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            return S3ShareObjectRepository.list_user_glue_databases_shared_in_env(
+            return S3ShareObjectRepository.query_shared_glue_databases(
                 session=session, groups=context.groups, env_uri=environmentUri, group_uri=groupUri
             )
 

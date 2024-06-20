@@ -213,7 +213,7 @@ class ShareItemService:
                 )
             return ShareObjectRepository.paginated_list_shareable_items(
                 session=session, subqueries=subqueries, data=filter
-            )  # TODO TEST
+            )
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)

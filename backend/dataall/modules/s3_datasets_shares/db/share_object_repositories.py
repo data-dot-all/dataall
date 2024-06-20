@@ -106,7 +106,7 @@ class S3ShareObjectRepository:
             session.delete(share)
 
     @staticmethod
-    def list_other_shares_for_item(
+    def find_all_other_share_items(
         session, not_this_share_uri, item_uri, share_type, principal_type, principal_uri, item_status=None
     ) -> List[ShareObjectItem]:
         """
@@ -241,7 +241,7 @@ class S3ShareObjectRepository:
         return shares_datasets
 
     @staticmethod
-    def list_user_dataset_tables_shared_in_env(
+    def query_dataset_tables_shared_with_env(
         session, environment_uri: str, dataset_uri: str, username: str, groups: [str]
     ):
         """For a given dataset, returns the list of Tables shared with the environment
@@ -277,7 +277,7 @@ class S3ShareObjectRepository:
         return env_tables_shared
 
     @staticmethod
-    def list_user_glue_databases_shared_in_env(session, groups, env_uri, group_uri):
+    def query_shared_glue_databases(session, groups, env_uri, group_uri):
         share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
         q = (
             session.query(

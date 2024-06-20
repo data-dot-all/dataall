@@ -6,9 +6,6 @@ from dataall.modules.shares_base.services.shares_enums import ShareableType
 
 log = logging.getLogger(__name__)
 
-MAX_RETRIES = 10
-RETRY_INTERVAL = 60
-
 
 class SharesProcessorInterface(ABC):
     @abstractmethod

@@ -46,9 +46,13 @@ class S3DatasetsSharesAsyncHandlersModuleInterface(ModuleInterface):
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.notifications import NotificationsModuleInterface
         from dataall.modules.s3_datasets import DatasetAsyncHandlersModuleInterface
-        from dataall.modules.shares_base import SharesBaseModuleInterface
+        from dataall.modules.shares_base import SharesBaseAsyncHandlerModuleInterface
 
-        return [DatasetAsyncHandlersModuleInterface, NotificationsModuleInterface, SharesBaseModuleInterface]
+        return [
+            DatasetAsyncHandlersModuleInterface,
+            NotificationsModuleInterface,
+            SharesBaseAsyncHandlerModuleInterface,
+        ]
 
     def __init__(self):
         log.info('S3 Sharing handlers have been imported')
@@ -83,7 +87,10 @@ class S3DatasetsSharesECSShareModuleInterface(ModuleInterface):
         return [SharesBaseECSTaskModuleInterface, NotificationsModuleInterface]
 
     def __init__(self):
-        from dataall.modules.shares_base.services.share_processor_manager import ShareProcessorManager, ShareProcessorDefinition
+        from dataall.modules.shares_base.services.share_processor_manager import (
+            ShareProcessorManager,
+            ShareProcessorDefinition,
+        )
         from dataall.modules.shares_base.services.shares_enums import ShareableType
         from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, DatasetBucket, DatasetStorageLocation
         from dataall.modules.s3_datasets_shares.services.share_processors.glue_table_share_processor import (

@@ -36,7 +36,7 @@ class S3ShareItemService:
         """
         Delete Table permissions to share groups
         """
-        other_shares = S3ShareObjectRepository.list_other_shares_for_item(
+        other_shares = S3ShareObjectRepository.find_all_other_share_items(
             session,
             not_this_share_uri=share.shareUri,
             item_uri=tableUri,
@@ -55,7 +55,7 @@ class S3ShareItemService:
         """
         Delete Folder permissions to share groups
         """
-        other_shares = S3ShareObjectRepository.list_other_shares_for_item(
+        other_shares = S3ShareObjectRepository.find_all_other_share_items(
             session,
             not_this_share_uri=share.shareUri,
             item_uri=locationUri,
