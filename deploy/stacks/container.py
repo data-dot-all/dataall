@@ -315,8 +315,9 @@ class ContainerStack(pyNestedClass):
             ecr_repository=self._ecr_repository,
             environment=self.env_vars,
             image_tag=self._cdkproxy_image_tag,
-            log_group=self.create_log_group(self._envname, self._resource_prefix,
-                                            log_group_name='persistent-email-reminders'),
+            log_group=self.create_log_group(
+                self._envname, self._resource_prefix, log_group_name='persistent-email-reminders'
+            ),
             schedule_expression=Schedule.expression('cron(0 9 ? * 2 *)'),  # Run at 9:00 AM UTC every Monday
             scheduled_task_id=f'{self._resource_prefix}-{self._envname}-persistent-email-reminders-schedule',
             task_id=f'{self._resource_prefix}-{self._envname}-persistent-email-reminders',
@@ -494,8 +495,9 @@ class ContainerStack(pyNestedClass):
         )
         return cicd_stacks_updater_role
 
-    def create_task_role(self, envname, resource_prefix, pivot_role_name, email_custom_domain=None,
-                         ses_configuration_set=None):
+    def create_task_role(
+            self, envname, resource_prefix, pivot_role_name, email_custom_domain=None, ses_configuration_set=None
+    ):
         role_inline_policy = iam.Policy(
             self,
             f'ECSRolePolicy{envname}',
