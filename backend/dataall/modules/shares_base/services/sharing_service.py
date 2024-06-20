@@ -399,17 +399,14 @@ class SharingService:
         with engine.scoped_session() as session:
             pending_shares = (
                 session.query(ShareObject)
-                .join(Notification, and_(
-                    ShareObject.shareUri == func.split_part(Notification.target_uri, '|', 1),
-                    ShareObject.datasetUri == func.split_part(Notification.target_uri, '|', 2),
-
-                ))
-                .filter(
+                .join(
+                    Notification,
                     and_(
-                        Notification.type == 'SHARE_OBJECT_SUBMITTED',
-                        ShareObject.status == 'Submitted'
-                    )
+                        ShareObject.shareUri == func.split_part(Notification.target_uri, '|', 1),
+                        ShareObject.datasetUri == func.split_part(Notification.target_uri, '|', 2),
+                    ),
                 )
+                .filter(and_(Notification.type == 'SHARE_OBJECT_SUBMITTED', ShareObject.status == 'Submitted'))
                 .all()
             )
             return pending_shares
@@ -430,9 +427,9 @@ class SharingService:
 
         with engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
-            ShareNotificationService(
-                session=session, dataset=dataset, share=share
-            ).notify_persistent_email_reminder(email_id=share.owner, engine=engine)
+            ShareNotificationService(session=session, dataset=dataset, share=share).notify_persistent_email_reminder(
+                email_id=share.owner, engine=engine
+            )
             log.info(f'Email reminder sent for share {share.shareUri}')
 
     @staticmethod

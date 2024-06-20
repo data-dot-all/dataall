@@ -59,18 +59,20 @@ class ShareNotificationService:
     def notify_persistent_email_reminder(self, email_id: str, engine):
         share_link_text = ''
         if os.environ.get('frontend_domain_url'):
-            share_link_text = (f'<br><br>Please visit data.all <a href="{os.environ.get("frontend_domain_url")}'
-                               f'/console/shares/{self.share.shareUri}">share link</a> '
-                               f'to review and take appropriate action or view more details.')
+            share_link_text = (
+                f'<br><br>Please visit data.all <a href="{os.environ.get("frontend_domain_url")}'
+                f'/console/shares/{self.share.shareUri}">share link</a> '
+                f'to review and take appropriate action or view more details.'
+            )
 
-        msg_intro = f"""Dear User\n\n,
+        msg_intro = f"""Dear User,
 
         This is a reminder that a share request for the dataset "{self.dataset.label}" submitted by {email_id} 
-        on behalf of principal "{self.share.principalId}" is still pending and has not been addressed. \n\n
+        on behalf of principal "{self.share.principalId}" is still pending and has not been addressed.
 
         """
 
-        msg_end = """Your prompt attention to this matter is greatly appreciated. \n\n
+        msg_end = """Your prompt attention to this matter is greatly appreciated.
 
         Best regards,
         The Data.all Team
@@ -89,11 +91,15 @@ class ShareNotificationService:
     def notify_share_object_approval(self, email_id: str):
         share_link_text = ''
         if os.environ.get('frontend_domain_url'):
-            share_link_text = (f'<br><br> Please visit data.all <a href="{os.environ.get("frontend_domain_url")}'
-                               f'/console/shares/{self.share.shareUri}">share link </a> '
-                               f'to take action or view more details')
-        msg = (f'User {email_id} APPROVED share request for dataset {self.dataset.label} '
-               f'for principal {self.share.principalId}')
+            share_link_text = (
+                f'<br><br> Please visit data.all <a href="{os.environ.get("frontend_domain_url")}'
+                f'/console/shares/{self.share.shareUri}">share link </a> '
+                f'to take action or view more details'
+            )
+        msg = (
+            f'User {email_id} APPROVED share request for dataset {self.dataset.label} '
+            f'for principal {self.share.principalId}'
+        )
         subject = f'Data.all | Share Request Approved for {self.dataset.label}'
         email_notification_msg = msg + share_link_text
 
