@@ -36,6 +36,7 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 import {
+  listInviteOrganizationPermissionsWithDescriptions,
   listOrganizationGroups,
   removeGroupFromOrganization
 } from '../services';
@@ -44,7 +45,7 @@ import {
   OrganizationTeamInviteForm
 } from '../components';
 
-function TeamRow({ team, organization, fetchItems }) {
+function TeamRow({ team, permissions, organization, fetchItems }) {
   const client = useClient();
   const dispatch = useDispatch();
   const theme = useTheme();
@@ -127,7 +128,9 @@ function TeamRow({ team, organization, fetchItems }) {
           <OrganizationTeamInviteEditForm
             organization={organization}
             team={team}
+            allPermissions={permissions}
             open
+            enqueueSnackbar={enqueueSnackbar}
             reloadTeams={fetchItems}
             onClose={handlePermissionsModalClose}
           />
@@ -166,6 +169,7 @@ function TeamRow({ team, organization, fetchItems }) {
 TeamRow.propTypes = {
   team: PropTypes.any,
   organization: PropTypes.any,
+  permissions: PropTypes.any,
   fetchItems: PropTypes.any
 };
 
@@ -175,6 +179,7 @@ export const OrganizationTeams = ({ organization }) => {
   const [items, setItems] = useState(Defaults.pagedResponse);
   const [filter, setFilter] = useState(Defaults.filter);
   const [loading, setLoading] = useState(true);
+  const [permissions, setPermissions] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [isTeamInviteModalOpen, setIsTeamInviteModalOpen] = useState(false);
   const handleTeamInviteModalOpen = () => {
@@ -183,6 +188,33 @@ export const OrganizationTeams = ({ organization }) => {
   const handleTeamInviteModalClose = () => {
     setIsTeamInviteModalOpen(false);
   };
+
+  const fetchPermissions = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await client.query(
+        listInviteOrganizationPermissionsWithDescriptions()
+      );
+      if (!response.errors) {
+        setPermissions(
+          response.data.listInviteOrganizationPermissionsWithDescriptions.map(
+            (g) => ({
+              ...g,
+              name: g.name,
+              description: g.description,
+              selected: true
+            })
+          )
+        );
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    } finally {
+      setLoading(false);
+    }
+  }, [client, dispatch]);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -210,8 +242,11 @@ export const OrganizationTeams = ({ organization }) => {
       fetchItems().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
+      fetchPermissions().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client, filter.page, dispatch, fetchItems]);
+  }, [client, filter.page, dispatch, fetchItems, fetchPermissions]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -292,6 +327,7 @@ export const OrganizationTeams = ({ organization }) => {
             {isTeamInviteModalOpen && (
               <OrganizationTeamInviteForm
                 organization={organization}
+                permissions={permissions}
                 open
                 reloadTeams={fetchItems}
                 onClose={handleTeamInviteModalClose}
@@ -317,6 +353,7 @@ export const OrganizationTeams = ({ organization }) => {
                     items.nodes.map((team) => (
                       <TeamRow
                         team={team}
+                        permissions={permissions}
                         organization={organization}
                         fetchItems={fetchItems}
                       />

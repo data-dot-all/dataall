@@ -59,10 +59,12 @@ def archive_organization(context: Context, source, organizationUri: str = None):
 def invite_group(context: Context, source, input):
     if not input:
         raise exceptions.RequiredParameter(input)
-    if not input.get('groupUri'):
-        raise exceptions.RequiredParameter('groupUri')
 
     return OrganizationService.invite_group(uri=input['organizationUri'], data=input)
+
+
+def update_group(context: Context, source, input):
+    return OrganizationService.update_group(uri=input['organizationUri'], data=input)
 
 
 def remove_group(context: Context, source, organizationUri=None, groupUri=None):
@@ -87,3 +89,11 @@ def resolve_organization_by_env(context, source, **kwargs):
         return None
 
     return OrganizationService.resolve_organization_by_env(uri=source.environmentUri)
+
+
+def list_group_organization_permissions(context, source, organizationUri, groupUri):
+    return OrganizationService.list_group_organization_permissions(organizationUri, groupUri)
+
+
+def list_invited_organization_permissions_with_descriptions(context, source):
+    return OrganizationService.list_invited_organization_permissions_with_descriptions()
