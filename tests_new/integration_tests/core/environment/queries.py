@@ -136,6 +136,7 @@ def update_environment(client, environmentUri, input: dict):
                         userRoleInEnvironment
                         SamlGroupName
                         AwsAccountId
+                        description
                         created
                         parameters {
                           key
@@ -146,4 +147,4 @@ def update_environment(client, environmentUri, input: dict):
                 """,
     }
     response = client.query(query=query)
-    return response
+    return response.data.updateEnvironment
