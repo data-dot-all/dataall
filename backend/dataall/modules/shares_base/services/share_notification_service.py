@@ -63,14 +63,14 @@ class ShareNotificationService:
                                f'/console/shares/{self.share.shareUri}">share link</a> '
                                f'to review and take appropriate action or view more details.')
 
-        msg_intro = f"""Dear User,
+        msg_intro = f"""Dear User\n\n,
 
         This is a reminder that a share request for the dataset "{self.dataset.label}" submitted by {email_id} 
-        on behalf of principal "{self.share.principalId}" is still pending and has not been addressed.
+        on behalf of principal "{self.share.principalId}" is still pending and has not been addressed. \n\n
 
         """
 
-        msg_end = f"""Your prompt attention to this matter is greatly appreciated.
+        msg_end = f"""Your prompt attention to this matter is greatly appreciated. \n\n
 
         Best regards,
         The Data.all Team
