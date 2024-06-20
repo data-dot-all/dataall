@@ -39,9 +39,6 @@ class SharesBaseAPIModuleInterface(ModuleInterface):
         return [DatasetBaseApiModuleInterface]
 
     def __init__(self):
-        import dataall.modules.shares_base.services.shares_enums
-        import dataall.modules.shares_base.services.share_permissions
-        import dataall.modules.shares_base.db.share_object_state_machines
         import dataall.modules.shares_base.api
 
 

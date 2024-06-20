@@ -135,7 +135,7 @@ class ShareItemService:
 
             if (
                 item_type == ShareableType.Table.value and item.region != target_environment.region
-            ):  # TODO: remove from here (we might be able to remove get_share_item_details entirely
+            ):  # TODO Part10: remove from here (we might be able to remove get_share_item_details entirely
                 raise UnauthorizedOperation(
                     action=ADD_ITEM,
                     message=f'Lake Formation cross region sharing is not supported. '
@@ -163,7 +163,7 @@ class ShareItemService:
         with get_context().db_engine.scoped_session() as session:
             share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
             if (
-                share_item.itemType == ShareableType.Table.value  # TODO REMOVE THIS!
+                share_item.itemType == ShareableType.Table.value  # TODO Part10 - REMOVE
                 and share_item.status == ShareItemStatus.Share_Failed.value
             ):
                 share = ShareObjectRepository.get_share_by_uri(session, share_item.shareUri)
@@ -205,6 +205,7 @@ class ShareItemService:
                     ShareObjectRepository.list_shareable_items_of_type(
                         session=session,
                         share=share,
+                        type=type,
                         share_type_model=processor.shareable_type,
                         share_type_uri=processor.shareable_uri,
                         status=status,

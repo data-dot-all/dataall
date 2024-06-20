@@ -83,7 +83,7 @@ class S3DatasetsSharesECSShareModuleInterface(ModuleInterface):
         return [SharesBaseECSTaskModuleInterface, NotificationsModuleInterface]
 
     def __init__(self):
-        from dataall.modules.shares_base.services.sharing_service import SharingService, SharingProcessorDefinition
+        from dataall.modules.shares_base.services.share_processor_manager import ShareProcessorManager, ShareProcessorDefinition
         from dataall.modules.shares_base.services.shares_enums import ShareableType
         from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, DatasetBucket, DatasetStorageLocation
         from dataall.modules.s3_datasets_shares.services.share_processors.glue_table_share_processor import (
@@ -96,18 +96,18 @@ class S3DatasetsSharesECSShareModuleInterface(ModuleInterface):
             ProcessS3AccessPointShare,
         )
 
-        SharingService.register_processor(
-            SharingProcessorDefinition(
+        ShareProcessorManager.register_processor(
+            ShareProcessorDefinition(
                 ShareableType.Table, ProcessLakeFormationShare, DatasetTable, DatasetTable.tableUri
             )
         )
-        SharingService.register_processor(
-            SharingProcessorDefinition(
+        ShareProcessorManager.register_processor(
+            ShareProcessorDefinition(
                 ShareableType.S3Bucket, ProcessS3BucketShare, DatasetBucket, DatasetBucket.bucketUri
             )
         )
-        SharingService.register_processor(
-            SharingProcessorDefinition(
+        ShareProcessorManager.register_processor(
+            ShareProcessorDefinition(
                 ShareableType.StorageLocation,
                 ProcessS3AccessPointShare,
                 DatasetStorageLocation,

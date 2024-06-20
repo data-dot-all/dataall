@@ -317,22 +317,17 @@ class ShareObjectRepository:
 
         return paginate(query=q, page=data.get('page', 1), page_size=data.get('pageSize', 10)).to_dict()
 
-    ######### TODO: TEST
     @staticmethod
-    def list_shareable_items_of_type(session, share, share_type_model, share_type_uri, status=None):  # TODO
+    def list_shareable_items_of_type(session, share, type, share_type_model, share_type_uri, status=None):  # TODO
         logger.info(f'Getting all shareable items {status=}, for {share_type_model=}')
         query = (
             session.query(
-                share_type_model,
                 share_type_uri.label('itemUri'),
-                func.coalesce(str(share_type_uri).split('.')[-1]).label('itemType'),
+                func.coalesce(type.value).label('itemType'),
                 share_type_model.description.label('description'),
                 share_type_model.name.label(
                     'itemName'
-                ),  # TODO: THE ONLY ITEM MISSING IS THE ITEMNAME - in reality it is the gluetablename, the s3prefix and the s3 bucket
-            )
-            .outerjoin(
-                ShareObjectItem,
+                ), #TODO WE CANNOT USE NAME BECAUSE FOR TABLES AND FOLDERS NAME=CONSTANT DEFAULT! ---> migration script for name=GlueTableName and name=S3Prefix
                 ShareObjectItem.shareItemUri.label('shareItemUri'),
                 ShareObjectItem.status.label('status'),
                 ShareObjectItem.healthStatus.label('healthStatus'),
@@ -343,17 +338,11 @@ class ShareObjectRepository:
                     else_=False,
                 ).label('isShared'),
             )
-            .join(
-                ShareObject,
-                ShareObject.shareUri == ShareObjectItem.shareUri,
+            .outerjoin(
+                ShareObjectItem,
+                share_type_uri == ShareObjectItem.itemUri,
             )
-            .filter(
-                and_(
-                    ShareObject.datasetUri == share.datasetUri,
-                    ShareObject.environmentUri == share.environmentUri,
-                    ShareObject.shareUri == share.shareUri,
-                )
-            )
+            .filter(share_type_model.datasetUri == share.datasetUri)
         )
         if status:
             query = query.filter(ShareObjectItem.status.in_(status))
