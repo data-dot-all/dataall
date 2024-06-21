@@ -3,12 +3,9 @@ import boto3
 import os
 from munch import DefaultMunch
 
+from integration_tests.errors import GqlError
+
 ENVNAME = os.getenv('ENVNAME', 'dev')
-
-
-class GqlError(RuntimeError):
-    def __init__(self, msg):
-        super().__init__(msg)
 
 
 class Client:
@@ -30,7 +27,7 @@ class Client:
     def _get_jwt_token(self):
         cognito_client = boto3.client('cognito-idp', region_name=os.getenv('AWS_REGION', 'eu-west-1'))
         kwargs = {
-            'ClientId': os.getenv('COGNITO_CLIENT', False),
+            'ClientId': os.environ['COGNITO_CLIENT'],
             'AuthFlow': 'USER_PASSWORD_AUTH',
             'AuthParameters': {
                 'USERNAME': self.username,
