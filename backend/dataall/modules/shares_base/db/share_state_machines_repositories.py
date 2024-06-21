@@ -78,7 +78,7 @@ class ShareStatusRepository:
             and_(ShareObjectItem.shareUri == share_uri, ShareObjectItem.status == old_status)
         )
         if share_item_type:
-            query = query.filter(ShareObjectItem.shareableType == share_item_type.value)
+            query = query.filter(ShareObjectItem.itemType == share_item_type.value)
 
         query.update(
             {
