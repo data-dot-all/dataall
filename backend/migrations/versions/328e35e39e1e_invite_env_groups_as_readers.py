@@ -37,7 +37,9 @@ def upgrade():
         env_org[e.environmentUri] = e.organizationUri
 
     for group in all_env_groups:
-        group_membership = OrganizationRepository.find_group_membership(session, [group], env_org[group.environmentUri])
+        group_membership = OrganizationRepository.find_group_membership(
+            session, [group.groupUri], env_org[group.environmentUri]
+        )
         if group_membership is None:
             data = {
                 'groupUri': group.groupUri,
