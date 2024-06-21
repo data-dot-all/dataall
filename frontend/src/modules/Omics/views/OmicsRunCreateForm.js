@@ -64,7 +64,7 @@ const OmicsRunCreateForm = (props) => {
           workflowUri: omicsWorkflow.workflowUri,
           parameterTemplate: values.parameterTemplate,
           SamlAdminGroupName: values.SamlAdminGroupName,
-          dataset: values.dataset
+          destination: values.dataset
         })
       );
       setStatus({ success: true });

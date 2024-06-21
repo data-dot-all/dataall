@@ -193,19 +193,37 @@ export const EnvironmentTeamDatasetsDropdown = (props) => {
               }
             }}
             renderInput={(params) => (
-              <TextField
-                {...params}
-                fullWidth
-                error={Boolean(
-                  touched.SamlAdminGroupName && errors.SamlAdminGroupName
+              <Box>
+                {groupOptions.length > 0 ? (
+                  <TextField
+                    {...params}
+                    fullWidth
+                    error={Boolean(
+                      touched.SamlAdminGroupName && errors.SamlAdminGroupName
+                    )}
+                    helperText={
+                      touched.SamlAdminGroupName && errors.SamlAdminGroupName
+                    }
+                    label="Team"
+                    onChange={handleChange}
+                    variant="outlined"
+                  />
+                ) : (
+                  <TextField
+                    error={Boolean(
+                      touched.SamlAdminGroupName && errors.SamlAdminGroupName
+                    )}
+                    helperText={
+                      touched.SamlAdminGroupName && errors.SamlAdminGroupName
+                    }
+                    fullWidth
+                    disabled
+                    label="Team"
+                    value="No teams found for this environment"
+                    variant="outlined"
+                  />
                 )}
-                helperText={
-                  touched.SamlAdminGroupName && errors.SamlAdminGroupName
-                }
-                label="Team"
-                onChange={handleChange}
-                variant="outlined"
-              />
+              </Box>
             )}
           />
         </CardContent>
@@ -222,15 +240,29 @@ export const EnvironmentTeamDatasetsDropdown = (props) => {
               }
             }}
             renderInput={(params) => (
-              <TextField
-                {...params}
-                fullWidth
-                error={Boolean(touched.dataset && errors.dataset)}
-                helperText={touched.dataset && errors.dataset}
-                label="Select S3 Output Dataset"
-                onChange={handleChange}
-                variant="outlined"
-              />
+              <Box>
+                {datasetOptions.length > 0 ? (
+                  <TextField
+                    {...params}
+                    fullWidth
+                    error={Boolean(touched.dataset && errors.dataset)}
+                    helperText={touched.dataset && errors.dataset}
+                    label="Select S3 Output Dataset"
+                    onChange={handleChange}
+                    variant="outlined"
+                  />
+                ) : (
+                  <TextField
+                    error={Boolean(touched.dataset && errors.dataset)}
+                    helperText={touched.dataset && errors.dataset}
+                    fullWidth
+                    disabled
+                    label="Select S3 Output Dataset"
+                    value="No datasets found for this team in this environment"
+                    variant="outlined"
+                  />
+                )}
+              </Box>
             )}
           />
         </CardContent>

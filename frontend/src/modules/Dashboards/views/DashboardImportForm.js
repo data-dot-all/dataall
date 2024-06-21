@@ -81,7 +81,7 @@ const DashboardImportForm = (props) => {
             dashboardId: values.dashboardId,
             environmentUri: values.environment.environmentUri,
             description: values.description,
-            SamlAdminGroupName: values.SamlAdminGroupName,
+            SamlGroupName: values.SamlAdminGroupName,
             tags: values.tags,
             terms: values.terms.nodes
               ? values.terms.nodes.map((t) => t.nodeUri)

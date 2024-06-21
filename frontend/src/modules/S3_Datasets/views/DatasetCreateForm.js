@@ -517,21 +517,41 @@ const DatasetCreateForm = (props) => {
                               }
                             }}
                             renderInput={(params) => (
-                              <TextField
-                                {...params}
-                                fullWidth
-                                error={Boolean(
-                                  touched.SamlAdminGroupName &&
-                                    errors.SamlAdminGroupName
+                              <Box>
+                                {groupOptions.length > 0 ? (
+                                  <TextField
+                                    {...params}
+                                    fullWidth
+                                    error={Boolean(
+                                      touched.SamlAdminGroupName &&
+                                        errors.SamlAdminGroupName
+                                    )}
+                                    helperText={
+                                      touched.SamlAdminGroupName &&
+                                      errors.SamlAdminGroupName
+                                    }
+                                    label="Team"
+                                    onChange={handleChange}
+                                    variant="outlined"
+                                  />
+                                ) : (
+                                  <TextField
+                                    error={Boolean(
+                                      touched.SamlAdminGroupName &&
+                                        errors.SamlAdminGroupName
+                                    )}
+                                    helperText={
+                                      touched.SamlAdminGroupName &&
+                                      errors.SamlAdminGroupName
+                                    }
+                                    fullWidth
+                                    disabled
+                                    label="Team"
+                                    value="No teams found for this environment"
+                                    variant="outlined"
+                                  />
                                 )}
-                                helperText={
-                                  touched.SamlAdminGroupName &&
-                                  errors.SamlAdminGroupName
-                                }
-                                label="Team"
-                                onChange={handleChange}
-                                variant="outlined"
-                              />
+                              </Box>
                             )}
                           />
                         </CardContent>
@@ -548,17 +568,39 @@ const DatasetCreateForm = (props) => {
                               }
                             }}
                             renderInput={(params) => (
-                              <TextField
-                                {...params}
-                                fullWidth
-                                error={Boolean(
-                                  touched.stewards && errors.stewards
+                              <Box>
+                                {groupOptions.length > 0 ? (
+                                  <TextField
+                                    {...params}
+                                    fullWidth
+                                    error={Boolean(
+                                      touched.stewards && errors.stewards
+                                    )}
+                                    helperText={
+                                      touched.stewards && errors.stewards
+                                    }
+                                    label="Stewards"
+                                    onChange={handleChange}
+                                    variant="outlined"
+                                  />
+                                ) : (
+                                  <TextField
+                                    error={Boolean(
+                                      touched.SamlAdminGroupName &&
+                                        errors.SamlAdminGroupName
+                                    )}
+                                    helperText={
+                                      touched.SamlAdminGroupName &&
+                                      errors.SamlAdminGroupName
+                                    }
+                                    fullWidth
+                                    disabled
+                                    label="Stewards"
+                                    value="No teams found for this environment"
+                                    variant="outlined"
+                                  />
                                 )}
-                                helperText={touched.stewards && errors.stewards}
-                                label="Stewards"
-                                onChange={handleChange}
-                                variant="outlined"
-                              />
+                              </Box>
                             )}
                           />
                         </CardContent>

@@ -7,7 +7,7 @@ import {
   CircularProgress,
   TextField
 } from '@mui/material';
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
@@ -156,19 +156,37 @@ export const EnvironmentTeamDropdown = (props) => {
               }
             }}
             renderInput={(params) => (
-              <TextField
-                {...params}
-                fullWidth
-                error={Boolean(
-                  touched.SamlAdminGroupName && errors.SamlAdminGroupName
+              <Box>
+                {groupOptions.length > 0 ? (
+                  <TextField
+                    {...params}
+                    fullWidth
+                    error={Boolean(
+                      touched.SamlAdminGroupName && errors.SamlAdminGroupName
+                    )}
+                    helperText={
+                      touched.SamlAdminGroupName && errors.SamlAdminGroupName
+                    }
+                    label="Team"
+                    onChange={handleChange}
+                    variant="outlined"
+                  />
+                ) : (
+                  <TextField
+                    error={Boolean(
+                      touched.SamlAdminGroupName && errors.SamlAdminGroupName
+                    )}
+                    helperText={
+                      touched.SamlAdminGroupName && errors.SamlAdminGroupName
+                    }
+                    fullWidth
+                    disabled
+                    label="Team"
+                    value="No teams found for this environment"
+                    variant="outlined"
+                  />
                 )}
-                helperText={
-                  touched.SamlAdminGroupName && errors.SamlAdminGroupName
-                }
-                label="Team"
-                onChange={handleChange}
-                variant="outlined"
-              />
+              </Box>
             )}
           />
         </CardContent>
