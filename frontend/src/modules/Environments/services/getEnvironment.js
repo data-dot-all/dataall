@@ -5,7 +5,7 @@ export const getEnvironment = ({ environmentUri }) => ({
     environmentUri
   },
   query: gql`
-    query GetEnvironment($environmentUri: String) {
+    query GetEnvironment($environmentUri: String!) {
       getEnvironment(environmentUri: $environmentUri) {
         environmentUri
         created

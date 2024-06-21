@@ -1,5 +1,5 @@
 # TODO: This file will be replaced by using the SDK directly
-def create_organization(client, name, group):
+def create_organization(client, name, group, tags=[]):
     query = {
         'operationName': 'CreateOrg',
         'variables': {
@@ -7,7 +7,7 @@ def create_organization(client, name, group):
                 'label': name,
                 'SamlGroupName': group,
                 'description': 'Created for integration testing',
-                'tags': [],
+                'tags': tags,
             }
         },
         'query': """mutation CreateOrg($input: NewOrganizationInput) {
@@ -22,7 +22,7 @@ def create_organization(client, name, group):
                 """,
     }
     response = client.query(query=query)
-    return response
+    return response.data.createOrganization
 
 
 def archive_organization(client, organizationUri):
@@ -35,7 +35,7 @@ def archive_organization(client, organizationUri):
             """,
     }
     response = client.query(query=query)
-    return response
+    return response.data.archiveOrganization
 
 
 def get_organization(client, organizationUri):
@@ -59,7 +59,7 @@ def get_organization(client, organizationUri):
         """,
     }
     response = client.query(query=query)
-    return response
+    return response.data.getOrganization
 
 
 def update_organization(client, organizationUri):
@@ -69,7 +69,7 @@ def update_organization(client, organizationUri):
             'organizationUri': organizationUri,
             'input': {'label': 'newlabel'},
         },
-        'query': """ mutation UpdateOrg($organizationUri:String!,$input:ModifyOrganizationInput){
+        'query': """ mutation UpdateOrg($organizationUri:String!,$input:ModifyOrganizationInput!){
                  updateOrganization(organizationUri:$organizationUri,input:$input){
                     label
                     owner
@@ -79,14 +79,14 @@ def update_organization(client, organizationUri):
         """,
     }
     response = client.query(query=query)
-    return response
+    return response.data.updateOrganization
 
 
 def invite_team_to_organization(client, organizationUri, group):
     query = {
         'operationName': 'inviteGroupToOrganization',
         'variables': {'input': {'organizationUri': organizationUri, 'groupUri': group}},
-        'query': """mutation inviteGroupToOrganization($input:InviteGroupToOrganizationInput){
+        'query': """mutation inviteGroupToOrganization($input:InviteGroupToOrganizationInput!){
             inviteGroupToOrganization(input:$input){
                 organizationUri
             }
@@ -94,7 +94,7 @@ def invite_team_to_organization(client, organizationUri, group):
             """,
     }
     response = client.query(query=query)
-    return response
+    return response.data.inviteGroupToOrganization
 
 
 def remove_team_from_organization(client, organizationUri, group):
@@ -109,7 +109,7 @@ def remove_team_from_organization(client, organizationUri, group):
             """,
     }
     response = client.query(query=query)
-    return response
+    return response.data.removeGroupFromOrganization
 
 
 def update_tenant_permissions(client, group, permissions):
@@ -123,7 +123,7 @@ def update_tenant_permissions(client, group, permissions):
                 """,
     }
     response = client.query(query=query)
-    return response
+    return response.data.updateGroupTenantPermissions
 
 
 def list_organizations(client, term=''):
@@ -143,4 +143,4 @@ def list_organizations(client, term=''):
                 """,
     }
     response = client.query(query=query)
-    return response
+    return response.data.listOrganizations

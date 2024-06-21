@@ -31,8 +31,6 @@ export const getShareRequestsToMe = ({ filter }) => ({
             organizationName
           }
           statistics {
-            tables
-            locations
             sharedItems
             revokedItems
             failedItems

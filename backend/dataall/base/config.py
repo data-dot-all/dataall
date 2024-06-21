@@ -1,18 +1,36 @@
 """Reads and encapsulates the configuration provided in config.json"""
 
-import json
 import copy
-from typing import Any, Dict
+import json
+import logging
 import os
 from pathlib import Path
+from typing import Any, Dict
+
+from dataall.base.utils import Parameter
+
+ENVNAME = os.getenv('envname', 'local')
+
+log = logging.getLogger(__name__)
 
 
 class _Config:
-    """A container of properties in the configuration file
-    and any other that can be specified/overwritten later in the application"""
+    """
+    A container of properties that configure data.all.
+    * Reads from config.json
+    * Optionally updates/overwrite from SSM /dataall/{ENVNAME}/configjson if it exists
+    * Updates dynamically at runtime via set_property
+    """
 
     def __init__(self):
+        log.info('reading data.all config from local file')
         self._config = _Config._read_config_file()
+        try:
+            if ssm_config := _Config._read_config_parameter():
+                log.info('updating data.all config from ParameterStore')
+                self._config |= ssm_config
+        except Exception:
+            log.warning('something went wrong when reading config from ParameterStore', exc_info=True)
 
     def get_property(self, key: str, default=None) -> Any:
         """
@@ -55,6 +73,12 @@ class _Config:
     def _read_config_file() -> Dict[str, Any]:
         with open(_Config._path_to_file()) as config_file:
             return json.load(config_file)
+
+    @staticmethod
+    def _read_config_parameter() -> Dict[str, Any]:
+        if configjson := Parameter.get_parameter(env=ENVNAME, path='configjson'):
+            return json.loads(configjson)
+        return None
 
     @staticmethod
     def _path_to_file() -> str:

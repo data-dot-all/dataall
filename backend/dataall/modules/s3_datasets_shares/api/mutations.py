@@ -1,17 +1,5 @@
 from dataall.base.api import gql
 from dataall.modules.s3_datasets_shares.api.resolvers import (
-    add_shared_item,
-    approve_share_object,
-    create_share_object,
-    delete_share_object,
-    reapply_items_share_object,
-    reject_share_object,
-    remove_shared_item,
-    revoke_items_share_object,
-    submit_share_object,
-    update_share_reject_purpose,
-    update_share_request_purpose,
-    verify_items_share_object,
     verify_dataset_share_objects,
 )
 

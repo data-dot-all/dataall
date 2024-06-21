@@ -41,6 +41,13 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
     mocker.patch(
         'dataall.core.environment.services.managed_iam_policies.PolicyManager.delete_all_policies', return_value=True
     )
+    mocker.patch(
+        'dataall.core.environment.services.managed_iam_policies.PolicyManager.delete_all_policies', return_value=True
+    )
+    mocker.patch(
+        'dataall.core.organizations.db.organization_repositories.OrganizationRepository.find_group_membership',
+        return_value=True,
+    )
     response = client.query(
         """
         query listEnvironmentGroupInvitationPermissions{
@@ -61,7 +68,7 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
 
     response = client.query(
         """
-        mutation inviteGroupOnEnvironment($input:InviteGroupOnEnvironmentInput){
+        mutation inviteGroupOnEnvironment($input:InviteGroupOnEnvironmentInput!){
             inviteGroupOnEnvironment(input:$input){
                 environmentUri
             }
@@ -81,7 +88,7 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
 
     response = client.query(
         """
-        query getGroup($groupUri:String!, $environmentUri:String){
+        query getGroup($groupUri:String!, $environmentUri:String!){
             getGroup(groupUri:$groupUri){
                 environmentPermissions(environmentUri:$environmentUri){
                  name

@@ -128,6 +128,8 @@ def graphql_server():
     logger.debug(request.data)
     data = request.get_json()
     print('*** Request ***', request.data)
+    logger.info(data)
+
     # Extract the GraphQL query string from the 'query' key in the data dictionary
     query_string = data.get('query')
 
@@ -137,7 +139,7 @@ def graphql_server():
         query = parse(query_string)
     except Exception as e:
         return jsonify({'error': str(e)}), 400
-    # query = parse(data)
+
     print('*****    Printing Query      ****** \n\n')
     print(query)
 

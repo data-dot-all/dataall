@@ -16,9 +16,9 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObject, ShareObjectItem
-from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM, ShareObjectSM
-from dataall.modules.s3_datasets_shares.services.share_object_service import ShareObjectService
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 
 
@@ -399,7 +399,7 @@ def create_share_object(
         $datasetUri: String!
         $itemType: String
         $itemUri: String
-        $input: NewShareObjectInput
+        $input: NewShareObjectInput!
       ) {
         createShareObject(
           datasetUri: $datasetUri
@@ -813,9 +813,7 @@ def list_datasets_published_in_environment(client, user, group, environmentUri):
                     datasetUri
                     datasetName
                     itemType
-                    itemAccess
-                    GlueDatabaseName
-                    GlueTableName
+                    itemName
                     created
                     principalId
                 }
@@ -1707,7 +1705,7 @@ def _successfull_processing_for_share_object(db, share):
         print('Processing share with action ShareObjectActions.Start')
         share = ShareObjectRepository.get_share_by_uri(session, share.shareUri)
 
-        share_items_states = ShareObjectRepository.get_share_items_states(session, share.shareUri)
+        share_items_states = ShareStatusRepository.get_share_items_states(session, share.shareUri)
 
         Share_SM = ShareObjectSM(share.status)
         new_share_state = Share_SM.run_transition(ShareObjectActions.Start.value)
@@ -1725,7 +1723,7 @@ def _successfull_processing_for_share_object(db, share):
         )
 
         share = ShareObjectRepository.get_share_by_uri(session, share.shareUri)
-        share_items_states = ShareObjectRepository.get_share_items_states(session, share.shareUri)
+        share_items_states = ShareStatusRepository.get_share_items_states(session, share.shareUri)
 
         new_share_state = Share_SM.run_transition(ShareObjectActions.Finish.value)
 

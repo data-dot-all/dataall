@@ -6,7 +6,7 @@ export const listOrganizationEnvironments = ({ organizationUri, filter }) => ({
     filter
   },
   query: gql`
-    query getOrg($organizationUri: String, $filter: EnvironmentFilter) {
+    query getOrg($organizationUri: String!, $filter: EnvironmentFilter) {
       getOrganization(organizationUri: $organizationUri) {
         environments(filter: $filter) {
           count

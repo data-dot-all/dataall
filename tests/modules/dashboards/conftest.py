@@ -16,7 +16,7 @@ def dashboard(client, env_fixture, group, module_mocker):
     response = client.query(
         """
             mutation importDashboard(
-                $input:ImportDashboardInput,
+                $input:ImportDashboardInput!,
             ){
                 importDashboard(input:$input){
                     dashboardUri

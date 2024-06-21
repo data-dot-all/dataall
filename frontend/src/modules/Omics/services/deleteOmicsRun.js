@@ -4,7 +4,7 @@ export const deleteOmicsRun = ({ input }) => ({
     input
   },
   mutation: gql`
-    mutation deleteOmicsRun($input: OmicsDeleteInput) {
+    mutation deleteOmicsRun($input: OmicsDeleteInput!) {
       deleteOmicsRun(input: $input)
     }
   `

@@ -44,7 +44,7 @@ def check_vpc_exists(module_mocker):
 def sagemaker_studio_user(client, tenant, group, env_with_mlstudio) -> SagemakerStudioUser:
     response = client.query(
         """
-            mutation createSagemakerStudioUser($input:NewSagemakerStudioUserInput){
+            mutation createSagemakerStudioUser($input:NewSagemakerStudioUserInput!){
             createSagemakerStudioUser(input:$input){
                 sagemakerStudioUserUri
                 name
@@ -73,7 +73,7 @@ def multiple_sagemaker_studio_users(client, db, env_with_mlstudio, group):
     for i in range(0, 10):
         response = client.query(
             """
-                mutation createSagemakerStudioUser($input:NewSagemakerStudioUserInput){
+                mutation createSagemakerStudioUser($input:NewSagemakerStudioUserInput!){
                 createSagemakerStudioUser(input:$input){
                     sagemakerStudioUserUri
                     name
@@ -104,7 +104,7 @@ def env_with_mlstudio(client, org_fixture, user, group, parameters=None, vpcId='
     if not parameters:
         parameters = {'mlStudiosEnabled': 'True'}
     response = client.query(
-        """mutation CreateEnv($input:NewEnvironmentInput){
+        """mutation CreateEnv($input:NewEnvironmentInput!){
             createEnvironment(input:$input){
                 organization{
                     organizationUri
