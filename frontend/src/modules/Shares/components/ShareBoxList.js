@@ -11,7 +11,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import PropTypes from 'prop-types';
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Defaults, Pager, ShareStatus, useSettings } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
@@ -23,11 +23,13 @@ import {
   getShareRequestsToMe,
   useClient
 } from 'services';
-import { getShareRequestsFromMe, listOwnedDatasets } from '../services';
+import {getShareRequestsFromMe, listOwnedDatasets, reApplyItemsShareObject} from '../services';
 
 import { ShareBoxListItem } from './ShareBoxListItem';
 import { ShareObjectSelectorModal } from './ShareObjectSelectorModal';
 import { ShareStatusList } from '../constants';
+import {RefreshRounded} from "@mui/icons-material";
+import {reApplyShareObjectItemsOnDataset} from "../services/reApplyShareObjectItemsBulk";
 
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
@@ -246,6 +248,13 @@ export const ShareBoxList = (props) => {
       .finally(() => setLoading(false));
   }, [client, dispatch]);
 
+  const reApplyShareObjectItemsBulk = async (datasetUri) => {
+      // Call the graphQL endpoint
+    if (client){
+      const response = await client.query()
+    }
+  }
+
   useEffect(() => {
     setLoading(true);
     setFilter({ page: 1, pageSize: 10, term: '' });
@@ -324,6 +333,20 @@ export const ShareBoxList = (props) => {
             variant="outlined"
           >
             Verify Share Objects Item(s) Health Status
+          </LoadingButton>
+        )}
+
+        {dataset && (
+          <LoadingButton
+            color="info"
+            align="right"
+            startIcon={<RefreshRounded fontSize="small" />}
+            sx={{ m: 1 }}
+            onClick={reApplyShareObjectItemsOnDataset(dataset.datasetUri)}
+            type="button"
+            variant="outlined"
+          >
+            Reapply Share Object(s)
           </LoadingButton>
         )}
 

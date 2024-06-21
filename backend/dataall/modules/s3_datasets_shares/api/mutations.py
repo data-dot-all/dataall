@@ -98,6 +98,13 @@ reApplyItemsShareObject = gql.MutationField(
     resolver=reapply_items_share_object,
 )
 
+# reApplyShareObjectItemsOnDataset = gql.MutationField(
+#     name='reApplyShareObjectItemsBulk',
+#     args=[gql.Argument(name='input', type=gql.String('datasetUri'))],
+#     type=gql.Boolean,
+#     resolver=reapply_share_object_items_on_dataset,
+# )
+
 updateShareRejectReason = gql.MutationField(
     name='updateShareRejectReason',
     args=[

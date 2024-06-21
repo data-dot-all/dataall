@@ -52,7 +52,7 @@
             "active": true
         },
         "maintenance": {
-            "active" : true
+            "active" : false
         }
     },
     "core": {
