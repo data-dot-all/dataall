@@ -167,9 +167,7 @@ class ShareStatusRepository:
             )
             .all()
         )
-        if shared_items:
-            return True
-        return False
+        return bool(shared_items)
 
     @staticmethod
     def check_existing_shared_items(session, uri):
@@ -182,6 +180,4 @@ class ShareStatusRepository:
             )
             .all()
         )
-        if shared_items:
-            return True
-        return False
+        return bool(shared_items)
