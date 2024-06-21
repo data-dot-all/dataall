@@ -18,6 +18,9 @@ from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTab
 from dataall.modules.s3_datasets_shares.tasks.subscriptions import poll_queues
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset
+from dataall.modules.datasets_base.db.dataset_models import DatasetBase
+from dataall.modules.shares_base.db.share_object_models import ShareObject
+from dataall.modules.shares_base.services.share_notification_service import DataSharingNotificationType
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -130,14 +133,24 @@ class DatasetSubscriptionService:
                         response = sns_client.publish_dataset_message(message)
                         log.info(f'SNS update publish response {response}')
 
-                        notifications = ShareNotificationService(
-                            session=session, dataset=dataset, share=share_object
-                        ).notify_new_data_available_from_owners(s3_prefix=prefix)
+                        notifications = self.notify_new_data_available_from_owners(
+                            session=session, dataset=dataset, share=share_object, s3_prefix=prefix
+                        )
 
                         log.info(f'Notifications for share owners {notifications}')
 
                     except ClientError as e:
                         log.error(f'Failed to deliver message {message} due to: {e}')
+
+    @staticmethod
+    def notify_new_data_available_from_owners(session, dataset: DatasetBase, share: ShareObject, s3_prefix: str):
+        msg = (
+            f'New data (at {s3_prefix}) is available from dataset {dataset.datasetUri} shared by owner {dataset.owner}'
+        )
+        notifications = ShareNotificationService(session=session, dataset=dataset, share=share).register_notifications(
+            notification_type=DataSharingNotificationType.DATASET_VERSION.value, msg=msg
+        )
+        return notifications
 
 
 if __name__ == '__main__':

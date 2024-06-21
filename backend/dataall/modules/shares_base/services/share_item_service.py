@@ -172,9 +172,7 @@ class ShareItemService:
     def resolve_shared_item(uri, item: ShareObjectItem):
         with get_context().db_engine.scoped_session() as session:
             processor = ShareProcessorManager.get_processor_by_item_type(item.itemType)
-            return ShareObjectRepository.get_share_item_details(
-                session, processor.shareable_type, item.itemUri
-            )
+            return ShareObjectRepository.get_share_item_details(session, processor.shareable_type, item.itemUri)
 
     @staticmethod
     def check_existing_shared_items(share):
