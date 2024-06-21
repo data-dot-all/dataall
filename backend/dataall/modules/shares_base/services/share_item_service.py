@@ -128,20 +128,9 @@ class ShareItemService:
             share_sm = ShareObjectSM(share.status)
             new_share_state = share_sm.run_transition(ShareItemActions.AddItem.value)
             share_sm.update_state(session, share, new_share_state)
-            processor = ShareProcessorManager.get_processor_by_item_type(item_type)
-            item = ShareObjectRepository.get_share_item_details(session, processor.shareable_type, item_uri)
+            item = ShareObjectRepository.get_share_item_by_uri(session, item_uri)
             if not item:
                 raise ObjectNotFound('ShareObjectItem', item_uri)
-
-            if (
-                item_type == ShareableType.Table.value and item.region != target_environment.region
-            ):  # TODO Part10: remove from here (we might be able to remove get_share_item_details entirely
-                raise UnauthorizedOperation(
-                    action=ADD_ITEM,
-                    message=f'Lake Formation cross region sharing is not supported. '
-                    f'Table {item.itemUri} is in {item.region} and target environment '
-                    f'{target_environment.name} is in {target_environment.region} ',
-                )
 
             share_item: ShareObjectItem = ShareObjectRepository.find_sharable_item(session, uri, item_uri)
 
