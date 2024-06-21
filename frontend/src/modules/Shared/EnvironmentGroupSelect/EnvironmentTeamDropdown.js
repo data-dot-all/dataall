@@ -155,6 +155,7 @@ export const EnvironmentTeamDropdown = (props) => {
                 setFieldValue('SamlAdminGroupName', '');
               }
             }}
+            inputValue={values.SamlAdminGroupName}
             renderInput={(params) => (
               <Box>
                 {groupOptions.length > 0 ? (
@@ -168,7 +169,6 @@ export const EnvironmentTeamDropdown = (props) => {
                       touched.SamlAdminGroupName && errors.SamlAdminGroupName
                     }
                     label="Team"
-                    onChange={handleChange}
                     variant="outlined"
                   />
                 ) : (

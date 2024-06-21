@@ -485,6 +485,7 @@ const NotebookCreateForm = (props) => {
                                 setFieldValue('SamlAdminGroupName', '');
                               }
                             }}
+                            inputValue={values.SamlAdminGroupName}
                             renderInput={(params) => (
                               <Box>
                                 {groupOptions.length > 0 ? (
@@ -500,7 +501,6 @@ const NotebookCreateForm = (props) => {
                                       errors.SamlAdminGroupName
                                     }
                                     label="Team"
-                                    onChange={handleChange}
                                     variant="outlined"
                                   />
                                 ) : (

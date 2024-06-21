@@ -516,6 +516,7 @@ const DatasetCreateForm = (props) => {
                                 setFieldValue('SamlAdminGroupName', '');
                               }
                             }}
+                            inputValue={values.SamlAdminGroupName}
                             renderInput={(params) => (
                               <Box>
                                 {groupOptions.length > 0 ? (
@@ -531,7 +532,6 @@ const DatasetCreateForm = (props) => {
                                       errors.SamlAdminGroupName
                                     }
                                     label="Team"
-                                    onChange={handleChange}
                                     variant="outlined"
                                   />
                                 ) : (
@@ -567,6 +567,7 @@ const DatasetCreateForm = (props) => {
                                 setFieldValue('stewards', '');
                               }
                             }}
+                            inputValue={values.stewards}
                             renderInput={(params) => (
                               <Box>
                                 {groupOptions.length > 0 ? (
@@ -580,18 +581,15 @@ const DatasetCreateForm = (props) => {
                                       touched.stewards && errors.stewards
                                     }
                                     label="Stewards"
-                                    onChange={handleChange}
                                     variant="outlined"
                                   />
                                 ) : (
                                   <TextField
                                     error={Boolean(
-                                      touched.SamlAdminGroupName &&
-                                        errors.SamlAdminGroupName
+                                      touched.stewards && errors.stewards
                                     )}
                                     helperText={
-                                      touched.SamlAdminGroupName &&
-                                      errors.SamlAdminGroupName
+                                      touched.stewards && errors.stewards
                                     }
                                     fullWidth
                                     disabled

@@ -580,6 +580,7 @@ const DatasetImportForm = (props) => {
                                 setFieldValue('SamlAdminGroupName', '');
                               }
                             }}
+                            inputValue={values.SamlAdminGroupName}
                             renderInput={(params) => (
                               <Box>
                                 {groupOptions.length > 0 ? (
@@ -595,7 +596,6 @@ const DatasetImportForm = (props) => {
                                       errors.SamlAdminGroupName
                                     }
                                     label="Team"
-                                    onChange={handleChange}
                                     variant="outlined"
                                   />
                                 ) : (
@@ -631,6 +631,7 @@ const DatasetImportForm = (props) => {
                                 setFieldValue('stewards', '');
                               }
                             }}
+                            inputValue={values.steward}
                             renderInput={(params) => (
                               <Box>
                                 {groupOptions.length > 0 ? (
@@ -644,7 +645,6 @@ const DatasetImportForm = (props) => {
                                       touched.stewards && errors.stewards
                                     }
                                     label="Stewards"
-                                    onChange={handleChange}
                                     variant="outlined"
                                   />
                                 ) : (
