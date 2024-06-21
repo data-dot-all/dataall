@@ -6,7 +6,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemStatus,
 )
 from dataall.modules.s3_datasets_shares.aws.glue_client import GlueClient
-from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.s3_datasets_shares.db.share_object_repositories import S3ShareObjectRepository
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, DatasetStorageLocation
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ, DATASET_FOLDER_READ
 
@@ -36,7 +36,7 @@ class S3ShareItemService:
         """
         Delete Table permissions to share groups
         """
-        other_shares = ShareObjectRepository.find_all_other_share_items(
+        other_shares = S3ShareObjectRepository.find_all_other_share_items(
             session,
             not_this_share_uri=share.shareUri,
             item_uri=tableUri,
@@ -55,7 +55,7 @@ class S3ShareItemService:
         """
         Delete Folder permissions to share groups
         """
-        other_shares = ShareObjectRepository.find_all_other_share_items(
+        other_shares = S3ShareObjectRepository.find_all_other_share_items(
             session,
             not_this_share_uri=share.shareUri,
             item_uri=locationUri,
