@@ -128,7 +128,7 @@ def generate_dataset_access_token(context, source, datasetUri: str = None):
 def resolve_dataset_stack(context: Context, source: S3Dataset, **kwargs):
     if not source:
         return None
-    return StackService.get_stack_with_cfn_resources(
+    return StackService.resolve_parent_obj_stack(
         targetUri=source.datasetUri,
         environmentUri=source.environmentUri,
     )

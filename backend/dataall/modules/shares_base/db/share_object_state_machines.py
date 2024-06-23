@@ -7,7 +7,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemActions,
     ShareItemStatus,
 )
-from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 
 logger = logging.getLogger(__name__)
 
@@ -117,15 +117,6 @@ class ShareObjectSM:
                     ]
                 },
             ),
-            ShareObjectActions.AcquireLockFailure.value: Transition(
-                name=ShareObjectActions.AcquireLockFailure.value,
-                transitions={
-                    ShareObjectStatus.Processed.value: [
-                        ShareObjectStatus.Share_In_Progress.value,
-                        ShareObjectStatus.Revoke_In_Progress.value,
-                    ]
-                },
-            ),
         }
 
     def run_transition(self, transition):
@@ -135,7 +126,7 @@ class ShareObjectSM:
 
     def update_state(self, session, share, new_state):
         logger.info(f'Updating share object {share.shareUri} in DB from {self._state} to state {new_state}')
-        ShareObjectRepository.update_share_object_status(session=session, share_uri=share.shareUri, status=new_state)
+        ShareStatusRepository.update_share_object_status(session=session, share_uri=share.shareUri, status=new_state)
         self._state = new_state
         return True
 
@@ -205,8 +196,14 @@ class ShareItemSM:
             ShareItemActions.Failure.value: Transition(
                 name=ShareItemActions.Failure.value,
                 transitions={
-                    ShareItemStatus.Share_Failed.value: [ShareItemStatus.Share_In_Progress.value],
-                    ShareItemStatus.Revoke_Failed.value: [ShareItemStatus.Revoke_In_Progress.value],
+                    ShareItemStatus.Share_Failed.value: [
+                        ShareItemStatus.Share_In_Progress.value,
+                        ShareItemStatus.Share_Approved.value,
+                    ],
+                    ShareItemStatus.Revoke_Failed.value: [
+                        ShareItemStatus.Revoke_In_Progress.value,
+                        ShareItemStatus.Revoke_Approved.value,
+                    ],
                 },
             ),
             ShareItemActions.RemoveItem.value: Transition(
@@ -241,13 +238,6 @@ class ShareItemSM:
                     ]
                 },
             ),
-            ShareObjectActions.AcquireLockFailure.value: Transition(
-                name=ShareObjectActions.AcquireLockFailure.value,
-                transitions={
-                    ShareItemStatus.Share_Failed.value: [ShareItemStatus.Share_Approved.value],
-                    ShareItemStatus.Revoke_Failed.value: [ShareItemStatus.Revoke_Approved.value],
-                },
-            ),
         }
 
     def run_transition(self, transition):
@@ -259,12 +249,12 @@ class ShareItemSM:
         if share_uri and (new_state != self._state):
             if new_state == ShareItemStatus.Deleted.value:
                 logger.info(f'Deleting share items in DB in {self._state} state')
-                ShareObjectRepository.delete_share_item_status_batch(
+                ShareStatusRepository.delete_share_item_status_batch(
                     session=session, share_uri=share_uri, status=self._state
                 )
             else:
                 logger.info(f'Updating share items in DB from {self._state} to state {new_state}')
-                ShareObjectRepository.update_share_item_status_batch(
+                ShareStatusRepository.update_share_item_status_batch(
                     session=session, share_uri=share_uri, old_status=self._state, new_status=new_state
                 )
             self._state = new_state
@@ -274,23 +264,6 @@ class ShareItemSM:
 
     def update_state_single_item(self, session, share_item, new_state):
         logger.info(f'Updating share item in DB {share_item.shareItemUri} status to {new_state}')
-        ShareObjectRepository.update_share_item_status(session=session, uri=share_item.shareItemUri, status=new_state)
+        ShareStatusRepository.update_share_item_status(session=session, uri=share_item.shareItemUri, status=new_state)
         self._state = new_state
         return True
-
-    @staticmethod
-    def get_share_item_shared_states():
-        return [
-            ShareItemStatus.Share_Succeeded.value,
-            ShareItemStatus.Share_In_Progress.value,
-            ShareItemStatus.Revoke_Failed.value,
-            ShareItemStatus.Revoke_In_Progress.value,
-            ShareItemStatus.Revoke_Approved.value,
-        ]
-
-    @staticmethod
-    def get_share_item_revokable_states():
-        return [
-            ShareItemStatus.Share_Succeeded.value,
-            ShareItemStatus.Revoke_Failed.value,
-        ]

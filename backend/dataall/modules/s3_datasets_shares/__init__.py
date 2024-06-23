@@ -16,9 +16,9 @@ class S3DatasetsSharesApiModuleInterface(ModuleInterface):
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.notifications import NotificationsModuleInterface
         from dataall.modules.s3_datasets import DatasetApiModuleInterface
-        from dataall.modules.shares_base import SharesBaseModuleInterface
+        from dataall.modules.shares_base import SharesBaseAPIModuleInterface
 
-        return [DatasetApiModuleInterface, NotificationsModuleInterface, SharesBaseModuleInterface]
+        return [DatasetApiModuleInterface, NotificationsModuleInterface, SharesBaseAPIModuleInterface]
 
     def __init__(self):
         from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
@@ -46,14 +46,16 @@ class S3DatasetsSharesAsyncHandlersModuleInterface(ModuleInterface):
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.notifications import NotificationsModuleInterface
         from dataall.modules.s3_datasets import DatasetAsyncHandlersModuleInterface
-        from dataall.modules.shares_base import SharesBaseModuleInterface
+        from dataall.modules.shares_base import SharesBaseAsyncHandlerModuleInterface
 
-        return [DatasetAsyncHandlersModuleInterface, NotificationsModuleInterface, SharesBaseModuleInterface]
+        return [
+            DatasetAsyncHandlersModuleInterface,
+            NotificationsModuleInterface,
+            SharesBaseAsyncHandlerModuleInterface,
+        ]
 
     def __init__(self):
-        import dataall.modules.s3_datasets_shares.handlers
-
-        log.info('Sharing handlers have been imported')
+        log.info('S3 Sharing handlers have been imported')
 
 
 class S3DatasetsSharesCdkModuleInterface(ModuleInterface):
@@ -68,3 +70,56 @@ class S3DatasetsSharesCdkModuleInterface(ModuleInterface):
         from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import SharePolicyService
 
         log.info('CDK module data_sharing has been imported')
+
+
+class S3DatasetsSharesECSShareModuleInterface(ModuleInterface):
+    """Implements ModuleInterface for data sharing"""
+
+    @staticmethod
+    def is_supported(modes):
+        return ImportMode.SHARES_TASK in modes
+
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        from dataall.modules.shares_base import SharesBaseECSTaskModuleInterface
+        from dataall.modules.notifications import NotificationsModuleInterface
+
+        return [SharesBaseECSTaskModuleInterface, NotificationsModuleInterface]
+
+    def __init__(self):
+        from dataall.modules.shares_base.services.share_processor_manager import (
+            ShareProcessorManager,
+            ShareProcessorDefinition,
+        )
+        from dataall.modules.shares_base.services.shares_enums import ShareableType
+        from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, DatasetBucket, DatasetStorageLocation
+        from dataall.modules.s3_datasets_shares.services.share_processors.glue_table_share_processor import (
+            ProcessLakeFormationShare,
+        )
+        from dataall.modules.s3_datasets_shares.services.share_processors.s3_bucket_share_processor import (
+            ProcessS3BucketShare,
+        )
+        from dataall.modules.s3_datasets_shares.services.share_processors.s3_access_point_share_processor import (
+            ProcessS3AccessPointShare,
+        )
+
+        ShareProcessorManager.register_processor(
+            ShareProcessorDefinition(
+                ShareableType.Table, ProcessLakeFormationShare, DatasetTable, DatasetTable.tableUri
+            )
+        )
+        ShareProcessorManager.register_processor(
+            ShareProcessorDefinition(
+                ShareableType.S3Bucket, ProcessS3BucketShare, DatasetBucket, DatasetBucket.bucketUri
+            )
+        )
+        ShareProcessorManager.register_processor(
+            ShareProcessorDefinition(
+                ShareableType.StorageLocation,
+                ProcessS3AccessPointShare,
+                DatasetStorageLocation,
+                DatasetStorageLocation.locationUri,
+            )
+        )
+
+        log.info('ECS Share module s3_data_sharing has been imported')

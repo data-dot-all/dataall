@@ -37,13 +37,6 @@ export const listDataPipelines = (filter) => ({
             stack
             status
             stackUri
-            targetUri
-            accountid
-            region
-            stackid
-            link
-            outputs
-            resources
           }
         }
       }

@@ -36,7 +36,7 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 import { archiveEnvironment, getEnvironment } from '../services';
-import { KeyValueTagList, Stack, StackStatus } from 'modules/Shared';
+import { KeyValueTagList, Stack } from 'modules/Shared';
 import {
   EnvironmentRedshiftConnections,
   EnvironmentDatasets,
@@ -95,7 +95,6 @@ const EnvironmentView = () => {
   const [currentTab, setCurrentTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [env, setEnv] = useState(null);
-  const [stack, setStack] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isArchiveObjectModalOpen, setIsArchiveObjectModalOpen] =
     useState(false);
@@ -142,7 +141,6 @@ const EnvironmentView = () => {
         environment.parameters.map((x) => [x.key, x.value])
       );
       setEnv(environment);
-      setStack(environment.stack);
       setIsAdmin(
         ['Admin', 'Owner'].indexOf(environment.userRoleInEnvironment) !== -1
       );
@@ -172,11 +170,6 @@ const EnvironmentView = () => {
       <Helmet>
         <title>Environments: Environment Details | data.all</title>
       </Helmet>
-      <StackStatus
-        stack={stack}
-        setStack={setStack}
-        environmentUri={env.environmentUri}
-      />
       <Box
         sx={{
           backgroundColor: 'background.default',

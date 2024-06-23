@@ -5,7 +5,7 @@ export const importDashboard = ({ input }) => ({
     input
   },
   mutation: gql`
-    mutation importDashboard($input: ImportDashboardInput) {
+    mutation importDashboard($input: ImportDashboardInput!) {
       importDashboard(input: $input) {
         dashboardUri
         name

@@ -1,9 +1,7 @@
-import abc
 import logging
 import time
 from datetime import datetime
 from warnings import warn
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.s3_datasets_shares.aws.glue_client import GlueClient
 from dataall.modules.s3_datasets_shares.aws.lakeformation_client import LakeFormationClient
@@ -11,18 +9,20 @@ from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.aws.iam import IAM
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.db import exceptions
-from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
+from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemStatus,
     ShareObjectActions,
     ShareItemActions,
     ShareItemHealthStatus,
 )
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable
 from dataall.modules.s3_datasets_shares.services.dataset_sharing_alarm_service import DatasetSharingAlarmService
-from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
+from dataall.modules.shares_base.db.share_object_models import ShareObjectItem
 from dataall.modules.s3_datasets_shares.services.share_managers.share_manager_utils import ShareErrorFormatter
+from dataall.modules.shares_base.services.sharing_service import ShareData
 
 logger = logging.getLogger(__name__)
 
@@ -31,20 +31,16 @@ class LFShareManager:
     def __init__(
         self,
         session,
-        dataset: S3Dataset,
-        share: ShareObject,
+        share_data: ShareData,
         tables: [DatasetTable],
-        source_environment: Environment,
-        target_environment: Environment,
-        env_group: EnvironmentGroup,
     ):
         self.session = session
-        self.env_group = env_group
-        self.dataset = dataset
-        self.share = share
         self.tables = tables
-        self.source_environment = source_environment
-        self.target_environment = target_environment
+        self.env_group = share_data.env_group
+        self.dataset = share_data.dataset
+        self.share = share_data.share
+        self.source_environment = share_data.source_environment
+        self.target_environment = share_data.target_environment
         # Set the source account details by checking if a catalog account exists
         self.source_account_id, self.source_account_region, self.source_database_name = (
             self.init_source_account_details()
@@ -59,18 +55,6 @@ class LFShareManager:
         self.glue_client_in_target = None
         self.lf_client_in_source = None
         self.lf_client_in_target = None
-
-    @abc.abstractmethod
-    def process_approved_shares(self) -> [str]:
-        return NotImplementedError
-
-    @abc.abstractmethod
-    def process_revoked_shares(self) -> [str]:
-        return NotImplementedError
-
-    @abc.abstractmethod
-    def verify_shares(self) -> bool:
-        raise NotImplementedError
 
     def init_source_account_details(self):
         """
@@ -627,7 +611,7 @@ class LFShareManager:
                 new_state = share_item_sm.run_transition(ShareItemActions.Failure.value)
                 share_item_sm.update_state_single_item(self.session, share_item, new_state)
             else:
-                ShareObjectRepository.update_share_item_health_status(
+                ShareStatusRepository.update_share_item_health_status(
                     self.session, share_item, ShareItemHealthStatus.Unhealthy.value, str(error), datetime.now()
                 )
 

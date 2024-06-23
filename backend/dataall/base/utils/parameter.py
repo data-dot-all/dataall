@@ -5,7 +5,7 @@ import os
 import boto3
 from botocore.exceptions import ClientError
 
-log = logging.getLogger('utils:Parameter')
+log = logging.getLogger(__name__)
 
 
 class Parameter:
@@ -25,7 +25,7 @@ class Parameter:
     @classmethod
     def put_parameter(cls, env, path='', value='', description=None):
         pname = cls.get_parameter_name(env, path)
-        print('writing ', pname)
+        log.info('writing %s', pname)
         ssm = cls.ssm()
         response = ssm.put_parameter(
             Name=pname,
@@ -41,8 +41,8 @@ class Parameter:
         pname = cls.get_parameter_name(env, path)
         ssm = cls.ssm()
         try:
-            param_value = ssm.get_parameter(Name=pname)['Parameter']['Value']
-            return param_value
+            param_value = ssm.get_parameter(Name=pname)
+            return param_value['Parameter']['Value']
         except ClientError as e:
             if e.response['Error']['Code'] == 'ParameterNotFound':
                 log.warning('Parameter `{}` not found for env `{}`, defaulting to None'.format(path, env))
@@ -84,10 +84,10 @@ class Parameter:
 
         total = sum([len(config[topic]) for topic in config.keys()])
         done = 1
-        print('Writing %(total)s `global` parameters in %(env)s Environment' % vars())
+        log.info('Writing %(total)s `global` parameters in %(env)s Environment' % vars())
         for topic in config.keys():
             for param in config[topic].keys():
-                print('     %(done)s/%(total)s written' % vars())
+                log.info('     %(done)s/%(total)s written' % vars())
                 Parameter.put_parameter(env=env, path='/'.join([topic, param]), value=config[topic][param])
                 done += 1
 

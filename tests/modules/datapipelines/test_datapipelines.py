@@ -4,7 +4,7 @@ import pytest
 def test_create_pipeline_environment(client, tenant, group, env_fixture, pipeline):
     response = client.query(
         """
-        mutation createDataPipelineEnvironment($input: NewDataPipelineEnvironmentInput) {
+        mutation createDataPipelineEnvironment($input: NewDataPipelineEnvironmentInput!) {
           createDataPipelineEnvironment(input: $input) {
             envPipelineUri
             environmentUri

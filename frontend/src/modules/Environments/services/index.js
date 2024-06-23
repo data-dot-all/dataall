@@ -22,6 +22,7 @@ export * from './listEnvironmentNetworks';
 export * from './listEnvironmentPermissions';
 export * from './removeConsumptionRole';
 export * from './removeGroup';
+export * from './searchEnvironmentDataItems';
 export * from './updateEnvironment';
 export * from './updateGroupEnvironmentPermissions';
 export * from './updateConsumptionRole';

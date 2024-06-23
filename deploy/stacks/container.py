@@ -177,6 +177,7 @@ class ContainerStack(pyNestedClass):
         self.add_share_management_task()
         self.add_share_verifier_task()
         self.add_share_reapplier_task()
+        self.add_omics_fetch_workflows_task()
 
     @run_if(['modules.s3_datasets.active', 'modules.dashboards.active'])
     def add_catalog_indexer_task(self):
@@ -216,7 +217,7 @@ class ContainerStack(pyNestedClass):
             container_name='container',
             image=ecs.ContainerImage.from_ecr_repository(repository=self._ecr_repository, tag=self._cdkproxy_image_tag),
             environment=self._create_env('DEBUG'),
-            command=['python3.9', '-m', 'dataall.modules.s3_datasets_shares.tasks.share_manager_task'],
+            command=['python3.9', '-m', 'dataall.modules.shares_base.tasks.share_manager_task'],
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix='task',
                 log_group=self.create_log_group(self._envname, self._resource_prefix, log_group_name='share-manager'),
@@ -243,7 +244,7 @@ class ContainerStack(pyNestedClass):
     def add_share_verifier_task(self):
         verify_shares_task, verify_shares_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
-            command=['python3.9', '-m', 'dataall.modules.s3_datasets_shares.tasks.share_verifier_task'],
+            command=['python3.9', '-m', 'dataall.modules.shares_base.tasks.share_verifier_task'],
             container_id='container',
             ecr_repository=self._ecr_repository,
             environment=self._create_env('INFO'),
@@ -276,7 +277,7 @@ class ContainerStack(pyNestedClass):
             container_name='container',
             image=ecs.ContainerImage.from_ecr_repository(repository=self._ecr_repository, tag=self._cdkproxy_image_tag),
             environment=self._create_env('INFO'),
-            command=['python3.9', '-m', 'dataall.modules.s3_datasets_shares.tasks.share_reapplier_task'],
+            command=['python3.9', '-m', 'dataall.modules.shares_base.tasks.share_reapplier_task'],
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix='task',
                 log_group=self.create_log_group(self._envname, self._resource_prefix, log_group_name='share-reapplier'),
@@ -328,6 +329,28 @@ class ContainerStack(pyNestedClass):
             prod_sizing=self._prod_sizing,
         )
         self.ecs_task_definitions_families.append(sync_tables_task.task_definition.family)
+
+    @run_if(['modules.omics.active'])
+    def add_omics_fetch_workflows_task(self):
+        fetch_omics_workflows_task, fetch_omics_workflows_task_def = self.set_scheduled_task(
+            cluster=self.ecs_cluster,
+            command=['python3.9', '-m', 'dataall.modules.omics.tasks.omics_workflows_fetcher'],
+            container_id='container',
+            ecr_repository=self._ecr_repository,
+            environment=self._create_env('DEBUG'),
+            image_tag=self._cdkproxy_image_tag,
+            log_group=self.create_log_group(
+                self._envname, self._resource_prefix, log_group_name='omics-workflows-fetcher'
+            ),
+            schedule_expression=Schedule.expression('cron(0 1 * * ? *)'),
+            scheduled_task_id=f'{self._resource_prefix}-{self._envname}-omics-workflows-fetcher-schedule',
+            task_id=f'{self._resource_prefix}-{self._envname}-omics-workflows-fetcher',
+            task_role=self.task_role,
+            vpc=self._vpc,
+            security_group=self.scheduled_tasks_sg,
+            prod_sizing=self._prod_sizing,
+        )
+        self.ecs_task_definitions_families.append(fetch_omics_workflows_task.task_definition.family)
 
     def create_ecs_security_groups(self, envname, resource_prefix, vpc, vpce_connection, s3_prefix_list, lambdas):
         scheduled_tasks_sg = ec2.SecurityGroup(
@@ -617,6 +640,15 @@ class ContainerStack(pyNestedClass):
             rule_name=scheduled_task_id,
             security_groups=[security_group],
         )
+
+        # Add the rule of the scheduled task to parameter store
+        ssm.StringParameter(
+            self,
+            f'ECSTaskRule-{scheduled_task_id}',
+            parameter_name=f'/dataall/{self._envname}/ecs/ecs_scheduled_tasks/rule/{scheduled_task_id}',
+            string_value=scheduled_task.event_rule.rule_name,
+        )
+
         return scheduled_task, task
 
     @property

@@ -1,13 +1,25 @@
 import { gql } from 'apollo-boost';
 
-export const getStack = (environmentUri, stackUri) => ({
+export const getStack = (environmentUri, stackUri, targetUri, targetType) => ({
   variables: {
     environmentUri,
-    stackUri
+    stackUri,
+    targetUri,
+    targetType
   },
   query: gql`
-    query getStack($environmentUri: String!, $stackUri: String!) {
-      getStack(environmentUri: $environmentUri, stackUri: $stackUri) {
+    query getStack(
+      $environmentUri: String!
+      $stackUri: String!
+      $targetUri: String!
+      $targetType: String!
+    ) {
+      getStack(
+        environmentUri: $environmentUri
+        stackUri: $stackUri
+        targetUri: $targetUri
+        targetType: $targetType
+      ) {
         status
         stackUri
         targetUri

@@ -9,6 +9,9 @@
         "datapipelines": {
             "active": true
         },
+        "omics": {
+            "active": false
+        },
         "datasets_base": {
             "active": true,
             "features": {
@@ -50,12 +53,16 @@
         },
         "dashboards": {
             "active": true
+        },
+        "maintenance": {
+            "active" : true
         }
     },
     "core": {
         "features": {
             "env_aws_actions": true,
-            "cdk_pivot_role_multiple_environments_same_account": false
+            "cdk_pivot_role_multiple_environments_same_account": false,
+            "enable_quicksight_monitoring": false
         }
     }
 }
