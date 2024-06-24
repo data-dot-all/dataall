@@ -377,3 +377,10 @@ class ShareObjectRepository:
         return paginate(
             query.order_by(shareable_objects.c.itemName).distinct(), data.get('page', 1), data.get('pageSize', 10)
         ).to_dict()
+
+    @staticmethod
+    def list_active_share_object_for_dataset(session, dataset_uri):
+        share_objects = session.query(ShareObject).filter(and_(ShareObject.datasetUri == dataset_uri, ShareObject.deleted.is_(None))).all()
+        return share_objects
+
+

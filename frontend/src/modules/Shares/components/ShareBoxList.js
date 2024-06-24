@@ -1,6 +1,6 @@
 import {
   Autocomplete,
-  Box,
+  Box, Button,
   Checkbox,
   Container,
   Grid,
@@ -11,7 +11,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import PropTypes from 'prop-types';
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Defaults, Pager, ShareStatus, useSettings } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
@@ -28,6 +28,9 @@ import { getShareRequestsFromMe, listOwnedDatasets } from '../services';
 import { ShareBoxListItem } from './ShareBoxListItem';
 import { ShareObjectSelectorModal } from './ShareObjectSelectorModal';
 import { ShareStatusList } from '../constants';
+import {RefreshRounded} from "@mui/icons-material";
+import {reApplyShareObjectItemsOnDataset} from "../services/reApplyShareObjectItemsOnDataset";
+import {useSnackbar} from "notistack";
 
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
@@ -51,6 +54,7 @@ export const ShareBoxList = (props) => {
   const [isVerifyObjectItemsModalOpen, setIsVerifyObjectItemsModalOpen] =
     useState(false);
   const statusOptions = ShareStatusList;
+  const { enqueueSnackbar } = useSnackbar();
 
   const handleVerifyObjectItemsModalOpen = () => {
     setIsVerifyObjectItemsModalOpen(true);
@@ -246,6 +250,28 @@ export const ShareBoxList = (props) => {
       .finally(() => setLoading(false));
   }, [client, dispatch]);
 
+  const reapplyShares = async (datasetUri) => {
+    try{
+        const response = await client.mutate(
+          reApplyShareObjectItemsOnDataset({ datasetUri: datasetUri })
+        );
+        if (response && !response.errors) {
+            enqueueSnackbar('Reapplying all shares on dataset', {
+              anchorOrigin: {
+                horizontal: 'right',
+                vertical: 'top'
+              },
+              variant: 'success'
+            })
+        } else {
+          dispatch({ type: SET_ERROR, error: response.errors[0].message });
+        }
+    }
+    catch (error) {
+      dispatch({ type: SET_ERROR, error: error?.message });
+    }
+  }
+
   useEffect(() => {
     setLoading(true);
     setFilter({ page: 1, pageSize: 10, term: '' });
@@ -325,6 +351,20 @@ export const ShareBoxList = (props) => {
           >
             Verify Share Objects Item(s) Health Status
           </LoadingButton>
+        )}
+
+        {dataset &&  (
+            <Button
+              color="info"
+              align="right"
+              startIcon={<RefreshRounded fontSize="small" />}
+              sx={{ m: 1 }}
+              onClick={(event) => {reapplyShares(dataset.datasetUri)}}
+              type="button"
+              variant="outlined"
+            >
+              Re-apply Share Items for Dataset
+            </Button>
         )}
 
         <Container maxWidth={settings.compact ? 'xl' : false}>

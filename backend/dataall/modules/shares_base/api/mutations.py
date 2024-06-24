@@ -11,7 +11,7 @@ from dataall.modules.shares_base.api.resolvers import (
     submit_share_object,
     update_share_reject_purpose,
     update_share_request_purpose,
-    verify_items_share_object,
+    verify_items_share_object, reapply_share_items_share_object_for_dataset,
 )
 
 createShareObject = gql.MutationField(
@@ -95,6 +95,13 @@ reApplyItemsShareObject = gql.MutationField(
     args=[gql.Argument(name='input', type=gql.Ref('ShareItemSelectorInput'))],
     type=gql.Ref('ShareObject'),
     resolver=reapply_items_share_object,
+)
+
+reApplyShareObjectItemsOnDataset = gql.MutationField(
+    name='reApplyShareObjectItemsOnDataset',
+    args=[gql.Argument(name='datasetUri', type=gql.String)],
+    type=gql.Boolean,
+    resolver=reapply_share_items_share_object_for_dataset,
 )
 
 updateShareRejectReason = gql.MutationField(
