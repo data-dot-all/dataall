@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, ForeignKey
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
-from dataall.modules.datasets_base.services.datasets_enums import DatasetType
+from dataall.modules.datasets_base.services.datasets_enums import DatasetTypes
 from dataall.base.db import Resource, Base, utils
 
 
@@ -15,7 +15,7 @@ class RedshiftDataset(DatasetBase):
     datashareArn = Column(String, nullable=True)
 
     __mapper_args__ = {
-        'polymorphic_identity': DatasetType.Redshift,
+        'polymorphic_identity': DatasetTypes.Redshift,
     }
 
 
