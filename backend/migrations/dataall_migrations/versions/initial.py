@@ -5,3 +5,5 @@ class Init(BaseDataAllMigration):
     key = '0'
     name = 'Initial migration'
     description = 'Initial migration'
+
+    previous_migration = None

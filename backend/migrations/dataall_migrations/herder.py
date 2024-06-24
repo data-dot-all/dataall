@@ -29,33 +29,40 @@ class Herder:
                     self.migration_path[obj.key] = obj
 
         for key, migration in self.migration_path.items():
-            prev = migration.previous_migration
+            prev = migration.previous()
             if prev is not None:
                 self.migration_path[prev].set_next(key)
 
         for key, migration in self.migration_path.items():
-            if migration.is_last():
+            if migration.next() is None:
                 self.last_key = key
                 break
 
     def upgrade(self, target_key=None, start_key=None):
         key = start_key if start_key is not None else self.initial_key
         print(f"Upgrade from {key} to {target_key if target_key is not None else 'latest'}")
-        while key != target_key and key is not None:
+        while key is not None:
             migration = self.migration_path[key]
-            print(f"Applying migration {migration.name}")
+            print(f'Applying migration {migration.name}, class = ', migration.__name__)
             migration.up()
-            print(f"Migration {migration.name} completed")
-            key = migration.next_migration
+            print(f'Migration {migration.name} completed')
+            if key == target_key:
+                break
+            key = migration.next()
         print('Upgrade completed')
 
     def downgrade(self, target_key=None, start_key=None):
         key = start_key if start_key is not None else self.last_key
         print(
-            f"Downgrade from {start_key if start_key is not None else 'latest'} to {target_key if target_key is not None else 'initial'}")
-        while key != target_key and key != '0':
+            f"Downgrade from {start_key if start_key is not None else 'latest'} to {target_key if target_key is not None else 'initial'}"
+        )
+        while key != '0':
             migration = self.migration_path[key]
-            print(f"Reverting migration {migration.name}")
+            print(f'Reverting migration {migration.name}')
             migration.down()
-            print(f"Migration {migration.name} completed")
-            key = migration.previous_migration
+            print(f'Migration {migration.name} completed')
+            if key == target_key:
+                break
+            key = migration.previous()
+
+        print('Downgrade completed')

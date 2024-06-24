@@ -16,21 +16,18 @@ def protect(*protected):
     return Protect
 
 
-class BaseDataAllMigration(metaclass=protect("set_next", "set_previous", "is_initial")):
+class BaseDataAllMigration(metaclass=protect('set_next', 'set_previous', 'is_initial', 'is_last')):
     key = '0'
     name = 'Base Migration'
     description = 'Base Migration'
 
-    previous_migration = None
-    next_migration = None
-
     @classmethod
     def up(cls):
-        print(f"Upgrade is not defined for migration {cls.name}")
+        print(f'Upgrade is not defined for migration {cls.name}')
 
     @classmethod
     def down(cls):
-        print(f"Downgrade is not defined for migration {cls.name}")
+        print(f'Downgrade is not defined for migration {cls.name}')
 
     @classmethod
     def set_previous(cls, previous_migration_key):
@@ -41,9 +38,21 @@ class BaseDataAllMigration(metaclass=protect("set_next", "set_previous", "is_ini
         cls.next_migration = next_migration_key
 
     @classmethod
+    def next(cls):
+        if 'next_migration' in cls.__dict__:
+            return cls.next_migration
+        return None
+
+    @classmethod
+    def previous(cls):
+        if 'previous_migration' in cls.__dict__:
+            return cls.previous_migration
+        return None
+
+    @classmethod
     def is_initial(cls):
-        return cls.previous_migration is None
+        return 'previous_migration' not in cls.__dict__ or cls.previous_migration is None
 
     @classmethod
     def is_last(cls):
-        return cls.next_migration is None
+        return 'next_migration' not in cls.__dict__ or cls.next_migration is None
