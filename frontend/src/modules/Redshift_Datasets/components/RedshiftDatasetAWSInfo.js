@@ -54,7 +54,8 @@ export const RedshiftDatasetAWSInfo = (props) => {
           <DatashareStatus status={dataset.datashareStatus}></DatashareStatus>
           {!(
             dataset.datashareStatus === 'ACTIVE' ||
-            dataset.datashareStatus === 'AVAILABLE'
+            dataset.datashareStatus === 'AVAILABLE' ||
+            dataset.datashareStatus === 'AUTHORIZED'
           ) ? (
             <Button
               startIcon={<FaSync size={15} />}

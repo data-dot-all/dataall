@@ -31,9 +31,9 @@ log = logging.getLogger(__name__)
 
 class RedshiftDatasetService:
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
-    @ResourcePolicyService.has_resource_permission(IMPORT_REDSHIFT_DATASET)
-    @GroupPolicyService.has_group_permission(IMPORT_REDSHIFT_DATASET)
+    #@TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    #@ResourcePolicyService.has_resource_permission(IMPORT_REDSHIFT_DATASET)
+    #@GroupPolicyService.has_group_permission(IMPORT_REDSHIFT_DATASET)
     def import_redshift_dataset(uri, admin_group, data: dict):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -43,7 +43,7 @@ class RedshiftDatasetService:
                 session=session, username=context.username, env=environment, data=data
             )
             connection = RedshiftConnectionRepository.find_redshift_connection(session, dataset.connectionUri)
-            dataset.datashareArn = f'arn:aws:redshift:{dataset.region}:{dataset.AwsAccountId}:datashare:{connection.nameSpaceId if connection.redshiftType == RedshiftType.Serverless.value else connection.clusterId}/{dataset.label.lower()}-{dataset.datasetUri}'
+            dataset.datashareArn = f'arn:aws:redshift:{dataset.region}:{dataset.AwsAccountId}:datashare:{connection.nameSpaceId if connection.redshiftType == RedshiftType.Serverless.value else connection.clusterId}/{environment.resourcePrefix}-{dataset.label.lower()}-{dataset.datasetUri}'
             dataset.userRoleForDataset = DatasetRole.Creator.value
             ResourcePolicyService.attach_resource_policy(
                 session=session,
@@ -69,7 +69,7 @@ class RedshiftDatasetService:
                     resource_uri=dataset.datasetUri,
                     resource_type=RedshiftDataset.__name__,
                 )
-            # DatasetIndexer.upsert(session=session, dataset_uri=dataset.datasetUri)
+            # DatasetIndexer.upsert(session=session, dataset_uri=dataset.datasetUri) #TODO: UNCOMMENT
 
             task = Task(
                 targetUri=dataset.datasetUri,

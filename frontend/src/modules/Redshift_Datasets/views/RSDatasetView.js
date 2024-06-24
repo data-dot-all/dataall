@@ -224,7 +224,7 @@ const RSDatasetView = () => {
                   underline="hover"
                   color="textPrimary"
                   component={RouterLink}
-                  to={`/console/s3-datasets/${dataset.datasetUri}`}
+                  to={`/console/redshift-datasets/${dataset.datasetUri}`}
                   variant="subtitle2"
                 >
                   {dataset.label}

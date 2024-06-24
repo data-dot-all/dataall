@@ -109,26 +109,24 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
     return newRow;
   };
 
-  const deleteConnection = async (connectionUri, connectionType) => {
+  const deleteConnection = async (connectionUri) => {
     try {
-      if (connectionType === 'ConnectionType.Redshift') {
-        const response = await client.mutate(
-          deleteRedshiftConnection({
-            connectionUri: connectionUri
-          })
-        );
-        if (!response.errors) {
-          enqueueSnackbar('Redshift connection removed from environment', {
-            anchorOrigin: {
-              horizontal: 'right',
-              vertical: 'top'
-            },
-            variant: 'success'
-          });
-          fetchItems();
-        } else {
-          dispatch({ type: SET_ERROR, error: response.errors[0].message });
-        }
+      const response = await client.mutate(
+        deleteRedshiftConnection({
+          connectionUri: connectionUri
+        })
+      );
+      if (!response.errors) {
+        enqueueSnackbar('Redshift connection removed from environment', {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'success'
+        });
+        fetchItems();
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
@@ -143,7 +141,26 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
         })
       );
       if (!response.errors) {
-        setItems({ ...response.data.listEnvironmentConnections });
+        setItems({
+          ...response.data.listEnvironmentRedshiftConnections,
+          nodes: [
+            ...response.data.listEnvironmentRedshiftConnections.nodes.map(
+              (item) => ({
+                ...item,
+                id: item.connectionUri,
+                redshiftId:
+                  item.redshiftType === 'serverless'
+                    ? item.nameSpaceId
+                    : item.clusterId,
+                connectionType: item.secretArn ? 'SecretArn' : 'Redshift User',
+                connectionDetails: item.secretArn
+                  ? item.secretArn
+                  : item.redshiftUser,
+                workgroup: item.workgroup ? item.workgroup : '-'
+              })
+            )
+          ]
+        });
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -175,7 +192,7 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
             title={
               <Box>
                 <SupervisedUserCircleRounded style={{ marginRight: '10px' }} />{' '}
-                Environment Connections
+                Redshift Connections
               </Box>
             }
           />
@@ -225,7 +242,7 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
                 Add Connection
               </Button>
               {isCreateModalOpen && (
-                <EnvironmentRedshiftConnectionAddForm //TODO make generic like Dataset creation
+                <EnvironmentRedshiftConnectionAddForm
                   environment={environment}
                   open
                   reload={fetchItems}
@@ -249,14 +266,38 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
                     editable: true
                   },
                   {
-                    field: 'connectionType',
-                    headerName: 'Type',
+                    field: 'redshiftType',
+                    headerName: 'Redshift Type',
+                    flex: 1,
+                    editable: false
+                  },
+                  {
+                    field: 'redshiftId',
+                    headerName: 'NamespaceId/ClusterId',
+                    flex: 1,
+                    editable: false
+                  },
+                  {
+                    field: 'workgroup',
+                    headerName: 'Workgroup',
                     flex: 1,
                     editable: false
                   },
                   {
                     field: 'SamlGroupName',
                     headerName: 'Team',
+                    flex: 1,
+                    editable: false
+                  },
+                  {
+                    field: 'connectionType',
+                    headerName: 'Connection Type',
+                    flex: 1,
+                    editable: false
+                  },
+                  {
+                    field: 'connectionDetails',
+                    headerName: 'SecretArn/Redshift user',
                     flex: 1,
                     editable: false
                   },
@@ -268,7 +309,6 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
                     cellClassName: 'actions',
                     getActions: ({ id, ...props }) => {
                       const name = props.row.name;
-                      const connectionType = props.row.connectionType;
                       const isInEditMode =
                         rowModesModel[id]?.mode === GridRowModes.Edit;
 
@@ -311,9 +351,7 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
                           onClose={() => handleDeleteModalClosed(id)}
                           open={isDeleteModalOpenId === id}
                           isAWSResource={false}
-                          deleteFunction={() =>
-                            deleteConnection(id, connectionType)
-                          }
+                          deleteFunction={() => deleteConnection(id)}
                         />
                       ];
                     }

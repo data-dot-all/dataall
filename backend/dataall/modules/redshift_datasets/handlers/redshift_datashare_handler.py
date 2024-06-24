@@ -44,10 +44,6 @@ class RedshiftDataShareHandler:
             lakeformation_client.register_resource_datashare(datashare_arn=dataset.datashareArn)
 
             glue_client = Glue(account_id=dataset.AwsAccountId, region=dataset.region)
-            # TODO: think - single dataset, duplicated datasets, same dataset imported twice
             glue_client.create_database_from_redshift_datashare(
                 name=dataset.label, datashare_arn=dataset.datashareArn, account=dataset.AwsAccountId
             )
-
-            # TODO: AS iac - CustomResource and maybe a few thingys - examine and discussion
-            #

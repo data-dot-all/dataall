@@ -121,7 +121,7 @@ const RSDatasetImportForm = (props) => {
         setConnectionOptions(
           response.data.listEnvironmentRedshiftConnections.nodes.map((g) => ({
             value: g.connectionUri,
-            label: g.name
+            label: `${g.name} [${g.secretArn}${g.redshiftUser}]`
           }))
         );
       } else {

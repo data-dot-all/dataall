@@ -4,10 +4,10 @@ import { Label } from 'design';
 export const DatashareStatus = (props) => {
   const { status } = props;
   const setTagColor = () => {
-    if (['ACTIVE', 'AVAILABLE'].includes(status)) return 'success';
+    if (['ACTIVE', 'AVAILABLE', 'AUTHORIZED'].includes(status))
+      return 'success';
     if (['REJECTED', 'DEAUTHORIZED'].includes(status)) return 'error';
-    if (['PENDING_AUTHORIZATION', 'AUTHORIZED'].includes(status))
-      return 'warning';
+    if (['PENDING_AUTHORIZATION'].includes(status)) return 'warning';
     return 'info';
   };
   return <Label color={setTagColor(status)}>{status}</Label>;

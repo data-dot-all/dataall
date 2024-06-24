@@ -61,12 +61,6 @@ class RedshiftDatasetCdkModuleInterface(ModuleInterface):
     def is_supported(modes: Set[ImportMode]):
         return ImportMode.CDK in modes
 
-    @staticmethod
-    def depends_on() -> List[Type['ModuleInterface']]:
-        from dataall.modules.datasets_base import DatasetBaseModuleInterface
-
-        return [DatasetBaseModuleInterface]
-
     def __init__(self):
         import dataall.modules.redshift_datasets.cdk
 

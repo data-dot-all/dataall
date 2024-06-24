@@ -12,10 +12,31 @@ class RedshiftDatasetsPivotRole(PivotRoleStatementSet):
     def get_statements(self):
         statements = [
             iam.PolicyStatement(
+                sid='RedshiftDatashare',
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'redshift-data:AuthorizeDataShare',
+                    'redshift-data:AssociateDataShareConsumer',
+                    'redshift-data:DescribeDataShares'
+                ],
+                resources=['*'],
+            ),
+            iam.PolicyStatement(
                 sid='RedshiftDataAPIActions',
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'redshift-data:ExecuteStatement',
+                ],
+                resources=[
+                    f'arn:aws:redshift-serverless:{self.region}:{self.account}:workgroup/*',
+                    f'arn:aws:redshift:{self.region}:{self.account}:cluster/*',  # TODO: SCOPE DOWN PERMISSIONS
+                ],
+            ),
+            iam.PolicyStatement(
+                sid='RedshiftActions',
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'redshift:ExecuteStatement',
                 ],
                 resources=[
                     f'arn:aws:redshift-serverless:{self.region}:{self.account}:workgroup/*',
