@@ -123,12 +123,13 @@ class ShareItemService:
             item_type = data.get('itemType')
             item_uri = data.get('itemUri')
             share = ShareObjectRepository.get_share_by_uri(session, uri)
-            target_environment = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
 
             share_sm = ShareObjectSM(share.status)
             new_share_state = share_sm.run_transition(ShareItemActions.AddItem.value)
             share_sm.update_state(session, share, new_share_state)
-            item = ShareObjectRepository.get_share_item_by_uri(session, item_uri)
+
+            processor = ShareProcessorManager.get_processor_by_item_type(item_type)
+            item = ShareObjectRepository.get_share_item_details(session, processor.shareable_type, item_uri)
             if not item:
                 raise ObjectNotFound('ShareObjectItem', item_uri)
 
