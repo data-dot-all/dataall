@@ -12,12 +12,7 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import {
-  Defaults,
-  Pager,
-  ShareHealthStatus,
-  ShareStatus
-} from '../../../design';
+import { Defaults, Pager, ShareHealthStatus, ShareStatus } from 'design';
 import SendIcon from '@mui/icons-material/Send';
 import React, { useCallback, useEffect, useState } from 'react';
 import {

@@ -52,10 +52,12 @@ export const ShareHealthStatus = (props) => {
       {!isHealthPending && (
         <Typography color="textSecondary" variant="subtitle2" noWrap>
           {(lastVerificationTime &&
-            lastVerificationTime.substring(
-              0,
-              lastVerificationTime.indexOf('.')
-            )) ||
+            '(' +
+              lastVerificationTime.substring(
+                0,
+                lastVerificationTime.indexOf('.')
+              ) +
+              ')') ||
             ''}
         </Typography>
       )}

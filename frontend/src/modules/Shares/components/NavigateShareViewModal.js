@@ -14,7 +14,7 @@ export const NavigateShareViewModal = (props) => {
           gutterBottom
           variant="h4"
         >
-          Dataset: {dataset.label} - Share Object Verification Tasks Started
+          Dataset: {dataset.label} - Share Object Verification Task(s) Started
         </Typography>
         <Typography
           align="center"
@@ -44,7 +44,7 @@ export const NavigateShareViewModal = (props) => {
           color="primary"
           variant="outlined"
         >
-          Save & Close
+          Close
         </Button>
       </Box>
     </Dialog>
