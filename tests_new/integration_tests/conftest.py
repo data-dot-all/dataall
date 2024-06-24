@@ -1,3 +1,4 @@
+import datetime
 import logging
 import os
 import sys
@@ -132,3 +133,8 @@ def client4(user4) -> Client:
 @pytest.fixture(scope='session')
 def clientTenant(userTenant) -> Client:
     yield Client(userTenant.username, userTenant.password)
+
+
+@pytest.fixture(scope='session')
+def session_id() -> str:
+    return datetime.datetime.utcnow().isoformat()

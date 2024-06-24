@@ -4,8 +4,8 @@ from typing import List
 
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers import S3AccessPointShareManager
-from dataall.modules.s3_datasets_shares.services.share_object_service import ShareObjectService
-from dataall.modules.s3_datasets_shares.services.share_item_service import ShareItemService
+from dataall.modules.shares_base.services.share_object_service import ShareObjectService
+from dataall.modules.s3_datasets_shares.services.share_item_service import S3ShareItemService
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
     ShareItemStatus,
@@ -13,9 +13,11 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemActions,
 )
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation
-from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
-from dataall.modules.shares_base.services.sharing_service import SharesProcessorInterface, ShareData
+from dataall.modules.shares_base.services.sharing_service import ShareData
+from dataall.modules.shares_base.services.share_processor_manager import SharesProcessorInterface
 
 
 log = logging.getLogger(__name__)
@@ -74,14 +76,14 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                     manager.update_dataset_bucket_key_policy()
 
                 log.info('Attaching FOLDER READ permissions...')
-                ShareItemService.attach_dataset_folder_read_permission(
+                S3ShareItemService.attach_dataset_folder_read_permission(
                     self.session, self.share_data.share, folder.locationUri
                 )
 
                 if not self.reapply:
                     new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
                     shared_item_SM.update_state_single_item(self.session, sharing_item, new_state)
-                ShareObjectRepository.update_share_item_health_status(
+                ShareStatusRepository.update_share_item_health_status(
                     self.session, sharing_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
                 )
 
@@ -91,7 +93,7 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                     new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
                     shared_item_SM.update_state_single_item(self.session, sharing_item, new_state)
                 else:
-                    ShareObjectRepository.update_share_item_health_status(
+                    ShareStatusRepository.update_share_item_health_status(
                         self.session, sharing_item, ShareItemHealthStatus.Unhealthy.value, str(e), datetime.now()
                     )
                 success = False
@@ -143,13 +145,13 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                     and self.share_data.share.groupUri != self.share_data.dataset.stewards
                 ):
                     log.info(f'Deleting FOLDER READ permissions from {folder.locationUri}...')
-                    ShareItemService.delete_dataset_folder_read_permission(
+                    S3ShareItemService.delete_dataset_folder_read_permission(
                         self.session, manager.share, folder.locationUri
                     )
 
                 new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
                 revoked_item_SM.update_state_single_item(self.session, removing_item, new_state)
-                ShareObjectRepository.update_share_item_health_status(
+                ShareStatusRepository.update_share_item_health_status(
                     self.session, removing_item, None, None, removing_item.lastVerificationTime
                 )
 
@@ -188,7 +190,7 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                 manager.folder_errors = [str(e)]
 
             if len(manager.folder_errors):
-                ShareObjectRepository.update_share_item_health_status(
+                ShareStatusRepository.update_share_item_health_status(
                     self.session,
                     sharing_item,
                     ShareItemHealthStatus.Unhealthy.value,
@@ -196,7 +198,7 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                     datetime.now(),
                 )
             else:
-                ShareObjectRepository.update_share_item_health_status(
+                ShareStatusRepository.update_share_item_health_status(
                     self.session, sharing_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
                 )
         return True
