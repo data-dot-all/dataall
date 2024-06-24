@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict
+from typing import Any
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from sqlalchemy import and_, func
@@ -15,13 +15,16 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
     ShareItemActions,
     ShareItemStatus,
-    ShareableType,
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+
 from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.notifications.db.notification_models import Notification
+from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
+from dataall.modules.shares_base.services.share_processor_manager import ShareProcessorManager
+
 from dataall.modules.shares_base.services.share_object_service import (
     ShareObjectService,
 )
@@ -37,31 +40,6 @@ MAX_RETRIES = 10
 RETRY_INTERVAL = 60
 
 
-class SharesProcessorInterface(ABC):
-    @abstractmethod
-    def process_approved_shares(self) -> bool:
-        """Executes a series of actions to share items using the share manager. Returns True if the sharing was successful"""
-        ...
-
-    @abstractmethod
-    def process_revoked_shares(self) -> bool:
-        """Executes a series of actions to revoke share items using the share manager. Returns True if the revoking was successful"""
-        ...
-
-    @abstractmethod
-    def verify_shares(self) -> bool:
-        """Executes a series of actions to verify share items using the share manager. Returns True if the verifying was successful"""
-        ...
-
-
-@dataclass
-class SharingProcessorDefinition:
-    type: ShareableType
-    Processor: Any
-    shareable_type: Any
-    shareable_uri: Any
-
-
 @dataclass
 class ShareData:
     share: ShareObject
@@ -73,12 +51,6 @@ class ShareData:
 
 
 class SharingService:
-    _SHARING_PROCESSORS: Dict[ShareableType, SharingProcessorDefinition] = {}
-
-    @classmethod
-    def register_processor(cls, processor: SharingProcessorDefinition) -> None:
-        cls._SHARING_PROCESSORS[processor.type] = processor
-
     @classmethod
     def approve_share(cls, engine: Engine, share_uri: str) -> bool:
         """
@@ -121,7 +93,7 @@ class SharingService:
                         'process approved shares',
                         f'Failed to acquire lock for dataset {share_data.dataset.datasetUri}',
                     )
-                for type, processor in cls._SHARING_PROCESSORS.items():
+                for type, processor in ShareProcessorManager.SHARING_PROCESSORS.items():
                     try:
                         log.info(f'Granting permissions of {type.value}')
                         shareable_items = ShareObjectRepository.get_share_data_items_by_type(
@@ -137,14 +109,14 @@ class SharingService:
                             share_successful = False
                     except Exception as e:
                         log.error(f'Error occurred during sharing of {type.value}: {e}')
-                        ShareObjectRepository.update_share_item_status_batch(
+                        ShareStatusRepository.update_share_item_status_batch(
                             session,
                             share_uri,
                             old_status=ShareItemStatus.Share_Approved.value,
                             new_status=ShareItemStatus.Share_Failed.value,
                             share_item_type=processor.type.value,
                         )
-                        ShareObjectRepository.update_share_item_status_batch(
+                        ShareStatusRepository.update_share_item_status_batch(
                             session,
                             share_uri,
                             old_status=ShareItemStatus.Share_In_Progress.value,
@@ -210,7 +182,7 @@ class SharingService:
                         f'Failed to acquire lock for dataset {share_data.dataset.datasetUri}',
                     )
 
-                for type, processor in cls._SHARING_PROCESSORS.items():
+                for type, processor in ShareProcessorManager.SHARING_PROCESSORS.items():
                     try:
                         shareable_items = ShareObjectRepository.get_share_data_items_by_type(
                             session,
@@ -226,14 +198,14 @@ class SharingService:
                             revoke_successful = False
                     except Exception as e:
                         log.error(f'Error occurred during share revoking of {type.value}: {e}')
-                        ShareObjectRepository.update_share_item_status_batch(
+                        ShareStatusRepository.update_share_item_status_batch(
                             session,
                             share_uri,
                             old_status=ShareItemStatus.Revoke_Approved.value,
                             new_status=ShareItemStatus.Revoke_Failed.value,
                             share_item_type=processor.type.value,
                         )
-                        ShareObjectRepository.update_share_item_status_batch(
+                        ShareStatusRepository.update_share_item_status_batch(
                             session,
                             share_uri,
                             old_status=ShareItemStatus.Revoke_In_Progress.value,
@@ -250,7 +222,7 @@ class SharingService:
                 return False
 
             finally:
-                existing_pending_items = ShareObjectRepository.check_pending_share_items(session, share_uri)
+                existing_pending_items = ShareStatusRepository.check_pending_share_items(session, share_uri)
                 if existing_pending_items:
                     new_share_state = share_sm.run_transition(ShareObjectActions.FinishPending.value)
                 else:
@@ -289,7 +261,7 @@ class SharingService:
                 log.error(
                     f'Failed to get Principal IAM Role {share_data.share.principalIAMRoleName}, updating health status...'
                 )
-                ShareObjectRepository.update_share_item_health_status_batch(
+                ShareStatusRepository.update_share_item_health_status_batch(
                     session,
                     share_uri,
                     old_status=healthStatus,
@@ -298,7 +270,7 @@ class SharingService:
                 )
                 return True
 
-            for type, processor in cls._SHARING_PROCESSORS.items():
+            for type, processor in ShareProcessorManager.SHARING_PROCESSORS.items():
                 try:
                     shareable_items = ShareObjectRepository.get_share_data_items_by_type(
                         session,
@@ -350,7 +322,7 @@ class SharingService:
                     if not lock_acquired:
                         log.error(f'Failed to acquire lock for dataset {share_data.dataset.datasetUri}, exiting...')
                         error_message = f'SHARING PROCESS TIMEOUT: Failed to acquire lock for dataset {share_data.dataset.datasetUri}'
-                        ShareObjectRepository.update_share_item_health_status_batch(
+                        ShareStatusRepository.update_share_item_health_status_batch(
                             session,
                             share_uri,
                             old_status=ShareItemHealthStatus.PendingReApply.value,
@@ -359,7 +331,7 @@ class SharingService:
                         )
                         return False
 
-                    for type, processor in cls._SHARING_PROCESSORS.items():
+                    for type, processor in ShareProcessorManager.SHARING_PROCESSORS.items():
                         try:
                             log.info(f'Reapplying permissions to {type.value}')
                             shareable_items = ShareObjectRepository.get_share_data_items_by_type(
@@ -444,7 +416,7 @@ class SharingService:
             env_group=data[5],
         )
         share_items = ShareObjectRepository.get_all_share_items_in_share(
-            session=session, share_uri=share_uri, status=status, healthStatus=healthStatus
+            session=session, share_uri=share_uri, status=[status], healthStatus=[healthStatus]
         )
         return share_data, share_items
 

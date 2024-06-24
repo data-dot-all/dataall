@@ -23,7 +23,7 @@ from dataall.modules.s3_datasets_shares.services.managed_share_policy_service im
 )
 from dataall.modules.shares_base.services.shares_enums import PrincipalType
 from dataall.modules.s3_datasets.db.dataset_models import DatasetBucket
-from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.services.sharing_service import ShareData
 
 logger = logging.getLogger(__name__)

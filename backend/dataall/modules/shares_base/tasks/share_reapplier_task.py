@@ -4,6 +4,7 @@ import sys
 
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_models import ShareObject
+from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.services.shares_enums import ShareItemHealthStatus
 from dataall.modules.shares_base.services.sharing_service import SharingService
 from dataall.base.db import get_engine
@@ -31,7 +32,7 @@ def reapply_shares(engine):
                 f'Re-applying Share Items for Share Object with Requestor: {share_object.principalId} on Target Dataset: {share_object.datasetUri}'
             )
             processed_share_objects.append(share_object.shareUri)
-            ShareObjectRepository.update_share_item_health_status_batch(
+            ShareStatusRepository.update_share_item_health_status_batch(
                 session=session,
                 share_uri=share_object.shareUri,
                 old_status=ShareItemHealthStatus.Unhealthy.value,

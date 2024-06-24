@@ -132,7 +132,7 @@ class ShareNotificationService:
         self._create_notification_task(subject=subject, msg=email_notification_msg)
         return notifications
 
-    def notify_new_data_available_from_owners(self, s3_prefix):
+    def notify_new_data_available_from_owners(self, s3_prefix):  # TODO part10: remove, this is specific for S3
         msg = f'New data (at {s3_prefix}) is available from dataset {self.dataset.datasetUri} shared by owner {self.dataset.owner}'
 
         notifications = self._register_notifications(
