@@ -5,8 +5,6 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
 )
 from dataall.modules.shares_base.api.resolvers import (
-    union_resolver,
-    resolve_shared_item,
     resolve_dataset,
     resolve_existing_shared_items,
     resolve_share_object_statistics,
@@ -17,12 +15,6 @@ from dataall.modules.shares_base.api.resolvers import (
     resolve_can_view_logs,
 )
 from dataall.core.environment.api.resolvers import resolve_environment
-
-ShareableObject = gql.Union(
-    name='ShareableObject',
-    types=[gql.Ref('DatasetTable'), gql.Ref('DatasetStorageLocation')],
-    resolver=union_resolver,
-)
 
 
 ShareItem = gql.ObjectType(
@@ -39,11 +31,6 @@ ShareItem = gql.ObjectType(
         gql.Field('healthStatus', ShareItemHealthStatus.toGraphQLEnum()),
         gql.Field('healthMessage', gql.String),
         gql.Field('lastVerificationTime', gql.String),
-        gql.Field(
-            name='sharedObject',
-            type=gql.Ref('ShareableObject'),
-            resolver=resolve_shared_item,
-        ),
     ],
 )
 

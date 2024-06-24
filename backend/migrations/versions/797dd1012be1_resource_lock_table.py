@@ -140,16 +140,13 @@ def downgrade():
             (f'{group.groupUri}-{group.environmentUri}', EnvironmentGroup.__tablename__)
         )
         if lock:
-            print('YES LOCK')
             session.delete(lock)
 
     # Deleting Locks for Consumption Roles
     consumption_roles = session.query(ConsumptionRole).all()
     for role in consumption_roles:
-        print('CR ROLE', role.consumptionRoleUri)
         lock = session.query(ResourceLock).get((role.consumptionRoleUri, ConsumptionRole.__tablename__))
         if lock:
-            print('YES LOCK')
             session.delete(lock)
     session.commit()
 
