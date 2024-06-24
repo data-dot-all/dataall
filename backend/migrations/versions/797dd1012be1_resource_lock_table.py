@@ -1,7 +1,7 @@
 """resource_lock_table
 
 Revision ID: 797dd1012be1
-Revises: 448d9dc95e94
+Revises: 18da23d3ba44
 Create Date: 2024-06-17 19:06:51.569471
 
 """
@@ -15,7 +15,7 @@ from dataall.base.db import utils
 
 # revision identifiers, used by Alembic.
 revision = '797dd1012be1'
-down_revision = '448d9dc95e94'
+down_revision = '18da23d3ba44'
 branch_labels = None
 depends_on = None
 
