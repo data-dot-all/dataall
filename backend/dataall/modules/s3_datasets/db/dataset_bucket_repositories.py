@@ -20,6 +20,7 @@ class DatasetBucketRepository:
             KmsAlias=dataset.KmsAlias,
             imported=dataset.imported,
             importedKmsKey=dataset.importedKmsKey,
+            name=dataset.S3BucketName,
         )
         session.add(bucket)
         session.commit()

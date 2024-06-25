@@ -12,7 +12,7 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { Defaults, Pager, ShareStatus } from '../../../design';
+import { Defaults, Pager, ShareHealthStatus, ShareStatus } from 'design';
 import SendIcon from '@mui/icons-material/Send';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -50,7 +50,10 @@ const ItemRow = (props) => {
       item.status === 'Share_Failed'
     )
       return 'Delete';
-    if (item.status === 'Share_Succeeded' || item.status === 'Revoke_Failed')
+    if (
+      (item.status === 'Share_Succeeded' || item.status === 'Revoke_Failed') &&
+      item.healthStatus !== 'PendingReApply'
+    )
       return 'Revoke';
     return 'Nothing';
   };
@@ -135,6 +138,17 @@ const ItemRow = (props) => {
       <TableCell>
         {item.status ? <ShareStatus status={item.status} /> : 'Not requested'}
       </TableCell>
+      <TableCell>
+        {item.status ? (
+          <ShareHealthStatus
+            status={item.status}
+            healthStatus={item.healthStatus}
+            lastVerificationTime={item.lastVerificationTime}
+          />
+        ) : (
+          'Not requested'
+        )}
+      </TableCell>
       {(shareStatus === 'Draft' ||
         shareStatus === 'Processed' ||
         shareStatus === 'Rejected' ||
@@ -173,7 +187,7 @@ const ItemRow = (props) => {
           )}
           {possibleAction === 'Nothing' && (
             <Typography color="textSecondary" variant="subtitle2">
-              Wait until this item is processed
+              Wait until this item is processed and/or re-apply task is complete
             </Typography>
           )}
         </TableCell>
@@ -376,6 +390,7 @@ export const ShareEditForm = (props) => {
               <TableCell>Type</TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Status</TableCell>
+              <TableCell>Health Status</TableCell>
               {(shareStatus === 'Draft' ||
                 shareStatus === 'Processed' ||
                 shareStatus === 'Rejected' ||

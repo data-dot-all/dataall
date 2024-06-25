@@ -1,6 +1,6 @@
 from assertpy import assert_that
 
-from .queries import (
+from integration_tests.core.organizations.queries import (
     archive_organization,
     create_organization,
     get_organization,
@@ -9,6 +9,7 @@ from .queries import (
     remove_team_from_organization,
     update_organization,
 )
+from integration_tests.errors import GqlError
 
 
 def test_create_organization_with_team_with_permissions(org1):
@@ -23,7 +24,7 @@ def test_create_organization_with_team_with_permissions(org1):
 def test_create_organization_with_unauthorized_team(client_noTenantPermissions, group4):
     # Given a user with no tenant permissions to MANAGE ORGANIZATIONS
     # When it creates an organization
-    assert_that(create_organization).raises(RuntimeError).when_called_with(
+    assert_that(create_organization).raises(GqlError).when_called_with(
         client_noTenantPermissions,
         'organization2',
         group4,
@@ -55,7 +56,7 @@ def test_get_organization_organization_with_invited_team(client2, org2):
 
 
 def test_get_organization_with_unauthorized_team(client3, org1):
-    assert_that(get_organization).raises(RuntimeError).when_called_with(
+    assert_that(get_organization).raises(GqlError).when_called_with(
         client=client3,
         organizationUri=org1.organizationUri,
     ).contains(
@@ -65,26 +66,26 @@ def test_get_organization_with_unauthorized_team(client3, org1):
     )
 
 
-def test_list_organizations_with_admin_team(client1, org1, org2):
+def test_list_organizations_with_admin_team(client1, org1, org2, session_id):
     # Given 2 organizations
     # When the admin user of both of them
-    response = list_organizations(client1)
+    response = list_organizations(client1, term=session_id)
     # Then
     assert_that(response.count).is_equal_to(2)
 
 
-def test_list_organizations_with_invited_team(client2, org1, org2):
+def test_list_organizations_with_invited_team(client2, org1, org2, session_id):
     # Given 2 organizations
     # When an invited user to one organization only
-    response = list_organizations(client2)
+    response = list_organizations(client2, term=session_id)
     # Then
     assert_that(response.count).is_equal_to(1)
 
 
-def test_list_organizations_with_unauthorized_team(client3, org1, org2):
+def test_list_organizations_with_unauthorized_team(client3, org1, org2, session_id):
     # Given 2 organizations
     # When a non-invited user
-    response = list_organizations(client3)
+    response = list_organizations(client3, term=session_id)
     # Then
     assert_that(response.count).is_equal_to(0)
 
@@ -101,7 +102,7 @@ def test_update_organization_organization_with_admin_team(client1, org1):
 
 
 def test_update_organization_organization_with_unauthorized_team(client3, org1):
-    assert_that(update_organization).raises(RuntimeError).when_called_with(
+    assert_that(update_organization).raises(GqlError).when_called_with(
         client=client3,
         organizationUri=org1.organizationUri,
     ).contains(
@@ -121,7 +122,7 @@ def test_invite_group_to_organization_with_admin_team(org2):
 
 
 def test_invite_group_to_organization_with_unauthorized_team(client3, org1, group2):
-    assert_that(invite_team_to_organization).raises(RuntimeError).when_called_with(
+    assert_that(invite_team_to_organization).raises(GqlError).when_called_with(
         client=client3,
         organizationUri=org1.organizationUri,
         group=group2,
@@ -142,7 +143,7 @@ def test_remove_group_from_organization_with_admin_team(client1, org2, group2):
 
 
 def test_remove_group_from_organization_with_unauthorized_team(client3, org2, group2):
-    assert_that(remove_team_from_organization).raises(RuntimeError).when_called_with(
+    assert_that(remove_team_from_organization).raises(GqlError).when_called_with(
         client=client3,
         organizationUri=org2.organizationUri,
         group=group2,
@@ -163,7 +164,7 @@ def test_archive_organization_organization_with_admin_team(client1, group1):
 
 
 def test_archive_organization_organization_with_invited_team(client2, org2):
-    assert_that(archive_organization).raises(RuntimeError).when_called_with(
+    assert_that(archive_organization).raises(GqlError).when_called_with(
         client=client2,
         organizationUri=org2.organizationUri,
     ).contains(
@@ -174,7 +175,7 @@ def test_archive_organization_organization_with_invited_team(client2, org2):
 
 
 def test_archive_organization_organization_with_unauthorized_team(client3, org1):
-    assert_that(archive_organization).raises(RuntimeError).when_called_with(
+    assert_that(archive_organization).raises(GqlError).when_called_with(
         client=client3,
         organizationUri=org1.organizationUri,
     ).contains(
