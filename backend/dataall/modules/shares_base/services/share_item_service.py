@@ -5,7 +5,6 @@ from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.tasks.db.task_models import Task
-from dataall.base.db import utils
 from dataall.base.db.exceptions import ObjectNotFound, UnauthorizedOperation
 from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
@@ -15,7 +14,8 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem
-from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository  # TODO in part9
+from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
     ShareItemSM,
@@ -29,6 +29,7 @@ from dataall.modules.shares_base.services.share_permissions import (
     LIST_ENVIRONMENT_SHARED_WITH_OBJECTS,
     APPROVE_SHARE_OBJECT,
 )
+from dataall.modules.shares_base.services.share_processor_manager import ShareProcessorManager
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 
 log = logging.getLogger(__name__)
@@ -78,7 +79,7 @@ class ShareItemService:
         with context.db_engine.scoped_session() as session:
             share = ShareObjectRepository.get_share_by_uri(session, uri)
             dataset = DatasetBaseRepository.get_dataset_by_uri(session, share.datasetUri)
-            revoked_items_states = ShareObjectRepository.get_share_items_states(session, uri, revoked_uris)
+            revoked_items_states = ShareStatusRepository.get_share_items_states(session, uri, revoked_uris)
             revoked_items = [ShareObjectRepository.get_share_item_by_uri(session, uri) for uri in revoked_uris]
 
             if not revoked_items_states:
@@ -122,34 +123,17 @@ class ShareItemService:
             item_type = data.get('itemType')
             item_uri = data.get('itemUri')
             share = ShareObjectRepository.get_share_by_uri(session, uri)
-            target_environment = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
 
             share_sm = ShareObjectSM(share.status)
             new_share_state = share_sm.run_transition(ShareItemActions.AddItem.value)
             share_sm.update_state(session, share, new_share_state)
 
-            item = ShareObjectRepository.get_share_item(session, item_type, item_uri)
+            processor = ShareProcessorManager.get_processor_by_item_type(item_type)
+            item = ShareObjectRepository.get_share_item_details(session, processor.shareable_type, item_uri)
             if not item:
                 raise ObjectNotFound('ShareObjectItem', item_uri)
 
-            if item_type == ShareableType.Table.value and item.region != target_environment.region:
-                raise UnauthorizedOperation(
-                    action=ADD_ITEM,
-                    message=f'Lake Formation cross region sharing is not supported. '
-                    f'Table {item.itemUri} is in {item.region} and target environment '
-                    f'{target_environment.name} is in {target_environment.region} ',
-                )
-
             share_item: ShareObjectItem = ShareObjectRepository.find_sharable_item(session, uri, item_uri)
-
-            s3_access_point_name = utils.slugify(
-                share.datasetUri + '-' + share.principalId,
-                max_length=50,
-                lowercase=True,
-                regex_pattern='[^a-zA-Z0-9-]',
-                separator='-',
-            )
-            log.info(f'S3AccessPointName={s3_access_point_name}')
 
             if not share_item:
                 share_item = ShareObjectItem(
@@ -168,17 +152,6 @@ class ShareItemService:
     def remove_shared_item(uri: str):
         with get_context().db_engine.scoped_session() as session:
             share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
-            if (
-                share_item.itemType == ShareableType.Table.value
-                and share_item.status == ShareItemStatus.Share_Failed.value
-            ):
-                share = ShareObjectRepository.get_share_by_uri(session, share_item.shareUri)
-                ResourcePolicyService.delete_resource_policy(
-                    session=session,
-                    group=share.groupUri,
-                    resource_uri=share_item.itemUri,
-                )
-
             item_sm = ShareItemSM(share_item.status)
             item_sm.run_transition(ShareItemActions.RemoveItem.value)
             ShareObjectRepository.remove_share_object_item(session, share_item)
@@ -188,23 +161,39 @@ class ShareItemService:
     @ResourcePolicyService.has_resource_permission(GET_SHARE_OBJECT)
     def resolve_shared_item(uri, item: ShareObjectItem):
         with get_context().db_engine.scoped_session() as session:
-            return ShareObjectRepository.get_share_item(session, item.itemType, item.itemUri)
+            processor = ShareProcessorManager.get_processor_by_item_type(item.itemType)
+            return ShareObjectRepository.get_share_item_details(session, processor.shareable_type, item.itemUri)
 
     @staticmethod
     def check_existing_shared_items(share):
         with get_context().db_engine.scoped_session() as session:
-            return ShareObjectRepository.check_existing_shared_items(session, share.shareUri)
+            return ShareStatusRepository.check_existing_shared_items(session, share.shareUri)
 
     @staticmethod
     def list_shareable_objects(share, filter, is_revokable=False):
-        states = None
+        status = None
         if is_revokable:
-            states = ShareItemSM.get_share_item_revokable_states()
+            status = ShareStatusRepository.get_share_item_revokable_states()
 
         with get_context().db_engine.scoped_session() as session:
-            return ShareObjectRepository.list_shareable_items(session, share, states, filter)
+            subqueries = []
+            for type, processor in ShareProcessorManager.SHARING_PROCESSORS.items():
+                subqueries.append(
+                    ShareObjectRepository.list_shareable_items_of_type(
+                        session=session,
+                        share=share,
+                        type=type,
+                        share_type_model=processor.shareable_type,
+                        share_type_uri=processor.shareable_uri,
+                        status=status,
+                    )
+                )
+            return ShareObjectRepository.paginated_list_shareable_items(
+                session=session, subqueries=subqueries, data=filter
+            )
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
     def paginated_shared_with_environment_datasets(session, uri, data) -> dict:
-        return ShareObjectRepository.paginate_shared_datasets(session, uri, data)
+        share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
+        return ShareObjectRepository.paginate_shared_datasets(session, uri, data, share_item_shared_states)

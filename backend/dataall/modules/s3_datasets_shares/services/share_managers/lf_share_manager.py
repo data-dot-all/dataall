@@ -9,8 +9,9 @@ from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.aws.iam import IAM
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.db import exceptions
-from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
+from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemStatus,
     ShareObjectActions,
@@ -610,7 +611,7 @@ class LFShareManager:
                 new_state = share_item_sm.run_transition(ShareItemActions.Failure.value)
                 share_item_sm.update_state_single_item(self.session, share_item, new_state)
             else:
-                ShareObjectRepository.update_share_item_health_status(
+                ShareStatusRepository.update_share_item_health_status(
                     self.session, share_item, ShareItemHealthStatus.Unhealthy.value, str(error), datetime.now()
                 )
 

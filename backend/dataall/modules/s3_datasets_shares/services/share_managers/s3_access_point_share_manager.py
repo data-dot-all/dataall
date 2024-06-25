@@ -19,7 +19,7 @@ from dataall.modules.s3_datasets_shares.aws.kms_client import (
 )
 from dataall.base.aws.iam import IAM
 from dataall.modules.s3_datasets_shares.services.dataset_sharing_alarm_service import DatasetSharingAlarmService
-from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers.share_manager_utils import ShareErrorFormatter
 from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import (

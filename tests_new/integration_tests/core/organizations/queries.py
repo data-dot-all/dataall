@@ -1,5 +1,5 @@
 # TODO: This file will be replaced by using the SDK directly
-def create_organization(client, name, group):
+def create_organization(client, name, group, tags=[]):
     query = {
         'operationName': 'CreateOrg',
         'variables': {
@@ -7,7 +7,7 @@ def create_organization(client, name, group):
                 'label': name,
                 'SamlGroupName': group,
                 'description': 'Created for integration testing',
-                'tags': [],
+                'tags': tags,
             }
         },
         'query': """mutation CreateOrg($input: NewOrganizationInput) {

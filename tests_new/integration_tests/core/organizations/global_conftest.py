@@ -3,21 +3,21 @@ from .queries import archive_organization, create_organization, invite_team_to_o
 
 
 @pytest.fixture(scope='session')
-def org1(client1, group1):
+def org1(client1, group1, session_id):
     """
     Session org owned by group1
     """
-    org = create_organization(client1, 'organization1', group1)
+    org = create_organization(client1, 'organization1', group1, tags=[session_id])
     yield org
     archive_organization(client1, org.organizationUri)
 
 
 @pytest.fixture(scope='session')
-def org2(client1, group1, group2):
+def org2(client1, group1, group2, session_id):
     """
     Session org owned by group1 and invite group2
     """
-    org = create_organization(client1, 'organization2', group1)
+    org = create_organization(client1, 'organization2', group1, tags=[session_id])
     invite_team_to_organization(client=client1, organizationUri=org.organizationUri, group=group2)
     yield org
     archive_organization(client1, org.organizationUri)

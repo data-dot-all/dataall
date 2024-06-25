@@ -17,9 +17,8 @@ from dataall.modules.shares_base.services.shares_enums import (
     PrincipalType,
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.s3_datasets_shares.db.share_object_repositories import (
-    ShareObjectRepository,
-)  # TODO: REPOSITORY TO SHARES_BASE
+from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
     ShareItemSM,
@@ -36,6 +35,7 @@ from dataall.modules.shares_base.services.share_permissions import (
     DELETE_SHARE_OBJECT,
     GET_SHARE_OBJECT,
 )
+from dataall.modules.shares_base.services.share_processor_manager import ShareProcessorManager
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.base.aws.iam import IAM
@@ -155,7 +155,9 @@ class ShareObjectService:
                 ShareObjectRepository.save_and_commit(session, share)
 
             if item_uri:
-                item = ShareObjectRepository.get_share_item(session, item_type, item_uri)
+                processor = ShareProcessorManager.get_processor_by_item_type(item_type)
+
+                item = ShareObjectRepository.get_share_item_details(session, processor.shareable_type, item_uri)
                 share_item = ShareObjectRepository.find_sharable_item(session, share.shareUri, item_uri)
 
                 if not share_item and item:
@@ -324,7 +326,7 @@ class ShareObjectService:
     def delete_share_object(cls, uri: str):
         with get_context().db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
-            shared_share_items_states = [x for x in ShareItemSM.get_share_item_shared_states() if x in states]
+            shared_share_items_states = [x for x in ShareStatusRepository.get_share_item_shared_states() if x in states]
 
             new_state = cls._run_transitions(session, share, states, ShareObjectActions.Delete)
             if shared_share_items_states:
@@ -364,15 +366,15 @@ class ShareObjectService:
     @staticmethod
     def resolve_share_object_statistics(uri):
         with get_context().db_engine.scoped_session() as session:
-            shared_items = ShareObjectRepository.count_items_in_states(
-                session, uri, ShareItemSM.get_share_item_shared_states()
+            shared_items = ShareStatusRepository.count_items_in_states(
+                session, uri, ShareStatusRepository.get_share_item_shared_states()
             )
-            revoked_items = ShareObjectRepository.count_items_in_states(
+            revoked_items = ShareStatusRepository.count_items_in_states(
                 session, uri, [ShareItemStatus.Revoke_Succeeded.value]
             )
             failed_states = [ShareItemStatus.Share_Failed.value, ShareItemStatus.Revoke_Failed.value]
-            failed_items = ShareObjectRepository.count_items_in_states(session, uri, failed_states)
-            pending_items = ShareObjectRepository.count_items_in_states(
+            failed_items = ShareStatusRepository.count_items_in_states(session, uri, failed_states)
+            pending_items = ShareStatusRepository.count_items_in_states(
                 session, uri, [ShareItemStatus.PendingApproval.value]
             )
             return {
@@ -421,7 +423,7 @@ class ShareObjectService:
     def _get_share_data(session, uri):
         share = ShareObjectRepository.get_share_by_uri(session, uri)
         dataset = DatasetBaseRepository.get_dataset_by_uri(session, share.datasetUri)
-        share_items_states = ShareObjectRepository.get_share_items_states(session, uri)
+        share_items_states = ShareStatusRepository.get_share_items_states(session, uri)
         return share, dataset, share_items_states
 
     @staticmethod
