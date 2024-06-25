@@ -2,7 +2,6 @@ import logging
 import os
 import sys
 from dataall.modules.shares_base.db.share_object_models import ShareObject
-from dataall.modules.shares_base.services.sharing_service import SharingService
 from dataall.base.db import get_engine
 from dataall.base.aws.sqs import SqsQueue
 from dataall.core.tasks.service_handlers import Worker
