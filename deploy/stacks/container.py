@@ -287,14 +287,14 @@ class ContainerStack(pyNestedClass):
 
         ssm.StringParameter(
             self,
-            f'ShareManagementTaskDef{self._envname}',
+            f'ShareReapplierTaskARNSSM{self._envname}',
             parameter_name=f'/dataall/{self._envname}/ecs/task_def_arn/share_reapplier',
             string_value=share_reapplier_task_definition.task_definition_arn,
         )
 
         ssm.StringParameter(
             self,
-            f'ShareManagementContainerParam{self._envname}',
+            f'ShareReapplierTaskContainerSSM{self._envname}',
             parameter_name=f'/dataall/{self._envname}/ecs/container/share_reapplier',
             string_value=share_reapplier_container.container_name,
         )

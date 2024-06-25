@@ -21,7 +21,9 @@ log = logging.getLogger(__name__)
 def _process_reapply_shares_for_dataset(engine, dataset_uri):
     with engine.scoped_session() as session:
         processed_share_objects = []
-        share_objects_for_dataset = ShareObjectRepository.list_active_share_object_for_dataset(session=session ,dataset_uri=dataset_uri)
+        share_objects_for_dataset = ShareObjectRepository.list_active_share_object_for_dataset(
+            session=session, dataset_uri=dataset_uri
+        )
         log.info(f'Found {len(share_objects_for_dataset)} active share objects on dataset with uri: {dataset_uri}')
         share_object: ShareObject
         for share_object in share_objects_for_dataset:

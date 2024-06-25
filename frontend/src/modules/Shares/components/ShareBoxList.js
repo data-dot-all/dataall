@@ -1,6 +1,7 @@
 import {
   Autocomplete,
-  Box, Button,
+  Box,
+  Button,
   Checkbox,
   Container,
   Grid,
@@ -28,9 +29,9 @@ import { getShareRequestsFromMe, listOwnedDatasets } from '../services';
 import { ShareBoxListItem } from './ShareBoxListItem';
 import { ShareObjectSelectorModal } from './ShareObjectSelectorModal';
 import { ShareStatusList } from '../constants';
-import {RefreshRounded} from "@mui/icons-material";
-import {reApplyShareObjectItemsOnDataset} from "../services/reApplyShareObjectItemsOnDataset";
-import {useSnackbar} from "notistack";
+import { RefreshRounded } from '@mui/icons-material';
+import { reApplyShareObjectItemsOnDataset } from '../services/reApplyShareObjectItemsOnDataset';
+import { useSnackbar } from 'notistack';
 
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
@@ -251,26 +252,25 @@ export const ShareBoxList = (props) => {
   }, [client, dispatch]);
 
   const reapplyShares = async (datasetUri) => {
-    try{
-        const response = await client.mutate(
-          reApplyShareObjectItemsOnDataset({ datasetUri: datasetUri })
-        );
-        if (response && !response.errors) {
-            enqueueSnackbar('Reapplying all shares on dataset', {
-              anchorOrigin: {
-                horizontal: 'right',
-                vertical: 'top'
-              },
-              variant: 'success'
-            })
-        } else {
-          dispatch({ type: SET_ERROR, error: response.errors[0].message });
-        }
-    }
-    catch (error) {
+    try {
+      const response = await client.mutate(
+        reApplyShareObjectItemsOnDataset({ datasetUri: datasetUri })
+      );
+      if (response && !response.errors) {
+        enqueueSnackbar('Reapplying all shares on dataset', {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'success'
+        });
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (error) {
       dispatch({ type: SET_ERROR, error: error?.message });
     }
-  }
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -353,18 +353,20 @@ export const ShareBoxList = (props) => {
           </LoadingButton>
         )}
 
-        {dataset &&  (
-            <Button
-              color="info"
-              align="right"
-              startIcon={<RefreshRounded fontSize="small" />}
-              sx={{ m: 1 }}
-              onClick={(event) => {reapplyShares(dataset.datasetUri)}}
-              type="button"
-              variant="outlined"
-            >
-              Re-apply Share Items for Dataset
-            </Button>
+        {dataset && (
+          <Button
+            color="info"
+            align="right"
+            startIcon={<RefreshRounded fontSize="small" />}
+            sx={{ m: 1 }}
+            onClick={(event) => {
+              reapplyShares(dataset.datasetUri);
+            }}
+            type="button"
+            variant="outlined"
+          >
+            Re-apply Share Items for Dataset
+          </Button>
         )}
 
         <Container maxWidth={settings.compact ? 'xl' : false}>

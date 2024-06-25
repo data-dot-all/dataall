@@ -108,8 +108,9 @@ def reapply_items_share_object(context: Context, source, input):
     reapply_item_uris = input.get('itemUris')
     return ShareItemService.reapply_items_share_object(uri=share_uri, item_uris=reapply_item_uris)
 
+
 def reapply_share_items_share_object_for_dataset(context: Context, source, datasetUri):
-    return ShareItemService.reapply_share_items_for_dataset(datasetUri=datasetUri)
+    return ShareItemService.reapply_share_items_for_dataset(uri=datasetUri)
 
 
 def delete_share_object(context: Context, source, shareUri: str = None):
