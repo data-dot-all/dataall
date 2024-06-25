@@ -50,16 +50,9 @@ class ShareStatusRepository:
 
     @staticmethod
     def get_share_items_health_states(session, share_uri, item_uris=None):
-        query = (
-            session.query(ShareObjectItem)
-            .join(
-                ShareObject,
-                ShareObjectItem.shareUri == ShareObject.shareUri,
-            )
-            .filter(
-                and_(
-                    ShareObject.shareUri == share_uri,
-                )
+        query = session.query(ShareObjectItem).filter(
+            and_(
+                ShareObjectItem.shareUri == share_uri,
             )
         )
         if item_uris:
