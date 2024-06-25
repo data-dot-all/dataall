@@ -23,16 +23,16 @@ class S3DatasetsSharesApiModuleInterface(ModuleInterface):
     def __init__(self):
         from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
         from dataall.modules.s3_datasets_shares import api
-        from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import SharePolicyService
+        from dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service import S3SharePolicyService
         from dataall.modules.s3_datasets.services.dataset_service import DatasetService
         from dataall.modules.datasets_base.services.dataset_list_service import DatasetListService
-        from dataall.modules.s3_datasets_shares.services.dataset_sharing_service import DatasetSharingService
-        from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareEnvironmentResource
+        from dataall.modules.s3_datasets_shares.services.s3_share_dataset_service import S3ShareDatasetService
+        from dataall.modules.s3_datasets_shares.db.s3_share_object_repositories import S3ShareEnvironmentResource
 
-        EnvironmentResourceManager.register(ShareEnvironmentResource())
-        DatasetService.register(DatasetSharingService())
-        DatasetListService.register(DatasetSharingService())
-        log.info('API of dataset sharing has been imported')
+        EnvironmentResourceManager.register(S3ShareEnvironmentResource())
+        DatasetService.register(S3ShareDatasetService())
+        DatasetListService.register(S3ShareDatasetService())
+        log.info('API of s3_datasets_shares has been imported')
 
 
 class S3DatasetsSharesAsyncHandlersModuleInterface(ModuleInterface):
@@ -55,7 +55,7 @@ class S3DatasetsSharesAsyncHandlersModuleInterface(ModuleInterface):
         ]
 
     def __init__(self):
-        log.info('S3 Sharing handlers have been imported')
+        log.info('s3_datasets_shares handlers have been imported')
 
 
 class S3DatasetsSharesCdkModuleInterface(ModuleInterface):
@@ -67,9 +67,9 @@ class S3DatasetsSharesCdkModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.s3_datasets_shares.cdk
-        from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import SharePolicyService
+        from dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service import S3SharePolicyService
 
-        log.info('CDK module data_sharing has been imported')
+        log.info('CDK module s3_datasets_shares has been imported')
 
 
 class S3DatasetsSharesECSShareModuleInterface(ModuleInterface):
@@ -122,4 +122,4 @@ class S3DatasetsSharesECSShareModuleInterface(ModuleInterface):
             )
         )
 
-        log.info('ECS Share module s3_data_sharing has been imported')
+        log.info('ECS Share module s3_datasets_shares has been imported')
