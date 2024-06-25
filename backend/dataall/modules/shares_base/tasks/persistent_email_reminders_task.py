@@ -1,11 +1,14 @@
 import logging
 import os
 import sys
-from dataall.modules.dataset_sharing.api.types import ShareObject
-from dataall.modules.shares_base.services.sharing_service import SharingService
+from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.base.db import get_engine
 from dataall.base.aws.sqs import SqsQueue
 from dataall.core.tasks.service_handlers import Worker
+from backend.dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
+
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -15,23 +18,28 @@ log = logging.getLogger(__name__)
 Worker.queue = SqsQueue.send
 
 
-def persistent_email_reminders(engine, envname):
+def persistent_email_reminders(engine):
     """
     A method used by the scheduled ECS Task to run persistent_email_reminder() process against ALL
     active share objects within data.all and send emails to all pending shares.
     """
     with engine.scoped_session() as session:
         log.info('Running Persistent Email Reminders Task')
-        pending_shares = SharingService.fetch_pending_shares(engine=engine)
+        pending_shares = ShareObjectRepository.fetch_submitted_shares_with_notifications(session=session)
         log.info(f'Found {len(pending_shares)} pending shares')
         pending_share: ShareObject
         for pending_share in pending_shares:
             log.info(f'Sending Email Reminder for Share: {pending_share.shareUri}')
-            SharingService.persistent_email_reminder(uri=pending_share.shareUri, envname=envname)
+            share = ShareObjectRepository.get_share_by_uri(session, pending_share.shareUri)
+            dataset = DatasetBaseRepository.get_dataset_by_uri(session, share.datasetUri)
+            ShareNotificationService(session=session, dataset=dataset, share=share).notify_persistent_email_reminder(
+                email_id=share.owner, engine=engine
+            )
+            log.info(f'Email reminder sent for share {share.shareUri}')
         log.info('Completed Persistent Email Reminders Task')
 
 
 if __name__ == '__main__':
     ENVNAME = os.environ.get('envname', 'local')
     ENGINE = get_engine(envname=ENVNAME)
-    persistent_email_reminders(engine=ENGINE, envname=ENVNAME)
+    persistent_email_reminders(engine=ENGINE)
