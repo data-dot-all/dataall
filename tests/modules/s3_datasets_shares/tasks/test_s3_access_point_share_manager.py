@@ -334,11 +334,11 @@ def test_grant_target_role_access_policy_test_empty_policy(
         return_value=None,
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.S3SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=True,
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.S3SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
 
@@ -400,11 +400,11 @@ def test_grant_target_role_access_policy_existing_policy_bucket_not_included(
 
     mocker.patch('dataall.base.aws.iam.IAM.get_managed_policy_default_version', return_value=('v1', iam_policy))
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.S3SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=True,
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.S3SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
 
@@ -452,12 +452,12 @@ def test_grant_target_role_access_policy_existing_policy_bucket_included(mocker,
     mocker.patch('dataall.base.aws.iam.IAM.get_managed_policy_default_version', return_value=('v1', iam_policy))
 
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.S3SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=True,
     )
 
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.S3SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
 
@@ -903,12 +903,12 @@ def test_delete_target_role_access_policy_no_remaining_statement(
         'dataall.base.aws.iam.IAM.get_managed_policy_default_version', return_value=('v1', existing_target_role_policy)
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.S3SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=True,
     )
 
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.S3SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
 
@@ -1006,12 +1006,12 @@ def test_delete_target_role_access_policy_with_remaining_statement(
     )
 
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.S3SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=True,
     )
 
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.S3SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
 
@@ -1199,12 +1199,12 @@ def test_check_bucket_policy_missing_sid(mocker, base_bucket_policy, share_manag
 def test_check_target_role_access_policy(mocker, share_manager):
     # Given
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.S3SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=True,
     )
 
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.S3SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
 
@@ -1235,12 +1235,12 @@ def test_check_target_role_access_policy(mocker, share_manager):
 def test_check_target_role_access_policy_existing_policy_bucket_and_key_not_included(mocker, share_manager):
     # Given
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.S3SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=True,
     )
 
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.S3SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
 
@@ -1272,12 +1272,12 @@ def test_check_target_role_access_policy_existing_policy_bucket_and_key_not_incl
 def test_check_target_role_access_policy_test_no_policy(mocker, share_manager):
     # Given
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.S3SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=False,
     )
 
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.S3SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
 
@@ -1293,12 +1293,12 @@ def test_check_target_role_access_policy_test_no_policy(mocker, share_manager):
 def test_check_target_role_access_policy_test_policy_not_attached(mocker, share_manager):
     # Given
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.S3SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=True,
     )
     # Policy is not attached
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.S3SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=False,
     )
 
