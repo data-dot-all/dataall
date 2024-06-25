@@ -6,18 +6,15 @@ import {
   Card,
   CardContent,
   CardHeader,
-  CircularProgress,
   Container,
   FormHelperText,
   Grid,
   Link,
-  MenuItem,
   TextField,
   Typography
 } from '@mui/material';
 import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
-import { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
@@ -25,17 +22,13 @@ import {
   ArrowLeftIcon,
   ChevronRightIcon,
   ChipInput,
-  Defaults,
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import {
-  listEnvironmentGroups,
-  listValidEnvironments,
-  useClient
-} from 'services';
+import { useClient } from 'services';
 
 import { createSagemakerStudioUser } from '../services';
+import { EnvironmentTeamDropdown } from 'modules/Shared';
 
 const MLStudioCreateForm = (props) => {
   const navigate = useNavigate();
@@ -43,57 +36,6 @@ const MLStudioCreateForm = (props) => {
   const dispatch = useDispatch();
   const client = useClient();
   const { settings } = useSettings();
-  const [loading, setLoading] = useState(true);
-  const [groupOptions, setGroupOptions] = useState([]);
-  const [environmentOptions, setEnvironmentOptions] = useState([]);
-  const fetchEnvironments = useCallback(async () => {
-    setLoading(true);
-    const response = await client.query(
-      listValidEnvironments({ filter: Defaults.selectListFilter })
-    );
-    if (!response.errors) {
-      setEnvironmentOptions(
-        response.data.listValidEnvironments.nodes.map((e) => ({
-          ...e,
-          value: e.environmentUri,
-          label: e.label
-        }))
-      );
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-    setLoading(false);
-  }, [client, dispatch]);
-  const fetchGroups = async (environmentUri) => {
-    try {
-      const response = await client.query(
-        listEnvironmentGroups({
-          filter: Defaults.selectListFilter,
-          environmentUri
-        })
-      );
-      if (!response.errors) {
-        setGroupOptions(
-          response.data.listEnvironmentGroups.nodes.map((g) => ({
-            value: g.groupUri,
-            label: g.groupUri
-          }))
-        );
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-    } catch (e) {
-      dispatch({ type: SET_ERROR, error: e.message });
-    }
-  };
-  useEffect(() => {
-    if (client) {
-      fetchEnvironments().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
-    }
-  }, [client, dispatch, fetchEnvironments]);
-
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
       const response = await client.mutate(
@@ -130,10 +72,6 @@ const MLStudioCreateForm = (props) => {
       setSubmitting(false);
     }
   }
-  if (loading) {
-    return <CircularProgress />;
-  }
-
   return (
     <>
       <Helmet>
@@ -283,31 +221,6 @@ const MLStudioCreateForm = (props) => {
                       <Card>
                         <CardHeader title="Organize" />
                         <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.SamlAdminGroupName &&
-                                errors.SamlAdminGroupName
-                            )}
-                            helperText={
-                              touched.SamlAdminGroupName &&
-                              errors.SamlAdminGroupName
-                            }
-                            label="Team"
-                            name="SamlAdminGroupName"
-                            onChange={handleChange}
-                            select
-                            value={values.SamlAdminGroupName}
-                            variant="outlined"
-                          >
-                            {groupOptions.map((group) => (
-                              <MenuItem key={group.value} value={group.value}>
-                                {group.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                        </CardContent>
-                        <CardContent>
                           <Box>
                             <ChipInput
                               fullWidth
@@ -325,71 +238,13 @@ const MLStudioCreateForm = (props) => {
                       </Card>
                     </Grid>
                     <Grid item lg={5} md={6} xs={12}>
-                      <Card sx={{ mb: 3 }}>
-                        <CardHeader title="Deployment" />
-                        <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.environment && errors.environment
-                            )}
-                            helperText={
-                              touched.environment && errors.environment
-                            }
-                            label="Environment"
-                            name="environment"
-                            onChange={(event) => {
-                              setFieldValue('SamlGroupName', '');
-                              fetchGroups(
-                                event.target.value.environmentUri
-                              ).catch((e) =>
-                                dispatch({ type: SET_ERROR, error: e.message })
-                              );
-                              setFieldValue('environment', event.target.value);
-                            }}
-                            select
-                            value={values.environment}
-                            variant="outlined"
-                          >
-                            {environmentOptions.map((environment) => (
-                              <MenuItem
-                                key={environment.environmentUri}
-                                value={environment}
-                              >
-                                {environment.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                        </CardContent>
-                        <CardContent>
-                          <TextField
-                            disabled
-                            fullWidth
-                            label="Region"
-                            name="region"
-                            value={
-                              values.environment
-                                ? values.environment.region
-                                : ''
-                            }
-                            variant="outlined"
-                          />
-                        </CardContent>
-                        <CardContent>
-                          <TextField
-                            disabled
-                            fullWidth
-                            label="Organization"
-                            name="organization"
-                            value={
-                              values.environment
-                                ? values.environment.organization.label
-                                : ''
-                            }
-                            variant="outlined"
-                          />
-                        </CardContent>
-                      </Card>
+                      <EnvironmentTeamDropdown
+                        setFieldValue={setFieldValue}
+                        handleChange={handleChange}
+                        values={values}
+                        touched={touched}
+                        errors={errors}
+                      />
                       {errors.submit && (
                         <Box sx={{ mt: 3 }}>
                           <FormHelperText error>{errors.submit}</FormHelperText>
