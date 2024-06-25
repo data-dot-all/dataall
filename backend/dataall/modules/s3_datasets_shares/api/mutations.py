@@ -1,6 +1,7 @@
 from dataall.base.api import gql
 from dataall.modules.s3_datasets_shares.api.resolvers import (
-    verify_dataset_share_objects, reapply_share_items_share_object_for_dataset,
+    verify_dataset_share_objects,
+    reapply_share_items_share_object_for_dataset,
 )
 
 

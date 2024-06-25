@@ -148,7 +148,6 @@ class DatasetSharingService(DatasetServiceInterface):
         Worker.queue(engine=context.db_engine, task_ids=[reapply_share_items_task.taskUri])
         return True
 
-
     @staticmethod
     def list_shared_tables_by_env_dataset(dataset_uri: str, env_uri: str):
         context = get_context()

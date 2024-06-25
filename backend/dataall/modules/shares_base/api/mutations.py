@@ -11,7 +11,7 @@ from dataall.modules.shares_base.api.resolvers import (
     submit_share_object,
     update_share_reject_purpose,
     update_share_request_purpose,
-    verify_items_share_object
+    verify_items_share_object,
 )
 
 createShareObject = gql.MutationField(

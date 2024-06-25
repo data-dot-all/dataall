@@ -267,7 +267,7 @@ export const ShareBoxList = (props) => {
         reApplyShareObjectItemsOnDataset({ datasetUri: datasetUri })
       );
       if (response && !response.errors) {
-        enqueueSnackbar('Reapplying all shares on dataset', {
+        enqueueSnackbar(`Reapplying process for all unhealthy shares on dataset with uri: ${datasetUri} has started. Please check each individual share for share item health status`, {
           anchorOrigin: {
             horizontal: 'right',
             vertical: 'top'
@@ -375,7 +375,7 @@ export const ShareBoxList = (props) => {
             type="button"
             variant="outlined"
           >
-            Re-apply Share Items for Dataset
+            Re-apply Share Item(s) for Dataset
           </Button>
         )}
 

@@ -6,6 +6,7 @@ from dataall.core.tasks.service_handlers import Worker
 from dataall.core.stacks.aws.ecs import Ecs
 from dataall.core.tasks.db.task_models import Task
 from dataall.modules.shares_base.services.sharing_service import SharingService
+from dataall.modules.shares_base.tasks.share_reapplier_task import EcsBulkShareRepplyService
 
 log = logging.getLogger(__name__)
 
@@ -34,14 +35,18 @@ class EcsShareHandler:
     @staticmethod
     @Worker.handler(path='ecs.dataset.share.reapply')
     def reapply_shares_of_dataset(engine, task: Task):
-        context = [
+        envname = os.environ.get('envname', 'local')
+        if envname in ['local', 'dkrcompose']:
+            EcsBulkShareRepplyService.process_reapply_shares_for_dataset(engine, task.targetUri)
+        else:
+            context = [
                 {'name': 'datasetUri', 'value': task.targetUri},
-        ]
-        return EcsShareHandler._run_share_management_ecs_task(
-            task_definition_param_str='ecs/task_def_arn/share_reapplier',
-            container_name_param_str='ecs/container/share_reapplier',
-            context=context
-        )
+            ]
+            return EcsShareHandler._run_share_management_ecs_task(
+                task_definition_param_str='ecs/task_def_arn/share_reapplier',
+                container_name_param_str='ecs/container/share_reapplier',
+                context=context,
+            )
 
     @staticmethod
     def _manage_share(engine, task: Task, local_handler, ecs_handler: str):
@@ -56,7 +61,7 @@ class EcsShareHandler:
             return EcsShareHandler._run_share_management_ecs_task(
                 task_definition_param_str='ecs/task_def_arn/share_management',
                 container_name_param_str='ecs/container/share_management',
-                context=share_management_context
+                context=share_management_context,
             )
 
     @staticmethod
@@ -66,4 +71,4 @@ class EcsShareHandler:
             container_name_param=container_name_param_str,
             context=context,
         )
-        return {"task_arn": ecs_task_arn}
+        return {'task_arn': ecs_task_arn}
