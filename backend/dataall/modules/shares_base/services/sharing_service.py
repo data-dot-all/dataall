@@ -3,7 +3,7 @@ from typing import Any
 from dataclasses import dataclass
 from sqlalchemy import and_
 from time import sleep
-from dataall.base.db import Engine
+from dataall.base.db import Engine, get_engine
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
@@ -17,8 +17,10 @@ from dataall.modules.shares_base.services.shares_enums import (
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.services.share_processor_manager import ShareProcessorManager
+
 from dataall.modules.shares_base.services.share_object_service import (
     ShareObjectService,
 )
