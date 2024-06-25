@@ -32,6 +32,28 @@ class S3DatasetsSharesApiModuleInterface(ModuleInterface):
         EnvironmentResourceManager.register(ShareEnvironmentResource())
         DatasetService.register(DatasetSharingService())
         DatasetListService.register(DatasetSharingService())
+
+        from dataall.modules.shares_base.services.share_processor_manager import (
+            ShareProcessorManager,
+            ShareProcessorDefinition,
+        )
+        from dataall.modules.shares_base.services.shares_enums import ShareableType
+        from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, DatasetBucket, DatasetStorageLocation
+
+        ShareProcessorManager.register_processor(
+            ShareProcessorDefinition(ShareableType.Table, None, DatasetTable, DatasetTable.tableUri)
+        )
+        ShareProcessorManager.register_processor(
+            ShareProcessorDefinition(ShareableType.S3Bucket, None, DatasetBucket, DatasetBucket.bucketUri)
+        )
+        ShareProcessorManager.register_processor(
+            ShareProcessorDefinition(
+                ShareableType.StorageLocation,
+                None,
+                DatasetStorageLocation,
+                DatasetStorageLocation.locationUri,
+            )
+        )
         log.info('API of dataset sharing has been imported')
 
 
