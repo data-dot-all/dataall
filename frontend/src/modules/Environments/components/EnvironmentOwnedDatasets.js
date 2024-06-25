@@ -150,7 +150,7 @@ export const EnvironmentOwnedDatasets = ({ environment }) => {
                         <IconButton
                           onClick={() => {
                             navigate(
-                              dataset.datasetType === 'DatasetType.S3'
+                              dataset.datasetType === 'DatasetTypes.S3'
                                 ? `/console/s3-datasets/${dataset.datasetUri}`
                                 : '-'
                             );
