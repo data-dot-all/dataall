@@ -4,11 +4,13 @@ from sqlalchemy.orm import Query
 from typing import List
 
 from dataall.base.db import exceptions, paginate
+from dataall.base.db.paginator import Page
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
+
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
     PrincipalType,
@@ -349,7 +351,9 @@ class ShareObjectRepository:
 
     @staticmethod
     def paginated_list_shareable_items(session, subqueries: List[Query], data: dict = None):
-        if len(subqueries) == 1:
+        if len(subqueries) == 0:
+            return Page([], 1, 1, 0)  # empty page. All modules are turned off
+        elif len(subqueries) == 1:
             shareable_objects = subqueries[0].subquery('shareable_objects')
         else:
             shareable_objects = subqueries[0].union(*subqueries[1:]).subquery('shareable_objects')
