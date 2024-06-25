@@ -18,6 +18,7 @@
                 "share_notifications": {
                     "email": {
                         "active": false,
+                        "persistent_reminders": false,
                         "parameters": {
                             "group_notifications": true
                         }
@@ -28,7 +29,7 @@
                 "auto_approval_for_confidentiality_level" : {
                     "Unclassified" : true,
                     "Official" : true,
-                    "Secret" : false
+                    "Secret" : true
                 }
             }
         },

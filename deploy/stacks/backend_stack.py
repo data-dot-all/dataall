@@ -218,6 +218,9 @@ class BackendStack(Stack):
                 self.lambda_api_stack.api_handler,
                 self.lambda_api_stack.elasticsearch_proxy_handler,
             ],
+            email_custom_domain=ses_stack.ses_identity.email_identity_name if ses_stack is not None else None,
+            ses_configuration_set=ses_stack.configuration_set.configuration_set_name if ses_stack is not None else None,
+            custom_domain=custom_domain,
             **kwargs,
         )
 

@@ -1,9 +1,10 @@
 import logging
 from typing import Any
 from dataclasses import dataclass
-from sqlalchemy import and_
+from abc import ABC, abstractmethod
+from sqlalchemy import and_, func
 from time import sleep
-from dataall.base.db import Engine
+from dataall.base.db import Engine, get_engine
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
@@ -17,8 +18,13 @@ from dataall.modules.shares_base.services.shares_enums import (
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+
+from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
+from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.notifications.db.notification_models import Notification
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.services.share_processor_manager import ShareProcessorManager
+
 from dataall.modules.shares_base.services.share_object_service import (
     ShareObjectService,
 )
@@ -355,6 +361,48 @@ class SharingService:
                     lock_released = cls.release_lock(share_data.dataset.datasetUri, session, share_data.share.shareUri)
                     if not lock_released:
                         log.error(f'Failed to release lock for dataset {share_data.dataset.datasetUri}.')
+
+    @staticmethod
+    def fetch_pending_shares(engine):
+        """
+        A method used by the scheduled ECS Task to run fetch_pending_shares() process against ALL shared objects in ALL
+        active share objects within dataall
+        """
+        with engine.scoped_session() as session:
+            pending_shares = (
+                session.query(ShareObject)
+                .join(
+                    Notification,
+                    and_(
+                        ShareObject.shareUri == func.split_part(Notification.target_uri, '|', 1),
+                        ShareObject.datasetUri == func.split_part(Notification.target_uri, '|', 2),
+                    ),
+                )
+                .filter(and_(Notification.type == 'SHARE_OBJECT_SUBMITTED', ShareObject.status == 'Submitted'))
+                .all()
+            )
+            return pending_shares
+
+    @staticmethod
+    def _get_share_data(session, uri):
+        share = ShareObjectRepository.get_share_by_uri(session, uri)
+        dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
+        share_items_states = ShareObjectRepository.get_share_items_states(session, uri)
+        return share, dataset, share_items_states
+
+    @classmethod
+    def persistent_email_reminder(cls, uri: str, envname):
+        """
+        A method used by the scheduled ECS Task to send email notifications to the requestor of the share object
+        """
+        engine = get_engine(envname=envname)
+
+        with engine.scoped_session() as session:
+            share, dataset, states = cls._get_share_data(session, uri)
+            ShareNotificationService(session=session, dataset=dataset, share=share).notify_persistent_email_reminder(
+                email_id=share.owner, engine=engine
+            )
+            log.info(f'Email reminder sent for share {share.shareUri}')
 
     @staticmethod
     def _get_share_data_and_items(session, share_uri, status, healthStatus=None):
