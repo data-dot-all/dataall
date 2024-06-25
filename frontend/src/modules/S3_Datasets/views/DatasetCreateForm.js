@@ -435,7 +435,7 @@ const DatasetCreateForm = (props) => {
                             options={environmentOptions.map((option) => option)}
                             onChange={(event, value) => {
                               setFieldValue('SamlAdminGroupName', '');
-                              setFieldValue('steward', '');
+                              setFieldValue('stewards', '');
                               if (value && value.environmentUri) {
                                 setFieldValue('environment', value);
                                 fetchGroups(value.environmentUri).catch((e) =>
@@ -532,6 +532,7 @@ const DatasetCreateForm = (props) => {
                                       errors.SamlAdminGroupName
                                     }
                                     label="Team"
+                                    onChange={handleChange}
                                     variant="outlined"
                                   />
                                 ) : (
@@ -581,6 +582,7 @@ const DatasetCreateForm = (props) => {
                                       touched.stewards && errors.stewards
                                     }
                                     label="Stewards"
+                                    onChange={handleChange}
                                     variant="outlined"
                                   />
                                 ) : (

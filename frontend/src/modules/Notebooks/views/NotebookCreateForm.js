@@ -501,6 +501,7 @@ const NotebookCreateForm = (props) => {
                                       errors.SamlAdminGroupName
                                     }
                                     label="Team"
+                                    onChange={handleChange}
                                     variant="outlined"
                                   />
                                 ) : (

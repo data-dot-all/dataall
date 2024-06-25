@@ -206,6 +206,7 @@ export const EnvironmentTeamDatasetsDropdown = (props) => {
                       touched.SamlAdminGroupName && errors.SamlAdminGroupName
                     }
                     label="Team"
+                    onChange={handleChange}
                     variant="outlined"
                   />
                 ) : (
@@ -249,6 +250,7 @@ export const EnvironmentTeamDatasetsDropdown = (props) => {
                     error={Boolean(touched.dataset && errors.dataset)}
                     helperText={touched.dataset && errors.dataset}
                     label="Select S3 Output Dataset"
+                    onChange={handleChange}
                     variant="outlined"
                   />
                 ) : (

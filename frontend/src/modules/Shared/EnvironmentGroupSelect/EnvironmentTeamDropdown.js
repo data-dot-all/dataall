@@ -169,6 +169,7 @@ export const EnvironmentTeamDropdown = (props) => {
                       touched.SamlAdminGroupName && errors.SamlAdminGroupName
                     }
                     label="Team"
+                    onChange={handleChange}
                     variant="outlined"
                   />
                 ) : (
