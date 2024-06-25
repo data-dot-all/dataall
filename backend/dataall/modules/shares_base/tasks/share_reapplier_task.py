@@ -81,5 +81,5 @@ if __name__ == '__main__':
     ENVNAME = os.environ.get('envname', 'local')
     ENGINE = get_engine(envname=ENVNAME)
     dataset_uri = os.environ.get('datasetUri', '')
-    processes_shares = reapply_shares(engine=ENGINE, dataset_uri=dataset_uri)
-    log.info(f'Finished processing {len(processes_shares)} shares')
+    processed_shares = reapply_shares(engine=ENGINE, dataset_uri=dataset_uri)
+    log.info(f'Finished processing {len(processed_shares)} shares')
