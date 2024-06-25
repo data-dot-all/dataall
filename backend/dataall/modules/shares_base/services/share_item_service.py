@@ -123,25 +123,15 @@ class ShareItemService:
             item_type = data.get('itemType')
             item_uri = data.get('itemUri')
             share = ShareObjectRepository.get_share_by_uri(session, uri)
-            target_environment = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
 
             share_sm = ShareObjectSM(share.status)
             new_share_state = share_sm.run_transition(ShareItemActions.AddItem.value)
             share_sm.update_state(session, share, new_share_state)
+
             processor = ShareProcessorManager.get_processor_by_item_type(item_type)
             item = ShareObjectRepository.get_share_item_details(session, processor.shareable_type, item_uri)
             if not item:
                 raise ObjectNotFound('ShareObjectItem', item_uri)
-
-            if (
-                item_type == ShareableType.Table.value and item.region != target_environment.region
-            ):  # TODO Part10: remove from here (we might be able to remove get_share_item_details entirely
-                raise UnauthorizedOperation(
-                    action=ADD_ITEM,
-                    message=f'Lake Formation cross region sharing is not supported. '
-                    f'Table {item.itemUri} is in {item.region} and target environment '
-                    f'{target_environment.name} is in {target_environment.region} ',
-                )
 
             share_item: ShareObjectItem = ShareObjectRepository.find_sharable_item(session, uri, item_uri)
 
@@ -162,17 +152,6 @@ class ShareItemService:
     def remove_shared_item(uri: str):
         with get_context().db_engine.scoped_session() as session:
             share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
-            if (
-                share_item.itemType == ShareableType.Table.value  # TODO Part10 - REMOVE
-                and share_item.status == ShareItemStatus.Share_Failed.value
-            ):
-                share = ShareObjectRepository.get_share_by_uri(session, share_item.shareUri)
-                ResourcePolicyService.delete_resource_policy(
-                    session=session,
-                    group=share.groupUri,
-                    resource_uri=share_item.itemUri,
-                )
-
             item_sm = ShareItemSM(share_item.status)
             item_sm.run_transition(ShareItemActions.RemoveItem.value)
             ShareObjectRepository.remove_share_object_item(session, share_item)
@@ -183,9 +162,7 @@ class ShareItemService:
     def resolve_shared_item(uri, item: ShareObjectItem):
         with get_context().db_engine.scoped_session() as session:
             processor = ShareProcessorManager.get_processor_by_item_type(item.itemType)
-            return ShareObjectRepository.get_share_item_details(
-                session, processor.shareable_type, item.itemUri
-            )  # TODO - check it works
+            return ShareObjectRepository.get_share_item_details(session, processor.shareable_type, item.itemUri)
 
     @staticmethod
     def check_existing_shared_items(share):
