@@ -11,9 +11,6 @@ from sqlalchemy import orm
 from dataall.core.environment.db.environment_models import EnvironmentGroup, Environment
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.permissions.services.organization_permissions import GET_ORGANIZATION
-from dataall.core.permissions.services.organization_permissions import (
-    GET_ORGANIZATION,
-)
 from dataall.core.organizations.db import organization_models as models
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 
