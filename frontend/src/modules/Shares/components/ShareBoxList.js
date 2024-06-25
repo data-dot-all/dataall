@@ -267,13 +267,16 @@ export const ShareBoxList = (props) => {
         reApplyShareObjectItemsOnDataset({ datasetUri: datasetUri })
       );
       if (response && !response.errors) {
-        enqueueSnackbar(`Reapplying process for all unhealthy shares on dataset with uri: ${datasetUri} has started. Please check each individual share for share item health status`, {
-          anchorOrigin: {
-            horizontal: 'right',
-            vertical: 'top'
-          },
-          variant: 'success'
-        });
+        enqueueSnackbar(
+          `Reapplying process for all unhealthy shares on dataset with uri: ${datasetUri} has started. Please check each individual share for share item health status`,
+          {
+            anchorOrigin: {
+              horizontal: 'right',
+              vertical: 'top'
+            },
+            variant: 'success'
+          }
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
