@@ -126,6 +126,11 @@ def group4(db, tenant, user3):
     yield _create_group(db, tenant, 'externals', user3)
 
 
+@pytest.fixture(scope='module')
+def not_in_org_group(db, tenant, user):
+    yield _create_group(db, tenant, 'NotInOrgGroup', user)
+
+
 @pytest.fixture(scope='module', autouse=True)
 def tenant(db, permissions):
     with db.scoped_session() as session:

@@ -5,13 +5,13 @@ from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db.exceptions import RequiredParameter
+from dataall.modules.datasets_base.db.dataset_models import DatasetBase
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.shares_base.services.shares_enums import ShareObjectPermission
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.s3_datasets_shares.services.share_item_service import ShareItemService
-from dataall.modules.s3_datasets_shares.services.share_object_service import ShareObjectService
-from dataall.modules.s3_datasets_shares.aws.glue_client import GlueClient
-from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset
+from dataall.modules.shares_base.services.share_item_service import ShareItemService
+from dataall.modules.shares_base.services.share_object_service import ShareObjectService
+from dataall.modules.shares_base.services.share_logs_service import ShareLogsService
 
 
 log = logging.getLogger(__name__)
@@ -132,14 +132,14 @@ def get_share_object(context, source, shareUri: str = None):
 
 
 def get_share_logs(context, source, shareUri: str):
-    return ShareObjectService.get_share_logs(shareUri)
+    return ShareLogsService.get_share_logs(shareUri)
 
 
 def resolve_user_role(context: Context, source: ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, source.datasetUri)
+        dataset: DatasetBase = DatasetBaseRepository.get_dataset_by_uri(session, source.datasetUri)
 
         can_approve = (
             True
@@ -168,14 +168,14 @@ def resolve_user_role(context: Context, source: ShareObject, **kwargs):
 
 
 def resolve_can_view_logs(context: Context, source: ShareObject):
-    return ShareObjectService.check_view_log_permissions(context.username, context.groups, source.shareUri)
+    return ShareLogsService.check_view_log_permissions(context.username, context.groups, source.shareUri)
 
 
 def resolve_dataset(context: Context, source: ShareObject, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        ds: S3Dataset = DatasetRepository.get_dataset_by_uri(session, source.datasetUri)
+        ds: DatasetBase = DatasetBaseRepository.get_dataset_by_uri(session, source.datasetUri)
         if ds:
             env: Environment = EnvironmentService.get_environment_by_uri(session, ds.environmentUri)
             return {
@@ -188,13 +188,6 @@ def resolve_dataset(context: Context, source: ShareObject, **kwargs):
                 'exists': True if ds else False,
                 'description': ds.description,
             }
-
-
-def union_resolver(object, *_):
-    if isinstance(object, DatasetTable):
-        return 'DatasetTable'
-    elif isinstance(object, DatasetStorageLocation):
-        return 'DatasetStorageLocation'
 
 
 def resolve_principal(context: Context, source: ShareObject, **kwargs):

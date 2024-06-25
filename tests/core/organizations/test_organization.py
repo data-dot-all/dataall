@@ -2,6 +2,7 @@ import pytest
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentParameter
 from dataall.core.organizations.services.organizations_enums import OrganisationUserRole
+from dataall.core.permissions.services.organization_permissions import ORGANIZATION_ALL
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -194,10 +195,7 @@ def test_group_invitation(db, client, org1, group2, user, group3, group, env):
         }
         """,
         username='alice',
-        input=dict(
-            organizationUri=org1.organizationUri,
-            groupUri=group2.name,
-        ),
+        input=dict(organizationUri=org1.organizationUri, groupUri=group2.name, permissions=ORGANIZATION_ALL),
         groups=[group.name, group2.name],
     )
     print(response)
