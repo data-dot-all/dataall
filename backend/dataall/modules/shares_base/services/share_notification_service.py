@@ -66,14 +66,11 @@ class ShareNotificationService:
             )
 
         msg_intro = f"""Dear User,
-
         This is a reminder that a share request for the dataset "{self.dataset.label}" submitted by {email_id} 
         on behalf of principal "{self.share.principalId}" is still pending and has not been addressed.
-
         """
 
         msg_end = """Your prompt attention to this matter is greatly appreciated.
-
         Best regards,
         The Data.all Team
         """
@@ -81,7 +78,7 @@ class ShareNotificationService:
         subject = f'URGENT REMINDER: Data.all | Action Required on Pending Share Request for {self.dataset.label}'
         email_notification_msg = msg_intro + share_link_text + msg_end
 
-        notifications = self._register_notifications(
+        notifications = self.register_notifications(
             notification_type=DataSharingNotificationType.SHARE_OBJECT_SUBMITTED.value, msg=msg_intro
         )
 
