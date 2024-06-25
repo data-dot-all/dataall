@@ -28,7 +28,7 @@ def _process_reapply_shares_for_dataset(engine, dataset_uri):
         share_object: ShareObject
         for share_object in share_objects_for_dataset:
             log.info(
-                f'Re-applying Share Items for Share Object with Requestor: {share_object.principalId} on Target Dataset: {share_object.datasetUri}'
+                f'Re-applying Share Items for Share Object (Share URI: {share_object.shareUri} ) with Requestor: {share_object.principalId} on Target Dataset: {share_object.datasetUri}'
             )
             processed_share_objects.append(share_object.shareUri)
             ShareStatusRepository.update_share_item_health_status_batch(
