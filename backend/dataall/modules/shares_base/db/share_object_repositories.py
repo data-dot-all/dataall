@@ -7,6 +7,7 @@ from dataall.base.db import exceptions, paginate
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
+from dataall.modules.notifications.db.notification_models import Notification
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.shares_base.services.shares_enums import (
@@ -377,3 +378,24 @@ class ShareObjectRepository:
         return paginate(
             query.order_by(shareable_objects.c.itemName).distinct(), data.get('page', 1), data.get('pageSize', 10)
         ).to_dict()
+
+    @staticmethod
+    def fetch_submitted_shares_with_notifications(session):
+        """
+        A method used by the scheduled ECS Task to run fetch_submitted_shares_with_notifications() process against ALL shared objects in ALL
+        active share objects within dataall
+        """
+        with session() as session:
+            pending_shares = (
+                session.query(ShareObject)
+                .join(
+                    Notification,
+                    and_(
+                        ShareObject.shareUri == func.split_part(Notification.target_uri, '|', 1),
+                        ShareObject.datasetUri == func.split_part(Notification.target_uri, '|', 2),
+                    ),
+                )
+                .filter(and_(Notification.type == 'SHARE_OBJECT_SUBMITTED', ShareObject.status == 'Submitted'))
+                .all()
+            )
+            return pending_shares

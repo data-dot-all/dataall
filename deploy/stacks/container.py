@@ -47,8 +47,6 @@ class ContainerStack(pyNestedClass):
         self._ecr_repository = ecr_repository
         self._vpc = vpc
         self._prod_sizing = prod_sizing
-        self._email_custom_domain = email_custom_domain
-        self._ses_configuration_set = ses_configuration_set
 
         (self.scheduled_tasks_sg, self.share_manager_sg) = self.create_ecs_security_groups(
             envname, resource_prefix, vpc, vpce_connection, s3_prefix_list, lambdas
