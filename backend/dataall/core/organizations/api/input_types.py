@@ -58,5 +58,6 @@ InviteGroupToOrganizationInput = gql.InputType(
     arguments=[
         gql.Argument('organizationUri', gql.NonNullableType(gql.String)),
         gql.Argument('groupUri', gql.NonNullableType(gql.String)),
+        gql.Argument('permissions', gql.ArrayType(gql.String)),
     ],
 )

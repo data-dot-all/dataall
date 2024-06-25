@@ -1,5 +1,6 @@
 import SendIcon from '@mui/icons-material/Send';
 import { LoadingButton } from '@mui/lab';
+import Autocomplete from '@mui/lab/Autocomplete';
 import {
   Box,
   Button,
@@ -8,7 +9,6 @@ import {
   Dialog,
   FormControlLabel,
   FormHelperText,
-  MenuItem,
   Switch,
   TextField,
   Typography
@@ -42,6 +42,7 @@ export const RequestAccessModal = (props) => {
   const [loadingEnvs, setLoadingEnvs] = useState(false);
   const [groupOptions, setGroupOptions] = useState([]);
   const [loadingRoles, setLoadingRoles] = useState(false);
+  const [loadingPolicies, setLoadingPolicies] = useState(false);
   const [roleOptions, setRoleOptions] = useState([]);
   const [isSharePolicyAttached, setIsSharePolicyAttached] = useState(true);
   const [policyName, setPolicyName] = useState('');
@@ -94,7 +95,7 @@ export const RequestAccessModal = (props) => {
       const response = await client.query(
         listEnvironmentGroups({
           filter: Defaults.selectListFilter,
-          environmentUri
+          environmentUri: environmentUri
         })
       );
       if (!response.errors) {
@@ -143,7 +144,7 @@ export const RequestAccessModal = (props) => {
   };
 
   const fetchRolePolicies = async (environmentUri, IAMRoleName) => {
-    setLoadingRoles(true);
+    setLoadingPolicies(true);
     try {
       const response = await client.query(
         getConsumptionRolePolicies({
@@ -167,7 +168,7 @@ export const RequestAccessModal = (props) => {
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
     } finally {
-      setLoadingRoles(false);
+      setLoadingPolicies(false);
     }
   };
 
@@ -201,12 +202,12 @@ export const RequestAccessModal = (props) => {
 
   const formRequestObject = (values) => {
     let type = values.consumptionRole ? 'ConsumptionRole' : 'Group';
-    let principal = values.consumptionRole
-      ? values.consumptionRole
+    let principal = values.consumptionRole.value
+      ? values.consumptionRole.value
       : values.groupUri;
 
     let inputObject = {
-      environmentUri: values.environment.environmentUri,
+      environmentUri: values.environmentUri,
       groupUri: values.groupUri,
       principalId: principal,
       principalType: type,
@@ -300,14 +301,16 @@ export const RequestAccessModal = (props) => {
           <Box sx={{ p: 3 }}>
             <Formik
               initialValues={{
-                environment: '',
+                environmentUri: '',
                 comment: '',
                 attachMissingPolicies: false
               }}
               validationSchema={Yup.object().shape({
-                environment: Yup.object().required('*Environment is required'),
+                environmentUri: Yup.string().required(
+                  '*Environment is required'
+                ),
                 groupUri: Yup.string().required('*Team is required'),
-                consumptionRole: Yup.string(),
+                consumptionRole: Yup.object(),
                 comment: Yup.string().max(5000)
               })}
               onSubmit={async (
@@ -374,39 +377,48 @@ export const RequestAccessModal = (props) => {
                     {hit.resourceKind !== 'dashboard' && (
                       <Box>
                         <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.environment && errors.environment
-                            )}
-                            helperText={
-                              touched.environment && errors.environment
-                            }
-                            label="Environment"
-                            name="environment"
-                            onChange={(event) => {
+                          <Autocomplete
+                            id="environment"
+                            disablePortal
+                            options={environmentOptions.map((option) => option)}
+                            onChange={(event, value) => {
                               setFieldValue('groupUri', '');
                               setFieldValue('consumptionRole', '');
-                              fetchGroups(
-                                event.target.value.environmentUri
-                              ).catch((e) =>
-                                dispatch({ type: SET_ERROR, error: e.message })
-                              );
-                              setFieldValue('environment', event.target.value);
+                              if (value && value.environmentUri) {
+                                setFieldValue(
+                                  'environmentUri',
+                                  value.environmentUri
+                                );
+                                fetchGroups(value.environmentUri).catch((e) =>
+                                  dispatch({
+                                    type: SET_ERROR,
+                                    error: e.message
+                                  })
+                                );
+                              } else {
+                                setFieldValue('environmentUri', '');
+                                setGroupOptions([]);
+                                setRoleOptions([]);
+                              }
                             }}
-                            select
-                            value={values.environment}
-                            variant="outlined"
-                          >
-                            {environmentOptions.map((environment) => (
-                              <MenuItem
-                                key={environment.environmentUri}
-                                value={environment}
-                              >
-                                {environment.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                fullWidth
+                                error={Boolean(
+                                  touched.environmentUri &&
+                                    errors.environmentUri
+                                )}
+                                helperText={
+                                  touched.environmentUri &&
+                                  errors.environmentUri
+                                }
+                                label="Environment"
+                                onChange={handleChange}
+                                variant="outlined"
+                              />
+                            )}
+                          />
                         </CardContent>
                         <CardContent>
                           {loadingGroups ? (
@@ -414,45 +426,44 @@ export const RequestAccessModal = (props) => {
                           ) : (
                             <Box>
                               {groupOptions.length > 0 ? (
-                                <TextField
-                                  error={Boolean(
-                                    touched.groupUri && errors.groupUri
-                                  )}
-                                  helperText={
-                                    touched.groupUri && errors.groupUri
-                                  }
-                                  fullWidth
-                                  label="Requesters Team"
-                                  name="groupUri"
-                                  onChange={(event) => {
+                                <Autocomplete
+                                  id="group"
+                                  disablePortal
+                                  options={groupOptions.map((option) => option)}
+                                  onChange={(event, value) => {
                                     setFieldValue('consumptionRole', '');
-                                    fetchRoles(
-                                      values.environment.environmentUri,
-                                      event.target.value
-                                    ).catch((e) =>
-                                      dispatch({
-                                        type: SET_ERROR,
-                                        error: e.message
-                                      })
-                                    );
-                                    setFieldValue(
-                                      'groupUri',
-                                      event.target.value
-                                    );
+                                    if (value && value.value) {
+                                      setFieldValue('groupUri', value.value);
+                                      fetchRoles(
+                                        values.environmentUri,
+                                        value.value
+                                      ).catch((e) =>
+                                        dispatch({
+                                          type: SET_ERROR,
+                                          error: e.message
+                                        })
+                                      );
+                                    } else {
+                                      setFieldValue('groupUri', '');
+                                      setRoleOptions([]);
+                                    }
                                   }}
-                                  select
-                                  value={values.groupUri}
-                                  variant="outlined"
-                                >
-                                  {groupOptions.map((group) => (
-                                    <MenuItem
-                                      key={group.value}
-                                      value={group.value}
-                                    >
-                                      {group.label}
-                                    </MenuItem>
-                                  ))}
-                                </TextField>
+                                  renderInput={(params) => (
+                                    <TextField
+                                      {...params}
+                                      fullWidth
+                                      error={Boolean(
+                                        touched.groupUri && errors.groupUri
+                                      )}
+                                      helperText={
+                                        touched.groupUri && errors.groupUri
+                                      }
+                                      label="Team"
+                                      onChange={handleChange}
+                                      variant="outlined"
+                                    />
+                                  )}
+                                />
                               ) : (
                                 <TextField
                                   error={Boolean(
@@ -477,47 +488,46 @@ export const RequestAccessModal = (props) => {
                           ) : (
                             <Box>
                               {roleOptions.length > 0 ? (
-                                <TextField
-                                  error={Boolean(
-                                    touched.consumptionRole &&
-                                      errors.consumptionRole
-                                  )}
-                                  helperText={
-                                    touched.consumptionRole &&
-                                    errors.consumptionRole
-                                  }
-                                  fullWidth
-                                  label="Consumption Role (optional)"
-                                  name="consumptionRole"
-                                  onChange={(event) => {
-                                    setFieldValue(
-                                      'consumptionRole',
-                                      event.target.value.value
-                                    );
-                                    setFieldValue(
-                                      'consumptionRoleObj',
-                                      event.target.value
-                                    );
-                                    fetchRolePolicies(
-                                      values.environment.environmentUri,
-                                      event.target.value.IAMRoleName
-                                    ).catch((e) =>
-                                      dispatch({
-                                        type: SET_ERROR,
-                                        error: e.message
-                                      })
-                                    );
+                                <Autocomplete
+                                  id="consumptionRole"
+                                  disablePortal
+                                  options={roleOptions.map((option) => option)}
+                                  getOptionLabel={(option) => option.label}
+                                  onChange={(event, value) => {
+                                    setFieldValue('consumptionRole', value);
+                                    if (value && value.IAMRoleName) {
+                                      fetchRolePolicies(
+                                        values.environmentUri,
+                                        value.IAMRoleName
+                                      ).catch((e) =>
+                                        dispatch({
+                                          type: SET_ERROR,
+                                          error: e.message
+                                        })
+                                      );
+                                    } else {
+                                      setFieldValue('consumptionRole', '');
+                                      setPolicyName('');
+                                    }
                                   }}
-                                  select
-                                  value={values.consumptionRoleObj}
-                                  variant="outlined"
-                                >
-                                  {roleOptions.map((role) => (
-                                    <MenuItem key={role.value} value={role}>
-                                      {role.label}
-                                    </MenuItem>
-                                  ))}
-                                </TextField>
+                                  renderInput={(params) => (
+                                    <TextField
+                                      {...params}
+                                      fullWidth
+                                      error={Boolean(
+                                        touched.consumptionRole &&
+                                          errors.consumptionRole
+                                      )}
+                                      helperText={
+                                        touched.consumptionRole &&
+                                        errors.consumptionRole
+                                      }
+                                      label="Consumption Role (optional)"
+                                      onChange={handleChange}
+                                      variant="outlined"
+                                    />
+                                  )}
+                                />
                               ) : (
                                 <TextField
                                   error={Boolean(
@@ -541,7 +551,7 @@ export const RequestAccessModal = (props) => {
                       </Box>
                     )}
                     {!values.consumptionRole ||
-                    values.consumptionRoleObj.dataallManaged ||
+                    values.consumptionRole.dataallManaged ||
                     isSharePolicyAttached ? (
                       <Box />
                     ) : (
@@ -564,9 +574,9 @@ export const RequestAccessModal = (props) => {
                                 component="p"
                                 variant="caption"
                               ></Typography>
-                              {values.consumptionRoleObj &&
+                              {values.consumptionRole &&
                               !(
-                                values.consumptionRoleObj.dataallManaged ||
+                                values.consumptionRole.dataallManaged ||
                                 isSharePolicyAttached ||
                                 values.attachMissingPolicies
                               ) ? (
@@ -587,7 +597,7 @@ export const RequestAccessModal = (props) => {
                       </CardContent>
                     )}
                   </Box>
-                  {isSubmitting || loading ? (
+                  {isSubmitting || loading || loadingPolicies ? (
                     <CardContent>
                       <CircularProgress sx={{ ml: '45%' }} size={50} />
                     </CardContent>
@@ -600,9 +610,9 @@ export const RequestAccessModal = (props) => {
                         disabled={
                           isSubmitting ||
                           loading ||
-                          (values.consumptionRoleObj &&
+                          (values.consumptionRole &&
                             !(
-                              values.consumptionRoleObj.dataallManaged ||
+                              values.consumptionRole.dataallManaged ||
                               isSharePolicyAttached ||
                               values.attachMissingPolicies
                             ))

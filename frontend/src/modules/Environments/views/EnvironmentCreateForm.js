@@ -17,7 +17,6 @@ import {
   Grid,
   IconButton,
   Link,
-  MenuItem,
   Switch,
   TextField,
   Typography
@@ -72,9 +71,7 @@ const EnvironmentCreateForm = (props) => {
   const [trustedAccount, setTrustedAccount] = useState(null);
   const [pivotRoleName, setPivotRoleName] = useState(null);
   const [loading, setLoading] = useState(true);
-  const groupOptions = groups
-    ? groups.map((g) => ({ value: g, label: g }))
-    : [];
+
   const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getOrganization(params.uri));
@@ -174,7 +171,7 @@ const EnvironmentCreateForm = (props) => {
           organizationUri: organization.organizationUri,
           AwsAccountId: values.AwsAccountId,
           label: values.label,
-          SamlGroupName: values.SamlGroupName,
+          SamlGroupName: values.SamlAdminGroupName,
           tags: values.tags,
           description: values.description,
           region: values.region,
@@ -504,7 +501,7 @@ const EnvironmentCreateForm = (props) => {
               initialValues={{
                 label: '',
                 description: '',
-                SamlGroupName: '',
+                SamlAdminGroupName: '',
                 AwsAccountId: '',
                 region: '',
                 tags: [],
@@ -523,7 +520,7 @@ const EnvironmentCreateForm = (props) => {
                   .max(255)
                   .required('*Environment name is required'),
                 description: Yup.string().max(5000),
-                SamlGroupName: Yup.string()
+                SamlAdminGroupName: Yup.string()
                   .max(255)
                   .required('*Team is required'),
                 AwsAccountId: Yup.number(
@@ -871,27 +868,37 @@ const EnvironmentCreateForm = (props) => {
                             />
                           </CardContent>
                           <CardContent>
-                            <TextField
-                              fullWidth
-                              label="Team"
-                              name="SamlGroupName"
-                              error={Boolean(
-                                touched.SamlGroupName && errors.SamlGroupName
+                            <Autocomplete
+                              id="SamlAdminGroupName"
+                              disablePortal
+                              options={groups}
+                              onChange={(event, value) => {
+                                if (value) {
+                                  setFieldValue('SamlAdminGroupName', value);
+                                } else {
+                                  setFieldValue('SamlAdminGroupName', '');
+                                }
+                              }}
+                              inputValue={values.SamlAdminGroupName}
+                              renderInput={(params) => (
+                                <TextField
+                                  {...params}
+                                  fullWidth
+                                  error={Boolean(
+                                    touched.SamlAdminGroupName &&
+                                      errors.SamlAdminGroupName
+                                  )}
+                                  helperText={
+                                    touched.SamlAdminGroupName &&
+                                    errors.SamlAdminGroupName
+                                  }
+                                  label="Team"
+                                  onChange={handleChange}
+                                  name="SamlAdminGroupName"
+                                  variant="outlined"
+                                />
                               )}
-                              helperText={
-                                touched.SamlGroupName && errors.SamlGroupName
-                              }
-                              onChange={handleChange}
-                              select
-                              value={values.SamlGroupName}
-                              variant="outlined"
-                            >
-                              {groupOptions.map((group) => (
-                                <MenuItem key={group.value} value={group.value}>
-                                  {group.label}
-                                </MenuItem>
-                              ))}
-                            </TextField>
+                            />
                           </CardContent>
                           <CardContent>
                             <TextField

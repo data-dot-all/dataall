@@ -13,6 +13,7 @@ from dataall.base.utils import Parameter
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.base.db.exceptions import AWSResourceNotFound
+from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.permissions.services.environment_permissions import (
     ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
     CREDENTIALS_ENVIRONMENT,
@@ -86,6 +87,7 @@ class EnvironmentRequestValidationService:
             raise exceptions.RequiredParameter('region')
         EnvironmentRequestValidationService.validate_resource_prefix(data)
         EnvironmentRequestValidationService.validate_account_region(data, session)
+        EnvironmentRequestValidationService.validate_org_group(data['organizationUri'], data['SamlGroupName'], session)
 
     @staticmethod
     def validate_resource_prefix(data):
@@ -122,6 +124,14 @@ class EnvironmentRequestValidationService:
             raise exceptions.RequiredParameter('groupUri')
         if not data.get('IAMRoleArn'):
             raise exceptions.RequiredParameter('IAMRoleArn')
+
+    @staticmethod
+    def validate_org_group(org_uri, group, session):
+        if OrganizationRepository.find_group_membership(session, [group], org_uri) is None:
+            raise Exception(
+                f'Group {group} is not a member of the organization {org_uri}. '
+                f'Invite this group to the organisation before giving it access to the environment.'
+            )
 
 
 class EnvironmentService:
@@ -359,6 +369,8 @@ class EnvironmentService:
             EnvironmentService.validate_permissions(session, uri, data['permissions'], group)
 
             environment = EnvironmentService.get_environment_by_uri(session, uri)
+
+            EnvironmentRequestValidationService.validate_org_group(environment.organizationUri, group, session)
 
             group_membership = EnvironmentService.find_environment_group(session, group, environment.environmentUri)
             if group_membership:

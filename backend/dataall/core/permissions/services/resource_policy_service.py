@@ -7,6 +7,10 @@ from typing import Protocol, Callable, List
 from dataall.base.context import get_context
 from functools import wraps
 
+import logging
+
+log = logging.getLogger(__name__)
+
 
 class Identifiable(Protocol):
     """Protocol to identify resources for checking permissions"""
@@ -131,6 +135,7 @@ class ResourcePolicyService:
             resource_uri=resource_uri,
             resource_type=resource_type,
         )
+        log.info(f'update policy for group {new_group} with new permissions: {new_permissions}')
         return ResourcePolicyService.attach_resource_policy(
             session=session,
             group=new_group,

@@ -2,6 +2,8 @@ import logging
 from typing import List
 from warnings import warn
 from datetime import datetime
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.base.aws.quicksight import QuicksightClient
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
     ShareItemStatus,
@@ -13,13 +15,16 @@ from dataall.modules.s3_datasets.db.dataset_models import DatasetTable
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers import LFShareManager
 from dataall.modules.s3_datasets_shares.aws.ram_client import RamClient
-from dataall.modules.s3_datasets_shares.services.share_object_service import ShareObjectService
-from dataall.modules.s3_datasets_shares.services.share_item_service import ShareItemService
-from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.services.share_object_service import ShareObjectService
+from dataall.modules.s3_datasets_shares.services.share_item_service import S3ShareItemService
+from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
+from dataall.modules.s3_datasets_shares.db.share_object_repositories import S3ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
 from dataall.modules.s3_datasets_shares.services.share_managers.share_manager_utils import ShareErrorFormatter
 
-from dataall.modules.shares_base.services.sharing_service import SharesProcessorInterface, ShareData
+from dataall.modules.shares_base.services.sharing_service import ShareData
+from dataall.modules.shares_base.services.share_processor_manager import SharesProcessorInterface
 
 log = logging.getLogger(__name__)
 
@@ -77,6 +82,11 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                 ]:
                     raise Exception(
                         'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all'
+                    )
+                env = EnvironmentService.get_environment_by_uri(self.session, self.share_data.share.environmentUri)
+                if EnvironmentService.get_boolean_env_param(self.session, env, 'dashboardsEnabled'):
+                    QuicksightClient.check_quicksight_enterprise_subscription(
+                        AwsAccountId=env.AwsAccountId, region=env.region
                     )
                 manager.initialize_clients()
                 manager.grant_pivot_role_all_database_permissions_to_source_database()
@@ -144,14 +154,14 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     manager.grant_principals_permissions_to_resource_link_table(table)
 
                     log.info('Attaching TABLE READ permissions...')
-                    ShareItemService.attach_dataset_table_read_permission(
+                    S3ShareItemService.attach_dataset_table_read_permission(
                         self.session, self.share_data.share, table.tableUri
                     )
 
                     if not self.reapply:
                         new_state = shared_item_SM.run_transition(ShareItemActions.Success.value)
                         shared_item_SM.update_state_single_item(self.session, share_item, new_state)
-                    ShareObjectRepository.update_share_item_health_status(
+                    ShareStatusRepository.update_share_item_health_status(
                         self.session, share_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
                     )
                 except Exception as e:
@@ -159,7 +169,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         new_state = shared_item_SM.run_transition(ShareItemActions.Failure.value)
                         shared_item_SM.update_state_single_item(self.session, share_item, new_state)
                     else:
-                        ShareObjectRepository.update_share_item_health_status(
+                        ShareStatusRepository.update_share_item_health_status(
                             self.session,
                             share_item,
                             ShareItemHealthStatus.Unhealthy.value,
@@ -234,7 +244,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     resource_link_table_exists = manager.check_resource_link_table_exists_in_target_database(table)
                     other_table_shares_in_env = (
                         True
-                        if ShareObjectRepository.other_approved_share_item_table_exists(
+                        if S3ShareObjectRepository.check_other_approved_share_item_table_exists(
                             self.session,
                             self.share_data.target_environment.environmentUri,
                             share_item.itemUri,
@@ -266,14 +276,14 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         and self.share_data.share.groupUri != self.share_data.dataset.stewards
                     ):
                         log.info('Deleting TABLE READ permissions...')
-                        ShareItemService.delete_dataset_table_read_permission(
+                        S3ShareItemService.delete_dataset_table_read_permission(
                             self.session, self.share_data.share, table.tableUri
                         )
 
                     new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
                     revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
 
-                    ShareObjectRepository.update_share_item_health_status(
+                    ShareStatusRepository.update_share_item_health_status(
                         self.session, share_item, None, None, share_item.lastVerificationTime
                     )
 
@@ -286,7 +296,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
 
             try:
                 if self.tables:
-                    existing_shared_tables_in_share = ShareObjectRepository.check_existing_shared_items_of_type(
+                    existing_shared_tables_in_share = S3ShareObjectRepository.check_existing_shared_items_of_type(
                         session=self.session, uri=self.share_data.share.shareUri, item_type=ShareableType.Table.value
                     )
                     log.info(f'Remaining tables shared in this share object = {existing_shared_tables_in_share}')
@@ -305,7 +315,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                             manager.delete_shared_database_in_target()
 
                     existing_shares_with_shared_tables_in_environment = (
-                        ShareObjectRepository.list_dataset_shares_and_datasets_with_existing_shared_items(
+                        S3ShareObjectRepository.list_shares_with_existing_shared_items_in_environment(
                             session=self.session,
                             dataset_uri=self.share_data.dataset.datasetUri,
                             environment_uri=self.share_data.target_environment.environmentUri,
@@ -313,7 +323,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         )
                     )
                     warn(
-                        'ShareObjectRepository.list_dataset_shares_and_datasets_with_existing_shared_items will be deprecated in v2.6.0',
+                        'S3ShareObjectRepository.list_shares_with_existing_shared_items_in_environment will be deprecated in v2.6.0',
                         DeprecationWarning,
                         stacklevel=2,
                     )
@@ -399,7 +409,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     manager.tbl_level_errors = [str(e)]
 
                 if len(manager.db_level_errors) or len(manager.tbl_level_errors):
-                    ShareObjectRepository.update_share_item_health_status(
+                    ShareStatusRepository.update_share_item_health_status(
                         self.session,
                         share_item,
                         ShareItemHealthStatus.Unhealthy.value,
@@ -407,7 +417,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         datetime.now(),
                     )
                 else:
-                    ShareObjectRepository.update_share_item_health_status(
+                    ShareStatusRepository.update_share_item_health_status(
                         self.session, share_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
                     )
         return True
