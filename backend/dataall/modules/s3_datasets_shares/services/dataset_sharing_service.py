@@ -6,6 +6,9 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.base.context import get_context
 from dataall.base.db import exceptions
 from dataall.base.aws.sts import SessionHelper
+from dataall.core.stacks.aws.ecs import Ecs
+from dataall.core.tasks.db.task_models import Task
+from dataall.core.tasks.service_handlers import Worker
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.s3_datasets_shares.db.share_object_repositories import S3ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
@@ -133,6 +136,18 @@ class DatasetSharingService(DatasetServiceInterface):
                 item_uris = [item.shareItemUri for item in items]
                 ShareItemService.verify_items_share_object(uri=share_uri, item_uris=item_uris)
         return True
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
+    @ResourcePolicyService.has_resource_permission(UPDATE_DATASET)
+    def reapply_share_items_for_dataset(uri: str):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            reapply_share_items_task: Task = Task(action='ecs.dataset.share.reapply', targetUri=uri)
+            session.add(reapply_share_items_task)
+        Worker.queue(engine=context.db_engine, task_ids=[reapply_share_items_task.taskUri])
+        return True
+
 
     @staticmethod
     def list_shared_tables_by_env_dataset(dataset_uri: str, env_uri: str):

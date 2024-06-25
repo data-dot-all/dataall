@@ -63,7 +63,7 @@ def _process_repply_shares(engine):
 
 def reapply_shares(engine, dataset_uri):
     """
-    A method used by the scheduled ECS Task to re-apply_share() on all data.all active shares
+    A method used by the scheduled ECS Task to re-apply_share() on all data.all active shares / reapply on all shares belonging to a dataset
     """
     if dataset_uri:
         return _process_reapply_shares_for_dataset(engine, dataset_uri)
@@ -76,4 +76,4 @@ if __name__ == '__main__':
     ENVNAME = os.environ.get('envname', 'local')
     ENGINE = get_engine(envname=ENVNAME)
     dataset_uri = os.environ.get('datasetUri', '')
-    reapply_shares(engine=ENGINE, dataset_uri = dataset_uri)
+    reapply_shares(engine=ENGINE, dataset_uri=dataset_uri)

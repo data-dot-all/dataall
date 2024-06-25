@@ -74,24 +74,6 @@ class ShareItemService:
         return True
 
     @staticmethod
-    @ResourcePolicyService.has_resource_permission(APPROVE_SHARE_OBJECT)
-    def reapply_share_items_for_dataset(uri: str):
-        try:
-            ecs_task_response = Ecs.run_ecs_task(
-                task_definition_param='ecs/task_def_arn/share_reapplier',
-                container_name_param='ecs/container/share_reapplier',
-                context=[
-                    {'name': 'datasetUri', 'value': uri},
-                ],
-            )
-            return True if ecs_task_response is not None else False
-        except Exception as e:
-            log.error(
-                f'Error while starting ECS task for share re-apply on dataset with datasetUri - {uri} due to: {e}'
-            )
-            return False
-
-    @staticmethod
     @ResourcePolicyService.has_resource_permission(GET_SHARE_OBJECT)
     def revoke_items_share_object(uri, revoked_uris):
         context = get_context()

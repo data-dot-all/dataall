@@ -31,6 +31,17 @@ class EcsShareHandler:
         return EcsShareHandler._manage_share(engine, task, SharingService.reapply_share, 'reapply_share')
 
     @staticmethod
+    @Worker.handler(path='ecs.dataset.share.reapply')
+    def reapply_share(engine, task: Task):
+        return Ecs.run_ecs_task(
+            task_definition_param='ecs/task_def_arn/share_reapplier',
+            container_name_param='ecs/container/share_reapplier',
+            context=[
+                {'name': 'datasetUri', 'value': task.targetUri},
+            ],
+        )
+
+    @staticmethod
     def _manage_share(engine, task: Task, local_handler, ecs_handler: str):
         envname = os.environ.get('envname', 'local')
         if envname in ['local', 'dkrcompose']:
