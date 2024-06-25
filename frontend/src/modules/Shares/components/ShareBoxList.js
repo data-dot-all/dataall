@@ -28,6 +28,7 @@ import { getShareRequestsFromMe, listOwnedDatasets } from '../services';
 
 import { ShareBoxListItem } from './ShareBoxListItem';
 import { ShareObjectSelectorModal } from './ShareObjectSelectorModal';
+import { NavigateShareViewModal } from './NavigateShareViewModal';
 import { ShareStatusList } from '../constants';
 import { RefreshRounded } from '@mui/icons-material';
 import { reApplyShareObjectItemsOnDataset } from '../services/reApplyShareObjectItemsOnDataset';
@@ -54,6 +55,8 @@ export const ShareBoxList = (props) => {
   const [datasets, setDatasets] = useState([]);
   const [isVerifyObjectItemsModalOpen, setIsVerifyObjectItemsModalOpen] =
     useState(false);
+  const [isNavigateShareViewModalOpen, setIsNavigateShareViewModalOpen] =
+    useState(false);
   const statusOptions = ShareStatusList;
   const { enqueueSnackbar } = useSnackbar();
 
@@ -62,6 +65,13 @@ export const ShareBoxList = (props) => {
   };
   const handleVerifyObjectItemsModalClose = () => {
     setIsVerifyObjectItemsModalOpen(false);
+    if (dataset) {
+      setIsNavigateShareViewModalOpen(true);
+    }
+  };
+
+  const handleNavigateShareViewModalClose = () => {
+    setIsNavigateShareViewModalOpen(false);
   };
 
   const handlePageChange = async (event, value) => {
@@ -569,6 +579,14 @@ export const ShareBoxList = (props) => {
           onApply={handleVerifyObjectItemsModalClose}
           onClose={handleVerifyObjectItemsModalClose}
           open={isVerifyObjectItemsModalOpen}
+        />
+      )}
+      {isNavigateShareViewModalOpen && (
+        <NavigateShareViewModal
+          dataset={dataset}
+          onApply={handleNavigateShareViewModalClose}
+          onClose={handleNavigateShareViewModalClose}
+          open={isNavigateShareViewModalOpen}
         />
       )}
     </>

@@ -6,10 +6,7 @@ import {
   DeleteOutlined,
   RefreshRounded
 } from '@mui/icons-material';
-import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
-import GppBadIcon from '@mui/icons-material/GppBad';
 import SecurityIcon from '@mui/icons-material/Security';
-import PendingIcon from '@mui/icons-material/Pending';
 import { LoadingButton } from '@mui/lab';
 import {
   Box,
@@ -49,6 +46,7 @@ import {
   PencilAltIcon,
   Scrollbar,
   ShareStatus,
+  ShareHealthStatus,
   TextAvatar,
   useSettings
 } from 'design';
@@ -489,33 +487,11 @@ export function SharedItem(props) {
         )}
       </TableCell>
       <TableCell>
-        <div style={{ display: 'flex', alignItems: 'left' }}>
-          {item.healthStatus === 'Unhealthy' ? (
-            <Tooltip title={<Typography>{item.healthStatus}</Typography>}>
-              <GppBadIcon color={'error'} />
-            </Tooltip>
-          ) : item.healthStatus === 'Healthy' ? (
-            <Tooltip title={<Typography>{item.healthStatus}</Typography>}>
-              <VerifiedUserIcon color={'success'} />
-            </Tooltip>
-          ) : (
-            <Tooltip
-              title={
-                <Typography>{item.healthStatus || 'Undefined'}</Typography>
-              }
-            >
-              <PendingIcon color={'info'} />
-            </Tooltip>
-          )}
-          <Typography color="textSecondary" variant="subtitle2">
-            {(item.lastVerificationTime &&
-              item.lastVerificationTime.substring(
-                0,
-                item.lastVerificationTime.indexOf('.')
-              )) ||
-              ''}
-          </Typography>
-        </div>
+        <ShareHealthStatus
+          status={item.status}
+          healthStatus={item.healthStatus}
+          lastVerificationTime={item.lastVerificationTime}
+        />
       </TableCell>
       <TableCell>
         {item.healthMessage ? (

@@ -67,7 +67,7 @@ class ShareObjectRepository:
         return share_item
 
     @staticmethod
-    def get_share_item_details(session, share_type_model, item_uri):  # TODO CHECK THAT IT WORKS
+    def get_share_item_details(session, share_type_model, item_uri):
         return session.query(share_type_model).get(item_uri)
 
     @staticmethod

@@ -49,7 +49,7 @@ class ShareNotificationService:
         subject = f'Data.all | Share Request Submitted for {self.dataset.label}'
         email_notification_msg = msg + share_link_text
 
-        notifications = self._register_notifications(
+        notifications = self.register_notifications(
             notification_type=DataSharingNotificationType.SHARE_OBJECT_SUBMITTED.value, msg=msg
         )
 
@@ -64,7 +64,7 @@ class ShareNotificationService:
         subject = f'Data.all | Share Request Approved for {self.dataset.label}'
         email_notification_msg = msg + share_link_text
 
-        notifications = self._register_notifications(
+        notifications = self.register_notifications(
             notification_type=DataSharingNotificationType.SHARE_OBJECT_APPROVED.value, msg=msg
         )
 
@@ -86,19 +86,11 @@ class ShareNotificationService:
             subject = f'Data.all | Share Request Rejected / Revoked for {self.dataset.label}'
         email_notification_msg = msg + share_link_text
 
-        notifications = self._register_notifications(
+        notifications = self.register_notifications(
             notification_type=DataSharingNotificationType.SHARE_OBJECT_REJECTED.value, msg=msg
         )
 
         self._create_notification_task(subject=subject, msg=email_notification_msg)
-        return notifications
-
-    def notify_new_data_available_from_owners(self, s3_prefix):  # TODO part10: remove, this is specific for S3
-        msg = f'New data (at {s3_prefix}) is available from dataset {self.dataset.datasetUri} shared by owner {self.dataset.owner}'
-
-        notifications = self._register_notifications(
-            notification_type=DataSharingNotificationType.DATASET_VERSION.value, msg=msg
-        )
         return notifications
 
     def _get_share_object_targeted_users(self):
@@ -109,7 +101,7 @@ class ShareNotificationService:
         targeted_users.append(self.share.groupUri)
         return targeted_users
 
-    def _register_notifications(self, notification_type, msg):
+    def register_notifications(self, notification_type, msg):
         """
         Notifications sent to:
             - dataset.SamlAdminGroupName
