@@ -46,9 +46,7 @@ def upgrade():
 
         if group_membership is None:
             # 1. Add Organization Group
-            org_group = models.OrganizationGroup(
-                organizationUri=organization_uri, groupUri=group.groupUri
-            )
+            org_group = models.OrganizationGroup(organizationUri=organization_uri, groupUri=group.groupUri)
             session.add(org_group)
 
             # 2. Add Resource Policy Permissions
