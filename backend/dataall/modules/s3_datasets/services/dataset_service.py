@@ -165,9 +165,6 @@ class DatasetService:
                 DatasetService.check_imported_resources(dataset)
 
             dataset = DatasetRepository.create_dataset(session=session, env=environment, dataset=dataset, data=data)
-            ResourceLockRepository.create_resource_lock(
-                session=session, resource_uri=dataset.datasetUri, resource_type=dataset.__tablename__
-            )
             DatasetBucketRepository.create_dataset_bucket(session, dataset, data)
 
             ResourcePolicyService.attach_resource_policy(
@@ -413,7 +410,6 @@ class DatasetService:
                 ResourcePolicyService.delete_resource_policy(session=session, resource_uri=uri, group=env.SamlGroupName)
             if dataset.stewards:
                 ResourcePolicyService.delete_resource_policy(session=session, resource_uri=uri, group=dataset.stewards)
-            ResourceLockRepository.delete_resource_lock(session=session, resource_uri=dataset.datasetUri)
             DatasetRepository.delete_dataset(session, dataset)
 
         if delete_from_aws:

@@ -9,7 +9,6 @@ class ResourceLock(Base):
 
     resourceUri = Column(String, nullable=False, primary_key=True)
     resourceType = Column(String, nullable=False, primary_key=True)
-    isLocked = Column(Boolean, default=False)
     acquiredByUri = Column(String, nullable=True)
     acquiredByType = Column(String, nullable=True)
 
@@ -17,12 +16,10 @@ class ResourceLock(Base):
         self,
         resourceUri: str,
         resourceType: str,
-        isLocked: bool = False,
         acquiredByUri: Optional[str] = None,
         acquiredByType: Optional[str] = None,
     ):
         self.resourceUri = resourceUri
         self.resourceType = resourceType
-        self.isLocked = isLocked
         self.acquiredByUri = acquiredByUri
         self.acquiredByType = acquiredByType
