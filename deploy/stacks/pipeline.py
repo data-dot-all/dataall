@@ -755,6 +755,7 @@ class PipelineStack(Stack):
                 custom_domain=target_env.get('custom_domain'),
                 custom_auth=target_env.get('custom_auth', None),
                 custom_waf_rules=target_env.get('custom_waf_rules', None),
+                backend_region=target_env.get('region', self.region),
             )
         )
         front_stage_actions = (
