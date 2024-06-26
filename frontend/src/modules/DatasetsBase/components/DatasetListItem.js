@@ -41,7 +41,7 @@ export const DatasetListItem = (props) => {
                     variant="h6"
                     onClick={() => {
                       navigate(
-                        dataset.datasetType === 'DatasetType.S3'
+                        dataset.datasetType === 'DatasetTypes.S3'
                           ? `/console/s3-datasets/${dataset.datasetUri}`
                           : '-'
                       );
@@ -208,7 +208,7 @@ export const DatasetListItem = (props) => {
               color="primary"
               component={RouterLink}
               to={
-                dataset.datasetType === 'DatasetType.S3'
+                dataset.datasetType === 'DatasetTypes.S3'
                   ? `/console/s3-datasets/${dataset.datasetUri}`
                   : '-'
               }
