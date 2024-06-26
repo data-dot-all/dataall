@@ -333,7 +333,7 @@ class BackendStack(Stack):
             **kwargs,
         )
 
-        TriggerFunctionStack(
+        dataall_migration_tfs = TriggerFunctionStack(
             self,
             'DataallMigrations',
             handler='deployment_triggers.dataall_migrate_handler.handler',
@@ -345,9 +345,19 @@ class BackendStack(Stack):
             ecr_repository=repo,
             execute_after=[db_migrations.trigger_function],
             connectables=[aurora_stack.cluster],
+            additional_policy_statements=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=['sts:AssumeRole'],
+                    resources=[f'arn:aws:iam:*:{self.account}:role/{self.pivot_role_name}'],
+                ),
+            ],
             env_var_encryption_key=lambda_env_key,
             **kwargs,
         )
+
+        pivot_role = iam.Role.from_role_name(self, 'PivotRole', role_name=self.pivot_role_name)
+        pivot_role.grant_assume_role(dataall_migration_tfs.trigger_function)
 
         self.monitoring_stack = MonitoringStack(
             self,
