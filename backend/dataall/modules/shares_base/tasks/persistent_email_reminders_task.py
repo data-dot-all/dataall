@@ -15,7 +15,6 @@ root.setLevel(logging.INFO)
 if not root.hasHandlers():
     root.addHandler(logging.StreamHandler(sys.stdout))
 log = logging.getLogger(__name__)
-Worker.queue = SqsQueue.send
 
 
 def persistent_email_reminders(engine):

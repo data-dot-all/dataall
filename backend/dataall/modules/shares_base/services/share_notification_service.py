@@ -9,6 +9,7 @@ from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.base.context import get_context
 from dataall.modules.shares_base.services.shares_enums import ShareObjectStatus
 from dataall.modules.notifications.db.notification_repositories import NotificationRepository
+from dataall.modules.notifications.services.ses_email_notification_service import SESEmailNotificationService
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 
 log = logging.getLogger(__name__)
@@ -235,7 +236,9 @@ class ShareNotificationService:
                         self.session.add(notification_task)
                         self.session.commit()
 
-                        Worker.queue(engine=engine, task_ids=[notification_task.taskUri])
+                        SESEmailNotificationService.send_email_task(
+                            subject, msg, notification_recipient_groups_list, []
+                        )
                 else:
                     log.info(f'Notification type : {share_notification_config_type} is not active')
         else:
