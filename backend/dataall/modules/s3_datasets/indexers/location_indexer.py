@@ -46,7 +46,6 @@ class DatasetLocationIndexer(BaseIndexer):
                     'glossary': glossary,
                 },
             )
-            DatasetIndexer.upsert(session=session, dataset_uri=folder.datasetUri)
         return folder
 
     @classmethod

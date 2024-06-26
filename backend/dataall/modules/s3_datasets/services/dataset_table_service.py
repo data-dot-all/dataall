@@ -9,6 +9,7 @@ from dataall.modules.s3_datasets.aws.athena_table_client import AthenaTableClien
 from dataall.modules.s3_datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.s3_datasets.indexers.table_indexer import DatasetTableIndexer
+from dataall.modules.s3_datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.s3_datasets.services.dataset_permissions import (
     UPDATE_DATASET_TABLE,
     MANAGE_DATASETS,
@@ -115,6 +116,7 @@ class DatasetTableService:
             cls.sync_existing_tables(session, uri=dataset.datasetUri, glue_tables=tables)
             DatasetTableIndexer.upsert_all(session=session, dataset_uri=dataset.datasetUri)
             DatasetTableIndexer.remove_all_deleted(session=session, dataset_uri=dataset.datasetUri)
+            DatasetIndexer.upsert(session=session, dataset_uri=dataset.datasetUri)
             return DatasetRepository.paginated_dataset_tables(
                 session=session,
                 uri=uri,

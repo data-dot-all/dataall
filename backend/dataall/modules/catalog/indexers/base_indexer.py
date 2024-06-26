@@ -52,6 +52,17 @@ class BaseIndexer(ABC):
             log.error(f'ES config is missing doc {doc} for id {doc_id} was not indexed')
             return False
 
+    @classmethod
+    def search(cls, query):
+        es = cls.es()
+        if es:
+            res = es.search(index=cls._INDEX, body=query)
+            log.info(f'Search query {query} returned {res["hits"]["total"]["value"]} records')
+            return res
+        else:
+            log.error(f'ES config is missing, search query {query} failed')
+            return None
+
     @staticmethod
     def _get_target_glossary_terms(session, target_uri):
         q = (

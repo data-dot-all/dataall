@@ -1,5 +1,6 @@
 import logging
 
+from typing import List
 from dataall.modules.s3_datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.s3_datasets.indexers.location_indexer import DatasetLocationIndexer
 from dataall.modules.s3_datasets.indexers.table_indexer import DatasetTableIndexer
@@ -16,13 +17,18 @@ class DatasetCatalogIndexer(CatalogIndexer):
     Register automatically itself when CatalogIndexer instance is created
     """
 
-    def index(self, session) -> int:
-        all_datasets: [S3Dataset] = DatasetRepository.list_all_active_datasets(session)
+    def index(self, session) -> List[str]:
+        all_datasets: List[S3Dataset] = DatasetRepository.list_all_active_datasets(session)
+        all_doc_uris = []
         log.info(f'Found {len(all_datasets)} datasets')
-        indexed = 0
         for dataset in all_datasets:
             tables = DatasetTableIndexer.upsert_all(session, dataset.datasetUri)
+            all_doc_uris += [table.tableUri for table in tables]
+
             folders = DatasetLocationIndexer.upsert_all(session, dataset_uri=dataset.datasetUri)
+            all_doc_uris += [folder.locationUri for folder in folders]
+
             DatasetIndexer.upsert(session=session, dataset_uri=dataset.datasetUri)
-            indexed += len(tables) + len(folders) + 1
-        return indexed
+            all_doc_uris.append(dataset.datasetUri)
+
+        return all_doc_uris

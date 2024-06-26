@@ -48,7 +48,6 @@ class DatasetTableIndexer(BaseIndexer):
                     'glossary': glossary,
                 },
             )
-            DatasetIndexer.upsert(session=session, dataset_uri=table.datasetUri)
         return table
 
     @classmethod
