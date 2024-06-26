@@ -15,8 +15,11 @@ from aws_cdk import (
     RemovalPolicy,
     CfnOutput,
     BundlingOptions,
+    aws_kms,
 )
+from aws_cdk.triggers import TriggerFunction
 
+from custom_resources.utils import get_lambda_code
 from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling
 from .waf_rules import get_waf_rules
@@ -34,6 +37,7 @@ class CloudfrontDistro(pyNestedClass):
         custom_waf_rules=None,
         tooling_account_id=None,
         custom_auth=None,
+        backend_region=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -269,6 +273,9 @@ class CloudfrontDistro(pyNestedClass):
                 )
             )
 
+        if not custom_auth:
+            self.cognito_urls_config(resource_prefix, envname, backend_region, custom_domain, [cloudfront_distribution])
+
         CfnOutput(
             self,
             'OutputCfnFrontDistribution',
@@ -489,3 +496,94 @@ class CloudfrontDistro(pyNestedClass):
                 response_page_path='/index.html',
             ),
         ]
+
+    def cognito_urls_config(self, resource_prefix, envname, backend_region, custom_domain, execute_after):
+        lambda_env_key = aws_kms.Key(
+            self,
+            f'{resource_prefix}-cogn-lambda-env-var-key',
+            removal_policy=RemovalPolicy.DESTROY,
+            alias=f'{resource_prefix}-cogn-lambda-env-var-key',
+            enable_key_rotation=True,
+            policy=iam.PolicyDocument(
+                statements=[
+                    iam.PolicyStatement(
+                        resources=['*'],
+                        effect=iam.Effect.ALLOW,
+                        principals=[
+                            iam.AccountPrincipal(account_id=self.account),
+                        ],
+                        actions=['kms:*'],
+                    ),
+                    iam.PolicyStatement(
+                        resources=['*'],
+                        effect=iam.Effect.ALLOW,
+                        principals=[
+                            iam.ServicePrincipal(service='lambda.amazonaws.com'),
+                        ],
+                        actions=['kms:GenerateDataKey*', 'kms:Decrypt'],
+                    ),
+                ],
+            ),
+        )
+
+        cognito_config_code = get_lambda_code('cognito_config')
+
+        TriggerFunction(
+            self,
+            'TriggerFunction-CognitoUrlsConfig',
+            function_name=f'{resource_prefix}-{envname}-cognito_urls_config',
+            description='dataall CognitoUrlsConfig trigger function',
+            initial_policy=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        'secretsmanager:DescribeSecret',
+                        'secretsmanager:GetSecretValue',
+                        'ssm:GetParameterHistory',
+                        'ssm:GetParameters',
+                        'ssm:GetParameter',
+                        'ssm:GetParametersByPath',
+                        'kms:Decrypt',
+                        'kms:GenerateDataKey',
+                        'kms:DescribeKey',
+                        'rum:GetAppMonitor',
+                    ],
+                    resources=[
+                        f'arn:aws:kms:{self.region}:{self.account}:key/*',
+                        f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
+                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*',
+                        f'arn:aws:rum:{self.region}:{self.account}:appmonitor/*dataall*',
+                    ],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        'cognito-idp:AddCustomAttributes',
+                        'cognito-idp:UpdateUserPool',
+                        'cognito-idp:DescribeUserPoolClient',
+                        'cognito-idp:CreateGroup',
+                        'cognito-idp:UpdateUserPoolClient',
+                        'cognito-idp:AdminSetUserPassword',
+                        'cognito-idp:AdminCreateUser',
+                        'cognito-idp:DescribeUserPool',
+                        'cognito-idp:AdminAddUserToGroup',
+                    ],
+                    resources=[f'arn:aws:cognito-idp:{backend_region}:{self.account}:userpool/*'],
+                ),
+            ],
+            code=cognito_config_code,
+            memory_size=256,
+            timeout=Duration.minutes(15),
+            environment={
+                'envname': envname,
+                'deployment_region': backend_region,
+                'custom_domain': str(bool(custom_domain)),
+            },
+            environment_encryption=lambda_env_key,
+            tracing=_lambda.Tracing.ACTIVE,
+            retry_attempts=0,
+            runtime=_lambda.Runtime.PYTHON_3_9,
+            handler='cognito_urls.handler',
+            execute_after=execute_after,
+            execute_on_handler_change=True,
+        )
