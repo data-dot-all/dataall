@@ -10,9 +10,9 @@ from alembic import op
 from sqlalchemy import orm
 from dataall.core.environment.db.environment_models import EnvironmentGroup, Environment
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
-from dataall.core.organizations.services.organization_service import OrganizationService
 from dataall.core.permissions.services.organization_permissions import GET_ORGANIZATION
-
+from dataall.core.organizations.db import organization_models as models
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 
 # revision identifiers, used by Alembic.
 revision = '328e35e39e1e'
@@ -37,15 +37,24 @@ def upgrade():
         env_org[e.environmentUri] = e.organizationUri
 
     for group in all_env_groups:
-        group_membership = OrganizationRepository.find_group_membership(
-            session, [group.groupUri], env_org[group.environmentUri]
-        )
+        organization_uri = env_org[group.environmentUri]
+
+        group_membership = OrganizationRepository.find_group_membership(session, [group.groupUri], organization_uri)
+
         if group_membership is None:
-            data = {
-                'groupUri': group.groupUri,
-                'permissions': [GET_ORGANIZATION],
-            }
-            OrganizationService.invite_group(env_org[group.environmentUri], data)
+            # 1. Add Organization Group
+            org_group = models.OrganizationGroup(organizationUri=organization_uri, groupUri=group.groupUri)
+            session.add(org_group)
+
+            # 2. Add Resource Policy Permissions
+            permissions = [GET_ORGANIZATION]
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                group=group.groupUri,
+                resource_uri=organization_uri,
+                permissions=permissions,
+                resource_type=models.Organization.__name__,
+            )
 
 
 def downgrade():

@@ -28,11 +28,33 @@ class S3DatasetsSharesApiModuleInterface(ModuleInterface):
         from dataall.modules.datasets_base.services.dataset_list_service import DatasetListService
         from dataall.modules.s3_datasets_shares.services.s3_share_dataset_service import S3ShareDatasetService
         from dataall.modules.s3_datasets_shares.db.s3_share_object_repositories import S3ShareEnvironmentResource
+        from dataall.modules.shares_base.services.share_processor_manager import (
+            ShareProcessorManager,
+            ShareProcessorDefinition,
+        )
+        from dataall.modules.shares_base.services.shares_enums import ShareableType
+        from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, DatasetBucket, DatasetStorageLocation
 
         EnvironmentResourceManager.register(S3ShareEnvironmentResource())
         DatasetService.register(S3ShareDatasetService())
         DatasetListService.register(S3ShareDatasetService())
-        log.info('API of s3_datasets_shares has been imported')
+
+        ShareProcessorManager.register_processor(
+            ShareProcessorDefinition(ShareableType.Table, None, DatasetTable, DatasetTable.tableUri)
+        )
+        ShareProcessorManager.register_processor(
+            ShareProcessorDefinition(ShareableType.S3Bucket, None, DatasetBucket, DatasetBucket.bucketUri)
+        )
+        ShareProcessorManager.register_processor(
+            ShareProcessorDefinition(
+                ShareableType.StorageLocation,
+                None,
+                DatasetStorageLocation,
+                DatasetStorageLocation.locationUri,
+            )
+        )
+
+        log.info('API of dataset sharing has been imported')
 
 
 class S3DatasetsSharesAsyncHandlersModuleInterface(ModuleInterface):

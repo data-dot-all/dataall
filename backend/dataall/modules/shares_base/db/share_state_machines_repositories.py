@@ -49,6 +49,17 @@ class ShareStatusRepository:
         return [item.status for item in query.distinct(ShareObjectItem.status)]
 
     @staticmethod
+    def get_share_items_health_states(session, share_uri, item_uris=None):
+        query = session.query(ShareObjectItem).filter(
+            and_(
+                ShareObjectItem.shareUri == share_uri,
+            )
+        )
+        if item_uris:
+            query = query.filter(ShareObjectItem.shareItemUri.in_(item_uris))
+        return [item.healthStatus for item in query.distinct(ShareObjectItem.healthStatus)]
+
+    @staticmethod
     def update_share_object_status(session, share_uri: str, status: str) -> ShareObject:
         share = ShareObjectRepository.get_share_by_uri(session, share_uri)
         share.status = status

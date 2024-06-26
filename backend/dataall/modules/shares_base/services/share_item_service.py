@@ -80,12 +80,21 @@ class ShareItemService:
             share = ShareObjectRepository.get_share_by_uri(session, uri)
             dataset = DatasetBaseRepository.get_dataset_by_uri(session, share.datasetUri)
             revoked_items_states = ShareStatusRepository.get_share_items_states(session, uri, revoked_uris)
+            revoked_items_health_states = ShareStatusRepository.get_share_items_health_states(
+                session, uri, revoked_uris
+            )
             revoked_items = [ShareObjectRepository.get_share_item_by_uri(session, uri) for uri in revoked_uris]
 
             if not revoked_items_states:
                 raise ShareItemsFound(
                     action='Revoke Items from Share Object',
                     message='Nothing to be revoked.',
+                )
+
+            if ShareItemHealthStatus.PendingReApply.value in revoked_items_health_states:
+                raise UnauthorizedOperation(
+                    action='Revoke Items from Share Object',
+                    message='Cannot revoke while reapply pending for one or more items.',
                 )
 
             share_sm = ShareObjectSM(share.status)

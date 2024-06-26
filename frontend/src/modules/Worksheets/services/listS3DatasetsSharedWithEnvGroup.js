@@ -9,8 +9,8 @@ export const listS3DatasetsSharedWithEnvGroup = ({
   },
   query: gql`
     query listS3DatasetsSharedWithEnvGroup(
-      $environmentUri: String
-      $groupUri: String
+      $environmentUri: String!
+      $groupUri: String!
     ) {
       listS3DatasetsSharedWithEnvGroup(
         environmentUri: $environmentUri

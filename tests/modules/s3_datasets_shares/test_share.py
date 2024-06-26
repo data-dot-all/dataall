@@ -317,6 +317,15 @@ def share3_processed(
     if delete_share_object_response.data.deleteShareObject == True:
         return
 
+    # Revert healthStatus back to healthy
+    with db.scoped_session() as session:
+        ShareStatusRepository.update_share_item_health_status_batch(
+            session=session,
+            share_uri=share3.shareUri,
+            old_status=ShareItemHealthStatus.PendingReApply.value,
+            new_status=ShareItemHealthStatus.Healthy.value,
+        )
+
     # Given share item in shared states
     get_share_object_response = get_share_object(
         client=client,
@@ -1522,7 +1531,7 @@ def test_reapply_items_share_request(db, client, user, group, share3_processed, 
         client=client, user=user, group=group, shareUri=share3_processed.shareUri, reapply_items_uris=reapply_items_uris
     )
 
-    # Then share item health Status changes to PendingVerify
+    # Then share item health Status changes to PendingReApply
     get_share_object_response = get_share_object(
         client=client,
         user=user,
