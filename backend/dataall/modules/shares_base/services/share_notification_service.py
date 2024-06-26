@@ -57,7 +57,7 @@ class ShareNotificationService:
         self._create_notification_task(subject=subject, msg=email_notification_msg)
         return notifications
 
-    def notify_persistent_email_reminder(self, email_id: str, engine):
+    def notify_persistent_email_reminder(self, email_id: str):
         share_link_text = ''
         if os.environ.get('frontend_domain_url'):
             share_link_text = (
@@ -83,7 +83,7 @@ class ShareNotificationService:
             notification_type=DataSharingNotificationType.SHARE_OBJECT_SUBMITTED.value, msg=msg_intro
         )
 
-        self._create_persistent_reminder_notification_task(subject=subject, msg=email_notification_msg, engine=engine)
+        self._create_persistent_reminder_notification_task(subject=subject, msg=email_notification_msg)
         return notifications
 
     def notify_share_object_approval(self, email_id: str):
@@ -205,7 +205,7 @@ class ShareNotificationService:
         else:
             log.info('Notifications are not active')
 
-    def _create_persistent_reminder_notification_task(self, subject, msg, engine):
+    def _create_persistent_reminder_notification_task(self, subject, msg):
         """
         At the moment just for notification_config_type = email, but designed for additional notification types
         Emails sent to:
