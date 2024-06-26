@@ -2,8 +2,16 @@ import logging
 
 from dataall.core.resource_lock.db.resource_lock_models import ResourceLock
 from sqlalchemy import and_, or_
+from sqlalchemy.orm import Session
+from time import sleep
+from typing import List, Tuple
+from contextlib import contextmanager
+from dataall.base.db.exceptions import ResourceLockTimeout
 
 log = logging.getLogger(__name__)
+
+MAX_RETRIES = 10
+RETRY_INTERVAL = 60
 
 
 class ResourceLockRepository:
@@ -120,3 +128,54 @@ class ResourceLockRepository:
             session.rollback()
             log.error('Error occurred while releasing lock:', e)
             return False
+
+    @staticmethod
+    def acquire_lock_with_retry(
+        resources: List[Tuple[str, str]], session: Session, acquired_by_uri: str, acquired_by_type: str
+    ):
+        for _ in range(MAX_RETRIES):
+            try:
+                log.info(f'Attempting to acquire lock for resources {resources} by share {acquired_by_uri}...')
+                lock_acquired = ResourceLockRepository.acquire_locks(
+                    resources, session, acquired_by_uri, acquired_by_type
+                )
+                if lock_acquired:
+                    return True
+
+                log.info(
+                    f'Lock for one or more resources {resources} already acquired. Retrying in {RETRY_INTERVAL} seconds...'
+                )
+                sleep(RETRY_INTERVAL)
+
+            except Exception as e:
+                log.error('Error occurred while retrying acquiring lock:', e)
+                return False
+
+        log.info(f'Max retries reached. Failed to acquire lock for one or more resources {resources}')
+        return False
+
+    @staticmethod
+    @contextmanager
+    def acquire_lock_with_retry_context(
+        resources: List[Tuple[str, str]], session: Session, acquired_by_uri: str, acquired_by_type: str
+    ):
+        retries_remaining = MAX_RETRIES
+        log.info(f'Attempting to acquire lock for resources {resources} by share {acquired_by_uri}...')
+        while not (
+            lock_acquired := ResourceLockRepository.acquire_locks(resources, session, acquired_by_uri, acquired_by_type)
+        ):
+            log.info(
+                f'Lock for one or more resources {resources} already acquired. Retrying in {RETRY_INTERVAL} seconds...'
+            )
+            sleep(RETRY_INTERVAL)
+            retries_remaining -= 1
+            if retries_remaining <= 0:
+                raise ResourceLockTimeout(
+                    'process shares',
+                    f'Failed to acquire lock for one or more of {resources=}',
+                )
+        try:
+            yield lock_acquired
+        finally:
+            for resource in resources:
+                ResourceLockRepository.release_lock(session, resource[0], resource[1], acquired_by_uri)
