@@ -19,7 +19,6 @@ from dataall.core.permissions.services.environment_permissions import (
     CREDENTIALS_ENVIRONMENT,
 )
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
-from dataall.core.resource_lock.db.resource_lock_repositories import ResourceLockRepository
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import EnvironmentParameter, ConsumptionRole
@@ -414,7 +413,6 @@ class EnvironmentService:
             )
             session.add(environment_group)
             session.commit()
-
             ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=group,
