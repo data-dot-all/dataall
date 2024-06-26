@@ -30,6 +30,7 @@ class TriggerFunctionStack(pyNestedClass):
         execute_after: List[Construct] = [],
         additional_policy_statements: List[iam.PolicyStatement] = [],
         env_var_encryption_key: IKey = None,
+        role = None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -59,6 +60,7 @@ class TriggerFunctionStack(pyNestedClass):
             retry_attempts=0,
             runtime=_lambda.Runtime.FROM_IMAGE,
             handler=_lambda.Handler.FROM_IMAGE,
+            role = role,
             execute_after=execute_after,
             execute_on_handler_change=True,
         )
