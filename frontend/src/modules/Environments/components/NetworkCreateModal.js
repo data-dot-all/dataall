@@ -233,6 +233,7 @@ export const NetworkCreateModal = (props) => {
                           id="SamlAdminGroupName"
                           disablePortal
                           options={groupOptions.map((option) => option)}
+                          noOptionsText="No teams found for this environment"
                           onChange={(event, value) => {
                             if (value && value.value) {
                               setFieldValue('SamlAdminGroupName', value.value);
@@ -242,42 +243,22 @@ export const NetworkCreateModal = (props) => {
                           }}
                           inputValue={values.SamlAdminGroupName}
                           renderInput={(params) => (
-                            <Box>
-                              {groupOptions.length > 0 ? (
-                                <TextField
-                                  {...params}
-                                  fullWidth
-                                  error={Boolean(
-                                    touched.SamlAdminGroupName &&
-                                      errors.SamlAdminGroupName
-                                  )}
-                                  helperText={
-                                    touched.SamlAdminGroupName &&
-                                    errors.SamlAdminGroupName
-                                  }
-                                  label="Team"
-                                  onChange={handleChange}
-                                  name="SamlAdminGroupName"
-                                  variant="outlined"
-                                />
-                              ) : (
-                                <TextField
-                                  error={Boolean(
-                                    touched.SamlAdminGroupName &&
-                                      errors.SamlAdminGroupName
-                                  )}
-                                  helperText={
-                                    touched.SamlAdminGroupName &&
-                                    errors.SamlAdminGroupName
-                                  }
-                                  fullWidth
-                                  disabled
-                                  label="Team"
-                                  value="No teams found for this environment"
-                                  variant="outlined"
-                                />
+                            <TextField
+                              {...params}
+                              fullWidth
+                              error={Boolean(
+                                touched.SamlAdminGroupName &&
+                                  errors.SamlAdminGroupName
                               )}
-                            </Box>
+                              helperText={
+                                touched.SamlAdminGroupName &&
+                                errors.SamlAdminGroupName
+                              }
+                              label="Team"
+                              onChange={handleChange}
+                              name="SamlAdminGroupName"
+                              variant="outlined"
+                            />
                           )}
                         />
                       </CardContent>

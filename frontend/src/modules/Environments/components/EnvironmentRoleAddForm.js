@@ -165,32 +165,19 @@ export const EnvironmentRoleAddForm = (props) => {
                         setFieldValue('groupUri', '');
                       }
                     }}
+                    noOptionsText="No teams found for this environment"
                     inputValue={values.groupUri}
                     renderInput={(params) => (
-                      <Box>
-                        {groupOptions.length > 0 ? (
-                          <TextField
-                            {...params}
-                            fullWidth
-                            error={Boolean(touched.groupUri && errors.groupUri)}
-                            helperText={touched.groupUri && errors.groupUri}
-                            label="Owners"
-                            onChange={handleChange}
-                            name="groupUri"
-                            variant="outlined"
-                          />
-                        ) : (
-                          <TextField
-                            error={Boolean(touched.groupUri && errors.groupUri)}
-                            helperText={touched.groupUri && errors.groupUri}
-                            fullWidth
-                            disabled
-                            label="Owners"
-                            value="No teams found for this environment"
-                            variant="outlined"
-                          />
-                        )}
-                      </Box>
+                      <TextField
+                        {...params}
+                        fullWidth
+                        error={Boolean(touched.groupUri && errors.groupUri)}
+                        helperText={touched.groupUri && errors.groupUri}
+                        label="Owners"
+                        onChange={handleChange}
+                        name="groupUri"
+                        variant="outlined"
+                      />
                     )}
                   />
                 </CardContent>
