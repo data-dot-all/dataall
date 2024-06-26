@@ -349,7 +349,7 @@ class BackendStack(Stack):
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=['sts:AssumeRole'],
-                    resources=[f'arn:aws:iam:*:{self.account}:role/{self.pivot_role_name}'],
+                    resources=[f'arn:aws:iam::{self.account}:role/{self.pivot_role_name}'],
                 ),
             ],
             env_var_encryption_key=lambda_env_key,
