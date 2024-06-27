@@ -116,7 +116,9 @@ class ResourceLockRepository:
         retries_remaining = MAX_RETRIES
         log.info(f'Attempting to acquire lock for resources {resources} by share {acquired_by_uri}...')
         while not (
-            lock_acquired := ResourceLockRepository._acquire_locks(resources, session, acquired_by_uri, acquired_by_type)
+            lock_acquired := ResourceLockRepository._acquire_locks(
+                resources, session, acquired_by_uri, acquired_by_type
+            )
         ):
             log.info(
                 f'Lock for one or more resources {resources} already acquired. Retrying in {RETRY_INTERVAL} seconds...'
