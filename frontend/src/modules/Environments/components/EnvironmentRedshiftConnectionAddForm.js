@@ -1,6 +1,7 @@
 import { GroupAddOutlined } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
+  Autocomplete,
   Box,
   CardContent,
   CircularProgress,
@@ -38,12 +39,13 @@ export const EnvironmentRedshiftConnectionAddForm = (props) => {
       const response = await client.mutate(
         createRedshiftConnection({
           connectionName: values.connectionName,
-          SamlGroupName: values.SamlGroupName,
+          SamlGroupName: values.SamlAdminGroupName,
           environmentUri: environment.environmentUri,
           redshiftType: values.redshiftType,
           clusterId: values.clusterId,
           nameSpaceId: values.nameSpaceId,
           workgroup: values.workgroup,
+          database: values.database,
           redshiftUser: values.redshiftUser,
           secretArn: values.secretArn
         })
@@ -103,21 +105,31 @@ export const EnvironmentRedshiftConnectionAddForm = (props) => {
           <Formik
             initialValues={{
               connectionName: '',
-              SamlGroupName: '',
+              SamlAdminGroupName: '',
               redshiftType: '',
               clusterId: '',
               nameSpaceId: '',
               workgroup: '',
+              database: '',
               redshiftUser: '',
               secretArn: ''
             }}
             validationSchema={Yup.object().shape({
-              SamlGroupName: Yup.string()
-                .max(255)
-                .required('*Owners Team is required'),
               connectionName: Yup.string()
                 .max(255)
-                .required('*Connection Name is required') // TODO: add other required rules
+                .required('*Connection Name is required'),
+              SamlAdminGroupName: Yup.string()
+                .max(255)
+                .required('*Owners Team is required'),
+              redshiftType: Yup.string()
+                .max(255)
+                .required('*Redshift type is required'),
+              clusterId: Yup.string().max(255),
+              nameSpaceId: Yup.string().max(255),
+              workgroup: Yup.string().max(255),
+              database: Yup.string().max(255).required('*Database is required'),
+              redshiftUser: Yup.string().max(255),
+              secretArn: Yup.string().max(255)
             })}
             onSubmit={async (
               values,
@@ -155,25 +167,37 @@ export const EnvironmentRedshiftConnectionAddForm = (props) => {
                     />
                   </CardContent>
                   <CardContent>
-                    <TextField
-                      fullWidth
-                      error={Boolean(
-                        touched.SamlGroupName && errors.SamlGroupName
+                    <Autocomplete
+                      id="SamlAdminGroupName"
+                      disablePortal
+                      options={groupOptions.map((option) => option)}
+                      noOptionsText="No teams found for this environment"
+                      onChange={(event, value) => {
+                        if (value && value.value) {
+                          setFieldValue('SamlAdminGroupName', value.value);
+                        } else {
+                          setFieldValue('SamlAdminGroupName', '');
+                        }
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          fullWidth
+                          error={Boolean(
+                            touched.SamlAdminGroupName &&
+                              errors.SamlAdminGroupName
+                          )}
+                          helperText={
+                            touched.SamlAdminGroupName &&
+                            errors.SamlAdminGroupName
+                          }
+                          label="Team"
+                          name="SamlAdminGroupName"
+                          variant="outlined"
+                          value={values.SamlAdminGroupName}
+                        />
                       )}
-                      helperText={touched.SamlGroupName && errors.SamlGroupName}
-                      label="Team"
-                      name="SamlGroupName"
-                      onChange={handleChange}
-                      select
-                      value={values.SamlGroupName}
-                      variant="outlined"
-                    >
-                      {groupOptions.map((group) => (
-                        <MenuItem key={group.value} value={group.value}>
-                          {group.label}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                    />
                   </CardContent>
                 </Box>
                 <Grid container spacing={3}>
@@ -258,6 +282,19 @@ export const EnvironmentRedshiftConnectionAddForm = (props) => {
                     )}
                   </Grid>
                 </Grid>
+                <CardContent>
+                  <TextField
+                    error={Boolean(touched.database && errors.database)}
+                    fullWidth
+                    helperText={touched.database && errors.database}
+                    label="database"
+                    placeholder="Redshift database you will be connecting to"
+                    name="database"
+                    onChange={handleChange}
+                    value={values.database}
+                    variant="outlined"
+                  />
+                </CardContent>
                 <CardContent>
                   <Typography color="textPrimary" variant="body2">
                     You can choose to provide a Redshift user or a Secret.

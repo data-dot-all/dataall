@@ -20,7 +20,6 @@ ImportRedshiftDatasetInput = gql.InputType(
         gql.Argument(name='stewards', type=gql.String),
         gql.Argument(name='autoApprovalEnabled', type=gql.Boolean),
         gql.Argument('connectionUri', gql.NonNullableType(gql.String)),
-        gql.Argument('database', gql.NonNullableType(gql.String)),
         gql.Argument('schema', gql.NonNullableType(gql.String)),
         gql.Argument(name='includePattern', type=gql.String),
         gql.Argument(name='excludePattern', type=gql.String),

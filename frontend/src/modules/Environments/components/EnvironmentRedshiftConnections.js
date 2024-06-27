@@ -266,6 +266,12 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
                     editable: true
                   },
                   {
+                    field: 'SamlGroupName',
+                    headerName: 'Team',
+                    flex: 1,
+                    editable: false
+                  },
+                  {
                     field: 'redshiftType',
                     headerName: 'Redshift Type',
                     flex: 1,
@@ -284,14 +290,14 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
                     editable: false
                   },
                   {
-                    field: 'SamlGroupName',
-                    headerName: 'Team',
+                    field: 'connectionType',
+                    headerName: 'Connection Type',
                     flex: 1,
                     editable: false
                   },
                   {
-                    field: 'connectionType',
-                    headerName: 'Connection Type',
+                    field: 'database',
+                    headerName: 'Database',
                     flex: 1,
                     editable: false
                   },

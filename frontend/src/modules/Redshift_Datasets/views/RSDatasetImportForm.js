@@ -121,7 +121,7 @@ const RSDatasetImportForm = (props) => {
         setConnectionOptions(
           response.data.listEnvironmentRedshiftConnections.nodes.map((g) => ({
             value: g.connectionUri,
-            label: `${g.name} [${g.secretArn}${g.redshiftUser}]`
+            label: `${g.name} [DATABASE: ${g.database}]`
           }))
         );
       } else {
@@ -148,15 +148,14 @@ const RSDatasetImportForm = (props) => {
           environmentUri: values.environment.environmentUri,
           owner: '',
           label: values.label,
-          SamlAdminGroupName: values.SamlGroupName,
+          SamlAdminGroupName: values.SamlAdminGroupName,
           tags: values.tags,
           description: values.description,
           topics: values.topics ? values.topics.map((t) => t.value) : [],
           stewards: values.stewards,
           confidentiality: values.confidentiality,
           autoApprovalEnabled: values.autoApprovalEnabled,
-          connectionUri: values.connectionUri,
-          database: values.database,
+          connectionUri: values.connection.value,
           schema: values.schema,
           includePattern: values.includePattern,
           excludePattern: values.excludePattern
@@ -254,14 +253,13 @@ const RSDatasetImportForm = (props) => {
                 environment: '',
                 businessOwnerEmail: '',
                 businessOwnerDelegationEmails: [],
-                SamlGroupName: '',
+                SamlAdminGroupName: '',
                 stewards: '',
                 tags: [],
                 topics: [],
                 confidentiality: '',
                 autoApprovalEnabled: false,
-                connectionUri: '',
-                database: '',
+                connection: '',
                 schema: '',
                 includePattern: '',
                 excludePattern: ''
@@ -271,14 +269,14 @@ const RSDatasetImportForm = (props) => {
                   .max(255)
                   .required('*Dataset name is required'),
                 description: Yup.string().max(5000),
-                SamlGroupName: Yup.string()
+                SamlAdminGroupName: Yup.string()
                   .max(255)
                   .required('*Team is required'),
                 topics: isFeatureEnabled('datasets_base', 'topics_dropdown')
                   ? Yup.array().min(1).required('*Topics are required')
                   : Yup.array(),
                 environment: Yup.object().required('*Environment is required'),
-                tags: Yup.array().min(1).required('*Tags are required'), //TODO: ADD REDSHIFT CONNECTION
+                tags: Yup.array().min(1).required('*Tags are required'),
                 confidentiality: isFeatureEnabled(
                   'datasets_base',
                   'confidentiality_dropdown'
@@ -290,10 +288,7 @@ const RSDatasetImportForm = (props) => {
                 autoApprovalEnabled: Yup.boolean().required(
                   '*AutoApproval property is required'
                 ),
-                connectionUri: Yup.string().required('*Connection is required'),
-                database: Yup.string().required(
-                  '*Redshift Database is required'
-                ),
+                connection: Yup.object().required('*Connection is required'),
                 schema: Yup.string().required('*Schema is required'),
                 includePattern: Yup.string(),
                 excludePattern: Yup.string()
@@ -477,38 +472,45 @@ const RSDatasetImportForm = (props) => {
                       <Card>
                         <CardHeader title="Governance" />
                         <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.environment && errors.environment
-                            )}
-                            helperText={
-                              touched.environment && errors.environment
-                            }
-                            label="Environment"
-                            name="environment"
-                            onChange={(event) => {
-                              setFieldValue('SamlGroupName', '');
-                              fetchGroups(
-                                event.target.value.environmentUri
-                              ).catch((e) =>
-                                dispatch({ type: SET_ERROR, error: e.message })
-                              );
-                              setFieldValue('environment', event.target.value);
+                          <Autocomplete
+                            id="environment"
+                            disablePortal
+                            options={environmentOptions.map((option) => option)}
+                            onChange={(event, value) => {
+                              setFieldValue('SamlAdminGroupName', '');
+                              setFieldValue('stewards', '');
+                              if (value && value.environmentUri) {
+                                setFieldValue('environment', value);
+                                fetchGroups(value.environmentUri).catch((e) =>
+                                  dispatch({
+                                    type: SET_ERROR,
+                                    error: e.message
+                                  })
+                                );
+                              } else {
+                                setFieldValue('environment', '');
+                                setGroupOptions([]);
+                              }
                             }}
-                            select
-                            value={values.environment}
-                            variant="outlined"
-                          >
-                            {environmentOptions.map((environment) => (
-                              <MenuItem
-                                key={environment.environmentUri}
-                                value={environment}
-                              >
-                                {environment.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                fullWidth
+                                error={Boolean(
+                                  touched.environmentUri &&
+                                    errors.environmentUri
+                                )}
+                                helperText={
+                                  touched.environmentUri &&
+                                  errors.environmentUri
+                                }
+                                label="Environment"
+                                value={values.environment}
+                                onChange={handleChange}
+                                variant="outlined"
+                              />
+                            )}
+                          />
                         </CardContent>
                         <CardContent>
                           <TextField
@@ -517,7 +519,8 @@ const RSDatasetImportForm = (props) => {
                             label="Organization"
                             name="organization"
                             value={
-                              values.environment
+                              values.environment &&
+                              values.environment.organization
                                 ? values.environment.organization.label
                                 : ''
                             }
@@ -525,54 +528,72 @@ const RSDatasetImportForm = (props) => {
                           />
                         </CardContent>
                         <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.SamlGroupName && errors.SamlGroupName
-                            )}
-                            helperText={
-                              touched.SamlGroupName && errors.SamlGroupName
-                            }
-                            label="Team"
-                            name="SamlGroupName"
-                            onChange={(event) => {
-                              fetchRedshiftConnections(
-                                values.environment.environmentUri,
-                                event.target.value
-                              ).catch((e) =>
-                                dispatch({ type: SET_ERROR, error: e.message })
-                              );
-                              setFieldValue(
-                                'SamlGroupName',
-                                event.target.value
-                              );
+                          <Autocomplete
+                            id="SamlAdminGroupName"
+                            disablePortal
+                            options={groupOptions.map((option) => option)}
+                            onChange={(event, value) => {
+                              if (value && value.value) {
+                                setFieldValue(
+                                  'SamlAdminGroupName',
+                                  value.value
+                                );
+                                fetchRedshiftConnections(
+                                  values.environment.environmentUri,
+                                  value.value
+                                ).catch((e) =>
+                                  dispatch({
+                                    type: SET_ERROR,
+                                    error: e.message
+                                  })
+                                );
+                              } else {
+                                setFieldValue('SamlAdminGroupName', '');
+                              }
                             }}
-                            select
-                            value={values.SamlGroupName}
-                            variant="outlined"
-                          >
-                            {groupOptions.map((group) => (
-                              <MenuItem key={group.value} value={group.value}>
-                                {group.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
+                            inputValue={values.SamlAdminGroupName}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                fullWidth
+                                error={Boolean(
+                                  touched.SamlAdminGroupName &&
+                                    errors.SamlAdminGroupName
+                                )}
+                                helperText={
+                                  touched.SamlAdminGroupName &&
+                                  errors.SamlAdminGroupName
+                                }
+                                label="Team"
+                                onChange={handleChange}
+                                variant="outlined"
+                              />
+                            )}
+                          />
                         </CardContent>
                         <CardContent>
                           <Autocomplete
                             id="stewards"
-                            freeSolo
-                            options={groupOptions.map((option) => option.value)}
+                            disablePortal
+                            options={groupOptions.map((option) => option)}
                             onChange={(event, value) => {
-                              setFieldValue('stewards', value);
+                              if (value && value.value) {
+                                setFieldValue('stewards', value.value);
+                              } else {
+                                setFieldValue('stewards', '');
+                              }
                             }}
-                            renderInput={(renderParams) => (
+                            inputValue={values.stewards}
+                            renderInput={(params) => (
                               <TextField
-                                {...renderParams}
+                                {...params}
+                                fullWidth
+                                error={Boolean(
+                                  touched.stewards && errors.stewards
+                                )}
+                                helperText={touched.stewards && errors.stewards}
                                 label="Stewards"
-                                margin="normal"
                                 onChange={handleChange}
-                                value={values.stewards}
                                 variant="outlined"
                               />
                             )}
@@ -582,42 +603,35 @@ const RSDatasetImportForm = (props) => {
                       <Card sx={{ mt: 3 }}>
                         <CardHeader title="Deployment" />
                         <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.connectionUri && errors.connectionUri
+                          <Autocomplete
+                            id="stewards"
+                            disablePortal
+                            options={connectionOptions.map((option) => option)}
+                            noOptionsText="No connections for the selected Team and Environment"
+                            onChange={(event, value) => {
+                              if (value && value) {
+                                setFieldValue('connection', value);
+                              } else {
+                                setFieldValue('connection', '');
+                              }
+                            }}
+                            inputValue={values.connection.label}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                fullWidth
+                                error={Boolean(
+                                  touched.connection && errors.connection
+                                )}
+                                helperText={
+                                  touched.connection && errors.connection
+                                }
+                                label="Redshift Connection"
+                                name="connection"
+                                onChange={handleChange}
+                                variant="outlined"
+                              />
                             )}
-                            helperText={
-                              touched.connectionUri && errors.connectionUri
-                            }
-                            label="Redshift Connection"
-                            name="connectionUri"
-                            onChange={handleChange}
-                            select
-                            value={values.connectionUri}
-                            variant="outlined"
-                          >
-                            {connectionOptions.map((connection) => (
-                              <MenuItem
-                                key={connection.value}
-                                value={connection.value}
-                              >
-                                {connection.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                        </CardContent>
-                        <CardContent>
-                          <TextField
-                            error={Boolean(touched.database && errors.database)}
-                            fullWidth
-                            helperText={touched.database && errors.database}
-                            label="Redshift database name"
-                            name="database"
-                            onBlur={handleBlur}
-                            onChange={handleChange}
-                            value={values.database}
-                            variant="outlined"
                           />
                         </CardContent>
                         <CardContent>

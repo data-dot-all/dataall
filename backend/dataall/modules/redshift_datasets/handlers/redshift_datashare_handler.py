@@ -25,9 +25,9 @@ class RedshiftDataShareHandler:
             )
 
             redshift_data_client = RedshiftData(
-                account_id=dataset.AwsAccountId, region=dataset.region, connection=connection, dataset=dataset
+                account_id=dataset.AwsAccountId, region=dataset.region, connection=connection
             )
-            redshift_data_client.create_datashare(datashare=datashare_name)
+            redshift_data_client.create_datashare(datashare=datashare_name, schema=dataset.schema)
             redshift_data_client.grant_usage_to_datashare_via_catalog(
                 datashare=datashare_name, account=dataset.AwsAccountId
             )

@@ -8,7 +8,6 @@ class RedshiftDataset(DatasetBase):
     __tablename__ = 'redshift_dataset'
     datasetUri = Column(String, ForeignKey('dataset.datasetUri'), primary_key=True)
     connectionUri = Column(String, ForeignKey('redshift_connection.connectionUri'), nullable=False)
-    database = Column(String, nullable=False)
     schema = Column(String, nullable=False)
     includePattern = Column(String, nullable=True)
     excludePattern = Column(String, nullable=True)
@@ -31,5 +30,6 @@ class RedshiftConnection(Base, Resource):
     clusterId = Column(String, nullable=True)
     nameSpaceId = Column(String, nullable=True)
     workgroup = Column(String, nullable=True)
+    database = Column(String, nullable=False)
     redshiftUser = Column(String, nullable=True)
     secretArn = Column(String, nullable=True)

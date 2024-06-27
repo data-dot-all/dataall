@@ -12,6 +12,7 @@ RedshiftConnection = gql.ObjectType(
         gql.Field(name='clusterId', type=gql.String),
         gql.Field(name='nameSpaceId', type=gql.String),
         gql.Field(name='workgroup', type=gql.String),
+        gql.Field(name='database', type=gql.String),
         gql.Field(name='redshiftUser', type=gql.String),
         gql.Field(name='secretArn', type=gql.String),
     ],

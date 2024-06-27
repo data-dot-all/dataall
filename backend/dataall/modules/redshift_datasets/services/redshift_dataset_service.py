@@ -1,6 +1,7 @@
 import logging
 
 from dataall.base.context import get_context
+from dataall.base.utils.naming_convention import NamingConventionService, NamingConventionPattern
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.permissions.services.group_policy_service import GroupPolicyService
@@ -43,7 +44,13 @@ class RedshiftDatasetService:
                 session=session, username=context.username, env=environment, data=data
             )
             connection = RedshiftConnectionRepository.find_redshift_connection(session, dataset.connectionUri)
-            dataset.datashareArn = f'arn:aws:redshift:{dataset.region}:{dataset.AwsAccountId}:datashare:{connection.nameSpaceId if connection.redshiftType == RedshiftType.Serverless.value else connection.clusterId}/{environment.resourcePrefix}-{dataset.label.lower()}-{dataset.datasetUri}'
+            datashare_name = NamingConventionService(
+                target_label=dataset.label,
+                pattern=NamingConventionPattern.REDSHIFT_DATASHARE,
+                target_uri=dataset.datasetUri,
+                resource_prefix=environment.resourcePrefix
+            ).build_compliant_name()
+            dataset.datashareArn = f'arn:aws:redshift:{dataset.region}:{dataset.AwsAccountId}:datashare:{connection.nameSpaceId if connection.redshiftType == RedshiftType.Serverless.value else connection.clusterId}/{datashare_name}'
             dataset.userRoleForDataset = DatasetRole.Creator.value
             ResourcePolicyService.attach_resource_policy(
                 session=session,

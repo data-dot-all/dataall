@@ -23,7 +23,7 @@ export const DatasetGovernance = (props) => {
   return (
     <Grid container spacing={2}>
       <Grid item lg={6} xl={6} xs={12}>
-        <Card {...dataset}>
+        <Card {...dataset} sx={{ width: 1, height: '100%' }}>
           <CardHeader title="Classification" />
           <Divider />
           {isFeatureEnabled('datasets_base', 'confidentiality_dropdown') && (
@@ -90,7 +90,7 @@ export const DatasetGovernance = (props) => {
         </Card>
       </Grid>
       <Grid item lg={6} xl={6} xs={12}>
-        <Card {...dataset}>
+        <Card {...dataset} sx={{ width: 1, height: '100%' }}>
           <CardHeader title="Governance" />
           <Divider />
           <CardContent>

@@ -1,21 +1,20 @@
 import logging
 import time
-
+from botocore.exceptions import ClientError
 from dataall.base.aws.sts import SessionHelper
-from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnection, RedshiftDataset
+from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnection
 
 
 log = logging.getLogger(__name__)
 
 
 class RedshiftData:
-    def __init__(self, account_id: str, region: str, connection: RedshiftConnection, dataset: RedshiftDataset) -> None:
+    def __init__(self, account_id: str, region: str, connection: RedshiftConnection) -> None:
         session = SessionHelper.remote_session(accountid=account_id, region=region)
         self.client = session.client(service_name='redshift-data', region_name=region)
-        self.schema = dataset.schema
-        self.database = dataset.database
+        self.database = connection.database
         self.execute_connection_params = {
-            'Database': dataset.database,
+            'Database': connection.database,
         }
         if connection.workgroup:
             self.execute_connection_params['WorkgroupName'] = connection.workgroup
@@ -49,16 +48,16 @@ class RedshiftData:
     def identifier(name: str) -> str:
         return f'"{name}"'
 
-    def fully_qualified_table_name(self, table_name: str) -> str:
-        return f'{RedshiftData.identifier(self.database)}.{RedshiftData.identifier(self.schema)}.{RedshiftData.identifier(table_name)}'
+    def fully_qualified_table_name(self, schema: str, table_name: str) -> str:
+        return f'{RedshiftData.identifier(self.database)}.{RedshiftData.identifier(schema)}.{RedshiftData.identifier(table_name)}'
 
-    def create_datashare(self, datashare: str):
+    def create_datashare(self, schema: str, datashare: str):
         try:
             log.info(f'Creating {datashare=}...')
             sql_statement = f'CREATE DATASHARE {RedshiftData.identifier(datashare)};'
             self.execute_statement(sql=sql_statement)
 
-            sql_statement = f'ALTER DATASHARE {RedshiftData.identifier(datashare)} ADD SCHEMA {RedshiftData.identifier(self.schema)};'
+            sql_statement = f'ALTER DATASHARE {RedshiftData.identifier(datashare)} ADD SCHEMA {RedshiftData.identifier(schema)};'
             self.execute_statement(sql=sql_statement)
 
         except Exception as e:
@@ -68,6 +67,66 @@ class RedshiftData:
                 log.info('Datashare {0} already exists'.format(datashare))
             else:
                 raise e
+
+    def list_redshift_databases(self):
+        databases = []
+        try:
+            log.info(f"Looking for {self.database} in databases...")
+
+            list_databases_response = self.client.list_databases(**self.execute_connection_params)
+            if "Databases" in list_databases_response.keys():
+                databases = list_databases_response["Databases"]
+            log.info(f'Returning {databases=}...')
+            return databases
+        except ClientError as e:
+            log.error(e)
+            raise e
+
+    def list_redshift_schemas(self):
+        schemas = []
+        try:
+            log.debug(f"Fetching {self.database} schemas")
+            list_schemas_response = self.client.list_schemas(**self.execute_connection_params)
+            if "Schemas" in list_schemas_response.keys():
+                schemas = list_schemas_response["Schemas"]
+
+            # Remove "internal" schemas
+            if "information_schema" in schemas:
+                schemas.remove("information_schema")
+            if "pg_catalog" in schemas:
+                schemas.remove("pg_catalog")
+            log.info(f'Returning {schemas=}...')
+            return schemas
+        except ClientError as e:
+            log.error(e)
+            raise e
+
+    def list_redshift_tables(self, schema: str):
+        tables_list = []
+        try:
+            log.debug(f"Fetching {self.database} tables")
+            list_tables_response = self.client.list_tables(**self.execute_connection_params, SchemaPattern=schema, MaxResults=1000)
+            next_token = list_tables_response.get("NextToken", None)
+            if "Tables" in list_tables_response.keys():
+                tables_list = list_tables_response["Tables"]
+                while next_token:
+                    list_tables_response = self.client.list_tables(
+                        **self.execute_connection_params, NextToken=next_token, MaxResults=1000, SchemaPattern=schema
+                    )
+                    if "Tables" in list_tables_response.keys():
+                        tables_list.extend(list_tables_response["Tables"])
+                    next_token = list_tables_response.get("NextToken", None)
+
+            tables = [{"name": table["name"], "type": table["type"]} for table in tables_list if
+                      table["type"] in ["TABLE", "VIEW"]]
+            log.info(f'Returning {tables=}...')
+            return tables
+        except ClientError as e:
+            log.error(e)
+            raise e
+
+
+
 
     # def add_table_to_datashare(self, schema: str, database: str, workgroup: str, datashare: str, table_name: str):
     #     fq_table_name = self.fully_qualified_table_name(database, schema, table_name)
@@ -141,42 +200,3 @@ class RedshiftData:
     #         )
     #         raise e
     #
-    # def list_redshift_databases(self, database: str, workgroup: str, secret_arn: str = ""):
-    #     databases = []
-    #     redshiftDataClient = self.client
-    #     try:
-    #         log.debug(f"Looking for {database} databases")
-    #         list_databases_response = redshiftDataClient.list_databases(Database=database, WorkgroupName=workgroup, SecretArn=secret_arn)
-    #         if "Databases" in list_databases_response.keys():
-    #             databases = list_databases_response["Databases"]
-    #
-    #         return databases
-    #     except ClientError as e:
-    #         log.error(
-    #             f"Failed to retrieve databases for namespace: {e}",
-    #             exc_info=True,
-    #         )
-    #         raise e
-    #
-    # def list_redshift_schemas(self, database: str, workgroup: str, secret_arn: str = ""):
-    #     schemas = []
-    #     redshiftDataClient = self.client
-    #     try:
-    #         log.debug(f"Looking for {database} schemas")
-    #         list_schemas_response = redshiftDataClient.list_schemas(Database=database, WorkgroupName=workgroup, SecretArn=secret_arn)
-    #         if "Schemas" in list_schemas_response.keys():
-    #             schemas = list_schemas_response["Schemas"]
-    #
-    #         # Remove "internal" schemas
-    #         if "information_schema" in schemas:
-    #             schemas.remove("information_schema")
-    #         if "pg_catalog" in schemas:
-    #             schemas.remove("pg_catalog")
-    #
-    #         return schemas
-    #     except ClientError as e:
-    #         log.error(
-    #             f"Failed to retrieve schemas for database {database}: {e}",
-    #             exc_info=True,
-    #         )
-    #         raise e

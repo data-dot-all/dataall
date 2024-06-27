@@ -19,7 +19,7 @@ from dataall.modules.redshift_datasets.services.redshift_connection_permissions 
     LIST_ENVIRONMENT_REDSHIFT_CONNECTIONS,
 )
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnection
-
+from dataall.modules.redshift_datasets.aws.redshift_data import RedshiftData
 
 log = logging.getLogger(__name__)
 
@@ -43,8 +43,14 @@ class RedshiftConnectionService:
                 clusterId=data.get('clusterId', ''),
                 nameSpaceId=data.get('nameSpaceId', ''),
                 workgroup=data.get('workgroup', ''),
+                database=data.get('database', ''),
                 redshiftUser=data.get('redshiftUser', ''),
                 secretArn=data.get('secretArn', ''),
+            )
+            RedshiftConnectionService._check_redshift_connection_database(
+                account_id=environment.AwsAccountId,
+                region=environment.region,
+                connection=connection
             )
             RedshiftConnectionRepository.save_redshift_connection(session, connection)
 
@@ -95,3 +101,10 @@ class RedshiftConnectionService:
                 session, context.username, context.groups, filter
             )
             return connections
+
+
+    @staticmethod
+    def _check_redshift_connection_database(account_id: str, region: str, connection: RedshiftConnection):
+        if connection.database not in RedshiftData(account_id=account_id, region=region,connection=connection).list_redshift_databases():
+            raise Exception(f'Redshift connection {connection.name} database does not exist or cannot be accessed with these parameters')
+        return

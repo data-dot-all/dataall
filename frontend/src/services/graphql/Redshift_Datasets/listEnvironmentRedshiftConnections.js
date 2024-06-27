@@ -20,6 +20,7 @@ export const listEnvironmentRedshiftConnections = ({ filter }) => ({
           clusterId
           nameSpaceId
           workgroup
+          database
           redshiftUser
           secretArn
         }
