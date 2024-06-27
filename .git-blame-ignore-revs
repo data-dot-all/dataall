@@ -3,4 +3,5 @@
 
 # Enforce frontend styling and remove dead code
 fefc45c2cdc4d3107369c4d70210894d098a775c
+# Ignore backend ruff format/lint
 a35a4c7c4de78f0b38502882382f07aeac815b3c
