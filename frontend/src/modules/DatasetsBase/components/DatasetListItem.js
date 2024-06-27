@@ -47,7 +47,9 @@ export const DatasetListItem = (props) => {
                     variant="h6"
                     onClick={() => {
                       navigate(
-                        `/console/${datasetTypeLink}/${dataset.datasetUri}`
+                        datasetTypeLink
+                          ? `/console/${datasetTypeLink}/${dataset.datasetUri}`
+                          : '-'
                       );
                     }}
                     sx={{
