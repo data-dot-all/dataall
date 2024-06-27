@@ -24,7 +24,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareableType,
     ShareItemStatus,
 )
-from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ
 

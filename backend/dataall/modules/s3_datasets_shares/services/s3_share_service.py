@@ -1,126 +1,139 @@
+import logging
 from warnings import warn
+
 from dataall.base.db import utils
+from dataall.base.context import get_context
+from dataall.base.aws.sts import SessionHelper
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.base.context import get_context
-from dataall.base.db import exceptions
-from dataall.base.aws.sts import SessionHelper
-from dataall.core.stacks.aws.ecs import Ecs
-from dataall.core.tasks.db.task_models import Task
-from dataall.core.tasks.service_handlers import Worker
-from dataall.modules.shares_base.db.share_object_models import ShareObject
-from dataall.modules.s3_datasets_shares.db.share_object_repositories import S3ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
-from dataall.modules.shares_base.services.share_permissions import SHARE_OBJECT_APPROVER, GET_SHARE_OBJECT
-from dataall.modules.s3_datasets_shares.services.share_item_service import S3ShareItemService
 from dataall.modules.shares_base.services.share_item_service import ShareItemService
+from dataall.modules.shares_base.services.share_permissions import GET_SHARE_OBJECT
+from dataall.modules.shares_base.services.shares_enums import (
+    ShareableType,
+    ShareItemStatus,
+)
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, DatasetStorageLocation
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.s3_datasets.services.dataset_permissions import (
     MANAGE_DATASETS,
     UPDATE_DATASET,
-    DELETE_DATASET,
-    DELETE_DATASET_TABLE,
-    DELETE_DATASET_FOLDER,
     CREDENTIALS_DATASET,
+    DATASET_TABLE_READ,
+    DATASET_FOLDER_READ,
 )
-from dataall.modules.datasets_base.services.datasets_enums import DatasetRole, DatasetTypes
-from dataall.modules.datasets_base.services.dataset_service_interface import DatasetServiceInterface
+from dataall.modules.s3_datasets_shares.db.s3_share_object_repositories import S3ShareObjectRepository
 from dataall.modules.s3_datasets_shares.aws.glue_client import GlueClient
 
-
-import logging
 
 log = logging.getLogger(__name__)
 
 
-class DatasetSharingService(DatasetServiceInterface):
-    @property
-    def dataset_type(self):
-        return DatasetTypes.S3
+class S3ShareService:
+    @staticmethod
+    def delete_dataset_table_read_permission(session, share, tableUri):
+        """
+        Delete Table permissions to share groups
+        """
+        other_shares = S3ShareObjectRepository.find_all_other_share_items(
+            session,
+            not_this_share_uri=share.shareUri,
+            item_uri=tableUri,
+            share_type=ShareableType.Table.value,
+            principal_type='GROUP',
+            principal_uri=share.groupUri,
+            item_status=[ShareItemStatus.Share_Succeeded.value],
+        )
+        log.info(f'Table {tableUri} has been shared with group {share.groupUri} in {len(other_shares)} more shares')
+        if len(other_shares) == 0:
+            log.info('Delete permissions...')
+            ResourcePolicyService.delete_resource_policy(session=session, group=share.groupUri, resource_uri=tableUri)
 
     @staticmethod
-    def resolve_additional_dataset_user_role(session, uri, username, groups):
-        """Implemented as part of the DatasetServiceInterface"""
-        share = S3ShareObjectRepository.get_share_by_dataset_attributes(session, uri, username, groups)
-        if share is not None:
-            return DatasetRole.Shared.value
-        return None
-
-    @staticmethod
-    def check_before_delete(session, uri, **kwargs):
-        """Implemented as part of the DatasetServiceInterface"""
-        action = kwargs.get('action')
-        if action in [DELETE_DATASET_FOLDER, DELETE_DATASET_TABLE]:
-            existing_s3_shared_items = S3ShareObjectRepository.check_existing_s3_shared_items(session, uri)
-            if existing_s3_shared_items:
-                raise exceptions.ResourceShared(
-                    action=action,
-                    message='Revoke all shares for this item before deletion',
-                )
-        elif action in [DELETE_DATASET]:
-            shares = S3ShareObjectRepository.list_s3_dataset_shares_with_existing_shared_items(
-                session=session, dataset_uri=uri
+    def delete_dataset_folder_read_permission(session, share, locationUri):
+        """
+        Delete Folder permissions to share groups
+        """
+        other_shares = S3ShareObjectRepository.find_all_other_share_items(
+            session,
+            not_this_share_uri=share.shareUri,
+            item_uri=locationUri,
+            share_type=ShareableType.StorageLocation.value,
+            principal_type='GROUP',
+            principal_uri=share.groupUri,
+            item_status=[ShareItemStatus.Share_Succeeded.value],
+        )
+        log.info(
+            f'Location {locationUri} has been shared with group {share.groupUri} in {len(other_shares)} more shares'
+        )
+        if len(other_shares) == 0:
+            log.info('Delete permissions...')
+            ResourcePolicyService.delete_resource_policy(
+                session=session,
+                group=share.groupUri,
+                resource_uri=locationUri,
             )
-            if shares:
-                raise exceptions.ResourceShared(
-                    action=DELETE_DATASET,
-                    message='Revoke all dataset shares before deletion.',
-                )
+
+    @staticmethod
+    def attach_dataset_table_read_permission(session, share, tableUri):
+        """
+        Attach Table permissions to share groups
+        """
+        existing_policy = ResourcePolicyService.find_resource_policies(
+            session,
+            group=share.groupUri,
+            resource_uri=tableUri,
+            resource_type=DatasetTable.__name__,
+            permissions=DATASET_TABLE_READ,
+        )
+        # toDo: separate policies from list DATASET_TABLE_READ, because in future only one of them can be granted (Now they are always granted together)
+        if len(existing_policy) == 0:
+            log.info(
+                f'Attaching new resource permission policy {DATASET_TABLE_READ} to table {tableUri} for group {share.groupUri}'
+            )
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                group=share.groupUri,
+                permissions=DATASET_TABLE_READ,
+                resource_uri=tableUri,
+                resource_type=DatasetTable.__name__,
+            )
         else:
-            raise exceptions.RequiredParameter('Delete action')
-        return True
+            log.info(
+                f'Resource permission policy {DATASET_TABLE_READ} to table {tableUri} for group {share.groupUri} already exists. Skip... '
+            )
 
     @staticmethod
-    def execute_on_delete(session, uri, **kwargs):
-        """Implemented as part of the DatasetServiceInterface"""
-        action = kwargs.get('action')
-        if action in [DELETE_DATASET_FOLDER, DELETE_DATASET_TABLE]:
-            S3ShareObjectRepository.delete_s3_share_item(session, uri)
-        elif action in [DELETE_DATASET]:
-            S3ShareObjectRepository.delete_s3_shares_with_no_shared_items(session, uri)
+    def attach_dataset_folder_read_permission(session, share, locationUri):
+        """
+        Attach Folder permissions to share groups
+        """
+        existing_policy = ResourcePolicyService.find_resource_policies(
+            session,
+            group=share.groupUri,
+            resource_uri=locationUri,
+            resource_type=DatasetStorageLocation.__name__,
+            permissions=DATASET_FOLDER_READ,
+        )
+        # toDo: separate policies from list DATASET_TABLE_READ, because in future only one of them can be granted (Now they are always granted together)
+        if len(existing_policy) == 0:
+            log.info(
+                f'Attaching new resource permission policy {DATASET_FOLDER_READ} to folder {locationUri} for group {share.groupUri}'
+            )
+
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                group=share.groupUri,
+                permissions=DATASET_FOLDER_READ,
+                resource_uri=locationUri,
+                resource_type=DatasetStorageLocation.__name__,
+            )
         else:
-            raise exceptions.RequiredParameter('Delete action')
-        return True
-
-    @staticmethod
-    def append_to_list_user_datasets(session, username, groups):
-        """Implemented as part of the DatasetServiceInterface"""
-        return S3ShareObjectRepository.list_user_s3_shared_datasets(session, username, groups)
-
-    @staticmethod
-    def extend_attach_steward_permissions(session, dataset, new_stewards, **kwargs):
-        """Implemented as part of the DatasetServiceInterface"""
-        dataset_shares = S3ShareObjectRepository.find_s3_dataset_shares(session, dataset.datasetUri)
-        if dataset_shares:
-            for share in dataset_shares:
-                ResourcePolicyService.attach_resource_policy(
-                    session=session,
-                    group=new_stewards,
-                    permissions=SHARE_OBJECT_APPROVER,
-                    resource_uri=share.shareUri,
-                    resource_type=ShareObject.__name__,
-                )
-                if dataset.stewards != dataset.SamlAdminGroupName:
-                    ResourcePolicyService.delete_resource_policy(
-                        session=session,
-                        group=dataset.stewards,
-                        resource_uri=share.shareUri,
-                    )
-
-    @staticmethod
-    def extend_delete_steward_permissions(session, dataset, **kwargs):
-        """Implemented as part of the DatasetServiceInterface"""
-        dataset_shares = S3ShareObjectRepository.find_s3_dataset_shares(session, dataset.datasetUri)
-        if dataset_shares:
-            for share in dataset_shares:
-                if dataset.stewards != dataset.SamlAdminGroupName:
-                    ResourcePolicyService.delete_resource_policy(
-                        session=session,
-                        group=dataset.stewards,
-                        resource_uri=share.shareUri,
-                    )
+            log.info(
+                f'Resource permission policy {DATASET_FOLDER_READ} to table {locationUri} for group {share.groupUri} already exists. Skip... '
+            )
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
@@ -209,9 +222,10 @@ class DatasetSharingService(DatasetServiceInterface):
                     separator='-',
                 )
                 # Check if the share was made with a Glue Database
-                datasetGlueDatabase = S3ShareItemService.get_glue_database_for_share(
-                    dataset.GlueDatabaseName, dataset.AwsAccountId, dataset.region
-                )
+                datasetGlueDatabase = GlueClient(
+                    account_id=dataset.AwsAccountId, region=dataset.region, database=dataset.GlueDatabaseName
+                ).get_glue_database_from_catalog()
+
                 old_shared_db_name = f'{datasetGlueDatabase}_shared_{uri}'[:254]
                 database = GlueClient(
                     account_id=environment.AwsAccountId, region=environment.region, database=old_shared_db_name
