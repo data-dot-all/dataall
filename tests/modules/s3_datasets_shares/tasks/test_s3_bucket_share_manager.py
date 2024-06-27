@@ -9,7 +9,7 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.s3_datasets_shares.services.share_managers import S3BucketShareManager
-from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import SharePolicyService
+from dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service import S3SharePolicyService
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetBucket
 from dataall.modules.shares_base.services.sharing_service import ShareData
 
@@ -418,7 +418,7 @@ def test_grant_s3_iam_access_with_no_policy(mocker, dataset2, share2_manager):
     # Check if the get and update_role_policy func are called and policy statements are added
 
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=False,
     )
     kms_client = mock_kms_client(mocker)
@@ -429,15 +429,15 @@ def test_grant_s3_iam_access_with_no_policy(mocker, dataset2, share2_manager):
         'Statement': [{'Sid': EMPTY_STATEMENT_SID, 'Effect': 'Allow', 'Action': 'none:null', 'Resource': '*'}],
     }
     share_policy_service_mock_1 = mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.create_managed_policy_from_inline_and_delete_inline',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.create_managed_policy_from_inline_and_delete_inline',
         return_value='arn:iam::someArn',
     )
     share_policy_service_mock_2 = mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.attach_policy',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.attach_policy',
         return_value=True,
     )
     share_policy_service_mock_3 = mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=False,
     )
     iam_update_role_policy_mock_1 = mocker.patch(
@@ -457,8 +457,8 @@ def test_grant_s3_iam_access_with_no_policy(mocker, dataset2, share2_manager):
 
     iam_policy = empty_policy_document
 
-    s3_index = SharePolicyService._get_statement_by_sid(policy=iam_policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}S3')
-    kms_index = SharePolicyService._get_statement_by_sid(policy=iam_policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS')
+    s3_index = S3SharePolicyService._get_statement_by_sid(policy=iam_policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}S3')
+    kms_index = S3SharePolicyService._get_statement_by_sid(policy=iam_policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS')
 
     # Assert if the IAM role policy with S3 and KMS permissions was created
     assert len(iam_policy['Statement']) == 2
@@ -484,11 +484,11 @@ def test_grant_s3_iam_access_with_empty_policy(mocker, dataset2, share2_manager)
     # Check if the get and update_role_policy func are called and policy statements are added
 
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=True,
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
     kms_client = mock_kms_client(mocker)
@@ -513,8 +513,8 @@ def test_grant_s3_iam_access_with_empty_policy(mocker, dataset2, share2_manager)
 
     iam_policy = initial_policy_document
 
-    s3_index = SharePolicyService._get_statement_by_sid(policy=iam_policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}S3')
-    kms_index = SharePolicyService._get_statement_by_sid(policy=iam_policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS')
+    s3_index = S3SharePolicyService._get_statement_by_sid(policy=iam_policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}S3')
+    kms_index = S3SharePolicyService._get_statement_by_sid(policy=iam_policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS')
 
     # Assert if the IAM role policy with S3 and KMS permissions was created
     assert len(iam_policy['Statement']) == 2
@@ -558,15 +558,15 @@ def test_grant_s3_iam_access_with_policy_and_target_resources_not_present(mocker
     }
 
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=True,
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
-    s3_index = SharePolicyService._get_statement_by_sid(policy=policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}S3')
-    kms_index = SharePolicyService._get_statement_by_sid(policy=policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS')
+    s3_index = S3SharePolicyService._get_statement_by_sid(policy=policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}S3')
+    kms_index = S3SharePolicyService._get_statement_by_sid(policy=policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS')
 
     assert len(policy['Statement']) == 2
     assert len(policy['Statement'][s3_index]['Resource']) == 2
@@ -630,11 +630,11 @@ def test_grant_s3_iam_access_with_complete_policy_present(mocker, dataset2, shar
     }
 
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=True,
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
     kms_client = mock_kms_client(mocker)
@@ -654,8 +654,8 @@ def test_grant_s3_iam_access_with_complete_policy_present(mocker, dataset2, shar
 
     created_iam_policy = policy
 
-    s3_index = SharePolicyService._get_statement_by_sid(policy=policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}S3')
-    kms_index = SharePolicyService._get_statement_by_sid(policy=policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS')
+    s3_index = S3SharePolicyService._get_statement_by_sid(policy=policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}S3')
+    kms_index = S3SharePolicyService._get_statement_by_sid(policy=policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS')
 
     assert len(created_iam_policy['Statement']) == 2
     assert (
@@ -920,7 +920,7 @@ def test_delete_target_role_access_no_policy_no_other_resources_shared(
     }
 
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=False,
     )
 
@@ -928,11 +928,11 @@ def test_delete_target_role_access_no_policy_no_other_resources_shared(
     kms_client().get_key_id.return_value = 'kms-key'
 
     share_policy_service_mock_1 = mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.create_managed_policy_from_inline_and_delete_inline',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.create_managed_policy_from_inline_and_delete_inline',
         return_value='arn:iam::someArn',
     )
     share_policy_service_mock_2 = mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.attach_policy',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.attach_policy',
         return_value=True,
     )
 
@@ -955,10 +955,10 @@ def test_delete_target_role_access_no_policy_no_other_resources_shared(
 
     # Get the updated IAM policy and compare it with the existing one
     updated_iam_policy = policy_document
-    s3_index = SharePolicyService._get_statement_by_sid(
+    s3_index = S3SharePolicyService._get_statement_by_sid(
         policy=updated_iam_policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}S3'
     )
-    kms_index = SharePolicyService._get_statement_by_sid(
+    kms_index = S3SharePolicyService._get_statement_by_sid(
         policy=updated_iam_policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS'
     )
 
@@ -992,11 +992,11 @@ def test_delete_target_role_access_policy_no_resource_of_datasets_s3_bucket(
     }
 
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=True,
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
 
@@ -1019,8 +1019,8 @@ def test_delete_target_role_access_policy_no_resource_of_datasets_s3_bucket(
 
     # Get the updated IAM policy and compare it with the existing one
     updated_iam_policy = iam_policy
-    s3_index = SharePolicyService._get_statement_by_sid(policy=iam_policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}S3')
-    kms_index = SharePolicyService._get_statement_by_sid(policy=iam_policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS')
+    s3_index = S3SharePolicyService._get_statement_by_sid(policy=iam_policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}S3')
+    kms_index = S3SharePolicyService._get_statement_by_sid(policy=iam_policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS')
 
     assert len(updated_iam_policy['Statement']) == 2
     assert 'arn:aws:s3:::someOtherBucket,arn:aws:s3:::someOtherBucket/*' == ','.join(
@@ -1065,11 +1065,11 @@ def test_delete_target_role_access_policy_with_multiple_s3_buckets_in_policy(
     }
 
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=True,
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
 
@@ -1092,8 +1092,8 @@ def test_delete_target_role_access_policy_with_multiple_s3_buckets_in_policy(
 
     updated_iam_policy = iam_policy
 
-    s3_index = SharePolicyService._get_statement_by_sid(policy=iam_policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}S3')
-    kms_index = SharePolicyService._get_statement_by_sid(policy=iam_policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS')
+    s3_index = S3SharePolicyService._get_statement_by_sid(policy=iam_policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}S3')
+    kms_index = S3SharePolicyService._get_statement_by_sid(policy=iam_policy, sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS')
 
     assert f'arn:aws:s3:::{dataset2.S3BucketName}' not in updated_iam_policy['Statement'][s3_index]['Resource']
     assert f'arn:aws:s3:::{dataset2.S3BucketName}/*' not in updated_iam_policy['Statement'][s3_index]['Resource']
@@ -1139,11 +1139,11 @@ def test_delete_target_role_access_policy_with_one_s3_bucket_and_one_kms_resourc
     }
 
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=True,
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
 
@@ -1397,11 +1397,11 @@ def test_check_s3_iam_access(mocker, dataset2, share2_manager):
         ],
     }
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=True,
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
     # Gets policy with S3 and KMS
@@ -1425,7 +1425,7 @@ def test_check_s3_iam_access_no_policy(mocker, dataset2, share2_manager):
 
     # When policy does not exist
     iam_update_role_policy_mock_1 = mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=False,
     )
 
@@ -1446,11 +1446,11 @@ def test_check_s3_iam_access_policy_not_attached(mocker, dataset2, share2_manage
 
     # When policy does not exist
     iam_update_role_policy_mock_1 = mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=True,
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=False,
     )
 
@@ -1481,11 +1481,11 @@ def test_check_s3_iam_access_missing_policy_statement(mocker, dataset2, share2_m
         ],
     }
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=True,
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
     # Gets policy with other S3 and KMS
@@ -1529,11 +1529,11 @@ def test_check_s3_iam_access_missing_target_resource(mocker, dataset2, share2_ma
         ],
     }
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_exists',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=True,
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.managed_share_policy_service.SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
     # Gets policy with other S3 and KMS

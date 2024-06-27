@@ -18,12 +18,12 @@ from dataall.modules.s3_datasets_shares.aws.kms_client import (
     DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID,
 )
 from dataall.base.aws.iam import IAM
-from dataall.modules.s3_datasets_shares.services.dataset_sharing_alarm_service import DatasetSharingAlarmService
+from dataall.modules.s3_datasets_shares.services.s3_share_alarm_service import S3ShareAlarmService
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers.share_manager_utils import ShareErrorFormatter
-from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import (
-    SharePolicyService,
+from dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service import (
+    S3SharePolicyService,
     IAM_S3_ACCESS_POINTS_STATEMENT_SID,
     EMPTY_STATEMENT_SID,
 )
@@ -159,7 +159,7 @@ class S3AccessPointShareManager:
         key_alias = f'alias/{self.dataset.KmsAlias}'
         kms_client = KmsClient(self.dataset_account_id, self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
-        share_policy_service = SharePolicyService(
+        share_policy_service = S3SharePolicyService(
             environmentUri=self.target_environment.environmentUri,
             account=self.target_environment.AwsAccountId,
             region=self.target_environment.region,
@@ -194,7 +194,7 @@ class S3AccessPointShareManager:
         )
         logger.info(f'Policy... {policy_document}')
 
-        s3_statement_index = SharePolicyService._get_statement_by_sid(
+        s3_statement_index = S3SharePolicyService._get_statement_by_sid(
             policy_document, f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3'
         )
 
@@ -228,7 +228,7 @@ class S3AccessPointShareManager:
             )
 
         if kms_key_id:
-            kms_statement_index = SharePolicyService._get_statement_by_sid(
+            kms_statement_index = S3SharePolicyService._get_statement_by_sid(
                 policy_document, f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS'
             )
             kms_target_resources = [f'arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}']
@@ -268,7 +268,7 @@ class S3AccessPointShareManager:
         """
         logger.info(f'Grant target role {self.target_requester_IAMRoleName} access policy')
 
-        share_policy_service = SharePolicyService(
+        share_policy_service = S3SharePolicyService(
             environmentUri=self.target_environment.environmentUri,
             account=self.target_environment.AwsAccountId,
             region=self.target_environment.region,
@@ -619,7 +619,7 @@ class S3AccessPointShareManager:
     def revoke_target_role_access_policy(self):
         logger.info('Deleting target role IAM statements...')
 
-        share_policy_service = SharePolicyService(
+        share_policy_service = S3SharePolicyService(
             environmentUri=self.target_environment.environmentUri,
             account=self.target_environment.AwsAccountId,
             region=self.target_environment.region,
@@ -718,7 +718,7 @@ class S3AccessPointShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        DatasetSharingAlarmService().trigger_folder_sharing_failure_alarm(
+        S3ShareAlarmService().trigger_folder_sharing_failure_alarm(
             self.target_folder, self.share, self.target_environment
         )
 
@@ -735,7 +735,7 @@ class S3AccessPointShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        DatasetSharingAlarmService().trigger_revoke_folder_sharing_failure_alarm(
+        S3ShareAlarmService().trigger_revoke_folder_sharing_failure_alarm(
             self.target_folder, self.share, self.target_environment
         )
         return True

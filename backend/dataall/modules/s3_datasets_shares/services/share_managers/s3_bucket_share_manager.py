@@ -15,9 +15,9 @@ from dataall.modules.s3_datasets_shares.aws.s3_client import S3ControlClient, S3
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers.share_manager_utils import ShareErrorFormatter
-from dataall.modules.s3_datasets_shares.services.dataset_sharing_alarm_service import DatasetSharingAlarmService
-from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import (
-    SharePolicyService,
+from dataall.modules.s3_datasets_shares.services.s3_share_alarm_service import S3ShareAlarmService
+from dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service import (
+    S3SharePolicyService,
     IAM_S3_BUCKETS_STATEMENT_SID,
     EMPTY_STATEMENT_SID,
 )
@@ -70,7 +70,7 @@ class S3BucketShareManager:
         kms_client = KmsClient(self.source_account_id, self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
 
-        share_policy_service = SharePolicyService(
+        share_policy_service = S3SharePolicyService(
             environmentUri=self.target_environment.environmentUri,
             account=self.target_environment.AwsAccountId,
             region=self.target_environment.region,
@@ -98,7 +98,7 @@ class S3BucketShareManager:
         version_id, policy_document = IAM.get_managed_policy_default_version(
             self.target_environment.AwsAccountId, self.target_environment.region, share_resource_policy_name
         )
-        s3_statement_index = SharePolicyService._get_statement_by_sid(
+        s3_statement_index = S3SharePolicyService._get_statement_by_sid(
             policy_document, f'{IAM_S3_BUCKETS_STATEMENT_SID}S3'
         )
 
@@ -131,7 +131,7 @@ class S3BucketShareManager:
             )
 
         if kms_key_id:
-            kms_statement_index = SharePolicyService._get_statement_by_sid(
+            kms_statement_index = S3SharePolicyService._get_statement_by_sid(
                 policy_document, f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS'
             )
             kms_target_resources = [f'arn:aws:kms:{self.bucket_region}:{self.source_account_id}:key/{kms_key_id}']
@@ -172,7 +172,7 @@ class S3BucketShareManager:
         """
         logger.info(f'Grant target role {self.target_requester_IAMRoleName} access policy')
 
-        share_policy_service = SharePolicyService(
+        share_policy_service = S3SharePolicyService(
             environmentUri=self.target_environment.environmentUri,
             account=self.target_environment.AwsAccountId,
             region=self.target_environment.region,
@@ -484,7 +484,7 @@ class S3BucketShareManager:
     ):
         logger.info('Deleting target role IAM statements...')
 
-        share_policy_service = SharePolicyService(
+        share_policy_service = S3SharePolicyService(
             role_name=share.principalIAMRoleName,
             account=target_environment.AwsAccountId,
             region=self.target_environment.region,
@@ -574,7 +574,7 @@ class S3BucketShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        DatasetSharingAlarmService().trigger_s3_bucket_sharing_failure_alarm(
+        S3ShareAlarmService().trigger_s3_bucket_sharing_failure_alarm(
             self.target_bucket, self.share, self.target_environment
         )
         return True
@@ -592,7 +592,7 @@ class S3BucketShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        DatasetSharingAlarmService().trigger_revoke_s3_bucket_sharing_failure_alarm(
+        S3ShareAlarmService().trigger_revoke_s3_bucket_sharing_failure_alarm(
             self.target_bucket, self.share, self.target_environment
         )
         return True

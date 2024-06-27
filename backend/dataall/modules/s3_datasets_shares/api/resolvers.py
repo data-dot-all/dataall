@@ -3,7 +3,7 @@ import logging
 from dataall.base.api.context import Context
 from dataall.base.db.exceptions import RequiredParameter
 from dataall.base.feature_toggle_checker import is_feature_enabled
-from dataall.modules.s3_datasets_shares.services.dataset_sharing_service import DatasetSharingService
+from dataall.modules.s3_datasets_shares.services.s3_share_service import S3ShareService
 
 
 log = logging.getLogger(__name__)
@@ -41,32 +41,30 @@ class RequestValidator:
 
 
 def list_shared_tables_by_env_dataset(context: Context, source, datasetUri: str, envUri: str):
-    return DatasetSharingService.list_shared_tables_by_env_dataset(datasetUri, envUri)
+    return S3ShareService.list_shared_tables_by_env_dataset(datasetUri, envUri)
 
 
 @is_feature_enabled('modules.s3_datasets.features.aws_actions')
 def get_dataset_shared_assume_role_url(context: Context, source, datasetUri: str = None):
-    return DatasetSharingService.get_dataset_shared_assume_role_url(uri=datasetUri)
+    return S3ShareService.get_dataset_shared_assume_role_url(uri=datasetUri)
 
 
 def verify_dataset_share_objects(context: Context, source, input):
     RequestValidator.validate_dataset_share_selector_input(input)
     dataset_uri = input.get('datasetUri')
     verify_share_uris = input.get('shareUris')
-    return DatasetSharingService.verify_dataset_share_objects(uri=dataset_uri, share_uris=verify_share_uris)
+    return S3ShareService.verify_dataset_share_objects(uri=dataset_uri, share_uris=verify_share_uris)
 
 
 def get_s3_consumption_data(context: Context, source, shareUri: str):
-    return DatasetSharingService.get_s3_consumption_data(uri=shareUri)
+    return S3ShareService.get_s3_consumption_data(uri=shareUri)
 
 
 def list_shared_databases_tables_with_env_group(context: Context, source, environmentUri: str, groupUri: str):
-    return DatasetSharingService.list_shared_databases_tables_with_env_group(
-        environmentUri=environmentUri, groupUri=groupUri
-    )
+    return S3ShareService.list_shared_databases_tables_with_env_group(environmentUri=environmentUri, groupUri=groupUri)
 
 
 def resolve_shared_db_name(context: Context, source, **kwargs):
-    return DatasetSharingService.resolve_shared_db_name(
+    return S3ShareService.resolve_shared_db_name(
         source.GlueDatabaseName, source.shareUri, source.targetEnvAwsAccountId, source.targetEnvRegion
     )
