@@ -16,7 +16,7 @@ RETRY_INTERVAL = 60
 
 class ResourceLockRepository:
     @staticmethod
-    def acquire_locks(resources, session, acquired_by_uri, acquired_by_type):
+    def _acquire_locks(resources, session, acquired_by_uri, acquired_by_type):
         """
         Attempts to acquire/create one or more locks on the resources identified by resourceUri and resourceType.
 
@@ -65,7 +65,7 @@ class ResourceLockRepository:
             return False
 
     @staticmethod
-    def release_lock(session, resource_uri, resource_type, share_uri):
+    def _release_lock(session, resource_uri, resource_type, share_uri):
         """
         Releases/delete the lock on the resource identified by resource_uri, resource_type.
 
@@ -116,7 +116,7 @@ class ResourceLockRepository:
         retries_remaining = MAX_RETRIES
         log.info(f'Attempting to acquire lock for resources {resources} by share {acquired_by_uri}...')
         while not (
-            lock_acquired := ResourceLockRepository.acquire_locks(resources, session, acquired_by_uri, acquired_by_type)
+            lock_acquired := ResourceLockRepository._acquire_locks(resources, session, acquired_by_uri, acquired_by_type)
         ):
             log.info(
                 f'Lock for one or more resources {resources} already acquired. Retrying in {RETRY_INTERVAL} seconds...'
@@ -132,4 +132,4 @@ class ResourceLockRepository:
             yield lock_acquired
         finally:
             for resource in resources:
-                ResourceLockRepository.release_lock(session, resource[0], resource[1], acquired_by_uri)
+                ResourceLockRepository._release_lock(session, resource[0], resource[1], acquired_by_uri)
