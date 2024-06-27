@@ -5,7 +5,7 @@ export const reApplyShareObjectItemsOnDataset = ({ datasetUri }) => ({
     datasetUri
   },
   mutation: gql`
-    mutation reApplyShareObjectItemsOnDataset($datasetUri: String) {
+    mutation reApplyShareObjectItemsOnDataset($datasetUri: String!) {
       reApplyShareObjectItemsOnDataset(datasetUri: $datasetUri)
     }
   `

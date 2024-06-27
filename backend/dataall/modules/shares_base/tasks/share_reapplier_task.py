@@ -43,7 +43,7 @@ class EcsBulkShareRepplyService:
             return processed_share_objects
 
     @classmethod
-    def process_repply_shares(cls, engine):
+    def process_reapply_shares(cls, engine):
         with engine.scoped_session() as session:
             processed_share_objects = []
             all_share_objects: [ShareObject] = ShareObjectRepository.list_all_active_share_objects(session)
@@ -73,7 +73,7 @@ def reapply_shares(engine, dataset_uri):
     if dataset_uri:
         return EcsBulkShareRepplyService.process_reapply_shares_for_dataset(engine, dataset_uri)
     else:
-        return EcsBulkShareRepplyService.process_repply_shares(engine)
+        return EcsBulkShareRepplyService.process_reapply_shares(engine)
 
 
 if __name__ == '__main__':

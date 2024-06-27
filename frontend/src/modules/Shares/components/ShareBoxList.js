@@ -1,7 +1,6 @@
 import {
   Autocomplete,
   Box,
-  Button,
   Checkbox,
   Container,
   Grid,
@@ -367,7 +366,7 @@ export const ShareBoxList = (props) => {
         )}
 
         {dataset && (
-          <Button
+          <LoadingButton
             color="info"
             align="right"
             startIcon={<RefreshRounded fontSize="small" />}
@@ -379,7 +378,7 @@ export const ShareBoxList = (props) => {
             variant="outlined"
           >
             Re-apply Share Item(s) for Dataset
-          </Button>
+          </LoadingButton>
         )}
 
         <Container maxWidth={settings.compact ? 'xl' : false}>

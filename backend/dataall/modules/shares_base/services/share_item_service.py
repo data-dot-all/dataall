@@ -1,15 +1,12 @@
 import logging
 
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
-from dataall.core.stacks.aws.ecs import Ecs
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
-from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db.exceptions import ObjectNotFound, UnauthorizedOperation
 from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
-    ShareableType,
     ShareItemStatus,
     ShareItemActions,
     ShareItemHealthStatus,

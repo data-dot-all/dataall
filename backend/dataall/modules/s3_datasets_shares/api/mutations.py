@@ -14,7 +14,7 @@ verifyDatasetShareObjects = gql.MutationField(
 
 reApplyShareObjectItemsOnDataset = gql.MutationField(
     name='reApplyShareObjectItemsOnDataset',
-    args=[gql.Argument(name='datasetUri', type=gql.String)],
+    args=[gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String))],
     type=gql.Boolean,
     resolver=reapply_share_items_share_object_for_dataset,
 )
