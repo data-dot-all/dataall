@@ -56,6 +56,7 @@ export const ShareBoxList = (props) => {
     useState(false);
   const [isNavigateShareViewModalOpen, setIsNavigateShareViewModalOpen] =
     useState(false);
+  const [reApplyButtonLoadingState, setreApplyButtonLoadingState] = useState(false)
   const statusOptions = ShareStatusList;
   const { enqueueSnackbar } = useSnackbar();
 
@@ -262,10 +263,12 @@ export const ShareBoxList = (props) => {
 
   const reapplyShares = async (datasetUri) => {
     try {
+      setreApplyButtonLoadingState(true)
       const response = await client.mutate(
         reApplyShareObjectItemsOnDataset({ datasetUri: datasetUri })
       );
       if (response && !response.errors) {
+        setreApplyButtonLoadingState(false)
         enqueueSnackbar(
           `Reapplying process for all unhealthy shares on dataset with uri: ${datasetUri} has started. Please check each individual share for share item health status`,
           {
@@ -280,6 +283,7 @@ export const ShareBoxList = (props) => {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
     } catch (error) {
+      setreApplyButtonLoadingState(false)
       dispatch({ type: SET_ERROR, error: error?.message });
     }
   };
@@ -367,6 +371,7 @@ export const ShareBoxList = (props) => {
 
         {dataset && (
           <LoadingButton
+              loading={reApplyButtonLoadingState}
             color="info"
             align="right"
             startIcon={<RefreshRounded fontSize="small" />}
