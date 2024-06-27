@@ -19,9 +19,9 @@ import { IconAvatar, Label, StackStatus, useCardStyle } from 'design';
 export const DatasetListItem = (props) => {
   const { dataset } = props;
   const datasetTypeLink =
-    dataset.datasetType === 'DatasetType.S3'
+    dataset.datasetType === 'DatasetTypes.S3'
       ? `s3-datasets`
-      : dataset.datasetType === 'DatasetType.Redshift'
+      : dataset.datasetType === 'DatasetTypes.Redshift'
       ? `redshift-datasets`
       : '-';
   const classes = useCardStyle();
@@ -211,11 +211,7 @@ export const DatasetListItem = (props) => {
             <Button
               color="primary"
               component={RouterLink}
-              to={
-                dataset.datasetType === 'DatasetType.S3'
-                  ? `/console/s3-datasets/${dataset.datasetUri}`
-                  : '-'
-              }
+              to={`/console/${datasetTypeLink}/${dataset.datasetUri}`}
             >
               Learn More
             </Button>

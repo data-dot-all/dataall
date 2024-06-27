@@ -1,5 +1,6 @@
 import { LoadingButton } from '@mui/lab';
 import {
+  Autocomplete,
   Box,
   Breadcrumbs,
   Button,
@@ -10,7 +11,6 @@ import {
   FormHelperText,
   Grid,
   Link,
-  MenuItem,
   TextField,
   Typography
 } from '@mui/material';
@@ -36,9 +36,6 @@ const OrganizationCreateForm = (props) => {
   const client = useClient();
   const groups = useGroups();
   const { settings } = useSettings();
-  const groupOptions = groups
-    ? groups.map((g) => ({ value: g, label: g }))
-    : [];
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
@@ -46,7 +43,7 @@ const OrganizationCreateForm = (props) => {
         createOrganization({
           label: values.label,
           description: values.description,
-          SamlGroupName: values.SamlGroupName,
+          SamlGroupName: values.SamlAdminGroupName,
           tags: values.tags
         })
       );
@@ -147,7 +144,7 @@ const OrganizationCreateForm = (props) => {
               initialValues={{
                 label: '',
                 description: '',
-                SamlGroupName: '',
+                SamlAdminGroupName: '',
                 tags: []
               }}
               validationSchema={Yup.object().shape({
@@ -155,7 +152,7 @@ const OrganizationCreateForm = (props) => {
                   .max(255)
                   .required('*Organization name is required'),
                 description: Yup.string().max(5000),
-                SamlGroupName: Yup.string()
+                SamlAdminGroupName: Yup.string()
                   .max(255)
                   .required('*Team is required'),
                 tags: Yup.array().nullable()
@@ -230,27 +227,37 @@ const OrganizationCreateForm = (props) => {
                       <Card>
                         <CardHeader title="Organize" />
                         <CardContent>
-                          <TextField
-                            error={Boolean(
-                              touched.SamlGroupName && errors.SamlGroupName
+                          <Autocomplete
+                            id="SamlAdminGroupName"
+                            disablePortal
+                            options={groups}
+                            onChange={(event, value) => {
+                              if (value) {
+                                setFieldValue('SamlAdminGroupName', value);
+                              } else {
+                                setFieldValue('SamlAdminGroupName', '');
+                              }
+                            }}
+                            inputValue={values.SamlAdminGroupName}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                fullWidth
+                                error={Boolean(
+                                  touched.SamlAdminGroupName &&
+                                    errors.SamlAdminGroupName
+                                )}
+                                helperText={
+                                  touched.SamlAdminGroupName &&
+                                  errors.SamlAdminGroupName
+                                }
+                                label="Team"
+                                onChange={handleChange}
+                                name="SamlAdminGroupName"
+                                variant="outlined"
+                              />
                             )}
-                            helperText={
-                              touched.SamlGroupName && errors.SamlGroupName
-                            }
-                            fullWidth
-                            label="Team"
-                            name="SamlGroupName"
-                            onChange={handleChange}
-                            select
-                            value={values.SamlGroupName}
-                            variant="outlined"
-                          >
-                            {groupOptions.map((group) => (
-                              <MenuItem key={group.value} value={group.value}>
-                                {group.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
+                          />
                         </CardContent>
                         <CardContent>
                           <Box>

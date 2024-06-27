@@ -17,6 +17,7 @@ from aws_cdk import (
 from aws_cdk.aws_cognito import AuthFlow
 from aws_cdk.triggers import TriggerFunction
 
+from custom_resources.utils import get_lambda_code
 from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling
 from .waf_rules import get_waf_rules
@@ -349,22 +350,7 @@ class IdpStack(pyNestedClass):
             sync_cr.node.add_dependency(domain_name)
             sync_cr.node.add_dependency(pool_arn)
 
-        cognito_config_assets = os.path.realpath(
-            os.path.join(
-                os.path.dirname(__file__),
-                '..',
-                'custom_resources',
-                'cognito_config',
-            )
-        )
-
-        cognito_config_code = _lambda.Code.from_asset(
-            path=cognito_config_assets,
-            bundling=BundlingOptions(
-                image=_lambda.Runtime.PYTHON_3_9.bundling_image,
-                local=SolutionBundling(source_path=cognito_config_assets),
-            ),
-        )
+        cognito_config_code = get_lambda_code('cognito_config')
 
         TriggerFunction(
             self,
@@ -411,8 +397,6 @@ class IdpStack(pyNestedClass):
             environment={
                 'envname': envname,
                 'deployment_region': self.region,
-                'internet_facing': str(internet_facing),
-                'custom_domain': str(not domain_name),
                 'enable_cw_canaries': str(enable_cw_rum),
                 'resource_prefix': resource_prefix,
                 'with_approval_tests': str(with_approval_tests),
@@ -421,7 +405,7 @@ class IdpStack(pyNestedClass):
             tracing=_lambda.Tracing.ACTIVE,
             retry_attempts=0,
             runtime=_lambda.Runtime.PYTHON_3_9,
-            handler='cognito_urls_config.handler',
+            handler='cognito_users.handler',
             execute_after=[self.client],
             execute_on_handler_change=True,
         )

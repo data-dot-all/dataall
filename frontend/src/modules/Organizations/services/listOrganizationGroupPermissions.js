@@ -10,8 +10,8 @@ export const listOrganizationGroupPermissions = ({
   },
   query: gql`
     query listOrganizationGroupPermissions(
-      $organizationUri: String
-      $groupUri: String
+      $organizationUri: String!
+      $groupUri: String!
     ) {
       listOrganizationGroupPermissions(
         organizationUri: $organizationUri

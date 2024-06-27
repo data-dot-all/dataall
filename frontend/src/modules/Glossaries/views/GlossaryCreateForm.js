@@ -32,9 +32,6 @@ const GlossaryCreateForm = (props) => {
   const client = useClient();
   const { settings } = useSettings();
   const groups = useGroups();
-  const groupOptions = groups
-    ? groups.map((g) => ({ value: g, label: g }))
-    : [];
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
@@ -42,7 +39,7 @@ const GlossaryCreateForm = (props) => {
         createGlossary({
           label: values.label,
           readme: values.readme,
-          admin: values.admin
+          admin: values.SamlAdminGroupName
         })
       );
 
@@ -212,21 +209,32 @@ const GlossaryCreateForm = (props) => {
                         </CardContent>
                         <CardContent>
                           <Autocomplete
-                            id="groupUri"
-                            freeSolo
-                            options={groupOptions.map((option) => option.value)}
+                            id="SamlAdminGroupName"
+                            disablePortal
+                            options={groups}
                             onChange={(event, value) => {
-                              setFieldValue('admin', value);
+                              if (value) {
+                                setFieldValue('SamlAdminGroupName', value);
+                              } else {
+                                setFieldValue('SamlAdminGroupName', '');
+                              }
                             }}
+                            inputValue={values.SamlAdminGroupName}
                             renderInput={(params) => (
                               <TextField
                                 {...params}
+                                fullWidth
+                                error={Boolean(
+                                  touched.SamlAdminGroupName &&
+                                    errors.SamlAdminGroupName
+                                )}
+                                helperText={
+                                  touched.SamlAdminGroupName &&
+                                  errors.SamlAdminGroupName
+                                }
                                 label="Team"
-                                margin="normal"
-                                error={Boolean(touched.admin && errors.admin)}
-                                helperText={touched.admin && errors.admin}
                                 onChange={handleChange}
-                                value={values.admin}
+                                name="SamlAdminGroupName"
                                 variant="outlined"
                               />
                             )}
