@@ -241,7 +241,6 @@ export const NetworkCreateModal = (props) => {
                               setFieldValue('SamlAdminGroupName', '');
                             }
                           }}
-                          inputValue={values.SamlAdminGroupName}
                           renderInput={(params) => (
                             <TextField
                               {...params}
@@ -255,9 +254,9 @@ export const NetworkCreateModal = (props) => {
                                 errors.SamlAdminGroupName
                               }
                               label="Team"
-                              onChange={handleChange}
                               name="SamlAdminGroupName"
                               variant="outlined"
+                              value={values.SamlAdminGroupName}
                             />
                           )}
                         />

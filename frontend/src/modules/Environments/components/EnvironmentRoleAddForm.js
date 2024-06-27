@@ -166,7 +166,6 @@ export const EnvironmentRoleAddForm = (props) => {
                       }
                     }}
                     noOptionsText="No teams found for this environment"
-                    inputValue={values.groupUri}
                     renderInput={(params) => (
                       <TextField
                         {...params}
@@ -174,9 +173,9 @@ export const EnvironmentRoleAddForm = (props) => {
                         error={Boolean(touched.groupUri && errors.groupUri)}
                         helperText={touched.groupUri && errors.groupUri}
                         label="Owners"
-                        onChange={handleChange}
                         name="groupUri"
                         variant="outlined"
+                        value={values.groupUri}
                       />
                     )}
                   />
