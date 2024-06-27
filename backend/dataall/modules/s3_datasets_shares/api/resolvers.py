@@ -56,6 +56,10 @@ def verify_dataset_share_objects(context: Context, source, input):
     return S3ShareService.verify_dataset_share_objects(uri=dataset_uri, share_uris=verify_share_uris)
 
 
+def reapply_share_items_share_object_for_dataset(context: Context, source, datasetUri: str):
+    return S3ShareService.reapply_share_items_for_dataset(uri=datasetUri)
+
+
 def get_s3_consumption_data(context: Context, source, shareUri: str):
     return S3ShareService.get_s3_consumption_data(uri=shareUri)
 

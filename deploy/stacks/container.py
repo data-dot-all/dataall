@@ -298,6 +298,21 @@ class ContainerStack(pyNestedClass):
             ),
             readonly_root_filesystem=True,
         )
+
+        ssm.StringParameter(
+            self,
+            f'ShareReapplierTaskARNSSM{self._envname}',
+            parameter_name=f'/dataall/{self._envname}/ecs/task_def_arn/share_reapplier',
+            string_value=share_reapplier_task_definition.task_definition_arn,
+        )
+
+        ssm.StringParameter(
+            self,
+            f'ShareReapplierTaskContainerSSM{self._envname}',
+            parameter_name=f'/dataall/{self._envname}/ecs/container/share_reapplier',
+            string_value=share_reapplier_container.container_name,
+        )
+
         self.ecs_task_definitions_families.append(share_reapplier_task_definition.family)
 
     @run_if(['modules.dataset_base.features.share_notifications.email.persistent_reminders'])

@@ -7,6 +7,8 @@ from dataall.base.aws.sts import SessionHelper
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.tasks.db.task_models import Task
+from dataall.core.tasks.service_handlers import Worker
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.services.share_item_service import ShareItemService
@@ -148,6 +150,17 @@ class S3ShareService:
                 )
                 item_uris = [item.shareItemUri for item in items]
                 ShareItemService.verify_items_share_object(uri=share_uri, item_uris=item_uris)
+        return True
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
+    @ResourcePolicyService.has_resource_permission(UPDATE_DATASET)
+    def reapply_share_items_for_dataset(uri: str):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            reapply_share_items_task: Task = Task(action='ecs.dataset.share.reapply', targetUri=uri)
+            session.add(reapply_share_items_task)
+        Worker.queue(engine=context.db_engine, task_ids=[reapply_share_items_task.taskUri])
         return True
 
     @staticmethod
