@@ -1,6 +1,6 @@
 import logging
 import os
-
+import platform
 from migrations.dataall_migrations.herder import Herder
 
 logger = logging.getLogger()
@@ -10,7 +10,11 @@ class BaseC:
     name = "base"
     @classmethod
     def test(cls):
-        print(cls.name)
+        print("test")
+        print("Classname: ", cls.__name__)
+        print("Attribute value: ", cls.name)
+
+        print("All attributes: ", cls.__dict__)
 
 
 class A(BaseC):
@@ -20,11 +24,21 @@ class B(BaseC):
     name = "class B"
     @classmethod
     def test(cls):
-        print(cls.name)
+        print("test")
+        print("Classname: ", cls.__name__)
+        print("Attribute value: ", cls.name)
 
+        print("All attributes: ", cls.__dict__)
 
 def handler(event, context) -> None:
     #H = Herder()
     #H.upgrade()
+    print("Python version = ", platform.python_version())
+    print("Python compiler = ", platform.python_compiler())
+    print("Python release = ", platform.release())
+    print("Python platform = ", platform.platform())
+
+    BaseC.test()
     A.test()
     B.test()
+
