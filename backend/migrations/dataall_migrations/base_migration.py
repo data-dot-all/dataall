@@ -1,3 +1,9 @@
+import logging
+import os
+logger = logging.getLogger()
+logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
+
+
 def protect(*protected):
     """Returns a metaclass that protects all attributes given as strings"""
 
@@ -23,11 +29,11 @@ class BaseDataAllMigration(metaclass=protect('set_next', 'set_previous', 'is_ini
 
     @classmethod
     def up(cls):
-        print(f'Upgrade is not defined for migration {cls.name}')
+        logger.info(f'Upgrade is not defined for migration {cls.name}')
 
     @classmethod
     def down(cls):
-        print(f'Downgrade is not defined for migration {cls.name}')
+        logger.info(f'Downgrade is not defined for migration {cls.name}')
 
     @classmethod
     def set_previous(cls, previous_migration_key):

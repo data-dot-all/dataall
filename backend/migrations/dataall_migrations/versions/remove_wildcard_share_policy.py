@@ -11,6 +11,11 @@ from dataall.base.db import get_engine
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 import json
 
+import logging
+logger = logging.getLogger()
+logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
+
+
 
 class RemoveWildCard(BaseDataAllMigration):
     key = '51132fed-c36d-470c-9946-5164581856cb'
@@ -21,10 +26,10 @@ class RemoveWildCard(BaseDataAllMigration):
 
     @classmethod
     def up(cls):
-        print('removing wildcard from sharing policy')
-        ENVNAME = os.environ.get('envname', 'local')
-        ENGINE = get_engine(envname=ENVNAME)
-        with ENGINE.scoped_session() as session:
+        logger.info('removing wildcard from sharing policy')
+        envname = os.environ.get('envname', 'local')
+        engine = get_engine(envname=envname)
+        with engine.scoped_session() as session:
             all_envs = EnvironmentRepository.query_all_active_environments(session)
             for env in all_envs:
                 cons_roles = EnvironmentRepository.query_all_environment_consumption_roles(
@@ -49,13 +54,13 @@ class RemoveWildCard(BaseDataAllMigration):
                                 f'{IAM_S3_BUCKETS_STATEMENT_SID}S3',
                                 f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3',
                             ]:
-                                actions = set(statement['Actions'])
+                                actions = set(statement['Action'])
                                 if 's3:*' in actions:
                                     actions.remove('s3:*')
                                     actions.add('s3:List*')
                                     actions.add('s3:Describe*')
                                     actions.add('s3:GetObject')
-                                statement['Actions'] = list(actions)
+                                statement['Action'] = list(actions)
                         policy_document['Statement'] = statements
                         IAM.update_managed_policy_default_version(
                             env.AwsAccountId,

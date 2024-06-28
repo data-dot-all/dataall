@@ -5,6 +5,10 @@ import os
 from pathlib import Path
 from migrations.dataall_migrations.base_migration import BaseDataAllMigration
 
+import logging
+logger = logging.getLogger()
+logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
+
 
 class Herder:
     def __init__(self):
@@ -14,8 +18,8 @@ class Herder:
         self.initial_key = '0'
         self.last_key = None
 
-        print('Loading migrations...')
-        print(f'Folder path: {self.folder_path}')
+        logger.info('Loading migrations...')
+        logger.info(f'Folder path: {self.folder_path}')
 
         for py_file in Path(self.folder_path).glob('*.py'):
             module_name = py_file.stem  # Get the module name (file name without extension)
@@ -42,33 +46,33 @@ class Herder:
         if start_key is not None:
             key = self.migration_path[start_key].next()
             if key is None:
-                print('Data-all version is up to date')
+                logger.info('Data-all version is up to date')
                 return
         else:
             key = self.initial_key
-        print(f"Upgrade from {key} to {target_key if target_key is not None else 'latest'}")
+        logger.info(f"Upgrade from {key} to {target_key if target_key is not None else 'latest'}")
         while key is not None:
             migration = self.migration_path[key]
-            print(f'Applying migration {migration.name}, class = ', migration.__name__)
+            logger.info(f'Applying migration {migration.name}, class = ', migration.__name__)
             migration.up()
-            print(f'Migration {migration.name} completed')
+            logger.info(f'Migration {migration.name} completed')
             if key == target_key:
                 break
             key = migration.next()
-        print('Upgrade completed')
+        logger.info('Upgrade completed')
 
     def downgrade(self, target_key=None, start_key=None):
         key = start_key if start_key is not None else self.last_key
-        print(
+        logger.info(
             f"Downgrade from {start_key if start_key is not None else 'latest'} to {target_key if target_key is not None else 'initial'}"
         )
         while key != '0':
             migration = self.migration_path[key]
-            print(f'Reverting migration {migration.name}')
+            logger.info(f'Reverting migration {migration.name}')
             migration.down()
-            print(f'Migration {migration.name} completed')
+            logger.info(f'Migration {migration.name} completed')
             if key == target_key:
                 break
             key = migration.previous()
 
-        print('Downgrade completed')
+        logger.info('Downgrade completed')
