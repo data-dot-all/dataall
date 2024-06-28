@@ -14,14 +14,15 @@ class DatasetIndexer(BaseIndexer):
     @classmethod
     def upsert(cls, session, dataset_uri: str):
         dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri)
-        env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
-        org = OrganizationRepository.get_organization_by_uri(session, dataset.organizationUri)
-
-        count_tables = DatasetRepository.count_dataset_tables(session, dataset_uri)
-        count_folders = DatasetLocationRepository.count_dataset_locations(session, dataset_uri)
-        count_upvotes = VoteRepository.count_upvotes(session, dataset_uri, target_type='dataset')
 
         if dataset:
+            env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
+            org = OrganizationRepository.get_organization_by_uri(session, dataset.organizationUri)
+
+            count_tables = DatasetRepository.count_dataset_tables(session, dataset_uri)
+            count_folders = DatasetLocationRepository.count_dataset_locations(session, dataset_uri)
+            count_upvotes = VoteRepository.count_upvotes(session, dataset_uri, target_type='dataset')
+
             glossary = BaseIndexer._get_target_glossary_terms(session, dataset_uri)
             BaseIndexer._index(
                 doc_id=dataset_uri,

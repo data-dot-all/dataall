@@ -31,7 +31,7 @@ engine = get_engine(envname=ENVNAME)
 es = connect(envname=ENVNAME)
 logger.info('Connected')
 # create_schema_and_tables(engine, envname=ENVNAME)
-load_modules(modes={ImportMode.API, ImportMode.HANDLERS, ImportMode.SHARES_TASK})
+load_modules(modes={ImportMode.API, ImportMode.HANDLERS, ImportMode.SHARES_TASK, ImportMode.CATALOG_INDEXER_TASK})
 Base.metadata.create_all(engine.engine)
 CDKPROXY_URL = 'http://cdkproxy:2805' if ENVNAME == 'dkrcompose' else 'http://localhost:2805'
 config.set_property('cdk_proxy_url', CDKPROXY_URL)
