@@ -52,9 +52,8 @@ class CatalogIndexerTask:
 
 
 if __name__ == '__main__':
+    load_modules({ImportMode.CATALOG_INDEXER_TASK})
     ENVNAME = os.environ.get('envname', 'local')
     ENGINE = get_engine(envname=ENVNAME)
-
     with_deletes = os.environ.get('with_deletes', 'False')
-    load_modules({ImportMode.CATALOG_INDEXER_TASK})
     CatalogIndexerTask.index_objects(engine=ENGINE, with_deletes=with_deletes)
