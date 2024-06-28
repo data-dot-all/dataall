@@ -355,6 +355,11 @@ class BackendStack(Stack):
                     actions=['sts:AssumeRole'],
                     resources=[f'arn:aws:iam::{self.account}:role/{self.pivot_role_name}'],
                 ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=['ssm:PutParameter'],
+                    resources=[f'arn:aws:ssm:*:{self.account}:parameter/*dataall-migration*'],
+                ),
             ],
             role=None,
             env_var_encryption_key=lambda_env_key,
