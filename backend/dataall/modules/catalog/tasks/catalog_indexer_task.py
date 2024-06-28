@@ -22,7 +22,7 @@ class CatalogIndexerTask:
     """
 
     @classmethod
-    def index_objects(cls, engine, with_deletes):
+    def index_objects(cls, engine, with_deletes='False'):
         try:
             indexed_object_uris = []
             with engine.scoped_session() as session:
