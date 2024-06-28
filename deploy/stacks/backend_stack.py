@@ -274,6 +274,7 @@ class BackendStack(Stack):
             self,
             'DbSnapshots',
             handler='deployment_triggers.dbsnapshots_handler.handler',
+            role_name='db-snapshot-role',
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
@@ -305,6 +306,7 @@ class BackendStack(Stack):
             self,
             'DbMigrations',
             handler='deployment_triggers.dbmigrations_handler.handler',
+            role_name='db-migration-role',
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
@@ -321,6 +323,7 @@ class BackendStack(Stack):
             self,
             'SavePerms',
             handler='deployment_triggers.saveperms_handler.handler',
+            role_name='save-perms-role',
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
@@ -333,10 +336,11 @@ class BackendStack(Stack):
             **kwargs,
         )
 
-        dataall_migration_tfs = TriggerFunctionStack(
+        TriggerFunctionStack(
             self,
             'DataallMigrations',
             handler='deployment_triggers.dataall_migrate_handler.handler',
+            role_name='dataall-migration-role',
             envname=envname,
             resource_prefix=resource_prefix,
             vpc=vpc,
@@ -352,13 +356,10 @@ class BackendStack(Stack):
                     resources=[f'arn:aws:iam::{self.account}:role/{self.pivot_role_name}'],
                 ),
             ],
-            role = None,
+            role=None,
             env_var_encryption_key=lambda_env_key,
             **kwargs,
         )
-
-        pivot_role = iam.Role.from_role_name(self, 'PivotRole', role_name=self.pivot_role_name)
-        pivot_role.grant_assume_role(dataall_migration_tfs.trigger_function)
 
         self.monitoring_stack = MonitoringStack(
             self,

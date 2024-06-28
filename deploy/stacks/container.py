@@ -448,6 +448,7 @@ class ContainerStack(pyNestedClass):
                     f'arn:aws:ssm:*:{self.account}:parameter/*{resource_prefix}*',
                     f'arn:aws:ecs:*:{self.account}:task-definition/{resource_prefix}-{envname}-*',
                     f'arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}-ecs-tasks-role',
+                    f'arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}-dataall-migration-role',
                 ],
             )
         )
@@ -498,6 +499,7 @@ class ContainerStack(pyNestedClass):
                         f'arn:aws:iam::*:role/{pivot_role_name}*',
                         'arn:aws:iam::*:role/cdk*',
                         f'arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}-ecs-tasks-role',
+                        f'arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}-dataall-migration-role',
                     ],
                 ),
                 iam.PolicyStatement(

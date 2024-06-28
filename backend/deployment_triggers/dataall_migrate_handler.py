@@ -9,5 +9,3 @@ logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 def handler(event, context) -> None:
     H = Herder()
     H.upgrade()
-
-

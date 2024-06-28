@@ -22,6 +22,7 @@ class TriggerFunctionStack(pyNestedClass):
         ecr_repository: ecr.IRepository,
         image_tag: str,
         handler: str,
+        role_name: str,
         envname='dev',
         resource_prefix='dataall',
         vpc: ec2.IVpc = None,
@@ -30,7 +31,6 @@ class TriggerFunctionStack(pyNestedClass):
         execute_after: List[Construct] = [],
         additional_policy_statements: List[iam.PolicyStatement] = [],
         env_var_encryption_key: IKey = None,
-        role = None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -43,12 +43,27 @@ class TriggerFunctionStack(pyNestedClass):
 
         function_sgs = self.create_lambda_sgs(envname, handler, resource_prefix, vpc)
         statements = self.get_policy_statements(resource_prefix) + (additional_policy_statements or [])
+
+        self.role_name = role_name
+        self.role = iam.Role(
+            self,
+            f'{role_name.replace("_", "")}',
+            role_name=f'{resource_prefix}-{envname}-{role_name}',
+            assumed_by=iam.ServicePrincipal('lambda.amazonaws.com'),
+            managed_policies=[
+                iam.ManagedPolicy.from_aws_managed_policy_name('service-role/AWSLambdaVPCAccessExecutionRole'),
+                iam.ManagedPolicy.from_aws_managed_policy_name('service-role/AWSLambdaBasicExecutionRole'),
+            ],
+        )
+
+        for s in statements:
+            self.role.add_to_policy(s)
+
         self.trigger_function = TriggerFunction(
             self,
             f'TriggerFunction-{handler}',
             function_name=f'{resource_prefix}-{envname}-{handler.replace(".", "_")}',
             description=f'dataall {handler} trigger function',
-            initial_policy=statements,
             code=_lambda.Code.from_ecr_image(repository=ecr_repository, tag=image_tag, cmd=[handler]),
             vpc=vpc,
             security_groups=[function_sgs],
@@ -60,7 +75,7 @@ class TriggerFunctionStack(pyNestedClass):
             retry_attempts=0,
             runtime=_lambda.Runtime.FROM_IMAGE,
             handler=_lambda.Handler.FROM_IMAGE,
-            role = role,
+            role=self.role,
             execute_after=execute_after,
             execute_on_handler_change=True,
         )
