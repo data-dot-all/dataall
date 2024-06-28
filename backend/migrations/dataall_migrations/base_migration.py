@@ -17,7 +17,7 @@ def protect(*protected):
 
 
 class BaseDataAllMigration(metaclass=protect('set_next', 'set_previous', 'is_initial', 'is_last')):
-    key = '0'
+    key = '-1'
     name = 'Base Migration'
     description = 'Base Migration'
 

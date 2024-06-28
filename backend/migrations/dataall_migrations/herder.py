@@ -25,7 +25,7 @@ class Herder:
             module = loader.load_module()
             for name, obj in inspect.getmembers(module, inspect.isclass):
                 # Check if obj is a subclass of MyClass and not MyClass itself
-                if issubclass(obj, BaseDataAllMigration):
+                if issubclass(obj, BaseDataAllMigration) and obj is not BaseDataAllMigration:
                     self.migration_path[obj.key] = obj
 
         for key, migration in self.migration_path.items():
