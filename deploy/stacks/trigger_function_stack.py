@@ -22,7 +22,7 @@ class TriggerFunctionStack(pyNestedClass):
         ecr_repository: ecr.IRepository,
         image_tag: str,
         handler: str,
-        role_name: str,
+        role_name: str = None,
         envname='dev',
         resource_prefix='dataall',
         vpc: ec2.IVpc = None,
@@ -44,11 +44,11 @@ class TriggerFunctionStack(pyNestedClass):
         function_sgs = self.create_lambda_sgs(envname, handler, resource_prefix, vpc)
         statements = self.get_policy_statements(resource_prefix) + (additional_policy_statements or [])
 
-        self.role_name = role_name
+        self.role_name = role_name if role_name else f'{id}Role'
         self.role = iam.Role(
             self,
-            f'{role_name.replace("_", "")}',
-            role_name=f'{resource_prefix}-{envname}-{role_name}',
+            f'{self.role_name.replace("_", "")}',
+            role_name=f'{resource_prefix}-{envname}-{self.role_name}',
             assumed_by=iam.ServicePrincipal('lambda.amazonaws.com'),
             managed_policies=[
                 iam.ManagedPolicy.from_aws_managed_policy_name('service-role/AWSLambdaVPCAccessExecutionRole'),
