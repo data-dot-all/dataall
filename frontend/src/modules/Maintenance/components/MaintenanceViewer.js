@@ -26,6 +26,7 @@ import {
 import { useClient } from 'services';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useSnackbar } from 'notistack';
+import { ModuleNames, isModuleEnabled } from 'utils';
 
 const maintenanceModes = [
   { value: 'READ-ONLY', label: 'Read-Only' },
@@ -444,29 +445,33 @@ export const MaintenanceViewer = () => {
       {refreshingReIndex ? (
         <CircularProgress />
       ) : (
-        <Box display="flex" paddingBottom={3} width="25%">
-          <Card>
-            <CardHeader title={<Box>Re-Index Data.all Catalog</Box>} />
-            <Divider />
-            <Box>
-              <LoadingButton
-                color="primary"
-                loading={updatingReIndex}
-                onClick={() => setPopUpReIndex(true)}
-                startIcon={<SystemUpdate fontSize="small" />}
-                sx={{ m: 1 }}
-                variant="contained"
-              >
-                Start Re-Index Catalog Task
-              </LoadingButton>
+        <div>
+          {isModuleEnabled(ModuleNames.CATALOG) && (
+            <Box display="flex" paddingBottom={3} width="25%">
+              <Card>
+                <CardHeader title={<Box>Re-Index Data.all Catalog</Box>} />
+                <Divider />
+                <Box>
+                  <LoadingButton
+                    color="primary"
+                    loading={updatingReIndex}
+                    onClick={() => setPopUpReIndex(true)}
+                    startIcon={<SystemUpdate fontSize="small" />}
+                    sx={{ m: 1 }}
+                    variant="contained"
+                  >
+                    Start Re-Index Catalog Task
+                  </LoadingButton>
+                </Box>
+              </Card>
+              <ReIndexConfirmationPopUp
+                popUpReIndex={popUpReIndex}
+                setPopUpReIndex={setPopUpReIndex}
+                setUpdatingReIndex={setUpdatingReIndex}
+              />
             </Box>
-          </Card>
-          <ReIndexConfirmationPopUp
-            popUpReIndex={popUpReIndex}
-            setPopUpReIndex={setPopUpReIndex}
-            setUpdatingReIndex={setUpdatingReIndex}
-          />
-        </Box>
+          )}
+        </div>
       )}
       {refreshing ? (
         <CircularProgress />
