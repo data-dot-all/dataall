@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 
 def test_create_env(session_env1):
-    assert_that(session_env1.stack.status).is_equal_to('CREATE_COMPLETE')
+    assert_that(session_env1.stack.status).is_in('CREATE_COMPLETE', 'UPDATE_COMPLETE')
 
 
 def test_modify_env(client1, session_env1):

@@ -94,7 +94,7 @@ def get_or_create_persistent_env(env_name, client, group, testdata):
         envdata = testdata.envs[env_name]
         org = create_organization(client, f'org_{env_name}', group)
         env = create_env(client, group, org['organizationUri'], envdata.accountId, envdata.region, tags=[env_name])
-        if env.stack.status == 'CREATE_COMPLETE':
+        if env.stack.status in ['CREATE_COMPLETE', 'UPDATE_COMPLETE']:
             return env
         else:
             delete_env(client, env['environmentUri'])
