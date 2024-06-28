@@ -36,8 +36,7 @@ import { countUpVotes, getVote, upVote, useClient } from 'services';
 import { deleteRedshiftDataset, getRedshiftDataset } from '../services';
 // import { ShareBoxList } from 'modules/Shares';
 import { FeedComments } from 'modules/Shared';
-import { RedshiftDatasetOverview } from '../components';
-// import { RedshiftDatasetTables, RedshiftDatasetOverview } from '../components';
+import { RedshiftDatasetTables, RedshiftDatasetOverview } from '../components';
 import { RequestAccessModal } from 'modules/Catalog/components';
 
 const RSDatasetView = () => {
@@ -323,9 +322,9 @@ const RSDatasetView = () => {
           </Box>
           <Divider />
           <Box sx={{ mt: 3 }}>
-            {/*{currentTab === 'data' && (*/}
-            {/*  <RedshiftDatasetTables dataset={dataset} isAdmin={isAdmin} />*/}
-            {/*)}*/}
+            {currentTab === 'data' && (
+              <RedshiftDatasetTables dataset={dataset} isAdmin={isAdmin} />
+            )}
             {currentTab === 'overview' && (
               <RedshiftDatasetOverview dataset={dataset} isAdmin={isAdmin} />
             )}

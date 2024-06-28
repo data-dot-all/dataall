@@ -7,6 +7,7 @@ import {
   Card,
   CardContent,
   CardHeader,
+  Checkbox,
   Chip,
   CircularProgress,
   Container,
@@ -17,6 +18,8 @@ import {
   TextField,
   Typography
 } from '@mui/material';
+import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -37,10 +40,17 @@ import {
   listEnvironmentRedshiftConnections,
   useClient
 } from 'services';
-import { importRedshiftDataset } from '../services';
+import {
+  importRedshiftDataset,
+  listRedshiftConnectionSchemas,
+  listRedshiftSchemaTables
+} from '../services';
 import { Topics, ConfidentialityList } from '../../constants';
 import config from '../../../generated/config.json';
 import { isFeatureEnabled } from 'utils';
+
+const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
+const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
 const RSDatasetImportForm = (props) => {
   const dispatch = useDispatch();
@@ -52,6 +62,8 @@ const RSDatasetImportForm = (props) => {
   const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [connectionOptions, setConnectionOptions] = useState([]);
+  const [schemaOptions, setSchemaOptions] = useState([]);
+  const [tableOptions, setTableOptions] = useState([]);
   const [confidentialityOptions] = useState(
     config.modules.datasets_base.features.confidentiality_dropdown === true &&
       config.modules.datasets_base.features.custom_confidentiality_mapping
@@ -132,6 +144,43 @@ const RSDatasetImportForm = (props) => {
     }
   };
 
+  const fetchSchemas = async (connectionUri) => {
+    try {
+      const response = await client.query(
+        listRedshiftConnectionSchemas({
+          connectionUri
+        })
+      );
+      if (!response.errors) {
+        setSchemaOptions(response.data.listRedshiftConnectionSchemas);
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    }
+  };
+
+  const fetchTables = async (connectionUri, schema) => {
+    try {
+      /* eslint-disable no-console */
+      console.log('fetchTables', connectionUri, schema);
+      const response = await client.query(
+        listRedshiftSchemaTables({
+          connectionUri,
+          schema
+        })
+      );
+      if (!response.errors) {
+        setTableOptions(response.data.listRedshiftSchemaTables);
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    }
+  };
+
   useEffect(() => {
     if (client) {
       fetchEnvironments().catch((e) =>
@@ -157,8 +206,7 @@ const RSDatasetImportForm = (props) => {
           autoApprovalEnabled: values.autoApprovalEnabled,
           connectionUri: values.connection.value,
           schema: values.schema,
-          includePattern: values.includePattern,
-          excludePattern: values.excludePattern
+          tables: values.tables
         })
       );
       if (!response.errors) {
@@ -261,8 +309,7 @@ const RSDatasetImportForm = (props) => {
                 autoApprovalEnabled: false,
                 connection: '',
                 schema: '',
-                includePattern: '',
-                excludePattern: ''
+                tables: []
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -290,8 +337,7 @@ const RSDatasetImportForm = (props) => {
                 ),
                 connection: Yup.object().required('*Connection is required'),
                 schema: Yup.string().required('*Schema is required'),
-                includePattern: Yup.string(),
-                excludePattern: Yup.string()
+                tables: Yup.array() //TODO: DECIDE IF REQUIRED
               })}
               onSubmit={async (
                 values,
@@ -489,6 +535,10 @@ const RSDatasetImportForm = (props) => {
                                 );
                               } else {
                                 setFieldValue('environment', '');
+                                setFieldValue('SamlAdminGroup', '');
+                                setFieldValue('connection', '');
+                                setFieldValue('schema', '');
+                                setFieldValue('tables', []);
                                 setGroupOptions([]);
                               }
                             }}
@@ -549,6 +599,9 @@ const RSDatasetImportForm = (props) => {
                                 );
                               } else {
                                 setFieldValue('SamlAdminGroupName', '');
+                                setFieldValue('connection', '');
+                                setFieldValue('schema', '');
+                                setFieldValue('tables', []);
                               }
                             }}
                             inputValue={values.SamlAdminGroupName}
@@ -604,15 +657,23 @@ const RSDatasetImportForm = (props) => {
                         <CardHeader title="Deployment" />
                         <CardContent>
                           <Autocomplete
-                            id="stewards"
+                            id="connection"
                             disablePortal
                             options={connectionOptions.map((option) => option)}
                             noOptionsText="No connections for the selected Team and Environment"
                             onChange={(event, value) => {
                               if (value && value) {
                                 setFieldValue('connection', value);
+                                fetchSchemas(value.value).catch((e) =>
+                                  dispatch({
+                                    type: SET_ERROR,
+                                    error: e.message
+                                  })
+                                );
                               } else {
                                 setFieldValue('connection', '');
+                                setFieldValue('schema', '');
+                                setFieldValue('tables', []);
                               }
                             }}
                             inputValue={values.connection.label}
@@ -635,50 +696,80 @@ const RSDatasetImportForm = (props) => {
                           />
                         </CardContent>
                         <CardContent>
-                          <TextField
-                            error={Boolean(touched.schema && errors.schema)}
-                            fullWidth
-                            helperText={touched.schema && errors.schema}
-                            label="Redshift database schema"
-                            name="schema"
-                            onBlur={handleBlur}
-                            onChange={handleChange}
-                            value={values.schema}
-                            variant="outlined"
+                          <Autocomplete
+                            id="schema"
+                            disablePortal
+                            options={schemaOptions.map((option) => option)}
+                            noOptionsText="No schemas for the selected Connection"
+                            onChange={(event, value) => {
+                              if (value) {
+                                setFieldValue('schema', value);
+                                fetchTables(
+                                  values.connection.value,
+                                  value
+                                ).catch((e) =>
+                                  dispatch({
+                                    type: SET_ERROR,
+                                    error: e.message
+                                  })
+                                );
+                              } else {
+                                setFieldValue('schema', '');
+                                setFieldValue('tables', []);
+                              }
+                            }}
+                            inputValue={values.schema}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                fullWidth
+                                error={Boolean(touched.schema && errors.schema)}
+                                helperText={touched.schema && errors.schema}
+                                label="Redshift database schema"
+                                name="schema"
+                                onChange={handleChange}
+                                variant="outlined"
+                              />
+                            )}
                           />
                         </CardContent>
                         <CardContent>
-                          <TextField
-                            error={Boolean(
-                              touched.includePattern && errors.includePattern
+                          <Autocomplete
+                            id="tables"
+                            multiple
+                            disablePortal
+                            options={tableOptions.map((option) => option.name)}
+                            noOptionsText="No tables for the selected Schema"
+                            onChange={(event, value) => {
+                              if (value) {
+                                setFieldValue('tables', value);
+                              } else {
+                                setFieldValue('tables', []);
+                              }
+                            }}
+                            renderOption={(props, option, { selected }) => (
+                              <li {...props}>
+                                <Checkbox
+                                  icon={icon}
+                                  checkedIcon={checkedIcon}
+                                  style={{ marginRight: 8 }}
+                                  checked={selected}
+                                />
+                                {option}
+                              </li>
                             )}
-                            fullWidth
-                            helperText={
-                              touched.includePattern && errors.includePattern
-                            }
-                            label="(optional) Include pattern"
-                            name="includePattern"
-                            onBlur={handleBlur}
-                            onChange={handleChange}
-                            value={values.includePattern}
-                            variant="outlined"
-                          />
-                        </CardContent>
-                        <CardContent>
-                          <TextField
-                            error={Boolean(
-                              touched.excludePattern && errors.excludePattern
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                fullWidth
+                                error={Boolean(touched.tables && errors.tables)}
+                                helperText={touched.tables && errors.tables}
+                                label="Redshift tables"
+                                name="tables"
+                                onChange={handleChange}
+                                variant="outlined"
+                              />
                             )}
-                            fullWidth
-                            helperText={
-                              touched.excludePattern && errors.excludePattern
-                            }
-                            label="(optional) Exclude pattern"
-                            name="excludePattern"
-                            onBlur={handleBlur}
-                            onChange={handleChange}
-                            value={values.excludePattern}
-                            variant="outlined"
                           />
                         </CardContent>
                       </Card>

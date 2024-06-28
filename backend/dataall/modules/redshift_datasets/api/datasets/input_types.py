@@ -21,7 +21,15 @@ ImportRedshiftDatasetInput = gql.InputType(
         gql.Argument(name='autoApprovalEnabled', type=gql.Boolean),
         gql.Argument('connectionUri', gql.NonNullableType(gql.String)),
         gql.Argument('schema', gql.NonNullableType(gql.String)),
-        gql.Argument(name='includePattern', type=gql.String),
-        gql.Argument(name='excludePattern', type=gql.String),
+        gql.Argument(name='tables', type=gql.ArrayType(gql.String)),
+    ],
+)
+
+RedshiftDatasetTableFilter = gql.InputType( #TODO: this filter should be generic in Core, very duplicated
+    name='RedshiftDatasetTableFilter',
+    arguments=[
+        gql.Argument('term', gql.String),
+        gql.Argument('page', gql.Integer),
+        gql.Argument('pageSize', gql.Integer),
     ],
 )

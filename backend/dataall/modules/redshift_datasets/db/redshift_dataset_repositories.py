@@ -9,7 +9,7 @@ from dataall.base.db import paginate
 from dataall.base.db.exceptions import ObjectNotFound
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification, Language
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
-from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset
+from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset, RedshiftTable
 
 logger = logging.getLogger(__name__)
 
@@ -62,3 +62,49 @@ class RedshiftDatasetRepository(EnvironmentResource):
         if not dataset:
             raise ObjectNotFound('RedshiftDataset', dataset_uri)
         return dataset
+
+    @staticmethod
+    def create_redshift_table(session, username, dataset_uri, data: dict) -> RedshiftTable:
+        dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, dataset_uri)
+        table = RedshiftTable(
+            datasetUri=dataset.datasetUri,
+            owner=username,
+            name=data.get('name'),
+            label=data.get('name'),
+            description=data.get('description', 'No description provided'),
+            tags=data.get('tags', []),
+            topics=data.get('topics', []),
+            status='NOT_IMPORTED' #TODO enum
+        )
+        session.add(table)
+        session.commit()
+        return table
+
+    @staticmethod
+    def _query_redshift_dataset_tables(session, dataset_uri, filter: dict = None):
+        query = (
+            session.query(RedshiftTable).filter(RedshiftTable.datasetUri == dataset_uri)
+        )
+        if filter:
+            terms = filter.get('terms')
+            if terms:
+                query = query.filter(
+                    or_(
+                        RedshiftTable.name.ilike(f"%{term}%") for term in terms
+                    )
+                )
+        return query
+
+    @staticmethod
+    def list_redshift_dataset_tables(session, dataset_uri, filter: dict = None):
+        query = RedshiftDatasetRepository._query_redshift_dataset_tables(session, dataset_uri, filter)
+        return query.order_by(RedshiftTable.label).all()
+
+    @staticmethod
+    def paginated_redshift_dataset_tables(session, dataset_uri, data=None) -> dict:
+        query = RedshiftDatasetRepository._query_redshift_dataset_tables(session, dataset_uri, data)
+        return paginate(query=query, page_size=data.get('pageSize', 10), page=data.get('page', 1)).to_dict()
+
+
+
+

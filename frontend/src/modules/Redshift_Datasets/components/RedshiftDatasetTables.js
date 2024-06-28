@@ -1,6 +1,6 @@
 //import { DeleteOutlined, SyncAlt, Warning } from '@mui/icons-material';
-import { SyncAlt } from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
+// import { SyncAlt } from '@mui/icons-material';
+// import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Card,
@@ -20,7 +20,7 @@ import {
   //Typography
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import { useSnackbar } from 'notistack';
+// import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { BsTable } from 'react-icons/bs';
@@ -38,17 +38,16 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 
-import { importRedshiftTables, listRedshiftDatasetTables } from '../services';
+import { listRedshiftDatasetTables } from '../services';
 
 export const RedshiftDatasetTables = (props) => {
-  const { dataset, isAdmin } = props;
+  const { dataset } = props;
   const client = useClient();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { enqueueSnackbar } = useSnackbar();
+  //const { enqueueSnackbar } = useSnackbar();
   const [items, setItems] = useState(Defaults.pagedResponse);
   const [filter, setFilter] = useState(Defaults.filter);
-  const [syncingTables, setSyncingTables] = useState(false);
   const [loading, setLoading] = useState(null);
   const [inputValue, setInputValue] = useState('');
   // const [isDeleteObjectModalOpen, setIsDeleteObjectModalOpen] = useState(false);
@@ -72,35 +71,12 @@ export const RedshiftDatasetTables = (props) => {
       })
     );
     if (!response.errors) {
-      setItems({ ...response.data.getDataset.tables });
+      setItems({ ...response.data.listRedshiftDatasetTables });
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoading(false);
   }, [dispatch, client, dataset, filter]);
-
-  const synchronizeTables = async () => {
-    setSyncingTables(true);
-    const response = await client.mutate(
-      importRedshiftTables(dataset.datasetUri)
-    );
-    if (!response.errors) {
-      fetchItems().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
-      enqueueSnackbar(`Retrieved ${response.data.syncTables.count} tables`, {
-        anchorOrigin: {
-          horizontal: 'right',
-          vertical: 'top'
-        },
-        variant: 'success'
-      });
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-    setSyncingTables(false);
-    setFilter(Defaults.filter);
-  };
 
   // const deleteTable = async () => {
   //   const response = await client.mutate(
@@ -197,20 +173,6 @@ export const RedshiftDatasetTables = (props) => {
               />
             </Box>
           </Grid>
-          {isAdmin && (
-            <Grid item md={3} sm={6} xs={12}>
-              <LoadingButton
-                loading={syncingTables}
-                color="primary"
-                onClick={synchronizeTables}
-                startIcon={<SyncAlt fontSize="small" />}
-                sx={{ m: 1 }}
-                variant="outlined"
-              >
-                Synchronize
-              </LoadingButton>
-            </Grid>
-          )}
         </Box>
         <Scrollbar>
           <Box sx={{ minWidth: 600 }}>

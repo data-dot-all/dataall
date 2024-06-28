@@ -1,7 +1,21 @@
 from sqlalchemy import Column, String, ForeignKey
+from sqlalchemy.dialects.postgresql import ARRAY
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.services.datasets_enums import DatasetTypes
 from dataall.base.db import Resource, Base, utils
+
+class RedshiftConnection(Base, Resource):
+    __tablename__ = 'redshift_connection'
+    connectionUri = Column(String, primary_key=True, default=utils.uuid('connection'))
+    environmentUri = Column(String, ForeignKey('environment.environmentUri'), nullable=False)
+    SamlGroupName = Column(String, nullable=False)
+    redshiftType = Column(String, nullable=False)
+    clusterId = Column(String, nullable=True)
+    nameSpaceId = Column(String, nullable=True)
+    workgroup = Column(String, nullable=True)
+    database = Column(String, nullable=False)
+    redshiftUser = Column(String, nullable=True)
+    secretArn = Column(String, nullable=True)
 
 
 class RedshiftDataset(DatasetBase):
@@ -17,19 +31,16 @@ class RedshiftDataset(DatasetBase):
         'polymorphic_identity': DatasetTypes.Redshift,
     }
 
-
 # TODO, migration script: ALTER TYPE SCHEMA.datasettype ADD VALUE 'Redshift';
 
+class RedshiftTable(Base, Resource):
+    __tablename__ = 'redshift_table'
+    datasetUri = Column(String, ForeignKey('redshift_dataset.datasetUri', ondelete='CASCADE'), nullable=False)
+    rsTableUri = Column(String, primary_key=True, default=utils.uuid('rs_table'))
+    topics = Column(ARRAY(String), nullable=True)
+    status = Column(String, nullable=False, default='NOT_IMPORTED')
 
-class RedshiftConnection(Base, Resource):
-    __tablename__ = 'redshift_connection'
-    connectionUri = Column(String, primary_key=True, default=utils.uuid('connection'))
-    environmentUri = Column(String, ForeignKey('environment.environmentUri'), nullable=False)
-    SamlGroupName = Column(String, nullable=False)
-    redshiftType = Column(String, nullable=False)
-    clusterId = Column(String, nullable=True)
-    nameSpaceId = Column(String, nullable=True)
-    workgroup = Column(String, nullable=True)
-    database = Column(String, nullable=False)
-    redshiftUser = Column(String, nullable=True)
-    secretArn = Column(String, nullable=True)
+    @classmethod
+    def uri(cls):
+        return cls.rsTableUri
+

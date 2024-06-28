@@ -1,6 +1,7 @@
 import logging
-
+from typing import Any
 from dataall.base.api.context import Context
+from dataall.base.db import exceptions
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
@@ -20,12 +21,19 @@ def import_redshift_dataset(context: Context, source, input=None):
     return RedshiftDatasetService.import_redshift_dataset(uri=uri, admin_group=admin_group, data=input)
 
 
-def get_redshift_dataset(context, source, datasetUri=None):
+def get_redshift_dataset(context, source, datasetUri: str):
+    _required_param('datasetUri', datasetUri)
     return RedshiftDatasetService.get_redshift_dataset(uri=datasetUri)
 
 
-def retry_redshift_datashare(context, source, datasetUri=None):
+def retry_redshift_datashare(context, source, datasetUri: str):
+    _required_param('datasetUri', datasetUri)
     return RedshiftDatasetService.retry_redshift_datashare(uri=datasetUri)
+
+
+def list_redshift_dataset_tables(context, source, datasetUri: str, filter: dict = None):
+    _required_param('datasetUri', datasetUri)
+    return RedshiftDatasetService.list_redshift_dataset_tables(uri=datasetUri, filter=filter)
 
 
 def resolve_datashare_state(context, source: RedshiftDataset, **kwargs):
@@ -85,3 +93,7 @@ def resolve_dataset_connection(context: Context, source: RedshiftDataset, **kwar
 
 def resolve_dataset_upvotes(context: Context, source: RedshiftDataset, **kwargs):
     return RedshiftDatasetService.get_dataset_upvotes(uri=source.datasetUri)
+
+def _required_param(param_name: str, param_value: Any):
+    if not param_value:
+        raise exceptions.RequiredParameter(param_name)

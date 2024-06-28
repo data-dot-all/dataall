@@ -102,6 +102,26 @@ class RedshiftConnectionService:
             )
             return connections
 
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_CONNECTION)
+    def list_connection_schemas(uri):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            connection = RedshiftConnectionService.get_redshift_connection_by_uri(uri=uri)
+            environment = EnvironmentService.get_environment_by_uri(session, connection.environmentUri)
+            return RedshiftData(account_id=environment.AwsAccountId, region=environment.region,connection=connection).list_redshift_schemas()
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_CONNECTION)
+    def list_schema_tables(uri, schema):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            connection = RedshiftConnectionService.get_redshift_connection_by_uri(uri=uri)
+            environment = EnvironmentService.get_environment_by_uri(session, connection.environmentUri)
+            response = RedshiftData(account_id=environment.AwsAccountId, region=environment.region, connection=connection).list_redshift_tables(schema)
+            log.info(f'Response: {response}')
+            return response
+
 
     @staticmethod
     def _check_redshift_connection_database(account_id: str, region: str, connection: RedshiftConnection):

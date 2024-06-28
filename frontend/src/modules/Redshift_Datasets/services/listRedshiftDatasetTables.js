@@ -8,7 +8,7 @@ export const listRedshiftDatasetTables = ({ datasetUri, filter }) => ({
   query: gql`
     query listRedshiftDatasetTables(
       $datasetUri: String!
-      $filter: DatasetTableFilter
+      $filter: RedshiftDatasetTableFilter
     ) {
       listRedshiftDatasetTables(datasetUri: $datasetUri, filter: $filter) {
         count
@@ -21,7 +21,6 @@ export const listRedshiftDatasetTables = ({ datasetUri, filter }) => ({
           name
           created
           description
-          userRoleForTable
         }
       }
     }

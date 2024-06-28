@@ -78,6 +78,14 @@ class RedshiftDatasetService:
                 )
             # DatasetIndexer.upsert(session=session, dataset_uri=dataset.datasetUri) #TODO: UNCOMMENT
 
+            for table in data.get('tables', []):
+                RedshiftDatasetRepository.create_redshift_table(
+                    session=session,
+                    username=context.username,
+                    dataset_uri=dataset.datasetUri,
+                    data={'name': table},
+                )
+
             task = Task(
                 targetUri=dataset.datasetUri,
                 action='redshift.datashare.import',
@@ -109,6 +117,19 @@ class RedshiftDatasetService:
             dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, uri)
             return Redshift(account_id=dataset.AwsAccountId, region=dataset.region).describe_datashare_status(
                 dataset.datashareArn
+            )
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
+    def list_redshift_dataset_tables(uri, filter):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, uri)
+            return RedshiftDatasetRepository.paginated_redshift_dataset_tables(
+                session=session,
+                dataset_uri=dataset.datasetUri,
+                data=filter
             )
 
     @staticmethod

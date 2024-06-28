@@ -25,7 +25,7 @@ class RedshiftData:
         if connection.redshiftUser:
             self.execute_connection_params['DbUser'] = connection.redshiftUser
 
-    def execute_statement(self, sql: str):
+    def _execute_statement(self, sql: str):
         log.info(f'Executing {sql=} with connection {self.execute_connection_params}...')
         execute_dict = self.execute_connection_params
         execute_dict['Sql'] = sql
@@ -50,23 +50,6 @@ class RedshiftData:
 
     def fully_qualified_table_name(self, schema: str, table_name: str) -> str:
         return f'{RedshiftData.identifier(self.database)}.{RedshiftData.identifier(schema)}.{RedshiftData.identifier(table_name)}'
-
-    def create_datashare(self, schema: str, datashare: str):
-        try:
-            log.info(f'Creating {datashare=}...')
-            sql_statement = f'CREATE DATASHARE {RedshiftData.identifier(datashare)};'
-            self.execute_statement(sql=sql_statement)
-
-            sql_statement = f'ALTER DATASHARE {RedshiftData.identifier(datashare)} ADD SCHEMA {RedshiftData.identifier(schema)};'
-            self.execute_statement(sql=sql_statement)
-
-        except Exception as e:
-            allowed_error_messages = [f'ERROR: share "{datashare}" already exists']
-            error_message = e.args[0]
-            if error_message in allowed_error_messages:
-                log.info('Datashare {0} already exists'.format(datashare))
-            else:
-                raise e
 
     def list_redshift_databases(self):
         databases = []
@@ -125,35 +108,48 @@ class RedshiftData:
             log.error(e)
             raise e
 
+    def create_datashare(self, schema: str, datashare: str):
+        try:
+            log.info(f'Creating {datashare=}...')
+            sql_statement = f'CREATE DATASHARE {RedshiftData.identifier(datashare)};'
+            self._execute_statement(sql=sql_statement)
 
+            sql_statement = f'ALTER DATASHARE {RedshiftData.identifier(datashare)} ADD SCHEMA {RedshiftData.identifier(schema)};'
+            self._execute_statement(sql=sql_statement)
 
+        except Exception as e:
+            allowed_error_messages = [f'ERROR: share "{datashare}" already exists']
+            error_message = e.args[0]
+            if error_message in allowed_error_messages:
+                log.info('Datashare {0} already exists'.format(datashare))
+            else:
+                raise e
 
-    # def add_table_to_datashare(self, schema: str, database: str, workgroup: str, datashare: str, table_name: str):
-    #     fq_table_name = self.fully_qualified_table_name(database, schema, table_name)
-    #     sql_statement = f"ALTER DATASHARE {RedshiftData.identifier(datashare)} ADD TABLE {fq_table_name};"
-    #
-    #     try:
-    #         self.execute_statement(database, workgroup, sql_statement)
-    #     except Exception as e:
-    #         allowed_error_message = f"ERROR: Relation {table_name} is already added to the datashare {datashare}"
-    #         error_message = e.args[0]
-    #         if error_message == allowed_error_message:
-    #             log.info("Table {0} is already present in the datashare {1}".format(fq_table_name, datashare))
-    #         else:
-    #             raise e
-    #
+    def add_table_to_datashare(self, datashare: str, schema: str, table_name: str):
+        fq_table_name = self.fully_qualified_table_name(schema, table_name)
+        sql_statement = f"ALTER DATASHARE {RedshiftData.identifier(datashare)} ADD TABLE {fq_table_name};"
+        try:
+            self._execute_statement(sql_statement)
+        except Exception as e:
+            allowed_error_message = f"ERROR: Relation {table_name} is already added to the datashare {datashare}"
+            error_message = e.args[0]
+            if error_message == allowed_error_message:
+                log.info("Table {0} is already present in the datashare {1}".format(fq_table_name, datashare))
+            else:
+                raise e
+
     def grant_usage_to_datashare_via_catalog(self, datashare: str, account: str):
         log.info(f'Grant usage on {datashare=} via catalog...')
         sql_statement = (
             f"GRANT USAGE ON DATASHARE {RedshiftData.identifier(datashare)} TO ACCOUNT '{account}' VIA DATA CATALOG;"
         )
-        self.execute_statement(sql=sql_statement)
+        self._execute_statement(sql=sql_statement)
 
     # def remove_table_from_datashare(self, schema: str, database: str, workgroup: str, datashare: str, table_name: str):
     #     fq_table_name = self.fully_qualified_table_name(database, schema, table_name)
     #     sql_statement = f"ALTER DATASHARE {RedshiftData.identifier(datashare)} REMOVE TABLE {fq_table_name};"
     #     try:
-    #         self.execute_statement(database, workgroup, sql_statement)
+    #         self._execute_statement(database, workgroup, sql_statement)
     #     except Exception as e:
     #         allowed_error_message = f"ERROR: Datashare {datashare} does not contain the Relation {table_name}"
     #         error_message = e.args[0]
@@ -165,7 +161,7 @@ class RedshiftData:
     # def drop_datashare(self, database: str, workgroup: str, datashare: str):
     #     sql_statement = f"DROP DATASHARE {RedshiftData.identifier(datashare)};"
     #     try:
-    #         self.execute_statement(database, workgroup, sql_statement)
+    #         self._execute_statement(database, workgroup, sql_statement)
     #     except Exception as e:
     #         allowed_error_message = f"ERROR: Datashare {datashare} does not exist"
     #         error_message = e.args[0]
