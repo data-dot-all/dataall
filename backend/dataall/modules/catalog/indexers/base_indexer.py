@@ -61,7 +61,7 @@ class BaseIndexer(ABC):
             return res
         else:
             log.error(f'ES config is missing, search query {query} failed')
-            return None
+            return {}
 
     @staticmethod
     def _get_target_glossary_terms(session, target_uri):

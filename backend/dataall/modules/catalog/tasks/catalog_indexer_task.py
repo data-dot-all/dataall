@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+from typing import List
 
 from dataall.modules.catalog.indexers.catalog_indexer import CatalogIndexer
 from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
@@ -15,43 +16,41 @@ if not root.hasHandlers():
 log = logging.getLogger(__name__)
 
 
-def index_objects(engine):
-    try:
-        indexed_object_uris = []
-        with engine.scoped_session() as session:
-            for indexer in CatalogIndexer.all():
-                indexed_object_uris += indexer.index(session)
+class CatalogIndexerTask:
+    @classmethod
+    def index_objects(cls, engine, with_deletes):
+        try:
+            indexed_object_uris = []
+            with engine.scoped_session() as session:
+                for indexer in CatalogIndexer.all():
+                    indexed_object_uris += indexer.index(session)
 
-            log.info(f'Successfully indexed {len(indexed_object_uris)} objects')
+                log.info(f'Successfully indexed {len(indexed_object_uris)} objects')
 
-            # Search for documents in opensearch without an ID in the indexed_object_uris list
-            query = {
-                "query": {
-                    "bool": {
-                        "must_not": {
-                            "terms": {
-                                "_id": indexed_object_uris
-                            }
-                        }
-                    }
-                }
-            }
+                if with_deletes == 'True':
+                    CatalogIndexerTask._delete_old_objects(indexed_object_uris)
+                return len(indexed_object_uris)
+        except Exception as e:
+            AlarmService().trigger_catalog_indexing_failure_alarm(error=str(e))
+            raise e
 
-            docs = BaseIndexer.search(query)
-            for doc in docs["hits"]["hits"]:
-                log.info(f'Deleting document {doc["_id"]}...')
-                BaseIndexer.delete_doc(doc_id=doc["_id"])
+    @classmethod
+    def _delete_old_objects(cls, indexed_object_uris: List[str]) -> None:
+        # Search for documents in opensearch without an ID in the indexed_object_uris list
+        query = {'query': {'bool': {'must_not': {'terms': {'_id': indexed_object_uris}}}}}
+        # Delete All "Outdated" Objects from Index
+        docs = BaseIndexer.search(query)
+        for doc in docs.get('hits', {}).get('hits', []):
+            log.info(f'Deleting document {doc["_id"]}...')
+            BaseIndexer.delete_doc(doc_id=doc['_id'])
 
-            log.info(f'Deleted {len(indexed_object_uris)} records')
-            return len(indexed_object_uris)
-    except Exception as e:
-        AlarmService().trigger_catalog_indexing_failure_alarm(error=str(e))
-        raise e
+        log.info(f'Deleted {len(docs.get("hits", {}).get("hits", []))} records')
 
 
 if __name__ == '__main__':
     ENVNAME = os.environ.get('envname', 'local')
     ENGINE = get_engine(envname=ENVNAME)
 
+    with_deletes = os.environ.get('with_deletes', 'False')
     load_modules({ImportMode.CATALOG_INDEXER_TASK})
-    index_objects(engine=ENGINE)
+    CatalogIndexerTask.index_objects(engine=ENGINE, with_deletes=with_deletes)

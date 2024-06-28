@@ -17,7 +17,7 @@ class DashboardCatalogIndexer(CatalogIndexer):
         log.info(f'Found {len(all_dashboards)} dashboards')
         dashboard: Dashboard
         for dashboard in all_dashboards:
-            all_dashboard_uris += dashboard.dashboardUri
+            all_dashboard_uris.append(dashboard.dashboardUri)
             DashboardIndexer.upsert(session=session, dashboard_uri=dashboard.dashboardUri)
 
         return all_dashboard_uris

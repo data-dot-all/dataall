@@ -59,6 +59,7 @@ class DatasetTableService:
                 )
 
         DatasetTableIndexer.upsert(session, table_uri=table.tableUri)
+        DatasetIndexer.upsert(session=session, dataset_uri=table.datasetUri)
         return table
 
     @staticmethod

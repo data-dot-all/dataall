@@ -6,19 +6,18 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.modules.s3_datasets.db.dataset_location_repositories import DatasetLocationRepository
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
 
 
 class DatasetLocationIndexer(BaseIndexer):
     @classmethod
-    def upsert(cls, session, folder_uri: str):
+    def upsert(cls, session, folder_uri: str, dataset=None, env=None, org=None):
         folder = DatasetLocationRepository.get_location_by_uri(session, folder_uri)
 
         if folder:
-            dataset = DatasetRepository.get_dataset_by_uri(session, folder.datasetUri)
-            env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
-            org = OrganizationRepository.get_organization_by_uri(session, dataset.organizationUri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, folder.datasetUri) if not dataset else dataset
+            env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri) if not env else env
+            org = OrganizationRepository.get_organization_by_uri(session, dataset.organizationUri) if not org else org
             glossary = BaseIndexer._get_target_glossary_terms(session, folder_uri)
 
             BaseIndexer._index(
@@ -51,6 +50,11 @@ class DatasetLocationIndexer(BaseIndexer):
     @classmethod
     def upsert_all(cls, session, dataset_uri: str):
         folders = DatasetLocationRepository.get_dataset_folders(session, dataset_uri)
+        dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri)
+        env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
+        org = OrganizationRepository.get_organization_by_uri(session, dataset.organizationUri)
         for folder in folders:
-            DatasetLocationIndexer.upsert(session=session, folder_uri=folder.locationUri)
+            DatasetLocationIndexer.upsert(
+                session=session, folder_uri=folder.locationUri, dataset=dataset, env=env, org=org
+            )
         return folders

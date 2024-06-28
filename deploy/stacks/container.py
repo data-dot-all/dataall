@@ -198,6 +198,20 @@ class ContainerStack(pyNestedClass):
             prod_sizing=self._prod_sizing,
         )
 
+        ssm.StringParameter(
+            self,
+            f'CatalogIndexerTaskARNSSM{self._envname}',
+            parameter_name=f'/dataall/{self._envname}/ecs/task_def_arn/catalog_indexer',
+            string_value=catalog_indexer_task_def.task_definition_arn,
+        )
+
+        ssm.StringParameter(
+            self,
+            f'CatalogIndexerTaskContainerSSM{self._envname}',
+            parameter_name=f'/dataall/{self._envname}/ecs/container/catalog_indexer',
+            string_value=catalog_indexer_task.container_name,
+        )
+
         self.ecs_task_definitions_families.append(catalog_indexer_task.task_definition.family)
 
     @run_if(['modules.s3_datasets.active'])

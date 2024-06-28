@@ -10,6 +10,7 @@ import {
   IconButton,
   MenuItem,
   TextField,
+  Switch,
   Typography
 } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -19,7 +20,8 @@ import { Label } from 'design';
 import {
   getMaintenanceStatus,
   stopMaintenanceWindow,
-  startMaintenanceWindow
+  startMaintenanceWindow,
+  startReindexCatalog
 } from '../services';
 import { useClient } from 'services';
 import { SET_ERROR, useDispatch } from 'globalErrors';
@@ -162,12 +164,112 @@ export const MaintenanceConfirmationPopUp = (props) => {
   );
 };
 
+export const ReIndexConfirmationPopUp = (props) => {
+  const { popUpReIndex, setPopUpReIndex, setUpdatingReIndex } = props;
+  const client = useClient();
+  const dispatch = useDispatch();
+  const { enqueueSnackbar } = useSnackbar();
+  const [withDelete, setWithDelete] = useState(false);
+
+  const handlePopUpModal = async () => {
+    setUpdatingReIndex(true);
+    if (!client) {
+      dispatch({
+        type: SET_ERROR,
+        error: 'Client not initialized for re-indexing catalog task'
+      });
+    }
+    const response = await client.mutate(
+      startReindexCatalog({ handleDeletes: withDelete })
+    );
+    if (!response.errors && response.data.startReindexCatalog != null) {
+      const respData = response.data.startReindexCatalog;
+      if (respData === true) {
+        enqueueSnackbar('Re Index Task has Started. Please check the status', {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'success'
+        });
+      } else {
+        enqueueSnackbar('Could not start re index task', {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'success'
+        });
+      }
+    } else {
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Something went wrong while starting re index task. Please check gql logs';
+      dispatch({ type: SET_ERROR, error });
+    }
+    setPopUpReIndex(false);
+    setUpdatingReIndex(false);
+  };
+
+  return (
+    <Dialog maxWidth="md" fullWidth open={popUpReIndex}>
+      <Box sx={{ p: 2 }}>
+        <Card>
+          <CardHeader
+            title={
+              <Box>
+                Are you sure you want to start re-indexing the ENTIRE data.all
+                Catalog?
+              </Box>
+            }
+          />
+          <Divider />
+          <Switch
+            color="primary"
+            defaultChecked
+            onChange={() => {
+              setWithDelete(!withDelete);
+            }}
+            edge="start"
+            name="withDelete"
+          />
+          <Box display="flex" sx={{ p: 1 }}>
+            <Button
+              color="primary"
+              startIcon={<Article fontSize="small" />}
+              sx={{ m: 1 }}
+              variant="outlined"
+              onClick={handlePopUpModal}
+            >
+              Yes
+            </Button>
+            <Button
+              color="primary"
+              startIcon={<Article fontSize="small" />}
+              sx={{ m: 1 }}
+              variant="outlined"
+              onClick={() => {
+                setPopUpReIndex(false);
+              }}
+            >
+              No
+            </Button>
+          </Box>
+        </Card>
+      </Box>
+    </Dialog>
+  );
+};
+
 export const MaintenanceViewer = () => {
   const client = useClient();
   const [refreshing, setRefreshing] = useState(false);
+  const [refreshingReIndex, setRefreshingReIndex] = useState(false);
+  const [updatingReIndex, setUpdatingReIndex] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [mode, setMode] = useState('');
   const [popUp, setPopUp] = useState(false);
+  const [popUpReIndex, setPopUpReIndex] = useState(false);
   const [confirmedMode, setConfirmedMode] = useState('');
   const [maintenanceButtonText, setMaintenanceButtonText] =
     useState(START_MAINTENANCE);
@@ -339,6 +441,33 @@ export const MaintenanceViewer = () => {
 
   return (
     <Box>
+      {refreshingReIndex ? (
+        <CircularProgress />
+      ) : (
+        <Box display="flex" paddingBottom={3} width="25%">
+          <Card>
+            <CardHeader title={<Box>Re-Index Data.all Catalog</Box>} />
+            <Divider />
+            <Box>
+              <LoadingButton
+                color="primary"
+                loading={updatingReIndex}
+                onClick={() => setPopUpReIndex(true)}
+                startIcon={<SystemUpdate fontSize="small" />}
+                sx={{ m: 1 }}
+                variant="contained"
+              >
+                Start Re-Index Catalog Task
+              </LoadingButton>
+            </Box>
+          </Card>
+          <ReIndexConfirmationPopUp
+            popUpReIndex={popUpReIndex}
+            setPopUpReIndex={setPopUpReIndex}
+            setUpdatingReIndex={setUpdatingReIndex}
+          />
+        </Box>
+      )}
       {refreshing ? (
         <CircularProgress />
       ) : (

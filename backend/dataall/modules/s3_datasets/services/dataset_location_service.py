@@ -79,7 +79,7 @@ class DatasetLocationService:
                 DatasetLocationService._create_glossary_links(session, location, data['terms'])
 
             DatasetLocationIndexer.upsert(session, folder_uri=location.locationUri)
-            DatasetIndexer.upsert(session, dataset.datasetUri)
+            DatasetIndexer.upsert(session, location.datasetUri)
 
             return location
 

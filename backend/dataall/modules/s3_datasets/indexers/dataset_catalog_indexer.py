@@ -19,16 +19,16 @@ class DatasetCatalogIndexer(CatalogIndexer):
 
     def index(self, session) -> List[str]:
         all_datasets: List[S3Dataset] = DatasetRepository.list_all_active_datasets(session)
-        all_doc_uris = []
+        all_dataset_uris = []
         log.info(f'Found {len(all_datasets)} datasets')
         for dataset in all_datasets:
             tables = DatasetTableIndexer.upsert_all(session, dataset.datasetUri)
-            all_doc_uris += [table.tableUri for table in tables]
+            all_dataset_uris += [table.tableUri for table in tables]
 
             folders = DatasetLocationIndexer.upsert_all(session, dataset_uri=dataset.datasetUri)
-            all_doc_uris += [folder.locationUri for folder in folders]
+            all_dataset_uris += [folder.locationUri for folder in folders]
 
             DatasetIndexer.upsert(session=session, dataset_uri=dataset.datasetUri)
-            all_doc_uris.append(dataset.datasetUri)
+            all_dataset_uris.append(dataset.datasetUri)
 
-        return all_doc_uris
+        return all_dataset_uris
