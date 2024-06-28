@@ -17,7 +17,7 @@ class RemoveWildCard(BaseDataAllMigration):
     name = 'Remove Wildcard from Sharing Policy'
     description = 'Remove Wildcard from Sharing Policy'
 
-    previous_migration = '0'
+    previous_migration = '0'  # initial migration
 
     @classmethod
     def up(cls):
