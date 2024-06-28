@@ -361,7 +361,6 @@ class BackendStack(Stack):
                     resources=[f'arn:aws:ssm:*:{self.account}:parameter/*dataall-migration*'],
                 ),
             ],
-            role=None,
             env_var_encryption_key=lambda_env_key,
             **kwargs,
         )
