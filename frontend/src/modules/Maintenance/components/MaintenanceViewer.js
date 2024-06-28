@@ -226,7 +226,6 @@ export const ReIndexConfirmationPopUp = (props) => {
           <Divider />
           <Switch
             color="primary"
-            defaultChecked
             onChange={() => {
               setWithDelete(!withDelete);
             }}
@@ -264,7 +263,8 @@ export const ReIndexConfirmationPopUp = (props) => {
 export const MaintenanceViewer = () => {
   const client = useClient();
   const [refreshing, setRefreshing] = useState(false);
-  const [refreshingReIndex, setRefreshingReIndex] = useState(false);
+  // const [refreshingReIndex, setRefreshingReIndex] = useState(false);
+  const refreshingReIndex = false;
   const [updatingReIndex, setUpdatingReIndex] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [mode, setMode] = useState('');

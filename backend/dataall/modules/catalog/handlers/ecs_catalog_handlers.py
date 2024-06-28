@@ -9,7 +9,7 @@ from dataall.modules.catalog.tasks.catalog_indexer_task import CatalogIndexerTas
 log = logging.getLogger(__name__)
 
 
-class EcsMaintenanceHandler:
+class EcsCatalogIndexHandler:
     @staticmethod
     @Worker.handler(path='ecs.reindex.catalog')
     def run_ecs_reindex_catalog_task(engine, task: Task):

@@ -17,6 +17,10 @@ log = logging.getLogger(__name__)
 
 
 class CatalogIndexerTask:
+    """
+    This class is responsible for indexing objects in the catalog.
+    """
+
     @classmethod
     def index_objects(cls, engine, with_deletes):
         try:

@@ -1,4 +1,4 @@
-from backend.dataall.modules.s3_datasets.indexers.dataset_indexer import DatasetIndexer
+from dataall.modules.s3_datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
