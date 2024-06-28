@@ -39,7 +39,13 @@ class Herder:
                 break
 
     def upgrade(self, target_key=None, start_key=None):
-        key = start_key if start_key is not None else self.initial_key
+        if start_key is not None:
+            key = self.migration_path[start_key].next()
+            if key is None:
+                print('Data-all version is up to date')
+                return
+        else:
+            key = self.initial_key
         print(f"Upgrade from {key} to {target_key if target_key is not None else 'latest'}")
         while key is not None:
             migration = self.migration_path[key]
