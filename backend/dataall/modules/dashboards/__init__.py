@@ -75,3 +75,21 @@ class DashboardCatalogIndexerModuleInterface(ModuleInterface):
 
         DashboardCatalogIndexer()
         log.info('Dashboard catalog indexer task has been loaded')
+
+
+class DashboardAsyncHandlersModuleInterface(ModuleInterface):
+    """Implements ModuleInterface for dashboard async lambda"""
+
+    @staticmethod
+    def is_supported(modes: Set[ImportMode]):
+        return ImportMode.HANDLERS in modes
+
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        from dataall.modules.catalog import CatalogAsyncHandlersModuleInterface
+
+        return [CatalogAsyncHandlersModuleInterface]
+
+    def __init__(self):
+        pass
+        log.info('S3 Dataset handlers have been imported')

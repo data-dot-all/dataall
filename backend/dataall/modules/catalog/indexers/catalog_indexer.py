@@ -12,5 +12,5 @@ class CatalogIndexer(ABC):
     def all():
         return CatalogIndexer._INDEXERS
 
-    def index(self, session) -> int:
+    def index(self, session) -> List[str]:
         raise NotImplementedError('index is not implemented')
