@@ -18,8 +18,8 @@ class EcsCatalogIndexHandler:
             CatalogIndexerTask.index_objects(engine, str(task.payload.get('with_deletes', False)))
         else:
             ecs_task_arn = Ecs.run_ecs_task(
-                task_definition_param='ecs/task_def_arn/share_management',
-                container_name_param='ecs/container/share_management',
+                task_definition_param='ecs/task_def_arn/catalog_indexer',
+                container_name_param='ecs/container/catalog_indexer',
                 context=[
                     {'name': 'with_deletes', 'value': str(task.payload.get('with_deletes', False))},
                 ],
