@@ -1,7 +1,7 @@
 import os
 
-from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import (
-    SharePolicyService,
+from dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service import (
+    S3SharePolicyService,
     IAM_S3_ACCESS_POINTS_STATEMENT_SID,
     IAM_S3_BUCKETS_STATEMENT_SID,
 )
@@ -36,7 +36,7 @@ class RemoveWildCard(BaseDataAllMigration):
                     session, env.environmentUri, filter=None
                 )
                 for role in cons_roles:
-                    share_policy_service = SharePolicyService(
+                    share_policy_service = S3SharePolicyService(
                         environmentUri=env.environmentUri,
                         account=env.AwsAccountId,
                         region=env.region,
