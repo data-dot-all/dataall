@@ -3,6 +3,7 @@ import {
   Button,
   Card,
   CardHeader,
+  CardContent,
   CircularProgress,
   Dialog,
   Divider,
@@ -11,10 +12,13 @@ import {
   MenuItem,
   TextField,
   Switch,
-  Typography
+  Typography,
+  FormControlLabel,
+  FormGroup,
+  Alert
 } from '@mui/material';
-import React, { useCallback, useEffect, useState } from 'react';
 import { Article, CancelRounded, SystemUpdate } from '@mui/icons-material';
+import React, { useCallback, useEffect, useState } from 'react';
 import { LoadingButton } from '@mui/lab';
 import { Label } from 'design';
 import {
@@ -172,7 +176,7 @@ export const ReIndexConfirmationPopUp = (props) => {
   const { enqueueSnackbar } = useSnackbar();
   const [withDelete, setWithDelete] = useState(false);
 
-  const handlePopUpModal = async () => {
+  const handleReindexStart = async () => {
     setUpdatingReIndex(true);
     if (!client) {
       dispatch({
@@ -213,35 +217,70 @@ export const ReIndexConfirmationPopUp = (props) => {
   };
 
   return (
-    <Dialog maxWidth="md" fullWidth open={popUpReIndex}>
-      <Box sx={{ p: 2 }}>
-        <Card>
-          <CardHeader
-            title={
-              <Box>
-                Are you sure you want to start re-indexing the ENTIRE data.all
-                Catalog?
-              </Box>
-            }
-          />
-          <Divider />
-          <Switch
-            color="primary"
-            onChange={() => {
-              setWithDelete(!withDelete);
-            }}
-            edge="start"
-            name="withDelete"
-          />
-          <Box display="flex" sx={{ p: 1 }}>
+    <Dialog maxWidth="sm" fullWidth open={popUpReIndex}>
+      <Box sx={{ p: 3 }}>
+        <Typography
+          align="center"
+          color="textPrimary"
+          gutterBottom
+          variant="h5"
+        >
+          Start Data.all Catalog Reindexing Task?
+        </Typography>
+        <Divider />
+        <Box>
+          <CardContent>
+            <Alert severity="warning" sx={{ mr: 1 }}>
+              Starting a reindexing job will update all catalog objects in
+              data.all with the latest information found in RDS.
+            </Alert>
+          </CardContent>
+        </Box>
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          sx={{ mb: 3 }}
+        >
+          <FormGroup>
+            <FormControlLabel
+              control={
+                <Switch
+                  color="primary"
+                  onChange={() => {
+                    setWithDelete(!withDelete);
+                  }}
+                  edge="start"
+                  name="withDelete"
+                />
+              }
+              label={
+                <div>
+                  With Deletes
+                  <Alert severity="error" sx={{ mr: 1 }}>
+                    Specifying <b>withDeletes</b> will identify catalog objects
+                    no longer in data.all's DB (if any) and attempt to delete /
+                    clean up the catalog
+                  </Alert>
+                </div>
+              }
+            />
+          </FormGroup>
+        </Box>
+        <Divider />
+        <Box display="flex" sx={{ mt: 1 }}>
+          <CardContent>
+            <Typography color="textPrimary">
+              Please confirm if you want to start the reindexing task:
+            </Typography>
             <Button
               color="primary"
               startIcon={<Article fontSize="small" />}
               sx={{ m: 1 }}
               variant="outlined"
-              onClick={handlePopUpModal}
+              onClick={handleReindexStart}
             >
-              Yes
+              Start
             </Button>
             <Button
               color="primary"
@@ -252,10 +291,10 @@ export const ReIndexConfirmationPopUp = (props) => {
                 setPopUpReIndex(false);
               }}
             >
-              No
+              Cancel
             </Button>
-          </Box>
-        </Card>
+          </CardContent>
+        </Box>
       </Box>
     </Dialog>
   );
@@ -264,7 +303,6 @@ export const ReIndexConfirmationPopUp = (props) => {
 export const MaintenanceViewer = () => {
   const client = useClient();
   const [refreshing, setRefreshing] = useState(false);
-  // const [refreshingReIndex, setRefreshingReIndex] = useState(false);
   const refreshingReIndex = false;
   const [updatingReIndex, setUpdatingReIndex] = useState(false);
   const [updating, setUpdating] = useState(false);
