@@ -18,7 +18,7 @@ def get_parameter_from_parameter_store():
         )
         return parameter
     except ClientError as e:
-        if e.response['Error']['Code'] == "ParameterNotFound":
+        if e.response['Error']['Code'] == 'ParameterNotFound':
             # Handle the case where the parameter is not found
             logger.info(
                 f"Error: Parameter '{PARAM_KEY}' not found. Migrations will be executed starting with Initial "
