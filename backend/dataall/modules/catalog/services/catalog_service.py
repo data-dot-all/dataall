@@ -1,22 +1,13 @@
 import logging
 
 from dataall.base.context import get_context
-from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 
-from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
-from dataall.modules.catalog.db.glossary_models import GlossaryNode
-from dataall.modules.catalog.services.glossaries_permissions import MANAGE_GLOSSARIES
-from dataall.modules.catalog.indexers.registry import GlossaryRegistry
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyValidationService
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.tasks.service_handlers import Worker
 
 
 logger = logging.getLogger(__name__)
-
-
-def _session():
-    return get_context().db_engine.scoped_session()
 
 
 class CatalogService:
