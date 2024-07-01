@@ -30,12 +30,20 @@ class Env:
     accountId: str
     region: str
 
+@dataclass_json
+@dataclass
+class Dataset:
+    name: str
+    bucket: str
+    kmsAlias: str
+
 
 @dataclass_json
 @dataclass
 class TestData:
     users: dict[str, User]
     envs: dict[str, Env]
+    datasets: dict[str, Dataset]
 
 
 @pytest.fixture(scope='session', autouse=True)
