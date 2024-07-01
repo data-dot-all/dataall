@@ -42,6 +42,7 @@ Glossary = gql.ObjectType(
     fields=[
         gql.Field(name='nodeUri', type=gql.ID),
         gql.Field(name='parentUri', type=gql.NonNullableType(gql.String)),
+        gql.Field(name='status', type=gql.NonNullableType(gql.String)),
         gql.Field(name='owner', type=gql.NonNullableType(gql.String)),
         gql.Field(name='path', type=gql.NonNullableType(gql.String)),
         gql.Field(name='label', type=gql.NonNullableType(gql.String)),
