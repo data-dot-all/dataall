@@ -2,6 +2,7 @@ import logging
 import os
 from migrations.dataall_migrations.herder import Herder
 from dataall.base.aws.parameter_store import ParameterStoreManager
+from botocore.exceptions import ClientError
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
@@ -16,14 +17,17 @@ def get_parameter_from_parameter_store():
             AwsAccountId=os.environ.get('AWS_ACCOUNT_ID'), region=os.environ.get('AWS_REGION'), parameter_path=PARAM_KEY
         )
         return parameter
-    except ParameterStoreManager.client().exception.ParameterNotFound as e:
-        # Handle the case where the parameter is not found
-        logger.info(
-            f"Error: Parameter '{PARAM_KEY}' not found. Migrations will be executed starting with Initial "
-            f'Migration.'
-        )
-        return None
-    # Handle other exceptions
+    except ClientError as e:
+        if e.response['Error']['Code'] == "ParameterNotFound":
+            # Handle the case where the parameter is not found
+            logger.info(
+                f"Error: Parameter '{PARAM_KEY}' not found. Migrations will be executed starting with Initial "
+                f'Migration.'
+            )
+            return None
+        # Handle other exceptions
+        logger.info(f'Failed to get parameter. Error: {e}')
+        return -1
     except Exception as e:
         logger.info(f'Failed to get parameter. Error: {e}')
         return -1
