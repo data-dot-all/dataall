@@ -14,6 +14,7 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 pytest_plugins = [
     'integration_tests.core.organizations.global_conftest',
     'integration_tests.core.environment.global_conftest',
+    'integration_tests.modules.s3_datasets.global_conftest',
 ]
 
 
@@ -30,12 +31,14 @@ class Env:
     accountId: str
     region: str
 
+
 @dataclass_json
 @dataclass
 class Dataset:
     name: str
-    bucket: str
-    kmsAlias: str
+    bucket: str = ''
+    kmsAlias: str = ''
+    glueDatabaseName: str = ''
 
 
 @dataclass_json
