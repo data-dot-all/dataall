@@ -13,18 +13,18 @@ PARAM_KEY = f'/dataall/{envname}/dataall-migration/revision'
 def get_parameter_from_parameter_store():
     try:
         parameter = ParameterStoreManager.get_parameter_value(
-            AwsAccountId=os.environ.get('AWS_ACCOUNT_ID'),
-            region=os.environ.get('AWS_REGION'),
-            parameter_path=PARAM_KEY
+            AwsAccountId=os.environ.get('AWS_ACCOUNT_ID'), region=os.environ.get('AWS_REGION'), parameter_path=PARAM_KEY
         )
         return parameter
+    except ParameterStoreManager.client().exception.ParameterNotFound as e:
+        # Handle the case where the parameter is not found
+        logger.info(
+            f"Error: Parameter '{PARAM_KEY}' not found. Migrations will be executed starting with Initial "
+            f'Migration.'
+        )
+        return None
+    # Handle other exceptions
     except Exception as e:
-        if 'ParameterNotFound' in f'{e}':
-            # Handle the case where the parameter is not found
-            logger.info(f"Error: Parameter '{PARAM_KEY}' not found. Migrations will be executed starting with Initial "
-                        f"Migration.")
-            return None
-        # Handle other exceptions
         logger.info(f'Failed to get parameter. Error: {e}')
         return -1
 
@@ -35,7 +35,7 @@ def put_parameter_to_parameter_store(value):
             AwsAccountId=os.environ.get('AWS_ACCOUNT_ID'),
             region=os.environ.get('AWS_REGION'),
             parameter_name=PARAM_KEY,
-            parameter_value=value
+            parameter_value=value,
         )
     except Exception as e:
         # Handle other exceptions

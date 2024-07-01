@@ -6,6 +6,7 @@ from pathlib import Path
 from migrations.dataall_migrations.base_migration import BaseDataAllMigration
 
 import logging
+
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 

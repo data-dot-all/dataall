@@ -12,9 +12,9 @@ from dataall.core.environment.db.environment_repositories import EnvironmentRepo
 import json
 
 import logging
+
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
-
 
 
 class RemoveWildCard(BaseDataAllMigration):

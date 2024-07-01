@@ -29,24 +29,18 @@ class ParameterStoreManager:
     def get_parameter_value(AwsAccountId=None, region=None, parameter_path=None):
         if not parameter_path:
             raise Exception('Parameter name is None')
-        try:
-            parameter_value = ParameterStoreManager.client(AwsAccountId, region).get_parameter(Name=parameter_path)[
-                'Parameter'
-            ]['Value']
-        except ClientError as e:
-            raise Exception(e)
+        parameter_value = ParameterStoreManager.client(AwsAccountId, region).get_parameter(Name=parameter_path)[
+            'Parameter'
+        ]['Value']
         return parameter_value
 
     @staticmethod
     def get_parameters_by_path(AwsAccountId=None, region=None, parameter_path=None):
         if not parameter_path:
             raise Exception('Parameter name is None')
-        try:
-            parameter_values = ParameterStoreManager.client(AwsAccountId, region).get_parameters_by_path(
-                Path=parameter_path
-            )['Parameters']
-        except ClientError as e:
-            raise Exception(e)
+        parameter_values = ParameterStoreManager.client(AwsAccountId, region).get_parameters_by_path(
+            Path=parameter_path
+        )['Parameters']
         return parameter_values
 
     @staticmethod
@@ -55,11 +49,9 @@ class ParameterStoreManager:
             raise Exception('Parameter name is None')
         if not parameter_value:
             raise Exception('Parameter value is None')
-        try:
-            response = ParameterStoreManager.client(AwsAccountId, region).put_parameter(
-                Name=parameter_name, Value=parameter_value, Overwrite=True
-            )['Version']
-        except ClientError as e:
-            raise Exception(e)
-        else:
-            return str(response)
+
+        response = ParameterStoreManager.client(AwsAccountId, region).put_parameter(
+            Name=parameter_name, Value=parameter_value, Overwrite=True
+        )['Version']
+
+        return str(response)
