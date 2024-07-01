@@ -54,7 +54,7 @@ class Herder:
         logger.info(f"Upgrade from {key} to {target_key if target_key is not None else 'latest'}")
         while key is not None:
             migration = self.migration_path[key]
-            logger.info(f'Applying migration {migration.name}, class = ', migration.__name__)
+            logger.info(f'Applying migration {migration.name}')
             migration.up()
             logger.info(f'Migration {migration.name} completed')
             if key == target_key:
