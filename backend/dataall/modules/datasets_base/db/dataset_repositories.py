@@ -5,25 +5,13 @@ from sqlalchemy.orm import Query
 from dataall.base.db import paginate
 from dataall.base.db.exceptions import ObjectNotFound
 from dataall.core.activity.db.activity_models import Activity
-from dataall.modules.datasets_base.db.dataset_models import DatasetBase, DatasetLock
+from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 
 logger = logging.getLogger(__name__)
 
 
 class DatasetBaseRepository:
     """DAO layer for GENERIC Datasets"""
-
-    @staticmethod
-    def create_dataset_lock(session, dataset: DatasetBase):
-        dataset_lock = DatasetLock(datasetUri=dataset.datasetUri, isLocked=False, acquiredBy='')
-        session.add(dataset_lock)
-        session.commit()
-
-    @staticmethod
-    def delete_dataset_lock(session, dataset: DatasetBase):
-        dataset_lock = session.query(DatasetLock).filter(DatasetLock.datasetUri == dataset.datasetUri).first()
-        session.delete(dataset_lock)
-        session.commit()
 
     @staticmethod
     def update_dataset_activity(session, dataset: DatasetBase, username):

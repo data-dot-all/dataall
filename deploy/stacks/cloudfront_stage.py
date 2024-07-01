@@ -16,6 +16,7 @@ class CloudfrontStage(Stage):
         custom_domain=None,
         custom_waf_rules=None,
         custom_auth=None,
+        backend_region=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -29,6 +30,7 @@ class CloudfrontStage(Stage):
             custom_domain=custom_domain,
             custom_waf_rules=custom_waf_rules,
             custom_auth=custom_auth,
+            backend_region=backend_region,
         )
 
         Tags.of(cloudfront_stack).add('Application', f'{resource_prefix}-{envname}')

@@ -11,7 +11,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import PropTypes from 'prop-types';
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Defaults, Pager, ShareStatus, useSettings } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
@@ -27,7 +27,11 @@ import { getShareRequestsFromMe, listOwnedDatasets } from '../services';
 
 import { ShareBoxListItem } from './ShareBoxListItem';
 import { ShareObjectSelectorModal } from './ShareObjectSelectorModal';
+import { NavigateShareViewModal } from './NavigateShareViewModal';
 import { ShareStatusList } from '../constants';
+import { RefreshRounded } from '@mui/icons-material';
+import { reApplyShareObjectItemsOnDataset } from '../services/reApplyShareObjectItemsOnDataset';
+import { useSnackbar } from 'notistack';
 
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
@@ -50,13 +54,25 @@ export const ShareBoxList = (props) => {
   const [datasets, setDatasets] = useState([]);
   const [isVerifyObjectItemsModalOpen, setIsVerifyObjectItemsModalOpen] =
     useState(false);
+  const [isNavigateShareViewModalOpen, setIsNavigateShareViewModalOpen] =
+    useState(false);
+  const [reApplyButtonLoadingState, setreApplyButtonLoadingState] =
+    useState(false);
   const statusOptions = ShareStatusList;
+  const { enqueueSnackbar } = useSnackbar();
 
   const handleVerifyObjectItemsModalOpen = () => {
     setIsVerifyObjectItemsModalOpen(true);
   };
   const handleVerifyObjectItemsModalClose = () => {
     setIsVerifyObjectItemsModalOpen(false);
+    if (dataset) {
+      setIsNavigateShareViewModalOpen(true);
+    }
+  };
+
+  const handleNavigateShareViewModalClose = () => {
+    setIsNavigateShareViewModalOpen(false);
   };
 
   const handlePageChange = async (event, value) => {
@@ -246,6 +262,33 @@ export const ShareBoxList = (props) => {
       .finally(() => setLoading(false));
   }, [client, dispatch]);
 
+  const reapplyShares = async (datasetUri) => {
+    try {
+      setreApplyButtonLoadingState(true);
+      const response = await client.mutate(
+        reApplyShareObjectItemsOnDataset({ datasetUri: datasetUri })
+      );
+      if (response && !response.errors) {
+        setreApplyButtonLoadingState(false);
+        enqueueSnackbar(
+          `Reapplying process for all unhealthy shares on dataset with uri: ${datasetUri} has started. Please check each individual share for share item health status`,
+          {
+            anchorOrigin: {
+              horizontal: 'right',
+              vertical: 'top'
+            },
+            variant: 'success'
+          }
+        );
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (error) {
+      setreApplyButtonLoadingState(false);
+      dispatch({ type: SET_ERROR, error: error?.message });
+    }
+  };
+
   useEffect(() => {
     setLoading(true);
     setFilter({ page: 1, pageSize: 10, term: '' });
@@ -324,6 +367,23 @@ export const ShareBoxList = (props) => {
             variant="outlined"
           >
             Verify Share Objects Item(s) Health Status
+          </LoadingButton>
+        )}
+
+        {dataset && (
+          <LoadingButton
+            loading={reApplyButtonLoadingState}
+            color="info"
+            align="right"
+            startIcon={<RefreshRounded fontSize="small" />}
+            sx={{ m: 1 }}
+            onClick={(event) => {
+              reapplyShares(dataset.datasetUri);
+            }}
+            type="button"
+            variant="outlined"
+          >
+            Re-apply Share Item(s) for Dataset
           </LoadingButton>
         )}
 
@@ -527,6 +587,14 @@ export const ShareBoxList = (props) => {
           onApply={handleVerifyObjectItemsModalClose}
           onClose={handleVerifyObjectItemsModalClose}
           open={isVerifyObjectItemsModalOpen}
+        />
+      )}
+      {isNavigateShareViewModalOpen && (
+        <NavigateShareViewModal
+          dataset={dataset}
+          onApply={handleNavigateShareViewModalClose}
+          onClose={handleNavigateShareViewModalClose}
+          open={isNavigateShareViewModalOpen}
         />
       )}
     </>

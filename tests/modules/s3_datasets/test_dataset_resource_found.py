@@ -1,5 +1,4 @@
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
-from dataall.modules.datasets_base.db.dataset_models import DatasetLock
 from dataall.modules.s3_datasets.services.dataset_permissions import CREATE_DATASET
 
 
@@ -40,6 +39,13 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
     )
     mocker.patch(
         'dataall.core.environment.services.managed_iam_policies.PolicyManager.delete_all_policies', return_value=True
+    )
+    mocker.patch(
+        'dataall.core.environment.services.managed_iam_policies.PolicyManager.delete_all_policies', return_value=True
+    )
+    mocker.patch(
+        'dataall.core.organizations.db.organization_repositories.OrganizationRepository.find_group_membership',
+        return_value=True,
     )
     response = client.query(
         """
@@ -117,8 +123,6 @@ def test_dataset_resource_found(db, client, env_fixture, org_fixture, group2, us
 
     assert 'EnvironmentResourcesFound' in response.errors[0].message
     with db.scoped_session() as session:
-        dataset_lock = session.query(DatasetLock).filter(DatasetLock.datasetUri == dataset.datasetUri).first()
-        session.delete(dataset_lock)
         dataset = session.query(S3Dataset).get(dataset.datasetUri)
         session.delete(dataset)
         session.commit()

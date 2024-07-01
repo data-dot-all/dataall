@@ -1,4 +1,55 @@
-def create_environment(client, name, group, organizationUri, awsAccountId, region):
+ENV_TYPE = """
+environmentUri
+created
+userRoleInEnvironment
+description
+name
+label
+AwsAccountId
+region
+owner
+tags
+SamlGroupName
+EnvironmentDefaultBucketName
+EnvironmentDefaultIAMRoleArn
+EnvironmentDefaultIAMRoleName
+EnvironmentDefaultIAMRoleImported
+resourcePrefix
+subscriptionsEnabled
+subscriptionsProducersTopicImported
+subscriptionsConsumersTopicImported
+subscriptionsConsumersTopicName
+subscriptionsProducersTopicName
+organization {
+  organizationUri
+  label
+  name
+}
+stack {
+  stack
+  status
+  stackUri
+  targetUri
+  accountid
+  region
+  stackid
+  link
+  outputs
+  resources
+}
+networks {
+  VpcId
+  privateSubnetIds
+  publicSubnetIds
+}
+parameters {
+  key
+  value
+}
+"""
+
+
+def create_environment(client, name, group, organizationUri, awsAccountId, region, tags):
     query = {
         'operationName': 'CreateEnvironment',
         'variables': {
@@ -9,24 +60,15 @@ def create_environment(client, name, group, organizationUri, awsAccountId, regio
                 'AwsAccountId': awsAccountId,
                 'region': region,
                 'description': 'Created for integration testing',
-                'tags': [],
+                'tags': tags,
             }
         },
-        'query': """
-                    mutation CreateEnvironment($input: NewEnvironmentInput) {
-                      createEnvironment(input: $input) {
-                        environmentUri
-                        label
-                        userRoleInEnvironment
-                        SamlGroupName
-                        AwsAccountId
-                        created
-                        parameters {
-                          key
-                          value
-                        }
-                      }
-                    }
+        'query': f"""
+                    mutation CreateEnvironment($input: NewEnvironmentInput!) {{
+                      createEnvironment(input: $input) {{
+                        {ENV_TYPE}
+                      }}
+                    }}
                 """,
     }
     response = client.query(query=query)
@@ -37,58 +79,12 @@ def get_environment(client, environmentUri):
     query = {
         'operationName': 'GetEnvironment',
         'variables': {'environmentUri': environmentUri},
-        'query': """
-                    query GetEnvironment($environmentUri: String) {
-                      getEnvironment(environmentUri: $environmentUri) {
-                        environmentUri
-                        created
-                        userRoleInEnvironment
-                        description
-                        name
-                        label
-                        AwsAccountId
-                        region
-                        owner
-                        tags
-                        SamlGroupName
-                        EnvironmentDefaultBucketName
-                        EnvironmentDefaultIAMRoleArn
-                        EnvironmentDefaultIAMRoleName
-                        EnvironmentDefaultIAMRoleImported
-                        resourcePrefix
-                        subscriptionsEnabled
-                        subscriptionsProducersTopicImported
-                        subscriptionsConsumersTopicImported
-                        subscriptionsConsumersTopicName
-                        subscriptionsProducersTopicName
-                        organization {
-                          organizationUri
-                          label
-                          name
-                        }
-                        stack {
-                          stack
-                          status
-                          stackUri
-                          targetUri
-                          accountid
-                          region
-                          stackid
-                          link
-                          outputs
-                          resources
-                        }
-                        networks {
-                          VpcId
-                          privateSubnetIds
-                          publicSubnetIds
-                        }
-                        parameters {
-                          key
-                          value
-                        }
-                      }
-                    }
+        'query': f"""
+                    query GetEnvironment($environmentUri: String!) {{
+                      getEnvironment(environmentUri: $environmentUri) {{
+                        {ENV_TYPE}  
+                      }}
+                    }}
                 """,
     }
     response = client.query(query=query)
@@ -116,3 +112,50 @@ def delete_environment(client, environmentUri, deleteFromAWS=True):
     }
     response = client.query(query=query)
     return response
+
+
+def update_environment(client, environmentUri, input: dict):
+    query = {
+        'operationName': 'UpdateEnvironment',
+        'variables': {
+            'environmentUri': environmentUri,
+            'input': input,
+        },
+        'query': f"""
+                    mutation UpdateEnvironment(
+                      $environmentUri: String!
+                      $input: ModifyEnvironmentInput!
+                    ) {{
+                      updateEnvironment(environmentUri: $environmentUri, input: $input) {{
+                        {ENV_TYPE}
+                      }}
+                    }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.updateEnvironment
+
+
+def list_environments(client, term=''):
+    query = {
+        'operationName': 'ListEnvironments',
+        'variables': {
+            'filter': {'term': term},
+        },
+        'query': f"""
+                    query ListEnvironments($filter: EnvironmentFilter) {{
+                      listEnvironments(filter: $filter) {{
+                        count
+                        page
+                        pages
+                        hasNext
+                        hasPrevious
+                        nodes {{
+                            {ENV_TYPE}
+                        }}
+                      }}
+                    }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.listEnvironments

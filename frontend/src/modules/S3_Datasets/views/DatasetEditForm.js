@@ -581,18 +581,25 @@ const DatasetEditForm = (props) => {
                           <Autocomplete
                             id="stewards"
                             freeSolo
-                            defaultValue={dataset.stewards}
-                            options={groupOptions.map((option) => option.value)}
+                            options={groupOptions.map((option) => option)}
                             onChange={(event, value) => {
-                              setFieldValue('stewards', value);
+                              if (value && value.value) {
+                                setFieldValue('stewards', value.value);
+                              } else {
+                                setFieldValue('stewards', '');
+                              }
                             }}
-                            renderInput={(renderParams) => (
+                            inputValue={values.stewards}
+                            renderInput={(params) => (
                               <TextField
-                                {...renderParams}
+                                {...params}
+                                fullWidth
+                                error={Boolean(
+                                  touched.stewards && errors.stewards
+                                )}
+                                helperText={touched.stewards && errors.stewards}
                                 label="Stewards"
-                                margin="normal"
                                 onChange={handleChange}
-                                value={values.stewards}
                                 variant="outlined"
                               />
                             )}

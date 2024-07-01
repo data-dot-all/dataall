@@ -4,7 +4,14 @@ from .input_types import (
     NewOrganizationInput,
     InviteGroupToOrganizationInput,
 )
-from .resolvers import archive_organization, create_organization, invite_group, remove_group, update_organization
+from .resolvers import (
+    archive_organization,
+    create_organization,
+    invite_group,
+    remove_group,
+    update_organization,
+    update_group,
+)
 from .types import Organization
 
 createOrganization = gql.MutationField(
@@ -38,6 +45,13 @@ inviteGroupToOrganization = gql.MutationField(
     args=[gql.Argument(name='input', type=gql.NonNullableType(InviteGroupToOrganizationInput))],
     type=gql.Ref('Organization'),
     resolver=invite_group,
+)
+
+updateOrganizationGroup = gql.MutationField(
+    name='updateOrganizationGroup',
+    args=[gql.Argument(name='input', type=gql.NonNullableType(InviteGroupToOrganizationInput))],
+    type=gql.Ref('Organization'),
+    resolver=update_group,
 )
 
 removeGroupFromOrganization = gql.MutationField(

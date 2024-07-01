@@ -19,6 +19,7 @@ export * from './Scrollbar';
 export * from './SearchInput';
 export * from './SettingsDrawer';
 export * from './ShareStatus';
+export * from './ShareHealthStatus';
 export * from './SplashScreen';
 export * from './StackStatus';
 export * from './TagsInput';

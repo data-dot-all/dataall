@@ -175,6 +175,18 @@ class GlueClient:
             raise e
         return None
 
+    def get_glue_database_from_catalog(self):
+        # Check if a catalog account exists and return database accordingly
+        try:
+            catalog_dict = self.get_source_catalog()
+
+            if catalog_dict is not None:
+                return catalog_dict.get('database_name')
+            else:
+                return self._database
+        except Exception as e:
+            raise e
+
     def get_database_tags(self):
         # Get tags from the glue database
         account_id = self._account_id

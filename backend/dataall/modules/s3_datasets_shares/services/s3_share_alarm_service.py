@@ -9,7 +9,7 @@ from dataall.base.utils.alarm_service import AlarmService
 log = logging.getLogger(__name__)
 
 
-class DatasetSharingAlarmService(AlarmService):
+class S3ShareAlarmService(AlarmService):
     """Contains set of alarms for datasets"""
 
     def trigger_table_sharing_failure_alarm(
