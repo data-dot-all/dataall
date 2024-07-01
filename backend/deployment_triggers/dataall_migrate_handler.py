@@ -19,7 +19,7 @@ def get_parameter_from_parameter_store():
         )
         return parameter
     except Exception as e:
-        if e.response['Error']['Code'] == 'ParameterNotFound':
+        if 'ParameterNotFound' in str(e):
             # Handle the case where the parameter is not found
             logger.info(f"Error: Parameter '{PARAM_KEY}' not found. Migrations will be executed starting with Initial "
                         f"Migration.")
