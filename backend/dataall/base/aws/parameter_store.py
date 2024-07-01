@@ -44,14 +44,14 @@ class ParameterStoreManager:
         return parameter_values
 
     @staticmethod
-    def update_parameter(AwsAccountId, region, parameter_name, parameter_value):
+    def update_parameter(AwsAccountId, region, parameter_name, parameter_value, parameter_type='String'):
         if not parameter_name:
             raise Exception('Parameter name is None')
         if not parameter_value:
             raise Exception('Parameter value is None')
 
         response = ParameterStoreManager.client(AwsAccountId, region).put_parameter(
-            Name=parameter_name, Value=parameter_value, Overwrite=True
+            Name=parameter_name, Value=parameter_value, Overwrite=True, Type=parameter_type
         )['Version']
 
         return str(response)
