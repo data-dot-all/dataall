@@ -13,6 +13,8 @@ from integration_tests.modules.s3_datasets.queries import (
 )
 from tests_new.integration_tests.modules.datasets_base.queries import list_datasets
 
+from integration_tests.modules.s3_datasets.aws_clients import S3Client, KMSClient, GlueClient
+
 log = logging.getLogger(__name__)
 
 
@@ -102,11 +104,17 @@ def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdat
 
 
 @pytest.fixture(scope='session')
-def session_imported_sse_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata):
+def session_imported_sse_s3_dataset1(
+    client1, group1, org1, session_env1, session_id, testdata, session_env1_aws_client
+):
     envdata = testdata.datasets['session_imported_sse_s3_dataset1']
     ds = None
+    bucket = None
     try:
-        # TODO: Create S3 Bucket before import + Clean Up in Finally
+        bucket = S3Client(session=session_env1_aws_client, region=session_env1['region']).create_bucket(
+            bucket_name=f'{envdata.bucket}{session_id}', kms_key_id=None
+        )
+
         ds = import_s3_dataset(
             client1,
             owner='someone',
@@ -115,20 +123,33 @@ def session_imported_sse_s3_dataset1(client1, group1, org1, session_env1, sessio
             env_uri=session_env1['environmentUri'],
             dataset_name=envdata.name,
             tags=[session_id],
-            bucket=envdata.bucket,
+            bucket=f'{envdata.bucket}{session_id}',
         )
         yield ds
     finally:
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
+            S3Client(session=session_env1_aws_client, region=session_env1['region']).delete_bucket(
+                f'{envdata.bucket}{session_id}'
+            )
 
 
 @pytest.fixture(scope='session')
-def session_imported_kms_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata):
+def session_imported_kms_s3_dataset1(
+    client1, group1, org1, session_env1, session_id, testdata, session_env1_aws_client
+):
     envdata = testdata.datasets['session_imported_kms_s3_dataset1']
     ds = None
     try:
-        # TODO: Create S3 Bucket, KMS, + Glue DB before import + Clean Up in Finally
+        kms_key_id = KMSClient(
+            session=session_env1_aws_client, account_id=session_env1['AwsAccountId'], region=session_env1['region']
+        ).create_key_with_alias(f'{envdata.kmsAlias}{session_id}')
+        S3Client(session=session_env1_aws_client, region=session_env1['region']).create_bucket(
+            bucket_name=f'{envdata.bucket}{session_id}', kms_key_id=kms_key_id
+        )
+        GlueClient(session=session_env1_aws_client, region=session_env1['region']).create_database(
+            database_name=f'{envdata.glueDatabaseName}{session_id}', bucket=f'{envdata.bucket}{session_id}'
+        )
         ds = import_s3_dataset(
             client1,
             owner='someone',
@@ -137,14 +158,23 @@ def session_imported_kms_s3_dataset1(client1, group1, org1, session_env1, sessio
             env_uri=session_env1['environmentUri'],
             dataset_name=envdata.name,
             tags=[session_id],
-            bucket=envdata.bucket,
-            kms_alias=envdata.kmsAlias,
-            glue_db_name=envdata.glueDatabaseName,
+            bucket=f'{envdata.bucket}{session_id}',
+            kms_alias=f'{envdata.kmsAlias}{session_id}',
+            glue_db_name=f'{envdata.glueDatabaseName}{session_id}',
         )
         yield ds
     finally:
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
+            S3Client(session=session_env1_aws_client, region=session_env1['region']).delete_bucket(
+                f'{envdata.bucket}{session_id}'
+            )
+            KMSClient(
+                session=session_env1_aws_client, account_id=session_env1['AwsAccountId'], region=session_env1['region']
+            ).delete_key_by_alias(f'{envdata.kmsAlias}{session_id}')
+            GlueClient(session=session_env1_aws_client, region=session_env1['region']).delete_database(
+                f'{envdata.glueDatabaseName}{session_id}'
+            )
 
 
 """

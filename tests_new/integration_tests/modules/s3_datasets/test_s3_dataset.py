@@ -3,7 +3,8 @@ from datetime import datetime
 import time
 from assertpy import assert_that
 
-from integration_tests.modules.s3_datasets.queries import get_dataset, update_dataset
+from integration_tests.modules.s3_datasets.queries import get_dataset, update_dataset, delete_dataset
+from integration_tests.modules.s3_datasets.global_conftest import create_s3_dataset
 from integration_tests.modules.datasets_base.queries import list_datasets
 from integration_tests.core.stack.queries import update_stack
 from integration_tests.core.stack.utils import check_stack_in_progress, check_stack_ready
@@ -22,6 +23,31 @@ def test_import_sse_s3_dataset(session_imported_sse_s3_dataset1):
 
 def test_import_kms_s3_dataset(session_imported_kms_s3_dataset1):
     assert_that(session_imported_kms_s3_dataset1.stack.status).is_in('CREATE_COMPLETE', 'UPDATE_COMPLETE')
+
+
+def test_get_s3_dataset(client1, session_s3_dataset1):
+    dataset = get_dataset(client1, session_s3_dataset1.datasetUri)
+    assert dataset
+    assert_that(dataset.label).is_equal_to(session_s3_dataset1.label)
+
+
+def test_get_s3_dataset_unauthorized(client2, session_s3_dataset1):
+    dataset_uri = session_s3_dataset1.datasetUri
+    assert_that(get_dataset).raises(GqlError).when_called_with(client2, dataset_uri).contains(
+        'UnauthorizedOperation', dataset_uri
+    )
+
+
+def test_list_datasets(
+    client1, session_s3_dataset1, session_imported_sse_s3_dataset1, session_imported_kms_s3_dataset1, session_id
+):
+    assert_that(list_datasets(client1, term=session_id).nodes).is_length(3)
+
+
+def test_list_datasets_unauthorized(
+    client2, session_s3_dataset1, session_imported_sse_s3_dataset1, session_imported_kms_s3_dataset1, session_id
+):
+    assert_that(list_datasets(client2, term=session_id).nodes).is_length(0)
 
 
 def test_modify_dataset(client1, session_s3_dataset1):
@@ -43,16 +69,11 @@ def test_modify_dataset_unauthorized(client1, client2, session_s3_dataset1):
     assert_that(dataset).contains_entry(datasetUri=dataset_uri).does_not_contain_entry(description=test_description)
 
 
-def test_list_datasets_authorized(
-    client1, session_s3_dataset1, session_imported_sse_s3_dataset1, session_imported_kms_s3_dataset1, session_id
-):
-    assert_that(list_datasets(client1, term=session_id).nodes).is_length(3)
-
-
-def test_list_datasets_unauthorized(
-    client2, session_s3_dataset1, session_imported_sse_s3_dataset1, session_imported_kms_s3_dataset1, session_id
-):
-    assert_that(list_datasets(client2, term=session_id).nodes).is_length(0)
+def test_delete_dataset_unauthorized(client2, session_s3_dataset1):
+    dataset_uri = session_s3_dataset1.datasetUri
+    assert_that(delete_dataset).raises(GqlError).when_called_with(client2, dataset_uri).contains(
+        'UnauthorizedOperation', dataset_uri
+    )
 
 
 def test_persistent_s3_dataset_update(client1, persistent_s3_dataset1):

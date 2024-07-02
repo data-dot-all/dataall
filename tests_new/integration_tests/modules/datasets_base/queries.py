@@ -1,5 +1,4 @@
 # TODO: This file will be replaced by using the SDK directly
-from backend.dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
 
 DATASET_BASE_TYPE = """
 datasetUri

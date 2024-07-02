@@ -1,6 +1,6 @@
 import logging
-
 import pytest
+import boto3
 
 from integration_tests.client import GqlError
 from integration_tests.core.environment.queries import (
@@ -48,6 +48,24 @@ def session_env1(client1, group1, org1, session_id, testdata):
     finally:
         if env:
             delete_env(client1, env)
+
+
+@pytest.fixture(scope='session')
+def session_env1_aws_client(session_env1, session_id):
+    try:
+        base_session = boto3.Session()
+        role_arn = f'arn:aws:iam::{session_env1.AwsAccountId}:role/dataall-integration-tests-role'
+        response = base_session.client('sts', region_name=session_env1.region).assume_role(
+            RoleArn=role_arn, RoleSessionName=role_arn.split('/')[1]
+        )
+        yield boto3.Session(
+            aws_access_key_id=response['Credentials']['AccessKeyId'],
+            aws_secret_access_key=response['Credentials']['SecretAccessKey'],
+            aws_session_token=response['Credentials']['SessionToken'],
+        )
+    except:
+        log.exception('Failed to assume environment integration test role')
+        raise
 
 
 @pytest.fixture(scope='session')
