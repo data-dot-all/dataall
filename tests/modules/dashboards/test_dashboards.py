@@ -326,9 +326,13 @@ def test_delete_dashboard(client, env_fixture, db, user, group, module_mocker, d
     )
     assert len(response.data.searchDashboards['nodes']) == 0
 
+
 def test_get_author_session(mocker, client, env_fixture, user, group, dashboard):
     mocker.patch('dataall.base.aws.quicksight.QuicksightClient.get_quicksight_client', return_value=MagicMock())
-    mocker.patch('dataall.modules.dashboards.aws.dashboard_quicksight_client.DashboardQuicksightClient.get_author_session', return_value="EmbedUrl")
+    mocker.patch(
+        'dataall.modules.dashboards.aws.dashboard_quicksight_client.DashboardQuicksightClient.get_author_session',
+        return_value='EmbedUrl',
+    )
 
     response = client.query(
         """
@@ -338,8 +342,8 @@ def test_get_author_session(mocker, client, env_fixture, user, group, dashboard)
         """,
         environmentUri=env_fixture.environmentUri,
         username=user.username,
-        groups=[group.name]
+        groups=[group.name],
     )
     print(response.data)
     print(response.errors)
-    assert response.data.getAuthorSession == "EmbedUrl"
+    assert response.data.getAuthorSession == 'EmbedUrl'
