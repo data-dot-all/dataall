@@ -33,9 +33,9 @@ class BaseDataAllMigration(ABC):
 
     @staticmethod
     @abstractmethod
-    def previous_migration() -> str:
+    def next_migration():
         """
-        Returns string and needs to be implemented in the  inherited classes
+        Returns next migraton class and needs to be implemented in the  inherited classes
         """
         ...
 
@@ -54,25 +54,3 @@ class BaseDataAllMigration(ABC):
         Performs downgrade and needs to be implemented in the inherited classes
         """
         ...
-
-    @classmethod
-    def set_next(cls, next_migration_key):
-        if 'next_migration' in cls.__dict__ and cls.next_migration is not None:
-            raise Exception(
-                f'Conflict. Migrations {next_migration_key} and {cls.next_migration} have the same parent {cls.key()}'
-            )
-        cls.next_migration = next_migration_key
-
-    @classmethod
-    def next(cls):
-        if 'next_migration' in cls.__dict__:
-            return cls.next_migration
-        return None
-
-    @classmethod
-    def is_initial(cls):
-        return cls.previous_migration() is None
-
-    @classmethod
-    def is_last(cls):
-        return 'next_migration' not in cls.__dict__ or cls.next_migration is None

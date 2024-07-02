@@ -51,9 +51,9 @@ def handler(event, context) -> None:
     if revision == -1:
         logger.error('Failed to retrieve revision from parameter store')
         return
-    manager = MigrationManager()
-    upgraded = manager.upgrade(start_key=revision)
-    put_parameter_to_parameter_store(manager.current_key)
-    if not upgraded:
+    manager = MigrationManager(revision)
+    new_version = manager.upgrade()
+    if not new_version:
         logger.error('Failed to upgrade Data.all.')
         raise Exception('Data.all migration failed.')
+    put_parameter_to_parameter_store(new_version)

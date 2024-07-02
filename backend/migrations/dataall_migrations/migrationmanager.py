@@ -1,8 +1,7 @@
-import importlib
-import importlib.machinery
-import inspect
 import os
-from pathlib import Path
+from collections import deque
+from typing import Deque
+from migrations.dataall_migrations.versions.initial import InitMigration
 from migrations.dataall_migrations.base_migration import BaseDataAllMigration
 
 import logging
@@ -12,100 +11,57 @@ logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
 
 class MigrationManager:
-    def __init__(self):
-        self.current_key = None
-        self.migration_path = {}
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        self.folder_path = os.path.join(dir_path, 'versions')
-        self.initial_key = '0'
-        self.last_key = None
+    def __init__(self, key='0'):
+        self.current_migration = InitMigration
+        self.previous_migrations: Deque[BaseDataAllMigration] = deque()
+        while self.current_migration.key() != key:
+            self.previous_migrations.append(self.current_migration)
+            self.current_migration = self.current_migration.next_migration()
+        self.executed_upgrades: Deque[BaseDataAllMigration] = deque()
+        self.executed_downgrades: Deque[BaseDataAllMigration] = deque()
 
-        logger.info('Loading migrations...')
-        logger.info(f'Folder path: {self.folder_path}')
+    def upgrade(self, target_key=None):
+        if self.current_migration.key() == target_key or self.current_migration.next_migration() is None:
+            logger.info('Data-all version is up to date')
+            return self.current_migration.key()
 
-        for py_file in Path(self.folder_path).glob('*.py'):
-            module_name = py_file.stem  # Get the module name (file name without extension)
-            module_path = str(py_file.absolute())
-            # Import the module
-            loader = importlib.machinery.SourceFileLoader(module_name, module_path)
-            module = loader.load_module()
-            for name, obj in inspect.getmembers(module, inspect.isclass):
-                # Check if obj is a subclass of MyClass and not MyClass itself
-                if issubclass(obj, BaseDataAllMigration) and obj is not BaseDataAllMigration:
-                    if obj.key() in self.migration_path:
-                        raise Exception(
-                            f'Migrations {obj.name()} and {self.migration_path[obj.key()].name()} have the same key.'
-                        )
-                    self.migration_path[obj.key()] = obj
-
-        for key, migration in self.migration_path.items():
-            prev = migration.previous_migration()
-            if prev is not None:
-                if prev not in self.migration_path:
-                    raise Exception(f'Migration with key {prev} -- parent of {migration.name()} is not found')
-                self.migration_path[prev].set_next(key)
-            else:
-                if migration.key() != self.initial_key:
-                    raise Exception(f'Migration {migration.key()} has no parent, but is not initial migration.')
-
-        for key, migration in self.migration_path.items():
-            if migration.next() is None:
-                if self.last_key is not None:
-                    raise Exception(
-                        f'Migrations with keys {self.last_key} and {key} has no next_migrations. Unexpected revision structure.'
-                    )
-                self.last_key = key
-                break
-
-    def upgrade(self, target_key=None, start_key=None, downgrade_if_fails=True):
-        if start_key is not None:
-            self.current_key = self.migration_path[start_key].next()
-            if self.current_key is None:
-                logger.info('Data-all version is up to date')
-                return
-        else:
-            self.current_key = self.initial_key
-        logger.info(f"Upgrade from {self.current_key} to {target_key if target_key is not None else 'latest'}")
-        while self.current_key is not None:
-            migration = self.migration_path[self.current_key]
-            try:
-                logger.info(f'Applying migration {migration.name()}')
-                migration.up()
-                logger.info(f'Migration {migration.name()} completed')
-            except Exception as e:
-                logger.info(f'An error occurred while applying the migration.{e}.')
-                self.current_key = migration.previous_migration()
-                logger.info(f'Upgrade terminated. Current revision is {self.current_key}')
-                if downgrade_if_fails:
-                    self.downgrade(start_key, self.current_key, False)
-                return False
-            if self.current_key == target_key:
-                break
-            self.current_key = migration.next()
-        if self.current_key is None:
-            self.current_key = self.last_key
-        logger.info('Upgrade completed')
-        return True
-
-    def downgrade(self, target_key=None, start_key=None, upgrade_if_fails=True):
-        self.current_key = start_key if start_key is not None else self.last_key
         logger.info(
-            f"Downgrade from {start_key if start_key is not None else 'latest'} to {target_key if target_key is not None else 'initial'}"
+            f"Upgrade from {self.current_migration.key()} to {target_key if target_key is not None else 'latest'}"
         )
-        while self.current_key != '0':
-            migration = self.migration_path[self.current_key]
+        while self.current_migration is not None and self.current_migration.key() != target_key:
             try:
+                self.executed_upgrades.append(self.current_migration)
+                logger.info(f'Applying migration {self.current_migration.name()}')
+                self.current_migration.up()
+                logger.info(f'Migration {self.current_migration.name()} completed')
+                self.current_migration = self.current_migration.next_migration()
+            except Exception as e:
+                # Something went wrong revert
+                logger.info(f'An error occurred while applying the migration.{e}.')
+                while migration := self.executed_upgrades.pop():
+                    migration.down()
+                return False
+        logger.info('Upgrade completed')
+        return self.executed_upgrades.pop().key()
+
+    def downgrade(self, target_key='0'):
+        logger.info(
+            f"Downgrade from {self.current_migration.key()} to {target_key if target_key is not None else 'initial'}"
+        )
+        self.previous_migrations.append(self.current_migration)
+        while migration := self.previous_migrations.pop():
+            if migration.key() == target_key:
+                break
+            try:
+                self.executed_downgrades.append(migration)
                 logger.info(f'Reverting migration {migration.name()}')
                 migration.down()
                 logger.info(f'Migration {migration.name()} completed')
             except Exception as e:
                 logger.info(f'An error occurred while reverting the migration.{e}.')
-                logger.info(f'Downgrade terminated. Current revision is {self.current_key}')
-                if upgrade_if_fails:
-                    self.upgrade(start_key, self.current_key, False)
+                while up_migration := self.executed_downgrades.pop():
+                    up_migration.up()
                 return False
-            if self.current_key == target_key:
-                break
-            self.current_key = migration.previous_migration()
+
         logger.info('Downgrade completed')
-        return True
+        return target_key

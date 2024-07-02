@@ -31,8 +31,8 @@ class RemoveWildCard(BaseDataAllMigration):
         return 'Remove Wildcard from Sharing Policy'
 
     @staticmethod
-    def previous_migration():
-        return '0'  # initial migration
+    def next_migration():
+        return None
 
     @staticmethod
     def up():
@@ -82,4 +82,4 @@ class RemoveWildCard(BaseDataAllMigration):
 
     @staticmethod
     def down():
-        print('Downgrade is not supported.')
+        logger.info('Downgrade is not supported.')
