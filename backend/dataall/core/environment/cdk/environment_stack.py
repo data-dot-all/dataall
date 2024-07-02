@@ -138,6 +138,9 @@ class EnvironmentSetup(Stack):
         self.environment_admins_group: EnvironmentGroup = self.get_environment_admins_group(
             self.engine, self._environment
         )
+        # Create test role for integration tests
+        if os.getenv('INTEGRATION_TESTS', None) == 'True':
+            self.create_integration_tests_role()
 
         # Create or import Pivot role
         if self.create_pivot_role is True:
@@ -559,3 +562,28 @@ class EnvironmentSetup(Stack):
             )
         )
         return topic
+
+    def create_integration_tests_role(self):
+        self.test_role = iam.Role(
+            self,
+            'IntegrationTestRole',
+            role_name='dataall-integration-tests-role',
+            assumed_by=iam.AccountPrincipal(os.getenv('TOOLING_ACCOUNT')),
+        )
+        self.test_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=['s3:CreateBucket', 's3:DeleteBucket'],
+                effect=iam.Effect.ALLOW,
+                resources=['*'],
+            ),
+            iam.PolicyStatement(
+                actions=['glue:createDatabase', 'glue:deleteDatabase'],
+                effect=iam.Effect.ALLOW,
+                resources=['*'],
+            ),
+            iam.PolicyStatement(
+                actions=['kms:CreateKey', 'kms:DeleteKey', 'kms:ListAliases'],
+                effect=iam.Effect.ALLOW,
+                resources=['*'],
+            ),
+        )
