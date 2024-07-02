@@ -1,6 +1,6 @@
 import logging
 import os
-from migrations.dataall_migrations.herder import Herder
+from migrations.dataall_migrations.migrationmanager import MigrationManager
 from dataall.base.aws.parameter_store import ParameterStoreManager
 from botocore.exceptions import ClientError
 
@@ -51,9 +51,9 @@ def handler(event, context) -> None:
     if revision == -1:
         logger.error('Failed to retrieve revision from parameter store')
         return
-    herder = Herder()
-    upgraded = herder.upgrade(start_key=revision)
-    put_parameter_to_parameter_store(herder.current_key)
+    manager = MigrationManager()
+    upgraded = manager.upgrade(start_key=revision)
+    put_parameter_to_parameter_store(manager.current_key)
     if not upgraded:
         logger.error('Failed to upgrade Data.all.')
         raise Exception('Data.all migration failed.')

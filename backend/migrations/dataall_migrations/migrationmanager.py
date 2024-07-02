@@ -11,7 +11,7 @@ logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
 
-class Herder:
+class MigrationManager:
     def __init__(self):
         self.current_key = None
         self.migration_path = {}
