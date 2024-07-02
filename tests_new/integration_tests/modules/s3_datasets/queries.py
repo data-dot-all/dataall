@@ -1,5 +1,4 @@
 # TODO: This file will be replaced by using the SDK directly
-from backend.dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
 
 S3_DATASET_TYPE = """
 datasetUri
@@ -101,7 +100,7 @@ def create_dataset(
                 'environmentUri': environmentUri,
                 'SamlAdminGroupName': group,
                 'organizationUri': organizationUri,
-                'confidentiality': confidentiality or ConfidentialityClassification.Unclassified.value,
+                'confidentiality': confidentiality or 'Unclassified',
                 'autoApprovalEnabled': autoApprovalEnabled,
             }
         },

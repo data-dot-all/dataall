@@ -34,19 +34,9 @@ class Env:
 
 @dataclass_json
 @dataclass
-class Dataset:
-    name: str
-    bucket: str = ''
-    kmsAlias: str = ''
-    glueDatabaseName: str = ''
-
-
-@dataclass_json
-@dataclass
 class TestData:
     users: dict[str, User]
     envs: dict[str, Env]
-    datasets: dict[str, Dataset]
 
 
 @pytest.fixture(scope='session', autouse=True)

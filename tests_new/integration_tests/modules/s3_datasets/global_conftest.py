@@ -18,12 +18,10 @@ from integration_tests.modules.s3_datasets.aws_clients import S3Client, KMSClien
 log = logging.getLogger(__name__)
 
 
-def create_s3_dataset(
-    client, owner, group, org_uri, env_uri, dataset_name, tags=[], autoApprovalEnabled=False, confidentiality=None
-):
+def create_s3_dataset(client, owner, group, org_uri, env_uri, tags=[], autoApprovalEnabled=False, confidentiality=None):
     dataset = create_dataset(
         client,
-        name=dataset_name,
+        name='TestDatasetCreated',
         owner=owner,
         group=group,
         organizationUri=org_uri,
@@ -42,7 +40,6 @@ def import_s3_dataset(
     group,
     org_uri,
     env_uri,
-    dataset_name,
     bucket,
     kms_alias='',
     glue_db_name='',
@@ -52,7 +49,7 @@ def import_s3_dataset(
 ):
     dataset = import_dataset(
         client,
-        name=dataset_name,
+        name='TestDatasetImported',
         owner=owner,
         group=group,
         organizationUri=org_uri,
@@ -85,7 +82,6 @@ For this reason they must stay immutable as changes to them will affect the rest
 
 @pytest.fixture(scope='session')
 def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata):
-    envdata = testdata.datasets['session_s3_dataset1']
     ds = None
     try:
         ds = create_s3_dataset(
@@ -94,7 +90,6 @@ def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdat
             group=group1,
             org_uri=org1['organizationUri'],
             env_uri=session_env1['environmentUri'],
-            dataset_name=envdata.name,
             tags=[session_id],
         )
         yield ds
@@ -107,12 +102,12 @@ def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdat
 def session_imported_sse_s3_dataset1(
     client1, group1, org1, session_env1, session_id, testdata, session_env1_aws_client
 ):
-    envdata = testdata.datasets['session_imported_sse_s3_dataset1']
     ds = None
     bucket = None
+    bucket_name = f'sessionimportedsses3{session_id}'
     try:
         bucket = S3Client(session=session_env1_aws_client, region=session_env1['region']).create_bucket(
-            bucket_name=f'{envdata.bucket}{session_id}', kms_key_id=None
+            bucket_name=bucket_name, kms_key_id=None
         )
 
         ds = import_s3_dataset(
@@ -121,34 +116,32 @@ def session_imported_sse_s3_dataset1(
             group=group1,
             org_uri=org1['organizationUri'],
             env_uri=session_env1['environmentUri'],
-            dataset_name=envdata.name,
             tags=[session_id],
-            bucket=f'{envdata.bucket}{session_id}',
+            bucket=bucket_name,
         )
         yield ds
     finally:
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
-            S3Client(session=session_env1_aws_client, region=session_env1['region']).delete_bucket(
-                f'{envdata.bucket}{session_id}'
-            )
+        if bucket:
+            S3Client(session=session_env1_aws_client, region=session_env1['region']).delete_bucket(bucket_name)
 
 
 @pytest.fixture(scope='session')
 def session_imported_kms_s3_dataset1(
     client1, group1, org1, session_env1, session_id, testdata, session_env1_aws_client
 ):
-    envdata = testdata.datasets['session_imported_kms_s3_dataset1']
     ds = None
+    resource_name = f'sessionimportedkms{session_id}'
     try:
         kms_key_id = KMSClient(
             session=session_env1_aws_client, account_id=session_env1['AwsAccountId'], region=session_env1['region']
-        ).create_key_with_alias(f'{envdata.kmsAlias}{session_id}')
+        ).create_key_with_alias(resource_name)
         S3Client(session=session_env1_aws_client, region=session_env1['region']).create_bucket(
-            bucket_name=f'{envdata.bucket}{session_id}', kms_key_id=kms_key_id
+            bucket_name=resource_name, kms_key_id=kms_key_id
         )
         GlueClient(session=session_env1_aws_client, region=session_env1['region']).create_database(
-            database_name=f'{envdata.glueDatabaseName}{session_id}', bucket=f'{envdata.bucket}{session_id}'
+            database_name=resource_name, bucket=resource_name
         )
         ds = import_s3_dataset(
             client1,
@@ -156,25 +149,20 @@ def session_imported_kms_s3_dataset1(
             group=group1,
             org_uri=org1['organizationUri'],
             env_uri=session_env1['environmentUri'],
-            dataset_name=envdata.name,
             tags=[session_id],
-            bucket=f'{envdata.bucket}{session_id}',
-            kms_alias=f'{envdata.kmsAlias}{session_id}',
-            glue_db_name=f'{envdata.glueDatabaseName}{session_id}',
+            bucket=resource_name,
+            kms_alias=resource_name,
+            glue_db_name=resource_name,
         )
         yield ds
     finally:
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
-            S3Client(session=session_env1_aws_client, region=session_env1['region']).delete_bucket(
-                f'{envdata.bucket}{session_id}'
-            )
+            S3Client(session=session_env1_aws_client, region=session_env1['region']).delete_bucket(resource_name)
             KMSClient(
                 session=session_env1_aws_client, account_id=session_env1['AwsAccountId'], region=session_env1['region']
-            ).delete_key_by_alias(f'{envdata.kmsAlias}{session_id}')
-            GlueClient(session=session_env1_aws_client, region=session_env1['region']).delete_database(
-                f'{envdata.glueDatabaseName}{session_id}'
-            )
+            ).delete_key_by_alias(resource_name)
+            GlueClient(session=session_env1_aws_client, region=session_env1['region']).delete_database(resource_name)
 
 
 """
@@ -185,7 +173,6 @@ They are suitable to test env mutations.
 
 @pytest.fixture(scope='function')
 def temp_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata):
-    envdata = testdata.datasets['temp_s3_dataset1']
     ds = None
     try:
         ds = create_s3_dataset(
@@ -194,7 +181,6 @@ def temp_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata):
             group=group1,
             org_uri=org1['organizationUri'],
             env_uri=session_env1['environmentUri'],
-            dataset_name=envdata.name,
             tags=[session_id],
         )
         yield ds
@@ -209,25 +195,25 @@ They are suitable for testing backwards compatibility.
 """
 
 
-def get_or_create_persistent_s3_dataset(dataset_name, client, group, env, testdata):
+def get_or_create_persistent_s3_dataset(
+    dataset_name, client, group, env, bucket=None, kms_alias=None, glue_database=None
+):
+    dataset_name = 'persistent_s3_dataset1'
     s3_datasets = list_datasets(client, term=dataset_name).nodes
     if s3_datasets:
         return s3_datasets[0]
     else:
-        s3_dataset_data = testdata.datasets[dataset_name]
-
-        if s3_dataset_data.bucket:
+        if bucket:
             s3_dataset = import_s3_dataset(
                 client,
                 owner='someone',
                 group=group,
                 org_uri=env['organization']['organizationUri'],
                 env_uri=env['environmentUri'],
-                dataset_name=dataset_name,
                 tags=[dataset_name],
-                bucket=s3_dataset_data.bucket,
-                kms_alias=s3_dataset_data.kmsAlias,
-                glue_db_name=s3_dataset_data.glueDatabaseName,
+                bucket=bucket,
+                kms_alias=kms_alias,
+                glue_db_name=glue_database,
             )
 
         else:
@@ -237,7 +223,6 @@ def get_or_create_persistent_s3_dataset(dataset_name, client, group, env, testda
                 group=group,
                 org_uri=env['organization']['organizationUri'],
                 env_uri=env['environmentUri'],
-                dataset_name=dataset_name,
                 tags=[dataset_name],
             )
 
@@ -250,18 +235,24 @@ def get_or_create_persistent_s3_dataset(dataset_name, client, group, env, testda
 
 @pytest.fixture(scope='session')
 def persistent_s3_dataset1(client1, group1, persistent_env1, testdata):
-    return get_or_create_persistent_s3_dataset('persistent_s3_dataset1', client1, group1, persistent_env1, testdata)
+    return get_or_create_persistent_s3_dataset('persistent_s3_dataset1', client1, group1, persistent_env1)
 
 
 @pytest.fixture(scope='session')
 def persistent_imported_sse_s3_dataset1(client1, group1, persistent_env1, testdata):
     return get_or_create_persistent_s3_dataset(
-        'persistent_imported_sse_s3_dataset1', client1, group1, persistent_env1, testdata
+        'persistent_imported_sse_s3_dataset1', client1, group1, persistent_env1, 'persistentimportedsses3'
     )
 
 
 @pytest.fixture(scope='session')
 def persistent_imported_kms_s3_dataset1(client1, group1, persistent_env1, testdata):
     return get_or_create_persistent_s3_dataset(
-        'persistent_imported_kms_s3_dataset1', client1, group1, persistent_env1, testdata
+        'persistent_imported_kms_s3_dataset1',
+        client1,
+        group1,
+        persistent_env1,
+        'persistentimportedkms',
+        'persistentimportedkms',
+        'persistentimportedkms',
     )
