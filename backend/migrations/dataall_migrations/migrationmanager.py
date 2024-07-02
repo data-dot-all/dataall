@@ -69,6 +69,8 @@ class MigrationManager:
             if self.current_key == target_key:
                 break
             self.current_key = migration.next()
+        if self.current_key is None:
+            self.current_key = self.last_key
         logger.info('Upgrade completed')
         return True
 
