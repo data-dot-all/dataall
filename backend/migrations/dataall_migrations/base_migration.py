@@ -57,6 +57,10 @@ class BaseDataAllMigration(ABC):
 
     @classmethod
     def set_next(cls, next_migration_key):
+        if 'next_migration' in cls.__dict__ and cls.next_migration is not None:
+            raise Exception(
+                f'Conflict. Migrations {next_migration_key} and {cls.next_migration} have the same parent {cls.key()}'
+            )
         cls.next_migration = next_migration_key
 
     @classmethod

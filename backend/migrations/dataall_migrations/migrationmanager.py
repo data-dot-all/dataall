@@ -32,15 +32,28 @@ class MigrationManager:
             for name, obj in inspect.getmembers(module, inspect.isclass):
                 # Check if obj is a subclass of MyClass and not MyClass itself
                 if issubclass(obj, BaseDataAllMigration) and obj is not BaseDataAllMigration:
+                    if obj.key() in self.migration_path:
+                        raise Exception(
+                            f'Migrations {obj.name()} and {self.migration_path[obj.key()].name()} have the same key.'
+                        )
                     self.migration_path[obj.key()] = obj
 
         for key, migration in self.migration_path.items():
             prev = migration.previous_migration()
             if prev is not None:
+                if prev not in self.migration_path:
+                    raise Exception(f'Migration with key {prev} -- parent of {migration.name()} is not found')
                 self.migration_path[prev].set_next(key)
+            else:
+                if migration.key() != self.initial_key:
+                    raise Exception(f'Migration {migration.key()} has no parent, but is not initial migration.')
 
         for key, migration in self.migration_path.items():
             if migration.next() is None:
+                if self.last_key is not None:
+                    raise Exception(
+                        f'Migrations with keys {self.last_key} and {key} has no next_migrations. Unexpected revision structure.'
+                    )
                 self.last_key = key
                 break
 
