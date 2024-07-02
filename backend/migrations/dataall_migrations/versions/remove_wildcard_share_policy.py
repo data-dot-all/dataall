@@ -18,14 +18,24 @@ logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
 
 class RemoveWildCard(BaseDataAllMigration):
-    key = '51132fed-c36d-470c-9946-5164581856cb'
-    name = 'Remove Wildcard from Sharing Policy'
-    description = 'Remove Wildcard from Sharing Policy'
+    @staticmethod
+    def key():
+        return '51132fed-c36d-470c-9946-5164581856cb'
 
-    previous_migration = '0'  # initial migration
+    @staticmethod
+    def name():
+        return 'Remove Wildcard from Sharing Policy'
 
-    @classmethod
-    def up(cls):
+    @staticmethod
+    def description():
+        return 'Remove Wildcard from Sharing Policy'
+
+    @staticmethod
+    def previous_migration():
+        return '0'  # initial migration
+
+    @staticmethod
+    def up():
         logger.info('removing wildcard from sharing policy')
         envname = os.environ.get('envname', 'local')
         engine = get_engine(envname=envname)
@@ -69,3 +79,7 @@ class RemoveWildCard(BaseDataAllMigration):
                             version_id,
                             json.dumps(policy_document),
                         )
+
+    @staticmethod
+    def down():
+        print('Downgrade is not supported.')

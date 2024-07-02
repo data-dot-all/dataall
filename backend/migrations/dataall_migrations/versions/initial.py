@@ -2,8 +2,26 @@ from migrations.dataall_migrations.base_migration import BaseDataAllMigration
 
 
 class Init(BaseDataAllMigration):
-    key = '0'
-    name = 'Initial migration'
-    description = 'Initial migration'
+    @staticmethod
+    def key():
+        return '0'
 
-    previous_migration = None
+    @staticmethod
+    def name():
+        return 'Initial migration'
+
+    @staticmethod
+    def description():
+        return 'Initial migration'
+
+    @staticmethod
+    def previous_migration():
+        return None
+
+    @staticmethod
+    def up():
+        print('Initial migration. Up.')
+
+    @staticmethod
+    def down():
+        print('Initial migration. Down')

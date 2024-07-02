@@ -32,10 +32,10 @@ class Herder:
             for name, obj in inspect.getmembers(module, inspect.isclass):
                 # Check if obj is a subclass of MyClass and not MyClass itself
                 if issubclass(obj, BaseDataAllMigration) and obj is not BaseDataAllMigration:
-                    self.migration_path[obj.key] = obj
+                    self.migration_path[obj.key()] = obj
 
         for key, migration in self.migration_path.items():
-            prev = migration.previous()
+            prev = migration.previous_migration()
             if prev is not None:
                 self.migration_path[prev].set_next(key)
 
@@ -56,12 +56,12 @@ class Herder:
         while self.current_key is not None:
             migration = self.migration_path[self.current_key]
             try:
-                logger.info(f'Applying migration {migration.name}')
+                logger.info(f'Applying migration {migration.name()}')
                 migration.up()
-                logger.info(f'Migration {migration.name} completed')
+                logger.info(f'Migration {migration.name()} completed')
             except Exception as e:
                 logger.info(f'An error occurred while applying the migration.{e}.')
-                self.current_key = migration.previous()
+                self.current_key = migration.previous_migration()
                 logger.info(f'Upgrade terminated. Current revision is {self.current_key}')
                 if downgrade_if_fails:
                     self.downgrade(start_key, self.current_key, False)
@@ -80,9 +80,9 @@ class Herder:
         while self.current_key != '0':
             migration = self.migration_path[self.current_key]
             try:
-                logger.info(f'Reverting migration {migration.name}')
+                logger.info(f'Reverting migration {migration.name()}')
                 migration.down()
-                logger.info(f'Migration {migration.name} completed')
+                logger.info(f'Migration {migration.name()} completed')
             except Exception as e:
                 logger.info(f'An error occurred while reverting the migration.{e}.')
                 logger.info(f'Downgrade terminated. Current revision is {self.current_key}')
@@ -91,6 +91,6 @@ class Herder:
                 return False
             if self.current_key == target_key:
                 break
-            self.current_key = migration.previous()
+            self.current_key = migration.previous_migration()
         logger.info('Downgrade completed')
         return True
