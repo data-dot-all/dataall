@@ -44,7 +44,7 @@ class Herder:
                 self.last_key = key
                 break
 
-    def upgrade(self, target_key=None, start_key=None):
+    def upgrade(self, target_key=None, start_key=None, downgrade_if_fails = True):
         if start_key is not None:
             self.current_key = self.migration_path[start_key].next()
             if self.current_key is None:
@@ -63,6 +63,8 @@ class Herder:
                 logger.info(f'An error occurred while applying the migration.{e}.')
                 self.current_key = migration.previous()
                 logger.info(f'Upgrade terminated. Current revision is {self.current_key}')
+                if downgrade_if_fails:
+                    self.downgrade(start_key, self.current_key, False)
                 return False
             if self.current_key == target_key:
                 break
@@ -70,7 +72,7 @@ class Herder:
         logger.info('Upgrade completed')
         return True
 
-    def downgrade(self, target_key=None, start_key=None):
+    def downgrade(self, target_key=None, start_key=None, upgrade_if_fails = True):
         self.current_key = start_key if start_key is not None else self.last_key
         logger.info(
             f"Downgrade from {start_key if start_key is not None else 'latest'} to {target_key if target_key is not None else 'initial'}"
@@ -84,6 +86,8 @@ class Herder:
             except Exception as e:
                 logger.info(f'An error occurred while reverting the migration.{e}.')
                 logger.info(f'Downgrade terminated. Current revision is {self.current_key}')
+                if upgrade_if_fails:
+                    self.upgrade(start_key, self.current_key, False)
                 return False
             if self.current_key == target_key:
                 break
