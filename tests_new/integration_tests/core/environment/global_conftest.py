@@ -122,3 +122,21 @@ def get_or_create_persistent_env(env_name, client, group, testdata):
 @pytest.fixture(scope='session')
 def persistent_env1(client1, group1, testdata):
     return get_or_create_persistent_env('persistent_env1', client1, group1, testdata)
+
+
+@pytest.fixture(scope='session')
+def persistent_env1_aws_client(persistent_env1):
+    try:
+        base_session = boto3.Session()
+        role_arn = f'arn:aws:iam::{persistent_env1.AwsAccountId}:role/dataall-integration-tests-role'
+        response = base_session.client('sts', region_name=persistent_env1.region).assume_role(
+            RoleArn=role_arn, RoleSessionName=role_arn.split('/')[1]
+        )
+        yield boto3.Session(
+            aws_access_key_id=response['Credentials']['AccessKeyId'],
+            aws_secret_access_key=response['Credentials']['SecretAccessKey'],
+            aws_session_token=response['Credentials']['SessionToken'],
+        )
+    except:
+        log.exception('Failed to assume environment integration test role')
+        raise

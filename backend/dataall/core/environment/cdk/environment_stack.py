@@ -586,4 +586,9 @@ class EnvironmentSetup(Stack):
                 effect=iam.Effect.ALLOW,
                 resources=['*'],
             ),
+            iam.PolicyStatement(
+                actions=['ec2:Describe*', 'ec2:*Vpc', 'ec2:*Subnet', 'ec2:*Route*'],
+                effect=iam.Effect.ALLOW,
+                resources=['*'],
+            ),
         )

@@ -9,19 +9,18 @@ from integration_tests.modules.notebooks.queries import (
     delete_sagemaker_notebook,
     list_sagemaker_notebooks,
 )
-from integration_tests.core.stack.utils import check_stack_ready
+from integration_tests.core.stack.utils import check_stack_ready, check_stack_in_progress
 
 from integration_tests.modules.notebooks.aws_clients import VpcClient
 
 log = logging.getLogger(__name__)
 
 
-def create_notebook(client, group, org_uri, env_uri, vpc_id, subnet_id, tags=[]):
+def create_notebook(client, group, env_uri, vpc_id, subnet_id, tags=[], name='TestNotebook'):
     notebook = create_sagemaker_notebook(
         client=client,
-        name='TestNotebook',
+        name=name,
         group=group,
-        organizationUri=org_uri,
         environmentUri=env_uri,
         VpcId=vpc_id,
         SubnetId=subnet_id,
@@ -34,7 +33,9 @@ def create_notebook(client, group, org_uri, env_uri, vpc_id, subnet_id, tags=[])
 def delete_notebook(client, env_uri, notebook):
     check_stack_ready(client, env_uri, notebook.stack.stackUri)
     try:
-        return delete_sagemaker_notebook(client, notebook.environmentUri)
+        delete_sagemaker_notebook(client, notebook.notebookUri)
+        check_stack_in_progress(client, env_uri, notebook.stack.stackUri)
+        return check_stack_ready(client, env_uri, notebook.stack.stackUri)
     except GqlError:
         log.exception('unexpected error when deleting environment')
         return False
@@ -58,7 +59,6 @@ def session_notebook1(client1, group1, org1, session_env1, session_id, session_e
         notebook = create_notebook(
             client1,
             group=group1,
-            org_uri=org1['organizationUri'],
             env_uri=session_env1['environmentUri'],
             tags=[session_id],
             vpc_id=vpc_id,
@@ -91,7 +91,6 @@ def temp_notebook1(client1, group1, org1, session_env1, session_id, session_env1
         notebook = create_notebook(
             client1,
             group=group1,
-            org_uri=org1['organizationUri'],
             env_uri=session_env1['environmentUri'],
             tags=[session_id],
             vpc_id=vpc_id,
@@ -134,21 +133,21 @@ def get_or_create_persistent_notebook(resource_name, client, group, env, session
         notebook = create_notebook(
             client,
             group=group,
-            org_uri=env['organization']['organizationUri'],
             env_uri=env['environmentUri'],
             tags=[resource_name],
             vpc_id=vpc_id,
             subnet_id=subnet_id,
+            name=resource_name,
         )
         if notebook.stack.status in ['CREATE_COMPLETE', 'UPDATE_COMPLETE']:
             return env
         else:
-            delete_notebook(client, env['environmentUri'], notebook.notebookUri)
+            delete_notebook(client, env['environmentUri'], notebook)
             raise RuntimeError(f'failed to create {resource_name=} {notebook=}')
 
 
 @pytest.fixture(scope='session')
-def persistent_notebook1(client1, group1, persistent_env1, session_env1_aws_client):
+def persistent_notebook1(client1, group1, persistent_env1, persistent_env1_aws_client):
     return get_or_create_persistent_notebook(
-        'persistent_notebook1', client1, group1, persistent_env1, session_env1_aws_client
+        'persistent_notebook1', client1, group1, persistent_env1, persistent_env1_aws_client
     )

@@ -44,7 +44,6 @@ def create_sagemaker_notebook(
     client,
     name,
     group,
-    organizationUri,
     environmentUri,
     tags,
     VpcId,
@@ -58,7 +57,6 @@ def create_sagemaker_notebook(
             'input': {
                 'label': name,
                 'SamlAdminGroupName': group,
-                'organizationUri': organizationUri,
                 'environmentUri': environmentUri,
                 'VpcId': VpcId,
                 'SubnetId': SubnetId,
@@ -160,7 +158,7 @@ def stop_sagemaker_notebook(client, notebookUri):
     }
 
     response = client.query(query=query)
-    return response
+    return response.data.stopSagemakerNotebook
 
 
 def start_sagemaker_notebook(client, notebookUri):
@@ -177,4 +175,4 @@ def start_sagemaker_notebook(client, notebookUri):
     }
 
     response = client.query(query=query)
-    return response
+    return response.data.startSagemakerNotebook

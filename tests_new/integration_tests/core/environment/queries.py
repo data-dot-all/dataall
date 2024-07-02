@@ -61,6 +61,9 @@ def create_environment(client, name, group, organizationUri, awsAccountId, regio
                 'region': region,
                 'description': 'Created for integration testing',
                 'tags': tags,
+                'parameters': [
+                    {'key': 'notebooksEnabled', 'value': 'true'},
+                ],
             }
         },
         'query': f"""
