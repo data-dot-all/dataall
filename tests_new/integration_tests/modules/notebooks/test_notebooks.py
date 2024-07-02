@@ -2,6 +2,9 @@ import logging
 import time
 from assertpy import assert_that
 
+import re
+from integration_tests.utils import poller
+
 from integration_tests.core.stack.queries import update_stack
 from integration_tests.core.stack.utils import check_stack_in_progress, check_stack_ready
 from integration_tests.errors import GqlError
@@ -13,9 +16,6 @@ from tests_new.integration_tests.modules.notebooks.queries import (
 )
 
 log = logging.getLogger(__name__)
-
-import re
-from integration_tests.utils import poller
 
 
 def is_notebook_ready(notebook):
