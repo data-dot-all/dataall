@@ -54,7 +54,7 @@ def session_env1(client1, group1, org1, session_id, testdata):
 def session_env1_aws_client(session_env1, session_id):
     try:
         base_session = boto3.Session()
-        role_arn = f'arn:aws:iam::{session_env1.AwsAccountId}:role/dataall-integration-tests-role'
+        role_arn = f'arn:aws:iam::{session_env1.AwsAccountId}:role/dataall-integration-tests-role-{session_env1.region}'
         response = base_session.client('sts', region_name=session_env1.region).assume_role(
             RoleArn=role_arn, RoleSessionName=role_arn.split('/')[1]
         )

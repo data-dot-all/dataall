@@ -567,7 +567,7 @@ class EnvironmentSetup(Stack):
         self.test_role = iam.Role(
             self,
             'IntegrationTestRole',
-            role_name='dataall-integration-tests-role',
+            role_name=f'dataall-integration-tests-role-{self._environment.region}',
             assumed_by=iam.AccountPrincipal(os.getenv('TOOLING_ACCOUNT')),
         )
         self.test_role.add_to_policy(
