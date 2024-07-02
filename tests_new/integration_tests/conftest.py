@@ -14,6 +14,7 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 pytest_plugins = [
     'integration_tests.core.organizations.global_conftest',
     'integration_tests.core.environment.global_conftest',
+    'integration_tests.modules.notebooks.global_conftest',
 ]
 
 
