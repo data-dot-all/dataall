@@ -13,6 +13,7 @@ logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
 class Herder:
     def __init__(self):
+        self.current_key = None
         self.migration_path = {}
         dir_path = os.path.dirname(os.path.realpath(__file__))
         self.folder_path = os.path.join(dir_path, 'versions')
@@ -45,35 +46,47 @@ class Herder:
 
     def upgrade(self, target_key=None, start_key=None):
         if start_key is not None:
-            key = self.migration_path[start_key].next()
-            if key is None:
+            self.current_key = self.migration_path[start_key].next()
+            if self.current_key is None:
                 logger.info('Data-all version is up to date')
                 return
         else:
-            key = self.initial_key
-        logger.info(f"Upgrade from {key} to {target_key if target_key is not None else 'latest'}")
-        while key is not None:
-            migration = self.migration_path[key]
-            logger.info(f'Applying migration {migration.name}')
-            migration.up()
-            logger.info(f'Migration {migration.name} completed')
-            if key == target_key:
+            self.current_key = self.initial_key
+        logger.info(f"Upgrade from {self.current_key} to {target_key if target_key is not None else 'latest'}")
+        while self.current_key is not None:
+            migration = self.migration_path[self.current_key]
+            try:
+                logger.info(f'Applying migration {migration.name}')
+                migration.up()
+                logger.info(f'Migration {migration.name} completed')
+            except Exception as e:
+                logger.info(f'An error occurred while applying the migration.{e}.')
+                self.current_key = migration.previous()
+                logger.info(f'Upgrade terminated. Current revision is {self.current_key}')
+                return False
+            if self.current_key == target_key:
                 break
-            key = migration.next()
+            self.current_key = migration.next()
         logger.info('Upgrade completed')
+        return True
 
     def downgrade(self, target_key=None, start_key=None):
-        key = start_key if start_key is not None else self.last_key
+        self.current_key = start_key if start_key is not None else self.last_key
         logger.info(
             f"Downgrade from {start_key if start_key is not None else 'latest'} to {target_key if target_key is not None else 'initial'}"
         )
-        while key != '0':
-            migration = self.migration_path[key]
-            logger.info(f'Reverting migration {migration.name}')
-            migration.down()
-            logger.info(f'Migration {migration.name} completed')
-            if key == target_key:
+        while self.current_key != '0':
+            migration = self.migration_path[self.current_key]
+            try:
+                logger.info(f'Reverting migration {migration.name}')
+                migration.down()
+                logger.info(f'Migration {migration.name} completed')
+            except Exception as e:
+                logger.info(f'An error occurred while reverting the migration.{e}.')
+                logger.info(f'Downgrade terminated. Current revision is {self.current_key}')
+                return False
+            if self.current_key == target_key:
                 break
-            key = migration.previous()
-
+            self.current_key = migration.previous()
         logger.info('Downgrade completed')
+        return True

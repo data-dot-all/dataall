@@ -52,5 +52,8 @@ def handler(event, context) -> None:
         logger.error('Failed to retrieve revision from parameter store')
         return
     herder = Herder()
-    herder.upgrade(start_key=revision)
-    put_parameter_to_parameter_store(herder.last_key)
+    upgraded = herder.upgrade(start_key=revision)
+    put_parameter_to_parameter_store(herder.current_key)
+    if not upgraded:
+        logger.error('Failed to upgrade Data.all.')
+        raise Exception('Data.all migration failed.')
