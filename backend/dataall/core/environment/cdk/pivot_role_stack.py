@@ -132,6 +132,7 @@ class PivotRole(NestedStack):
                                 f'arn:aws:iam::{principal_id}:role/*graphql-role',
                                 f'arn:aws:iam::{principal_id}:role/*awsworker-role',
                                 f'arn:aws:iam::{principal_id}:role/*ecs-tasks-role',
+                                f'arn:aws:iam::{principal_id}:role/*dataall-migration-role',
                             ]
                         },
                     },
