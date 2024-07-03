@@ -13,6 +13,7 @@ from dataall.modules.s3_datasets.services.dataset_table_service import DatasetTa
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 from dataall.modules.s3_datasets.indexers.table_indexer import DatasetTableIndexer
+from dataall.modules.s3_datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.s3_datasets.services.dataset_alarm_service import DatasetAlarmService
 
 root = logging.getLogger()
@@ -68,6 +69,7 @@ def sync_tables(engine):
                     processed_tables.extend(tables)
 
                     DatasetTableIndexer.upsert_all(session, dataset_uri=dataset.datasetUri)
+                    DatasetIndexer.upsert(session=session, dataset_uri=dataset.datasetUri)
             except Exception as e:
                 log.error(
                     f'Failed to sync tables for dataset '

@@ -1,5 +1,6 @@
 from dataall.modules.catalog.api.enums import GlossaryRole
 from dataall.modules.catalog.services.glossaries_service import GlossariesService
+from dataall.modules.catalog.services.catalog_service import CatalogService
 from dataall.base.api.context import Context
 from dataall.modules.catalog.db.glossary_models import TermLink, GlossaryNode
 from dataall.base.db import exceptions
@@ -157,3 +158,7 @@ def search_glossary(context: Context, source, filter: dict = None):
     if not filter:
         filter = {}
     return GlossariesService.search_glossary_terms(data=filter)
+
+
+def start_reindex_catalog(context: Context, source, handleDeletes: bool):
+    return CatalogService.start_reindex_catalog(with_deletes=handleDeletes)

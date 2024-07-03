@@ -1,6 +1,6 @@
 import pytest
 
-from dataall.modules.catalog.tasks.catalog_indexer_task import index_objects
+from dataall.modules.catalog.tasks.catalog_indexer_task import CatalogIndexerTask
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 
 
@@ -54,6 +54,30 @@ def test_catalog_indexer(db, org, env, sync_dataset, table, mocker):
     mocker.patch(
         'dataall.modules.s3_datasets.indexers.dataset_indexer.DatasetIndexer.upsert', return_value=sync_dataset
     )
-    indexed_objects_counter = index_objects(engine=db)
+    indexed_objects_counter = CatalogIndexerTask.index_objects(engine=db)
     # Count should be One table + One Dataset = 2
     assert indexed_objects_counter == 2
+
+
+def test_catalog_indexer_with_deletes(db, org, env, sync_dataset, table, mocker):
+    # When Table no longer exists
+    mocker.patch('dataall.modules.s3_datasets.indexers.table_indexer.DatasetTableIndexer.upsert_all', return_value=[])
+    mocker.patch(
+        'dataall.modules.s3_datasets.indexers.dataset_indexer.DatasetIndexer.upsert', return_value=sync_dataset
+    )
+    mocker.patch(
+        'dataall.modules.catalog.indexers.base_indexer.BaseIndexer.search',
+        return_value={'hits': {'hits': [{'_id': table.tableUri}]}},
+    )
+    delete_doc_path = mocker.patch(
+        'dataall.modules.catalog.indexers.base_indexer.BaseIndexer.delete_doc', return_value=True
+    )
+
+    # And with_deletes 'True' for index_objects
+    indexed_objects_counter = CatalogIndexerTask.index_objects(engine=db, with_deletes='True')
+
+    # Index Objects Should call Delete Doc 1 time for Table
+    assert delete_doc_path.call_count == 1
+
+    # Count should be One Dataset = 1
+    assert indexed_objects_counter == 1
