@@ -1,59 +1,41 @@
 import logging
 import os
 from migrations.dataall_migrations.migrationmanager import MigrationManager
-from dataall.base.aws.parameter_store import ParameterStoreManager
-from botocore.exceptions import ClientError
+from dataall.base.db import get_engine
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
-envname = os.environ.get('ENVNAME', 'local')
-PARAM_KEY = f'/dataall/{envname}/dataall-migration/revision'
+ENVNAME = os.environ.get('ENVNAME', 'local')
+ENGINE = get_engine(envname=ENVNAME)
+PARAM_KEY = f'/dataall/{ENVNAME}/dataall-migration/revision'
 
 
-def get_parameter_from_parameter_store():
-    try:
-        parameter = ParameterStoreManager.get_parameter_value(
-            AwsAccountId=os.environ.get('AWS_ACCOUNT_ID'), region=os.environ.get('AWS_REGION'), parameter_path=PARAM_KEY
-        )
-        return parameter
-    except ClientError as e:
-        if e.response['Error']['Code'] == 'ParameterNotFound':
-            # Handle the case where the parameter is not found
-            logger.info(
-                f"Error: Parameter '{PARAM_KEY}' not found. Migrations will be executed starting with Initial "
-                f'Migration.'
+def get_current_revision():
+    with ENGINE.scoped_session() as session:
+        row = session.query('revision from dataall_migrations').first()
+        return row[0] if row else row
+
+
+def put_latest_revision(old_revision, new_revision):
+    with ENGINE.scoped_session() as session:
+        if old_revision:
+            session.execute(
+                f"""UPDATE dataall_migrations SET revision='{new_revision}' WHERE revision='{old_revision}';"""
             )
-            return None
-        # Handle other exceptions
-        logger.info(f'Failed to get parameter. Error: {e}')
-        return -1
-    except Exception as e:
-        logger.info(f'Failed to get parameter. Error: {e}')
-        return -1
-
-
-def put_parameter_to_parameter_store(value):
-    try:
-        ParameterStoreManager.update_parameter(
-            AwsAccountId=os.environ.get('AWS_ACCOUNT_ID'),
-            region=os.environ.get('AWS_REGION'),
-            parameter_name=PARAM_KEY,
-            parameter_value=value,
-        )
-    except Exception as e:
-        # Handle other exceptions
-        logger.info(f'Failed to put parameter. Error: {e}')
+        else:
+            print('here')
+            session.execute(f"""INSERT INTO dataall_migrations VALUES('{new_revision}');""")
 
 
 def handler(event, context) -> None:
-    revision = get_parameter_from_parameter_store()
-    if revision == -1:
-        logger.error('Failed to retrieve revision from parameter store')
-        return
-    manager = MigrationManager(revision)
+    revision = get_current_revision()
+    print('Old revision, ', revision)
+    current_key = revision if revision else '0'
+    manager = MigrationManager(current_key)
     new_version = manager.upgrade()
+    print(new_version)
     if not new_version:
         logger.error('Failed to upgrade Data.all.')
         raise Exception('Data.all migration failed.')
-    put_parameter_to_parameter_store(new_version)
+    put_latest_revision(revision, new_version)
