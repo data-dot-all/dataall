@@ -9,9 +9,14 @@ from integration_tests.modules.notebooks.queries import (
     delete_sagemaker_notebook,
     list_sagemaker_notebooks,
 )
-from integration_tests.core.stack.utils import check_stack_ready, check_stack_in_progress
+from integration_tests.core.stack.utils import check_stack_ready, check_stack_in_progress, wait_stack_delete_complete
 
 from integration_tests.modules.notebooks.aws_clients import VpcClient
+
+from dataall.base.utils.naming_convention import (
+    NamingConventionService,
+    NamingConventionPattern,
+)
 
 log = logging.getLogger(__name__)
 
@@ -37,18 +42,15 @@ def create_notebook(client, group, env_uri, vpc_id, subnet_id, tags=[], name='Te
 
 
 def delete_notebook(client, env_uri, notebook):
-    input_args = {
-        'client': client,
-        'env_uri': env_uri,
-        'stack_uri': notebook.stack.stackUri,
-        'target_uri': notebook.notebookUri,
-        'target_type': 'notebook',
-    }
-    check_stack_ready(**input_args)
+    check_stack_ready(
+        client=client,
+        env_uri=env_uri,
+        stack_uri=notebook.stack.stackUri,
+        target_uri=notebook.notebookUri,
+        target_type='notebook',
+    )
     try:
-        delete_sagemaker_notebook(client, notebook.notebookUri)
-        check_stack_in_progress(**input_args)
-        return check_stack_ready(**input_args)
+        return delete_sagemaker_notebook(client, notebook.notebookUri)
     except GqlError:
         log.exception('unexpected error when deleting environment')
         return False
@@ -61,14 +63,13 @@ For this reason they must stay immutable as changes to them will affect the rest
 
 
 @pytest.fixture(scope='session')
-def session_notebook1(client1, group1, org1, session_env1, session_id, session_env1_aws_client):
+def session_notebook1(client1, group1, session_env1, session_id, session_env1_aws_client):
     resource_name = 'sessionnotebook1'
     notebook = None
     try:
         vpc_client = VpcClient(session=session_env1_aws_client, region=session_env1['region'])
         vpc_id = vpc_client.create_vpc(vpc_name=resource_name, cidr='172.31.0.0/26')
         subnet_id = vpc_client.create_subnet(vpc_id=vpc_id, subnet_name=resource_name, cidr='172.31.0.0/28')
-
         notebook = create_notebook(
             client1,
             group=group1,
@@ -81,6 +82,16 @@ def session_notebook1(client1, group1, org1, session_env1, session_id, session_e
     finally:
         if notebook:
             delete_notebook(client1, session_env1['environmentUri'], notebook)
+            stack_name = NamingConventionService(
+                target_label='notebook',
+                target_uri=notebook.notebookUri,
+                pattern=NamingConventionPattern.DEFAULT,
+                resource_prefix=session_env1['resourcePrefix'],
+            ).build_compliant_name()
+            wait_stack_delete_complete(
+                session_env1_aws_client.client('cloudformation', region_name=session_env1['region']), stack_name
+            )
+
         vpc_client = VpcClient(session=session_env1_aws_client, region=session_env1['region'])
         vpc_client.delete_subnet_by_name(resource_name)
         vpc_client.delete_vpc_by_name(resource_name)
@@ -93,7 +104,7 @@ They are suitable to test env mutations.
 
 
 @pytest.fixture(scope='function')
-def temp_notebook1(client1, group1, org1, session_env1, session_id, session_env1_aws_client):
+def temp_notebook1(client1, group1, session_env1, session_id, session_env1_aws_client):
     resource_name = 'tempnotebook1'
     notebook = None
     try:
