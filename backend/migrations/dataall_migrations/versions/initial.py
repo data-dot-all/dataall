@@ -1,28 +1,25 @@
-from migrations.dataall_migrations.base_migration import BaseDataAllMigration
+from migrations.dataall_migrations.base_migration import MigrationBase
 from migrations.dataall_migrations.versions.remove_wildcard_share_policy import RemoveWildCard
+from typing import Type
 
 
-class InitMigration(BaseDataAllMigration):
+class InitMigration(MigrationBase):
     @staticmethod
-    def key():
+    def revision_id() -> str:
         return '0'
 
     @staticmethod
-    def name():
+    def description() -> str:
         return 'Initial migration'
 
     @staticmethod
-    def description():
-        return 'Initial migration'
-
-    @staticmethod
-    def next_migration():
+    def next_migration() -> Type[MigrationBase] | None:
         return RemoveWildCard
 
     @staticmethod
-    def up():
+    def up() -> None:
         print('Initial migration. Up.')
 
     @staticmethod
-    def down():
+    def down() -> None:
         print('Initial migration. Down')

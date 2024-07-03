@@ -30,12 +30,9 @@ def put_latest_revision(old_revision, new_revision):
 
 def handler(event, context) -> None:
     revision = get_current_revision()
-    print('Old revision, ', revision)
-    current_key = revision if revision else '0'
+    current_key = revision or '0'
     manager = MigrationManager(current_key)
     new_version = manager.upgrade()
-    print(new_version)
     if not new_version:
-        logger.error('Failed to upgrade Data.all.')
         raise Exception('Data.all migration failed.')
     put_latest_revision(revision, new_version)

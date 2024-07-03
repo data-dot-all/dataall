@@ -1,25 +1,18 @@
 import logging
 import os
 from abc import ABC, abstractmethod
+from typing import Type
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
 
-class BaseDataAllMigration(ABC):
+class MigrationBase(ABC):
     @staticmethod
     @abstractmethod
-    def key() -> str:
+    def revision_id() -> str:
         """
-        Returns string and needs to be implemented in the  inherited classes
-        """
-        ...
-
-    @staticmethod
-    @abstractmethod
-    def name() -> str:
-        """
-        Returns string and needs to be implemented in the  inherited classes
+        Uniq revision identifier.  To be implemented in the  inherited classes
         """
         ...
 
@@ -27,21 +20,21 @@ class BaseDataAllMigration(ABC):
     @abstractmethod
     def description() -> str:
         """
-        Returns string and needs to be implemented in the  inherited classes
+        Short description of migration logic and purpose. To be implemented in the  inherited classes
         """
         ...
 
     @staticmethod
     @abstractmethod
-    def next_migration():
+    def next_migration() -> Type['MigrationBase'] | None:
         """
-        Returns next migraton class and needs to be implemented in the  inherited classes
+        Returns next migration class and needs to be implemented in the  inherited classes
         """
         ...
 
     @staticmethod
     @abstractmethod
-    def up():
+    def up() -> None:
         """
         Performs upgrade and needs to be implemented in the inherited classes
         """
@@ -49,7 +42,7 @@ class BaseDataAllMigration(ABC):
 
     @staticmethod
     @abstractmethod
-    def down():
+    def down() -> None:
         """
         Performs downgrade and needs to be implemented in the inherited classes
         """

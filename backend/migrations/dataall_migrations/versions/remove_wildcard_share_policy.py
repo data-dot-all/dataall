@@ -5,33 +5,29 @@ from dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service
     IAM_S3_ACCESS_POINTS_STATEMENT_SID,
     IAM_S3_BUCKETS_STATEMENT_SID,
 )
-from migrations.dataall_migrations.base_migration import BaseDataAllMigration
+from migrations.dataall_migrations.base_migration import MigrationBase
 from dataall.base.aws.iam import IAM
 from dataall.base.db import get_engine
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 import json
-
+from typing import Type
 import logging
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
 
-class RemoveWildCard(BaseDataAllMigration):
+class RemoveWildCard(MigrationBase):
     @staticmethod
-    def key():
+    def revision_id() -> str:
         return '51132fed-c36d-470c-9946-5164581856cb'
 
     @staticmethod
-    def name():
+    def description() -> str:
         return 'Remove Wildcard from Sharing Policy'
 
     @staticmethod
-    def description():
-        return 'Remove Wildcard from Sharing Policy'
-
-    @staticmethod
-    def next_migration():
+    def next_migration() -> Type[MigrationBase] | None:
         return None
 
     @staticmethod

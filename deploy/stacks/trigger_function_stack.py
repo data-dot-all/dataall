@@ -44,7 +44,7 @@ class TriggerFunctionStack(pyNestedClass):
         function_sgs = self.create_lambda_sgs(envname, handler, resource_prefix, vpc)
         statements = self.get_policy_statements(resource_prefix) + (additional_policy_statements or [])
 
-        self.role_name = role_name if role_name else f'{id}Role'
+        self.role_name = role_name or f'{id}Role'
         self.role = iam.Role(
             self,
             f'{self.role_name.replace("_", "")}',
