@@ -6,7 +6,7 @@ from dataall.base.db import get_engine
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
-ENVNAME = os.environ.get('ENVNAME', 'local')
+ENVNAME = os.environ.get('envname', 'local')
 ENGINE = get_engine(envname=ENVNAME)
 PARAM_KEY = f'/dataall/{ENVNAME}/dataall-migration/revision'
 
