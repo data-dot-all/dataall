@@ -580,15 +580,19 @@ class EnvironmentSetup(Stack):
                 actions=['s3:CreateBucket', 's3:DeleteBucket'],
                 effect=iam.Effect.ALLOW,
                 resources=['*'],
-            ),
+            )
+        )
+        self.test_role.add_to_policy(
             iam.PolicyStatement(
                 actions=['glue:createDatabase', 'glue:deleteDatabase'],
                 effect=iam.Effect.ALLOW,
                 resources=['*'],
-            ),
+            )
+        )
+        self.test_role.add_to_policy(
             iam.PolicyStatement(
                 actions=['kms:CreateKey', 'kms:DeleteKey', 'kms:ListAliases'],
                 effect=iam.Effect.ALLOW,
                 resources=['*'],
-            ),
+            )
         )
