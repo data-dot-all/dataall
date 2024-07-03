@@ -45,10 +45,13 @@ class VpcClient:
         return vpc_id
 
     def delete_vpc_by_name(self, vpc_name: str):
-        vpc_id = self.get_vpc_id_by_name(vpc_name)
-        if vpc_id:
-            self.delete_vpc(vpc_id)
-        return True
+        try:
+            vpc_id = self.get_vpc_id_by_name(vpc_name)
+            if vpc_id:
+                self.delete_vpc(vpc_id)
+            return True
+        except Exception as e:
+            log.error(f'Error deleting vpc {vpc_name=}. Error Message: {e}')
 
     def create_subnet(self, vpc_id: str, subnet_name: str, cidr: str) -> str:
         log.info('Creating subnet..')
@@ -85,7 +88,10 @@ class VpcClient:
         return response
 
     def delete_subnet_by_name(self, subnet_name: str):
-        subnet_id = self.get_subnet_id_by_name(subnet_name)
-        if subnet_id:
-            self.delete_subnet(subnet_id)
-        return True
+        try:
+            subnet_id = self.get_subnet_id_by_name(subnet_name)
+            if subnet_id:
+                self.delete_subnet(subnet_id)
+            return True
+        except Exception as e:
+            log.error(f'Error deleting subnet {subnet_name=}. Error Message: {e}')

@@ -26,16 +26,29 @@ def create_notebook(client, group, env_uri, vpc_id, subnet_id, tags=[], name='Te
         SubnetId=subnet_id,
         tags=tags,
     )
-    check_stack_ready(client, env_uri, notebook.stack.stackUri)
-    return get_sagemaker_notebook(client, notebook.environmentUri)
+    check_stack_ready(
+        client=client,
+        env_uri=env_uri,
+        stack_uri=notebook.stack.stackUri,
+        target_uri=notebook.notebookUri,
+        target_type='notebook',
+    )
+    return get_sagemaker_notebook(client, notebook.notebookUri)
 
 
 def delete_notebook(client, env_uri, notebook):
-    check_stack_ready(client, env_uri, notebook.stack.stackUri)
+    input_args = {
+        'client': client,
+        'env_uri': env_uri,
+        'stack_uri': notebook.stack.stackUri,
+        'target_uri': notebook.notebookUri,
+        'target_type': 'notebook',
+    }
+    check_stack_ready(**input_args)
     try:
         delete_sagemaker_notebook(client, notebook.notebookUri)
-        check_stack_in_progress(client, env_uri, notebook.stack.stackUri)
-        return check_stack_ready(client, env_uri, notebook.stack.stackUri)
+        check_stack_in_progress(**input_args)
+        return check_stack_ready(**input_args)
     except GqlError:
         log.exception('unexpected error when deleting environment')
         return False
