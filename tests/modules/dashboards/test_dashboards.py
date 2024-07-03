@@ -344,6 +344,4 @@ def test_get_author_session(mocker, client, env_fixture, user, group, dashboard)
         username=user.username,
         groups=[group.name],
     )
-    print(response.data)
-    print(response.errors)
     assert response.data.getAuthorSession == 'EmbedUrl'
