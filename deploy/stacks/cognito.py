@@ -240,6 +240,34 @@ class IdpStack(pyNestedClass):
             string_value=cross_account_frontend_config_role.role_name,
         )
 
+        lambda_env_key = kms.Key(
+            self,
+            f'{resource_prefix}-cogn-lambda-env-var-key',
+            removal_policy=RemovalPolicy.DESTROY,
+            alias=f'{resource_prefix}-cogn-lambda-env-var-key',
+            enable_key_rotation=True,
+            policy=iam.PolicyDocument(
+                statements=[
+                    iam.PolicyStatement(
+                        resources=['*'],
+                        effect=iam.Effect.ALLOW,
+                        principals=[
+                            iam.AccountPrincipal(account_id=self.account),
+                        ],
+                        actions=['kms:*'],
+                    ),
+                    iam.PolicyStatement(
+                        resources=['*'],
+                        effect=iam.Effect.ALLOW,
+                        principals=[
+                            iam.ServicePrincipal(service='lambda.amazonaws.com'),
+                        ],
+                        actions=['kms:GenerateDataKey*', 'kms:Decrypt'],
+                    ),
+                ],
+            ),
+        )
+
         if internet_facing:
             role_inline_policy = iam.Policy(
                 self,
@@ -280,33 +308,6 @@ class IdpStack(pyNestedClass):
                     'custom_resources',
                     'sync_congito_params',
                 )
-            )
-            lambda_env_key = kms.Key(
-                self,
-                f'{resource_prefix}-cogn-lambda-env-var-key',
-                removal_policy=RemovalPolicy.DESTROY,
-                alias=f'{resource_prefix}-cogn-lambda-env-var-key',
-                enable_key_rotation=True,
-                policy=iam.PolicyDocument(
-                    statements=[
-                        iam.PolicyStatement(
-                            resources=['*'],
-                            effect=iam.Effect.ALLOW,
-                            principals=[
-                                iam.AccountPrincipal(account_id=self.account),
-                            ],
-                            actions=['kms:*'],
-                        ),
-                        iam.PolicyStatement(
-                            resources=['*'],
-                            effect=iam.Effect.ALLOW,
-                            principals=[
-                                iam.ServicePrincipal(service='lambda.amazonaws.com'),
-                            ],
-                            actions=['kms:GenerateDataKey*', 'kms:Decrypt'],
-                        ),
-                    ],
-                ),
             )
             cognito_sync_handler = _lambda.Function(
                 self,
