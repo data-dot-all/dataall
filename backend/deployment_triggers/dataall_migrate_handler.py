@@ -20,12 +20,10 @@ def get_current_revision():
 def put_latest_revision(old_revision, new_revision):
     with ENGINE.scoped_session() as session:
         if old_revision:
-            session.execute(
-                f"""UPDATE dataall_migrations SET revision='{new_revision}' WHERE revision='{old_revision}';"""
-            )
+            sql_params = "UPDATE dataall_migrations SET revision='%s' WHERE revision='%s';".format()
         else:
-            print('here')
-            session.execute(f"""INSERT INTO dataall_migrations VALUES('{new_revision}');""")
+            sql_params = "INSERT INTO dataall_migrations VALUES('%s');".format()
+        session.execute(sql_params)
 
 
 def handler(event, context) -> None:
@@ -36,3 +34,6 @@ def handler(event, context) -> None:
     if not new_version:
         raise Exception('Data.all migration failed.')
     put_latest_revision(revision, new_version)
+
+
+handler(None, None)
