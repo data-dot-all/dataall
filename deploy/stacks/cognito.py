@@ -242,9 +242,9 @@ class IdpStack(pyNestedClass):
 
         lambda_env_key = kms.Key(
             self,
-            f'{resource_prefix}-cogn-lambda-env-var-key',
+            f'{resource_prefix}-{envname}-cogn-config-lambda-env-var-key',
             removal_policy=RemovalPolicy.DESTROY,
-            alias=f'{resource_prefix}-cogn-lambda-env-var-key',
+            alias=f'{resource_prefix}-{envname}-cogn-config-lambda-env-var-key',
             enable_key_rotation=True,
             policy=iam.PolicyDocument(
                 statements=[
