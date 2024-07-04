@@ -599,7 +599,7 @@ class EnvironmentSetup(Stack):
 
         self.test_role.add_to_policy(
             iam.PolicyStatement(
-                actions=['ec2:Describe*', 'ec2:*Vpc', 'ec2:*Subnet', 'ec2:*Route*'],
+                actions=['ec2:Describe*', 'ec2:*Vpc', 'ec2:*Subnet', 'ec2:*Route*', 'ec2:*Tags'],
                 effect=iam.Effect.ALLOW,
                 resources=['*'],
             ),
