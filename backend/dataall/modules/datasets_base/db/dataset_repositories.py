@@ -62,10 +62,12 @@ class DatasetListRepository:
             query = all_subqueries[0].union(*all_subqueries[1:])
 
         if filter and filter.get('term'):
+            term = filter['term']
             query = query.filter(
                 or_(
-                    DatasetBase.description.ilike(filter.get('term') + '%%'),
-                    DatasetBase.label.ilike(filter.get('term') + '%%'),
+                    DatasetBase.description.ilike(term + '%%'),
+                    DatasetBase.label.ilike(term + '%%'),
+                    DatasetBase.tags.contains(f'{{{term}}}'),
                 )
             )
         return query.order_by(DatasetBase.label).distinct(DatasetBase.datasetUri, DatasetBase.label)
