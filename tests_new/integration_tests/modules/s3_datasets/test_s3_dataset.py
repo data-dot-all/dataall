@@ -179,9 +179,7 @@ def test_get_dataset_presigned_url_upload_data(client1, client2, session_s3_data
     )
 
     object_name = './sample_data/books.csv'
-
-    # Upload multiple files with post request using presigned URL
-
+    # TODO: Test + Iterate for Multiple Files
     with open(object_name, 'rb') as f:
         response = get_dataset_presigned_role_url(
             client1, dataset_uri, input={'prefix': 'sample_data', 'fileName': f.name}
@@ -193,22 +191,17 @@ def test_get_dataset_presigned_url_upload_data(client1, client2, session_s3_data
         http_response.raise_for_status()
 
 
-# def test_upload_data_to_new_datasets_success(path_to_config, client_mapping):
-#     config = Config(path_to_config).config
-#     for resource in config.get("test_resources").get("created_datasets") + config.get("test_resources").get("imported_datasets"):
-#         client = client_mapping.get(resource.get("username"))
-#         normalized_name = f"dataall-{resource.get('name').lower()}-{resource.get('uri')}"
-#         bucket_name = resource.get("aws_infra",{}).get("bucket") if resource.get("aws_infra",{}).get("bucket") else normalized_name
-#         print("Getting AWS credentials for dataset IAM role")
-#         creds = client.generate_dataset_access_token(datasetUri=resource.get("uri"))
-#         S3Client(creds=json.loads(creds)).upload_local_folder(bucket_name=bucket_name)
+# TODO: Write Tests for the following casses + unauth user assertions
+# def test_start_crawler()
 
-# def test_upload_data_to_new_datasets_success(path_to_config, client_mapping):
-#     config = Config(path_to_config).config
-#     for resource in config.get("test_resources").get("created_datasets") + config.get("test_resources").get("imported_datasets"):
-#         client = client_mapping.get(resource.get("username"))
-#         normalized_name = f"dataall-{resource.get('name').lower()}-{resource.get('uri')}"
-#         bucket_name = resource.get("aws_infra",{}).get("bucket") if resource.get("aws_infra",{}).get("bucket") else normalized_name
-#         print("Getting AWS credentials for dataset IAM role")
-#         creds = client.generate_dataset_access_token(datasetUri=resource.get("uri"))
-#         S3Client(creds=json.loads(creds)).upload_local_folder(bucket_name=bucket_name)
+# def test_sync_tables()
+
+# def test_start_table_profiling()
+
+# def test_preview_table()
+
+# def test_delete_table()
+
+# def test_create_folder()
+
+# def test_delete_folder()
