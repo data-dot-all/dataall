@@ -2,8 +2,16 @@ import logging
 from datetime import datetime
 import time
 from assertpy import assert_that
+import requests
 
-from integration_tests.modules.s3_datasets.queries import get_dataset, update_dataset, delete_dataset
+from integration_tests.modules.s3_datasets.queries import (
+    get_dataset,
+    update_dataset,
+    delete_dataset,
+    get_dataset_assume_role_url,
+    generate_dataset_access_token,
+    get_dataset_presigned_role_url,
+)
 from integration_tests.modules.s3_datasets.global_conftest import create_s3_dataset
 from integration_tests.modules.datasets_base.queries import list_datasets
 from integration_tests.core.stack.queries import update_stack
@@ -139,3 +147,68 @@ def test_persistent_import_kms_s3_dataset_update(client1, persistent_imported_km
         client1, env_uri=env_uri, stack_uri=stack_uri, target_uri=dataset_uri, target_type=target_type
     )
     assert_that(stack.status).is_in('CREATE_COMPLETE', 'UPDATE_COMPLETE')
+
+
+def test_access_dataset_assume_role_url(client1, client2, session_s3_dataset1):
+    dataset_uri = session_s3_dataset1.datasetUri
+
+    assert_that(get_dataset_assume_role_url).raises(GqlError).when_called_with(client2, dataset_uri).contains(
+        'UnauthorizedOperation', 'CREDENTIALS_DATASET', dataset_uri
+    )
+
+    assert_that(get_dataset_assume_role_url(client1, dataset_uri)).starts_with(
+        'https://signin.aws.amazon.com/federation'
+    )
+
+
+def test_generate_dataset_access_token(client1, client2, session_s3_dataset1):
+    dataset_uri = session_s3_dataset1.datasetUri
+
+    assert_that(generate_dataset_access_token).raises(GqlError).when_called_with(client2, dataset_uri).contains(
+        'UnauthorizedOperation', 'CREDENTIALS_DATASET', dataset_uri
+    )
+
+    creds = generate_dataset_access_token(client1, dataset_uri)
+    assert_that(creds).contains_key('AccessKey', 'SessionKey', 'sessionToken')
+
+
+def test_get_dataset_presigned_url_upload_data(client1, client2, session_s3_dataset1):
+    dataset_uri = session_s3_dataset1.datasetUri
+    assert_that(get_dataset_presigned_role_url).raises(GqlError).when_called_with(client2, dataset_uri).contains(
+        'UnauthorizedOperation', 'CREDENTIALS_DATASET', dataset_uri
+    )
+
+    object_name = './sample_data/books.csv'
+
+    # Upload multiple files with post request using presigned URL
+
+    with open(object_name, 'rb') as f:
+        response = get_dataset_presigned_role_url(
+            client1, dataset_uri, input={'prefix': 'sample_data', 'fileName': f.name}
+        )
+        assert_that(response).contains_key('url', 'fields')
+
+        files = {'file': (object_name, f)}
+        http_response = requests.post(response['url'], data=response['fields'], files=files)
+        http_response.raise_for_status()
+
+
+# def test_upload_data_to_new_datasets_success(path_to_config, client_mapping):
+#     config = Config(path_to_config).config
+#     for resource in config.get("test_resources").get("created_datasets") + config.get("test_resources").get("imported_datasets"):
+#         client = client_mapping.get(resource.get("username"))
+#         normalized_name = f"dataall-{resource.get('name').lower()}-{resource.get('uri')}"
+#         bucket_name = resource.get("aws_infra",{}).get("bucket") if resource.get("aws_infra",{}).get("bucket") else normalized_name
+#         print("Getting AWS credentials for dataset IAM role")
+#         creds = client.generate_dataset_access_token(datasetUri=resource.get("uri"))
+#         S3Client(creds=json.loads(creds)).upload_local_folder(bucket_name=bucket_name)
+
+# def test_upload_data_to_new_datasets_success(path_to_config, client_mapping):
+#     config = Config(path_to_config).config
+#     for resource in config.get("test_resources").get("created_datasets") + config.get("test_resources").get("imported_datasets"):
+#         client = client_mapping.get(resource.get("username"))
+#         normalized_name = f"dataall-{resource.get('name').lower()}-{resource.get('uri')}"
+#         bucket_name = resource.get("aws_infra",{}).get("bucket") if resource.get("aws_infra",{}).get("bucket") else normalized_name
+#         print("Getting AWS credentials for dataset IAM role")
+#         creds = client.generate_dataset_access_token(datasetUri=resource.get("uri"))
+#         S3Client(creds=json.loads(creds)).upload_local_folder(bucket_name=bucket_name)
