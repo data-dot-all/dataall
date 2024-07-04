@@ -10,7 +10,7 @@ from dataall.base.aws.iam import IAM
 from dataall.base.db import get_engine
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 import json
-from typing import Type,Union
+from typing import Type, Union
 import logging
 
 logger = logging.getLogger()
@@ -33,7 +33,6 @@ class RemoveWildCard(MigrationBase):
     @classmethod
     def up(cls):
         logger.info('removing wildcard from sharing policy')
-        return
         envname = os.environ.get('envname', 'local')
         engine = get_engine(envname=envname)
         with engine.scoped_session() as session:

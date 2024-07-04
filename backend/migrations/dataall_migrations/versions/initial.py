@@ -1,6 +1,6 @@
 from migrations.dataall_migrations.base_migration import MigrationBase
 from migrations.dataall_migrations.versions.remove_wildcard_share_policy import RemoveWildCard
-from typing import Type,Union
+from typing import Type, Union
 
 
 class InitMigration(MigrationBase):
