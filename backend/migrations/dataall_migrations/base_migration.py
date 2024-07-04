@@ -1,49 +1,49 @@
 import logging
 import os
 from abc import ABC, abstractmethod
-from typing import Type
+from typing import Type,Union
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
 
 class MigrationBase(ABC):
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def revision_id() -> str:
+    def revision_id(cls) -> str:
         """
-        Uniq revision identifier.  To be implemented in the  inherited classes
+        Uniq revision identifier.
         """
         ...
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def description() -> str:
+    def description(cls) -> str:
         """
-        Short description of migration logic and purpose. To be implemented in the  inherited classes
+        Short description of migration logic and purpose.
         """
         ...
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def next_migration() -> Type['MigrationBase'] | None:
+    def next_migration(cls) -> Union[Type['MigrationBase'], None]:
         """
-        Returns next migration class and needs to be implemented in the  inherited classes
+        Returns next migration class
         """
         ...
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def up() -> None:
+    def up(cls) -> None:
         """
-        Performs upgrade and needs to be implemented in the inherited classes
+        Performs upgrade
         """
         ...
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def down() -> None:
+    def down(cls) -> None:
         """
-        Performs downgrade and needs to be implemented in the inherited classes
+        Performs downgrade
         """
         ...

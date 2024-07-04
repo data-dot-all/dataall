@@ -11,12 +11,14 @@ logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
 
 class MigrationManager:
-    def __init__(self, key='0', initial_migration=InitMigration):
+    def __init__(self, current_revision='0', initial_migration=InitMigration):
         self.current_migration = initial_migration
         self.previous_migrations: Deque[MigrationBase] = deque()
-        while self.current_migration.revision_id() != key:
+        while self.current_migration.revision_id() != current_revision:
             self.previous_migrations.append(self.current_migration)
             self.current_migration = self.current_migration.next_migration()
+            if not self.current_migration:
+                raise Exception(f'Revision {current_revision} is not found.')
         self.executed_upgrades: Deque[MigrationBase] = deque()
         self.executed_downgrades: Deque[MigrationBase] = deque()
 

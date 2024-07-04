@@ -10,7 +10,7 @@ from dataall.base.aws.iam import IAM
 from dataall.base.db import get_engine
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 import json
-from typing import Type
+from typing import Type,Union
 import logging
 
 logger = logging.getLogger()
@@ -18,21 +18,22 @@ logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
 
 class RemoveWildCard(MigrationBase):
-    @staticmethod
-    def revision_id() -> str:
+    @classmethod
+    def revision_id(cls) -> str:
         return '51132fed-c36d-470c-9946-5164581856cb'
 
-    @staticmethod
-    def description() -> str:
+    @classmethod
+    def description(cls) -> str:
         return 'Remove Wildcard from Sharing Policy'
 
-    @staticmethod
-    def next_migration() -> Type[MigrationBase] | None:
+    @classmethod
+    def next_migration(cls) -> Union[Type['MigrationBase'], None]:
         return None
 
-    @staticmethod
-    def up():
+    @classmethod
+    def up(cls):
         logger.info('removing wildcard from sharing policy')
+        return
         envname = os.environ.get('envname', 'local')
         engine = get_engine(envname=envname)
         with engine.scoped_session() as session:
@@ -76,6 +77,6 @@ class RemoveWildCard(MigrationBase):
                             json.dumps(policy_document),
                         )
 
-    @staticmethod
-    def down():
+    @classmethod
+    def down(cls):
         logger.info('Downgrade is not supported.')

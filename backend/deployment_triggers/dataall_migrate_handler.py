@@ -20,9 +20,9 @@ def get_current_revision():
 def put_latest_revision(old_revision, new_revision):
     with ENGINE.scoped_session() as session:
         if old_revision:
-            sql_params = "UPDATE dataall_migrations SET revision='%s' WHERE revision='%s';".format()
+            sql_params = "UPDATE dataall_migrations SET revision='{}' WHERE revision='{}';".format(new_revision, old_revision)
         else:
-            sql_params = "INSERT INTO dataall_migrations VALUES('%s');".format()
+            sql_params = "INSERT INTO dataall_migrations VALUES('{}');".format(new_revision)
         session.execute(sql_params)
 
 
@@ -35,5 +35,3 @@ def handler(event, context) -> None:
         raise Exception('Data.all migration failed.')
     put_latest_revision(revision, new_version)
 
-
-handler(None, None)
