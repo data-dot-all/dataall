@@ -687,8 +687,6 @@ class PipelineStack(Stack):
                                     f'export TESTDATA=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/testdata --profile buildprofile --output text --query "Parameter.Value")',
                                     f'export ENVNAME={target_env["envname"]}',
                                     f'export AWS_REGION={target_env["region"]}',
-                                    'export INTEGRATION_TESTS=True',
-                                    f'export TOOLING_ACCOUNT={self.account}',
                                     f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                                     'python -m venv env',
                                     '. env/bin/activate',

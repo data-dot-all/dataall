@@ -22,6 +22,7 @@ from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.services.managed_iam_policies import PolicyManager
+from dataall.core.environment.api.enums import EnvironmentType
 from dataall.base.cdkproxy.stacks.manager import stack
 from dataall.core.environment.cdk.pivot_role_stack import PivotRole
 from dataall.core.environment.cdk.env_role_core_policies.data_policy import S3Policy
@@ -139,7 +140,7 @@ class EnvironmentSetup(Stack):
             self.engine, self._environment
         )
         # Create test role for integration tests
-        if os.getenv('INTEGRATION_TESTS', None) == 'True':
+        if self._environment.environmentType == EnvironmentType.IntegrationTesting.value:
             self.create_integration_tests_role()
 
         # Create or import Pivot role
@@ -564,28 +565,39 @@ class EnvironmentSetup(Stack):
         return topic
 
     def create_integration_tests_role(self):
+        toolingAccount = ParameterStoreManager.get_parameter_value(
+            region=os.getenv('AWS_REGION', 'eu-west-1'),
+            parameter_path=f"/dataall/{os.getenv('envname', 'local')}/toolingAccount",
+        )
         self.test_role = iam.Role(
             self,
             'IntegrationTestRole',
-            role_name='dataall-integration-tests-role',
-            assumed_by=iam.AccountPrincipal(os.getenv('TOOLING_ACCOUNT')),
+            role_name=f'dataall-integration-tests-role-{self._environment.region}',
+            assumed_by=iam.AccountPrincipal(toolingAccount),
         )
         self.test_role.add_to_policy(
             iam.PolicyStatement(
                 actions=['s3:CreateBucket', 's3:DeleteBucket'],
                 effect=iam.Effect.ALLOW,
                 resources=['*'],
-            ),
+            )
+        )
+        self.test_role.add_to_policy(
             iam.PolicyStatement(
                 actions=['glue:createDatabase', 'glue:deleteDatabase'],
                 effect=iam.Effect.ALLOW,
                 resources=['*'],
-            ),
+            )
+        )
+        self.test_role.add_to_policy(
             iam.PolicyStatement(
                 actions=['kms:CreateKey', 'kms:DeleteKey', 'kms:ListAliases'],
                 effect=iam.Effect.ALLOW,
                 resources=['*'],
-            ),
+            )
+        )
+
+        self.test_role.add_to_policy(
             iam.PolicyStatement(
                 actions=['ec2:Describe*', 'ec2:*Vpc', 'ec2:*Subnet', 'ec2:*Route*'],
                 effect=iam.Effect.ALLOW,
