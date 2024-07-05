@@ -1,4 +1,3 @@
-
 def NewShareObjectInput(environmentUri, groupUri, principalId, principalType, requestPurpose, attachMissingPolicies):
     return {
         'environmentUri': environmentUri,
