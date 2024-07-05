@@ -62,10 +62,10 @@ def test_persistent_env_update(client1, persistent_env1):
     assert_that(stack.status).is_equal_to('UPDATE_COMPLETE')
 
 
-def test_invite_group_on_env_no_org(client1, session_env2, group3):
+def test_invite_group_on_env_no_org(client1, session_env2, group4):
     assert_that(invite_group_on_env).raises(GqlError).when_called_with(
-        client1, session_env2.environmentUri, group3, ['CREATE_DATASET']
-    ).contains(group3, 'is not a member of the organization')
+        client1, session_env2.environmentUri, group4, ['CREATE_DATASET']
+    ).contains(group4, 'is not a member of the organization')
 
 
 def test_invite_group_on_env_unauthorized(client2, session_env2, group2):
