@@ -34,7 +34,26 @@ def test_add_share_items(client2, share1):
     assert_that(items[0].status).is_equal_to(ShareItemStatus.PendingApproval.value)
 
 
+
 def test_submit_object_no_auto_approval(client2, share1):
     submit_share_object(client2, share1.shareUri)
     updated_share = get_share_object(client2, share1.shareUri)
     assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Submitted.value)
+
+
+def test_submit_object_with_auto_approval(client2, share2):
+    items = share2['items'].nodes
+    item_to_add = items[0]
+    add_share_item(client2, share2.shareUri, item_to_add.itemUri, item_to_add.itemType)
+
+    submit_share_object(client2, share2.shareUri)
+    updated_share = get_share_object(client2, share2.shareUri)
+    assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Approved.value)
+
+
+def test_reject_share(client1, share1):
+    pass
+
+
+def test_approve_share(client1, share1):
+    pass
