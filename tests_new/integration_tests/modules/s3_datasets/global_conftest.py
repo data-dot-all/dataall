@@ -1,15 +1,17 @@
 import logging
-
+import re
 import pytest
-
+import boto3
 from integration_tests.client import GqlError
 from integration_tests.core.stack.utils import check_stack_ready
 
 from integration_tests.modules.s3_datasets.queries import (
     create_dataset,
+    generate_dataset_access_token,
     import_dataset,
     delete_dataset,
     get_dataset,
+    sync_tables,
 )
 from tests_new.integration_tests.modules.datasets_base.queries import list_datasets
 
@@ -99,6 +101,35 @@ def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdat
 
 
 @pytest.fixture(scope='session')
+def session_s3_dataset2_with_table(client1, group1, org1, session_env1, session_id, testdata):
+    ds = None
+    try:
+        ds = create_s3_dataset(
+            client1,
+            owner='someone',
+            group=group1,
+            org_uri=org1['organizationUri'],
+            env_uri=session_env1['environmentUri'],
+            tags=[session_id],
+        )
+        creds = generate_dataset_access_token(client1, ds.datasetUri)
+        dataset_session = boto3.Session(
+            aws_access_key_id=creds['AccessKey'],
+            aws_secret_access_key=creds['SessionKey'],
+            aws_session_token=creds['sessionToken'],
+        )
+        GlueClient(dataset_session, ds.region).create_table(
+            database_name=ds.GlueDatabaseName, table_name='integrationtest', bucket=ds.S3Bucket
+        )
+        response = sync_tables(client1, datasetUri=ds.datasetUri)
+
+        yield ds, response.get('nodes', [])[0]
+    finally:
+        if ds:
+            delete_s3_dataset(client1, session_env1['environmentUri'], ds)
+
+
+@pytest.fixture(scope='session')
 def session_imported_sse_s3_dataset1(
     client1, group1, org1, session_env1, session_id, testdata, session_env1_aws_client
 ):
@@ -117,14 +148,14 @@ def session_imported_sse_s3_dataset1(
             org_uri=org1['organizationUri'],
             env_uri=session_env1['environmentUri'],
             tags=[session_id],
-            bucket=bucket_name,
+            bucket=bucket,
         )
         yield ds
     finally:
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
         if bucket:
-            S3Client(session=session_env1_aws_client, region=session_env1['region']).delete_bucket(bucket_name)
+            S3Client(session=session_env1_aws_client, region=session_env1['region']).delete_bucket(bucket)
 
 
 @pytest.fixture(scope='session')
@@ -134,13 +165,13 @@ def session_imported_kms_s3_dataset1(
     ds = None
     resource_name = f'sessionimportedkms{session_id}'
     try:
-        kms_key_id = KMSClient(
+        kms_key_id, kms_alias = KMSClient(
             session=session_env1_aws_client, account_id=session_env1['AwsAccountId'], region=session_env1['region']
         ).create_key_with_alias(resource_name)
-        S3Client(session=session_env1_aws_client, region=session_env1['region']).create_bucket(
+        bucket = S3Client(session=session_env1_aws_client, region=session_env1['region']).create_bucket(
             bucket_name=resource_name, kms_key_id=kms_key_id
         )
-        GlueClient(session=session_env1_aws_client, region=session_env1['region']).create_database(
+        database = GlueClient(session=session_env1_aws_client, region=session_env1['region']).create_database(
             database_name=resource_name, bucket=resource_name
         )
         ds = import_s3_dataset(
@@ -150,19 +181,19 @@ def session_imported_kms_s3_dataset1(
             org_uri=org1['organizationUri'],
             env_uri=session_env1['environmentUri'],
             tags=[session_id],
-            bucket=resource_name,
-            kms_alias=resource_name,
-            glue_db_name=resource_name,
+            bucket=bucket,
+            kms_alias=kms_alias,
+            glue_db_name=database,
         )
         yield ds
     finally:
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
-            S3Client(session=session_env1_aws_client, region=session_env1['region']).delete_bucket(resource_name)
+            S3Client(session=session_env1_aws_client, region=session_env1['region']).delete_bucket(bucket)
             KMSClient(
                 session=session_env1_aws_client, account_id=session_env1['AwsAccountId'], region=session_env1['region']
-            ).delete_key_by_alias(resource_name)
-            GlueClient(session=session_env1_aws_client, region=session_env1['region']).delete_database(resource_name)
+            ).delete_key_by_alias(kms_alias)
+            GlueClient(session=session_env1_aws_client, region=session_env1['region']).delete_database(database)
 
 
 """

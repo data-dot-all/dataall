@@ -251,7 +251,7 @@ def get_dataset_presigned_role_url(client, datasetUri, input):
     return response.data.getDatasetPresignedUrl
 
 
-def start_glue_Crawler(client, datasetUri, input):
+def start_glue_crawler(client, datasetUri, input):
     query = {
         'operationName': 'StartGlueCrawler',
         'variables': {'datasetUri': datasetUri, 'input': input},
@@ -349,7 +349,7 @@ def delete_table(client, tableUri):
     return response.data.deleteDatasetTable
 
 
-def add_folder(client, datasetUri, input):
+def create_folder(client, datasetUri, input):
     query = {
         'operationName': 'CreateDatasetStorageLocation',
         'variables': {'datasetUri': datasetUri, 'input': input},
