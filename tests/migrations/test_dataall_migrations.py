@@ -15,6 +15,36 @@ def get_migration(revision_id, next_migration, up=None, down=None):
     return migration
 
 
+def test_up_and_down():
+    m2 = get_migration('2', None)
+    m1 = get_migration('1', m2)
+    m0 = get_migration('0', m1)
+
+    manager = MigrationManager('0', m0)
+    manager.upgrade()
+    manager.downgrade()
+
+    assert_that(manager.current_migration.revision_id()).is_equal_to('0')
+
+
+def test_partial_up_and_down():
+    m2 = get_migration('2', None)
+    m1 = get_migration('1', m2)
+    m0 = get_migration('0', m1)
+
+    manager = MigrationManager('1', m0)
+    manager.upgrade()
+    m0.up.assert_not_called()
+    m1.up.assert_not_called()
+    m2.up.assert_called_once()
+
+    manager.downgrade()
+
+    m0.down.assert_not_called()
+    m1.down.assert_called_once()
+    m2.down.assert_called_once()
+
+
 def test_dont_call_current_migration():
     m2 = get_migration('2', None)
     m1 = get_migration('1', m2)

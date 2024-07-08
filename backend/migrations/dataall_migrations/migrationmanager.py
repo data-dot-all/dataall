@@ -17,24 +17,26 @@ class MigrationManager:
         self.previous_migrations: Deque[Union[Type[MigrationBase], None]] = deque()
         self.current_migration = initial_migration
 
-        while self.current_migration.revision_id() != current_revision:
+        while True:
             self.previous_migrations.append(self.current_migration)
+            if self.current_migration.revision_id() == current_revision:
+                break
             self.current_migration = self.current_migration.next_migration()
             if not self.current_migration:
                 raise Exception(f'Revision {current_revision} is not found.')
 
-    def save_upgraded(self, executed_ups: Deque[Union[Type[MigrationBase], None]]):
+    def _save_upgraded(self, executed_ups: Deque[Union[Type[MigrationBase], None]]):
         while executed_ups:
             self.previous_migrations.append(executed_ups.popleft())
 
-    def save_downgrades(self, executed_downs: Deque[Union[Type[MigrationBase], None]]):
+    def _save_downgrades(self, executed_downs: Deque[Union[Type[MigrationBase], None]]):
         while executed_downs:
             try:
                 self.previous_migrations.remove(executed_downs.pop())
             except Exception as e:
                 ...
 
-    def check_downgrade_id(self, target_revision_id):
+    def _check_downgrade_id(self, target_revision_id):
         for pm in self.previous_migrations:
             if pm.revision_id() == target_revision_id:
                 return True
@@ -43,7 +45,7 @@ class MigrationManager:
 
         raise Exception(f'Failed to find {target_revision_id} in migration history.')
 
-    def check_upgrade_id(self, target_revision_id):
+    def _check_upgrade_id(self, target_revision_id):
         if target_revision_id is None:
             if (
                 self.current_migration.next_migration() is None
@@ -61,7 +63,7 @@ class MigrationManager:
         raise Exception(f'Failed to find {target_revision_id}.')
 
     def upgrade(self, target_revision_id=None):
-        if not self.check_upgrade_id(target_revision_id):
+        if not self._check_upgrade_id(target_revision_id):
             logger.info('Data-all version is up to date')
             return self.current_migration.revision_id()
 
@@ -90,19 +92,25 @@ class MigrationManager:
                 self.current_migration = saved_start_migration
                 return False
         logger.info('Upgrade completed')
-        self.save_upgraded(executed_upgrades)
+        self._save_upgraded(executed_upgrades)
         return self.current_migration.revision_id()
 
     def downgrade(self, target_revision_id='0'):
-        if not self.check_downgrade_id(target_revision_id):
+        if not self._check_downgrade_id(target_revision_id):
             logger.info(f'Current revision is  {self.current_migration.revision_id()}')
             return
 
         logger.info(f"Downgrade from {self.current_migration.revision_id()} to {target_revision_id or 'initial'}")
         executed_downgrades: Deque[Union[Type[MigrationBase], None]] = deque()
         while self.current_migration:
-            if self.current_migration.revision_id() == target_revision_id:
+            if self.previous_migrations:
+                self.current_migration = self.previous_migrations[-1]
+                if self.current_migration.revision_id() == target_revision_id:
+                    break
+                self.previous_migrations.pop()
+            else:
                 break
+
             try:
                 logger.info(f'Reverting migration {self.current_migration.__name__}')
                 self.current_migration.down()
@@ -115,11 +123,7 @@ class MigrationManager:
                     up_migration.up()
                     self.current_migration = up_migration
                 return False
-            if self.previous_migrations:
-                self.current_migration = self.previous_migrations.pop()
-            else:
-                break
 
         logger.info('Downgrade completed')
-        self.save_downgrades(executed_downgrades)
+        self._save_downgrades(executed_downgrades)
         return self.current_migration.revision_id()
