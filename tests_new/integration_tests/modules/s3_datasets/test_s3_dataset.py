@@ -1,4 +1,5 @@
 import logging
+import json
 from datetime import datetime
 import time
 from assertpy import assert_that
@@ -45,11 +46,10 @@ def test_get_s3_dataset(client1, session_s3_dataset1):
     assert_that(dataset.label).is_equal_to(session_s3_dataset1.label)
 
 
-def test_get_s3_dataset_unauthorized(client2, session_s3_dataset1):
-    dataset_uri = session_s3_dataset1.datasetUri
-    assert_that(get_dataset).raises(GqlError).when_called_with(client2, dataset_uri).contains(
-        'UnauthorizedOperation', dataset_uri
-    )
+def test_get_s3_dataset_non_admin(client2, session_s3_dataset1):
+    dataset = get_dataset(client2, session_s3_dataset1.datasetUri)
+    assert dataset
+    assert_that(dataset.userRoleForDataset).is_equal_to('NoPermission')
 
 
 def test_list_datasets(
@@ -67,7 +67,9 @@ def test_list_datasets_unauthorized(
 def test_modify_dataset(client1, session_s3_dataset1):
     test_description = f'a test description {datetime.utcnow().isoformat()}'
     dataset_uri = session_s3_dataset1.datasetUri
-    updated_dataset = update_dataset(client1, dataset_uri, {'description': test_description})
+    updated_dataset = update_dataset(
+        client1, dataset_uri, {'description': test_description, 'KmsAlias': session_s3_dataset1.KmsAlias}
+    )
     assert_that(updated_dataset).contains_entry(datasetUri=dataset_uri, description=test_description)
     env = get_dataset(client1, dataset_uri)
     assert_that(env).contains_entry(datasetUri=dataset_uri, description=test_description)
@@ -77,7 +79,7 @@ def test_modify_dataset_unauthorized(client1, client2, session_s3_dataset1):
     test_description = f'unauthorized {datetime.utcnow().isoformat()}'
     dataset_uri = session_s3_dataset1.datasetUri
     assert_that(update_dataset).raises(GqlError).when_called_with(
-        client2, dataset_uri, {'description': test_description}
+        client2, dataset_uri, {'description': test_description, 'KmsAlias': session_s3_dataset1.KmsAlias}
     ).contains('UnauthorizedOperation', dataset_uri)
     dataset = get_dataset(client1, dataset_uri)
     assert_that(dataset).contains_entry(datasetUri=dataset_uri).does_not_contain_entry(description=test_description)
@@ -175,7 +177,7 @@ def test_generate_dataset_access_token(client1, session_s3_dataset1):
     dataset_uri = session_s3_dataset1.datasetUri
 
     creds = generate_dataset_access_token(client1, dataset_uri)
-    assert_that(creds).contains_key('AccessKey', 'SessionKey', 'sessionToken')
+    assert_that(json.loads(creds)).contains_key('AccessKey', 'SessionKey', 'sessionToken')
 
 
 def test_generate_dataset_access_token_unauthorized(client1, client2, session_s3_dataset1):
@@ -204,7 +206,7 @@ def test_get_dataset_presigned_url_upload_data(client1, session_s3_dataset1):
 
 def test_get_dataset_presigned_url_upload_data_unauthorized(client2, session_s3_dataset1):
     dataset_uri = session_s3_dataset1.datasetUri
-    assert_that(get_dataset_presigned_role_url).raises(GqlError).when_called_with(client2, dataset_uri).contains(
+    assert_that(get_dataset_presigned_role_url).raises(GqlError).when_called_with(client2, dataset_uri, input={'prefix': 'sample_data', 'fileName': 'name'}).contains(
         'UnauthorizedOperation', 'CREDENTIALS_DATASET', dataset_uri
     )
 

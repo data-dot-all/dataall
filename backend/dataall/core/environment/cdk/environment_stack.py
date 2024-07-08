@@ -577,21 +577,42 @@ class EnvironmentSetup(Stack):
         )
         self.test_role.add_to_policy(
             iam.PolicyStatement(
-                actions=['s3:CreateBucket', 's3:DeleteBucket'],
+                actions=['s3:CreateBucket', 's3:DeleteBucket', 's3:PutEncryptionConfiguration'],
                 effect=iam.Effect.ALLOW,
-                resources=['*'],
+                resources=['arn:aws:s3:::dataalltesting*'],
             )
         )
         self.test_role.add_to_policy(
             iam.PolicyStatement(
-                actions=['glue:createDatabase', 'glue:createTable', 'glue:deleteDatabase'],
+                actions=['glue:CreateDatabase', 'glue:DeleteDatabase'],
                 effect=iam.Effect.ALLOW,
-                resources=['*'],
+                resources=[
+                    f'arn:aws:glue:*:{self.account}:catalog',
+                    f'arn:aws:glue::{self.account}:database/dataalltesting*',
+                ],
             )
         )
         self.test_role.add_to_policy(
             iam.PolicyStatement(
-                actions=['kms:CreateKey', 'kms:CreateAlias', 'kms:DeleteKey', 'kms:ListAliases'],
+                actions=['kms:CreateAlias', 'kms:DeleteAlias'],
+                effect=iam.Effect.ALLOW,
+                resources=[f'arn:aws:kms::{self.account}:alias/dataalltesting'],
+            )
+        )
+
+        self.test_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    'lakeformation:GrantPermissions',
+                    'lakeformation:PutDataLakeSettings',
+                    'kms:CreateKey',
+                    'kms:ListAliases',
+                    'kms:GetKeyPolicy',
+                    'kms:PutKeyPolicy',
+                    'kms:ScheduleKeyDeletion',
+                    'kms:TagResource',
+                    's3:GetBucketVersioning',
+                ],
                 effect=iam.Effect.ALLOW,
                 resources=['*'],
             )

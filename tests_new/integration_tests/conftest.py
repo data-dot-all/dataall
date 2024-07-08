@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import re
 import sys
 from dataclasses import dataclass
 
@@ -139,3 +140,9 @@ def clientTenant(userTenant) -> Client:
 @pytest.fixture(scope='session')
 def session_id() -> str:
     return datetime.datetime.utcnow().isoformat()
+
+
+@pytest.fixture(scope='session')
+def resources_prefix(session_id) -> str:
+    re.sub('[^a-zA-Z0-9-]', '', session_id).lower()
+    return f'dataalltesting{session_id}'

@@ -14,7 +14,7 @@ from integration_tests.modules.s3_datasets.queries import (
 )
 from tests_new.integration_tests.modules.datasets_base.queries import list_datasets
 
-from integration_tests.modules.s3_datasets.aws_clients import S3Client, KMSClient, GlueClient
+from integration_tests.modules.s3_datasets.aws_clients import S3Client, KMSClient, GlueClient, LakeFormationClient
 
 log = logging.getLogger(__name__)
 
@@ -117,42 +117,43 @@ def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdat
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
 
 
-@pytest.fixture(scope='session')
-def session_s3_dataset2_with_table(client1, group1, org1, session_env1, session_id, testdata):
-    ds = None
-    try:
-        ds = create_s3_dataset(
-            client1,
-            owner='someone',
-            group=group1,
-            org_uri=org1['organizationUri'],
-            env_uri=session_env1['environmentUri'],
-            tags=[session_id],
-        )
-        creds = generate_dataset_access_token(client1, ds.datasetUri)
-        dataset_session = boto3.Session(
-            aws_access_key_id=creds['AccessKey'],
-            aws_secret_access_key=creds['SessionKey'],
-            aws_session_token=creds['sessionToken'],
-        )
-        GlueClient(dataset_session, ds.region).create_table(
-            database_name=ds.GlueDatabaseName, table_name='integrationtest', bucket=ds.S3Bucket
-        )
-        response = sync_tables(client1, datasetUri=ds.datasetUri)
-
-        yield ds, response.get('nodes', [])[0]
-    finally:
-        if ds:
-            delete_s3_dataset(client1, session_env1['environmentUri'], ds)
+#
+# @pytest.fixture(scope='session')
+# def session_s3_dataset2_with_table(client1, group1, org1, session_env1, session_id, testdata):
+#     ds = None
+#     try:
+#         ds = create_s3_dataset(
+#             client1,
+#             owner='someone',
+#             group=group1,
+#             org_uri=org1['organizationUri'],
+#             env_uri=session_env1['environmentUri'],
+#             tags=[session_id],
+#         )
+#         creds = generate_dataset_access_token(client1, ds.datasetUri)
+#         dataset_session = boto3.Session(
+#             aws_access_key_id=creds['AccessKey'],
+#             aws_secret_access_key=creds['SessionKey'],
+#             aws_session_token=creds['sessionToken'],
+#         )
+#         GlueClient(dataset_session, ds.region).create_table(
+#             database_name=ds.GlueDatabaseName, table_name='integrationtest', bucket=ds.S3Bucket
+#         )
+#         response = sync_tables(client1, datasetUri=ds.datasetUri)
+#
+#         yield ds, response.get('nodes', [])[0]
+#     finally:
+#         if ds:
+#             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
 
 
 @pytest.fixture(scope='session')
 def session_imported_sse_s3_dataset1(
-    client1, group1, org1, session_env1, session_id, testdata, session_env1_aws_client
+    client1, group1, org1, session_env1, session_id, testdata, session_env1_aws_client, resources_prefix
 ):
     ds = None
     bucket = None
-    bucket_name = f'sessionimportedsses3{session_id}'
+    bucket_name = f'{resources_prefix}importedsses3'
     try:
         bucket = S3Client(session=session_env1_aws_client, region=session_env1['region']).create_bucket(
             bucket_name=bucket_name, kms_key_id=None
@@ -167,6 +168,8 @@ def session_imported_sse_s3_dataset1(
             tags=[session_id],
             bucket=bucket,
         )
+        if not bucket:
+            raise Exception('Error creating import dataset AWS resources')
         yield ds
     finally:
         if ds:
@@ -177,13 +180,22 @@ def session_imported_sse_s3_dataset1(
 
 @pytest.fixture(scope='session')
 def session_imported_kms_s3_dataset1(
-    client1, group1, org1, session_env1, session_id, testdata, session_env1_aws_client
+    client1,
+    group1,
+    org1,
+    session_env1,
+    session_id,
+    testdata,
+    session_env1_aws_client,
+    session_env1_integration_role_arn,
+    resources_prefix,
 ):
     ds = None
     bucket = None
     database = None
+    existing_lf_admins = []
     kms_alias = None
-    resource_name = f'sessionimportedkms{session_id}'
+    resource_name = f'{resources_prefix}importedkms'
     try:
         kms_key_id, kms_alias = KMSClient(
             session=session_env1_aws_client,
@@ -193,9 +205,14 @@ def session_imported_kms_s3_dataset1(
         bucket = S3Client(session=session_env1_aws_client, region=session_env1['region']).create_bucket(
             bucket_name=resource_name, kms_key_id=kms_key_id
         )
-        database = GlueClient(session=session_env1_aws_client, region=session_env1['region']).create_database(
-            database_name=resource_name, bucket=resource_name
-        )
+        lf_client = LakeFormationClient(session=session_env1_aws_client, region=session_env1['region'])
+        existing_lf_admins = lf_client.add_role_to_datalake_admin(role_arn=session_env1_integration_role_arn)
+        if lf_client.grant_create_database(role_arn=session_env1_integration_role_arn):
+            database = GlueClient(session=session_env1_aws_client, region=session_env1['region']).create_database(
+                database_name=resource_name, bucket=resource_name
+            )
+        if None in [bucket, database, kms_alias]:
+            raise Exception('Error creating import dataset AWS resources')
         ds = import_s3_dataset(
             client1,
             owner='someone',
@@ -219,6 +236,10 @@ def session_imported_kms_s3_dataset1(
                 account_id=session_env1['AwsAccountId'],
                 region=session_env1['region'],
             ).delete_key_by_alias(kms_alias)
+        if existing_lf_admins:
+            LakeFormationClient(
+                session=session_env1_aws_client, region=session_env1['region']
+            ).remove_role_from_datalake_admin(existing_lf_admins)
         if database:
             GlueClient(session=session_env1_aws_client, region=session_env1['region']).delete_database(database)
 
