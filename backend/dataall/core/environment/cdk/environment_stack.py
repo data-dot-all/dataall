@@ -577,7 +577,14 @@ class EnvironmentSetup(Stack):
         )
         self.test_role.add_to_policy(
             iam.PolicyStatement(
-                actions=['s3:CreateBucket', 's3:DeleteBucket', 's3:PutEncryptionConfiguration'],
+                actions=[
+                    's3:CreateBucket',
+                    's3:DeleteBucket',
+                    's3:PutEncryptionConfiguration',
+                    's3:List*',
+                    's3:GetObject*',
+                    's3:DeleteObject',
+                ],
                 effect=iam.Effect.ALLOW,
                 resources=['arn:aws:s3:::dataalltesting*'],
             )
@@ -587,25 +594,22 @@ class EnvironmentSetup(Stack):
                 actions=['glue:CreateDatabase', 'glue:DeleteDatabase'],
                 effect=iam.Effect.ALLOW,
                 resources=[
-                    f'arn:aws:glue:*:{self.account}:catalog',
-                    f'arn:aws:glue::{self.account}:database/dataalltesting*',
+                    f'arn:aws:glue:{self.region}:{self.account}:catalog',
+                    f'arn:aws:glue:{self.region}:{self.account}:database/dataalltesting*',
+                    f'arn:aws:glue:{self.region}:{self.account}:table/dataalltesting*',
+                    f'arn:aws:glue:{self.region}:{self.account}:userDefinedFunction/dataalltesting*',
                 ],
             )
         )
         self.test_role.add_to_policy(
             iam.PolicyStatement(
-                actions=['kms:CreateAlias', 'kms:DeleteAlias'],
-                effect=iam.Effect.ALLOW,
-                resources=[f'arn:aws:kms::{self.account}:alias/dataalltesting'],
-            )
-        )
-
-        self.test_role.add_to_policy(
-            iam.PolicyStatement(
                 actions=[
                     'lakeformation:GrantPermissions',
                     'lakeformation:PutDataLakeSettings',
+                    'lakeformation:GetDataLakeSettings',
                     'kms:CreateKey',
+                    'kms:CreateAlias',
+                    'kms:DeleteAlias',
                     'kms:ListAliases',
                     'kms:GetKeyPolicy',
                     'kms:PutKeyPolicy',

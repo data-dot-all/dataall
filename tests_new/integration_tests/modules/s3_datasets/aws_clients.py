@@ -91,12 +91,11 @@ class KMSClient:
         policy = json.loads(response['Policy'])
         # The updated policy replaces the existing policy. Add a new statement to
         # the list along with the original policy statements.
-        principal = f'arn:aws:iam::{self._account_id}:role/dataallPivotRole-cdk'
         policy['Statement'].append(
             {
                 'Sid': 'Allow access for PivotRole',
                 'Effect': 'Allow',
-                'Principal': {'AWS': principal},
+                'Principal': {'AWS': '*'},
                 'Action': [
                     'kms:Decrypt',
                     'kms:Encrypt',
@@ -108,6 +107,9 @@ class KMSClient:
                     'kms:UntagResource',
                 ],
                 'Resource': '*',
+                'Condition': {
+                    'ArnLike': {'aws:PrincipalArn': f'arn:aws:iam::{self._account_id}:role/dataallPivotRole*'}
+                },
             }
         )
         try:
@@ -116,7 +118,7 @@ class KMSClient:
             log.exception(
                 "Couldn't set policy for key %s. Here's why %s",
                 key_id,
-                err.response['Error']['Message'],
+                err,
             )
 
     def delete_key_by_alias(self, alias_name):
@@ -130,6 +132,7 @@ class KMSClient:
             if key_id:
                 # Schedule the key for deletion
                 self._client.schedule_key_deletion(KeyId=key_id)
+            self._client.delete_alias(AliasName=f'alias/{alias_name}')
         except ClientError as e:
             log.exception(f'Error deleting KMS key by alias: {e}')
 
@@ -210,7 +213,9 @@ class LakeFormationClient:
             new_admins.extend(existing_admins or [])
             self._client.put_data_lake_settings(
                 DataLakeSettings={
-                    'DataLakeAdmins': [{'DataLakePrincipalIdentifier': principal} for principal in new_admins]
+                    'DataLakeAdmins': [
+                        {'DataLakePrincipalIdentifier': principal} for principal in list(set(new_admins))
+                    ]
                 },
             )
             return existing_admins
