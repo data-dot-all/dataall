@@ -1,5 +1,6 @@
 from tests_new.integration_tests.modules.share_base.input_types import NewShareObjectInput
 from tests_new.integration_tests.modules.share_base.types import ShareObject
+from typing import List
 
 
 def create_share_object(
@@ -58,6 +59,42 @@ def submit_share_object(client, shareUri: str):
     return response.data.submitShareObject
 
 
+def reject_share_object(client, shareUri: str):
+    variables = {'shareUri': shareUri}
+    query = {
+        'operationName': 'rejectShareObject',
+        'variables': variables,
+        'query': f"""
+                    mutation rejectShareObject($shareUri: String!) {{
+                      rejectShareObject(shareUri: $shareUri) {{
+                         shareUri,
+                         status,
+                      }}
+                    }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.rejectShareObject
+
+
+def approve_share_object(client, shareUri: str):
+    variables = {'shareUri': shareUri}
+    query = {
+        'operationName': 'approveShareObject',
+        'variables': variables,
+        'query': f"""
+                    mutation approveShareObject($shareUri: String!) {{
+                      approveShareObject(shareUri: $shareUri) {{
+                         shareUri,
+                         status,
+                      }}
+                    }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.approveShareObject
+
+
 def delete_share_object(client, shareUri: str):
     variables = {'shareUri': shareUri}
     query = {
@@ -73,8 +110,8 @@ def delete_share_object(client, shareUri: str):
     return response.data.deleteShareObject
 
 
-def get_share_object(client, shareUri: str):
-    variables = {'shareUri': shareUri, 'filter': {}}
+def get_share_object(client, shareUri: str, filter=None):
+    variables = {'shareUri': shareUri, 'filter': filter or {}}
     query = {
         'operationName': 'getShareObject',
         'variables': variables,
@@ -106,3 +143,21 @@ def add_share_item(client, shareUri: str, itemUri: str, itemType: str):
 
     response = client.query(query=query)
     return response.data.addSharedItem.shareItemUri
+
+
+def revoke_share_items(client, shareUri: str, shareItemUris: List[str]):
+    query = {
+        'operationName': 'revokeItemsShareObject',
+        'variables': {'input': {'shareUri': shareUri, 'itemUris': shareItemUris}},
+        'query': f"""
+                    mutation revokeItemsShareObject($input: ShareItemSelectorInput) {{
+                        revokeItemsShareObject(input: $input) {{
+                            shareUri
+                            status
+                        }}
+                    }}
+                """,
+    }
+
+    response = client.query(query=query)
+    return response.data.revokeItemsShareObject
