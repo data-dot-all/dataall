@@ -5,17 +5,23 @@ from assertpy import assert_that
 import requests
 
 from integration_tests.modules.s3_datasets.queries import (
-    get_dataset,
-    update_dataset,
+    create_folder,
     delete_dataset,
+    delete_folder,
+    delete_table,
+    get_dataset,
     get_dataset_assume_role_url,
     generate_dataset_access_token,
     get_dataset_presigned_role_url,
+    preview_table,
+    start_dataset_profiling_run,
+    start_glue_crawler,
+    sync_tables,
+    update_dataset,
 )
-from integration_tests.modules.s3_datasets.global_conftest import create_s3_dataset
 from integration_tests.modules.datasets_base.queries import list_datasets
 from integration_tests.core.stack.queries import update_stack
-from integration_tests.core.stack.utils import check_stack_in_progress, check_stack_ready
+from integration_tests.core.stack.utils import check_stack_ready
 from integration_tests.errors import GqlError
 
 log = logging.getLogger(__name__)
@@ -149,34 +155,39 @@ def test_persistent_import_kms_s3_dataset_update(client1, persistent_imported_km
     assert_that(stack.status).is_in('CREATE_COMPLETE', 'UPDATE_COMPLETE')
 
 
-def test_access_dataset_assume_role_url(client1, client2, session_s3_dataset1):
+def test_access_dataset_assume_role_url(client1, session_s3_dataset1):
     dataset_uri = session_s3_dataset1.datasetUri
-
-    assert_that(get_dataset_assume_role_url).raises(GqlError).when_called_with(client2, dataset_uri).contains(
-        'UnauthorizedOperation', 'CREDENTIALS_DATASET', dataset_uri
-    )
 
     assert_that(get_dataset_assume_role_url(client1, dataset_uri)).starts_with(
         'https://signin.aws.amazon.com/federation'
     )
 
 
-def test_generate_dataset_access_token(client1, client2, session_s3_dataset1):
+def test_access_dataset_assume_role_url_unauthorized(client2, session_s3_dataset1):
+    dataset_uri = session_s3_dataset1.datasetUri
+
+    assert_that(get_dataset_assume_role_url).raises(GqlError).when_called_with(client2, dataset_uri).contains(
+        'UnauthorizedOperation', 'CREDENTIALS_DATASET', dataset_uri
+    )
+
+
+def test_generate_dataset_access_token(client1, session_s3_dataset1):
+    dataset_uri = session_s3_dataset1.datasetUri
+
+    creds = generate_dataset_access_token(client1, dataset_uri)
+    assert_that(creds).contains_key('AccessKey', 'SessionKey', 'sessionToken')
+
+
+def test_generate_dataset_access_token_unauthorized(client1, client2, session_s3_dataset1):
     dataset_uri = session_s3_dataset1.datasetUri
 
     assert_that(generate_dataset_access_token).raises(GqlError).when_called_with(client2, dataset_uri).contains(
         'UnauthorizedOperation', 'CREDENTIALS_DATASET', dataset_uri
     )
 
-    creds = generate_dataset_access_token(client1, dataset_uri)
-    assert_that(creds).contains_key('AccessKey', 'SessionKey', 'sessionToken')
 
-
-def test_get_dataset_presigned_url_upload_data(client1, client2, session_s3_dataset1):
+def test_get_dataset_presigned_url_upload_data(client1, session_s3_dataset1):
     dataset_uri = session_s3_dataset1.datasetUri
-    assert_that(get_dataset_presigned_role_url).raises(GqlError).when_called_with(client2, dataset_uri).contains(
-        'UnauthorizedOperation', 'CREDENTIALS_DATASET', dataset_uri
-    )
 
     object_name = './sample_data/books.csv'
     # TODO: Test + Iterate for Multiple Files
@@ -191,17 +202,121 @@ def test_get_dataset_presigned_url_upload_data(client1, client2, session_s3_data
         http_response.raise_for_status()
 
 
-# TODO: Write Tests for the following casses + unauth user assertions
-# def test_start_crawler()
+def test_get_dataset_presigned_url_upload_data_unauthorized(client2, session_s3_dataset1):
+    dataset_uri = session_s3_dataset1.datasetUri
+    assert_that(get_dataset_presigned_role_url).raises(GqlError).when_called_with(client2, dataset_uri).contains(
+        'UnauthorizedOperation', 'CREDENTIALS_DATASET', dataset_uri
+    )
 
-# def test_sync_tables()
 
-# def test_start_table_profiling()
-
-# def test_preview_table()
-
-# def test_delete_table()
-
-# def test_create_folder()
-
-# def test_delete_folder()
+#
+#
+# def test_start_crawler(client1, session_s3_dataset1):
+#     dataset_uri = session_s3_dataset1.datasetUri
+#     response = start_glue_crawler(client1, datasetUri=dataset_uri, input=None)
+#     assert_that(response.get('Name')).is_equal_to(session_s3_dataset1.GlueCrawlerName)
+#     assert_that(response.get('status')).is_in(['Pending', 'Running'])
+#     # TODO: check it can run successfully + check sending prefix
+#
+#
+# def test_start_crawler_unauthorized(client2, session_s3_dataset1):
+#     dataset_uri = session_s3_dataset1.datasetUri
+#     assert_that(start_glue_crawler).raises(GqlError).when_called_with(client2, dataset_uri).contains(
+#         'UnauthorizedOperation', 'CRAWL_DATASET', dataset_uri
+#     )
+#
+#
+# def test_sync_tables(client1, session_s3_dataset1):
+#     dataset_uri = session_s3_dataset1.datasetUri
+#     response = sync_tables(client1, datasetUri=dataset_uri)
+#     assert_that(response.count).is_equal_to(2)
+#
+#
+# def test_sync_tables_unauthorized(client2, session_s3_dataset1):
+#     dataset_uri = session_s3_dataset1.datasetUri
+#     assert_that(sync_tables).raises(GqlError).when_called_with(client2, dataset_uri).contains(
+#         'UnauthorizedOperation', 'SYNC_DATASET', dataset_uri
+#     )
+#
+#
+# def test_start_table_profiling(client1, session_s3_dataset2_with_table):
+#     dataset, table = session_s3_dataset2_with_table
+#     table_uri = table.tableUri
+#     dataset_uri = dataset.datasetUri
+#     response = start_dataset_profiling_run(
+#         client1, input={'datasetUri': dataset_uri, 'tableUri': table_uri, 'GlueTableName': table.GlueTableName}
+#     )
+#     assert_that(response.datasetUri).is_equal_to(dataset_uri)
+#     assert_that(response.status).is_equal_to('RUNNING')
+#     assert_that(response.GlueTableName).is_equal_to(table.GlueTableName)
+#
+#
+# def test_start_table_profiling_unauthorized(client2, session_s3_dataset1):
+#     dataset_uri = session_s3_dataset1.datasetUri
+#     assert_that(start_dataset_profiling_run).raises(GqlError).when_called_with(client2, dataset_uri).contains(
+#         'UnauthorizedOperation', 'PROFILE_DATASET_TABLE', dataset_uri
+#     )
+#
+#
+# def test_preview_table(client1, session_s3_dataset2_with_table):
+#     dataset, table = session_s3_dataset2_with_table
+#     table_uri = table.tableUri
+#     response = preview_table(client1, table_uri)
+#     assert_that(response.rows).exists()
+#
+#
+# def test_preview_table_unauthorized(client2, session_s3_dataset2_with_table):
+#     dataset, table = session_s3_dataset2_with_table
+#     table_uri = table.tableUri
+#     # TODO: confidentiality levels
+#     assert_that(preview_table).raises(GqlError).when_called_with(client2, table_uri, {}).contains(
+#         'UnauthorizedOperation', 'PREVIEW_DATASET_TABLE', table_uri
+#     )
+#
+#
+# def test_delete_table(client1, session_s3_dataset2_with_table):
+#     dataset, table = session_s3_dataset2_with_table
+#     # todo
+#
+#
+# def test_delete_table_unauthorized(client2, session_s3_dataset2_with_table):
+#     dataset, table = session_s3_dataset2_with_table
+#     table_uri = table.tableUri
+#     assert_that(delete_table).raises(GqlError).when_called_with(client2, table_uri).contains(
+#         'UnauthorizedOperation', 'DELETE_DATASET_TABLE', table_uri
+#     )
+#
+#
+# def test_create_folder(client1, session_s3_dataset1):
+#     dataset_uri = session_s3_dataset1.datasetUri
+#     response = create_folder(
+#         client1, datasetUri=dataset_uri, input={'prefix': 'folderCreatedInTest', 'label': 'labelFolder'}
+#     )
+#     assert_that(response.S3Prefix).is_equal_to('folderCreatedInTest')
+#     assert_that(response.label).is_equal_to('labelFolder')
+#
+#
+# def test_create_folder_unauthorized(client2, session_s3_dataset1):
+#     dataset_uri = session_s3_dataset1.datasetUri
+#     assert_that(create_folder).raises(GqlError).when_called_with(client2, dataset_uri, {}).contains(
+#         'UnauthorizedOperation', 'CREATE_DATASET_FOLDER', dataset_uri
+#     )
+#
+#
+# def test_delete_folder(client1, session_s3_dataset1):
+#     dataset_uri = session_s3_dataset1.datasetUri
+#     location = create_folder(
+#         client1, datasetUri=dataset_uri, input={'prefix': 'folderToDelete', 'label': 'folderToDelete'}
+#     )
+#     response = delete_folder(client1, location.locationUri)
+#     assert_that(response).is_equal_to(True)
+#
+#
+# def test_delete_folder_unauthorized(client1, client2, session_s3_dataset1):
+#     dataset_uri = session_s3_dataset1.datasetUri
+#     location = create_folder(
+#         client1, datasetUri=dataset_uri, input={'prefix': 'folderToDelete', 'label': 'folderToDelete'}
+#     )
+#     assert_that(delete_folder).raises(GqlError).when_called_with(client2, location.locationUri).contains(
+#         'UnauthorizedOperation', 'DELETE_DATASET_FOLDER', location.locationUri
+#     )

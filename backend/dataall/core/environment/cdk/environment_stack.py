@@ -584,14 +584,14 @@ class EnvironmentSetup(Stack):
         )
         self.test_role.add_to_policy(
             iam.PolicyStatement(
-                actions=['glue:createDatabase', 'glue:deleteDatabase'],
+                actions=['glue:createDatabase', 'glue:createTable', 'glue:deleteDatabase'],
                 effect=iam.Effect.ALLOW,
                 resources=['*'],
             )
         )
         self.test_role.add_to_policy(
             iam.PolicyStatement(
-                actions=['kms:CreateKey', 'kms:DeleteKey', 'kms:ListAliases'],
+                actions=['kms:CreateKey', 'kms:CreateAlias', 'kms:DeleteKey', 'kms:ListAliases'],
                 effect=iam.Effect.ALLOW,
                 resources=['*'],
             )

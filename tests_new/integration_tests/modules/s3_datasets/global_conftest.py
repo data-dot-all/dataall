@@ -83,7 +83,7 @@ For this reason they must stay immutable as changes to them will affect the rest
 
 
 @pytest.fixture(scope='session')
-def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata):
+def session_s3_dataset1(client1, group1, org1, persistent_env1, session_id, testdata):
     ds = None
     try:
         ds = create_s3_dataset(
@@ -91,17 +91,17 @@ def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdat
             owner='someone',
             group=group1,
             org_uri=org1['organizationUri'],
-            env_uri=session_env1['environmentUri'],
+            env_uri=persistent_env1['environmentUri'],
             tags=[session_id],
         )
         yield ds
     finally:
         if ds:
-            delete_s3_dataset(client1, session_env1['environmentUri'], ds)
+            delete_s3_dataset(client1, persistent_env1['environmentUri'], ds)
 
 
 @pytest.fixture(scope='session')
-def session_s3_dataset2_with_table(client1, group1, org1, session_env1, session_id, testdata):
+def session_s3_dataset2_with_table(client1, group1, org1, persistent_env1, session_id, testdata):
     ds = None
     try:
         ds = create_s3_dataset(
@@ -109,7 +109,7 @@ def session_s3_dataset2_with_table(client1, group1, org1, session_env1, session_
             owner='someone',
             group=group1,
             org_uri=org1['organizationUri'],
-            env_uri=session_env1['environmentUri'],
+            env_uri=persistent_env1['environmentUri'],
             tags=[session_id],
         )
         creds = generate_dataset_access_token(client1, ds.datasetUri)
@@ -126,18 +126,18 @@ def session_s3_dataset2_with_table(client1, group1, org1, session_env1, session_
         yield ds, response.get('nodes', [])[0]
     finally:
         if ds:
-            delete_s3_dataset(client1, session_env1['environmentUri'], ds)
+            delete_s3_dataset(client1, persistent_env1['environmentUri'], ds)
 
 
 @pytest.fixture(scope='session')
 def session_imported_sse_s3_dataset1(
-    client1, group1, org1, session_env1, session_id, testdata, session_env1_aws_client
+    client1, group1, org1, persistent_env1, session_id, testdata, persistent_env1_aws_client
 ):
     ds = None
     bucket = None
     bucket_name = f'sessionimportedsses3{session_id}'
     try:
-        bucket = S3Client(session=session_env1_aws_client, region=session_env1['region']).create_bucket(
+        bucket = S3Client(session=persistent_env1_aws_client, region=persistent_env1['region']).create_bucket(
             bucket_name=bucket_name, kms_key_id=None
         )
 
@@ -146,32 +146,37 @@ def session_imported_sse_s3_dataset1(
             owner='someone',
             group=group1,
             org_uri=org1['organizationUri'],
-            env_uri=session_env1['environmentUri'],
+            env_uri=persistent_env1['environmentUri'],
             tags=[session_id],
             bucket=bucket,
         )
         yield ds
     finally:
         if ds:
-            delete_s3_dataset(client1, session_env1['environmentUri'], ds)
+            delete_s3_dataset(client1, persistent_env1['environmentUri'], ds)
         if bucket:
-            S3Client(session=session_env1_aws_client, region=session_env1['region']).delete_bucket(bucket)
+            S3Client(session=persistent_env1_aws_client, region=persistent_env1['region']).delete_bucket(bucket)
 
 
 @pytest.fixture(scope='session')
 def session_imported_kms_s3_dataset1(
-    client1, group1, org1, session_env1, session_id, testdata, session_env1_aws_client
+    client1, group1, org1, persistent_env1, session_id, testdata, persistent_env1_aws_client
 ):
     ds = None
+    bucket = None
+    database = None
+    kms_alias = None
     resource_name = f'sessionimportedkms{session_id}'
     try:
         kms_key_id, kms_alias = KMSClient(
-            session=session_env1_aws_client, account_id=session_env1['AwsAccountId'], region=session_env1['region']
+            session=persistent_env1_aws_client,
+            account_id=persistent_env1['AwsAccountId'],
+            region=persistent_env1['region'],
         ).create_key_with_alias(resource_name)
-        bucket = S3Client(session=session_env1_aws_client, region=session_env1['region']).create_bucket(
+        bucket = S3Client(session=persistent_env1_aws_client, region=persistent_env1['region']).create_bucket(
             bucket_name=resource_name, kms_key_id=kms_key_id
         )
-        database = GlueClient(session=session_env1_aws_client, region=session_env1['region']).create_database(
+        database = GlueClient(session=persistent_env1_aws_client, region=persistent_env1['region']).create_database(
             database_name=resource_name, bucket=resource_name
         )
         ds = import_s3_dataset(
@@ -179,7 +184,7 @@ def session_imported_kms_s3_dataset1(
             owner='someone',
             group=group1,
             org_uri=org1['organizationUri'],
-            env_uri=session_env1['environmentUri'],
+            env_uri=persistent_env1['environmentUri'],
             tags=[session_id],
             bucket=bucket,
             kms_alias=kms_alias,
@@ -188,12 +193,17 @@ def session_imported_kms_s3_dataset1(
         yield ds
     finally:
         if ds:
-            delete_s3_dataset(client1, session_env1['environmentUri'], ds)
-            S3Client(session=session_env1_aws_client, region=session_env1['region']).delete_bucket(bucket)
+            delete_s3_dataset(client1, persistent_env1['environmentUri'], ds)
+        if bucket:
+            S3Client(session=persistent_env1_aws_client, region=persistent_env1['region']).delete_bucket(bucket)
+        if kms_alias:
             KMSClient(
-                session=session_env1_aws_client, account_id=session_env1['AwsAccountId'], region=session_env1['region']
+                session=persistent_env1_aws_client,
+                account_id=persistent_env1['AwsAccountId'],
+                region=persistent_env1['region'],
             ).delete_key_by_alias(kms_alias)
-            GlueClient(session=session_env1_aws_client, region=session_env1['region']).delete_database(database)
+        if database:
+            GlueClient(session=persistent_env1_aws_client, region=persistent_env1['region']).delete_database(database)
 
 
 """
@@ -203,7 +213,7 @@ They are suitable to test env mutations.
 
 
 @pytest.fixture(scope='function')
-def temp_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata):
+def temp_s3_dataset1(client1, group1, org1, persistent_env1, session_id, testdata):
     ds = None
     try:
         ds = create_s3_dataset(
@@ -211,13 +221,13 @@ def temp_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata):
             owner='someone',
             group=group1,
             org_uri=org1['organizationUri'],
-            env_uri=session_env1['environmentUri'],
+            env_uri=persistent_env1['environmentUri'],
             tags=[session_id],
         )
         yield ds
     finally:
         if ds:
-            delete_s3_dataset(client1, session_env1['environmentUri'], ds)
+            delete_s3_dataset(client1, persistent_env1['environmentUri'], ds)
 
 
 """

@@ -141,7 +141,7 @@ def import_dataset(
                 'environmentUri': environmentUri,
                 'SamlAdminGroupName': group,
                 'organizationUri': organizationUri,
-                'confidentiality': confidentiality or ConfidentialityClassification.Unclassified.value,
+                'confidentiality': confidentiality or 'Unclassified',
                 'autoApprovalEnabled': autoApprovalEnabled,
                 'bucketName': bucketName,
                 'KmsKeyAlias': KmsKeyAlias,
