@@ -85,7 +85,7 @@ class MigrationManager:
                 self.current_migration = self.current_migration.next_migration()
             except Exception as e:
                 # Something went wrong revert
-                logger.info(f'An error occurred while applying the migration.{e}.')
+                logger.exception(f'An error occurred while applying the migration.{e}.')
                 while executed_upgrades:
                     migration = executed_upgrades.pop()
                     migration.down()
@@ -117,7 +117,7 @@ class MigrationManager:
                 executed_downgrades.append(self.current_migration)
                 logger.info(f'Migration {self.current_migration.__name__} completed')
             except Exception as e:
-                logger.info(f'An error occurred while reverting the migration.{e}.')
+                logger.exception(f'An error occurred while reverting the migration.{e}.')
                 while executed_downgrades:
                     up_migration = executed_downgrades.pop()
                     up_migration.up()
