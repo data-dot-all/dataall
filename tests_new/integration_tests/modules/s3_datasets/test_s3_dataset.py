@@ -1,4 +1,5 @@
 import logging
+import os
 import json
 from datetime import datetime
 import time
@@ -190,8 +191,8 @@ def test_generate_dataset_access_token_unauthorized(client1, client2, session_s3
 
 def test_get_dataset_presigned_url_upload_data(client1, session_s3_dataset1):
     dataset_uri = session_s3_dataset1.datasetUri
-
-    object_name = './sample_data/books.csv'
+    object_name = os.path.join(os.path.dirname(__file__), 'sample_data/csv_table/books.csv')
+    # object_name = './tests_new/integration_tests/modules/s3_datasets/sample_data/csv_table/books.csv'
     # TODO: Test + Iterate for Multiple Files
     with open(object_name, 'rb') as f:
         response = get_dataset_presigned_role_url(

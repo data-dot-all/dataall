@@ -109,6 +109,10 @@ def persistent_env1(client1, group1, testdata):
 
 
 @pytest.fixture(scope='session')
+def session_env1_integration_role_arn(session_env1):
+    yield f'arn:aws:iam::{session_env1.AwsAccountId}:role/dataall-integration-tests-role-{session_env1.region}'
+
+@pytest.fixture(scope='session')
 def session_env1_aws_client(session_env1, session_id, session_env1_integration_role_arn):
     try:
         base_session = boto3.Session()
