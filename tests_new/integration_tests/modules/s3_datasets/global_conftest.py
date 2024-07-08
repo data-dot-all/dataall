@@ -31,7 +31,13 @@ def create_s3_dataset(client, owner, group, org_uri, env_uri, tags=[], autoAppro
         autoApprovalEnabled=autoApprovalEnabled,
         confidentiality=confidentiality,
     )
-    check_stack_ready(client, env_uri, dataset.stack.stackUri, env_uri, 'dataset')
+    check_stack_ready(
+        client=client,
+        env_uri=env_uri,
+        stack_uri=dataset.stack.stackUri,
+        target_uri=dataset.datasetUri,
+        target_type='dataset',
+    )
     return get_dataset(client, dataset.datasetUri)
 
 
@@ -62,12 +68,24 @@ def import_s3_dataset(
         autoApprovalEnabled=autoApprovalEnabled,
         confidentiality=confidentiality,
     )
-    check_stack_ready(client, env_uri, dataset.stack.stackUri, env_uri, 'dataset')
+    check_stack_ready(
+        client=client,
+        env_uri=env_uri,
+        stack_uri=dataset.stack.stackUri,
+        target_uri=dataset.datasetUri,
+        target_type='dataset',
+    )
     return get_dataset(client, dataset.datasetUri)
 
 
 def delete_s3_dataset(client, env_uri, dataset):
-    check_stack_ready(client, env_uri, dataset.stack.stackUri, env_uri, 'dataset')
+    check_stack_ready(
+        client=client,
+        env_uri=env_uri,
+        stack_uri=dataset.stack.stackUri,
+        target_uri=dataset.datasetUri,
+        target_type='dataset',
+    )
     try:
         return delete_dataset(client, dataset.datasetUri)
     except GqlError:
