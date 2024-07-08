@@ -17,7 +17,7 @@ class CatalogIndexerModuleInterface(ModuleInterface):
 
 
 class CatalogAsyncHandlersModuleInterface(ModuleInterface):
-    """Implements ModuleInterface for datapipelines async lambda"""
+    """Implements ModuleInterface for catalog async lambda"""
 
     @staticmethod
     def is_supported(modes: Set[ImportMode]):

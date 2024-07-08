@@ -18,6 +18,7 @@
                 "share_notifications": {
                     "email": {
                         "active": false,
+                        "persistent_reminders": false,
                         "parameters": {
                             "group_notifications": true
                         }

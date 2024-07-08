@@ -17,7 +17,7 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.modules.shares_base.services.shares_enums import ShareItemStatus
 from dataall.modules.shares_base.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
-from dataall.modules.s3_datasets_shares.services.dataset_sharing_alarm_service import DatasetSharingAlarmService
+from dataall.modules.s3_datasets_shares.services.s3_share_alarm_service import S3ShareAlarmService
 from dataall.modules.s3_datasets_shares.services.share_processors.glue_table_share_processor import (
     ProcessLakeFormationShare,
 )
@@ -870,7 +870,7 @@ def test_check_catalog_account_exists_and_update_processor_with_catalog_doesnt_e
 
 def test_handle_share_failure(manager_with_mocked_clients, table1: DatasetTable, mocker):
     # Given
-    alarm_service_mock = mocker.patch.object(DatasetSharingAlarmService, 'trigger_table_sharing_failure_alarm')
+    alarm_service_mock = mocker.patch.object(S3ShareAlarmService, 'trigger_table_sharing_failure_alarm')
     error = Exception()
     manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
 
@@ -887,7 +887,7 @@ def test_handle_revoke_failure(
     mocker,
 ):
     # Given
-    alarm_service_mock = mocker.patch.object(DatasetSharingAlarmService, 'trigger_revoke_table_sharing_failure_alarm')
+    alarm_service_mock = mocker.patch.object(S3ShareAlarmService, 'trigger_revoke_table_sharing_failure_alarm')
     error = Exception()
     manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
 

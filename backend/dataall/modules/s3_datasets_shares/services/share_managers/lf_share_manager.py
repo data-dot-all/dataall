@@ -19,7 +19,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
 )
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable
-from dataall.modules.s3_datasets_shares.services.dataset_sharing_alarm_service import DatasetSharingAlarmService
+from dataall.modules.s3_datasets_shares.services.s3_share_alarm_service import S3ShareAlarmService
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem
 from dataall.modules.s3_datasets_shares.services.share_managers.share_manager_utils import ShareErrorFormatter
 from dataall.modules.shares_base.services.sharing_service import ShareData
@@ -569,7 +569,7 @@ class LFShareManager:
             f'due to: {error}'
         )
 
-        DatasetSharingAlarmService().trigger_table_sharing_failure_alarm(table, self.share, self.target_environment)
+        S3ShareAlarmService().trigger_table_sharing_failure_alarm(table, self.share, self.target_environment)
         return True
 
     def handle_revoke_failure(
@@ -589,9 +589,7 @@ class LFShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        DatasetSharingAlarmService().trigger_revoke_table_sharing_failure_alarm(
-            table, self.share, self.target_environment
-        )
+        S3ShareAlarmService().trigger_revoke_table_sharing_failure_alarm(table, self.share, self.target_environment)
         return True
 
     def handle_share_failure_for_all_tables(self, tables, error, share_item_status, reapply=False):

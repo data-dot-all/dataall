@@ -18,7 +18,7 @@ IAM_S3_BUCKETS_STATEMENT_SID = 'BucketStatement'
 EMPTY_STATEMENT_SID = 'EmptyStatement'
 
 
-class SharePolicyService(ManagedPolicy):
+class S3SharePolicyService(ManagedPolicy):
     def __init__(self, role_name, account, region, environmentUri, resource_prefix):
         self.role_name = role_name
         self.account = account
@@ -48,7 +48,7 @@ class SharePolicyService(ManagedPolicy):
 
     @staticmethod
     def remove_empty_statement(policy_doc: dict, statement_sid: str) -> dict:
-        statement_index = SharePolicyService._get_statement_by_sid(policy_doc, statement_sid)
+        statement_index = S3SharePolicyService._get_statement_by_sid(policy_doc, statement_sid)
         if statement_index is not None:
             policy_doc['Statement'].pop(statement_index)
         return policy_doc

@@ -23,9 +23,6 @@ export const RequestDashboardAccessModal = (props) => {
   const dispatch = useDispatch();
   const client = useClient();
   const groups = useGroups();
-  const idpGroupOptions = groups
-    ? groups.map((g) => ({ value: g, label: g }))
-    : [];
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
@@ -117,20 +114,24 @@ export const RequestDashboardAccessModal = (props) => {
                   <CardContent>
                     <Autocomplete
                       id="teams"
-                      freeSolo
-                      options={idpGroupOptions.map((option) => option.value)}
+                      disablePortal
+                      options={groups}
                       onChange={(event, value) => {
-                        setFieldValue('groupUri', value);
+                        if (value) {
+                          setFieldValue('groupUri', value);
+                        } else {
+                          setFieldValue('groupUri', '');
+                        }
                       }}
-                      renderInput={(renderParams) => (
+                      inputValue={values.groupUri}
+                      renderInput={(params) => (
                         <TextField
-                          {...renderParams}
+                          {...params}
+                          fullWidth
                           error={Boolean(touched.groupUri && errors.groupUri)}
                           helperText={touched.groupUri && errors.groupUri}
                           label="Team"
-                          margin="normal"
                           onChange={handleChange}
-                          value={values.groupUri}
                           variant="outlined"
                         />
                       )}

@@ -1,33 +1,33 @@
 import logging
-import re
 
 import pytest
 
 from integration_tests.client import GqlError
-from integration_tests.core.environment.queries import create_environment, get_environment, delete_environment
-from integration_tests.utils import poller
+from integration_tests.core.environment.queries import (
+    create_environment,
+    get_environment,
+    delete_environment,
+    list_environments,
+    invite_group_on_env,
+)
+from integration_tests.core.organizations.queries import create_organization
+from integration_tests.core.stack.utils import check_stack_ready
 
 log = logging.getLogger(__name__)
 
 
-@poller(check_success=lambda env: not re.match(r'.*IN_PROGRESS|PENDING', env.stack.status, re.IGNORECASE), timeout=600)
-def check_env_ready(client, env_uri):
-    env = get_environment(client, env_uri)
-    log.info(f'polling {env_uri=}, new {env.stack.status=}')
-    return env
+def create_env(client, group, org_uri, account_id, region, tags=[]):
+    env = create_environment(
+        client, name='testEnvA', group=group, organizationUri=org_uri, awsAccountId=account_id, region=region, tags=tags
+    )
+    check_stack_ready(client, env.environmentUri, env.stack.stackUri)
+    return get_environment(client, env.environmentUri)
 
 
-def create_env(client, group, org_uri, account_id, region):
-    new_env_uri = create_environment(
-        client, name='testEnvA', group=group, organizationUri=org_uri, awsAccountId=account_id, region=region
-    )['environmentUri']
-    return check_env_ready(client, new_env_uri)
-
-
-def delete_env(client, env_uri):
-    check_env_ready(client, env_uri)
+def delete_env(client, env):
+    check_stack_ready(client, env.environmentUri, env.stack.stackUri)
     try:
-        return delete_environment(client, env_uri)
+        return delete_environment(client, env.environmentUri)
     except GqlError:
         log.exception('unexpected error when deleting environment')
         return False
@@ -40,27 +40,28 @@ For this reason they must stay immutable as changes to them will affect the rest
 
 
 @pytest.fixture(scope='session')
-def session_env1(client1, group1, org1, testdata):
+def session_env1(client1, group1, org1, session_id, testdata):
     envdata = testdata.envs['session_env1']
     env = None
     try:
-        env = create_env(client1, group1, org1['organizationUri'], envdata.accountId, envdata.region)
+        env = create_env(client1, group1, org1.organizationUri, envdata.accountId, envdata.region, tags=[session_id])
         yield env
     finally:
         if env:
-            delete_env(client1, env['environmentUri'])
+            delete_env(client1, env)
 
 
 @pytest.fixture(scope='session')
-def session_env2(client1, group1, org1, testdata):
+def session_env2(client1, group1, group2, org2, session_id, testdata):
     envdata = testdata.envs['session_env2']
     env = None
     try:
-        env = create_env(client1, group1, org1['organizationUri'], envdata.accountId, envdata.region)
+        env = create_env(client1, group1, org2.organizationUri, envdata.accountId, envdata.region, tags=[session_id])
+        invite_group_on_env(client1, env.environmentUri, group2, ['CREATE_DATASET'])
         yield env
     finally:
         if env:
-            delete_env(client1, env['environmentUri'])
+            delete_env(client1, env)
 
 
 """
@@ -74,11 +75,11 @@ def temp_env1(client1, group1, org1, testdata):
     envdata = testdata.envs['temp_env1']
     env = None
     try:
-        env = create_env(client1, group1, org1['organizationUri'], envdata.accountId, envdata.region)
+        env = create_env(client1, group1, org1.organizationUri, envdata.accountId, envdata.region)
         yield env
     finally:
         if env:
-            delete_env(client1, env['environmentUri'])
+            delete_env(client1, env)
 
 
 """
@@ -87,5 +88,21 @@ They are suitable for testing backwards compatibility.
 """
 
 
-@pytest.fixture(scope='function')
-def persistent_env1(client1, group1, org1, testdata): ...  # TODO
+def get_or_create_persistent_env(env_name, client, group, testdata):
+    envs = list_environments(client, term=env_name).nodes
+    if envs:
+        return envs[0]
+    else:
+        envdata = testdata.envs[env_name]
+        org = create_organization(client, f'org_{env_name}', group)
+        env = create_env(client, group, org.organizationUri, envdata.accountId, envdata.region, tags=[env_name])
+        if env.stack.status in ['CREATE_COMPLETE', 'UPDATE_COMPLETE']:
+            return env
+        else:
+            delete_env(client, env['environmentUri'])
+            raise RuntimeError(f'failed to create {env_name=} {env=}')
+
+
+@pytest.fixture(scope='session')
+def persistent_env1(client1, group1, testdata):
+    return get_or_create_persistent_env('persistent_env1', client1, group1, testdata)

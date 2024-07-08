@@ -210,8 +210,13 @@ export const EnvironmentTeamInviteForm = (props) => {
                       freeSolo
                       options={groupOptions.map((option) => option.value)}
                       onChange={(event, value) => {
-                        setFieldValue('groupUri', value);
+                        if (value) {
+                          setFieldValue('groupUri', value);
+                        } else {
+                          setFieldValue('groupUri', '');
+                        }
                       }}
+                      inputValue={values.groupUri}
                       renderInput={(params) => (
                         <TextField
                           {...params}
@@ -220,7 +225,6 @@ export const EnvironmentTeamInviteForm = (props) => {
                           error={Boolean(touched.groupUri && errors.groupUri)}
                           helperText={touched.groupUri && errors.groupUri}
                           onChange={handleChange}
-                          value={values.groupUri}
                           variant="outlined"
                         />
                       )}

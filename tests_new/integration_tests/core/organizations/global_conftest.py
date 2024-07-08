@@ -13,12 +13,13 @@ def org1(client1, group1, session_id):
 
 
 @pytest.fixture(scope='session')
-def org2(client1, group1, group2, session_id):
+def org2(client1, group1, group2, group3, session_id):
     """
     Session org owned by group1 and invite group2
     """
     org = create_organization(client1, 'organization2', group1, tags=[session_id])
     invite_team_to_organization(client=client1, organizationUri=org.organizationUri, group=group2)
+    invite_team_to_organization(client=client1, organizationUri=org.organizationUri, group=group3)
     yield org
     archive_organization(client1, org.organizationUri)
 

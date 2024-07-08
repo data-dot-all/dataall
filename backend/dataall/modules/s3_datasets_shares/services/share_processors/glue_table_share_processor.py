@@ -16,10 +16,10 @@ from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleN
 from dataall.modules.s3_datasets_shares.services.share_managers import LFShareManager
 from dataall.modules.s3_datasets_shares.aws.ram_client import RamClient
 from dataall.modules.shares_base.services.share_object_service import ShareObjectService
-from dataall.modules.s3_datasets_shares.services.share_item_service import S3ShareItemService
+from dataall.modules.s3_datasets_shares.services.s3_share_service import S3ShareService
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
-from dataall.modules.s3_datasets_shares.db.share_object_repositories import S3ShareObjectRepository
+from dataall.modules.s3_datasets_shares.db.s3_share_object_repositories import S3ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
 from dataall.modules.s3_datasets_shares.services.share_managers.share_manager_utils import ShareErrorFormatter
 
@@ -154,7 +154,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     manager.grant_principals_permissions_to_resource_link_table(table)
 
                     log.info('Attaching TABLE READ permissions...')
-                    S3ShareItemService.attach_dataset_table_read_permission(
+                    S3ShareService.attach_dataset_table_read_permission(
                         self.session, self.share_data.share, table.tableUri
                     )
 
@@ -276,7 +276,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         and self.share_data.share.groupUri != self.share_data.dataset.stewards
                     ):
                         log.info('Deleting TABLE READ permissions...')
-                        S3ShareItemService.delete_dataset_table_read_permission(
+                        S3ShareService.delete_dataset_table_read_permission(
                             self.session, self.share_data.share, table.tableUri
                         )
 
