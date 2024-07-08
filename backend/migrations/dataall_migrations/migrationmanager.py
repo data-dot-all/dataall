@@ -58,7 +58,7 @@ class MigrationManager:
                 return True
             revision = revision.next_migration()
 
-        Exception(f'Failed to find {target_revision_id}.')
+        raise Exception(f'Failed to find {target_revision_id}.')
 
     def upgrade(self, target_revision_id=None):
         if not self.check_upgrade_id(target_revision_id):
@@ -68,6 +68,7 @@ class MigrationManager:
         logger.info(f"Upgrade from {self.current_migration.revision_id()} to {target_revision_id or 'latest'}")
         executed_upgrades: Deque[Union[Type[MigrationBase], None]] = deque()
         saved_start_migration = self.current_migration
+        self.current_migration = self.current_migration.next_migration()
         while self.current_migration is not None:
             try:
                 logger.info(f'Applying migration {self.current_migration.__name__}')
