@@ -341,6 +341,7 @@ class PipelineStack(Stack):
                     ],
                     resources=[
                         f'arn:aws:iam::*:role/{self.resource_prefix}*',
+                        'arn:aws:iam::*:role/dataall-integration-tests*',
                         'arn:aws:cloudfront::*:distribution/*',
                     ],
                 )

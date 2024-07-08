@@ -500,9 +500,9 @@ class CloudfrontDistro(pyNestedClass):
     def cognito_urls_config(self, resource_prefix, envname, backend_region, custom_domain, execute_after):
         lambda_env_key = aws_kms.Key(
             self,
-            f'{resource_prefix}-{envname}-cogn-urls-lambda-env-var-key',
+            f'{resource_prefix}-cogn-lambda-env-var-key',
             removal_policy=RemovalPolicy.DESTROY,
-            alias=f'{resource_prefix}-{envname}-cogn-urls-lambda-env-var-key',
+            alias=f'{resource_prefix}-cogn-lambda-env-var-key',
             enable_key_rotation=True,
             policy=iam.PolicyDocument(
                 statements=[

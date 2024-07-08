@@ -1,6 +1,6 @@
 import logging
-
 import pytest
+import boto3
 
 from integration_tests.client import GqlError
 from integration_tests.core.environment.queries import (

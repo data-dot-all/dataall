@@ -12,4 +12,4 @@ class EnvironmentPermission(GraphQLEnumMapper):
 
 class EnvironmentType(GraphQLEnumMapper):
     Data = 'Data'
-    Compute = 'Compute'
+    IntegrationTesting = 'IntegrationTesting'

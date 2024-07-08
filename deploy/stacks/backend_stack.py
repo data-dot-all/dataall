@@ -96,6 +96,7 @@ class BackendStack(Stack):
             pivot_role_name=self.pivot_role_name,
             reauth_apis=reauth_config.get('reauth_apis', None) if reauth_config else None,
             prod_sizing=prod_sizing,
+            tooling_account_id=tooling_account_id,
             **kwargs,
         )
         if enable_cw_canaries:
