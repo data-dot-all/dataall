@@ -206,9 +206,9 @@ def test_get_dataset_presigned_url_upload_data(client1, session_s3_dataset1):
 
 def test_get_dataset_presigned_url_upload_data_unauthorized(client2, session_s3_dataset1):
     dataset_uri = session_s3_dataset1.datasetUri
-    assert_that(get_dataset_presigned_role_url).raises(GqlError).when_called_with(client2, dataset_uri, input={'prefix': 'sample_data', 'fileName': 'name'}).contains(
-        'UnauthorizedOperation', 'CREDENTIALS_DATASET', dataset_uri
-    )
+    assert_that(get_dataset_presigned_role_url).raises(GqlError).when_called_with(
+        client2, dataset_uri, input={'prefix': 'sample_data', 'fileName': 'name'}
+    ).contains('UnauthorizedOperation', 'CREDENTIALS_DATASET', dataset_uri)
 
 
 #
