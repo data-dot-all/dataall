@@ -14,8 +14,13 @@ class Client:
         self.password = password
         self.token = self._get_jwt_token()
 
+    @staticmethod
+    def _retry_if_connection_error(exception):
+        """Return True if we should retry, False otherwise"""
+        return isinstance(exception, requests.exceptions.ConnectionError) or isinstance(exception, requests.ReadTimeout)
+
     @retry(
-        exceptions=requests.exceptions.ConnectionError,
+        retry_on_exception=_retry_if_connection_error,
         stop_max_attempt_number=3,
         wait_random_min=1000,
         wait_random_max=3000,

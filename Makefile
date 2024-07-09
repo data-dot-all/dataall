@@ -57,7 +57,7 @@ test:
 
 integration-tests: upgrade-pip install-integration-tests
 	export PYTHONPATH=./backend:/./tests_new && \
-	python -m pytest -v -ra tests_new/integration_tests/ \
+	python -m pytest -v -ra tests_new/integration_tests/modules/notebooks/ \
 		--junitxml=reports/integration_tests.xml
 
 coverage: upgrade-pip install-backend install-cdkproxy install-tests
@@ -72,7 +72,7 @@ coverage: upgrade-pip install-backend install-cdkproxy install-tests
 		--color=yes
 
 deploy-image:
-	docker build -f backend/docker/prod/${type}/Dockerfile -t ${image-tag}:${image-tag} . && \
+	docker build -f backend/docker/prod/${type}/Dockerfile --platform=linux/amd64 -t ${image-tag}:${image-tag} . && \
 	aws ecr get-login-password --region ${region} | docker login --username AWS --password-stdin ${account}.dkr.ecr.${region}.amazonaws.com && \
 	docker tag ${image-tag}:${image-tag} ${account}.dkr.ecr.${region}.amazonaws.com/${repo}:${image-tag} && \
 	docker push ${account}.dkr.ecr.${region}.amazonaws.com/${repo}:${image-tag}
