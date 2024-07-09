@@ -78,7 +78,8 @@ def session_notebook1(client1, group1, session_env1, session_id, session_env1_aw
         if notebook:
             delete_notebook(client1, session_env1['environmentUri'], notebook)
             wait_stack_delete_complete(
-                session_env1_aws_client.client('cloudformation', region_name=session_env1['region']), notebook.stack.name
+                session_env1_aws_client.client('cloudformation', region_name=session_env1['region']),
+                notebook.stack.name,
             )
 
         vpc_client = VpcClient(session=session_env1_aws_client, region=session_env1['region'])
