@@ -117,34 +117,34 @@ def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdat
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
 
 
-#
-# @pytest.fixture(scope='session')
-# def session_s3_dataset2_with_table(client1, group1, org1, session_env1, session_id, testdata):
-#     ds = None
-#     try:
-#         ds = create_s3_dataset(
-#             client1,
-#             owner='someone',
-#             group=group1,
-#             org_uri=org1['organizationUri'],
-#             env_uri=session_env1['environmentUri'],
-#             tags=[session_id],
-#         )
-#         creds = generate_dataset_access_token(client1, ds.datasetUri)
-#         dataset_session = boto3.Session(
-#             aws_access_key_id=creds['AccessKey'],
-#             aws_secret_access_key=creds['SessionKey'],
-#             aws_session_token=creds['sessionToken'],
-#         )
-#         GlueClient(dataset_session, ds.region).create_table(
-#             database_name=ds.GlueDatabaseName, table_name='integrationtest', bucket=ds.S3Bucket
-#         )
-#         response = sync_tables(client1, datasetUri=ds.datasetUri)
-#
-#         yield ds, response.get('nodes', [])[0]
-#     finally:
-#         if ds:
-#             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
+
+@pytest.fixture(scope='session')
+def session_s3_dataset2_with_table(client1, group1, org1, session_env1, session_id, testdata):
+    ds = None
+    try:
+        ds = create_s3_dataset(
+            client1,
+            owner='someone',
+            group=group1,
+            org_uri=org1['organizationUri'],
+            env_uri=session_env1['environmentUri'],
+            tags=[session_id],
+        )
+        creds = generate_dataset_access_token(client1, ds.datasetUri)
+        dataset_session = boto3.Session(
+            aws_access_key_id=creds['AccessKey'],
+            aws_secret_access_key=creds['SessionKey'],
+            aws_session_token=creds['sessionToken'],
+        )
+        GlueClient(dataset_session, ds.region).create_table(
+            database_name=ds.GlueDatabaseName, table_name='integrationtest', bucket=ds.S3Bucket
+        )
+        response = sync_tables(client1, datasetUri=ds.datasetUri)
+
+        yield ds, response.get('nodes', [])[0]
+    finally:
+        if ds:
+            delete_s3_dataset(client1, session_env1['environmentUri'], ds)
 
 
 @pytest.fixture(scope='session')
