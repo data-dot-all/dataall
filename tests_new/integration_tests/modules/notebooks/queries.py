@@ -27,6 +27,7 @@ organization {
 }
 stack {
   stack
+  name
   status
   stackUri
   targetUri

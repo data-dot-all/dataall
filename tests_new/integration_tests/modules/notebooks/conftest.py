@@ -9,14 +9,9 @@ from integration_tests.modules.notebooks.queries import (
     delete_sagemaker_notebook,
     list_sagemaker_notebooks,
 )
-from integration_tests.core.stack.utils import check_stack_ready, check_stack_in_progress, wait_stack_delete_complete
+from integration_tests.core.stack.utils import check_stack_ready, wait_stack_delete_complete
 
 from integration_tests.modules.notebooks.aws_clients import VpcClient
-
-from dataall.base.utils.naming_convention import (
-    NamingConventionService,
-    NamingConventionPattern,
-)
 
 log = logging.getLogger(__name__)
 
@@ -82,14 +77,8 @@ def session_notebook1(client1, group1, session_env1, session_id, session_env1_aw
     finally:
         if notebook:
             delete_notebook(client1, session_env1['environmentUri'], notebook)
-            stack_name = NamingConventionService(
-                target_label='notebook',
-                target_uri=notebook.notebookUri,
-                pattern=NamingConventionPattern.DEFAULT,
-                resource_prefix=session_env1['resourcePrefix'],
-            ).build_compliant_name()
             wait_stack_delete_complete(
-                session_env1_aws_client.client('cloudformation', region_name=session_env1['region']), stack_name
+                session_env1_aws_client.client('cloudformation', region_name=session_env1['region']), notebook.stack.name
             )
 
         vpc_client = VpcClient(session=session_env1_aws_client, region=session_env1['region'])

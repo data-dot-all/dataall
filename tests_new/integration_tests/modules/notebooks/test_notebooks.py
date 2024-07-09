@@ -83,7 +83,7 @@ def test_persistent_notebook_update(client1, persistent_notebook1):
     # TODO: Come up with better way to handle wait in progress if applicable
     # Use time.sleep() instead of poller b/c of case where no changes founds  (i.e. no update required)
     # check_stack_in_progress(client1, env_uri, stack_uri)
-    time.sleep(20)
+    time.sleep(120)
 
     stack = check_stack_ready(
         client1, env_uri=env_uri, stack_uri=stack_uri, target_uri=notebook_uri, target_type=target_type
