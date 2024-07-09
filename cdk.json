@@ -4,6 +4,28 @@
     "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": false,
     "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": true,
     "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
-    "@aws-cdk/core:stackRelativeExports": false
+    "@aws-cdk/core:stackRelativeExports": false,
+    "tooling_region": "us-east-1",
+    "git_branch": "main",
+    "quality_gate": true,
+    "resource_prefix": "dataall",
+    "DeploymentEnvironments": [
+        {
+            "envname": "dev",
+            "account": "562801399559",
+            "region": "us-east-1",
+            "with_approval": true,
+            "internet_facing": true,
+            "prod_sizing": false,
+            "enable_pivot_role_auto_create": true,
+            "enable_update_dataall_stacks_in_cicd_pipeline": true,
+            "enable_opensearch_serverless": true,
+            "cognito_user_session_timeout_inmins": 240,
+            "reauth_config": {
+              "reauth_apis": ["CreateDataset", "ImportDataset", "deleteDataset"],
+              "ttl": 10
+            }
+        }
+    ]
   }
 }
