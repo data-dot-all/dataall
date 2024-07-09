@@ -190,17 +190,21 @@ def test_generate_dataset_access_token_unauthorized(client1, client2, session_s3
 
 
 def test_get_dataset_presigned_url_upload_data(client1, session_s3_dataset1):
-    dataset_uri = session_s3_dataset1.datasetUri
-    object_name = os.path.join(os.path.dirname(__file__), 'sample_data/csv_table/books.csv')
-    # object_name = './tests_new/integration_tests/modules/s3_datasets/sample_data/csv_table/books.csv'
     # TODO: Test + Iterate for Multiple Files
-    with open(object_name, 'rb') as f:
-        response = get_dataset_presigned_role_url(
-            client1, dataset_uri, input={'prefix': 'sample_data', 'fileName': f.name}
-        )
-        assert_that(response).contains_key('url', 'fields')
+    dataset_uri = session_s3_dataset1.datasetUri
+    file_path = os.path.join(os.path.dirname(__file__), 'sample_data/csv_table/books.csv')
+    prefix = 'csv_table'
+    file_name = 'books.csv'
 
-        files = {'file': (object_name, f)}
+    response = json.loads(
+        get_dataset_presigned_role_url(client1, dataset_uri, input={'prefix': prefix, 'fileName': file_name})
+    )
+    assert_that(response).contains_key('url', 'fields')
+    with open(file_path, 'rb') as f:
+        # Create a dictionary with the form fields and the file data
+        files = {'file': (f'{prefix}/{file_name}', f)}
+
+        # Send the POST request with the presigned URL, form fields, and file data
         http_response = requests.post(response['url'], data=response['fields'], files=files)
         http_response.raise_for_status()
 
