@@ -337,6 +337,35 @@ class BackendStack(Stack):
             **kwargs,
         )
 
+        TriggerFunctionStack(
+            self,
+            'DataallMigrations',
+            handler='deployment_triggers.dataall_migrate_handler.handler',
+            role_name='dataall-migration-role',
+            envname=envname,
+            resource_prefix=resource_prefix,
+            vpc=vpc,
+            vpce_connection=vpce_connection,
+            image_tag=image_tag,
+            ecr_repository=repo,
+            execute_after=[db_migrations.trigger_function],
+            connectables=[aurora_stack.cluster],
+            additional_policy_statements=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=['sts:AssumeRole'],
+                    resources=[f'arn:aws:iam::{self.account}:role/{self.pivot_role_name}'],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=['ssm:PutParameter'],
+                    resources=[f'arn:aws:ssm:*:{self.account}:parameter/*dataall-migration*'],
+                ),
+            ],
+            env_var_encryption_key=lambda_env_key,
+            **kwargs,
+        )
+
         self.monitoring_stack = MonitoringStack(
             self,
             'CWDashboards',
