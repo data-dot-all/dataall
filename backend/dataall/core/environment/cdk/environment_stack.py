@@ -644,3 +644,11 @@ class EnvironmentSetup(Stack):
                 resources=['*'],
             ),
         )
+
+        self.test_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=['cloudformation:Describe*'],
+                effect=iam.Effect.ALLOW,
+                resources=[f'arn:aws:cloudformation:*:{self.account}:stack/*/*'],
+            ),
+        )
