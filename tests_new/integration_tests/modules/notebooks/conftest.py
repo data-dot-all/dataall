@@ -154,7 +154,7 @@ def get_or_create_persistent_notebook(resource_name, client, group, env, session
             name=resource_name,
         )
         if notebook.stack.status in ['CREATE_COMPLETE', 'UPDATE_COMPLETE']:
-            return env
+            return notebook
         else:
             delete_notebook(client, env['environmentUri'], notebook)
             raise RuntimeError(f'failed to create {resource_name=} {notebook=}')
