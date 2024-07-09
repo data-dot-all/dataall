@@ -33,7 +33,7 @@ class WorksheetService:
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_WORKSHEETS)
-    def create_worksheet(session, username, uri, data=None) -> Worksheet:
+    def create_worksheet(session, username, data=None) -> Worksheet:
         worksheet = Worksheet(
             owner=username,
             label=data.get('label'),
