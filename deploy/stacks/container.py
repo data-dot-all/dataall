@@ -195,10 +195,11 @@ class ContainerStack(pyNestedClass):
 
     @run_if(['modules.s3_datasets.active', 'modules.dashboards.active'])
     def add_catalog_indexer_task(self):
+        container_id = 'container'
         catalog_indexer_task, catalog_indexer_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
             command=['python3.9', '-m', 'dataall.modules.catalog.tasks.catalog_indexer_task'],
-            container_id='container',
+            container_id=container_id,
             ecr_repository=self._ecr_repository,
             environment=self._create_env('INFO'),
             image_tag=self._cdkproxy_image_tag,
@@ -210,6 +211,20 @@ class ContainerStack(pyNestedClass):
             vpc=self._vpc,
             security_group=self.scheduled_tasks_sg,
             prod_sizing=self._prod_sizing,
+        )
+
+        ssm.StringParameter(
+            self,
+            f'CatalogIndexerTaskARNSSM{self._envname}',
+            parameter_name=f'/dataall/{self._envname}/ecs/task_def_arn/catalog_indexer',
+            string_value=catalog_indexer_task_def.task_definition_arn,
+        )
+
+        ssm.StringParameter(
+            self,
+            f'CatalogIndexerTaskContainerSSM{self._envname}',
+            parameter_name=f'/dataall/{self._envname}/ecs/container/catalog_indexer',
+            string_value=container_id,
         )
 
         self.ecs_task_definitions_families.append(catalog_indexer_task.task_definition.family)

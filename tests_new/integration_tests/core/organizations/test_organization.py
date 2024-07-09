@@ -44,7 +44,7 @@ def test_get_organization_organization_with_admin_team(client1, org1):
     assert_that(response.stats.groups).is_equal_to(0)
 
 
-def test_get_organization_organization_with_invited_team(client2, org2):
+def test_get_organization_with_invited_team(client2, org2):
     # Given an organization
     organization = org2
     # When an invited team (client2) gets the organization
@@ -52,7 +52,7 @@ def test_get_organization_organization_with_invited_team(client2, org2):
     # Then
     assert_that(response.organizationUri).is_equal_to(organization.organizationUri)
     assert_that(response.userRoleInOrganization).is_equal_to('Invited')
-    assert_that(response.stats.groups).is_equal_to(1)
+    assert_that(response.stats.groups).is_equal_to(2)
 
 
 def test_get_organization_with_unauthorized_team(client3, org1):
@@ -82,10 +82,10 @@ def test_list_organizations_with_invited_team(client2, org1, org2, session_id):
     assert_that(response.count).is_equal_to(1)
 
 
-def test_list_organizations_with_unauthorized_team(client3, org1, org2, session_id):
+def test_list_organizations_with_unauthorized_team(client4, org1, org2, session_id):
     # Given 2 organizations
     # When a non-invited user
-    response = list_organizations(client3, term=session_id)
+    response = list_organizations(client4, term=session_id)
     # Then
     assert_that(response.count).is_equal_to(0)
 

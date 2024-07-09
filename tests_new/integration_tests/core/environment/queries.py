@@ -160,3 +160,101 @@ def list_environments(client, term=''):
     }
     response = client.query(query=query)
     return response.data.listEnvironments
+
+
+def invite_group_on_env(client, env_uri, group_uri, perms, iam_role_arn=None):
+    query = {
+        'operationName': 'inviteGroupOnEnvironment',
+        'variables': {
+            'input': {
+                'environmentUri': env_uri,
+                'groupUri': group_uri,
+                'permissions': perms,
+                'environmentIAMRoleArn': iam_role_arn,
+            },
+        },
+        'query': """
+                    mutation inviteGroupOnEnvironment($input: InviteGroupOnEnvironmentInput!) {
+                      inviteGroupOnEnvironment(input: $input) {
+                        environmentUri
+                      }
+                    }
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.inviteGroupOnEnvironment
+
+
+def remove_group_from_env(client, env_uri, group_uri):
+    query = {
+        'operationName': 'removeGroupFromEnvironment',
+        'variables': {'environmentUri': env_uri, 'groupUri': group_uri},
+        'query': """
+                    mutation removeGroupFromEnvironment(
+                      $environmentUri: String!
+                      $groupUri: String!
+                    ) {
+                      removeGroupFromEnvironment(
+                        environmentUri: $environmentUri
+                        groupUri: $groupUri
+                      ) {
+                        environmentUri
+                      }
+                    }
+        """,
+    }
+    response = client.query(query=query)
+    return response.data.removeGroupFromEnvironment
+
+
+def add_consumption_role(client, env_uri, group_uri, consumption_role_name, iam_role_arn, is_managed=True):
+    query = {
+        'operationName': 'addConsumptionRoleToEnvironment',
+        'variables': {
+            'input': {
+                'environmentUri': env_uri,
+                'groupUri': group_uri,
+                'consumptionRoleName': consumption_role_name,
+                'IAMRoleArn': iam_role_arn,
+                'dataallManaged': is_managed,
+            },
+        },
+        'query': """
+                    mutation addConsumptionRoleToEnvironment(
+                      $input: AddConsumptionRoleToEnvironmentInput!
+                    ) {
+                      addConsumptionRoleToEnvironment(input: $input) {
+                        consumptionRoleUri
+                        consumptionRoleName
+                        environmentUri
+                        groupUri
+                        IAMRoleArn
+                      }
+                    }
+        """,
+    }
+    response = client.query(query=query)
+    return response.data.addConsumptionRoleToEnvironment
+
+
+def remove_consumption_role(client, env_uri, consumption_role_uri):
+    query = {
+        'operationName': 'removeConsumptionRoleFromEnvironment',
+        'variables': {
+            'environmentUri': env_uri,
+            'consumptionRoleUri': consumption_role_uri,
+        },
+        'query': """
+                    mutation removeConsumptionRoleFromEnvironment(
+                      $environmentUri: String!
+                      $consumptionRoleUri: String!
+                    ) {
+                      removeConsumptionRoleFromEnvironment(
+                        environmentUri: $environmentUri
+                        consumptionRoleUri: $consumptionRoleUri
+                      )
+                    }
+        """,
+    }
+    response = client.query(query=query)
+    return response.data.removeConsumptionRoleFromEnvironment

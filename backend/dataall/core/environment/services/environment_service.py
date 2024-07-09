@@ -868,13 +868,19 @@ class EnvironmentService:
                     f'related objects before proceeding',
                 )
             else:
-                PolicyManager(
-                    role_name=environment.EnvironmentDefaultIAMRoleName,
-                    environmentUri=environment.environmentUri,
-                    account=environment.AwsAccountId,
-                    region=environment.region,
-                    resource_prefix=environment.resourcePrefix,
-                ).delete_all_policies()
+                if StackRepository.find_stack_by_target_uri(session, environment.environmentUri) not in [
+                    StackStatus.ROLLBACK_COMPLETE.value,
+                    StackStatus.ROLLBACK_IN_PROGRESS.value,
+                    StackStatus.CREATE_FAILED.value,
+                    StackStatus.DELETE_COMPLETE.value,
+                ]:
+                    PolicyManager(
+                        role_name=environment.EnvironmentDefaultIAMRoleName,
+                        environmentUri=environment.environmentUri,
+                        account=environment.AwsAccountId,
+                        region=environment.region,
+                        resource_prefix=environment.resourcePrefix,
+                    ).delete_all_policies()
 
                 KeyValueTagRepository.delete_key_value_tags(session, environment.environmentUri, 'environment')
                 EnvironmentResourceManager.delete_env(session, environment)

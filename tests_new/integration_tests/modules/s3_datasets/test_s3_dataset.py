@@ -108,7 +108,7 @@ def test_persistent_s3_dataset_update(client1, persistent_s3_dataset1):
     # TODO: Come up with better way to handle wait in progress if applicable
     # Use time.sleep() instead of poller b/c of case where no changes founds  (i.e. no update required)
     # check_stack_in_progress(client1, env_uri, stack_uri)
-    time.sleep(10)
+    time.sleep(120)
 
     stack = check_stack_ready(
         client1, env_uri=env_uri, stack_uri=stack_uri, target_uri=dataset_uri, target_type=target_type
@@ -129,7 +129,7 @@ def test_persistent_import_sse_s3_dataset_update(client1, persistent_imported_ss
     # TODO: Come up with better way to handle wait in progress if applicable
     # Use time.sleep() instead of poller b/c of case where no changes founds  (i.e. no update required)
     # check_stack_in_progress(client1, env_uri, stack_uri)
-    time.sleep(10)
+    time.sleep(120)
 
     stack = check_stack_ready(
         client1, env_uri=env_uri, stack_uri=stack_uri, target_uri=dataset_uri, target_type=target_type
@@ -150,7 +150,7 @@ def test_persistent_import_kms_s3_dataset_update(client1, persistent_imported_km
     # TODO: Come up with better way to handle wait in progress if applicable
     # Use time.sleep() instead of poller b/c of case where no changes founds  (i.e. no update required)
     # check_stack_in_progress(client1, env_uri, stack_uri)
-    time.sleep(10)
+    time.sleep(120)
 
     stack = check_stack_ready(
         client1, env_uri=env_uri, stack_uri=stack_uri, target_uri=dataset_uri, target_type=target_type
