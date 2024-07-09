@@ -30,6 +30,7 @@ NewEnvironmentInput = gql.InputType(
         gql.Argument('parameters', gql.ArrayType(ModifyEnvironmentParameterInput)),
         gql.Argument('vpcId', gql.String),
         gql.Argument('subnetIds', gql.ArrayType(gql.String)),
+        gql.Argument('type', gql.String),
     ],
 )
 

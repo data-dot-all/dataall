@@ -22,6 +22,7 @@ from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.services.managed_iam_policies import PolicyManager
+from dataall.core.environment.api.enums import EnvironmentType
 from dataall.base.cdkproxy.stacks.manager import stack
 from dataall.core.environment.cdk.pivot_role_stack import PivotRole
 from dataall.core.environment.cdk.env_role_core_policies.data_policy import S3Policy
@@ -138,6 +139,9 @@ class EnvironmentSetup(Stack):
         self.environment_admins_group: EnvironmentGroup = self.get_environment_admins_group(
             self.engine, self._environment
         )
+        # Create test role for integration tests
+        if self._environment.environmentType == EnvironmentType.IntegrationTesting.value:
+            self.create_integration_tests_role()
 
         # Create or import Pivot role
         if self.create_pivot_role is True:
@@ -559,3 +563,61 @@ class EnvironmentSetup(Stack):
             )
         )
         return topic
+
+    def create_integration_tests_role(self):
+        toolingAccount = ParameterStoreManager.get_parameter_value(
+            region=os.getenv('AWS_REGION', 'eu-west-1'),
+            parameter_path=f"/dataall/{os.getenv('envname', 'local')}/toolingAccount",
+        )
+        self.test_role = iam.Role(
+            self,
+            'IntegrationTestRole',
+            role_name=f'dataall-integration-tests-role-{self._environment.region}',
+            assumed_by=iam.AccountPrincipal(toolingAccount),
+        )
+        self.test_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    's3:CreateBucket',
+                    's3:DeleteBucket',
+                    's3:PutEncryptionConfiguration',
+                    's3:List*',
+                    's3:GetObject*',
+                    's3:DeleteObject',
+                ],
+                effect=iam.Effect.ALLOW,
+                resources=['arn:aws:s3:::dataalltesting*'],
+            )
+        )
+        self.test_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=['glue:CreateDatabase', 'glue:DeleteDatabase'],
+                effect=iam.Effect.ALLOW,
+                resources=[
+                    f'arn:aws:glue:{self.region}:{self.account}:catalog',
+                    f'arn:aws:glue:{self.region}:{self.account}:database/dataalltesting*',
+                    f'arn:aws:glue:{self.region}:{self.account}:table/dataalltesting*',
+                    f'arn:aws:glue:{self.region}:{self.account}:userDefinedFunction/dataalltesting*',
+                ],
+            )
+        )
+        self.test_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    'lakeformation:GrantPermissions',
+                    'lakeformation:PutDataLakeSettings',
+                    'lakeformation:GetDataLakeSettings',
+                    'kms:CreateKey',
+                    'kms:CreateAlias',
+                    'kms:DeleteAlias',
+                    'kms:ListAliases',
+                    'kms:GetKeyPolicy',
+                    'kms:PutKeyPolicy',
+                    'kms:ScheduleKeyDeletion',
+                    'kms:TagResource',
+                    's3:GetBucketVersioning',
+                ],
+                effect=iam.Effect.ALLOW,
+                resources=['*'],
+            )
+        )

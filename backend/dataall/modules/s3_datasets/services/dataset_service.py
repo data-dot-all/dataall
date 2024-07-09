@@ -218,6 +218,7 @@ class DatasetService:
             return dataset
 
     @staticmethod
+    @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def get_file_upload_presigned_url(uri: str, data: dict):
         with get_context().db_engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
