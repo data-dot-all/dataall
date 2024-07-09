@@ -46,10 +46,12 @@ class NotebookRepository(EnvironmentResource):
             )
         )
         if filter and filter.get('term'):
+            term = filter['term']
             query = query.filter(
                 or_(
-                    SagemakerNotebook.description.ilike(filter.get('term') + '%%'),
-                    SagemakerNotebook.label.ilike(filter.get('term') + '%%'),
+                    SagemakerNotebook.description.ilike(term + '%%'),
+                    SagemakerNotebook.label.ilike(term + '%%'),
+                    SagemakerNotebook.tags.contains(f'{{{term}}}'),
                 )
             )
         return query.order_by(SagemakerNotebook.label)
