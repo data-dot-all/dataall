@@ -577,21 +577,46 @@ class EnvironmentSetup(Stack):
         )
         self.test_role.add_to_policy(
             iam.PolicyStatement(
-                actions=['s3:CreateBucket', 's3:DeleteBucket'],
+                actions=[
+                    's3:CreateBucket',
+                    's3:DeleteBucket',
+                    's3:PutEncryptionConfiguration',
+                    's3:List*',
+                    's3:GetObject*',
+                    's3:DeleteObject',
+                ],
                 effect=iam.Effect.ALLOW,
-                resources=['*'],
+                resources=['arn:aws:s3:::dataalltesting*'],
             )
         )
         self.test_role.add_to_policy(
             iam.PolicyStatement(
-                actions=['glue:createDatabase', 'glue:deleteDatabase'],
+                actions=['glue:CreateDatabase', 'glue:DeleteDatabase'],
                 effect=iam.Effect.ALLOW,
-                resources=['*'],
+                resources=[
+                    f'arn:aws:glue:{self.region}:{self.account}:catalog',
+                    f'arn:aws:glue:{self.region}:{self.account}:database/dataalltesting*',
+                    f'arn:aws:glue:{self.region}:{self.account}:table/dataalltesting*',
+                    f'arn:aws:glue:{self.region}:{self.account}:userDefinedFunction/dataalltesting*',
+                ],
             )
         )
         self.test_role.add_to_policy(
             iam.PolicyStatement(
-                actions=['kms:CreateKey', 'kms:DeleteKey', 'kms:ListAliases'],
+                actions=[
+                    'lakeformation:GrantPermissions',
+                    'lakeformation:PutDataLakeSettings',
+                    'lakeformation:GetDataLakeSettings',
+                    'kms:CreateKey',
+                    'kms:CreateAlias',
+                    'kms:DeleteAlias',
+                    'kms:ListAliases',
+                    'kms:GetKeyPolicy',
+                    'kms:PutKeyPolicy',
+                    'kms:ScheduleKeyDeletion',
+                    'kms:TagResource',
+                    's3:GetBucketVersioning',
+                ],
                 effect=iam.Effect.ALLOW,
                 resources=['*'],
             )

@@ -1,5 +1,6 @@
 import logging
 import json
+import re
 from botocore.exceptions import ClientError
 
 log = logging.getLogger(__name__)
@@ -18,6 +19,7 @@ class S3Client:
         :param kms_key_id: KMS key ID to use for encryption if encryption_type is 'aws:kms'
         :return: None
         """
+        bucket_name = re.sub('[^a-zA-Z0-9-]', '', bucket_name).lower()
 
         encryption_type = 'aws:kms' if kms_key_id else 'AES256'
         encryption_config = (
@@ -43,6 +45,7 @@ class S3Client:
                     ]
                 },
             )
+            return bucket_name
         except ClientError as e:
             log.exception(f'Error creating S3 bucket: {e}')
 
@@ -74,10 +77,11 @@ class KMSClient:
         try:
             response = self._client.create_key()
             key_id = response['KeyMetadata']['KeyId']
+            alias_name = re.sub('[^a-zA-Z0-9-]', '', alias_name).lower()
             self._client.create_alias(AliasName=f'alias/{alias_name}', TargetKeyId=key_id)
             self._put_key_policy(key_id)
 
-            return key_id
+            return key_id, alias_name
 
         except ClientError as e:
             log.exception(f'Error creating KMS key with alias: {e}')
@@ -87,12 +91,11 @@ class KMSClient:
         policy = json.loads(response['Policy'])
         # The updated policy replaces the existing policy. Add a new statement to
         # the list along with the original policy statements.
-        principal = f'arn:aws:iam::{self._account_id}:role/dataallPivotRole-cdk'
         policy['Statement'].append(
             {
                 'Sid': 'Allow access for PivotRole',
                 'Effect': 'Allow',
-                'Principal': {'AWS': principal},
+                'Principal': {'AWS': '*'},
                 'Action': [
                     'kms:Decrypt',
                     'kms:Encrypt',
@@ -104,6 +107,9 @@ class KMSClient:
                     'kms:UntagResource',
                 ],
                 'Resource': '*',
+                'Condition': {
+                    'ArnLike': {'aws:PrincipalArn': f'arn:aws:iam::{self._account_id}:role/dataallPivotRole*'}
+                },
             }
         )
         try:
@@ -112,7 +118,7 @@ class KMSClient:
             log.exception(
                 "Couldn't set policy for key %s. Here's why %s",
                 key_id,
-                err.response['Error']['Message'],
+                err,
             )
 
     def delete_key_by_alias(self, alias_name):
@@ -126,6 +132,7 @@ class KMSClient:
             if key_id:
                 # Schedule the key for deletion
                 self._client.schedule_key_deletion(KeyId=key_id)
+            self._client.delete_alias(AliasName=f'alias/{alias_name}')
         except ClientError as e:
             log.exception(f'Error deleting KMS key by alias: {e}')
 
@@ -150,7 +157,29 @@ class GlueClient:
 
     def create_database(self, database_name, bucket):
         try:
+            database_name = re.sub('[^a-zA-Z0-9_]', '', database_name).lower()
             self._client.create_database(DatabaseInput={'Name': database_name, 'LocationUri': f's3://{bucket}/'})
+            return database_name
+        except ClientError as e:
+            log.exception(f'Error creating Glue database: {e}')
+
+    def create_table(self, database_name, bucket, table_name):
+        try:
+            self._client.create_table(
+                DatabaseName=database_name,
+                TableInput={
+                    'Name': table_name,
+                    'Description': 'integration tests',
+                    'StorageDescriptor': {
+                        'Columns': [
+                            {'Name': 'column1', 'Type': 'string'},
+                            {'Name': 'column2', 'Type': 'string'},
+                            {'Name': 'column3', 'Type': 'string'},
+                        ],
+                        'Location': f's3://{bucket}/',
+                    },
+                },
+            )
         except ClientError as e:
             log.exception(f'Error creating Glue database: {e}')
 
@@ -167,3 +196,57 @@ class GlueClient:
                 log.exception(f"Glue database '{database_name}' does not exist.")
             else:
                 log.exception(f'Error deleting Glue database: {e}')
+
+
+class LakeFormationClient:
+    def __init__(self, session, region):
+        self._client = session.client('lakeformation', region_name=region)
+
+    def add_role_to_datalake_admin(self, role_arn):
+        try:
+            response = self._client.get_data_lake_settings()
+            existing_admins = response.get('DataLakeSettings', {}).get('DataLakeAdmins', [])
+            if existing_admins:
+                existing_admins = [admin['DataLakePrincipalIdentifier'] for admin in existing_admins]
+
+            new_admins = [role_arn]
+            new_admins.extend(existing_admins or [])
+            self._client.put_data_lake_settings(
+                DataLakeSettings={
+                    'DataLakeAdmins': [
+                        {'DataLakePrincipalIdentifier': principal} for principal in list(set(new_admins))
+                    ]
+                },
+            )
+            return existing_admins
+        except ClientError as e:
+            log.exception(f'Error granting lake formation permissions: {e}')
+
+    def remove_role_from_datalake_admin(self, old_existing_principals):
+        try:
+            self._client.put_data_lake_settings(
+                DataLakeSettings={
+                    'DataLakeAdmins': [
+                        {'DataLakePrincipalIdentifier': principal} for principal in old_existing_principals
+                    ]
+                },
+            )
+            return True
+        except ClientError as e:
+            log.exception(f'Error granting lake formation permissions: {e}')
+
+    def grant_create_database(self, role_arn):
+        """
+        Grants permissions to create a Glue database in catalog.
+        :param role_arn: principal to grant permissions
+        :return: None
+        """
+        try:
+            self._client.grant_permissions(
+                Principal={'DataLakePrincipalIdentifier': role_arn},
+                Resource={'Catalog': {}},
+                Permissions=['CREATE_DATABASE'],
+            )
+            return True
+        except ClientError as e:
+            log.exception(f'Error granting permissions to create database: {e}')

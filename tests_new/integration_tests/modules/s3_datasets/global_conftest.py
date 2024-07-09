@@ -1,19 +1,20 @@
 import logging
-
 import pytest
-
+import boto3
 from integration_tests.client import GqlError
 from integration_tests.core.stack.utils import check_stack_ready
 
 from integration_tests.modules.s3_datasets.queries import (
     create_dataset,
+    generate_dataset_access_token,
     import_dataset,
     delete_dataset,
     get_dataset,
+    sync_tables,
 )
 from tests_new.integration_tests.modules.datasets_base.queries import list_datasets
 
-from integration_tests.modules.s3_datasets.aws_clients import S3Client, KMSClient, GlueClient
+from integration_tests.modules.s3_datasets.aws_clients import S3Client, KMSClient, GlueClient, LakeFormationClient
 
 log = logging.getLogger(__name__)
 
@@ -30,7 +31,13 @@ def create_s3_dataset(client, owner, group, org_uri, env_uri, tags=[], autoAppro
         autoApprovalEnabled=autoApprovalEnabled,
         confidentiality=confidentiality,
     )
-    check_stack_ready(client, env_uri, dataset.stack.stackUri)
+    check_stack_ready(
+        client=client,
+        env_uri=env_uri,
+        stack_uri=dataset.stack.stackUri,
+        target_uri=dataset.datasetUri,
+        target_type='dataset',
+    )
     return get_dataset(client, dataset.datasetUri)
 
 
@@ -61,12 +68,24 @@ def import_s3_dataset(
         autoApprovalEnabled=autoApprovalEnabled,
         confidentiality=confidentiality,
     )
-    check_stack_ready(client, env_uri, dataset.stack.stackUri)
+    check_stack_ready(
+        client=client,
+        env_uri=env_uri,
+        stack_uri=dataset.stack.stackUri,
+        target_uri=dataset.datasetUri,
+        target_type='dataset',
+    )
     return get_dataset(client, dataset.datasetUri)
 
 
 def delete_s3_dataset(client, env_uri, dataset):
-    check_stack_ready(client, env_uri, dataset.stack.stackUri)
+    check_stack_ready(
+        client=client,
+        env_uri=env_uri,
+        stack_uri=dataset.stack.stackUri,
+        target_uri=dataset.datasetUri,
+        target_type='dataset',
+    )
     try:
         return delete_dataset(client, dataset.datasetUri)
     except GqlError:
@@ -100,11 +119,11 @@ def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdat
 
 @pytest.fixture(scope='session')
 def session_imported_sse_s3_dataset1(
-    client1, group1, org1, session_env1, session_id, testdata, session_env1_aws_client
+    client1, group1, org1, session_env1, session_id, testdata, session_env1_aws_client, resources_prefix
 ):
     ds = None
     bucket = None
-    bucket_name = f'sessionimportedsses3{session_id}'
+    bucket_name = f'{resources_prefix}importedsses3'
     try:
         bucket = S3Client(session=session_env1_aws_client, region=session_env1['region']).create_bucket(
             bucket_name=bucket_name, kms_key_id=None
@@ -117,32 +136,53 @@ def session_imported_sse_s3_dataset1(
             org_uri=org1['organizationUri'],
             env_uri=session_env1['environmentUri'],
             tags=[session_id],
-            bucket=bucket_name,
+            bucket=bucket,
         )
+        if not bucket:
+            raise Exception('Error creating import dataset AWS resources')
         yield ds
     finally:
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
         if bucket:
-            S3Client(session=session_env1_aws_client, region=session_env1['region']).delete_bucket(bucket_name)
+            S3Client(session=session_env1_aws_client, region=session_env1['region']).delete_bucket(bucket)
 
 
 @pytest.fixture(scope='session')
 def session_imported_kms_s3_dataset1(
-    client1, group1, org1, session_env1, session_id, testdata, session_env1_aws_client
+    client1,
+    group1,
+    org1,
+    session_env1,
+    session_id,
+    testdata,
+    session_env1_aws_client,
+    session_env1_integration_role_arn,
+    resources_prefix,
 ):
     ds = None
-    resource_name = f'sessionimportedkms{session_id}'
+    bucket = None
+    database = None
+    existing_lf_admins = []
+    kms_alias = None
+    resource_name = f'{resources_prefix}importedkms'
     try:
-        kms_key_id = KMSClient(
-            session=session_env1_aws_client, account_id=session_env1['AwsAccountId'], region=session_env1['region']
+        kms_key_id, kms_alias = KMSClient(
+            session=session_env1_aws_client,
+            account_id=session_env1['AwsAccountId'],
+            region=session_env1['region'],
         ).create_key_with_alias(resource_name)
-        S3Client(session=session_env1_aws_client, region=session_env1['region']).create_bucket(
+        bucket = S3Client(session=session_env1_aws_client, region=session_env1['region']).create_bucket(
             bucket_name=resource_name, kms_key_id=kms_key_id
         )
-        GlueClient(session=session_env1_aws_client, region=session_env1['region']).create_database(
-            database_name=resource_name, bucket=resource_name
-        )
+        lf_client = LakeFormationClient(session=session_env1_aws_client, region=session_env1['region'])
+        existing_lf_admins = lf_client.add_role_to_datalake_admin(role_arn=session_env1_integration_role_arn)
+        if lf_client.grant_create_database(role_arn=session_env1_integration_role_arn):
+            database = GlueClient(session=session_env1_aws_client, region=session_env1['region']).create_database(
+                database_name=resource_name, bucket=resource_name
+            )
+        if None in [bucket, database, kms_alias]:
+            raise Exception('Error creating import dataset AWS resources')
         ds = import_s3_dataset(
             client1,
             owner='someone',
@@ -150,19 +190,28 @@ def session_imported_kms_s3_dataset1(
             org_uri=org1['organizationUri'],
             env_uri=session_env1['environmentUri'],
             tags=[session_id],
-            bucket=resource_name,
-            kms_alias=resource_name,
-            glue_db_name=resource_name,
+            bucket=bucket,
+            kms_alias=kms_alias,
+            glue_db_name=database,
         )
         yield ds
     finally:
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
-            S3Client(session=session_env1_aws_client, region=session_env1['region']).delete_bucket(resource_name)
+        if bucket:
+            S3Client(session=session_env1_aws_client, region=session_env1['region']).delete_bucket(bucket)
+        if kms_alias:
             KMSClient(
-                session=session_env1_aws_client, account_id=session_env1['AwsAccountId'], region=session_env1['region']
-            ).delete_key_by_alias(resource_name)
-            GlueClient(session=session_env1_aws_client, region=session_env1['region']).delete_database(resource_name)
+                session=session_env1_aws_client,
+                account_id=session_env1['AwsAccountId'],
+                region=session_env1['region'],
+            ).delete_key_by_alias(kms_alias)
+        if existing_lf_admins:
+            LakeFormationClient(
+                session=session_env1_aws_client, region=session_env1['region']
+            ).remove_role_from_datalake_admin(existing_lf_admins)
+        if database:
+            GlueClient(session=session_env1_aws_client, region=session_env1['region']).delete_database(database)
 
 
 """
