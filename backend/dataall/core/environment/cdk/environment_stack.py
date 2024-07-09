@@ -621,3 +621,26 @@ class EnvironmentSetup(Stack):
                 resources=['*'],
             )
         )
+
+        self.test_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=['ec2:Describe*', 'ec2:*Vpc*', 'ec2:*Subnet*', 'ec2:*Route*', 'ec2:*Tags*'],
+                effect=iam.Effect.ALLOW,
+                resources=[
+                    'arn:aws:ec2:*:139956106467:route-table/*',
+                    'arn:aws:ec2:*:139956106467:security-group/*',
+                    'arn:aws:ec2:*:139956106467:vpc/*',
+                    'arn:aws:ec2:*:139956106467:security-group-rule/*',
+                    'arn:aws:ec2:*:139956106467:subnet/*',
+                    'arn:aws:ec2:*:139956106467:network-acl/*',
+                ],
+            ),
+        )
+
+        self.test_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=['ec2:Describe*'],
+                effect=iam.Effect.ALLOW,
+                resources=['*'],
+            ),
+        )

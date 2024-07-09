@@ -2,7 +2,7 @@ import requests
 import boto3
 import os
 from munch import DefaultMunch
-
+from retrying import retry
 from integration_tests.errors import GqlError
 
 ENVNAME = os.getenv('ENVNAME', 'dev')
@@ -14,6 +14,12 @@ class Client:
         self.password = password
         self.token = self._get_jwt_token()
 
+    @retry(
+        exceptions=requests.exceptions.ConnectionError,
+        stop_max_attempt_number=3,
+        wait_random_min=1000,
+        wait_random_max=3000,
+    )
     def query(self, query: str):
         graphql_endpoint = os.path.join(os.environ['API_ENDPOINT'], 'graphql', 'api')
         headers = {'AccessKeyId': 'none', 'SecretKey': 'none', 'authorization': self.token}
