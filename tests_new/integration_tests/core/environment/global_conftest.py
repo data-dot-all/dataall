@@ -8,6 +8,7 @@ from integration_tests.core.environment.queries import (
     get_environment,
     delete_environment,
     list_environments,
+    invite_group_on_env,
 )
 from integration_tests.core.organizations.queries import create_organization
 from integration_tests.core.stack.utils import check_stack_ready
@@ -43,7 +44,7 @@ def session_env1(client1, group1, org1, session_id, testdata):
     envdata = testdata.envs['session_env1']
     env = None
     try:
-        env = create_env(client1, group1, org1['organizationUri'], envdata.accountId, envdata.region, tags=[session_id])
+        env = create_env(client1, group1, org1.organizationUri, envdata.accountId, envdata.region, tags=[session_id])
         yield env
     finally:
         if env:
@@ -98,11 +99,12 @@ def persistent_env1_aws_client(persistent_env1, session_id):
 
 
 @pytest.fixture(scope='session')
-def session_env2(client1, group1, org1, session_id, testdata):
+def session_env2(client1, group1, group2, org2, session_id, testdata):
     envdata = testdata.envs['session_env2']
     env = None
     try:
-        env = create_env(client1, group1, org1['organizationUri'], envdata.accountId, envdata.region, tags=[session_id])
+        env = create_env(client1, group1, org2.organizationUri, envdata.accountId, envdata.region, tags=[session_id])
+        invite_group_on_env(client1, env.environmentUri, group2, ['CREATE_DATASET'])
         yield env
     finally:
         if env:
@@ -120,7 +122,7 @@ def temp_env1(client1, group1, org1, testdata):
     envdata = testdata.envs['temp_env1']
     env = None
     try:
-        env = create_env(client1, group1, org1['organizationUri'], envdata.accountId, envdata.region)
+        env = create_env(client1, group1, org1.organizationUri, envdata.accountId, envdata.region)
         yield env
     finally:
         if env:
@@ -140,7 +142,7 @@ def get_or_create_persistent_env(env_name, client, group, testdata):
     else:
         envdata = testdata.envs[env_name]
         org = create_organization(client, f'org_{env_name}', group)
-        env = create_env(client, group, org['organizationUri'], envdata.accountId, envdata.region, tags=[env_name])
+        env = create_env(client, group, org.organizationUri, envdata.accountId, envdata.region, tags=[env_name])
         if env.stack.status in ['CREATE_COMPLETE', 'UPDATE_COMPLETE']:
             return env
         else:

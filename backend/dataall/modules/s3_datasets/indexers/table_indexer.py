@@ -12,13 +12,13 @@ from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
 
 class DatasetTableIndexer(BaseIndexer):
     @classmethod
-    def upsert(cls, session, table_uri: str):
+    def upsert(cls, session, table_uri: str, dataset=None, env=None, org=None):
         table = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
 
         if table:
-            dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
-            env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
-            org = OrganizationRepository.get_organization_by_uri(session, dataset.organizationUri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri) if not dataset else dataset
+            env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri) if not env else env
+            org = OrganizationRepository.get_organization_by_uri(session, dataset.organizationUri) if not org else org
             glossary = BaseIndexer._get_target_glossary_terms(session, table_uri)
 
             tags = table.tags if table.tags else []
@@ -48,14 +48,16 @@ class DatasetTableIndexer(BaseIndexer):
                     'glossary': glossary,
                 },
             )
-            DatasetIndexer.upsert(session=session, dataset_uri=table.datasetUri)
         return table
 
     @classmethod
     def upsert_all(cls, session, dataset_uri: str):
         tables = DatasetTableRepository.find_all_active_tables(session, dataset_uri)
+        dataset = DatasetRepository.get_dataset_by_uri(session, dataset_uri)
+        env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
+        org = OrganizationRepository.get_organization_by_uri(session, dataset.organizationUri)
         for table in tables:
-            DatasetTableIndexer.upsert(session=session, table_uri=table.tableUri)
+            DatasetTableIndexer.upsert(session=session, table_uri=table.tableUri, dataset=dataset, env=env, org=org)
         return tables
 
     @classmethod
