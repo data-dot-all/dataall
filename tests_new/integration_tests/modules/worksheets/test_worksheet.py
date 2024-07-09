@@ -51,16 +51,6 @@ def test_list_worksheets_no_admin(client2, worksheet1, session_id):
     assert_that(response.count).is_equal_to(0)
 
 
-# def test_run_athena_sql_query(client1, session_env1, worksheet1):
-#     response = run_athena_sql_query(client1, environment_uri=session_env1.environmentUri, worksheet_uri=worksheet1.worksheetUri, query="select * from randomTable")
-#     assert response
-# def test_run_athena_sql_query_unauthorized(client2, session_env1, worksheet1):
-#     assert_that(update_worksheet).raises(GqlError).when_called_with(
-#         client2, session_env1.environmentUri, worksheet1.worksheetUri, "select * from random_table"
-#     ).contains('UnauthorizedOperation', 'RUN_ATHENA_QUERY')
-#
-
-
 def test_update_worksheet(client1, worksheet1):
     ws = update_worksheet(client1, worksheet1.worksheetUri, worksheet1.label, 'updated desc', worksheet1.tags)
     assert_that(ws.description).is_equal_to('updated desc')
