@@ -1,6 +1,6 @@
 import logging
-
 import pytest
+import boto3
 
 from integration_tests.client import GqlError
 from integration_tests.core.environment.queries import (
@@ -8,6 +8,7 @@ from integration_tests.core.environment.queries import (
     get_environment,
     delete_environment,
     list_environments,
+    invite_group_on_env,
 )
 from integration_tests.core.organizations.queries import create_organization
 from integration_tests.core.stack.utils import check_stack_ready
@@ -43,7 +44,7 @@ def session_env1(client1, group1, org1, session_id, testdata):
     envdata = testdata.envs['session_env1']
     env = None
     try:
-        env = create_env(client1, group1, org1['organizationUri'], envdata.accountId, envdata.region, tags=[session_id])
+        env = create_env(client1, group1, org1.organizationUri, envdata.accountId, envdata.region, tags=[session_id])
         yield env
     finally:
         if env:
@@ -51,11 +52,59 @@ def session_env1(client1, group1, org1, session_id, testdata):
 
 
 @pytest.fixture(scope='session')
-def session_env2(client1, group1, org1, session_id, testdata):
+def session_env1_integration_role_arn(session_env1):
+    yield f'arn:aws:iam::{session_env1.AwsAccountId}:role/dataall-integration-tests-role-{session_env1.region}'
+
+
+@pytest.fixture(scope='session')
+def session_env1_aws_client(session_env1, session_id, session_env1_integration_role_arn):
+    try:
+        base_session = boto3.Session()
+        response = base_session.client('sts', region_name=session_env1.region).assume_role(
+            RoleArn=session_env1_integration_role_arn, RoleSessionName=session_env1_integration_role_arn.split('/')[1]
+        )
+        yield boto3.Session(
+            aws_access_key_id=response['Credentials']['AccessKeyId'],
+            aws_secret_access_key=response['Credentials']['SecretAccessKey'],
+            aws_session_token=response['Credentials']['SessionToken'],
+        )
+    except:
+        log.exception('Failed to assume environment integration test role')
+        raise
+
+
+@pytest.fixture(scope='session')
+def persistent_env1_integration_role_arn(persistent_env1):
+    yield f'arn:aws:iam::{persistent_env1.AwsAccountId}:role/dataall-integration-tests-role-{persistent_env1.region}'
+
+
+@pytest.fixture(scope='session')
+def persistent_env1_aws_client(persistent_env1, session_id):
+    try:
+        base_session = boto3.Session()
+        role_arn = (
+            f'arn:aws:iam::{persistent_env1.AwsAccountId}:role/dataall-integration-tests-role-{persistent_env1.region}'
+        )
+        response = base_session.client('sts', region_name=persistent_env1.region).assume_role(
+            RoleArn=role_arn, RoleSessionName=role_arn.split('/')[1]
+        )
+        yield boto3.Session(
+            aws_access_key_id=response['Credentials']['AccessKeyId'],
+            aws_secret_access_key=response['Credentials']['SecretAccessKey'],
+            aws_session_token=response['Credentials']['SessionToken'],
+        )
+    except:
+        log.exception('Failed to assume environment integration test role')
+        raise
+
+
+@pytest.fixture(scope='session')
+def session_env2(client1, group1, group2, org2, session_id, testdata):
     envdata = testdata.envs['session_env2']
     env = None
     try:
-        env = create_env(client1, group1, org1['organizationUri'], envdata.accountId, envdata.region, tags=[session_id])
+        env = create_env(client1, group1, org2.organizationUri, envdata.accountId, envdata.region, tags=[session_id])
+        invite_group_on_env(client1, env.environmentUri, group2, ['CREATE_DATASET'])
         yield env
     finally:
         if env:
@@ -73,7 +122,7 @@ def temp_env1(client1, group1, org1, testdata):
     envdata = testdata.envs['temp_env1']
     env = None
     try:
-        env = create_env(client1, group1, org1['organizationUri'], envdata.accountId, envdata.region)
+        env = create_env(client1, group1, org1.organizationUri, envdata.accountId, envdata.region)
         yield env
     finally:
         if env:
@@ -93,7 +142,7 @@ def get_or_create_persistent_env(env_name, client, group, testdata):
     else:
         envdata = testdata.envs[env_name]
         org = create_organization(client, f'org_{env_name}', group)
-        env = create_env(client, group, org['organizationUri'], envdata.accountId, envdata.region, tags=[env_name])
+        env = create_env(client, group, org.organizationUri, envdata.accountId, envdata.region, tags=[env_name])
         if env.stack.status in ['CREATE_COMPLETE', 'UPDATE_COMPLETE']:
             return env
         else:
