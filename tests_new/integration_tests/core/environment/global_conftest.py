@@ -57,7 +57,7 @@ def get_environment_aws_session(role_arn, env):
         response = base_session.client('sts', region_name=env.region).assume_role(
             RoleArn=role_arn, RoleSessionName=role_arn.split('/')[1]
         )
-        yield boto3.Session(
+        return boto3.Session(
             aws_access_key_id=response['Credentials']['AccessKeyId'],
             aws_secret_access_key=response['Credentials']['SecretAccessKey'],
             aws_session_token=response['Credentials']['SessionToken'],
@@ -69,22 +69,22 @@ def get_environment_aws_session(role_arn, env):
 
 @pytest.fixture(scope='session')
 def session_env1_integration_role_arn(session_env1):
-    yield f'arn:aws:iam::{session_env1.AwsAccountId}:role/dataall-integration-tests-role-{session_env1.region}'
+    return f'arn:aws:iam::{session_env1.AwsAccountId}:role/dataall-integration-tests-role-{session_env1.region}'
 
 
 @pytest.fixture(scope='session')
 def session_env1_aws_client(session_env1, session_env1_integration_role_arn):
-    yield get_environment_aws_session(session_env1_integration_role_arn, session_env1)
+    return get_environment_aws_session(session_env1_integration_role_arn, session_env1)
 
 
 @pytest.fixture(scope='session')
 def persistent_env1_integration_role_arn(persistent_env1):
-    yield f'arn:aws:iam::{persistent_env1.AwsAccountId}:role/dataall-integration-tests-role-{persistent_env1.region}'
+    return f'arn:aws:iam::{persistent_env1.AwsAccountId}:role/dataall-integration-tests-role-{persistent_env1.region}'
 
 
 @pytest.fixture(scope='session')
 def persistent_env1_aws_client(persistent_env1, persistent_env1_integration_role_arn):
-    yield get_environment_aws_session(persistent_env1_integration_role_arn, persistent_env1)
+    return get_environment_aws_session(persistent_env1_integration_role_arn, persistent_env1)
 
 
 @pytest.fixture(scope='session')
