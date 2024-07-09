@@ -18,7 +18,7 @@ def test_create_worksheet(client1, worksheet1):
 
 def test_delete_worksheet(client1, group1, session_id):
     ws = create_worksheet(client1, 'worksheetdelete', group1, tags=[session_id])
-    assert assert_that(ws.label).is_equal_to('worksheetdelete')
+    assert_that(ws).contains_entry(label='worksheetdelete')
     response = delete_worksheet(client1, ws.worksheetUri)
     assert_that(response).is_equal_to(True)
 
@@ -31,8 +31,7 @@ def test_delete_worksheet_unauthorized(client2, worksheet1):
 
 def test_get_worksheet(client1, group1, worksheet1):
     ws = get_worksheet(client1, worksheet1.worksheetUri)
-    assert_that(ws.SamlAdminGroupName).is_equal_to(group1)
-    assert_that(ws.worksheetUri).is_equal_to(worksheet1.worksheetUri)
+    assert_that(ws).contains_entry(SamlAdminGroupName=group1, worksheetUri=worksheet1.worksheetUri)
 
 
 def test_get_worksheet_unauthorized(client2, worksheet1):
@@ -53,7 +52,7 @@ def test_list_worksheets_no_admin(client2, worksheet1, session_id):
 
 def test_update_worksheet(client1, worksheet1):
     ws = update_worksheet(client1, worksheet1.worksheetUri, worksheet1.label, 'updated desc', worksheet1.tags)
-    assert_that(ws.description).is_equal_to('updated desc')
+    assert_that(ws).contains_entry(description='updated desc')
 
 
 def test_update_worksheet_unauthorized(client2, worksheet1):
