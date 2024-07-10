@@ -180,17 +180,19 @@ class CloudfrontDistro(pyNestedClass):
         ]
         self.user_docs_bucket = None
         if custom_auth is None:
-            userguide_docs_distribution, user_docs_bucket = self.build_static_site(
-                'userguide',
-                acl,
-                auth_at_edge,
-                envname,
-                resource_prefix,
-                userguide_domain_names,
-                certificate,
-                ssl_support_method,
-                security_policy,
-                logging_bucket,
+            userguide_docs_distribution, user_docs_bucket, ssm_distribution_domain_name_userguide = (
+                self.build_static_site(
+                    'userguide',
+                    acl,
+                    auth_at_edge,
+                    envname,
+                    resource_prefix,
+                    userguide_domain_names,
+                    certificate,
+                    ssl_support_method,
+                    security_policy,
+                    logging_bucket,
+                )
             )
 
             self.userguide_docs_distribution = userguide_docs_distribution
@@ -274,7 +276,13 @@ class CloudfrontDistro(pyNestedClass):
             )
 
         if not custom_auth:
-            self.cognito_urls_config(resource_prefix, envname, backend_region, custom_domain, [cloudfront_distribution])
+            self.cognito_urls_config(
+                resource_prefix,
+                envname,
+                backend_region,
+                custom_domain,
+                [cloudfront_distribution, ssm_distribution_domain_name, ssm_distribution_domain_name_userguide],
+            )
 
         CfnOutput(
             self,
@@ -441,8 +449,10 @@ class CloudfrontDistro(pyNestedClass):
 
         param_path = f'/dataall/{envname}/cloudfront/docs/user'
 
-        self.store_distribution_params(cloudfront_bucket, construct_id, cloudfront_distribution, param_path)
-        return cloudfront_distribution, cloudfront_bucket
+        domain_name_ssm_param = self.store_distribution_params(
+            cloudfront_bucket, construct_id, cloudfront_distribution, param_path
+        )
+        return cloudfront_distribution, cloudfront_bucket, domain_name_ssm_param
 
     def store_distribution_params(self, cloudfront_bucket, construct_id, distribution, param_path):
         ssm.StringParameter(
@@ -451,7 +461,7 @@ class CloudfrontDistro(pyNestedClass):
             parameter_name=f'{param_path}/CloudfrontDistributionId',
             string_value=distribution.distribution_id,
         )
-        ssm.StringParameter(
+        domain_name = ssm.StringParameter(
             self,
             f'{construct_id}DistributionDomain',
             parameter_name=f'{param_path}/CloudfrontDistributionDomainName',
@@ -463,6 +473,7 @@ class CloudfrontDistro(pyNestedClass):
             parameter_name=f'{param_path}/CloudfrontDistributionBucket',
             string_value=cloudfront_bucket.bucket_name,
         )
+        return domain_name
 
     @staticmethod
     def additional_documentation_behavior(func) -> cloudfront.BehaviorOptions:
