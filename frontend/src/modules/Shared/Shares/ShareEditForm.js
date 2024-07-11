@@ -42,7 +42,7 @@ const ItemRow = (props) => {
   } = props;
 
   const whatToDo = () => {
-    if (!item.status) return 'Request';
+    if (!item.status && shareStatus !== 'Revoked') return 'Request';
     if (
       item.status === 'Revoke_Succeeded' ||
       item.status === 'PendingApproval' ||
@@ -152,6 +152,7 @@ const ItemRow = (props) => {
       {(shareStatus === 'Draft' ||
         shareStatus === 'Processed' ||
         shareStatus === 'Rejected' ||
+        shareStatus === 'Revoked' ||
         shareStatus === 'Submitted') && (
         <TableCell>
           {possibleAction === 'Delete' && (
