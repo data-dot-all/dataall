@@ -28,6 +28,8 @@ class ShareErrorFormatter:
         permissions = ShareErrorFormatter._stringify(permissions)
         message = f'Requestor {requestor} has invalid {permission_type} policy: {permissions} for {resource_type} Target: {target_resource}.'
         if missing_actions:
-            message += ' Missing actions: {missing_actions}. Not allowed permissions: {extra_actions}'
+            message += f' Missing actions: {missing_actions}.'
         if extra_actions:
-            message += ' Not allowed permissions: {extra_actions}'
+            message += f' Not allowed permissions: {extra_actions}'
+
+        return message

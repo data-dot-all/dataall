@@ -1385,7 +1385,7 @@ def test_check_s3_iam_access(mocker, dataset2, share2_manager):
             {
                 'Sid': f'{IAM_S3_BUCKETS_STATEMENT_SID}S3',
                 'Effect': 'Allow',
-                'Action': ['s3:*'],
+                'Action': ['s3:List*', 's3:Describe*', 's3:GetObject'],
                 'Resource': [f'arn:aws:s3:::{dataset2.S3BucketName}', f'arn:aws:s3:::{dataset2.S3BucketName}/*'],
             },
             {
@@ -1416,6 +1416,54 @@ def test_check_s3_iam_access(mocker, dataset2, share2_manager):
     # Then
     iam_update_role_policy_mock_1.assert_called_once()
     assert (len(share2_manager.bucket_errors)) == 0
+
+
+def test_check_s3_iam_access_wrong_actions(mocker, dataset2, share2_manager):
+    # Given policy with some other bucket as resource
+    # Check if the correct resource is attached/appended
+
+    policy = {
+        'Version': '2012-10-17',
+        'Statement': [
+            {
+                'Sid': f'{IAM_S3_BUCKETS_STATEMENT_SID}S3',
+                'Effect': 'Allow',
+                'Action': ['s3:*'],
+                'Resource': [f'arn:aws:s3:::{dataset2.S3BucketName}', f'arn:aws:s3:::{dataset2.S3BucketName}/*'],
+            },
+            {
+                'Sid': f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS',
+                'Effect': 'Allow',
+                'Action': ['kms:*'],
+                'Resource': [f'arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key'],
+            },
+        ],
+    }
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
+        return_value=True,
+    )
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
+        return_value=True,
+    )
+    # Gets policy with S3 and KMS
+    iam_update_role_policy_mock_1 = mocker.patch(
+        'dataall.base.aws.iam.IAM.get_managed_policy_default_version', return_value=('v1', policy)
+    )
+
+    kms_client = mock_kms_client(mocker)
+    kms_client().get_key_id.return_value = 'kms-key'
+
+    share2_manager.check_s3_iam_access()
+    # Then
+    iam_update_role_policy_mock_1.assert_called_once()
+    assert (len(share2_manager.bucket_errors)) == 1
+    print(share2_manager.bucket_errors)
+    message_missing = 'Missing actions:'
+    message_extra = 'Not allowed permissions: s3:*'
+    assert message_missing in share2_manager.bucket_errors[0]
+    assert message_extra in share2_manager.bucket_errors[0]
 
 
 def test_check_s3_iam_access_no_policy(mocker, dataset2, share2_manager):
