@@ -221,6 +221,17 @@ export const ShareEditForm = (props) => {
   const [requestPurpose, setRequestPurpose] = useState('');
   const [smthChanged, setSmthChanged] = useState(false);
 
+  const canUpdateRequestPurpose = () => {
+    return (
+      (share.userRoleForShareObject === 'Requesters' ||
+        share.userRoleForShareObject === 'ApproversAndRequesters') &&
+      (share.status === 'Draft' ||
+        share.status === 'Processed' ||
+        share.status === 'Rejected' ||
+        share.status === 'Submitted')
+    );
+  };
+
   const handlePageChange = async (event, value) => {
     if (value <= sharedItems.pages && value !== sharedItems.page) {
       await setFilter({ ...filter, page: value });
@@ -228,8 +239,10 @@ export const ShareEditForm = (props) => {
   };
 
   const beforeClose = async () => {
-    if (smthChanged || requestPurpose !== share.requestPurpose) {
+    if (requestPurpose !== share.requestPurpose) {
       await updateRequestPurpose();
+    }
+    if (smthChanged) {
       onApply();
     } else {
       onCancel();
@@ -447,12 +460,7 @@ export const ShareEditForm = (props) => {
               name="requestPurpose"
               multiline
               rows={3}
-              disabled={
-                shareStatus !== 'Draft' &&
-                shareStatus !== 'Processed' &&
-                shareStatus !== 'Rejected' &&
-                shareStatus !== 'Submitted'
-              }
+              disabled={!canUpdateRequestPurpose()}
               value={requestPurpose}
               variant="outlined"
               onChange={(event) => {
@@ -462,32 +470,34 @@ export const ShareEditForm = (props) => {
           </CardContent>
         </Box>
       </Box>
-      {shareStatus.toUpperCase() === 'DRAFT' && (
-        <CardContent>
-          <Tooltip
-            title={
-              sharedItems.nodes.filter((item) => item.status).length === 0
-                ? 'There is no items added into the request.'
-                : ''
-            }
-          >
-            <span>
-              <Button
-                onClick={sendRequest}
-                fullWidth
-                startIcon={<SendIcon fontSize="small" />}
-                color="primary"
-                variant="contained"
-                disabled={
-                  sharedItems.nodes.filter((item) => item.status).length === 0
-                }
-              >
-                Submit request
-              </Button>
-            </span>
-          </Tooltip>
-        </CardContent>
-      )}
+      {shareStatus.toUpperCase() === 'DRAFT' &&
+        (share.userRoleForShareObject === 'Requesters' ||
+          share.userRoleForShareObject === 'ApproversAndRequesters') && (
+          <CardContent>
+            <Tooltip
+              title={
+                sharedItems.nodes.filter((item) => item.status).length === 0
+                  ? 'There is no items added into the request.'
+                  : ''
+              }
+            >
+              <span>
+                <Button
+                  onClick={sendRequest}
+                  fullWidth
+                  startIcon={<SendIcon fontSize="small" />}
+                  color="primary"
+                  variant="contained"
+                  disabled={
+                    sharedItems.nodes.filter((item) => item.status).length === 0
+                  }
+                >
+                  Submit request
+                </Button>
+              </span>
+            </Tooltip>
+          </CardContent>
+        )}
       {shareStatus.toUpperCase() === 'DRAFT' && (
         <CardContent>
           <Button
