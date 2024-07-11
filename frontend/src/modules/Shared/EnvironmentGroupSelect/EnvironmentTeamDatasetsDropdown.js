@@ -184,7 +184,7 @@ export const EnvironmentTeamDatasetsDropdown = (props) => {
               setFieldValue('dataset', '');
               if (value && value.value) {
                 setFieldValue('SamlAdminGroupName', value.value);
-                fetchDatasets(value).catch((e) =>
+                fetchDatasets(value.value).catch((e) =>
                   dispatch({ type: SET_ERROR, error: e.message })
                 );
               } else {
