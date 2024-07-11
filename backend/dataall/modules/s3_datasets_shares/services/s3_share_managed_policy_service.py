@@ -17,6 +17,8 @@ IAM_S3_ACCESS_POINTS_STATEMENT_SID = 'AccessPointsStatement'
 IAM_S3_BUCKETS_STATEMENT_SID = 'BucketStatement'
 EMPTY_STATEMENT_SID = 'EmptyStatement'
 
+S3_ALLOWED_ACTIONS = ['s3:List*', 's3:Describe*', 's3:GetObject']
+
 
 class S3SharePolicyService(ManagedPolicy):
     def __init__(self, role_name, account, region, environmentUri, resource_prefix):
@@ -66,11 +68,7 @@ class S3SharePolicyService(ManagedPolicy):
         index = self._get_statement_by_sid(policy_document, statement_sid)
         if index is None:
             log.info(f'{statement_sid} does NOT exists for Managed policy {policy_name} ' f'creating statement...')
-            policy_actions = (
-                [f'{resource_type}:List*', f'{resource_type}:Describe*', f'{resource_type}:GetObject']
-                if resource_type == 's3'
-                else [f'{resource_type}:*']
-            )
+            policy_actions = S3_ALLOWED_ACTIONS if resource_type == 's3' else [f'{resource_type}:*']
             additional_policy = {
                 'Sid': statement_sid,
                 'Effect': 'Allow',
@@ -127,6 +125,23 @@ class S3SharePolicyService(ManagedPolicy):
             if target_resource not in existing_policy_statement['Resource']:
                 return False
         return True
+
+    @staticmethod
+    def check_s3_actions(existing_policy_statement: dict) -> (bool, str, str):
+        """
+        Checks if all required s3 actions are allowed in the existing policy and there is no unallowed actions
+        :param existing_policy_statement:
+        :return: bool, allowed missing actions string, not allowed actions string
+        """
+        statement_actions = set(existing_policy_statement['Action'])
+        allowed_actions = set(S3_ALLOWED_ACTIONS)
+        missing_actions = allowed_actions - statement_actions
+        extra_actions = statement_actions - allowed_actions
+        return (
+            not (missing_actions or extra_actions),
+            ','.join(missing_actions),
+            ','.join(extra_actions),
+        )
 
     @staticmethod
     def _get_statement_by_sid(policy, sid):
