@@ -96,7 +96,7 @@ const PipelineCreateForm = (props) => {
               label: values.label,
               environmentUri: values.environment.environmentUri,
               description: values.description,
-              SamlGroupName: values.SamlGroupName,
+              SamlGroupName: values.SamlAdminGroupName,
               tags: values.tags,
               devStrategy: values.devStrategy
             }
@@ -202,7 +202,7 @@ const PipelineCreateForm = (props) => {
               initialValues={{
                 label: '',
                 description: '',
-                SamlGroupName: '',
+                SamlAdminGroupName: '',
                 environment: '',
                 tags: [],
                 devStrategy: 'cdk-trunk'
@@ -212,7 +212,7 @@ const PipelineCreateForm = (props) => {
                   .max(255)
                   .required('*Pipeline name is required'),
                 description: Yup.string().max(5000),
-                SamlGroupName: Yup.string().max(255),
+                SamlAdminGroupName: Yup.string().max(255),
                 environment: Yup.object(),
                 devStrategy: Yup.string().required(
                   '*A CICD strategy is required'

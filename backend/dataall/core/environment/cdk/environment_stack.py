@@ -627,12 +627,12 @@ class EnvironmentSetup(Stack):
                 actions=['ec2:Describe*', 'ec2:*Vpc*', 'ec2:*Subnet*', 'ec2:*Route*', 'ec2:*Tags*'],
                 effect=iam.Effect.ALLOW,
                 resources=[
-                    'arn:aws:ec2:*:139956106467:route-table/*',
-                    'arn:aws:ec2:*:139956106467:security-group/*',
-                    'arn:aws:ec2:*:139956106467:vpc/*',
-                    'arn:aws:ec2:*:139956106467:security-group-rule/*',
-                    'arn:aws:ec2:*:139956106467:subnet/*',
-                    'arn:aws:ec2:*:139956106467:network-acl/*',
+                    f'arn:aws:ec2:*:{self.account}:route-table/*',
+                    f'arn:aws:ec2:*:{self.account}:security-group/*',
+                    f'arn:aws:ec2:*:{self.account}:vpc/*',
+                    f'arn:aws:ec2:*:{self.account}:security-group-rule/*',
+                    f'arn:aws:ec2:*:{self.account}:subnet/*',
+                    f'arn:aws:ec2:*:{self.account}:network-acl/*',
                 ],
             ),
         )
@@ -649,6 +649,6 @@ class EnvironmentSetup(Stack):
             iam.PolicyStatement(
                 actions=['cloudformation:Describe*'],
                 effect=iam.Effect.ALLOW,
-                resources=['arn:aws:cloudformation:*:139956106467:stack/*/*'],
+                resources=[f'arn:aws:cloudformation:*:{self.account}:stack/*/*'],
             ),
         )
