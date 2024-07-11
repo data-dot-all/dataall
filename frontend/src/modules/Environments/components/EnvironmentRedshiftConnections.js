@@ -31,7 +31,6 @@ import { EnvironmentRedshiftConnectionAddForm } from './EnvironmentRedshiftConne
 import { deleteRedshiftConnection } from '../services';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
-import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import { useSnackbar } from 'notistack';
 
@@ -72,10 +71,6 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
     if (page <= items.pages && page !== items.page) {
       await setFilter({ ...filter, page: page });
     }
-  };
-
-  const handleEditClick = (id) => () => {
-    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
   };
 
   const handleSaveClick = (id) => () => {
@@ -338,13 +333,6 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
                         ];
                       }
                       return [
-                        <GridActionsCellItem
-                          icon={<EditIcon />}
-                          label="Edit"
-                          className="textPrimary"
-                          onClick={handleEditClick(id)}
-                          color="inherit"
-                        />,
                         <GridActionsCellItem
                           icon={<DeleteIcon />}
                           label="Delete"

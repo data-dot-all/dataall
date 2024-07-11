@@ -54,11 +54,11 @@ class RedshiftData:
     def list_redshift_databases(self):
         databases = []
         try:
-            log.info(f"Looking for {self.database} in databases...")
+            log.info(f'Looking for {self.database} in databases...')
 
             list_databases_response = self.client.list_databases(**self.execute_connection_params)
-            if "Databases" in list_databases_response.keys():
-                databases = list_databases_response["Databases"]
+            if 'Databases' in list_databases_response.keys():
+                databases = list_databases_response['Databases']
             log.info(f'Returning {databases=}...')
             return databases
         except ClientError as e:
@@ -68,16 +68,16 @@ class RedshiftData:
     def list_redshift_schemas(self):
         schemas = []
         try:
-            log.debug(f"Fetching {self.database} schemas")
+            log.debug(f'Fetching {self.database} schemas')
             list_schemas_response = self.client.list_schemas(**self.execute_connection_params)
-            if "Schemas" in list_schemas_response.keys():
-                schemas = list_schemas_response["Schemas"]
+            if 'Schemas' in list_schemas_response.keys():
+                schemas = list_schemas_response['Schemas']
 
             # Remove "internal" schemas
-            if "information_schema" in schemas:
-                schemas.remove("information_schema")
-            if "pg_catalog" in schemas:
-                schemas.remove("pg_catalog")
+            if 'information_schema' in schemas:
+                schemas.remove('information_schema')
+            if 'pg_catalog' in schemas:
+                schemas.remove('pg_catalog')
             log.info(f'Returning {schemas=}...')
             return schemas
         except ClientError as e:
@@ -87,21 +87,26 @@ class RedshiftData:
     def list_redshift_tables(self, schema: str):
         tables_list = []
         try:
-            log.debug(f"Fetching {self.database} tables")
-            list_tables_response = self.client.list_tables(**self.execute_connection_params, SchemaPattern=schema, MaxResults=1000)
-            next_token = list_tables_response.get("NextToken", None)
-            if "Tables" in list_tables_response.keys():
-                tables_list = list_tables_response["Tables"]
+            log.debug(f'Fetching {self.database} tables')
+            list_tables_response = self.client.list_tables(
+                **self.execute_connection_params, SchemaPattern=schema, MaxResults=1000
+            )
+            next_token = list_tables_response.get('NextToken', None)
+            if 'Tables' in list_tables_response.keys():
+                tables_list = list_tables_response['Tables']
                 while next_token:
                     list_tables_response = self.client.list_tables(
                         **self.execute_connection_params, NextToken=next_token, MaxResults=1000, SchemaPattern=schema
                     )
-                    if "Tables" in list_tables_response.keys():
-                        tables_list.extend(list_tables_response["Tables"])
-                    next_token = list_tables_response.get("NextToken", None)
+                    if 'Tables' in list_tables_response.keys():
+                        tables_list.extend(list_tables_response['Tables'])
+                    next_token = list_tables_response.get('NextToken', None)
 
-            tables = [{"name": table["name"], "type": table["type"]} for table in tables_list if
-                      table["type"] in ["TABLE", "VIEW"]]
+            tables = [
+                {'name': table['name'], 'type': table['type']}
+                for table in tables_list
+                if table['type'] in ['TABLE', 'VIEW']
+            ]
             log.info(f'Returning {tables=}...')
             return tables
         except ClientError as e:
@@ -114,7 +119,9 @@ class RedshiftData:
             sql_statement = f'CREATE DATASHARE {RedshiftData.identifier(datashare)};'
             self._execute_statement(sql=sql_statement)
 
-            sql_statement = f'ALTER DATASHARE {RedshiftData.identifier(datashare)} ADD SCHEMA {RedshiftData.identifier(schema)};'
+            sql_statement = (
+                f'ALTER DATASHARE {RedshiftData.identifier(datashare)} ADD SCHEMA {RedshiftData.identifier(schema)};'
+            )
             self._execute_statement(sql=sql_statement)
 
         except Exception as e:
@@ -127,14 +134,14 @@ class RedshiftData:
 
     def add_table_to_datashare(self, datashare: str, schema: str, table_name: str):
         fq_table_name = self.fully_qualified_table_name(schema, table_name)
-        sql_statement = f"ALTER DATASHARE {RedshiftData.identifier(datashare)} ADD TABLE {fq_table_name};"
+        sql_statement = f'ALTER DATASHARE {RedshiftData.identifier(datashare)} ADD TABLE {fq_table_name};'
         try:
             self._execute_statement(sql_statement)
         except Exception as e:
-            allowed_error_message = f"ERROR: Relation {table_name} is already added to the datashare {datashare}"
+            allowed_error_message = f'ERROR: Relation {table_name} is already added to the datashare {datashare}'
             error_message = e.args[0]
             if error_message == allowed_error_message:
-                log.info("Table {0} is already present in the datashare {1}".format(fq_table_name, datashare))
+                log.info('Table {0} is already present in the datashare {1}'.format(fq_table_name, datashare))
             else:
                 raise e
 

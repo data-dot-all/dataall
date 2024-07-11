@@ -337,7 +337,7 @@ const RSDatasetImportForm = (props) => {
                 ),
                 connection: Yup.object().required('*Connection is required'),
                 schema: Yup.string().required('*Schema is required'),
-                tables: Yup.array() //TODO: DECIDE IF REQUIRED
+                tables: Yup.array()
               })}
               onSubmit={async (
                 values,
@@ -762,7 +762,7 @@ const RSDatasetImportForm = (props) => {
                               <TextField
                                 {...params}
                                 fullWidth
-                                error={Boolean(touched.tables && errors.tables)}
+                                error={Boolean(touched.tables && errors.tables)} //TODO: TOO MANY TABLES RESULT IN DROPDOWN BEING CUT!
                                 helperText={touched.tables && errors.tables}
                                 label="Redshift tables"
                                 name="tables"

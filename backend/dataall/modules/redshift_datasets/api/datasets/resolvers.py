@@ -94,6 +94,7 @@ def resolve_dataset_connection(context: Context, source: RedshiftDataset, **kwar
 def resolve_dataset_upvotes(context: Context, source: RedshiftDataset, **kwargs):
     return RedshiftDatasetService.get_dataset_upvotes(uri=source.datasetUri)
 
+
 def _required_param(param_name: str, param_value: Any):
     if not param_value:
         raise exceptions.RequiredParameter(param_name)

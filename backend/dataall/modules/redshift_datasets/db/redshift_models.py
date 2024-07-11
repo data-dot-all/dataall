@@ -4,6 +4,7 @@ from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.services.datasets_enums import DatasetTypes
 from dataall.base.db import Resource, Base, utils
 
+
 class RedshiftConnection(Base, Resource):
     __tablename__ = 'redshift_connection'
     connectionUri = Column(String, primary_key=True, default=utils.uuid('connection'))
@@ -31,7 +32,9 @@ class RedshiftDataset(DatasetBase):
         'polymorphic_identity': DatasetTypes.Redshift,
     }
 
+
 # TODO, migration script: ALTER TYPE SCHEMA.datasettype ADD VALUE 'Redshift';
+
 
 class RedshiftTable(Base, Resource):
     __tablename__ = 'redshift_table'
@@ -43,4 +46,3 @@ class RedshiftTable(Base, Resource):
     @classmethod
     def uri(cls):
         return cls.rsTableUri
-

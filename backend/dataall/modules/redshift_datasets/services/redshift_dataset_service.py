@@ -32,9 +32,9 @@ log = logging.getLogger(__name__)
 
 class RedshiftDatasetService:
     @staticmethod
-    #@TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
-    #@ResourcePolicyService.has_resource_permission(IMPORT_REDSHIFT_DATASET)
-    #@GroupPolicyService.has_group_permission(IMPORT_REDSHIFT_DATASET)
+    # @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    # @ResourcePolicyService.has_resource_permission(IMPORT_REDSHIFT_DATASET)
+    # @GroupPolicyService.has_group_permission(IMPORT_REDSHIFT_DATASET)
     def import_redshift_dataset(uri, admin_group, data: dict):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -48,7 +48,7 @@ class RedshiftDatasetService:
                 target_label=dataset.label,
                 pattern=NamingConventionPattern.REDSHIFT_DATASHARE,
                 target_uri=dataset.datasetUri,
-                resource_prefix=environment.resourcePrefix
+                resource_prefix=environment.resourcePrefix,
             ).build_compliant_name()
             dataset.datashareArn = f'arn:aws:redshift:{dataset.region}:{dataset.AwsAccountId}:datashare:{connection.nameSpaceId if connection.redshiftType == RedshiftType.Serverless.value else connection.clusterId}/{datashare_name}'
             dataset.userRoleForDataset = DatasetRole.Creator.value
@@ -127,9 +127,7 @@ class RedshiftDatasetService:
         with context.db_engine.scoped_session() as session:
             dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, uri)
             return RedshiftDatasetRepository.paginated_redshift_dataset_tables(
-                session=session,
-                dataset_uri=dataset.datasetUri,
-                data=filter
+                session=session, dataset_uri=dataset.datasetUri, data=filter
             )
 
     @staticmethod

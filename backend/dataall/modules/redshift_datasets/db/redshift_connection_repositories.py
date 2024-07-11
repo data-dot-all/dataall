@@ -54,6 +54,11 @@ class RedshiftConnectionRepository:
         return query.order_by(RedshiftConnection.label)
 
     @staticmethod
+    def query_environment_redshift_connections(session, environment_uri) -> Query:
+        query = session.query(RedshiftConnection).filter(RedshiftConnection.environmentUri == environment_uri)
+        return query.order_by(RedshiftConnection.label)
+
+    @staticmethod
     def paginated_user_redshift_connections(session, username, groups, filter={}) -> dict:
         """Returns a page of sagemaker studio users for a data.all user"""
         return paginate(

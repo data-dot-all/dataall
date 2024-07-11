@@ -1,11 +1,8 @@
 import logging
-import time
 
-from typing import List
 from botocore.exceptions import ClientError
 
 from dataall.base.aws.sts import SessionHelper
-from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnection
 
 
 log = logging.getLogger(__name__)
@@ -43,4 +40,4 @@ class Redshift:
             return response.get('DataShares', [])[0].get('DataShareAssociations', [])[0].get('Status')
         except ClientError as e:
             log.error(e)
-            raise e
+            return 'NotFound'

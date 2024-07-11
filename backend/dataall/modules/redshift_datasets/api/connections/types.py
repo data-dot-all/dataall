@@ -30,7 +30,7 @@ RedshiftConnectionSearchResult = gql.ObjectType(
     ],
 )
 
-RedshiftTable =  gql.ObjectType(
+RedshiftTable = gql.ObjectType(
     name='RedshiftTable',
     fields=[
         gql.Field(name='name', type=gql.String),

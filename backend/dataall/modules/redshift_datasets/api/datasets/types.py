@@ -86,14 +86,14 @@ RedshiftDatasetTable = gql.ObjectType(
     fields=[
         gql.Field(name='tableUri', type=gql.ID),
         gql.Field(name='datasetUri', type=gql.String),
-        #gql.Field(name='dataset', type=gql.Ref('Dataset'), resolver=resolve_dataset),
+        # gql.Field(name='dataset', type=gql.Ref('Dataset'), resolver=resolve_dataset),
         gql.Field(name='label', type=gql.String),
         gql.Field(name='name', type=gql.String),
         gql.Field(name='description', type=gql.String),
         gql.Field(name='owner', type=gql.String),
         gql.Field(name='created', type=gql.String),
         gql.Field(name='updated', type=gql.String),
-        #gql.Field(name='admins', type=gql.ArrayType(gql.String)),
+        # gql.Field(name='admins', type=gql.ArrayType(gql.String)),
         # gql.Field(name='GlueDatabaseName', type=gql.String),
         # gql.Field(name='GlueTableName', type=gql.String),
         # gql.Field(name='LastGlueTableStatus', type=gql.String),
@@ -106,7 +106,7 @@ RedshiftDatasetTable = gql.ObjectType(
         # ),
         gql.Field(name='region', type=gql.String),
         gql.Field(name='tags', type=gql.ArrayType(gql.String)),
-        #gql.Field(name='userRoleForTable', type=gql.Ref('DatasetRole')),
+        # gql.Field(name='userRoleForTable', type=gql.Ref('DatasetRole')),
         # gql.Field(
         #     name='columns',
         #     resolver=list_table_columns,
@@ -131,4 +131,3 @@ RedshiftDatasetTableSearchResult = gql.ObjectType(
         gql.Field(name='hasPrevious', type=gql.Boolean),
     ],
 )
-

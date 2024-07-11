@@ -43,14 +43,12 @@ class RedshiftConnectionService:
                 clusterId=data.get('clusterId', ''),
                 nameSpaceId=data.get('nameSpaceId', ''),
                 workgroup=data.get('workgroup', ''),
-                database=data.get('database', ''),
+                database=data.get('database'),
                 redshiftUser=data.get('redshiftUser', ''),
                 secretArn=data.get('secretArn', ''),
             )
             RedshiftConnectionService._check_redshift_connection_database(
-                account_id=environment.AwsAccountId,
-                region=environment.region,
-                connection=connection
+                account_id=environment.AwsAccountId, region=environment.region, connection=connection
             )
             RedshiftConnectionRepository.save_redshift_connection(session, connection)
 
@@ -109,7 +107,9 @@ class RedshiftConnectionService:
         with context.db_engine.scoped_session() as session:
             connection = RedshiftConnectionService.get_redshift_connection_by_uri(uri=uri)
             environment = EnvironmentService.get_environment_by_uri(session, connection.environmentUri)
-            return RedshiftData(account_id=environment.AwsAccountId, region=environment.region,connection=connection).list_redshift_schemas()
+            return RedshiftData(
+                account_id=environment.AwsAccountId, region=environment.region, connection=connection
+            ).list_redshift_schemas()
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_CONNECTION)
@@ -118,13 +118,19 @@ class RedshiftConnectionService:
         with context.db_engine.scoped_session() as session:
             connection = RedshiftConnectionService.get_redshift_connection_by_uri(uri=uri)
             environment = EnvironmentService.get_environment_by_uri(session, connection.environmentUri)
-            response = RedshiftData(account_id=environment.AwsAccountId, region=environment.region, connection=connection).list_redshift_tables(schema)
+            response = RedshiftData(
+                account_id=environment.AwsAccountId, region=environment.region, connection=connection
+            ).list_redshift_tables(schema)
             log.info(f'Response: {response}')
             return response
 
-
     @staticmethod
     def _check_redshift_connection_database(account_id: str, region: str, connection: RedshiftConnection):
-        if connection.database not in RedshiftData(account_id=account_id, region=region,connection=connection).list_redshift_databases():
-            raise Exception(f'Redshift connection {connection.name} database does not exist or cannot be accessed with these parameters')
+        if (
+            connection.database
+            not in RedshiftData(account_id=account_id, region=region, connection=connection).list_redshift_databases()
+        ):
+            raise Exception(
+                f'Redshift connection {connection.name} database does not exist or cannot be accessed with these parameters'
+            )
         return
