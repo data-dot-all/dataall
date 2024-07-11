@@ -118,12 +118,29 @@ class S3BucketShareManager:
             existing_policy_statement=policy_document['Statement'][s3_statement_index],
         ):
             logger.info(
-                f'IAM Policy Statement {IAM_S3_BUCKETS_STATEMENT_SID}KMS does not contain resources {s3_target_resources}'
+                f'IAM Policy Statement {IAM_S3_BUCKETS_STATEMENT_SID}S3 does not contain resources {s3_target_resources}'
             )
             self.bucket_errors.append(
                 ShareErrorFormatter.missing_permission_error_msg(
                     self.target_requester_IAMRoleName,
                     'IAM Policy Resource',
+                    f'{IAM_S3_BUCKETS_STATEMENT_SID}S3',
+                    'S3 Bucket',
+                    f'{self.bucket_name}',
+                )
+            )
+        elif len(
+            incorrect_actions := share_policy_service.check_correct_actions_in_policy_statement(
+                existing_policy_statement=policy_document['Statement'][s3_statement_index]
+            )
+        ):
+            logger.info(
+                f'IAM Policy Statement {IAM_S3_BUCKETS_STATEMENT_SID}S3 contains incorrect actions {incorrect_actions}'
+            )
+            self.bucket_errors.append(
+                ShareErrorFormatter.missing_permission_error_msg(
+                    self.target_requester_IAMRoleName,
+                    'IAM Policy Actions',
                     f'{IAM_S3_BUCKETS_STATEMENT_SID}S3',
                     'S3 Bucket',
                     f'{self.bucket_name}',

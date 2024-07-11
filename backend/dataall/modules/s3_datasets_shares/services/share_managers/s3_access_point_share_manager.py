@@ -227,6 +227,24 @@ class S3AccessPointShareManager:
                 )
             )
 
+        elif len(
+            incorrect_actions := share_policy_service.check_correct_actions_in_policy_statement(
+                existing_policy_statement=policy_document['Statement'][s3_statement_index]
+            )
+        ):
+            logger.info(
+                f'IAM Policy Statement {IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3 contains incorrect actions {incorrect_actions}'
+            )
+            self.folder_errors.append(
+                ShareErrorFormatter.missing_permission_error_msg(
+                    self.target_requester_IAMRoleName,
+                    'IAM Policy Actions',
+                    f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3',
+                    'S3 Bucket',
+                    f'{self.bucket_name}',
+                )
+            )
+
         if kms_key_id:
             kms_statement_index = S3SharePolicyService._get_statement_by_sid(
                 policy_document, f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS'

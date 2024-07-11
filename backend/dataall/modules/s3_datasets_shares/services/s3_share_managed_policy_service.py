@@ -1,4 +1,5 @@
 import json
+from typing import List
 from dataall.base.aws.iam import IAM
 from dataall.base.utils.naming_convention import NamingConventionService, NamingConventionPattern
 from dataall.core.environment.services.managed_iam_policies import ManagedPolicy
@@ -127,6 +128,19 @@ class S3SharePolicyService(ManagedPolicy):
             if target_resource not in existing_policy_statement['Resource']:
                 return False
         return True
+
+    @staticmethod
+    def check_correct_actions_in_policy_statement(existing_policy_statement: dict) -> List[str]:
+        """
+        Checks if there are incorrect actions in the existing policy
+        :param existing_policy_statement: dict
+        :return list of incorrect actions if any. None if everything is alright
+        """
+        return [
+            action
+            for action in existing_policy_statement['Action']
+            if action not in ['s3:List*', 's3:Describe*', 's3:GetObject']
+        ]
 
     @staticmethod
     def _get_statement_by_sid(policy, sid):
