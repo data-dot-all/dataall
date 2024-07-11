@@ -163,16 +163,16 @@ export const TableMetrics = ({ table, isAdmin }) => {
       getDatasetTableProfilingRun(table.tableUri)
     );
     if (!response.errors) {
-      if (
-        response.data.getDatasetTableProfilingRun &&
-        response.data.getDatasetTableProfilingRun.results
-      ) {
-        const res = JSON.parse(
-          response.data.getDatasetTableProfilingRun.results
-        );
-        setMetrics(res);
-        setColumn(res?.columns[0]);
-        setActiveItem(res?.columns[0]?.Name);
+      if (response.data.getDatasetTableProfilingRun) {
+        setProfilingStatus(response.data.getDatasetTableProfilingRun.status);
+        if (response.data.getDatasetTableProfilingRun.results) {
+          const res = JSON.parse(
+            response.data.getDatasetTableProfilingRun.results
+          );
+          setMetrics(res);
+          setColumn(res?.columns[0]);
+          setActiveItem(res?.columns[0]?.Name);
+        }
       }
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
