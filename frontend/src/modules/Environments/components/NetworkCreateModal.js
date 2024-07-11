@@ -1,12 +1,12 @@
 import { LoadingButton } from '@mui/lab';
 import {
+  Autocomplete,
   Box,
   CardContent,
   CardHeader,
   Dialog,
   FormHelperText,
   Grid,
-  MenuItem,
   TextField,
   Typography
 } from '@mui/material';
@@ -60,7 +60,7 @@ export const NetworkCreateModal = (props) => {
           description: values.description,
           label: values.label,
           vpcId: values.vpcId,
-          SamlGroupName: values.SamlGroupName,
+          SamlGroupName: values.SamlAdminGroupName,
           privateSubnetIds: values.privateSubnetIds,
           publicSubnetIds: values.publicSubnetIds
         })
@@ -124,7 +124,7 @@ export const NetworkCreateModal = (props) => {
             initialValues={{
               label: '',
               vpcId: '',
-              SamlGroupName: '',
+              SamlAdminGroupName: '',
               privateSubnetIds: [],
               publicSubnetIds: [],
               tags: []
@@ -132,7 +132,7 @@ export const NetworkCreateModal = (props) => {
             validationSchema={Yup.object().shape({
               label: Yup.string().max(255).required('*VPC name is required'),
               vpcId: Yup.string().max(255).required('*VPC ID is required'),
-              SamlGroupName: Yup.string()
+              SamlAdminGroupName: Yup.string()
                 .max(255)
                 .required('*Team is required'),
               privateSubnetIds: Yup.array().nullable(),
@@ -229,27 +229,37 @@ export const NetworkCreateModal = (props) => {
                     <Box>
                       <CardHeader title="Organize" />
                       <CardContent>
-                        <TextField
-                          fullWidth
-                          error={Boolean(
-                            touched.SamlGroupName && errors.SamlGroupName
+                        <Autocomplete
+                          id="SamlAdminGroupName"
+                          disablePortal
+                          options={groupOptions.map((option) => option)}
+                          noOptionsText="No teams found for this environment"
+                          onChange={(event, value) => {
+                            if (value && value.value) {
+                              setFieldValue('SamlAdminGroupName', value.value);
+                            } else {
+                              setFieldValue('SamlAdminGroupName', '');
+                            }
+                          }}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              fullWidth
+                              error={Boolean(
+                                touched.SamlAdminGroupName &&
+                                  errors.SamlAdminGroupName
+                              )}
+                              helperText={
+                                touched.SamlAdminGroupName &&
+                                errors.SamlAdminGroupName
+                              }
+                              label="Team"
+                              name="SamlAdminGroupName"
+                              variant="outlined"
+                              value={values.SamlAdminGroupName}
+                            />
                           )}
-                          helperText={
-                            touched.SamlGroupName && errors.SamlGroupName
-                          }
-                          label="Team"
-                          name="SamlGroupName"
-                          onChange={handleChange}
-                          select
-                          value={values.SamlGroupName}
-                          variant="outlined"
-                        >
-                          {groupOptions.map((group) => (
-                            <MenuItem key={group.value} value={group.value}>
-                              {group.label}
-                            </MenuItem>
-                          ))}
-                        </TextField>
+                        />
                       </CardContent>
                       <CardContent>
                         <ChipInput

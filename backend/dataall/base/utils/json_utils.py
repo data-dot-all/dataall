@@ -37,7 +37,7 @@ def to_json(record):
     elif isinstance(record, type({'a': 'dict'})):
         return json.loads(json.dumps(record, default=json_decoder))
     elif type(record) in [str, 'unicode']:
-        return record
+        return json.dumps(record)
     elif type(record) in [int, float]:
         return json.dumps(record)
     elif isinstance(record, bool):

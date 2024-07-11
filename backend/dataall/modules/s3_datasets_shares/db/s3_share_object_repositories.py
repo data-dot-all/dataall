@@ -2,16 +2,13 @@ import logging
 from warnings import warn
 from typing import List
 
-from sqlalchemy import and_, or_, func, case
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
-from dataall.base.db import exceptions, paginate
 from dataall.modules.shares_base.services.shares_enums import (
-    ShareItemHealthStatus,
     ShareObjectStatus,
-    ShareItemStatus,
     ShareableType,
     PrincipalType,
 )
@@ -19,13 +16,13 @@ from dataall.modules.shares_base.db.share_state_machines_repositories import Sha
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset, DatasetBucket
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 
 logger = logging.getLogger(__name__)
 
 
-class ShareEnvironmentResource(EnvironmentResource):
+class S3ShareEnvironmentResource(EnvironmentResource):
     @staticmethod
     def count_resources(session, environment, group_uri) -> int:
         return S3ShareObjectRepository.count_S3_principal_shares(
@@ -394,124 +391,6 @@ class S3ShareObjectRepository:
         if item_type:
             query = query.filter(ShareObjectItem.itemType == item_type)
         return query.all()
-
-    @staticmethod  # TODO!!!
-    def list_shareable_items(session, share, states, data):  # TODO
-        # All tables from dataset with a column isShared
-        # marking the table as part of the shareObject
-        tables = (
-            session.query(
-                DatasetTable.tableUri.label('itemUri'),
-                func.coalesce('DatasetTable').label('itemType'),
-                DatasetTable.GlueTableName.label('itemName'),
-                DatasetTable.description.label('description'),
-                ShareObjectItem.shareItemUri.label('shareItemUri'),
-                ShareObjectItem.status.label('status'),
-                ShareObjectItem.healthStatus.label('healthStatus'),
-                ShareObjectItem.healthMessage.label('healthMessage'),
-                ShareObjectItem.lastVerificationTime.label('lastVerificationTime'),
-                case(
-                    [(ShareObjectItem.shareItemUri.isnot(None), True)],
-                    else_=False,
-                ).label('isShared'),
-            )
-            .outerjoin(
-                ShareObjectItem,
-                and_(
-                    ShareObjectItem.shareUri == share.shareUri,
-                    DatasetTable.tableUri == ShareObjectItem.itemUri,
-                ),
-            )
-            .filter(DatasetTable.datasetUri == share.datasetUri)
-        )
-        if states:
-            tables = tables.filter(ShareObjectItem.status.in_(states))
-
-        # All folders from the dataset with a column isShared
-        # marking the folder as part of the shareObject
-        locations = (
-            session.query(
-                DatasetStorageLocation.locationUri.label('itemUri'),
-                func.coalesce('DatasetStorageLocation').label('itemType'),
-                DatasetStorageLocation.S3Prefix.label('itemName'),
-                DatasetStorageLocation.description.label('description'),
-                ShareObjectItem.shareItemUri.label('shareItemUri'),
-                ShareObjectItem.status.label('status'),
-                ShareObjectItem.healthStatus.label('healthStatus'),
-                ShareObjectItem.healthMessage.label('healthMessage'),
-                ShareObjectItem.lastVerificationTime.label('lastVerificationTime'),
-                case(
-                    [(ShareObjectItem.shareItemUri.isnot(None), True)],
-                    else_=False,
-                ).label('isShared'),
-            )
-            .outerjoin(
-                ShareObjectItem,
-                and_(
-                    ShareObjectItem.shareUri == share.shareUri,
-                    DatasetStorageLocation.locationUri == ShareObjectItem.itemUri,
-                ),
-            )
-            .filter(DatasetStorageLocation.datasetUri == share.datasetUri)
-        )
-        if states:
-            locations = locations.filter(ShareObjectItem.status.in_(states))
-
-        s3_buckets = (
-            session.query(
-                DatasetBucket.bucketUri.label('itemUri'),
-                func.coalesce('S3Bucket').label('itemType'),
-                DatasetBucket.S3BucketName.label('itemName'),
-                DatasetBucket.description.label('description'),
-                ShareObjectItem.shareItemUri.label('shareItemUri'),
-                ShareObjectItem.status.label('status'),
-                ShareObjectItem.healthStatus.label('healthStatus'),
-                ShareObjectItem.healthMessage.label('healthMessage'),
-                ShareObjectItem.lastVerificationTime.label('lastVerificationTime'),
-                case(
-                    [(ShareObjectItem.shareItemUri.isnot(None), True)],
-                    else_=False,
-                ).label('isShared'),
-            )
-            .outerjoin(
-                ShareObjectItem,
-                and_(
-                    ShareObjectItem.shareUri == share.shareUri,
-                    DatasetBucket.bucketUri == ShareObjectItem.itemUri,
-                ),
-            )
-            .filter(DatasetBucket.datasetUri == share.datasetUri)
-        )
-        if states:
-            s3_buckets = s3_buckets.filter(ShareObjectItem.status.in_(states))
-
-        shareable_objects = tables.union(locations, s3_buckets).subquery('shareable_objects')
-        query = session.query(shareable_objects)
-
-        if data:
-            if data.get('term'):
-                term = data.get('term')
-                query = query.filter(
-                    or_(
-                        shareable_objects.c.itemName.ilike(term + '%'),
-                        shareable_objects.c.description.ilike(term + '%'),
-                    )
-                )
-            if 'isShared' in data:
-                is_shared = data.get('isShared')
-                query = query.filter(shareable_objects.c.isShared == is_shared)
-
-            if 'isHealthy' in data:
-                # healthy_status = ShareItemHealthStatus.Healthy.value
-                query = (
-                    query.filter(shareable_objects.c.healthStatus == ShareItemHealthStatus.Healthy.value)
-                    if data.get('isHealthy')
-                    else query.filter(shareable_objects.c.healthStatus != ShareItemHealthStatus.Healthy.value)
-                )
-
-        return paginate(
-            query.order_by(shareable_objects.c.itemName).distinct(), data.get('page', 1), data.get('pageSize', 10)
-        ).to_dict()
 
     # the next 2 methods are used in subscription task
     @staticmethod

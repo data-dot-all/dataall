@@ -58,7 +58,6 @@ getPlatformReaderSession = gql.QueryField(
 getAuthorSession = gql.QueryField(
     name='getAuthorSession',
     args=[
-        gql.Argument(name='dashboardUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
     ],
     type=gql.String,

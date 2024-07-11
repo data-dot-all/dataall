@@ -195,10 +195,11 @@ class ContainerStack(pyNestedClass):
 
     @run_if(['modules.s3_datasets.active', 'modules.dashboards.active'])
     def add_catalog_indexer_task(self):
+        container_id = 'container'
         catalog_indexer_task, catalog_indexer_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
             command=['python3.9', '-m', 'dataall.modules.catalog.tasks.catalog_indexer_task'],
-            container_id='container',
+            container_id=container_id,
             ecr_repository=self._ecr_repository,
             environment=self._create_env('INFO'),
             image_tag=self._cdkproxy_image_tag,
@@ -210,6 +211,20 @@ class ContainerStack(pyNestedClass):
             vpc=self._vpc,
             security_group=self.scheduled_tasks_sg,
             prod_sizing=self._prod_sizing,
+        )
+
+        ssm.StringParameter(
+            self,
+            f'CatalogIndexerTaskARNSSM{self._envname}',
+            parameter_name=f'/dataall/{self._envname}/ecs/task_def_arn/catalog_indexer',
+            string_value=catalog_indexer_task_def.task_definition_arn,
+        )
+
+        ssm.StringParameter(
+            self,
+            f'CatalogIndexerTaskContainerSSM{self._envname}',
+            parameter_name=f'/dataall/{self._envname}/ecs/container/catalog_indexer',
+            string_value=container_id,
         )
 
         self.ecs_task_definitions_families.append(catalog_indexer_task.task_definition.family)
@@ -298,6 +313,21 @@ class ContainerStack(pyNestedClass):
             ),
             readonly_root_filesystem=True,
         )
+
+        ssm.StringParameter(
+            self,
+            f'ShareReapplierTaskARNSSM{self._envname}',
+            parameter_name=f'/dataall/{self._envname}/ecs/task_def_arn/share_reapplier',
+            string_value=share_reapplier_task_definition.task_definition_arn,
+        )
+
+        ssm.StringParameter(
+            self,
+            f'ShareReapplierTaskContainerSSM{self._envname}',
+            parameter_name=f'/dataall/{self._envname}/ecs/container/share_reapplier',
+            string_value=share_reapplier_container.container_name,
+        )
+
         self.ecs_task_definitions_families.append(share_reapplier_task_definition.family)
 
     @run_if(['modules.dataset_base.features.share_notifications.email.persistent_reminders'])
@@ -488,6 +518,7 @@ class ContainerStack(pyNestedClass):
                     f'arn:aws:ssm:*:{self.account}:parameter/*{resource_prefix}*',
                     f'arn:aws:ecs:*:{self.account}:task-definition/{resource_prefix}-{envname}-*',
                     f'arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}-ecs-tasks-role',
+                    f'arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}-dataall-migration-role',
                 ],
             )
         )
@@ -540,6 +571,7 @@ class ContainerStack(pyNestedClass):
                         f'arn:aws:iam::*:role/{pivot_role_name}*',
                         'arn:aws:iam::*:role/cdk*',
                         f'arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}-ecs-tasks-role',
+                        f'arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}-dataall-migration-role',
                     ],
                 ),
                 iam.PolicyStatement(

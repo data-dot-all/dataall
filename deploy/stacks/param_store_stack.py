@@ -24,6 +24,7 @@ class ParamStoreStack(pyNestedClass):
         pivot_role_name='dataallPivotRole',
         reauth_apis=None,
         prod_sizing=False,
+        tooling_account_id='',
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -118,6 +119,15 @@ class ParamStoreStack(pyNestedClass):
             string_value=str(json.dumps(deploy_config.get_dataall_version())),
             description='Deployed data all version',
         )
+
+        aws_ssm.StringParameter(
+            self,
+            f'toolingAccountParam{envname}',
+            parameter_name=f'/dataall/{envname}/toolingAccount',
+            string_value=str(tooling_account_id),
+            description=f'Store AWS account if for the tooling account that hosts the code for environment {envname}',
+        )
+
         if prod_sizing:
             cr.AwsCustomResource(
                 self,

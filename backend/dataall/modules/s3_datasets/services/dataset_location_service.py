@@ -1,3 +1,4 @@
+from dataall.modules.s3_datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
@@ -48,6 +49,7 @@ class DatasetLocationService:
             S3LocationClient(location, dataset).create_bucket_prefix()
 
         DatasetLocationIndexer.upsert(session=session, folder_uri=location.locationUri)
+        DatasetIndexer.upsert(session, dataset.datasetUri)
         return location
 
     @staticmethod
@@ -77,6 +79,7 @@ class DatasetLocationService:
                 DatasetLocationService._create_glossary_links(session, location, data['terms'])
 
             DatasetLocationIndexer.upsert(session, folder_uri=location.locationUri)
+            DatasetIndexer.upsert(session, location.datasetUri)
 
             return location
 

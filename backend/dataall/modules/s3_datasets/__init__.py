@@ -90,8 +90,9 @@ class DatasetAsyncHandlersModuleInterface(ModuleInterface):
     @staticmethod
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.datasets_base import DatasetBaseModuleInterface
+        from dataall.modules.catalog import CatalogAsyncHandlersModuleInterface
 
-        return [DatasetBaseModuleInterface]
+        return [DatasetBaseModuleInterface, CatalogAsyncHandlersModuleInterface]
 
     def __init__(self):
         import dataall.modules.s3_datasets.handlers
