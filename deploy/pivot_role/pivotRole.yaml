@@ -44,9 +44,7 @@ Resources:
                 'aws:PrincipalArn': [
                   !Sub "arn:aws:iam::${AwsAccountId}:role/*graphql-role",
                   !Sub "arn:aws:iam::${AwsAccountId}:role/*awsworker-role",
-                  !Sub "arn:aws:iam::${AwsAccountId}:role/*ecs-tasks-role",
-                  !Sub "arn:aws:iam::${AwsAccountId}:role/*dataall-migration-role",
-
+                  !Sub "arn:aws:iam::${AwsAccountId}:role/*ecs-tasks-role"
                 ]
   PivotRolePolicy0:
     Type: 'AWS::IAM::ManagedPolicy'
