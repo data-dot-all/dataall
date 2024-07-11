@@ -621,3 +621,34 @@ class EnvironmentSetup(Stack):
                 resources=['*'],
             )
         )
+
+        self.test_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=['ec2:Describe*', 'ec2:*Vpc*', 'ec2:*Subnet*', 'ec2:*Route*', 'ec2:*Tags*'],
+                effect=iam.Effect.ALLOW,
+                resources=[
+                    f'arn:aws:ec2:*:{self.account}:route-table/*',
+                    f'arn:aws:ec2:*:{self.account}:security-group/*',
+                    f'arn:aws:ec2:*:{self.account}:vpc/*',
+                    f'arn:aws:ec2:*:{self.account}:security-group-rule/*',
+                    f'arn:aws:ec2:*:{self.account}:subnet/*',
+                    f'arn:aws:ec2:*:{self.account}:network-acl/*',
+                ],
+            ),
+        )
+
+        self.test_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=['ec2:Describe*'],
+                effect=iam.Effect.ALLOW,
+                resources=['*'],
+            ),
+        )
+
+        self.test_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=['cloudformation:Describe*'],
+                effect=iam.Effect.ALLOW,
+                resources=[f'arn:aws:cloudformation:*:{self.account}:stack/*/*'],
+            ),
+        )
