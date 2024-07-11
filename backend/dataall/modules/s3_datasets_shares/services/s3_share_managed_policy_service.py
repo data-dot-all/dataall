@@ -77,6 +77,10 @@ class S3SharePolicyService(ManagedPolicy):
             }
             policy_document['Statement'].append(additional_policy)
         else:
+            # Enforce, that actions are valid
+            policy_actions = S3_ALLOWED_ACTIONS if resource_type == 's3' else [f'{resource_type}:*']
+            policy_document['Statement'][index]['Action'] = policy_actions
+
             for target_resource in target_resources:
                 if target_resource not in policy_document['Statement'][index]['Resource']:
                     log.info(
