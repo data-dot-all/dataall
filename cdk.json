@@ -14,7 +14,7 @@
             "envname": "dev",
             "account": "562801399559",
             "region": "us-east-1",
-            "with_approval": true,
+            "with_approval": false,
             "internet_facing": true,
             "prod_sizing": false,
             "enable_pivot_role_auto_create": true,
