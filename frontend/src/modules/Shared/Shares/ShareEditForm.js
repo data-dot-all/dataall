@@ -242,7 +242,7 @@ export const ShareEditForm = (props) => {
     if (requestPurpose !== share.requestPurpose) {
       await updateRequestPurpose();
     }
-    if (smthChanged) {
+    if (smthChanged || requestPurpose !== share.requestPurpose) {
       onApply();
     } else {
       onCancel();
@@ -330,7 +330,6 @@ export const ShareEditForm = (props) => {
       })
     );
     if (!response.errors) {
-      setSmthChanged(true);
       enqueueSnackbar('Share request reason updated', {
         anchorOrigin: {
           horizontal: 'right',
