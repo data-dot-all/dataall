@@ -330,6 +330,7 @@ export const ShareEditForm = (props) => {
       })
     );
     if (!response.errors) {
+      setSmthChanged(true);
       enqueueSnackbar('Share request reason updated', {
         anchorOrigin: {
           horizontal: 'right',
