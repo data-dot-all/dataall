@@ -65,10 +65,10 @@ class S3SharePolicyService(ManagedPolicy):
         :return
         """
         policy_name = self.generate_policy_name()
+        policy_actions = S3_ALLOWED_ACTIONS if resource_type == 's3' else [f'{resource_type}:*']
         index = self._get_statement_by_sid(policy_document, statement_sid)
         if index is None:
             log.info(f'{statement_sid} does NOT exists for Managed policy {policy_name} ' f'creating statement...')
-            policy_actions = S3_ALLOWED_ACTIONS if resource_type == 's3' else [f'{resource_type}:*']
             additional_policy = {
                 'Sid': statement_sid,
                 'Effect': 'Allow',
@@ -78,9 +78,7 @@ class S3SharePolicyService(ManagedPolicy):
             policy_document['Statement'].append(additional_policy)
         else:
             # Enforce, that actions are valid
-            policy_actions = S3_ALLOWED_ACTIONS if resource_type == 's3' else [f'{resource_type}:*']
             policy_document['Statement'][index]['Action'] = policy_actions
-
             for target_resource in target_resources:
                 if target_resource not in policy_document['Statement'][index]['Resource']:
                     log.info(

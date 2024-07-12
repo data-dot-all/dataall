@@ -1459,7 +1459,6 @@ def test_check_s3_iam_access_wrong_actions(mocker, dataset2, share2_manager):
     # Then
     iam_update_role_policy_mock_1.assert_called_once()
     assert (len(share2_manager.bucket_errors)) == 1
-    print(share2_manager.bucket_errors)
     message_missing = 'Missing actions:'
     message_extra = 'Not allowed permissions: s3:*'
     assert message_missing in share2_manager.bucket_errors[0]
