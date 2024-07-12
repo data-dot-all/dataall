@@ -103,7 +103,7 @@ class SagemakernotebookPolicy(ServicePolicy):
                     f'arn:aws:sagemaker:{self.region}:{self.account}:domain/*',
                     f'arn:aws:sagemaker:{self.region}:{self.account}:user-profile/*/*',
                 ],
-                conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_key]}},
+                conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_value]}},
             ),
             # For everything that is not domains and user-profiles we allow permissions if the resource is tagged
             # Deny on creation of domains and users, generic allow for prefixed and tagged resources
