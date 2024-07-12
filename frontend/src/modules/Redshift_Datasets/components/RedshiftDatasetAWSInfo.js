@@ -24,9 +24,7 @@ export const RedshiftDatasetAWSInfo = (props) => {
   const { enqueueSnackbar } = useSnackbar();
   const retryDataShare = async () => {
     const response = await client.mutate(
-      retryRedshiftDatashare({
-        dataseturi: dataset.datasetUri
-      })
+      retryRedshiftDatashare(dataset.datasetUri)
     );
 
     if (!response.errors) {

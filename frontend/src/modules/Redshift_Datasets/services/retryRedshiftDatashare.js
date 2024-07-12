@@ -4,11 +4,10 @@ export const retryRedshiftDatashare = (datasetUri) => ({
   variables: {
     datasetUri
   },
-  query: gql`
-    query retryRedshiftDatashare($datasetUri: String!) {
+  mutation: gql`
+    mutation retryRedshiftDatashare($datasetUri: String!) {
       retryRedshiftDatashare(datasetUri: $datasetUri) {
-        datasetUri
-        owner
+        dataShareStatus
       }
     }
   `

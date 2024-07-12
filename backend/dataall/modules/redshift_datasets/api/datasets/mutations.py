@@ -14,9 +14,9 @@ importRedshiftDataset = gql.MutationField(
     resolver=import_redshift_dataset,
 )
 
-retryRedshiftDatashare = gql.QueryField(
+retryRedshiftDatashare = gql.MutationField(
     name='retryRedshiftDatashare',
     args=[gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String))],
-    type=gql.Boolean,
+    type=gql.String,
     resolver=retry_redshift_datashare,
 )
