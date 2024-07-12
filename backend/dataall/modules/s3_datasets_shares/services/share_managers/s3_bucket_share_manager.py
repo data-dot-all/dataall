@@ -130,22 +130,33 @@ class S3BucketShareManager:
                 )
             )
         else:
-            policy_check, missing_policies, extra_policies = share_policy_service.check_s3_actions_in_policy_statement(
-                existing_policy_statement=policy_document['Statement'][s3_statement_index]
+            policy_check, missing_permissions, extra_permissions = (
+                share_policy_service.check_s3_actions_in_policy_statement(
+                    existing_policy_statement=policy_document['Statement'][s3_statement_index]
+                )
             )
             if not policy_check:
                 logger.info(f'IAM Policy Statement {IAM_S3_BUCKETS_STATEMENT_SID}S3 has invalid actions')
-                self.bucket_errors.append(
-                    ShareErrorFormatter.invalid_policy_error_msg(
-                        self.target_requester_IAMRoleName,
-                        'IAM Policy Resource',
-                        f'{IAM_S3_BUCKETS_STATEMENT_SID}S3',
-                        'S3 Bucket',
-                        f'{self.bucket_name}',
-                        missing_actions=missing_policies,
-                        extra_actions=extra_policies,
+                if missing_permissions:
+                    self.bucket_errors.append(
+                        ShareErrorFormatter.missing_permission_error_msg(
+                            self.target_requester_IAMRoleName,
+                            'IAM Policy Action',
+                            missing_permissions,
+                            'S3 Bucket',
+                            f'{self.bucket_name}',
+                        )
                     )
-                )
+                if extra_permissions:
+                    self.bucket_errors.append(
+                        ShareErrorFormatter.not_allowed_permission_error_msg(
+                            self.target_requester_IAMRoleName,
+                            'IAM Policy Action',
+                            extra_permissions,
+                            'S3 Bucket',
+                            f'{self.bucket_name}',
+                        )
+                    )
 
         if kms_key_id:
             kms_statement_index = S3SharePolicyService._get_statement_by_sid(

@@ -1273,11 +1273,13 @@ def test_check_target_role_access_policy_wrong_permissions(mocker, share_manager
     # Then
     iam_get_policy_mock.assert_called()
     kms_client().get_key_id.assert_called()
-    assert len(share_manager.folder_errors) == 1
-    message_missing = 'Missing actions:'
-    message_extra = 'Not allowed permissions: s3:*'
+    assert len(share_manager.folder_errors) == 2
+    message_missing = 'missing IAM Policy Action permissions:'
+    message_extra = 'has not allowed IAM Policy Action permissions: s3:*'
     assert message_missing in share_manager.folder_errors[0]
-    assert message_extra in share_manager.folder_errors[0]
+    for action in S3_ALLOWED_ACTIONS:
+        assert action in share_manager.folder_errors[0]
+    assert message_extra in share_manager.folder_errors[1]
 
 
 def test_check_target_role_access_policy_existing_policy_bucket_and_key_not_included(mocker, share_manager):

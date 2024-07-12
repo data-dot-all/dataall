@@ -9,7 +9,10 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.s3_datasets_shares.services.share_managers import S3BucketShareManager
-from dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service import S3SharePolicyService
+from dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service import (
+    S3SharePolicyService,
+    S3_ALLOWED_ACTIONS,
+)
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetBucket
 from dataall.modules.shares_base.services.sharing_service import ShareData
 
@@ -1458,11 +1461,13 @@ def test_check_s3_iam_access_wrong_actions(mocker, dataset2, share2_manager):
     share2_manager.check_s3_iam_access()
     # Then
     iam_update_role_policy_mock_1.assert_called_once()
-    assert (len(share2_manager.bucket_errors)) == 1
-    message_missing = 'Missing actions:'
-    message_extra = 'Not allowed permissions: s3:*'
+    assert (len(share2_manager.bucket_errors)) == 2
+    message_missing = 'missing IAM Policy Action permissions:'
+    message_extra = 'has not allowed IAM Policy Action permissions: s3:*'
     assert message_missing in share2_manager.bucket_errors[0]
-    assert message_extra in share2_manager.bucket_errors[0]
+    for action in S3_ALLOWED_ACTIONS:
+        assert action in share2_manager.bucket_errors[0]
+    assert message_extra in share2_manager.bucket_errors[1]
 
 
 def test_check_s3_iam_access_no_policy(mocker, dataset2, share2_manager):
