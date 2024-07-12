@@ -227,7 +227,7 @@ class S3AccessPointShareManager:
                 )
             )
         else:
-            policy_check, missing_policies, extra_policies = share_policy_service.check_s3_actions(
+            policy_check, missing_policies, extra_policies = share_policy_service.check_s3_actions_in_policy_statement(
                 existing_policy_statement=policy_document['Statement'][s3_statement_index]
             )
             if not policy_check:

@@ -129,7 +129,7 @@ class S3SharePolicyService(ManagedPolicy):
         return True
 
     @staticmethod
-    def check_s3_actions(existing_policy_statement: dict) -> (bool, str, str):
+    def check_s3_actions_in_policy_statement(existing_policy_statement: dict) -> (bool, str, str):
         """
         Checks if all required s3 actions are allowed in the existing policy and there is no unallowed actions
         :param existing_policy_statement:
