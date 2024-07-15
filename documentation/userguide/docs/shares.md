@@ -52,7 +52,7 @@ data asset.
 
 ![catalog_search](pictures/shares/shares_1.png#zoom#shadow)
 
-The following window will open. Choose your target environment and team and optionally add a *Request purpose*.
+The following window will open. Choose your target environment and team.
 
 ![share_request_form](pictures/shares/shares_2_1.png#zoom#shadow)
 
@@ -62,9 +62,20 @@ If instead of to a team, you want to request access for a Consumption role, add 
 
 ![share_request_form](pictures/shares/shares_2_2.png#zoom#shadow)
 
-Finally, click on **Send Request**. This will create a share request or object for the corresponding dataset
-and if you have requested a table or folder
-it will add those items to the request. The share needs to be submitted for the request to be sent to the approvers.
+Finally, click on **Create Draft Request**. This will create a share request or object for the corresponding dataset
+and if you have requested a table or folder it will add those items to the request. 
+After that the modal window will switch to share edit form.
+![share_request_form](pictures/shares/shares_2_3.png#zoom#shadow)
+
+Here you can edit the list of items you want to request access to. Note that the request is in `DRAFT` status and that
+the items that we add are in `PENDINGAPPROVAL`. They are not shared until the request is submitted and processed.
+The share can not be submitted if the list of items is empty. 
+
+`Request purpose` is optional field, recommended length is up to 200 symbols.
+
+When you are happy with the share request form, click **Submit Request** or click **Draft Request** if you want to return to this form later.
+
+The share needs to be submitted for the request to be sent to the approvers.
 
 ## **Check your sent/received share requests**
 Anyone can go to the Shares menu on the left side pane and look up the share requests that they have received
@@ -74,21 +85,10 @@ in the request that you are interested in to start working on your request.
 ![add_share](pictures/shares/shares_inbox.png#zoom#shadow)
 
 ## **Add/delete items**
-When you create a share request for a dataset, you still need to add the items (tables or folders) that you want to
-get access to. Initially the share request should be empty of items and in `DRAFT` state, it should look like the following picture.
-
-![add_share](pictures/shares/shares_initial.png#zoom#shadow)
-
-As appears in the picture, by clicking on **Add Item**, the following window will pop up to let you choose a specific table
-or folder in the dataset.
-
-![add_share](pictures/shares/shares_add_window.png#zoom#shadow)
-
-Note that the request is in `DRAFT` status and that
-the items that we add are in `PENDINGAPPROVAL`. They are not shared until the request is submitted and processed.
-
-![add_share](pictures/shares/shares_added.png#zoom#shadow)
-
+If request can be edited (if it is not being processed in the moment), the **Edit** button will appear on top of the page.
+![edit_share](pictures/shares/shares_view.png#zoom#shadow)
+**Edit** button opens the modal window with the Share Edit Form, same as upon creating the share.
+Here you can edit list of shared items and request purpose.
 To remove an item from the request click on the **Delete** button with 
 the trash icon next to it. We can only delete items that have not been shared. Items that are shared must be revoked,
 which is explained below.
@@ -160,6 +160,11 @@ pressed the consequent revoke task will be triggered.
 !!! success "Proactive clean-up"
     In every revoke task, data.all checks if there are no more shared folders or tables in a share request.
     In such case, data.all automatically cleans up any unnecessary S3 access point or Lake Formation permission.
+
+## **View Share Logs**
+For the share Approvers the logs of share processor are available via Data.all UI. To view logs of the latest share processor run, 
+click **Logs** button in right upper conner of the Share View page.
+![accept_logs](pictures/shares/shares_logs.png#zoom#shadow)
 
 
 ## **Delete share request**
