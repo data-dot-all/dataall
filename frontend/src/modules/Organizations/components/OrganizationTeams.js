@@ -45,29 +45,22 @@ import {
   OrganizationTeamInviteForm
 } from '../components';
 
-function TeamRow({ team, permissions, organization, fetchItems }) {
+function TeamRow({
+  team,
+  permissions,
+  organization,
+  fetchItems,
+  handleDeleteGroupModalOpen,
+  handleDeleteGroupModalClosed,
+  handlePermissionsModalOpen,
+  handlePermissionsModalClose,
+  isDeleteGroupModalOpenId,
+  isPermissionModalOpenId
+}) {
   const client = useClient();
   const dispatch = useDispatch();
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
-  const [isPermissionModalOpen, setIsPermissionsModalOpen] = useState(false);
-  const [isDeleteGroupModalOpen, setIsDeleteGroupModalOpenId] = useState(false);
-
-  const handleDeleteGroupModalClosed = () => {
-    setIsDeleteGroupModalOpenId(false);
-  };
-
-  const handleDeleteGroupModalOpen = () => {
-    setIsDeleteGroupModalOpenId(true);
-  };
-
-  const handlePermissionsModalClose = () => {
-    setIsPermissionsModalOpen(false);
-  };
-
-  const handlePermissionsModalOpen = () => {
-    setIsPermissionsModalOpen(true);
-  };
   const removeGroup = async (groupUri) => {
     try {
       const response = await client.mutate(
@@ -84,6 +77,9 @@ function TeamRow({ team, permissions, organization, fetchItems }) {
           },
           variant: 'success'
         });
+        if (handleDeleteGroupModalClosed) {
+          handleDeleteGroupModalClosed();
+        }
         if (fetchItems) {
           fetchItems();
         }
@@ -105,7 +101,9 @@ function TeamRow({ team, permissions, organization, fetchItems }) {
       </TableCell>
       <TableCell>
         {team.groupUri !== organization.SamlGroupName ? (
-          <LoadingButton onClick={() => handlePermissionsModalOpen(team)}>
+          <LoadingButton
+            onClick={() => handlePermissionsModalOpen(team.groupUri)}
+          >
             <VscChecklist
               size={20}
               color={
@@ -124,22 +122,24 @@ function TeamRow({ team, permissions, organization, fetchItems }) {
             variant="outlined"
           />
         )}
-        {isPermissionModalOpen && (
+        {isPermissionModalOpenId === team.groupUri && (
           <OrganizationTeamInviteEditForm
             organization={organization}
             team={team}
             allPermissions={permissions}
-            open
+            open={isPermissionModalOpenId === team.groupUri}
             enqueueSnackbar={enqueueSnackbar}
             reloadTeams={fetchItems}
-            onClose={handlePermissionsModalClose}
+            onClose={() => handlePermissionsModalClose()}
           />
         )}
       </TableCell>
       <TableCell>
         <Box>
           {team.groupUri !== organization.SamlGroupName && (
-            <LoadingButton onClick={() => handleDeleteGroupModalOpen()}>
+            <LoadingButton
+              onClick={() => handleDeleteGroupModalOpen(team.groupUri)}
+            >
               <HiUserRemove
                 size={25}
                 color={
@@ -155,7 +155,7 @@ function TeamRow({ team, permissions, organization, fetchItems }) {
               objectName={team.groupUri}
               onApply={() => handleDeleteGroupModalClosed()}
               onClose={() => handleDeleteGroupModalClosed()}
-              open={isDeleteGroupModalOpen}
+              open={isDeleteGroupModalOpenId === team.groupUri}
               isAWSResource={false}
               deleteFunction={() => removeGroup(team.groupUri)}
             />
@@ -170,7 +170,13 @@ TeamRow.propTypes = {
   team: PropTypes.any,
   organization: PropTypes.any,
   permissions: PropTypes.any,
-  fetchItems: PropTypes.any
+  fetchItems: PropTypes.any,
+  handleDeleteGroupModalOpen: PropTypes.any,
+  handleDeleteGroupModalClosed: PropTypes.any,
+  handlePermissionsModalOpen: PropTypes.any,
+  handlePermissionsModalClose: PropTypes.any,
+  isDeleteGroupModalOpenId: PropTypes.string,
+  isPermissionModalOpenId: PropTypes.string
 };
 
 export const OrganizationTeams = ({ organization }) => {
@@ -182,6 +188,25 @@ export const OrganizationTeams = ({ organization }) => {
   const [permissions, setPermissions] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [isTeamInviteModalOpen, setIsTeamInviteModalOpen] = useState(false);
+  const [isPermissionModalOpenId, setIsPermissionsModalOpen] = useState('');
+  const [isDeleteGroupModalOpenId, setIsDeleteGroupModalOpenId] = useState('');
+
+  const handleDeleteGroupModalClosed = () => {
+    setIsDeleteGroupModalOpenId('');
+  };
+
+  const handleDeleteGroupModalOpen = (groupUri) => {
+    setIsDeleteGroupModalOpenId(groupUri);
+  };
+
+  const handlePermissionsModalClose = () => {
+    setIsPermissionsModalOpen('');
+  };
+
+  const handlePermissionsModalOpen = (groupUri) => {
+    setIsPermissionsModalOpen(groupUri);
+  };
+
   const handleTeamInviteModalOpen = () => {
     setIsTeamInviteModalOpen(true);
   };
@@ -356,6 +381,16 @@ export const OrganizationTeams = ({ organization }) => {
                         permissions={permissions}
                         organization={organization}
                         fetchItems={fetchItems}
+                        handleDeleteGroupModalOpen={handleDeleteGroupModalOpen}
+                        handleDeleteGroupModalClosed={
+                          handleDeleteGroupModalClosed
+                        }
+                        handlePermissionsModalOpen={handlePermissionsModalOpen}
+                        handlePermissionsModalClose={
+                          handlePermissionsModalClose
+                        }
+                        isDeleteGroupModalOpenId={isDeleteGroupModalOpenId}
+                        isPermissionModalOpenId={isPermissionModalOpenId}
                       />
                     ))
                   ) : (
