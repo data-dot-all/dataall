@@ -890,6 +890,7 @@ class PipelineStack(Stack):
                 ip_ranges=target_env.get('ip_ranges'),
                 resource_prefix=self.resource_prefix,
                 custom_auth=target_env.get('custom_auth', None),
+                backend_region=target_env.get('region', self.region),
             ),
             pre=[
                 pipelines.CodeBuildStep(

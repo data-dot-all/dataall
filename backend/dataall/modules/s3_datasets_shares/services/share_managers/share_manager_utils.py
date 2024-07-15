@@ -19,3 +19,9 @@ class ShareErrorFormatter:
         requestor = ShareErrorFormatter._stringify(requestor)
         permissions = ShareErrorFormatter._stringify(permissions)
         return f'Requestor {requestor} missing {permission_type} permissions: {permissions} for {resource_type} Target: {target_resource}'
+
+    @staticmethod
+    def not_allowed_permission_error_msg(requestor, permission_type, permissions, resource_type, target_resource):
+        requestor = ShareErrorFormatter._stringify(requestor)
+        permissions = ShareErrorFormatter._stringify(permissions)
+        return f'Requestor {requestor} has not allowed {permission_type} permissions: {permissions} for {resource_type} Target: {target_resource}'

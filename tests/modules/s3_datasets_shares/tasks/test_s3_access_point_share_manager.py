@@ -10,7 +10,10 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.s3_datasets_shares.aws.s3_client import S3ControlClient
 from dataall.modules.shares_base.db.share_object_models import ShareObject, ShareObjectItem
-from dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service import S3SharePolicyService
+from dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service import (
+    S3SharePolicyService,
+    S3_ALLOWED_ACTIONS,
+)
 from dataall.modules.s3_datasets_shares.services.share_managers import S3AccessPointShareManager
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, S3Dataset
 from dataall.modules.shares_base.services.sharing_service import ShareData
@@ -237,7 +240,7 @@ def _create_target_dataset_access_control_policy(bucket_name, access_point_name)
             {
                 'Sid': f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3',
                 'Effect': 'Allow',
-                'Action': ['s3:*'],
+                'Action': S3_ALLOWED_ACTIONS,
                 'Resource': [
                     f'arn:aws:s3:::{bucket_name}',
                     f'arn:aws:s3:::{bucket_name}/*',
@@ -350,7 +353,7 @@ def test_grant_target_role_access_policy_test_empty_policy(
             {
                 'Sid': f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3',
                 'Effect': 'Allow',
-                'Action': ['s3:List*', 's3:Describe*', 's3:GetObject'],
+                'Action': S3_ALLOWED_ACTIONS,
                 'Resource': [
                     f'arn:aws:s3:::{location1.S3BucketName}',
                     f'arn:aws:s3:::{location1.S3BucketName}/*',
@@ -1230,6 +1233,53 @@ def test_check_target_role_access_policy(mocker, share_manager):
     iam_get_policy_mock.assert_called()
     kms_client().get_key_id.assert_called()
     assert len(share_manager.folder_errors) == 0
+
+
+def test_check_target_role_access_policy_wrong_permissions(mocker, share_manager):
+    # Given
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
+        return_value=True,
+    )
+
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
+        return_value=True,
+    )
+
+    bad_policy = _create_target_dataset_access_control_policy(
+        share_manager.bucket_name, share_manager.access_point_name
+    )
+    bad_policy['Statement'][0]['Action'] = ['s3:*']
+
+    iam_get_policy_mock = mocker.patch(
+        'dataall.base.aws.iam.IAM.get_managed_policy_default_version',
+        return_value=(
+            'v1',
+            bad_policy,
+        ),
+    )
+
+    mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        side_effect=lambda account_id, region, role_name: f'arn:aws:iam::{account_id}:role/{role_name}',
+    )
+
+    kms_client = mock_kms_client(mocker)
+    kms_client().get_key_id.return_value = 'some-key-2112'
+
+    # When
+    share_manager.check_target_role_access_policy()
+    # Then
+    iam_get_policy_mock.assert_called()
+    kms_client().get_key_id.assert_called()
+    assert len(share_manager.folder_errors) == 2
+    message_missing = 'missing IAM Policy Action permissions:'
+    message_extra = 'has not allowed IAM Policy Action permissions: s3:*'
+    assert message_missing in share_manager.folder_errors[0]
+    for action in S3_ALLOWED_ACTIONS:
+        assert action in share_manager.folder_errors[0]
+    assert message_extra in share_manager.folder_errors[1]
 
 
 def test_check_target_role_access_policy_existing_policy_bucket_and_key_not_included(mocker, share_manager):
