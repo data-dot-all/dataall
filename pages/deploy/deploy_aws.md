@@ -65,7 +65,7 @@ which means that AWS services used by this construct need to be available in the
 
 Clone the GitHub repository from:
 ```bash
-git clone https://github.com/data-dot-all/dataall.git --branch v2.5.0
+git clone https://github.com/data-dot-all/dataall.git --branch v2.6.0
 cd dataall
 ```
 ## 2. Setup Python virtualenv <a name="env"></a>
@@ -191,7 +191,6 @@ of our repository. Open it, you should be seen something like:
         "prod_sizing": "boolean_SET_INFRA_SIZING_TO_PROD_VALUES_IF_TRUE|DEFAULT=true",
         "enable_cw_rum":  "boolean_SET_CLOUDWATCH_RUM_APP_MONITOR|DEFAULT=false",
         "enable_cw_canaries": "boolean_SET_CLOUDWATCH_CANARIES_FOR_FRONTEND_TESTING|DEFAULT=false",
-        "enable_quicksight_monitoring": "boolean_ENABLE_CONNECTION_QUICKSIGHT_RDS|DEFAULT=false",
         "shared_dashboards_sessions": "string_TYPE_SESSION_SHARED_DASHBOARDS|(reader, anonymous) DEFAULT=anonymous",
         "enable_pivot_role_auto_create": "boolean_ENABLE_PIVOT_ROLE_AUTO_CREATE_IN_ENVIRONMENT|DEFAULT=false",
         "enable_update_dataall_stacks_in_cicd_pipeline": "boolean_ENABLE_UPDATE_DATAALL_STACKS_IN_CICD_PIPELINE|DEFAULT=false",
@@ -252,7 +251,6 @@ and find 2 examples of cdk.json files.
 | prod_sizing                                   | Optional              | If set to **true**, infrastructure sizing is adapted to prod environments. Check additional resources section for more details.  (default: true)                                                                                                                                                                                                                                                                     |
 | enable_cw_rum                                 | Optional              | If set to **true** CloudWatch RUM monitor is created to monitor the user interface (default: false)                                                                                                                                                                                                                                                                                                                  |
 | enable_cw_canaries                            | Optional              | If set to **true**, CloudWatch Synthetics Canaries are created to monitor the GUI workflow of principle features (default: false)                                                                                                                                                                                                                                                                                    |
-| enable_quicksight_monitoring                  | Optional              | If set to **true**, RDS security groups and VPC NACL rules are modified to allow connection of the RDS metadata database with Quicksight in the infrastructure account (default: false)                                                                                                                                                                                                                              |
 | shared_dashboard_sessions                     | Optional              | Either 'anonymous' or 'reader'. It indicates the type of Quicksight session used for Shared Dashboards (default: 'anonymous')                                                                                                                                                                                                                                                                                        |
 | enable_pivot_role_auto_create                 | Optional              | If set to **true**, data.all creates the pivot IAM role as part of the environment stack. If false, a CloudFormation template is provided in the UI and AWS account admins need to deploy this stack as pre-requisite to link a data.all environment (default: false)                                                                                                                                                |
 | enable_update_dataall_stacks_in_cicd_pipeline | Optional              | If set to **true**, CI/CD pipeline update stacks stage is enabled for the deployment environment. This stage triggers the update of all environment and dataset stacks (default: false)                                                                                                                                                                                                                              |
@@ -454,34 +452,43 @@ the different configuration options.
         "datapipelines": {
             "active": true
         },
+        "omics": {
+            "active": false
+        },
+        "datasets_base": {
+            "active": true,
+            "features": {
+              "share_notifications": {
+                "email": {
+                  "active": false,
+                  "persistent_reminders": false,
+                  "parameters": {
+                    "group_notifications": true
+                  }
+                }
+              },
+              "confidentiality_dropdown" : true,
+              "topics_dropdown" : true,
+              "auto_approval_for_confidentiality_level" : {
+                "Unclassified" : true,
+                "Official" : true,
+                "Secret" : true
+              }
+            }
+          },
         "s3_datasets": {
             "active": true,
             "features": {
-                "file_uploads": true,
-                "file_actions": true,
-                "aws_actions": true,
-                "share_notifications": {
-                    "email": {
-                        "active": false,
-                        "parameters": {
-                            "group_notifications": true
-                        }
-                    }
-                },
-                "preview_data": true,
-                "glue_crawler": true,
-                "confidentiality_dropdown" : true,
-                "topics_dropdown" : true,
-                "auto_approval_for_confidentiality_level" : {
-                    "Unclassified" : true,
-                    "Official" : true,
-                    "Secret" : true
-                }
+              "file_uploads": true,
+              "file_actions": true,
+              "aws_actions": true,
+              "preview_data": true,
+              "glue_crawler": true
             }
-        },
-        "dataset_sharing": {
+          },
+        "s3_datasets_shares": {
             "active": true
-        },
+          },
         "worksheets": {
             "active": true
         },
@@ -495,7 +502,8 @@ the different configuration options.
     "core": {
         "features": {
             "env_aws_actions": true,
-            "cdk_pivot_role_multiple_environments_same_account": false
+            "cdk_pivot_role_multiple_environments_same_account": false,
+            "enable_quicksight_monitoring": false
         }
     }
 }
@@ -518,11 +526,12 @@ check the [UserGuide](https://github.com/data-dot-all/dataall/blob/main/UserGuid
 | catalog         | None                                                | Central catalog of data items. In this module a glossary of terms is defined.                                              |
 | feed            | None                                                | S3 Bucket and Glue database construct to store data in data.all                                                            |
 | vote            | catalog                                             | S3 Bucket and Glue database construct to store data in data.all                                                            |
-| s3_datasets     | datasets_base, dataset_sharing, catalog, vote, feed | S3 Bucket and Glue database construct to store data in data.all                                                            |
-| dataset_sharing | datasets_base, notifications                        | Sub-module that allows sharing of Datasets through Lake Formation and S3                                                   |
+| s3_datasets     | datasets_base, s3_datasets_shares, catalog, vote, feed | S3 Bucket and Glue database construct to store data in data.all                                                            |
+| s3_datasets_shares | datasets_base, notifications                        | Sub-module that allows sharing of Datasets through Lake Formation and S3                                                   |
 | datasets_base   | None                                                | Shared code related to Datasets (not exposed on `config.json`).                                                            |
 | worksheets      | datasets                                            | Athena query editor integrated in data.all UI                                                                              |
 | datapipelines   | feed                                                | CICD pipelines that deploy [AWS DDK](https://awslabs.github.io/aws-ddk/) applications                                      |
+| omics           | None                                                | adds the capability to view and instantiate HealthOmics Ready2Run workflows as runs that can output and save omic data as data.all Datasets.|
 | mlstudio        | None                                                | SageMaker Studio users that can open a session directly from data.all UI                                                   |
 | notebooks       | None                                                | SageMaker Notebooks created and accessible from data.all UI                                                                |
 | dashboards      | catalog, vote, feed                                 | Start a Quicksight session or import and share a Quicksight Dashboard.                                                     |
@@ -531,27 +540,23 @@ check the [UserGuide](https://github.com/data-dot-all/dataall/blob/main/UserGuid
 
 
 ### Disable module features
-As you probably noticed, the `s3_datasets` module contains an additional field called `features` in the `config.json`. 
+As you probably noticed, the `s3_datasets` and `datasets_base` modules contain an additional field called `features` in the `config.json`. 
 If there is a particular functionality that you want to enable or disable you can do so in this section. 
 In the example config.json, the feature that enables file upload from data.all UI has been disabled.
 
 ```json
-    "s3_datasets": {
+    "datasets_base": {
         "active": true,
         "features": {
-            "file_uploads": true,
-            "file_actions": true,
-            "aws_actions": true,
             "share_notifications": {
-                "email": {
-                    "active": false,
-                    "parameters": {
+                   "email": {
+                        "active": false,
+                        "persistent_reminders": false,
+                        "parameters": {
                         "group_notifications": true
-                    }
+                  }
                 }
             },
-            "preview_data": true,
-            "glue_crawler": true,
             "confidentiality_dropdown" : true,
             "topics_dropdown" : true,
             "auto_approval_for_confidentiality_level" : {
@@ -559,6 +564,16 @@ In the example config.json, the feature that enables file upload from data.all U
                 "Official" : true,
                 "Secret" : true
             }
+       }
+    },
+    "s3_datasets": {
+        "active": true,
+        "features": {
+            "file_uploads": true,
+            "file_actions": true,
+            "aws_actions": true,
+            "preview_data": true,
+            "glue_crawler": true
         }
     },
 ```
@@ -607,7 +622,8 @@ a particular feature in the core is to add it to the core section of the `config
     "core": {
         "features": {
             "env_aws_actions": true,
-            "cdk_pivot_role_multiple_environments_same_account": false
+            "cdk_pivot_role_multiple_environments_same_account": false,
+            "enable_quicksight_monitoring": false
         }
     }
 ```
@@ -618,6 +634,7 @@ disable or modify the bahavior any other core feature.
 |-----------------------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | env_aws_actions       | environments   | If set to True, users can get AWS Credentials and assume Environment Group IAM roles from data.all's UI                                                                                                                                             |
 | cdk_pivot_role_multiple_environments_same_account       | environments   | If set to True, the CDK-created pivot role as part of the environment stack will be region specific (`dataallPivotRole-cdk-<region>`). This feature allows users to create multiple data.all environments in the same account but multiple regions. |
+| enable_quicksight_monitoring       | environments   |  If set to **true**, RDS security groups and VPC NACL rules are modified to allow connection of the RDS metadata database with Quicksight in the infrastructure account (default: false)        |
 
 
 ## 8. Run CDK synth and check cdk.context.json <a name="context"></a>
