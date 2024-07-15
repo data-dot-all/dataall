@@ -27,9 +27,9 @@ class FrontendCognitoConfig(pyNestedClass):
 
         lambda_env_key = aws_kms.Key(
             self,
-            f'{resource_prefix}-{envname}-cogn-urls-lambda-env-var-key',
+            f'{resource_prefix}-{envname}-cogn-url-lambda-env-var-key',
             removal_policy=RemovalPolicy.DESTROY,
-            alias=f'{resource_prefix}-{envname}-cogn-urls-lambda-env-var-key',
+            alias=f'{resource_prefix}-{envname}-cogn-url-lambda-env-var-key',
             enable_key_rotation=True,
             policy=iam.PolicyDocument(
                 statements=[
@@ -58,7 +58,7 @@ class FrontendCognitoConfig(pyNestedClass):
         TriggerFunction(
             self,
             'TriggerFunction-CognitoUrlsConfig',
-            function_name=f'{resource_prefix}-{envname}-cognito_urls_config',
+            function_name=f'{resource_prefix}-{envname}-cognito-urls',
             description='dataall CognitoUrlsConfig trigger function',
             initial_policy=[
                 iam.PolicyStatement(
