@@ -85,7 +85,7 @@ in the request that you are interested in to start working on your request.
 ![add_share](pictures/shares/shares_inbox.png#zoom#shadow)
 
 ## **Add/delete items**
-If request can be edited (if it is not being processed in the moment), the **Edit** button will appear on top of the page.
+If the request is not being processed, it can be edited by clicking the **Edit** button on top of the page.
 ![edit_share](pictures/shares/shares_view.png#zoom#shadow)
 **Edit** button opens the modal window with the Share Edit Form, same as upon creating the share.
 Here you can edit list of shared items and request purpose.
