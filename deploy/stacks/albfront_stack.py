@@ -16,6 +16,8 @@ from aws_cdk import (
     Fn,
 )
 
+from .frontend_cognito_config import FrontendCognitoConfig
+
 
 class AlbFrontStack(Stack):
     def __init__(
@@ -29,6 +31,7 @@ class AlbFrontStack(Stack):
         custom_domain=None,
         ip_ranges=None,
         custom_auth=None,
+        backend_region=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -300,6 +303,18 @@ class AlbFrontStack(Stack):
             export_name=f'frontend-{envname}-hostedzoneid',
             value=frontend_alb.load_balancer.load_balancer_canonical_hosted_zone_id,
         )
+
+        if not custom_auth:
+            FrontendCognitoConfig(
+                self,
+                'FrontendCognitoConfig',
+                envname=envname,
+                resource_prefix=resource_prefix,
+                custom_domain=custom_domain,
+                backend_region=backend_region,
+                execute_after=[],
+                **kwargs,
+            )
 
     def create_log_group(self, envname, resource_prefix, log_group_name):
         log_group = logs.LogGroup(
