@@ -174,3 +174,9 @@ class DatasetTableService:
         ResourcePolicyService.delete_resource_policy(
             session=session, group=None, resource_uri=table_uri, resource_type=DatasetTable.__name__
         )
+    @staticmethod 
+    # type='table', version='0'
+    def generate_metadata(resourceUri):
+       context = get_context()
+       with context.db_engine.scoped_session() as session:
+            return DatasetRepository.get_table_info_metadata_generation(session, resourceUri)

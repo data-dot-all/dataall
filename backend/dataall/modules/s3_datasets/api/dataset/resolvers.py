@@ -10,6 +10,7 @@ from dataall.base.db.exceptions import RequiredParameter, InvalidInput
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole, ConfidentialityClassification
 from dataall.modules.s3_datasets.services.dataset_service import DatasetService
+from dataall.modules.s3_datasets.services.dataset_table_service import DatasetTableService
 
 log = logging.getLogger(__name__)
 
@@ -152,6 +153,10 @@ def list_datasets_owned_by_env_group(
         filter = {}
     return DatasetService.list_datasets_owned_by_env_group(environmentUri, groupUri, filter)
 
+def generate_metadata(context : Context, source: S3Dataset, resourceUri):
+    if not resourceUri:
+        return None
+    return DatasetTableService.generate_metadata(resourceUri=resourceUri)
 
 class RequestValidator:
     @staticmethod
@@ -173,3 +178,4 @@ class RequestValidator:
         RequestValidator.validate_creation_request(data)
         if not data.get('bucketName'):
             raise RequiredParameter('bucketName')
+    

@@ -11,6 +11,7 @@ from dataall.modules.s3_datasets.api.dataset.resolvers import (
     delete_dataset,
     import_dataset,
     start_crawler,
+    generate_metadata
 )
 
 createDataset = gql.MutationField(
@@ -67,4 +68,10 @@ StartGlueCrawler = gql.MutationField(
     ],
     resolver=start_crawler,
     type=gql.Ref('GlueCrawler'),
+)
+generateMetadata = gql.MutationField(
+    name='generate_metadata',
+    args=[gql.Argument(name='resourceUri', type=gql.NonNullableType(gql.String))],
+    type=gql.String,
+    resolver=generate_metadata,
 )
