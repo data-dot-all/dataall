@@ -1,12 +1,13 @@
 import { gql } from 'apollo-boost';
 
-export const createTableDataFilter = (input) => ({
+export const createTableDataFilter = (tableUri, input) => ({
   variables: {
+    tableUri,
     input
   },
   mutation: gql`
-    mutation createTableDataFilter($input: NewDataFilterInput) {
-      createTableDataFilter(input: $input) {
+    mutation createTableDataFilter($tableUri: String!, $input: NewDataFilterInput!) {
+      createTableDataFilter(tableUri: $tableUri, input: $input) {
         filterUri
       }
     }

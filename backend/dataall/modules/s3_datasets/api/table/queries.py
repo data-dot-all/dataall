@@ -4,6 +4,7 @@ from dataall.modules.s3_datasets.api.table.resolvers import get_table, preview
 from dataall.modules.s3_datasets.api.table.types import (
     DatasetTable,
     DatasetTableSearchResult,
+    DatasetTableDataFilterSearchResult,
 )
 
 getDatasetTable = gql.QueryField(
@@ -35,4 +36,14 @@ previewTable = gql.QueryField(
     args=[gql.Argument(name='tableUri', type=gql.NonNullableType(gql.String))],
     resolver=preview,
     type=gql.Ref('QueryPreviewResult'),
+)
+
+listTableDataFilters = gql.QueryField(
+    name='listTableDataFilters',
+    args=[
+        gql.Argument(name='tableUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument('filter', DatasetTableFilter),
+    ],
+    type=DatasetTableDataFilterSearchResult,
+    resolver=list_table_data_filters,
 )

@@ -33,7 +33,7 @@ import CancelIcon from '@mui/icons-material/Close';
 import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback} from 'react';
 import * as Yup from 'yup';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient, listDatasetTableColumns } from 'services';
@@ -185,7 +185,7 @@ export const TableDataFilterAddForm = (props) => {
     setRowModesModel(newRowModesModel);
   };
 
-  const fetchColumns = async () => {
+  const fetchColumns = useCallback(async () => {
     setLoadingColumns(true);
     const response = await client.query(
       listDatasetTableColumns({
@@ -215,7 +215,7 @@ export const TableDataFilterAddForm = (props) => {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setLoadingColumns(false);
-  };
+  }, [client, dispatch, table]);
 
   useEffect(() => {
     if (client) {
@@ -225,19 +225,30 @@ export const TableDataFilterAddForm = (props) => {
     }
   }, [client, dispatch, fetchColumns, table.tableUri]);
 
-  const dataFilterOptions = ['ROW', 'COLUMN'];
+  const dataFilterOptions = ['COLUMN', 'ROW'];
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
+      let includedColumns;
+      let rowExpressionString;
+      if (values.filterType === 'COLUMN') {
+        includedColumns = columns.filter(c => values.includedCols.includes(c.id)).map((c) => c.name);
+        rowExpressionString = null;
+      } else if (values.filterType === 'ROW') {
+        includedColumns = null;
+        rowExpressionString = rowExpressionRows.map((row) => ( '(' + row.columnName + row.operator + row.userValue + ')' )).join( ' OR ');
+      }
+
       const response = await client.mutate(
         createTableDataFilter({
-          filterName: values.filterName,
-          SamlGroupName: values.SamlAdminGroupName,
           tableUri: table.tableUri,
-          filterType: values.filterType,
-          includedCols: values.includedCols,
-          rowExpression: values.rowExpression,
-          description: values.description
+          input: {
+            filterName: values.filterName,
+            description: values.description,
+            filterType: values.filterType,
+            includedCols: includedColumns,
+            rowExpression: rowExpressionString,
+          }
         })
       );
       if (!response.errors) {
@@ -303,20 +314,18 @@ export const TableDataFilterAddForm = (props) => {
             initialValues={{
               filterName: '',
               description: '',
-              filterType: 'ROW',
+              filterType: dataFilterOptions[0],
               includedCols: [],
-              rowExpression: ''
             }}
             validationSchema={Yup.object().shape({
               filterName: Yup.string()
                 .max(255)
-                .required('*Connection Name is required'),
+                .required('*Filter Name is required'),
+              description: Yup.string().max(200),
               filterType: Yup.string()
                 .max(255)
                 .required('*Filter Type is required'),
-              includedCols: Yup.string().max(255),
-              rowExpression: Yup.string().max(255),
-              description: Yup.string().max(255)
+              includedCols: Yup.array().nullable(),
             })}
             onSubmit={async (
               values,
@@ -388,7 +397,7 @@ export const TableDataFilterAddForm = (props) => {
                           if (value && value === 'ROW') {
                             setFieldValue('includedCols', []);
                           } else {
-                            setFieldValue('rowExpression', '');
+                            setRowExpressionRows([]);
                           }
                         }}
                       >
@@ -494,7 +503,6 @@ export const TableDataFilterAddForm = (props) => {
                               onRowModesModelChange={handleRowModesModelChange}
                               onRowEditStop={handleRowEditStop}
                               experimentalFeatures={{ newEditingApi: true }}
-                              // onRowEditStart={handleRowEditStart}
                               processRowUpdate={processRowUpdate}
                               onProcessRowUpdateError={(error) =>
                                 dispatch({
@@ -557,14 +565,6 @@ export const TableDataFilterAddForm = (props) => {
                           </CardContent>
                         </>
                       )}
-                      <Typography
-                        align="center"
-                        color="textSecondary"
-                        variant="subtitle2"
-                      >
-                        Current Selected Columns:{' '}
-                        {values.includedCols.join(', ')}
-                      </Typography>
                     </>
                   )}
                 </Card>
@@ -574,7 +574,7 @@ export const TableDataFilterAddForm = (props) => {
                       fullWidth
                       startIcon={<GroupAddOutlined fontSize="small" />}
                       color="primary"
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || loadingColumns}
                       type="submit"
                       variant="contained"
                     >
