@@ -540,40 +540,15 @@ check the [UserGuide](https://github.com/data-dot-all/dataall/blob/main/UserGuid
 
 
 ### Disable module features
-As you probably noticed, the `s3_datasets` and `datasets_base` modules contain an additional field called `features` in the `config.json`. 
+As you probably noticed, the `s3_datasets` module contains an additional field called `features` in the `config.json`. 
 If there is a particular functionality that you want to enable or disable you can do so in this section. 
 In the example config.json, the feature that enables file upload from data.all UI has been disabled.
 
 ```json
-    "datasets_base": {
-        "active": true,
-        "features": {
-            "share_notifications": {
-                   "email": {
-                        "active": false,
-                        "persistent_reminders": false,
-                        "parameters": {
-                        "group_notifications": true
-                  }
-                }
-            },
-            "confidentiality_dropdown" : true,
-            "topics_dropdown" : true,
-            "auto_approval_for_confidentiality_level" : {
-                "Unclassified" : true,
-                "Official" : true,
-                "Secret" : true
-            }
-       }
-    },
     "s3_datasets": {
         "active": true,
         "features": {
-            "file_uploads": true,
-            "file_actions": true,
-            "aws_actions": true,
-            "preview_data": true,
-            "glue_crawler": true
+            "file_uploads": false,
         }
     },
 ```
