@@ -5,6 +5,7 @@ from dataall.core.permissions.services.resource_policy_service import ResourcePo
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.stacks.services.stack_service import StackService
 from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
 
 from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import (
@@ -14,12 +15,13 @@ from dataall.modules.redshift_datasets.services.redshift_dataset_permissions imp
 from dataall.modules.redshift_datasets.services.redshift_connection_permissions import (
     REDSHIFT_CONNECTION_ALL,
     DELETE_REDSHIFT_CONNECTION,
-    UPDATE_REDSHIFT_CONNECTION,
     GET_REDSHIFT_CONNECTION,
     LIST_ENVIRONMENT_REDSHIFT_CONNECTIONS,
 )
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnection
 from dataall.modules.redshift_datasets.aws.redshift_data import RedshiftData
+from dataall.modules.redshift_datasets.aws.redshift_serverless import RedshiftServerless
+from dataall.modules.redshift_datasets.aws.redshift import Redshift
 
 log = logging.getLogger(__name__)
 
@@ -47,7 +49,7 @@ class RedshiftConnectionService:
                 redshiftUser=data.get('redshiftUser', ''),
                 secretArn=data.get('secretArn', ''),
             )
-            RedshiftConnectionService._check_redshift_connection_database(
+            RedshiftConnectionService._check_redshift_connection(
                 account_id=environment.AwsAccountId, region=environment.region, connection=connection
             )
             RedshiftConnectionRepository.save_redshift_connection(session, connection)
@@ -59,6 +61,7 @@ class RedshiftConnectionService:
                 resource_uri=connection.connectionUri,
                 resource_type=RedshiftConnection.__name__,
             )
+            StackService.deploy_stack(targetUri=environment.environmentUri)
             return connection
 
     @staticmethod
@@ -125,12 +128,24 @@ class RedshiftConnectionService:
             return response
 
     @staticmethod
-    def _check_redshift_connection_database(account_id: str, region: str, connection: RedshiftConnection):
-        if (
-            connection.database
-            not in RedshiftData(account_id=account_id, region=region, connection=connection).list_redshift_databases()
-        ):
+    def _check_redshift_connection(account_id: str, region: str, connection: RedshiftConnection):
+        if connection.nameSpaceId:
+            if (namespace := RedshiftServerless(account_id=account_id, region=region).get_namespace_by_id(connection.nameSpaceId)) is None:
+                raise Exception(
+                    f'Redshift namespaceId {connection.nameSpaceId} does not exist. Remember to introduce the Id and not the name of the namespace.'
+                )
+            if connection.workgroup and connection.workgroup not in [workgroup['workgroupName'] for workgroup in RedshiftServerless(account_id=account_id, region=region).list_workgroups_in_namespace(namespace['namespaceName'])]:
+                raise Exception(f'Redshift workgroup {connection.workgroup} does not exist or is not associated to namespace {connection.nameSpaceId}')
+
+        if connection.clusterId and not Redshift(account_id=account_id, region=region).describe_cluster(connection.clusterId):
             raise Exception(
-                f'Redshift connection {connection.name} database does not exist or cannot be accessed with these parameters'
+                f'Redshift cluster {connection.clusterId} does not exist or cannot be accessed with these parameters'
+            )
+
+        try:
+            RedshiftData(account_id=account_id, region=region, connection=connection).get_redshift_connection_database()
+        except Exception as e:
+            raise Exception(
+                f'Redshift database {connection.database} does not exist or cannot be accessed with these parameters: {e}'
             )
         return

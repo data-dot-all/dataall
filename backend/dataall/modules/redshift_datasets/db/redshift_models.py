@@ -27,6 +27,7 @@ class RedshiftDataset(DatasetBase):
     includePattern = Column(String, nullable=True)
     excludePattern = Column(String, nullable=True)
     datashareArn = Column(String, nullable=True)
+    glueDatabaseName = Column(String, nullable=True)
 
     __mapper_args__ = {
         'polymorphic_identity': DatasetTypes.Redshift,

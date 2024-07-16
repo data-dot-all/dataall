@@ -4,10 +4,17 @@ import { Label } from 'design';
 export const DatashareStatus = (props) => {
   const { status } = props;
   const setTagColor = () => {
-    if (['ACTIVE', 'AVAILABLE', 'AUTHORIZED'].includes(status))
-      return 'success';
+    if (['COMPLETED'].includes(status)) return 'success';
     if (['REJECTED', 'DEAUTHORIZED'].includes(status)) return 'error';
-    if (['PENDING_AUTHORIZATION'].includes(status)) return 'warning';
+    if (
+      [
+        'PENDING_AUTHORIZATION',
+        'AUTHORIZED',
+        'NOT_REGISTERED_IN_LF',
+        'MISSING_GLUE_DATABASE'
+      ].includes(status)
+    )
+      return 'warning';
     return 'info';
   };
   return <Label color={setTagColor(status)}>{status}</Label>;

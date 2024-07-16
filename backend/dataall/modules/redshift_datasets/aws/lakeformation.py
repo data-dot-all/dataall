@@ -14,7 +14,19 @@ class LakeFormation:
     def register_resource_datashare(self, datashare_arn: str) -> None:
         try:
             log.info(f'Registering resource {datashare_arn}')
-            self.client.response = self.client.register_resource(ResourceArn=datashare_arn)
+            self.client.register_resource(ResourceArn=datashare_arn)
+        except ClientError as e:
+            log.error(e)
+            if e.response['Error']['Code'] == 'AlreadyExistsException':
+                log.debug(f'Resource already registered {datashare_arn}')
+            else:
+                raise e
+
+    def get_registered_resource_datashare(self, datashare_arn: str) -> None:
+        try:
+            log.info(f'Getting registered resource {datashare_arn}')
+            response = self.client.describe_resource(ResourceArn=datashare_arn)
+            return response.get('ResourceInfo', None)
         except ClientError as e:
             log.error(e)
             raise e

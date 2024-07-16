@@ -1,5 +1,7 @@
 export * from './deleteRedshiftDataset';
+export * from './deleteRedshiftDatasetTable';
 export * from './getRedshiftDataset';
+export * from './getRedshiftDatasetTable';
 export * from './importRedshiftDataset';
 export * from './importRedshiftTables';
 export * from './listRedshiftDatasetTables';

@@ -4,7 +4,6 @@ from botocore.exceptions import ClientError
 from dataall.base.aws.sts import SessionHelper
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnection
 
-
 log = logging.getLogger(__name__)
 
 
@@ -22,7 +21,10 @@ class RedshiftData:
             self.execute_connection_params['ClusterIdentifier'] = connection.clusterId
         if connection.secretArn:
             self.execute_connection_params['SecretArn'] = connection.secretArn
-        if connection.redshiftUser:
+        if connection.redshiftUser and connection.clusterId:
+            # TODO: https://boto3.amazonaws.com/v1/documentation/api/1.26.93/reference/services/redshift-data/client/list_databases.html
+            # We cannot use DbUser with serverless for role federation.
+            # It must use the current session IAM role, which in this case would be the pivot role.
             self.execute_connection_params['DbUser'] = connection.redshiftUser
 
     def _execute_statement(self, sql: str):
@@ -51,7 +53,7 @@ class RedshiftData:
     def fully_qualified_table_name(self, schema: str, table_name: str) -> str:
         return f'{RedshiftData.identifier(self.database)}.{RedshiftData.identifier(schema)}.{RedshiftData.identifier(table_name)}'
 
-    def list_redshift_databases(self):
+    def get_redshift_connection_database(self):
         databases = []
         try:
             log.info(f'Looking for {self.database} in databases...')
@@ -113,26 +115,43 @@ class RedshiftData:
             log.error(e)
             raise e
 
-    def create_datashare(self, schema: str, datashare: str):
+    def create_datashare(self, datashare: str):
+        """
+        Create datashare if not already created
+        """
         try:
             log.info(f'Creating {datashare=}...')
             sql_statement = f'CREATE DATASHARE {RedshiftData.identifier(datashare)};'
-            self._execute_statement(sql=sql_statement)
-
-            sql_statement = (
-                f'ALTER DATASHARE {RedshiftData.identifier(datashare)} ADD SCHEMA {RedshiftData.identifier(schema)};'
-            )
             self._execute_statement(sql=sql_statement)
 
         except Exception as e:
             allowed_error_messages = [f'ERROR: share "{datashare}" already exists']
             error_message = e.args[0]
             if error_message in allowed_error_messages:
-                log.info('Datashare {0} already exists'.format(datashare))
+                log.info(f'Datashare {datashare} already exists')
             else:
                 raise e
 
+    def add_schema_to_datashare(self, datashare: str, schema: str):
+        """
+        Add schema to datashare if not already added
+        """
+        log.info(f'Adding schema {schema=} to {datashare=}...')
+        sql_statement = f'ALTER DATASHARE {RedshiftData.identifier(datashare)} ADD SCHEMA {RedshiftData.identifier(schema)};'
+        try:
+            self._execute_statement(sql_statement)
+        except Exception as e:
+            allowed_error_message = f'ERROR: Schema {schema} is already added to the datashare {datashare}'
+            error_message = e.args[0]
+            if error_message == allowed_error_message:
+                log.info(f'{schema=} is already present in {datashare=}')
+            else:
+                raise e
     def add_table_to_datashare(self, datashare: str, schema: str, table_name: str):
+        """
+        Add table to datashare if not already added
+        """
+        log.info(f'Adding table {table_name=} to {datashare=}...')
         fq_table_name = self.fully_qualified_table_name(schema, table_name)
         sql_statement = f'ALTER DATASHARE {RedshiftData.identifier(datashare)} ADD TABLE {fq_table_name};'
         try:
@@ -141,11 +160,14 @@ class RedshiftData:
             allowed_error_message = f'ERROR: Relation {table_name} is already added to the datashare {datashare}'
             error_message = e.args[0]
             if error_message == allowed_error_message:
-                log.info('Table {0} is already present in the datashare {1}'.format(fq_table_name, datashare))
+                log.info(f'Table {fq_table_name} is already present in the {datashare=}')
             else:
                 raise e
 
     def grant_usage_to_datashare_via_catalog(self, datashare: str, account: str):
+        """
+        Grant usage on datashare to account via catalog. If it is already granted it succeeds.
+        """
         log.info(f'Grant usage on {datashare=} via catalog...')
         sql_statement = (
             f"GRANT USAGE ON DATASHARE {RedshiftData.identifier(datashare)} TO ACCOUNT '{account}' VIA DATA CATALOG;"

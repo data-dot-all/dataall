@@ -15,7 +15,6 @@ def create_redshift_connection(context: Context, source, input=None):
         uri=input['environmentUri'], admin_group=input['SamlGroupName'], data=input
     )
 
-
 def delete_redshift_connection(context: Context, source, connectionUri: str):
     _required_param('connectionUri', connectionUri)
     return RedshiftConnectionService.delete_redshift_connection(uri=connectionUri)

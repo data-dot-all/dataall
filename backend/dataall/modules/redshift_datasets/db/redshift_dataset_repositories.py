@@ -1,12 +1,15 @@
 import logging
 
-from sqlalchemy import and_, or_
-from sqlalchemy.orm import Query
+from sqlalchemy import or_
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db import paginate
 from dataall.base.db.exceptions import ObjectNotFound
+from dataall.base.utils.naming_convention import (
+    NamingConventionService,
+    NamingConventionPattern,
+)
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification, Language
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset, RedshiftTable
@@ -40,8 +43,15 @@ class RedshiftDatasetRepository(EnvironmentResource):
             connectionUri=data.get('connectionUri'),
             schema=data.get('schema'),
             includePattern=data.get('includePattern'),
-            excludePattern=data.get('excludePattern'),
+            excludePattern=data.get('excludePattern')
         )
+        glue_db_name = NamingConventionService(
+            target_uri=dataset.datasetUri,
+            target_label=dataset.label,
+            pattern=NamingConventionPattern.GLUE,
+            resource_prefix=env.resourcePrefix,
+        ).build_compliant_name()
+        dataset.glueDatabaseName = glue_db_name
         session.add(dataset)
         session.commit()
 

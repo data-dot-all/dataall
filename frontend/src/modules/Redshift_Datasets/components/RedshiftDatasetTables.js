@@ -1,10 +1,10 @@
-//import { DeleteOutlined, SyncAlt, Warning } from '@mui/icons-material';
-// import { SyncAlt } from '@mui/icons-material';
-// import { LoadingButton } from '@mui/lab';
+import { DeleteOutlined, Warning } from '@mui/icons-material';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import {
   Box,
+  Button,
   Card,
-  //CardContent,
+  CardContent,
   CardHeader,
   Divider,
   Grid,
@@ -16,20 +16,18 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  TextField
-  //Typography
+  TextField,
+  Typography
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-// import { useSnackbar } from 'notistack';
+import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { BsTable } from 'react-icons/bs';
-import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
 import {
-  ArrowRightIcon,
   Defaults,
-  //DeleteObjectModal,
+  DeleteObjectModal,
   Pager,
   RefreshTableMenu,
   Scrollbar,
@@ -38,29 +36,42 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 
-import { listRedshiftDatasetTables } from '../services';
+import {
+  deleteRedshiftDatasetTable,
+  listRedshiftDatasetTables
+} from '../services';
+
+import { TableSchemaModal } from './TableSchemaModal';
 
 export const RedshiftDatasetTables = (props) => {
-  const { dataset } = props;
+  const { dataset, isAdmin } = props;
   const client = useClient();
-  const navigate = useNavigate();
   const dispatch = useDispatch();
-  //const { enqueueSnackbar } = useSnackbar();
+  const { enqueueSnackbar } = useSnackbar();
   const [items, setItems] = useState(Defaults.pagedResponse);
   const [filter, setFilter] = useState(Defaults.filter);
   const [loading, setLoading] = useState(null);
   const [inputValue, setInputValue] = useState('');
-  // const [isDeleteObjectModalOpen, setIsDeleteObjectModalOpen] = useState(false);
-  // const [tableToDelete, setTableToDelete] = useState(null);
+  const [isDeleteObjectModalOpen, setIsDeleteObjectModalOpen] = useState(false);
+  const [isTableSchemaModalOpen, setIsTableSchemaModalOpen] = useState(false);
+  const [tableToDelete, setTableToDelete] = useState(null);
+  const [tableToSee, setTableToSee] = useState(null);
 
-  // const handleDeleteObjectModalOpen = (table) => {
-  //   setTableToDelete(table);
-  //   setIsDeleteObjectModalOpen(true);
-  // };
-  // const handleDeleteObjectModalClose = () => {
-  //   setTableToDelete(null);
-  //   setIsDeleteObjectModalOpen(false);
-  // };
+  const handleDeleteObjectModalOpen = (table) => {
+    setTableToDelete(table);
+    setIsDeleteObjectModalOpen(true);
+  };
+  const handleDeleteObjectModalClose = () => {
+    setTableToDelete(null);
+    setIsDeleteObjectModalOpen(false);
+  };
+
+  const handleTableSchemaModalOpen = () => {
+    setIsTableSchemaModalOpen(true);
+  };
+  const handleTableSchemaModalClose = () => {
+    setIsTableSchemaModalOpen(false);
+  };
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -78,26 +89,26 @@ export const RedshiftDatasetTables = (props) => {
     setLoading(false);
   }, [dispatch, client, dataset, filter]);
 
-  // const deleteTable = async () => {
-  //   const response = await client.mutate(
-  //     deleteDatasetTable({ tableUri: tableToDelete.tableUri })
-  //   );
-  //   if (!response.errors) {
-  //     handleDeleteObjectModalClose();
-  //     enqueueSnackbar('Table deleted', {
-  //       anchorOrigin: {
-  //         horizontal: 'right',
-  //         vertical: 'top'
-  //       },
-  //       variant: 'success'
-  //     });
-  //     fetchItems().catch((e) =>
-  //       dispatch({ type: SET_ERROR, error: e.message })
-  //     );
-  //   } else {
-  //     dispatch({ type: SET_ERROR, error: response.errors[0].message });
-  //   }
-  // };
+  const deleteTable = async () => {
+    const response = await client.mutate(
+      deleteRedshiftDatasetTable({ rsTableUri: tableToDelete.rsTableUri })
+    );
+    if (!response.errors) {
+      handleDeleteObjectModalClose();
+      enqueueSnackbar('Table deleted', {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'success'
+      });
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+  };
 
   useEffect(() => {
     if (client) {
@@ -139,49 +150,48 @@ export const RedshiftDatasetTables = (props) => {
           }
         />
         <Divider />
-        <Box
-          sx={{
-            alignItems: 'center',
-            display: 'flex',
-            flexWrap: 'wrap',
-            m: -1,
-            p: 2
-          }}
-        >
-          <Grid item md={9} sm={6} xs={12}>
-            <Box
-              sx={{
-                m: 1,
-                maxWidth: '100%',
-                width: 500
+        <Grid container spacing={2}>
+          <Grid item md={4} sm={4} xs={6}>
+            <TextField
+              fullWidth
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                )
               }}
-            >
-              <TextField
-                fullWidth
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                  )
-                }}
-                onChange={handleInputChange}
-                onKeyUp={handleInputKeyup}
-                placeholder="Search"
-                value={inputValue}
-                variant="outlined"
-              />
-            </Box>
+              onChange={handleInputChange}
+              onKeyUp={handleInputKeyup}
+              placeholder="Search"
+              value={inputValue}
+              variant="outlined"
+            />
           </Grid>
-        </Box>
+          <Grid item md={2} sm={2} xs={3}>
+            <Typography color="textPrimary" variant="h6">
+              Database
+            </Typography>
+            <Typography color="primary" variant="body2">
+              {dataset.connection.database}
+            </Typography>
+          </Grid>
+          <Grid item md={2} sm={2} xs={3}>
+            <Typography color="textPrimary" variant="h6">
+              Schema
+            </Typography>
+            <Typography color="primary" variant="body2">
+              {dataset.schema}
+            </Typography>
+          </Grid>
+        </Grid>
         <Scrollbar>
           <Box sx={{ minWidth: 600 }}>
             <Table>
               <TableHead>
                 <TableRow>
                   <TableCell>Name</TableCell>
-                  <TableCell>Database</TableCell>
-                  <TableCell>Location</TableCell>
+                  <TableCell>Description</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -191,40 +201,42 @@ export const RedshiftDatasetTables = (props) => {
                 <TableBody>
                   {items.nodes.length > 0 ? (
                     items.nodes.map((table) => (
-                      <TableRow hover key={table.tableUri}>
+                      <TableRow hover key={table.rsTableUri}>
                         <TableCell>
                           <Link
                             underline="hover"
                             color="textPrimary"
                             component={RouterLink}
-                            to={`/console/redshift-datasets/table/${table.tableUri}`}
+                            to={`/console/redshift-datasets/table/${table.rsTableUri}`}
                             variant="subtitle2"
                           >
-                            {table.GlueTableName}
+                            {table.name}
                           </Link>
                         </TableCell>
-                        <TableCell>{table.GlueDatabaseName}</TableCell>
-                        <TableCell>{table.S3Prefix}</TableCell>
+                        <TableCell>{table.description}</TableCell>
                         <TableCell>
-                          {/*{isAdmin && (*/}
-                          {/*  <IconButton*/}
-                          {/*    onClick={() => {*/}
-                          {/*      setTableToDelete(table);*/}
-                          {/*      handleDeleteObjectModalOpen(table);*/}
-                          {/*    }}*/}
-                          {/*  >*/}
-                          {/*    <DeleteOutlined fontSize="small" />*/}
-                          {/*  </IconButton>*/}
-                          {/*)}*/}
-                          <IconButton
+                          <Button
+                            color="primary"
+                            startIcon={<OpenInNewIcon fontSize="small" />}
+                            sx={{ mr: 1 }}
+                            variant="outlined"
                             onClick={() => {
-                              navigate(
-                                `/console/redshift-datasets/table/${table.tableUri}`
-                              );
+                              handleTableSchemaModalOpen();
+                              setTableToSee(table.rsTableUri);
                             }}
                           >
-                            <ArrowRightIcon fontSize="small" />
-                          </IconButton>
+                            Open table schema
+                          </Button>
+                          {isAdmin && (
+                            <IconButton
+                              onClick={() => {
+                                setTableToDelete(table);
+                                handleDeleteObjectModalOpen(table);
+                              }}
+                            >
+                              <DeleteOutlined fontSize="small" />
+                            </IconButton>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))
@@ -247,6 +259,31 @@ export const RedshiftDatasetTables = (props) => {
           </Box>
         </Scrollbar>
       </Card>
+      {isAdmin && tableToDelete && (
+        <DeleteObjectModal
+          objectName={tableToDelete.name}
+          onApply={handleDeleteObjectModalClose}
+          onClose={handleDeleteObjectModalClose}
+          open={isDeleteObjectModalOpen}
+          deleteFunction={deleteTable}
+          deleteMessage={
+            <Card>
+              <CardContent>
+                <Typography gutterBottom variant="body2">
+                  <Warning /> Redshift Table will be deleted from data.all
+                  catalog, but will still be available on Amazon Redshift.
+                </Typography>
+              </CardContent>
+            </Card>
+          }
+        />
+      )}
+      <TableSchemaModal
+        onApply={handleTableSchemaModalClose}
+        onClose={handleTableSchemaModalClose}
+        open={isTableSchemaModalOpen}
+        rsTableUri={tableToSee}
+      />
     </Box>
   );
 };

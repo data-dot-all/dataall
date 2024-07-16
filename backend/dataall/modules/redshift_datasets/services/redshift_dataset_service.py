@@ -25,6 +25,9 @@ from dataall.modules.redshift_datasets.db.redshift_connection_repositories impor
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset
 from dataall.modules.redshift_datasets.api.connections.enums import RedshiftType
 from dataall.modules.redshift_datasets.aws.redshift import Redshift
+from dataall.modules.redshift_datasets.aws.lakeformation import LakeFormation
+from dataall.modules.redshift_datasets.aws.glue import Glue
+from dataall.modules.redshift_datasets.services.redshift_enums import DatashareStatus
 
 
 log = logging.getLogger(__name__)
@@ -115,9 +118,17 @@ class RedshiftDatasetService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, uri)
-            return Redshift(account_id=dataset.AwsAccountId, region=dataset.region).describe_datashare_status(
-                dataset.datashareArn
-            )
+            status = RedshiftDatasetService._get_datashare_status(dataset)
+            if status != DatashareStatus.Completed.value:
+                task = Task(
+                    targetUri=dataset.datasetUri,
+                    action='redshift.datashare.import',
+                    payload={},
+                )
+                session.add(task)
+                session.commit()
+                Worker.queue(engine=context.db_engine, task_ids=[task.taskUri])
+
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
@@ -137,9 +148,7 @@ class RedshiftDatasetService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, uri)
-            return Redshift(account_id=dataset.AwsAccountId, region=dataset.region).describe_datashare_status(
-                dataset.datashareArn
-            )
+            return RedshiftDatasetService._get_datashare_status(dataset)
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
@@ -147,3 +156,22 @@ class RedshiftDatasetService:
     def get_dataset_upvotes(uri):
         with get_context().db_engine.scoped_session() as session:
             return VoteRepository.count_upvotes(session, uri, target_type='redshift-dataset') or 0
+
+
+    @staticmethod
+    def _get_datashare_status(dataset):
+        datashare_status = Redshift(account_id=dataset.AwsAccountId, region=dataset.region).get_datashare_status(
+            datashare_arn=dataset.datashareArn, consumer_id=f'arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:catalog'
+        )
+        if datashare_status != DatashareStatus.Active.value:
+            return datashare_status
+        if LakeFormation(account_id=dataset.AwsAccountId, region=dataset.region).get_registered_resource_datashare(
+            dataset.datashareArn
+        ) is None:
+            return DatashareStatus.NotRegisteredInLF.value
+        if Glue(account_id=dataset.AwsAccountId, region=dataset.region).get_database_from_redshift_datashare(
+            dataset.glueDatabaseName
+        ) is None:
+            return DatashareStatus.MissingGlueDatabase.value
+        return DatashareStatus.Completed.value
+

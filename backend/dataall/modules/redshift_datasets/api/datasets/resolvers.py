@@ -6,7 +6,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
-from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset
+from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset, RedshiftTable
 from dataall.modules.redshift_datasets.services.redshift_dataset_service import RedshiftDatasetService
 from dataall.modules.redshift_datasets.services.redshift_connection_service import RedshiftConnectionService
 

@@ -60,9 +60,9 @@ export const getRedshiftDataset = (datasetUri) => ({
           workgroup
           redshiftUser
           secretArn
+          database
         }
-        includePattern
-        excludePattern
+        schema
         datashareStatus
         datashareArn
       }

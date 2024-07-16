@@ -31,7 +31,33 @@ class RedshiftDatasetsPivotRole(PivotRoleStatementSet):
                         # TODO: add in instructions that it is needed to tag the resource also with Redshift tag
                     },
                 },
-            )
+            ),
+            iam.PolicyStatement(
+                sid='RedshiftRead',
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'redshift-data:DescribeStatement',
+                    'redshift:DescribeClusters',
+                    'redshift-serverless:ListNamespaces',
+                    'redshift-serverless:GetWorkgroup',
+                    'redshift-serverless:ListWorkgroups'
+                ],
+                resources=[
+                    '*',
+                ],
+            ),
+            iam.PolicyStatement(
+                sid='RedshiftLakeFormationGlue',
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'lakeformation:RegisterResource',
+                    'glue:PassConnection'
+                ],
+                resources=[
+                    f'arn:aws:lakeformation:{self.region}:{self.account}:catalog:{self.account}',
+                    f'arn:aws:glue:{self.region}:{self.account}:connection/aws:redshift'
+                ],
+            ),
         ]
         engine = db.get_engine(envname=os.environ.get('envname', 'local'))
         with engine.scoped_session() as session:
@@ -64,6 +90,9 @@ class RedshiftDatasetsPivotRole(PivotRoleStatementSet):
                         actions=[
                             'redshift-data:ListSchemas',
                             'redshift-data:ListDatabases',
+                            'redshift-serverless:GetCredentials',
+                            'redshift:GetClusterCredentials',
+                            'redshift:GetClusterCredentialsWithIAM',
                             'redshift-data:ListTables',
                             'redshift-data:ExecuteStatement',
                         ],

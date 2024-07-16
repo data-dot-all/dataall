@@ -25,3 +25,15 @@ class Glue:
         except ClientError as e:
             log.error(e)
             raise e
+
+
+    def get_database_from_redshift_datashare(self, name: str):
+        try:
+            log.info(f'Getting database {name=}')
+            response = self.client.get_database(
+                Name=name,
+            )
+            return response
+        except ClientError as e:
+            log.info(f'Database {name=} does not exist.')
+            return None

@@ -297,23 +297,30 @@ export const EnvironmentRedshiftConnectionAddForm = (props) => {
                 </CardContent>
                 <CardContent>
                   <Typography color="textPrimary" variant="body2">
-                    You can choose to provide a Redshift user or a Secret.
+                    You can choose to provide a Redshift user (for Provisioned
+                    Cluster) or a Secrets Manager secret.
                   </Typography>
                 </CardContent>
-                <CardContent>
-                  <TextField
-                    error={Boolean(touched.redshiftUser && errors.redshiftUser)}
-                    fullWidth
-                    helperText={touched.redshiftUser && errors.redshiftUser}
-                    label="Redshift User"
-                    placeholder="Redshift User"
-                    name="redshiftUser"
-                    onChange={handleChange}
-                    value={values.redshiftUser}
-                    variant="outlined"
-                  />
-                </CardContent>
-                <Divider>OR</Divider>
+                {values.redshiftType !== 'serverless' && (
+                  <Box>
+                    <CardContent>
+                      <TextField
+                        error={Boolean(
+                          touched.redshiftUser && errors.redshiftUser
+                        )}
+                        fullWidth
+                        helperText={touched.redshiftUser && errors.redshiftUser}
+                        label="Redshift User"
+                        placeholder="Redshift User"
+                        name="redshiftUser"
+                        onChange={handleChange}
+                        value={values.redshiftUser}
+                        variant="outlined"
+                      />
+                    </CardContent>
+                    <Divider>OR</Divider>
+                  </Box>
+                )}
                 <CardContent>
                   <TextField
                     error={Boolean(touched.secretArn && errors.secretArn)}
