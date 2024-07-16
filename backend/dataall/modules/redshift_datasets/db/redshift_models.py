@@ -24,10 +24,6 @@ class RedshiftDataset(DatasetBase):
     datasetUri = Column(String, ForeignKey('dataset.datasetUri'), primary_key=True)
     connectionUri = Column(String, ForeignKey('redshift_connection.connectionUri'), nullable=False)
     schema = Column(String, nullable=False)
-    includePattern = Column(String, nullable=True)
-    excludePattern = Column(String, nullable=True)
-    datashareArn = Column(String, nullable=True)
-    glueDatabaseName = Column(String, nullable=True)
 
     __mapper_args__ = {
         'polymorphic_identity': DatasetTypes.Redshift,
@@ -42,7 +38,6 @@ class RedshiftTable(Base, Resource):
     datasetUri = Column(String, ForeignKey('redshift_dataset.datasetUri', ondelete='CASCADE'), nullable=False)
     rsTableUri = Column(String, primary_key=True, default=utils.uuid('rs_table'))
     topics = Column(ARRAY(String), nullable=True)
-    status = Column(String, nullable=False, default='NOT_IMPORTED')
 
     @classmethod
     def uri(cls):

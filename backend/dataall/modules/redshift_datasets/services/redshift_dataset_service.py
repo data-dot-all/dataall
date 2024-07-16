@@ -1,13 +1,10 @@
 import logging
 
 from dataall.base.context import get_context
-from dataall.base.utils.naming_convention import NamingConventionService, NamingConventionPattern
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.tasks.db.task_models import Task
-from dataall.core.tasks.service_handlers import Worker
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
@@ -16,7 +13,6 @@ from dataall.modules.redshift_datasets.services.redshift_dataset_permissions imp
     MANAGE_REDSHIFT_DATASETS,
     IMPORT_REDSHIFT_DATASET,
     GET_REDSHIFT_DATASET,
-    RETRY_REDSHIFT_DATASHARE,
     REDSHIFT_DATASET_ALL,
     REDSHIFT_DATASET_READ,
 )
@@ -25,9 +21,6 @@ from dataall.modules.redshift_datasets.db.redshift_connection_repositories impor
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset
 from dataall.modules.redshift_datasets.api.connections.enums import RedshiftType
 from dataall.modules.redshift_datasets.aws.redshift import Redshift
-from dataall.modules.redshift_datasets.aws.lakeformation import LakeFormation
-from dataall.modules.redshift_datasets.aws.glue import Glue
-from dataall.modules.redshift_datasets.services.redshift_enums import DatashareStatus
 
 
 log = logging.getLogger(__name__)

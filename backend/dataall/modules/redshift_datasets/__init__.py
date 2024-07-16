@@ -35,25 +35,6 @@ class RedshiftDatasetApiModuleInterface(ModuleInterface):
         log.info('API of Redshift datasets has been imported')
 
 
-class RedshiftDatasetAsyncHandlersModuleInterface(ModuleInterface):
-    """Implements ModuleInterface for dataset async lambda"""
-
-    @staticmethod
-    def is_supported(modes: Set[ImportMode]):
-        return ImportMode.HANDLERS in modes
-
-    @staticmethod
-    def depends_on() -> List[Type['ModuleInterface']]:
-        from dataall.modules.datasets_base import DatasetBaseModuleInterface
-
-        return [DatasetBaseModuleInterface]
-
-    def __init__(self):
-        import dataall.modules.redshift_datasets.handlers
-
-        log.info('Redshift Dataset handlers have been imported')
-
-
 class RedshiftDatasetCdkModuleInterface(ModuleInterface):
     """Loads dataset cdk stacks"""
 
