@@ -45,13 +45,6 @@ class RedshiftDatasetRepository(EnvironmentResource):
             includePattern=data.get('includePattern'),
             excludePattern=data.get('excludePattern')
         )
-        glue_db_name = NamingConventionService(
-            target_uri=dataset.datasetUri,
-            target_label=dataset.label,
-            pattern=NamingConventionPattern.GLUE,
-            resource_prefix=env.resourcePrefix,
-        ).build_compliant_name()
-        dataset.glueDatabaseName = glue_db_name
         session.add(dataset)
         session.commit()
 

@@ -164,15 +164,6 @@ class RedshiftData:
             else:
                 raise e
 
-    def grant_usage_to_datashare_via_catalog(self, datashare: str, account: str):
-        """
-        Grant usage on datashare to account via catalog. If it is already granted it succeeds.
-        """
-        log.info(f'Grant usage on {datashare=} via catalog...')
-        sql_statement = (
-            f"GRANT USAGE ON DATASHARE {RedshiftData.identifier(datashare)} TO ACCOUNT '{account}' VIA DATA CATALOG;"
-        )
-        self._execute_statement(sql=sql_statement)
 
     # def remove_table_from_datashare(self, schema: str, database: str, workgroup: str, datashare: str, table_name: str):
     #     fq_table_name = self.fully_qualified_table_name(database, schema, table_name)

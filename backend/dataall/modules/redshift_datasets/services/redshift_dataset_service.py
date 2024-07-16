@@ -46,14 +46,6 @@ class RedshiftDatasetService:
             dataset = RedshiftDatasetRepository.create_redshift_dataset(
                 session=session, username=context.username, env=environment, data=data
             )
-            connection = RedshiftConnectionRepository.find_redshift_connection(session, dataset.connectionUri)
-            datashare_name = NamingConventionService(
-                target_label=dataset.label,
-                pattern=NamingConventionPattern.REDSHIFT_DATASHARE,
-                target_uri=dataset.datasetUri,
-                resource_prefix=environment.resourcePrefix,
-            ).build_compliant_name()
-            dataset.datashareArn = f'arn:aws:redshift:{dataset.region}:{dataset.AwsAccountId}:datashare:{connection.nameSpaceId if connection.redshiftType == RedshiftType.Serverless.value else connection.clusterId}/{datashare_name}'
             dataset.userRoleForDataset = DatasetRole.Creator.value
             ResourcePolicyService.attach_resource_policy(
                 session=session,
@@ -89,15 +81,6 @@ class RedshiftDatasetService:
                     data={'name': table},
                 )
 
-            task = Task(
-                targetUri=dataset.datasetUri,
-                action='redshift.datashare.import',
-                payload={},
-            )
-            session.add(task)
-            session.commit()
-            Worker.queue(engine=context.db_engine, task_ids=[task.taskUri])
-
         return dataset
 
     @staticmethod
@@ -110,24 +93,6 @@ class RedshiftDatasetService:
             if dataset.SamlAdminGroupName in context.groups:
                 dataset.userRoleForDataset = DatasetRole.Admin.value
             return dataset
-
-    @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
-    @ResourcePolicyService.has_resource_permission(RETRY_REDSHIFT_DATASHARE)
-    def retry_redshift_datashare(uri):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, uri)
-            status = RedshiftDatasetService._get_datashare_status(dataset)
-            if status != DatashareStatus.Completed.value:
-                task = Task(
-                    targetUri=dataset.datasetUri,
-                    action='redshift.datashare.import',
-                    payload={},
-                )
-                session.add(task)
-                session.commit()
-                Worker.queue(engine=context.db_engine, task_ids=[task.taskUri])
 
 
     @staticmethod
@@ -144,34 +109,8 @@ class RedshiftDatasetService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
     @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
-    def get_datashare_status(uri):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, uri)
-            return RedshiftDatasetService._get_datashare_status(dataset)
-
-    @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
-    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
     def get_dataset_upvotes(uri):
         with get_context().db_engine.scoped_session() as session:
             return VoteRepository.count_upvotes(session, uri, target_type='redshift-dataset') or 0
 
-
-    @staticmethod
-    def _get_datashare_status(dataset):
-        datashare_status = Redshift(account_id=dataset.AwsAccountId, region=dataset.region).get_datashare_status(
-            datashare_arn=dataset.datashareArn, consumer_id=f'arn:aws:glue:{dataset.region}:{dataset.AwsAccountId}:catalog'
-        )
-        if datashare_status != DatashareStatus.Active.value:
-            return datashare_status
-        if LakeFormation(account_id=dataset.AwsAccountId, region=dataset.region).get_registered_resource_datashare(
-            dataset.datashareArn
-        ) is None:
-            return DatashareStatus.NotRegisteredInLF.value
-        if Glue(account_id=dataset.AwsAccountId, region=dataset.region).get_database_from_redshift_datashare(
-            dataset.glueDatabaseName
-        ) is None:
-            return DatashareStatus.MissingGlueDatabase.value
-        return DatashareStatus.Completed.value
 

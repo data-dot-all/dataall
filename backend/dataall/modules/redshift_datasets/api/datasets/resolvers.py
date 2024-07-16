@@ -26,11 +26,6 @@ def get_redshift_dataset(context, source, datasetUri: str):
     return RedshiftDatasetService.get_redshift_dataset(uri=datasetUri)
 
 
-def retry_redshift_datashare(context, source, datasetUri: str):
-    _required_param('datasetUri', datasetUri)
-    return RedshiftDatasetService.retry_redshift_datashare(uri=datasetUri)
-
-
 def list_redshift_dataset_tables(context, source, datasetUri: str, filter: dict = None):
     _required_param('datasetUri', datasetUri)
     return RedshiftDatasetService.list_redshift_dataset_tables(uri=datasetUri, filter=filter)
