@@ -1,31 +1,229 @@
 import { GroupAddOutlined } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
-  Autocomplete,
   Box,
   CardContent,
+  CardHeader,
   CircularProgress,
   Dialog,
   Divider,
-  Grid,
-  MenuItem,
+  Button,
+  Card,
   TextField,
-  Typography
+  Typography,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
+  FormControl,
+  FormLabel
 } from '@mui/material';
+import {
+  GridRowModes,
+  DataGrid,
+  GridToolbarContainer,
+  GridActionsCellItem
+} from '@mui/x-data-grid';
+
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Close';
+
 import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import * as Yup from 'yup';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { useClient, useFetchGroups } from 'services';
+import { useClient, listDatasetTableColumns } from 'services';
 import { createTableDataFilter } from '../services';
+import { Defaults } from 'design';
+
+const rowFilterExpressions = [
+  {
+    value: '=',
+    label: '= (equals)',
+    acceptsArgument: true
+  },
+  {
+    value: '>',
+    label: '> (greater than)',
+    acceptsArgument: true
+  },
+  {
+    value: '<',
+    label: '< (less than)',
+    acceptsArgument: true
+  },
+  {
+    value: '>=',
+    label: '>= (greater than or equal)',
+    acceptsArgument: true
+  },
+  {
+    value: '<=',
+    label: '<= (less than or equal)',
+    acceptsArgument: true
+  },
+  {
+    value: '<>',
+    label: '<> (not equal)',
+    acceptsArgument: true
+  },
+  {
+    value: '!=',
+    label: '!= (not equal)',
+    acceptsArgument: true
+  },
+  {
+    value: 'BETWEEN',
+    label: 'BETWEEN',
+    acceptsArgument: true
+  },
+  {
+    value: 'IN',
+    label: 'IN',
+    acceptsArgument: true
+  },
+  {
+    value: 'LIKE',
+    label: 'LIKE',
+    acceptsArgument: true
+  },
+  {
+    value: 'NOT',
+    label: 'NOT',
+    acceptsArgument: true
+  },
+  {
+    value: 'IS NULL',
+    label: 'IS NULL',
+    acceptsArgument: false
+  },
+  {
+    value: 'IS NOT NULL',
+    label: 'IS NOT NULL',
+    acceptsArgument: false
+  }
+];
+
+function EditToolbar(props) {
+  const { setRowExpressionRows, setRowModesModel } = props;
+
+  const handleClick = () => {
+    const id = Date.now();
+    setRowExpressionRows((oldRows) => [
+      ...oldRows,
+      { id, columnName: '', operator: '', userValue: '', isNew: true }
+    ]);
+    setRowModesModel((oldModel) => ({
+      ...oldModel,
+      [id]: { mode: GridRowModes.Edit, fieldToFocus: 'columnName' }
+    }));
+  };
+
+  return (
+    <GridToolbarContainer>
+      <Button color="primary" startIcon={<AddIcon />} onClick={handleClick}>
+        Add Row Expression
+      </Button>
+    </GridToolbarContainer>
+  );
+}
 
 export const TableDataFilterAddForm = (props) => {
   const { table, onClose, open, reload, ...other } = props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const client = useClient();
+  const [columns, setColumns] = useState([]);
+  const [loadingColumns, setLoadingColumns] = useState(false);
+  const [pageSize, setPageSize] = useState(5);
+
+  const [rowExpressionRows, setRowExpressionRows] = useState([]);
+  const [rowModesModel, setRowModesModel] = useState({});
+  const [rowExpressionColumns, setRowExpressionColumns] = useState([]);
+
+  const handleRowEditStop = (params, event) => {
+    event.defaultMuiPrevented = true;
+  };
+
+  const handleEditClick = (id) => () => {
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
+  };
+
+  const handleSaveClick = (id) => () => {
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+  };
+
+  const handleDeleteClick = (id) => () => {
+    setRowExpressionRows(rowExpressionRows.filter((row) => row.id !== id));
+  };
+
+  const handleCancelClick = (id) => () => {
+    setRowModesModel({
+      ...rowModesModel,
+      [id]: { mode: GridRowModes.View, ignoreModifications: true }
+    });
+
+    const editedRow = rowExpressionRows.find((row) => row.id === id);
+    if (editedRow.isNew) {
+      setRowExpressionRows(rowExpressionRows.filter((row) => row.id !== id));
+    }
+  };
+
+  const processRowUpdate = (newRow) => {
+    const updatedRow = { ...newRow, isNew: false };
+    setRowExpressionRows(
+      rowExpressionRows.map((row) => (row.id === newRow.id ? updatedRow : row))
+    );
+    return updatedRow;
+  };
+
+  const handleRowModesModelChange = (newRowModesModel) => {
+    setRowModesModel(newRowModesModel);
+  };
+
+  const fetchColumns = async () => {
+    setLoadingColumns(true);
+    const response = await client.query(
+      listDatasetTableColumns({
+        tableUri: table.tableUri,
+        filter: Defaults.selectListFilter
+      })
+    );
+    if (!response.errors) {
+      setColumns(
+        response.data.listDatasetTableColumns.nodes.map((c) => ({
+          id: c.columnUri,
+          columnType: c.columnType,
+          name:
+            c.columnType && c.columnType !== 'column'
+              ? `${c.name} (${c.columnType})`
+              : c.name,
+          type: c.typeName,
+          description: c.description
+        }))
+      );
+      setRowExpressionColumns(
+        response.data.listDatasetTableColumns.nodes
+          .filter((c) => c.columnType === 'column')
+          .map((c) => c.name)
+      );
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+    setLoadingColumns(false);
+  };
+
+  useEffect(() => {
+    if (client) {
+      fetchColumns().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+    }
+  }, [client, dispatch, fetchColumns, table.tableUri]);
 
   const dataFilterOptions = ['ROW', 'COLUMN'];
 
@@ -74,6 +272,16 @@ export const TableDataFilterAddForm = (props) => {
     return null;
   }
 
+  const header = [
+    { field: 'name', headerName: 'Name', width: 300, editable: false },
+    { field: 'type', headerName: 'Type', width: 200, editable: false },
+    {
+      field: 'description',
+      headerName: 'Description',
+      width: 600
+    }
+  ];
+
   return (
     <Dialog maxWidth="lg" fullWidth onClose={onClose} open={open} {...other}>
       <Box sx={{ p: 3 }}>
@@ -95,8 +303,8 @@ export const TableDataFilterAddForm = (props) => {
             initialValues={{
               filterName: '',
               description: '',
-              filterType: '',
-              includedCols: '',
+              filterType: 'ROW',
+              includedCols: [],
               rowExpression: ''
             }}
             validationSchema={Yup.object().shape({
@@ -143,9 +351,19 @@ export const TableDataFilterAddForm = (props) => {
                   </CardContent>
                   <CardContent>
                     <TextField
+                      FormHelperTextProps={{
+                        sx: {
+                          textAlign: 'right',
+                          mr: 0
+                        }
+                      }}
                       error={Boolean(touched.description && errors.description)}
                       fullWidth
-                      helperText={touched.description && errors.description}
+                      helperText={`${
+                        200 - values.description.length
+                      } characters left`}
+                      multiline
+                      rows={3}
                       label="Data Filter Description"
                       placeholder="Description of Data Filter"
                       name="description"
@@ -154,74 +372,202 @@ export const TableDataFilterAddForm = (props) => {
                       variant="outlined"
                     />
                   </CardContent>
-                </Box>
-                <Grid container spacing={3}>
-                  <Grid item lg={6} md={6} xs={12}>
-                    <CardContent>
-                      <TextField
-                        fullWidth
-                        error={Boolean(touched.filterType && errors.filterType)}
-                        helperText={touched.filterType && errors.filterType}
-                        label="Filter Type"
+                  <CardContent>
+                    <FormControl>
+                      <FormLabel>Filter Type</FormLabel>
+                      <RadioGroup
+                        {...props}
+                        row
                         name="filterType"
-                        onChange={handleChange}
-                        select
                         value={values.filterType}
-                        variant="outlined"
+                        onChange={(event, value) => {
+                          setFieldValue(
+                            'filterType',
+                            event.currentTarget.value
+                          );
+                          if (value && value === 'ROW') {
+                            setFieldValue('includedCols', []);
+                          } else {
+                            setFieldValue('rowExpression', '');
+                          }
+                        }}
                       >
                         {dataFilterOptions.map((option) => (
-                          <MenuItem key={option} value={option}>
-                            {option}
-                          </MenuItem>
+                          <FormControlLabel
+                            value={option}
+                            control={<Radio />}
+                            label={option}
+                          />
                         ))}
-                      </TextField>
-                    </CardContent>
-                  </Grid>
-                  <Grid item lg={6} md={6} xs={12}>
-                    {values.filterType === 'ROW' && (
-                      <Box>
-                        <CardContent>
-                          <TextField
-                            error={Boolean(
-                              touched.rowExpression && errors.rowExpression
+                      </RadioGroup>
+                    </FormControl>
+                  </CardContent>
+                </Box>
+                <Card>
+                  {values.filterType === 'ROW' && (
+                    <>
+                      {loadingColumns || !rowExpressionColumns ? (
+                        <CircularProgress />
+                      ) : (
+                        <>
+                          <CardHeader title="Create a Row Filter Expression" />
+                          <Divider />
+                          <CardContent>
+                            <DataGrid
+                              fullWidth
+                              autoHeight
+                              rows={rowExpressionRows}
+                              columns={[
+                                {
+                                  field: 'columnName',
+                                  headerName: 'Column Name',
+                                  flex: 1,
+                                  editable: true,
+                                  type: 'singleSelect',
+                                  valueOptions: rowExpressionColumns
+                                },
+                                {
+                                  field: 'operator',
+                                  headerName: 'Operator',
+                                  flex: 1,
+                                  editable: true,
+                                  type: 'singleSelect',
+                                  valueOptions: rowFilterExpressions
+                                },
+                                {
+                                  field: 'userValue',
+                                  headerName: 'Value',
+                                  flex: 1,
+                                  editable: true
+                                },
+                                {
+                                  field: 'actions',
+                                  type: 'actions',
+                                  headerName: 'Actions',
+                                  flex: 0.5,
+                                  cellClassName: 'actions',
+                                  getActions: ({ id }) => {
+                                    const isInEditMode =
+                                      rowModesModel[id]?.mode ===
+                                      GridRowModes.Edit;
+                                    if (isInEditMode) {
+                                      return [
+                                        <GridActionsCellItem
+                                          icon={<SaveIcon />}
+                                          label="Save"
+                                          sx={{
+                                            color: 'primary.main'
+                                          }}
+                                          onClick={handleSaveClick(id)}
+                                        />,
+                                        <GridActionsCellItem
+                                          icon={<CancelIcon />}
+                                          label="Cancel"
+                                          className="textPrimary"
+                                          onClick={handleCancelClick(id)}
+                                          color="inherit"
+                                        />
+                                      ];
+                                    }
+                                    return [
+                                      <GridActionsCellItem
+                                        icon={<EditIcon />}
+                                        label="Edit"
+                                        className="textPrimary"
+                                        onClick={handleEditClick(id)}
+                                        color="inherit"
+                                      />,
+                                      <GridActionsCellItem
+                                        icon={<DeleteIcon />}
+                                        label="Delete"
+                                        onClick={handleDeleteClick(id)}
+                                        color="inherit"
+                                      />
+                                    ];
+                                  }
+                                }
+                              ]}
+                              rowsPerPageOptions={[10]}
+                              pageSize={10}
+                              editMode="row"
+                              rowModesModel={rowModesModel}
+                              onRowModesModelChange={handleRowModesModelChange}
+                              onRowEditStop={handleRowEditStop}
+                              experimentalFeatures={{ newEditingApi: true }}
+                              // onRowEditStart={handleRowEditStart}
+                              processRowUpdate={processRowUpdate}
+                              onProcessRowUpdateError={(error) =>
+                                dispatch({
+                                  type: SET_ERROR,
+                                  error: error.message
+                                })
+                              }
+                              components={{
+                                Toolbar: EditToolbar
+                              }}
+                              componentsProps={{
+                                toolbar: {
+                                  setRowExpressionRows,
+                                  setRowModesModel
+                                }
+                              }}
+                            />
+                          </CardContent>
+                        </>
+                      )}
+                    </>
+                  )}
+                  {values.filterType === 'COLUMN' && (
+                    <>
+                      {loadingColumns ? (
+                        <CircularProgress />
+                      ) : (
+                        <>
+                          <CardHeader title="Select Which Columns To Include on Filter:" />
+                          <Divider />
+                          <CardContent>
+                            {columns.length > 0 ? (
+                              <DataGrid
+                                fullWidth
+                                autoHeight
+                                rowSpacingType="border"
+                                rows={columns}
+                                columns={header}
+                                pageSize={pageSize}
+                                rowsPerPageOptions={[5, 10, 20]}
+                                onPageSizeChange={(newPageSize) =>
+                                  setPageSize(newPageSize)
+                                }
+                                checkboxSelection
+                                onSelectionModelChange={(newSelection) => {
+                                  setFieldValue('includedCols', newSelection);
+                                }}
+                                selectionModel={values.includedCols}
+                                loading={loadingColumns}
+                              />
+                            ) : (
+                              <Typography
+                                align="center"
+                                color="textSecondary"
+                                variant="subtitle2"
+                              >
+                                No columns found for this table
+                              </Typography>
                             )}
-                            fullWidth
-                            helperText={
-                              touched.rowExpression && errors.rowExpression
-                            }
-                            label="Row Expression"
-                            placeholder="Row Expression"
-                            name="rowExpression"
-                            onChange={handleChange}
-                            value={values.rowExpression}
-                            variant="outlined"
-                          />
-                        </CardContent>
-                      </Box>
-                    )}
-                    {values.filterType === 'COLUMN' && (
-                      <Box>
-                        <CardContent>
-                          <TextField
-                            error={Boolean(
-                              touched.includedCols && errors.includedCols
-                            )}
-                            fullWidth
-                            helperText={
-                              touched.includedCols && errors.includedCols
-                            }
-                            label="Cluster Id"
-                            placeholder="Included Columns"
-                            name="includedCols"
-                            onChange={handleChange}
-                            value={values.includedCols}
-                            variant="outlined"
-                          />
-                        </CardContent>
-                      </Box>
-                    )}
-                  </Grid>
-                </Grid>
+                          </CardContent>
+                        </>
+                      )}
+                      <Typography
+                        align="center"
+                        color="textSecondary"
+                        variant="subtitle2"
+                      >
+                        Current Selected Columns:{' '}
+                        {values.includedCols.join(', ')}
+                      </Typography>
+                    </>
+                  )}
+                </Card>
                 <Box>
                   <CardContent>
                     <LoadingButton

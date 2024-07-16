@@ -11,7 +11,7 @@ import {
   InputAdornment,
   TextField
 } from '@mui/material';
-import { DataGrid, GridActionsCellItem, GridRowModes } from '@mui/x-data-grid';
+import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import {
   GroupAddOutlined,
   SupervisedUserCircleRounded,
@@ -35,7 +35,6 @@ import { deleteTableDataFilter } from '../services';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import { useSnackbar } from 'notistack';
 
-
 export const TableFilters = ({ table }) => {
   const client = useClient();
   const dispatch = useDispatch();
@@ -46,7 +45,6 @@ export const TableFilters = ({ table }) => {
   const [inputValue, setInputValue] = useState('');
   const [isCreateFilterModalOpen, setIsCreateFilterModalOpen] = useState(false);
   const [isDeleteFilterModalOpenId, setIsDeleteFilterModalOpen] = useState(0);
-
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -133,7 +131,8 @@ export const TableFilters = ({ table }) => {
             filterUri: 'filterUri2',
             label: 'Name of filter',
             name: 'Name of filter',
-            description: 'This is a lengthy description of a particular data filter that restrcits teh data access of the consumeing group to only a subset of columns in particular 5 columns that are the ones included and a part of the included Columns section of the table',
+            description:
+              'This is a lengthy description of a particular data filter that restrcits teh data access of the consumeing group to only a subset of columns in particular 5 columns that are the ones included and a part of the included Columns section of the table',
             filterType: 'COLUMN',
             includedCols: ['price', 'product_id', 'cost', 'purchase_count'],
             rowExpression: '-'
@@ -296,8 +295,9 @@ export const TableFilters = ({ table }) => {
                             <Card variant="outlined" sx={{ mb: 2 }}>
                               <CardContent>
                                 <Typography variant="subtitle2" color="error">
-                                  <Warning sx={{ mr: 1 }} /> Revoke all share items where
-                                  data filter <b>{name}</b> is used before proceeding with the deletion !
+                                  <Warning sx={{ mr: 1 }} /> Revoke all share
+                                  items where data filter <b>{name}</b> is used
+                                  before proceeding with the deletion !
                                 </Typography>
                               </CardContent>
                             </Card>
