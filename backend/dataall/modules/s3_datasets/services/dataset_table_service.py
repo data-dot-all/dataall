@@ -6,6 +6,7 @@ from dataall.core.permissions.services.tenant_policy_service import TenantPolicy
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.s3_datasets.aws.athena_table_client import AthenaTableClient
+from dataall.modules.s3_datasets.aws.bedrock_metadata_client import BedrockClient
 from dataall.modules.s3_datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.s3_datasets.indexers.table_indexer import DatasetTableIndexer
@@ -17,6 +18,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     SYNC_DATASET,
 )
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_column_repositories import DatasetColumnRepository
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 from dataall.modules.s3_datasets.services.dataset_permissions import (
@@ -179,4 +181,5 @@ class DatasetTableService:
     def generate_metadata(resourceUri):
        context = get_context()
        with context.db_engine.scoped_session() as session:
-            return DatasetRepository.get_table_info_metadata_generation(session, resourceUri)
+            table_name, table_columns, query_result = DatasetColumnRepository.get_table_info_metadata_generation(session, resourceUri)
+            return BedrockClient(query_result.AWSAccountId,'us-east-1').generate_metadata(table_name,table_columns)

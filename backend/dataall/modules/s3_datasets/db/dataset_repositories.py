@@ -272,26 +272,6 @@ class DatasetRepository(EnvironmentResource):
         dataset.importedAdminRole = True if data.get('adminRoleName') else False
         if data.get('imported'):
             dataset.KmsAlias = data.get('KmsKeyAlias') if data.get('KmsKeyAlias') else 'SSE-S3'
-    @staticmethod
-    def get_table_info_metadata_generation(session,table_uri):
-        logger.info(table_uri)
-        result = session \
-            .query(
-                DatasetTable.label,
-                DatasetTable.GlueTableName,
-            ) \
-            .filter(
-                and_(
-                    DatasetTable.tableUri == table_uri
-                )
-            ) \
-            .all()
-        logger.info(type(result))
-        result_str = ""
-        for row in result:
-            logger.info(row)
-            label, glue_table_name = row
-            result_str += f"Label: {label}, GlueTableName: {glue_table_name}\n"
-        
-        return result_str
+
+    
         

@@ -154,7 +154,7 @@ def list_datasets_owned_by_env_group(
     return DatasetService.list_datasets_owned_by_env_group(environmentUri, groupUri, filter)
 
 def generate_metadata(context : Context, source: S3Dataset, resourceUri):
-    if not resourceUri:
+    if not resourceUri: #raise error
         return None
     return DatasetTableService.generate_metadata(resourceUri=resourceUri)
 
