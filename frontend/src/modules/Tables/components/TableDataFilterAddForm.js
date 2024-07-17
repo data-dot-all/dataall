@@ -21,7 +21,8 @@ import {
   GridRowModes,
   DataGrid,
   GridToolbarContainer,
-  GridActionsCellItem
+  GridActionsCellItem,
+  GridEditInputCell
 } from '@mui/x-data-grid';
 
 import AddIcon from '@mui/icons-material/Add';
@@ -33,12 +34,35 @@ import CancelIcon from '@mui/icons-material/Close';
 import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
-import React, { useState, useEffect, useCallback} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import * as Yup from 'yup';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient, listDatasetTableColumns } from 'services';
 import { createTableDataFilter } from '../services';
 import { Defaults } from 'design';
+
+const numericDataTypes = [
+  'bigint',
+  'date',
+  'datetime',
+  'decimal',
+  'double',
+  'float',
+  'int',
+  'smallint',
+  'tinyint',
+  'timestamp'
+];
+const stringLikeDataTypes = ['string', 'char', 'varchar', 'binary'];
+const compositeDataTypes = [
+  'array',
+  'interval',
+  'map',
+  'set',
+  'struct',
+  'union'
+];
+// const boolDataTypes = ['boolean'];
 
 const rowFilterExpressions = [
   {
@@ -49,27 +73,26 @@ const rowFilterExpressions = [
   {
     value: '>',
     label: '> (greater than)',
-    acceptsArgument: true
+    acceptsArgument: true,
+    dTypesSupported: numericDataTypes
   },
   {
     value: '<',
     label: '< (less than)',
-    acceptsArgument: true
+    acceptsArgument: true,
+    dTypesSupported: numericDataTypes
   },
   {
     value: '>=',
     label: '>= (greater than or equal)',
-    acceptsArgument: true
+    acceptsArgument: true,
+    dTypesSupported: numericDataTypes
   },
   {
     value: '<=',
     label: '<= (less than or equal)',
-    acceptsArgument: true
-  },
-  {
-    value: '<>',
-    label: '<> (not equal)',
-    acceptsArgument: true
+    acceptsArgument: true,
+    dTypesSupported: numericDataTypes
   },
   {
     value: '!=',
@@ -77,24 +100,36 @@ const rowFilterExpressions = [
     acceptsArgument: true
   },
   {
-    value: 'BETWEEN',
-    label: 'BETWEEN',
-    acceptsArgument: true
-  },
-  {
     value: 'IN',
     label: 'IN',
-    acceptsArgument: true
+    acceptsArgument: true,
+    dTypesSupported: [
+      ...numericDataTypes,
+      ...stringLikeDataTypes,
+      ...compositeDataTypes
+    ]
+  },
+  {
+    value: 'NOT IN',
+    label: 'NOT IN',
+    acceptsArgument: true,
+    dTypesSupported: [
+      ...numericDataTypes,
+      ...stringLikeDataTypes,
+      ...compositeDataTypes
+    ]
   },
   {
     value: 'LIKE',
     label: 'LIKE',
-    acceptsArgument: true
+    acceptsArgument: true,
+    dTypesSupported: [...stringLikeDataTypes, ...compositeDataTypes]
   },
   {
-    value: 'NOT',
-    label: 'NOT',
-    acceptsArgument: true
+    value: 'NOT LIKE',
+    label: 'NOT LIKE',
+    acceptsArgument: true,
+    dTypesSupported: [...stringLikeDataTypes, ...compositeDataTypes]
   },
   {
     value: 'IS NULL',
@@ -102,8 +137,8 @@ const rowFilterExpressions = [
     acceptsArgument: false
   },
   {
-    value: 'IS NOT NULL',
-    label: 'IS NOT NULL',
+    value: 'NOT NULL',
+    label: 'NOT NULL',
     acceptsArgument: false
   }
 ];
@@ -232,11 +267,18 @@ export const TableDataFilterAddForm = (props) => {
       let includedColumns;
       let rowExpressionString;
       if (values.filterType === 'COLUMN') {
-        includedColumns = columns.filter(c => values.includedCols.includes(c.id)).map((c) => c.name);
+        includedColumns = columns
+          .filter((c) => values.includedCols.includes(c.id))
+          .map((c) => c.name);
         rowExpressionString = null;
       } else if (values.filterType === 'ROW') {
         includedColumns = null;
-        rowExpressionString = rowExpressionRows.map((row) => ( '(' + row.columnName + row.operator + row.userValue + ')' )).join( ' OR ');
+        rowExpressionString = rowExpressionRows
+          .map(
+            (row) =>
+              '(' + row.columnName + row.operator + (row.userValue || '') + ')'
+          )
+          .join(' OR ');
       }
 
       const response = await client.mutate(
@@ -247,7 +289,7 @@ export const TableDataFilterAddForm = (props) => {
             description: values.description,
             filterType: values.filterType,
             includedCols: includedColumns,
-            rowExpression: rowExpressionString,
+            rowExpression: rowExpressionString
           }
         })
       );
@@ -315,7 +357,7 @@ export const TableDataFilterAddForm = (props) => {
               filterName: '',
               description: '',
               filterType: dataFilterOptions[0],
-              includedCols: [],
+              includedCols: []
             }}
             validationSchema={Yup.object().shape({
               filterName: Yup.string()
@@ -325,7 +367,7 @@ export const TableDataFilterAddForm = (props) => {
               filterType: Yup.string()
                 .max(255)
                 .required('*Filter Type is required'),
-              includedCols: Yup.array().nullable(),
+              includedCols: Yup.array().nullable()
             })}
             onSubmit={async (
               values,
@@ -441,13 +483,50 @@ export const TableDataFilterAddForm = (props) => {
                                   flex: 1,
                                   editable: true,
                                   type: 'singleSelect',
-                                  valueOptions: rowFilterExpressions
+                                  valueOptions: (params) => {
+                                    const columnType = columns.find(
+                                      (col) =>
+                                        col.name === params.row.columnName
+                                    )?.type;
+                                    if (!columnType) {
+                                      return [];
+                                    }
+                                    return rowFilterExpressions.filter(
+                                      (exp) =>
+                                        exp.dTypesSupported === undefined ||
+                                        exp.dTypesSupported.includes(columnType)
+                                    );
+                                  }
                                 },
                                 {
                                   field: 'userValue',
                                   headerName: 'Value',
                                   flex: 1,
-                                  editable: true
+                                  editable: true,
+                                  renderEditCell: (params) => {
+                                    const rowFilter = rowFilterExpressions.find(
+                                      (exp) => exp.value === params.row.operator
+                                    );
+                                    if (
+                                      rowFilter &&
+                                      !rowFilter?.acceptsArgument
+                                    ) {
+                                      return null;
+                                    }
+                                    return <GridEditInputCell {...params} />;
+                                  },
+                                  renderCell: (params) => {
+                                    const rowFilter = rowFilterExpressions.find(
+                                      (exp) => exp.value === params.row.operator
+                                    );
+                                    if (
+                                      rowFilter &&
+                                      !rowFilter?.acceptsArgument
+                                    ) {
+                                      return null;
+                                    }
+                                    return params.value;
+                                  }
                                 },
                                 {
                                   field: 'actions',

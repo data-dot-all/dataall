@@ -36,7 +36,6 @@ import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import { useSnackbar } from 'notistack';
 import { useTheme } from '@mui/styles';
 
-
 export const TableFilters = ({ table }) => {
   const client = useClient();
   const theme = useTheme();
@@ -243,7 +242,7 @@ export const TableFilters = ({ table }) => {
                   boxShadow: 2,
                   borderRadius: 1,
                   '& .MuiDataGrid-cell:hover': {
-                    color: theme.palette.primary.main,
+                    color: theme.palette.primary.main
                   },
                   '& .MuiDataGrid-row': {
                     borderRadius: 0,
@@ -259,7 +258,6 @@ export const TableFilters = ({ table }) => {
                     borderBottom: `1px solid ${theme.palette.grey[400]}`
                   }
                 }}
-
                 showCellVerticalBorder
                 showColumnVerticalBorder
                 showColumnRightBorder

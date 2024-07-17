@@ -6,7 +6,10 @@ export const createTableDataFilter = (tableUri, input) => ({
     input
   },
   mutation: gql`
-    mutation createTableDataFilter($tableUri: String!, $input: NewDataFilterInput!) {
+    mutation createTableDataFilter(
+      $tableUri: String!
+      $input: NewDataFilterInput!
+    ) {
       createTableDataFilter(tableUri: $tableUri, input: $input) {
         filterUri
       }
