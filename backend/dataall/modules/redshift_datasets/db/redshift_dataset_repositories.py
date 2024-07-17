@@ -83,10 +83,15 @@ class RedshiftDatasetRepository(EnvironmentResource):
     @staticmethod
     def _query_redshift_dataset_tables(session, dataset_uri, filter: dict = None):
         query = session.query(RedshiftTable).filter(RedshiftTable.datasetUri == dataset_uri)
-        if filter:
-            terms = filter.get('terms')
-            if terms:
-                query = query.filter(or_(RedshiftTable.name.ilike(f'%{term}%') for term in terms))
+        if filter and filter.get('term'):
+            query = query.filter(
+                or_(
+                    *[
+                        RedshiftTable.name.ilike('%' + filter.get('term') + '%'),
+                        RedshiftTable.label.ilike('%' + filter.get('term') + '%'),
+                    ]
+                )
+            )
         return query
 
     @staticmethod

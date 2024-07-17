@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Checkbox,
   Chip,
   CircularProgress,
   Container,
@@ -18,8 +17,7 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
-import CheckBoxIcon from '@mui/icons-material/CheckBox';
+import LinearProgress from '@mui/material/LinearProgress';
 import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -31,6 +29,7 @@ import {
   ChevronRightIcon,
   ChipInput,
   Defaults,
+  Scrollbar,
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
@@ -48,9 +47,7 @@ import {
 import { Topics, ConfidentialityList } from '../../constants';
 import config from '../../../generated/config.json';
 import { isFeatureEnabled } from 'utils';
-
-const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
-const checkedIcon = <CheckBoxIcon fontSize="small" />;
+import { DataGrid } from '@mui/x-data-grid';
 
 const RSDatasetImportForm = (props) => {
   const dispatch = useDispatch();
@@ -59,11 +56,14 @@ const RSDatasetImportForm = (props) => {
   const client = useClient();
   const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
+  const [loadingSchemas, setLoadingSchemas] = useState(false);
+  const [loadingTables, setLoadingTables] = useState(false);
   const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [connectionOptions, setConnectionOptions] = useState([]);
   const [schemaOptions, setSchemaOptions] = useState([]);
-  const [tableOptions, setTableOptions] = useState([]);
+  const [tableOptions, setTableOptions] = useState(null);
+  const [filter, setFilter] = useState(Defaults.filter);
   const [confidentialityOptions] = useState(
     config.modules.datasets_base.features.confidentiality_dropdown === true &&
       config.modules.datasets_base.features.custom_confidentiality_mapping
@@ -145,6 +145,7 @@ const RSDatasetImportForm = (props) => {
   };
 
   const fetchSchemas = async (connectionUri) => {
+    setLoadingSchemas(true);
     try {
       const response = await client.query(
         listRedshiftConnectionSchemas({
@@ -159,12 +160,12 @@ const RSDatasetImportForm = (props) => {
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
     }
+    setLoadingSchemas(false);
   };
 
   const fetchTables = async (connectionUri, schema) => {
+    setLoadingTables(true);
     try {
-      /* eslint-disable no-console */
-      console.log('fetchTables', connectionUri, schema);
       const response = await client.query(
         listRedshiftSchemaTables({
           connectionUri,
@@ -179,6 +180,7 @@ const RSDatasetImportForm = (props) => {
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
     }
+    setLoadingTables(false);
   };
 
   useEffect(() => {
@@ -540,6 +542,9 @@ const RSDatasetImportForm = (props) => {
                                 setFieldValue('schema', '');
                                 setFieldValue('tables', []);
                                 setGroupOptions([]);
+                                setConnectionOptions([]);
+                                setSchemaOptions([]);
+                                setTableOptions(null);
                               }
                             }}
                             renderInput={(params) => (
@@ -602,6 +607,9 @@ const RSDatasetImportForm = (props) => {
                                 setFieldValue('connection', '');
                                 setFieldValue('schema', '');
                                 setFieldValue('tables', []);
+                                setConnectionOptions([]);
+                                setSchemaOptions([]);
+                                setTableOptions(null);
                               }
                             }}
                             inputValue={values.SamlAdminGroupName}
@@ -672,6 +680,8 @@ const RSDatasetImportForm = (props) => {
                                 );
                               } else {
                                 setFieldValue('connection', '');
+                                setSchemaOptions([]);
+                                setTableOptions(null);
                                 setFieldValue('schema', '');
                                 setFieldValue('tables', []);
                               }
@@ -699,6 +709,7 @@ const RSDatasetImportForm = (props) => {
                           <Autocomplete
                             id="schema"
                             disablePortal
+                            loading={loadingSchemas}
                             options={schemaOptions.map((option) => option)}
                             noOptionsText="No schemas for the selected Connection"
                             onChange={(event, value) => {
@@ -714,6 +725,7 @@ const RSDatasetImportForm = (props) => {
                                   })
                                 );
                               } else {
+                                setTableOptions(null);
                                 setFieldValue('schema', '');
                                 setFieldValue('tables', []);
                               }
@@ -733,45 +745,61 @@ const RSDatasetImportForm = (props) => {
                             )}
                           />
                         </CardContent>
-                        <CardContent>
-                          <Autocomplete
-                            id="tables"
-                            multiple
-                            disablePortal
-                            options={tableOptions.map((option) => option.name)}
-                            noOptionsText="No tables for the selected Schema"
-                            onChange={(event, value) => {
-                              if (value) {
-                                setFieldValue('tables', value);
-                              } else {
-                                setFieldValue('tables', []);
-                              }
-                            }}
-                            renderOption={(props, option, { selected }) => (
-                              <li {...props}>
-                                <Checkbox
-                                  icon={icon}
-                                  checkedIcon={checkedIcon}
-                                  style={{ marginRight: 8 }}
-                                  checked={selected}
+                        {loadingTables && (
+                          <Box>
+                            <Typography
+                              color="primary"
+                              variant="subtitle2"
+                              marginLeft={3}
+                            >
+                              Loading database tables
+                            </Typography>
+                            <LinearProgress />
+                          </Box>
+                        )}
+                        {tableOptions && (
+                          <CardContent>
+                            <Scrollbar>
+                              <Box sx={{ minWidth: 600 }}>
+                                <DataGrid
+                                  autoHeight
+                                  checkboxSelection
+                                  getRowId={(node) => node.name}
+                                  rows={tableOptions}
+                                  columns={[
+                                    { field: 'id', hide: true },
+                                    {
+                                      field: 'name',
+                                      headerName: 'Redshift tables',
+                                      flex: 0.5,
+                                      editable: false
+                                    }
+                                  ]}
+                                  pageSize={filter.pageSize}
+                                  rowsPerPageOptions={[filter.pageSize]}
+                                  loading={loading}
+                                  onPageSizeChange={(pageSize) => {
+                                    setFilter({
+                                      ...filter,
+                                      pageSize: pageSize
+                                    });
+                                  }}
+                                  getRowHeight={() => 'auto'}
+                                  disableSelectionOnClick
+                                  onSelectionModelChange={(
+                                    newSelectionModel
+                                  ) => {
+                                    setFieldValue('tables', newSelectionModel);
+                                  }}
+                                  components={{
+                                    LoadingOverlay: LinearProgress
+                                  }}
+                                  sx={{ wordWrap: 'break-word' }}
                                 />
-                                {option}
-                              </li>
-                            )}
-                            renderInput={(params) => (
-                              <TextField
-                                {...params}
-                                fullWidth
-                                error={Boolean(touched.tables && errors.tables)} //TODO: TOO MANY TABLES RESULT IN DROPDOWN BEING CUT!
-                                helperText={touched.tables && errors.tables}
-                                label="Redshift tables"
-                                name="tables"
-                                onChange={handleChange}
-                                variant="outlined"
-                              />
-                            )}
-                          />
-                        </CardContent>
+                              </Box>
+                            </Scrollbar>
+                          </CardContent>
+                        )}
                       </Card>
                       <Box
                         sx={{

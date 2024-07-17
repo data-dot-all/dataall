@@ -1,4 +1,5 @@
 import {
+  Avatar,
   Box,
   Button,
   Card,
@@ -14,7 +15,7 @@ import * as FaIcons from 'react-icons/fa';
 import * as FiIcons from 'react-icons/fi';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
-import { IconAvatar, Label, StackStatus, useCardStyle } from 'design';
+import { Label, StackStatus, useCardStyle } from 'design';
 
 export const DatasetListItem = (props) => {
   const { dataset } = props;
@@ -23,6 +24,12 @@ export const DatasetListItem = (props) => {
       ? `s3-datasets`
       : dataset.datasetType === 'DatasetTypes.Redshift'
       ? `redshift-datasets`
+      : '-';
+  const datasetTypeIcon =
+    dataset.datasetType === 'DatasetTypes.S3'
+      ? `/static/icons/amazon-s3.svg`
+      : dataset.datasetType === 'DatasetTypes.Redshift'
+      ? `/static/icons/aws-redshift.svg`
       : '-';
   const classes = useCardStyle();
   const navigate = useNavigate();
@@ -38,7 +45,7 @@ export const DatasetListItem = (props) => {
                   display: 'flex'
                 }}
               >
-                <IconAvatar icon={<FiIcons.FiPackage size={18} />} />
+                <Avatar src={datasetTypeIcon} size={18} variant="square" />
                 <Box sx={{ ml: 2 }}>
                   <Link
                     underline="hover"
@@ -63,7 +70,12 @@ export const DatasetListItem = (props) => {
                     }}
                   >
                     <Tooltip title={dataset.label}>
-                      <span>{dataset.label}</span>
+                      {dataset.datasetType === 'DatasetTypes.S3'
+                        ? `S3/Glue: `
+                        : dataset.datasetType === 'DatasetTypes.Redshift'
+                        ? `Redshift: `
+                        : '-'}
+                      {dataset.label}
                     </Tooltip>
                   </Link>
                   <Typography color="textSecondary" variant="body2">
@@ -165,20 +177,22 @@ export const DatasetListItem = (props) => {
             py: 0.5
           }}
         >
-          <Grid container>
-            <Grid item md={4} xs={12}>
-              <Typography color="textSecondary" variant="body2">
-                <FiIcons.FiActivity /> Status
-              </Typography>
+          {dataset.stack && (
+            <Grid container>
+              <Grid item md={4} xs={12}>
+                <Typography color="textSecondary" variant="body2">
+                  <FiIcons.FiActivity /> Status
+                </Typography>
+              </Grid>
+              <Grid item md={8} xs={12}>
+                <Typography color="textPrimary" variant="body2">
+                  <StackStatus
+                    status={dataset.stack ? dataset.stack.status : 'NOT_FOUND'}
+                  />
+                </Typography>
+              </Grid>
             </Grid>
-            <Grid item md={8} xs={12}>
-              <Typography color="textPrimary" variant="body2">
-                <StackStatus
-                  status={dataset.stack ? dataset.stack.status : 'NOT_FOUND'}
-                />
-              </Typography>
-            </Grid>
-          </Grid>
+          )}
         </Box>
         <Box
           sx={{

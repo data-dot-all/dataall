@@ -1,4 +1,5 @@
 import { DeleteOutlined, Warning } from '@mui/icons-material';
+import PostAddIcon from '@mui/icons-material/PostAdd';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import {
   Box,
@@ -41,6 +42,7 @@ import {
   listRedshiftDatasetTables
 } from '../services';
 
+import { AddTablesModal } from './AddTablesModal';
 import { TableSchemaModal } from './TableSchemaModal';
 
 export const RedshiftDatasetTables = (props) => {
@@ -56,6 +58,7 @@ export const RedshiftDatasetTables = (props) => {
   const [isTableSchemaModalOpen, setIsTableSchemaModalOpen] = useState(false);
   const [tableToDelete, setTableToDelete] = useState(null);
   const [tableToSee, setTableToSee] = useState(null);
+  const [isAddTablesModalOpen, setIsAddTablesModalOpen] = useState(false);
 
   const handleDeleteObjectModalOpen = (table) => {
     setTableToDelete(table);
@@ -64,6 +67,13 @@ export const RedshiftDatasetTables = (props) => {
   const handleDeleteObjectModalClose = () => {
     setTableToDelete(null);
     setIsDeleteObjectModalOpen(false);
+  };
+
+  const handleAddTablesModalOpen = () => {
+    setIsAddTablesModalOpen(true);
+  };
+  const handleAddTablesModalClose = () => {
+    setIsAddTablesModalOpen(false);
   };
 
   const handleTableSchemaModalOpen = () => {
@@ -138,7 +148,31 @@ export const RedshiftDatasetTables = (props) => {
   };
 
   return (
-    <Box>
+    <>
+      <Box sx={{ mb: 3 }}>
+        <Card>
+          <CardContent>
+            <Grid container spacing={2}>
+              <Grid item md={2} sm={2} xs={3}>
+                <Typography color="textSecondary" variant="subtitle2">
+                  Database
+                </Typography>
+                <Typography color="textPrimary" variant="body2">
+                  {dataset.connection.database}
+                </Typography>
+              </Grid>
+              <Grid item md={2} sm={2} xs={3}>
+                <Typography color="textSecondary" variant="subtitle2">
+                  Schema
+                </Typography>
+                <Typography color="textPrimary" variant="body2">
+                  {dataset.schema}
+                </Typography>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+      </Box>
       <Card>
         <CardHeader
           action={<RefreshTableMenu refresh={fetchItems} />}
@@ -168,21 +202,24 @@ export const RedshiftDatasetTables = (props) => {
               variant="outlined"
             />
           </Grid>
-          <Grid item md={2} sm={2} xs={3}>
-            <Typography color="textPrimary" variant="h6">
-              Database
-            </Typography>
-            <Typography color="primary" variant="body2">
-              {dataset.connection.database}
-            </Typography>
-          </Grid>
-          <Grid item md={2} sm={2} xs={3}>
-            <Typography color="textPrimary" variant="h6">
-              Schema
-            </Typography>
-            <Typography color="primary" variant="body2">
-              {dataset.schema}
-            </Typography>
+          <Grid item md={2} sm={6} xs={12}>
+            <Button
+              color="primary"
+              startIcon={<PostAddIcon fontSize="small" />}
+              sx={{ m: 1 }}
+              onClick={handleAddTablesModalOpen}
+              variant="contained"
+            >
+              Add Tables
+            </Button>
+            {isAddTablesModalOpen && (
+              <AddTablesModal
+                onApply={handleAddTablesModalClose}
+                onClose={handleAddTablesModalClose}
+                open={isAddTablesModalOpen}
+                dataset={dataset}
+              />
+            )}
           </Grid>
         </Grid>
         <Scrollbar>
@@ -284,7 +321,7 @@ export const RedshiftDatasetTables = (props) => {
         open={isTableSchemaModalOpen}
         table={tableToSee}
       />
-    </Box>
+    </>
   );
 };
 

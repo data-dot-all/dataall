@@ -116,7 +116,7 @@ RedshiftDatasetTableColumn = gql.ObjectType(
         gql.Field(name='label', type=gql.String),
         gql.Field(name='length', type=gql.Integer),
         gql.Field(name='name', type=gql.String),
-        gql.Field(name='nullable', type=gql.Integer),
+        gql.Field(name='nullable', type=gql.Boolean),
         gql.Field(name='precision', type=gql.Integer),
         gql.Field(name='scale', type=gql.Integer),
         gql.Field(name='typeName', type=gql.String),

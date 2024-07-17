@@ -113,7 +113,7 @@ class RedshiftDatasetService:
             )
             columns = RedshiftData(
                 account_id=dataset.AwsAccountId, region=dataset.region, connection=connection
-            ).describe_redshift_table(dataset.schema, table.name)
+            ).list_redshift_table_columns(dataset.schema, table.name)
             return paginate_list(
                 items=columns, page_size=filter.get('pageSize', 10), page=filter.get('page', 1)
             ).to_dict()

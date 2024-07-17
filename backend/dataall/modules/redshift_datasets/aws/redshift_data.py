@@ -136,20 +136,10 @@ class RedshiftData:
                     if 'ColumnList' in response.keys():
                         columns_list.extend(response['ColumnList'])
                     next_token = response.get('NextToken', None)
+            for col in columns_list:
+                col['nullable'] = True if col['nullable'] == 1 else False
             log.info(f'Returning {columns_list=}')
             return columns_list
-        except ClientError as e:
-            log.error(e)
-            raise e
-
-    def describe_redshift_table(self, schema: str, table: str):
-        try:
-            log.info(f'Describing {self.database}.{schema}.{table}')
-            describe_table_response = self.client.describe_table(
-                **self.execute_connection_params, Schema=schema, Table=table
-            )
-            log.info(f'Returning {describe_table_response=}...')
-            return describe_table_response.get('ColumnList', [])
         except ClientError as e:
             log.error(e)
             raise e

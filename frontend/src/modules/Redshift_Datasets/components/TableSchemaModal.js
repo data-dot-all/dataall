@@ -64,6 +64,11 @@ export const TableSchemaModal = (props) => {
     return (
       <Dialog open={open}>
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+          <Typography color="textPrimary" variant="subtitle2">
+            Loading table schema
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
           <CircularProgress />
         </Box>
       </Dialog>
@@ -79,9 +84,9 @@ export const TableSchemaModal = (props) => {
           align="center"
           color="textPrimary"
           gutterBottom
-          variant="h4"
+          variant="h5"
         >
-          Redshift table {table.label}
+          Redshift table: {table.label}
         </Typography>
         <Divider />
         <Scrollbar>
@@ -95,12 +100,30 @@ export const TableSchemaModal = (props) => {
                 {
                   field: 'name',
                   headerName: 'Name',
-                  flex: 0.5,
+                  flex: 1.5,
                   editable: false
                 },
                 {
                   field: 'typeName',
                   headerName: 'Type',
+                  flex: 1,
+                  editable: false
+                },
+                {
+                  field: 'length',
+                  headerName: 'Length',
+                  flex: 1,
+                  editable: false
+                },
+                {
+                  field: 'nullable',
+                  headerName: 'Nullable',
+                  flex: 1,
+                  editable: false
+                },
+                {
+                  field: 'columnDefault',
+                  headerName: 'Default value',
                   flex: 1,
                   editable: false
                 }
@@ -116,7 +139,15 @@ export const TableSchemaModal = (props) => {
               }}
               getRowHeight={() => 'auto'}
               disableSelectionOnClick
-              sx={{ wordWrap: 'break-word' }}
+              sx={{
+                wordWrap: 'break-word', //TODO: create a generic styled datagrid to be used across features
+                '& .MuiDataGrid-row': {
+                  borderBottom: '1px solid rgba(145, 158, 171, 0.24)'
+                },
+                '& .MuiDataGrid-columnHeaders': {
+                  borderBottom: 0.5
+                }
+              }}
             />
           </Box>
         </Scrollbar>
