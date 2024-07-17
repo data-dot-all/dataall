@@ -56,3 +56,18 @@ def resolve_glossary_terms(context: Context, source: DatasetTable, **kwargs):
         return None
     with context.engine.scoped_session() as session:
         return GlossaryRepository.get_glossary_terms_links(session, source.tableUri, 'DatasetTable')
+
+
+# TODO: Implement
+def create_table_data_filter(context: Context, source, tableUri: str = None, input: dict = None):
+    return
+
+
+# TODO: Implement
+def delete_table_data_filter(context: Context, source, filterUri: str = None):
+    return
+
+
+# TODO: Implement
+def list_table_data_filters(context: Context, source, tableUri: str = None, filter: dict = None):
+    return

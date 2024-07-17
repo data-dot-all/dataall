@@ -58,31 +58,23 @@ import { EnvironmentTeamInviteEditForm } from './EnvironmentTeamInviteEditForm';
 import { EnvironmentTeamInviteForm } from './EnvironmentTeamInviteForm';
 import { DataGrid, GridActionsCellItem, GridRowModes } from '@mui/x-data-grid';
 
-function TeamRow({ team, environment, fetchItems }) {
+function TeamRow({
+  team,
+  environment,
+  fetchItems,
+  handleDeleteTeamModalOpen,
+  handleDeleteTeamModalClose,
+  handleTeamEditModalOpen,
+  handleTeamEditModalClose,
+  isDeleteTeamModalOpenId,
+  isTeamEditModalOpenId
+}) {
   const client = useClient();
   const dispatch = useDispatch();
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
   const [accessingConsole, setAccessingConsole] = useState(false);
   const [loadingCreds, setLoadingCreds] = useState(false);
-  const [isTeamEditModalOpen, setIsTeamEditModalOpen] = useState(false);
-  const [isDeleteTeamModalOpen, setIsDeleteTeamModalOpen] = useState(false);
-
-  const handleDeleteTeamModalOpen = () => {
-    setIsDeleteTeamModalOpen(true);
-  };
-
-  const handleDeleteTeamModalClose = () => {
-    setIsDeleteTeamModalOpen(false);
-  };
-
-  const handleTeamEditModalClose = () => {
-    setIsTeamEditModalOpen(false);
-  };
-
-  const handleTeamEditModalOpen = () => {
-    setIsTeamEditModalOpen(true);
-  };
 
   const removeGroup = async (groupUri) => {
     try {
@@ -100,6 +92,9 @@ function TeamRow({ team, environment, fetchItems }) {
           },
           variant: 'success'
         });
+        if (handleDeleteTeamModalClose) {
+          handleDeleteTeamModalClose();
+        }
         if (fetchItems) {
           fetchItems();
         }
@@ -163,7 +158,7 @@ function TeamRow({ team, environment, fetchItems }) {
       <TableCell>{team.environmentAthenaWorkGroup}</TableCell>
       <TableCell>
         {team.groupUri !== environment.SamlGroupName ? (
-          <LoadingButton onClick={() => handleTeamEditModalOpen(team)}>
+          <LoadingButton onClick={() => handleTeamEditModalOpen(team.groupUri)}>
             <VscChecklist
               size={20}
               color={
@@ -182,13 +177,13 @@ function TeamRow({ team, environment, fetchItems }) {
             variant="outlined"
           />
         )}
-        {isTeamEditModalOpen && (
+        {isTeamEditModalOpenId === team.groupUri && (
           <EnvironmentTeamInviteEditForm
             environment={environment}
             team={team}
-            open
+            open={isTeamEditModalOpenId === team.groupUri}
             reloadTeams={fetchItems}
-            onClose={handleTeamEditModalClose}
+            onClose={() => handleTeamEditModalClose()}
           />
         )}
       </TableCell>
@@ -226,7 +221,9 @@ function TeamRow({ team, environment, fetchItems }) {
             </>
           )}
           {team.groupUri !== environment.SamlGroupName && (
-            <LoadingButton onClick={() => handleDeleteTeamModalOpen()}>
+            <LoadingButton
+              onClick={() => handleDeleteTeamModalOpen(team.groupUri)}
+            >
               <HiUserRemove
                 size={25}
                 color={
@@ -237,15 +234,17 @@ function TeamRow({ team, environment, fetchItems }) {
               />
             </LoadingButton>
           )}
+          {team.groupUri !== environment.SamlGroupName && (
+            <DeleteObjectWithFrictionModal
+              objectName={team.groupUri}
+              onApply={() => handleDeleteTeamModalClose()}
+              onClose={() => handleDeleteTeamModalClose()}
+              open={isDeleteTeamModalOpenId === team.groupUri}
+              isAWSResource={false}
+              deleteFunction={() => removeGroup(team.groupUri)}
+            />
+          )}
         </Box>
-        <DeleteObjectWithFrictionModal
-          objectName={team.groupUri}
-          onApply={handleDeleteTeamModalClose}
-          onClose={handleDeleteTeamModalClose}
-          open={isDeleteTeamModalOpen}
-          isAWSResource={false}
-          deleteFunction={() => removeGroup(team.groupUri)}
-        />
       </TableCell>
     </TableRow>
   );
@@ -254,7 +253,13 @@ function TeamRow({ team, environment, fetchItems }) {
 TeamRow.propTypes = {
   team: PropTypes.any,
   environment: PropTypes.any,
-  fetchItems: PropTypes.any
+  fetchItems: PropTypes.any,
+  handleDeleteTeamModalOpen: PropTypes.any,
+  handleDeleteTeamModalClose: PropTypes.any,
+  handleTeamEditModalOpen: PropTypes.any,
+  handleTemaEditModalClose: PropTypes.any,
+  isDeleteTeamModalOpenId: PropTypes.string,
+  isTeamEditModalOpenId: PropTypes.string
 };
 
 export const EnvironmentTeams = ({ environment }) => {
@@ -272,6 +277,25 @@ export const EnvironmentTeams = ({ environment }) => {
   const [isTeamInviteModalOpen, setIsTeamInviteModalOpen] = useState(false);
   const [isAddRoleModalOpen, setIsAddRoleModalOpen] = useState(false);
   const [isDeleteRoleModalOpenId, setIsDeleteRoleModalOpen] = useState(0);
+  const [isTeamEditModalOpenId, setIsTeamEditModalOpen] = useState('');
+  const [isDeleteTeamModalOpenId, setIsDeleteTeamModalOpen] = useState('');
+
+  const handleDeleteTeamModalOpen = (groupUri) => {
+    setIsDeleteTeamModalOpen(groupUri);
+  };
+
+  const handleDeleteTeamModalClose = () => {
+    setIsDeleteTeamModalOpen('');
+  };
+
+  const handleTeamEditModalOpen = (groupUri) => {
+    setIsTeamEditModalOpen(groupUri);
+  };
+
+  const handleTeamEditModalClose = () => {
+    setIsTeamEditModalOpen('');
+  };
+
   const handleDeleteRoleModalOpen = (id) => {
     setIsDeleteRoleModalOpen(id);
   };
@@ -293,6 +317,7 @@ export const EnvironmentTeams = ({ environment }) => {
   };
 
   const fetchItems = useCallback(async () => {
+    setLoading(true);
     try {
       const response = await client.query(
         listAllEnvironmentGroups({
@@ -555,6 +580,14 @@ export const EnvironmentTeams = ({ environment }) => {
                           team={team}
                           environment={environment}
                           fetchItems={fetchItems}
+                          handleDeleteTeamModalOpen={handleDeleteTeamModalOpen}
+                          handleDeleteTeamModalClose={
+                            handleDeleteTeamModalClose
+                          }
+                          handleTeamEditModalOpen={handleTeamEditModalOpen}
+                          handleTeamEditModalClose={handleTeamEditModalClose}
+                          isDeleteTeamModalOpenId={isDeleteTeamModalOpenId}
+                          isTeamEditModalOpenId={isTeamEditModalOpenId}
                         />
                       ))
                     ) : (
