@@ -34,9 +34,12 @@ import { TableDataFilterAddForm } from './TableDataFilterAddForm';
 import { deleteTableDataFilter } from '../services';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import { useSnackbar } from 'notistack';
+import { useTheme } from '@mui/styles';
+
 
 export const TableFilters = ({ table }) => {
   const client = useClient();
+  const theme = useTheme();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(true);
@@ -232,9 +235,35 @@ export const TableFilters = ({ table }) => {
             </Grid>
           </Box>
           <Scrollbar>
-            <Box sx={{ minWidth: 600 }}>
+            <Box sx={{ paddingTop: 2, minWidth: 600 }}>
               <DataGrid
                 autoHeight
+                sx={{
+                  wordWrap: 'break-word',
+                  boxShadow: 2,
+                  borderRadius: 1,
+                  '& .MuiDataGrid-cell:hover': {
+                    color: theme.palette.primary.main,
+                  },
+                  '& .MuiDataGrid-row': {
+                    borderRadius: 0,
+                    boxShadow: 2
+                  },
+                  '& .MuiDataGrid-columnHeader, .MuiDataGrid-cell': {
+                    borderRight: `1px solid ${theme.palette.grey[400]}`
+                  },
+                  '& .MuiDataGrid-columnHeader': {
+                    borderBottom: `1px solid ${theme.palette.grey[400]}`
+                  },
+                  '& .MuiDataGrid-columnsContainer, .MuiDataGrid-cell': {
+                    borderBottom: `1px solid ${theme.palette.grey[400]}`
+                  }
+                }}
+
+                showCellVerticalBorder
+                showColumnVerticalBorder
+                showColumnRightBorder
+                showCellRightBorder
                 getRowId={(node) => node.filterUri}
                 rows={items.nodes}
                 columns={[
@@ -318,7 +347,6 @@ export const TableFilters = ({ table }) => {
                 loading={loading}
                 getRowHeight={() => 'auto'}
                 disableSelectionOnClick
-                sx={{ wordWrap: 'break-word' }}
               />
             </Box>
           </Scrollbar>
