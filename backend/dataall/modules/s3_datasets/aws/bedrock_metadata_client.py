@@ -16,12 +16,14 @@ class BedrockClient:
     def generate_metadata(self, table_name:str, columns:str): #enforce type annotations , metadata_query_result -> table
         log.info("Generating metadata for table %s", table_name)
         prompt_data = f"""
-        Generate a detailed metadata description for a database table in the following form:
-        Table Name: {table_name}
-        Columns: {columns}
-        Tags:
-        Topic:
-        Description:
+        Generate a detailed metadata description for a database table named {table_name} using table name and \
+              columns({columns})following parameters and generate Tags,Topic, Description for this table. Return a string that looks like this:\
+              This dataset is about <topic>. It contains the following columns: <column1>, <column2>, ..., <columnN>.\
+              The table name is <table_name>.\
+              The table tags are <tags>.\
+              The table description is: <description>.\
+              Descripton for each column is <column1>:<column1_description>,<column2>:<column2_description>,...,<columnN>:<columnN_description>.\
+              Return only the string, no additional text or explanation.\
         """
         messages=[{ "role":'user', "content":[{'type':'text','text': prompt_data}]}]
         body=json.dumps(
@@ -39,8 +41,8 @@ class BedrockClient:
         response = self._client.invoke_model(body=body, modelId=modelId)
         response_body = json.loads(response.get('body').read())
         output_list = response_body.get("content", [])
-        return_str = ""
-        for output in output_list:  
-            return_str += output["text"]
-        return return_str
+        log.info(output_list)
+
+        output_str = output_list[0]['text']
+        return output_str
    
