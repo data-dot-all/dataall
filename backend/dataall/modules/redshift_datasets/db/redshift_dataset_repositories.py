@@ -42,8 +42,6 @@ class RedshiftDatasetRepository(EnvironmentResource):
             autoApprovalEnabled=data.get('autoApprovalEnabled', False),
             connectionUri=data.get('connectionUri'),
             schema=data.get('schema'),
-            includePattern=data.get('includePattern'),
-            excludePattern=data.get('excludePattern')
         )
         session.add(dataset)
         session.commit()
@@ -77,7 +75,6 @@ class RedshiftDatasetRepository(EnvironmentResource):
             description=data.get('description', 'No description provided'),
             tags=data.get('tags', []),
             topics=data.get('topics', []),
-            status='NOT_IMPORTED',  # TODO enum
         )
         session.add(table)
         session.commit()
@@ -101,3 +98,10 @@ class RedshiftDatasetRepository(EnvironmentResource):
     def paginated_redshift_dataset_tables(session, dataset_uri, data=None) -> dict:
         query = RedshiftDatasetRepository._query_redshift_dataset_tables(session, dataset_uri, data)
         return paginate(query=query, page_size=data.get('pageSize', 10), page=data.get('page', 1)).to_dict()
+
+    @staticmethod
+    def get_redshift_table_by_uri(session, table_uri) -> RedshiftTable:
+        table: RedshiftTable = session.query(RedshiftTable).get(table_uri)
+        if not table:
+            raise ObjectNotFound('RedshiftTable', table_uri)
+        return table

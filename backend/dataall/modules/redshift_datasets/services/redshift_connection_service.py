@@ -130,14 +130,27 @@ class RedshiftConnectionService:
     @staticmethod
     def _check_redshift_connection(account_id: str, region: str, connection: RedshiftConnection):
         if connection.nameSpaceId:
-            if (namespace := RedshiftServerless(account_id=account_id, region=region).get_namespace_by_id(connection.nameSpaceId)) is None:
+            if (
+                namespace := RedshiftServerless(account_id=account_id, region=region).get_namespace_by_id(
+                    connection.nameSpaceId
+                )
+            ) is None:
                 raise Exception(
                     f'Redshift namespaceId {connection.nameSpaceId} does not exist. Remember to introduce the Id and not the name of the namespace.'
                 )
-            if connection.workgroup and connection.workgroup not in [workgroup['workgroupName'] for workgroup in RedshiftServerless(account_id=account_id, region=region).list_workgroups_in_namespace(namespace['namespaceName'])]:
-                raise Exception(f'Redshift workgroup {connection.workgroup} does not exist or is not associated to namespace {connection.nameSpaceId}')
+            if connection.workgroup and connection.workgroup not in [
+                workgroup['workgroupName']
+                for workgroup in RedshiftServerless(account_id=account_id, region=region).list_workgroups_in_namespace(
+                    namespace['namespaceName']
+                )
+            ]:
+                raise Exception(
+                    f'Redshift workgroup {connection.workgroup} does not exist or is not associated to namespace {connection.nameSpaceId}'
+                )
 
-        if connection.clusterId and not Redshift(account_id=account_id, region=region).describe_cluster(connection.clusterId):
+        if connection.clusterId and not Redshift(account_id=account_id, region=region).describe_cluster(
+            connection.clusterId
+        ):
             raise Exception(
                 f'Redshift cluster {connection.clusterId} does not exist or cannot be accessed with these parameters'
             )

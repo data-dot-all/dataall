@@ -70,7 +70,7 @@ class RedshiftData:
     def list_redshift_schemas(self):
         schemas = []
         try:
-            log.debug(f'Fetching {self.database} schemas')
+            log.info(f'Fetching {self.database} schemas')
             list_schemas_response = self.client.list_schemas(**self.execute_connection_params)
             if 'Schemas' in list_schemas_response.keys():
                 schemas = list_schemas_response['Schemas']
@@ -89,7 +89,7 @@ class RedshiftData:
     def list_redshift_tables(self, schema: str):
         tables_list = []
         try:
-            log.debug(f'Fetching {self.database} tables')
+            log.info(f'Fetching {self.database} tables')
             list_tables_response = self.client.list_tables(
                 **self.execute_connection_params, SchemaPattern=schema, MaxResults=1000
             )
@@ -115,55 +115,94 @@ class RedshiftData:
             log.error(e)
             raise e
 
-    def create_datashare(self, datashare: str):
-        """
-        Create datashare if not already created
-        """
+    def list_redshift_table_columns(self, schema: str, table: str):
+        columns_list = []
         try:
-            log.info(f'Creating {datashare=}...')
-            sql_statement = f'CREATE DATASHARE {RedshiftData.identifier(datashare)};'
-            self._execute_statement(sql=sql_statement)
+            log.info(f'Fetching {self.database} tables')
+            response = self.client.describe_table(
+                **self.execute_connection_params, Schema=schema, Table=table, MaxResults=1000
+            )
+            next_token = response.get('NextToken', None)
+            if 'ColumnList' in response.keys():
+                columns_list = response['ColumnList']
+                while next_token:
+                    response = self.client.describe_table(
+                        **self.execute_connection_params,
+                        Schema=schema,
+                        Table=table,
+                        MaxResults=1000,
+                        NextToken=next_token,
+                    )
+                    if 'ColumnList' in response.keys():
+                        columns_list.extend(response['ColumnList'])
+                    next_token = response.get('NextToken', None)
+            log.info(f'Returning {columns_list=}')
+            return columns_list
+        except ClientError as e:
+            log.error(e)
+            raise e
 
-        except Exception as e:
-            allowed_error_messages = [f'ERROR: share "{datashare}" already exists']
-            error_message = e.args[0]
-            if error_message in allowed_error_messages:
-                log.info(f'Datashare {datashare} already exists')
-            else:
-                raise e
-
-    def add_schema_to_datashare(self, datashare: str, schema: str):
-        """
-        Add schema to datashare if not already added
-        """
-        log.info(f'Adding schema {schema=} to {datashare=}...')
-        sql_statement = f'ALTER DATASHARE {RedshiftData.identifier(datashare)} ADD SCHEMA {RedshiftData.identifier(schema)};'
+    def describe_redshift_table(self, schema: str, table: str):
         try:
-            self._execute_statement(sql_statement)
-        except Exception as e:
-            allowed_error_message = f'ERROR: Schema {schema} is already added to the datashare {datashare}'
-            error_message = e.args[0]
-            if error_message == allowed_error_message:
-                log.info(f'{schema=} is already present in {datashare=}')
-            else:
-                raise e
-    def add_table_to_datashare(self, datashare: str, schema: str, table_name: str):
-        """
-        Add table to datashare if not already added
-        """
-        log.info(f'Adding table {table_name=} to {datashare=}...')
-        fq_table_name = self.fully_qualified_table_name(schema, table_name)
-        sql_statement = f'ALTER DATASHARE {RedshiftData.identifier(datashare)} ADD TABLE {fq_table_name};'
-        try:
-            self._execute_statement(sql_statement)
-        except Exception as e:
-            allowed_error_message = f'ERROR: Relation {table_name} is already added to the datashare {datashare}'
-            error_message = e.args[0]
-            if error_message == allowed_error_message:
-                log.info(f'Table {fq_table_name} is already present in the {datashare=}')
-            else:
-                raise e
+            log.info(f'Describing {self.database}.{schema}.{table}')
+            describe_table_response = self.client.describe_table(
+                **self.execute_connection_params, Schema=schema, Table=table
+            )
+            log.info(f'Returning {describe_table_response=}...')
+            return describe_table_response.get('ColumnList', [])
+        except ClientError as e:
+            log.error(e)
+            raise e
 
+    # TODO IT WILL BE USED IN SHARING
+    # def create_datashare(self, datashare: str):
+    #     """
+    #     Create datashare if not already created
+    #     """
+    #     try:
+    #         log.info(f'Creating {datashare=}...')
+    #         sql_statement = f'CREATE DATASHARE {RedshiftData.identifier(datashare)};'
+    #         self._execute_statement(sql=sql_statement)
+    #
+    #     except Exception as e:
+    #         allowed_error_messages = [f'ERROR: share "{datashare}" already exists']
+    #         error_message = e.args[0]
+    #         if error_message in allowed_error_messages:
+    #             log.info(f'Datashare {datashare} already exists')
+    #         else:
+    #             raise e
+    #
+    # def add_schema_to_datashare(self, datashare: str, schema: str):
+    #     """
+    #     Add schema to datashare if not already added
+    #     """
+    #     log.info(f'Adding schema {schema=} to {datashare=}...')
+    #     sql_statement = f'ALTER DATASHARE {RedshiftData.identifier(datashare)} ADD SCHEMA {RedshiftData.identifier(schema)};'
+    #     try:
+    #         self._execute_statement(sql_statement)
+    #     except Exception as e:
+    #         allowed_error_message = f'ERROR: Schema {schema} is already added to the datashare {datashare}'
+    #         error_message = e.args[0]
+    #         if error_message == allowed_error_message:
+    #             log.info(f'{schema=} is already present in {datashare=}')
+    #         else:
+    #             raise e
+    # def add_table_to_datashare(self, datashare: str, schema: str, table_name: str):
+    #     """
+    #     Add table to datashare if not already added
+    #     """
+    #     log.info(f'Adding table {table_name=} to {datashare=}...')
+    #     fq_table_name = self.fully_qualified_table_name(schema, table_name)
+    #     sql_statement = f'ALTER DATASHARE {RedshiftData.identifier(datashare)} ADD TABLE {fq_table_name};'
+    #     try:
+    #         self._execute_statement(sql_statement)
+    #     except Exception as e:
+    #         allowed_error_message = f'ERROR: Relation {table_name} is already added to the datashare {datashare}'
+    #         error_message = e.args[0]
+    #         if error_message == allowed_error_message:
+    #             log.info(f'Table {fq_table_name} is already present in the {datashare=}')
+    #         else:
+    #             raise e
 
     # def remove_table_from_datashare(self, schema: str, database: str, workgroup: str, datashare: str, table_name: str):
     #     fq_table_name = self.fully_qualified_table_name(database, schema, table_name)

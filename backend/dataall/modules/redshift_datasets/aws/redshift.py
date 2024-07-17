@@ -20,4 +20,3 @@ class Redshift:
         except ClientError as e:
             log.error(e)
             raise e
-

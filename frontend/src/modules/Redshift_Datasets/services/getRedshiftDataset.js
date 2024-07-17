@@ -63,8 +63,6 @@ export const getRedshiftDataset = (datasetUri) => ({
           database
         }
         schema
-        datashareStatus
-        datashareArn
       }
     }
   `

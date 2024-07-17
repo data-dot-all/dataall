@@ -1,6 +1,7 @@
 import logging
 
 from dataall.base.context import get_context
+from dataall.base.db.paginator import paginate_list
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.permissions.services.group_policy_service import GroupPolicyService
@@ -18,9 +19,8 @@ from dataall.modules.redshift_datasets.services.redshift_dataset_permissions imp
 )
 from dataall.modules.redshift_datasets.db.redshift_dataset_repositories import RedshiftDatasetRepository
 from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
-from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset
-from dataall.modules.redshift_datasets.api.connections.enums import RedshiftType
-from dataall.modules.redshift_datasets.aws.redshift import Redshift
+from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset, RedshiftTable
+from dataall.modules.redshift_datasets.aws.redshift_data import RedshiftData
 
 
 log = logging.getLogger(__name__)
@@ -87,7 +87,6 @@ class RedshiftDatasetService:
                 dataset.userRoleForDataset = DatasetRole.Admin.value
             return dataset
 
-
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
     @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
@@ -102,8 +101,26 @@ class RedshiftDatasetService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
     @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
+    def list_redshift_dataset_table_columns(uri, rsTableUri, filter):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            table = RedshiftDatasetRepository.get_redshift_table_by_uri(session=session, table_uri=rsTableUri)
+            dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(
+                session=session, dataset_uri=table.datasetUri
+            )
+            connection = RedshiftConnectionRepository.find_redshift_connection(
+                session=session, uri=dataset.connectionUri
+            )
+            columns = RedshiftData(
+                account_id=dataset.AwsAccountId, region=dataset.region, connection=connection
+            ).describe_redshift_table(dataset.schema, table.name)
+            return paginate_list(
+                items=columns, page_size=filter.get('pageSize', 10), page=filter.get('page', 1)
+            ).to_dict()
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
     def get_dataset_upvotes(uri):
         with get_context().db_engine.scoped_session() as session:
             return VoteRepository.count_upvotes(session, uri, target_type='redshift-dataset') or 0
-
-

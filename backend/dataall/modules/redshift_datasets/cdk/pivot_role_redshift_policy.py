@@ -40,22 +40,10 @@ class RedshiftDatasetsPivotRole(PivotRoleStatementSet):
                     'redshift:DescribeClusters',
                     'redshift-serverless:ListNamespaces',
                     'redshift-serverless:GetWorkgroup',
-                    'redshift-serverless:ListWorkgroups'
+                    'redshift-serverless:ListWorkgroups',
                 ],
                 resources=[
                     '*',
-                ],
-            ),
-            iam.PolicyStatement(
-                sid='RedshiftLakeFormationGlue',
-                effect=iam.Effect.ALLOW,
-                actions=[
-                    'lakeformation:RegisterResource',
-                    'glue:PassConnection'
-                ],
-                resources=[
-                    f'arn:aws:lakeformation:{self.region}:{self.account}:catalog:{self.account}',
-                    f'arn:aws:glue:{self.region}:{self.account}:connection/aws:redshift'
                 ],
             ),
         ]
@@ -95,10 +83,12 @@ class RedshiftDatasetsPivotRole(PivotRoleStatementSet):
                             'redshift:GetClusterCredentialsWithIAM',
                             'redshift-data:ListTables',
                             'redshift-data:ExecuteStatement',
+                            'redshift-data:DescribeTable',
                         ],
                         resources=cluster_arns + workgroup_arns,
                     )
                 )
+                # TODO: review when we implement dataset sharing
                 additional_statements.extend(
                     split_policy_with_resources_in_statements(
                         base_sid='RedshiftDataShare',

@@ -77,6 +77,7 @@ RedshiftDataset = gql.ObjectType(
     ],
 )
 
+
 RedshiftDatasetTableListItem = gql.ObjectType(
     name='RedshiftDatasetTableListItem',
     fields=[
@@ -89,7 +90,7 @@ RedshiftDatasetTableListItem = gql.ObjectType(
         gql.Field(name='created', type=gql.String),
         gql.Field(name='updated', type=gql.String),
         gql.Field(name='region', type=gql.String),
-        gql.Field(name='tags', type=gql.ArrayType(gql.String))
+        gql.Field(name='tags', type=gql.ArrayType(gql.String)),
     ],
 )
 
@@ -97,6 +98,35 @@ RedshiftDatasetTableSearchResult = gql.ObjectType(
     name='RedshiftDatasetTableSearchResult',
     fields=[
         gql.Field(name='nodes', type=gql.ArrayType(RedshiftDatasetTableListItem)),
+        gql.Field(name='count', type=gql.Integer),
+        gql.Field(name='pages', type=gql.Integer),
+        gql.Field(name='page', type=gql.Integer),
+        gql.Field(name='hasNext', type=gql.Boolean),
+        gql.Field(name='hasPrevious', type=gql.Boolean),
+    ],
+)
+
+RedshiftDatasetTableColumn = gql.ObjectType(
+    name='RedshiftDatasetTableColumn',
+    fields=[
+        gql.Field(name='columnDefault', type=gql.String),
+        gql.Field(name='isCaseSensitive', type=gql.Boolean),
+        gql.Field(name='isCurrency', type=gql.Boolean),
+        gql.Field(name='isSigned', type=gql.Boolean),
+        gql.Field(name='label', type=gql.String),
+        gql.Field(name='length', type=gql.Integer),
+        gql.Field(name='name', type=gql.String),
+        gql.Field(name='nullable', type=gql.Integer),
+        gql.Field(name='precision', type=gql.Integer),
+        gql.Field(name='scale', type=gql.Integer),
+        gql.Field(name='typeName', type=gql.String),
+    ],
+)
+
+RedshiftDatasetTableColumnSearchResult = gql.ObjectType(
+    name='RedshiftDatasetTableColumnSearchResult',
+    fields=[
+        gql.Field(name='nodes', type=gql.ArrayType(RedshiftDatasetTableColumn)),
         gql.Field(name='count', type=gql.Integer),
         gql.Field(name='pages', type=gql.Integer),
         gql.Field(name='page', type=gql.Integer),

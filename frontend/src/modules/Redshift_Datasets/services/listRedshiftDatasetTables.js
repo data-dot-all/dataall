@@ -18,7 +18,9 @@ export const listRedshiftDatasetTables = ({ datasetUri, filter }) => ({
         hasPrevious
         nodes {
           rsTableUri
+          datasetUri
           name
+          label
           created
           description
         }

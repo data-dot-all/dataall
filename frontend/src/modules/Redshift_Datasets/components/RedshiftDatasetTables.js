@@ -222,7 +222,7 @@ export const RedshiftDatasetTables = (props) => {
                             variant="outlined"
                             onClick={() => {
                               handleTableSchemaModalOpen();
-                              setTableToSee(table.rsTableUri);
+                              setTableToSee(table);
                             }}
                           >
                             Open table schema
@@ -282,7 +282,7 @@ export const RedshiftDatasetTables = (props) => {
         onApply={handleTableSchemaModalClose}
         onClose={handleTableSchemaModalClose}
         open={isTableSchemaModalOpen}
-        rsTableUri={tableToSee}
+        table={tableToSee}
       />
     </Box>
   );

@@ -6,7 +6,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
-from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset, RedshiftTable
+from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset
 from dataall.modules.redshift_datasets.services.redshift_dataset_service import RedshiftDatasetService
 from dataall.modules.redshift_datasets.services.redshift_connection_service import RedshiftConnectionService
 
@@ -31,10 +31,12 @@ def list_redshift_dataset_tables(context, source, datasetUri: str, filter: dict 
     return RedshiftDatasetService.list_redshift_dataset_tables(uri=datasetUri, filter=filter)
 
 
-def resolve_datashare_state(context, source: RedshiftDataset, **kwargs):
-    if not source:
-        return None
-    return RedshiftDatasetService.get_datashare_status(uri=source.datasetUri)
+def list_redshift_dataset_table_columns(context, source, datasetUri: str, rsTableUri: str, filter: dict = None):
+    _required_param('datasetUri', datasetUri)
+    _required_param('rsTableUri', rsTableUri)
+    return RedshiftDatasetService.list_redshift_dataset_table_columns(
+        uri=datasetUri, rsTableUri=rsTableUri, filter=filter
+    )
 
 
 def resolve_dataset_organization(context, source: RedshiftDataset, **kwargs):

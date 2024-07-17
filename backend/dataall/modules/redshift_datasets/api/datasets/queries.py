@@ -1,5 +1,9 @@
 from dataall.base.api import gql
-from dataall.modules.redshift_datasets.api.datasets.resolvers import get_redshift_dataset, list_redshift_dataset_tables
+from dataall.modules.redshift_datasets.api.datasets.resolvers import (
+    get_redshift_dataset,
+    list_redshift_dataset_table_columns,
+    list_redshift_dataset_tables,
+)
 from dataall.modules.redshift_datasets.api.datasets.input_types import RedshiftDatasetTableFilter
 
 
@@ -18,4 +22,15 @@ listRedshiftDatasetTables = gql.QueryField(
     ],
     type=gql.Ref('RedshiftDatasetTableSearchResult'),
     resolver=list_redshift_dataset_tables,
+)
+
+getRedshiftDatasetTableColumns = gql.QueryField(
+    name='getRedshiftDatasetTableColumns',
+    args=[
+        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='rsTableUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument('filter', RedshiftDatasetTableFilter),
+    ],
+    type=gql.Ref('RedshiftDatasetTableColumnSearchResult'),
+    resolver=list_redshift_dataset_table_columns,
 )
