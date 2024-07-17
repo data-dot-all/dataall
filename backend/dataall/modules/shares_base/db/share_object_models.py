@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 
 from sqlalchemy import Boolean, Column, String, DateTime
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import query_expression
 
 from dataall.base.db import Base, utils
@@ -57,3 +58,4 @@ class ShareObjectItem(Base):
     healthStatus = Column(String, nullable=True)
     healthMessage = Column(String, nullable=True)
     lastVerificationTime = Column(DateTime, nullable=True)
+    dataFilters = Column(ARRAY(String), nullable=True)
