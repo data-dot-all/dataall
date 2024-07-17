@@ -79,6 +79,33 @@ class RedshiftDatasetService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
     @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
+    def add_redshift_dataset_tables(uri, tables):
+        context = get_context()
+        datasetUri = uri
+        with context.db_engine.scoped_session() as session:
+            for table in tables:
+                RedshiftDatasetRepository.create_redshift_table(
+                    session=session,
+                    username=context.username,
+                    dataset_uri=datasetUri,
+                    data={'name': table},
+                )
+        return True
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
+    def delete_redshift_dataset_table(uri, rsTableUri):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            table: RedshiftTable = RedshiftDatasetRepository.get_redshift_table_by_uri(session, rsTableUri)
+            session.delete(table)
+            session.commit()
+        return True
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
     def get_redshift_dataset(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -117,6 +144,25 @@ class RedshiftDatasetService:
             return paginate_list(
                 items=columns, page_size=filter.get('pageSize', 10), page=filter.get('page', 1)
             ).to_dict()
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
+    def list_redshift_schema_dataset_tables(uri):
+        with get_context().db_engine.scoped_session() as session:
+            dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, uri)
+            dataset_tables = RedshiftDatasetRepository.list_redshift_dataset_tables(session, dataset.datasetUri)
+            connection = RedshiftConnectionRepository.find_redshift_connection(session, dataset.connectionUri)
+            environment = EnvironmentService.get_environment_by_uri(session, connection.environmentUri)
+            tables = RedshiftData(
+                account_id=environment.AwsAccountId, region=environment.region, connection=connection
+            ).list_redshift_tables(dataset.schema)
+            for table in tables:
+                if table['name'] in [t['name'] for t in dataset_tables]:
+                    table['already_added'] = True
+            log.info(f'Response: {tables}')
+            return tables
+
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)

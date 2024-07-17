@@ -25,6 +25,7 @@ ImportRedshiftDatasetInput = gql.InputType(
     ],
 )
 
+
 RedshiftDatasetTableFilter = gql.InputType(  # TODO: this filter should be generic in Core, very duplicated
     name='RedshiftDatasetTableFilter',
     arguments=[

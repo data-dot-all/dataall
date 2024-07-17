@@ -1,18 +1,30 @@
 import PropTypes from 'prop-types';
-import { Box, CircularProgress, Dialog, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  Divider,
+  Typography
+} from '@mui/material';
+import PostAddIcon from '@mui/icons-material/PostAdd';
+import { DataGrid } from '@mui/x-data-grid';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { listRedshiftSchemaTables } from '../services';
+import { useSnackbar } from 'notistack';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { useClient } from 'services';
-import { DataGrid } from '@mui/x-data-grid';
 import { Defaults, Scrollbar } from 'design';
-import LinearProgress from '@mui/material/LinearProgress';
+import { useClient } from 'services';
+import {
+  addRedshiftDatasetTables,
+  listRedshiftSchemaDatasetTables
+} from '../services';
 
 export const AddTablesModal = (props) => {
   const { onClose, open, dataset } = props;
   const client = useClient();
   const dispatch = useDispatch();
+  const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState(null);
   const [selectedTables, setSelectedTables] = useState(null);
@@ -22,13 +34,12 @@ export const AddTablesModal = (props) => {
     setLoading(true);
     try {
       const response = await client.query(
-        listRedshiftSchemaTables({
-          connectionUri: dataset.connection.connectionUri,
-          schema: dataset.schema
+        listRedshiftSchemaDatasetTables({
+          datasetUri: dataset.datasetUri
         })
       );
       if (!response.errors) {
-        setItems(response.data.listRedshiftSchemaTables);
+        setItems(response.data.listRedshiftSchemaDatasetTables);
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -37,6 +48,29 @@ export const AddTablesModal = (props) => {
     }
     setLoading(false);
   }, [client, dispatch, dataset]);
+
+  const addTables = useCallback(
+    async (item) => {
+      const response = await client.mutate(
+        addRedshiftDatasetTables({
+          datasetUri: dataset.datasetUri,
+          tables: selectedTables
+        })
+      );
+      if (!response.errors) {
+        enqueueSnackbar('Item added', {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'success'
+        });
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    },
+    [client, dispatch]
+  );
 
   useEffect(() => {
     if (client && dataset) {
@@ -58,7 +92,7 @@ export const AddTablesModal = (props) => {
       <Dialog open={open}>
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
           <Typography color="textPrimary" variant="subtitle2">
-            Loading database tables {selectedTables}
+            Loading database tables
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
@@ -72,44 +106,67 @@ export const AddTablesModal = (props) => {
   }
   return (
     <Dialog maxWidth="md" fullWidth onClose={onClose} open={open}>
-      <Scrollbar>
-        <Box sx={{ minWidth: 600 }}>
-          <DataGrid
-            autoHeight
-            checkboxSelection
-            getRowId={(node) => node.name}
-            rows={items}
-            columns={[
-              { field: 'id', hide: true },
-              {
-                field: 'name',
-                headerName: 'Redshift tables',
-                flex: 0.5,
-                editable: false
-              }
-            ]}
-            pageSize={filter.pageSize}
-            rowsPerPageOptions={[filter.pageSize]}
-            onPageChange={handlePageChange}
-            loading={loading}
-            onPageSizeChange={(pageSize) => {
-              setFilter({
-                ...filter,
-                pageSize: pageSize
-              });
-            }}
-            getRowHeight={() => 'auto'}
-            disableSelectionOnClick
-            onSelectionModelChange={(newSelectionModel) => {
-              setSelectedTables(newSelectionModel);
-            }}
-            components={{
-              LoadingOverlay: LinearProgress
-            }}
-            sx={{ wordWrap: 'break-word' }}
-          />
-        </Box>
-      </Scrollbar>
+      <Box sx={{ p: 3 }}>
+        <Typography
+          align="center"
+          color="textPrimary"
+          gutterBottom
+          variant="h5"
+        >
+          Add tables to dataset: {dataset.label}
+        </Typography>
+        <Divider />
+        <Scrollbar>
+          <Box sx={{ minWidth: 600 }}>
+            <DataGrid
+              autoHeight
+              checkboxSelection
+              getRowId={(node) => node.name}
+              rows={items}
+              columns={[
+                { field: 'id', hide: true },
+                {
+                  field: 'name',
+                  headerName: 'Redshift tables',
+                  flex: 0.5,
+                  editable: false
+                },
+                {
+                  field: 'alreadyAdded',
+                  headerName: 'Already added',
+                  flex: 0.5,
+                  editable: false
+                }
+              ]}
+              pageSize={filter.pageSize}
+              rowsPerPageOptions={[filter.pageSize]}
+              onPageChange={handlePageChange}
+              loading={loading}
+              onPageSizeChange={(pageSize) => {
+                setFilter({
+                  ...filter,
+                  pageSize: pageSize
+                });
+              }}
+              getRowHeight={() => 'auto'}
+              disableSelectionOnClick
+              onSelectionModelChange={(newSelectionModel) => {
+                setSelectedTables(newSelectionModel);
+              }}
+              sx={{ wordWrap: 'break-word' }}
+            />
+          </Box>
+        </Scrollbar>
+        <Button
+          color="primary"
+          startIcon={<PostAddIcon fontSize="small" />}
+          sx={{ m: 1 }}
+          onClick={addTables}
+          variant="contained"
+        >
+          Add Tables
+        </Button>
+      </Box>
     </Dialog>
   );
 };

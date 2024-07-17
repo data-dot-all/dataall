@@ -20,6 +20,21 @@ def import_redshift_dataset(context: Context, source, input=None):
     uri = input['environmentUri']
     return RedshiftDatasetService.import_redshift_dataset(uri=uri, admin_group=admin_group, data=input)
 
+def list_redshift_schema_dataset_tables(context: Context, source, datasetUri: str):
+    _required_param('datasetUri', datasetUri)
+    return RedshiftDatasetService.list_redshift_schema_dataset_tables(uri=datasetUri)
+
+def add_redshift_dataset_tables(context: Context, source, datasetUri: str, tables: [str]):
+    _required_param('datasetUri', datasetUri)
+    _required_param('tables', tables)
+    return RedshiftDatasetService.add_redshift_dataset_tables(uri=datasetUri, tables=tables)
+
+
+def delete_redshift_dataset_table(context: Context, source, datasetUri: str, rsTableUri: str):
+    _required_param('datasetUri', datasetUri)
+    _required_param('rsTableUri', rsTableUri)
+    return RedshiftDatasetService.delete_redshift_dataset_table(uri=datasetUri, rsTableUri=rsTableUri)
+
 
 def get_redshift_dataset(context, source, datasetUri: str):
     _required_param('datasetUri', datasetUri)
