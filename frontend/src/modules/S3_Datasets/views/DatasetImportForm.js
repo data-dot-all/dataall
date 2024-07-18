@@ -1,21 +1,21 @@
 import { LoadingButton } from '@mui/lab';
 import {
-  Autocomplete,
-  Box,
-  Breadcrumbs,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  CircularProgress,
-  Container,
-  FormHelperText,
-  Grid,
-  Link,
-  MenuItem,
-  TextField,
-  Typography
+    Autocomplete,
+    Box,
+    Breadcrumbs,
+    Button,
+    Card,
+    CardContent,
+    CardHeader,
+    Chip,
+    CircularProgress, Collapse,
+    Container,
+    FormHelperText,
+    Grid,
+    Link,
+    MenuItem, Switch,
+    TextField,
+    Typography
 } from '@mui/material';
 import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
@@ -23,6 +23,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   ArrowLeftIcon,
   ChevronRightIcon,
@@ -58,7 +59,10 @@ const DatasetImportForm = (props) => {
         )
       : ConfidentialityList
   );
-
+  const [showAdvancedControls, setShowAdvancedControl] = useState(false);
+  const [showExpirationMenu, setShowExpirationMenu] = useState(false);
+  const [expirationMenu] = useState(['Quarterly', 'Monthly']);
+  const [enableShareExpiration, setEnableShareExpiration] = useState(false);
   const topicsData = Topics.map((t) => ({ label: t, value: t }));
 
   const fetchEnvironments = useCallback(async () => {
@@ -113,6 +117,7 @@ const DatasetImportForm = (props) => {
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
+        await validateInput(values)
       const response = await client.mutate(
         importDataset({
           organizationUri: values.environment.organization.organizationUri,
@@ -154,6 +159,23 @@ const DatasetImportForm = (props) => {
       setSubmitting(false);
       dispatch({ type: SET_ERROR, error: err.message });
     }
+  }
+
+  const validateInput = async(values) =>{
+    // Validate of the values of the
+    if (values.minValidity > values.maxValidity){
+      throw new Error('Minimum allowed expiration cannot be greater than maximum allowed expiration');
+    }
+  }
+
+  const handleEnableShareExpiration = async() => {
+      // Check once this goes to enabled
+      // Enable the minimum and maximum validity of the share
+    console.log("Handling Enable Share Expiration")
+    setEnableShareExpiration(!enableShareExpiration);
+    setShowExpirationMenu(!enableShareExpiration);
+    return "";
+
   }
 
   if (loading) {
@@ -231,7 +253,10 @@ const DatasetImportForm = (props) => {
                 bucketName: '',
                 KmsKeyAlias: '',
                 confidentiality: '',
-                autoApprovalEnabled: false
+                autoApprovalEnabled: false,
+                expirationSetting: '',
+                minValidity: 0,
+                maxValidity: 0
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -261,7 +286,10 @@ const DatasetImportForm = (props) => {
                   : Yup.string(),
                 autoApprovalEnabled: Yup.boolean().required(
                   '*AutoApproval property is required'
-                )
+                ),
+                expirationSetting: Yup.string(),
+                minValidity: enableShareExpiration ? Yup.number().required("*Minimum allowed expiration cannot be negative") :  Yup.number(),
+                maxValidity: enableShareExpiration ? Yup.number().required("*Maximum allowed expiration cannot be negative") :  Yup.number()
               })}
               onSubmit={async (
                 values,
@@ -437,6 +465,89 @@ const DatasetImportForm = (props) => {
                           )}
                         </CardContent>
                       </Card>
+
+
+                      <Card sx={{ mt: 3 }}>
+                        <Box alignItems="center" display="flex" sx={{ p: 1 }}>
+                          <Box sx={{ flexGrow: 1 }}>
+                            <CardHeader title="Advanced Controls" />
+                          </Box>
+                          {/*<Button color="primary"*/}
+                          {/*        startIcon={<Article fontSize="small" />}*/}
+                          {/*        sx={{ m: 1 }}*/}
+                          {/*        variant="outlined"*/}
+                          {/*        onClick={() => {setShowAdvancedControl(!showAdvancedControls)}}*/}
+                          {/*        value="Collapse"> Collapse*/}
+                          {/*</Button>*/}
+                          <ExpandMoreIcon sx={{ m: 1 }}
+                          variant="outlined"
+                          onClick={() => {setShowAdvancedControl(!showAdvancedControls)}}
+                          />
+                        </Box>
+                        <Collapse in={showAdvancedControls}>
+                          <CardContent>
+                            <Box display="flex" sx={{ p: 1 }} alignItems="center">
+                            {/*<Stack alignItems="center" direction="row" gap={1}>*/}
+                              <Typography>Enable Share Expiration</Typography>
+                              <Switch checked={enableShareExpiration} onChange={handleEnableShareExpiration}/>
+                            {/*</Stack>*/}
+                            </Box>
+                            <Collapse in={showExpirationMenu}>
+                              <CardContent>
+                                <TextField
+                                 fullWidth
+                                error={Boolean(
+                                  touched.expirationSetting &&
+                                    errors.expirationSetting
+                                )}
+                                helperText={
+                                  touched.expirationSetting &&
+                                  errors.expirationSetting
+                                }
+                                label="Expiration Setting For Dataset"
+                                name="expirationSetting"
+                                onChange={handleChange}
+                                select
+                                value={values.expirationSetting}
+                                variant="outlined"
+                                >
+                                  {expirationMenu.map((c) => (
+                                <MenuItem key={c} value={c}>
+                                  {c}
+                                </MenuItem>
+                              ))}
+                                </TextField>
+
+                              </CardContent>
+                                <CardContent>
+                                  <TextField
+                                  error={Boolean(touched.minValidity && errors.minValidity)}
+                                  fullWidth
+                                  helperText={touched.minValidity && errors.minValidity}
+                                  label="Minimum allowed number of months / quarters"
+                                  name="minValidity"
+                                  onBlur={handleBlur}
+                                  onChange={handleChange}
+                                  variant="outlined"
+                                  inputProps={{ type: 'number'}}
+                                /></CardContent>
+                                <CardContent>
+                                  <TextField
+                                  error={Boolean(touched.maxValidity && errors.maxValidity)}
+                                  fullWidth
+                                  helperText={touched.maxValidity && errors.maxValidity}
+                                  label="Maximum allowed number of months / quarters"
+                                  name="maxValidity"
+                                  onBlur={handleBlur}
+                                  onChange={handleChange}
+                                  variant="outlined"
+                                  inputProps={{ type: 'number'}}
+                                /></CardContent>
+                            </Collapse>
+                          </CardContent>
+                        </Collapse>
+                      </Card>
+
                     </Grid>
                     <Grid item lg={5} md={5} xs={12}>
                       <Card sx={{ mb: 3 }}>
