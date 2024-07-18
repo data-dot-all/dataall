@@ -30,7 +30,35 @@ class RedshiftDatasetApiModuleInterface(ModuleInterface):
         ]
 
     def __init__(self):
+        from dataall.modules.vote.services.vote_service import add_vote_type
+        from dataall.modules.feed.api.registry import FeedRegistry, FeedDefinition
+        from dataall.modules.catalog.indexers.registry import GlossaryRegistry, GlossaryDefinition
+        from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
+
+        from dataall.modules.redshift_datasets.indexers.dataset_indexer import DatasetIndexer
+        from dataall.modules.redshift_datasets.indexers.table_indexer import DatasetTableIndexer
+        from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset, RedshiftTable
         import dataall.modules.redshift_datasets.api
+
+        FeedRegistry.register(FeedDefinition('RedshiftDatasetTable', RedshiftTable))
+        FeedRegistry.register(FeedDefinition('RedshiftDataset', RedshiftDataset))
+
+        GlossaryRegistry.register(
+            GlossaryDefinition(target_type='RedshiftDataset', object_type='RedshiftDataset', model=RedshiftDataset, reindexer=DatasetIndexer)
+        )
+
+        GlossaryRegistry.register(
+            GlossaryDefinition(
+                target_type='RedshiftDatasetTable',
+                object_type='RedshiftDatasetTable',
+                model=RedshiftTable,
+                reindexer=DatasetTableIndexer,
+            )
+        )
+
+        add_vote_type('redshiftdataset', DatasetIndexer)
+
+        #TODO:EnvironmentResourceManager.register(RedshiftDatasetRepository())
 
         log.info('API of Redshift datasets has been imported')
 

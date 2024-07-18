@@ -151,7 +151,7 @@ export const GlossarySearchResultItem = ({ hit }) => {
                 underline="hover"
                 color="textPrimary"
                 component={RouterLink}
-                to={`/console/redshift-datasets/${hit._id}/`} /*eslint-disable-line*/
+                to={`/console/redshift-datasets/${hit.datasetUri}/`} /*eslint-disable-line*/
                 variant="h6"
               >
                 {hit.label}

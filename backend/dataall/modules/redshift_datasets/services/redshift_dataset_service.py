@@ -7,8 +7,11 @@ from dataall.core.permissions.services.tenant_policy_service import TenantPolicy
 from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.vote.db.vote_repositories import VoteRepository
+from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
+
 
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 
 from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import (
     MANAGE_REDSHIFT_DATASETS,
@@ -92,14 +95,14 @@ class RedshiftDatasetService:
                 for k in data.keys():
                     if k not in ['stewards']:
                         setattr(dataset, k, data.get(k))
-                # TODO: move to datasetbase logic
-                # if data.get('stewards') and data.get('stewards') != dataset.stewards:
-                #     if data.get('stewards') != dataset.SamlAdminGroupName:
-                #         DatasetService._transfer_stewardship_to_new_stewards(session, dataset, data['stewards'])
-                #         dataset.stewards = data['stewards']
-                #     else:
-                #         DatasetService._transfer_stewardship_to_owners(session, dataset)
-                #         dataset.stewards = dataset.SamlAdminGroupName
+
+                if data.get('stewards') and data.get('stewards') != dataset.stewards:
+                    if data.get('stewards') != dataset.SamlAdminGroupName:
+                        RedshiftDatasetService._transfer_stewardship_to_new_stewards(session, dataset, data['stewards'])
+                        dataset.stewards = data['stewards']
+                    else:
+                        RedshiftDatasetService._transfer_stewardship_to_owners(session, dataset)
+                        dataset.stewards = dataset.SamlAdminGroupName
 
                 ResourcePolicyService.attach_resource_policy(
                     session=session,
@@ -108,10 +111,12 @@ class RedshiftDatasetService:
                     resource_uri=dataset.datasetUri,
                     resource_type=RedshiftDataset.__name__,
                 )
-                # TODO move to datasetsbase
-                # if data.get('terms'):
-                #     GlossaryRepository.set_glossary_terms_links(session, username, uri, 'RedshiftDataset', data.get('terms'))
-                #DatasetBaseRepository.update_dataset_activity(session, dataset, username)
+                if data.get('terms'):
+                    GlossaryRepository.set_glossary_terms_links(session, username, uri, 'RedshiftDataset', data.get('terms'))
+                    for table in RedshiftDatasetRepository.list_redshift_dataset_tables(session, dataset.datasetUri):
+                        GlossaryRepository.set_glossary_terms_links(session, username, table.rsTableUri, 'RedshiftDatasetTable',
+                                                                    data.get('terms'))
+                DatasetBaseRepository.update_dataset_activity(session, dataset, username)
 
             DatasetIndexer.upsert(session, dataset_uri=uri)
             return dataset
@@ -244,4 +249,33 @@ class RedshiftDatasetService:
     @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
     def get_dataset_upvotes(uri):
         with get_context().db_engine.scoped_session() as session:
-            return VoteRepository.count_upvotes(session, uri, target_type='redshift-dataset') or 0
+            return VoteRepository.count_upvotes(session, uri, target_type='redshiftdataset') or 0
+
+    @staticmethod
+    def _transfer_stewardship_to_owners(session, dataset):
+        env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
+        if dataset.stewards != env.SamlGroupName:
+            ResourcePolicyService.delete_resource_policy(
+                session=session,
+                group=dataset.stewards,
+                resource_uri=dataset.datasetUri,
+            )
+
+        return dataset
+
+    @staticmethod
+    def _transfer_stewardship_to_new_stewards(session, dataset, new_stewards):
+        if dataset.stewards != dataset.SamlAdminGroupName:
+            ResourcePolicyService.delete_resource_policy(
+                session=session,
+                group=dataset.stewards,
+                resource_uri=dataset.datasetUri,
+            )
+        ResourcePolicyService.attach_resource_policy(
+            session=session,
+            group=new_stewards,
+            permissions=REDSHIFT_DATASET_READ,
+            resource_uri=dataset.datasetUri,
+            resource_type=RedshiftDataset.__name__,
+        )
+        return dataset
