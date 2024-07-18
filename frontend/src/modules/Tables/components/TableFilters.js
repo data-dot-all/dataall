@@ -108,44 +108,44 @@ export const TableFilters = ({ table }) => {
 
   const fetchItems = useCallback(async () => {
     try {
-      // const response = await client.query(
-      //   listTableDataFilters({
-      //     filter: { ...filter, tableUri: table.tableUri }
-      //   })
-      // );
-      setItems({
-        count: 2,
-        page: 1,
-        pages: 1,
-        hasNext: false,
-        hasPrevious: false,
-        nodes: [
-          {
-            filterUri: 'filterUri1',
-            label: 'Name of filter',
-            name: 'Name of filter',
-            description: 'This is a description',
-            filterType: 'ROW',
-            includedCols: '-',
-            rowExpression: '(region=AMER) AND (language=EN)'
-          },
-          {
-            filterUri: 'filterUri2',
-            label: 'Name of filter',
-            name: 'Name of filter',
-            description:
-              'This is a lengthy description of a particular data filter that restrcits teh data access of the consumeing group to only a subset of columns in particular 5 columns that are the ones included and a part of the included Columns section of the table',
-            filterType: 'COLUMN',
-            includedCols: ['price', 'product_id', 'cost', 'purchase_count'],
-            rowExpression: '-'
-          }
-        ]
-      });
-      // if (!testResponse.errors) {
-      //   setItems(response.data.listTableDataFilters);
-      // } else {
-      //   dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      // }
+      const response = await client.query(
+        listTableDataFilters({
+          tableUri: table.tableUri, filter: filter
+        })
+      );
+      // setItems({
+      //   count: 2,
+      //   page: 1,
+      //   pages: 1,
+      //   hasNext: false,
+      //   hasPrevious: false,
+      //   nodes: [
+      //     {
+      //       filterUri: 'filterUri1',
+      //       label: 'Name of filter',
+      //       name: 'Name of filter',
+      //       description: 'This is a description',
+      //       filterType: 'ROW',
+      //       includedCols: '-',
+      //       rowExpression: '(region=AMER) AND (language=EN)'
+      //     },
+      //     {
+      //       filterUri: 'filterUri2',
+      //       label: 'Name of filter',
+      //       name: 'Name of filter',
+      //       description:
+      //         'This is a lengthy description of a particular data filter that restrcits teh data access of the consumeing group to only a subset of columns in particular 5 columns that are the ones included and a part of the included Columns section of the table',
+      //       filterType: 'COLUMN',
+      //       includedCols: ['price', 'product_id', 'cost', 'purchase_count'],
+      //       rowExpression: '-'
+      //     }
+      //   ]
+      // });
+      if (!response.errors) {
+        setItems(response.data.listTableDataFilters);
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
     } finally {
@@ -267,7 +267,7 @@ export const TableFilters = ({ table }) => {
                 columns={[
                   { field: 'id', hide: true },
                   {
-                    field: 'name',
+                    field: 'label',
                     headerName: 'Filter Name',
                     flex: 1,
                     editable: false

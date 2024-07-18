@@ -3,14 +3,17 @@ import logging
 from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.s3_datasets.db.dataset_table_data_filter_repositories import DatasetTableDataFilterRepository
+from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
+from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.s3_datasets.services.dataset_table_data_filter_enums import DataFilterType
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTableDataFilter
 from dataall.modules.s3_datasets.services.dataset_permissions import (
     CREATE_TABLE_DATA_FILTER,
     DELETE_TABLE_DATA_FILTER,
     LIST_TABLE_DATA_FILTERS,
 )
 from dataall.base.db import exceptions
+from dataall.modules.s3_datasets.aws.lf_data_filter_client import LakeFormationDataFilterClient
+
 
 log = logging.getLogger(__name__)
 
@@ -24,7 +27,7 @@ class DatasetTableDataFilterRequestValidationService:
     @staticmethod
     def validate_data_filter_type(data):
         DatasetTableDataFilterRequestValidationService._required_param(data.get('filterType'), 'filterType')
-        if data.get('filterType') not in DataFilterType:
+        if data.get('filterType') not in set(item.value for item in DataFilterType):
             raise exceptions.InvalidInput(
                 'filterType',
                 data.get('filterType'),
@@ -53,34 +56,48 @@ class DatasetTableDataFilterRequestValidationService:
 
 class DatasetTableDataFilterService:
     @staticmethod
+    def _get_table_uri_from_filter(session, uri):
+        data_filter = DatasetTableDataFilterRepository.get_data_filter_by_uri(session, filter_uri=uri)
+        return data_filter.tableUri
+
+    @staticmethod
     @ResourcePolicyService.has_resource_permission(CREATE_TABLE_DATA_FILTER)
     def create_table_data_filter(uri: str, data: dict):
         DatasetTableDataFilterRequestValidationService.validate_creation_data_filter_params(uri, data)
         context = get_context()
 
         with context.db_engine.scoped_session() as session:
-            data_filter = DatasetTableDataFilter(
-                tableUri=uri,
-                label=data.get('filterName'),
-                filterType=data.get('filterType'),
-                rowExpression=data.get('rowExpression') if data.get('filterType') == DataFilterType.ROW.value else None,
-                includedCols=data.get('includedCols')
-                if data.get('filterType') == DataFilterType.COLUMN.value
-                else None,
-                owner=context.username,
-            )
+            table = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
+            data_filter = DatasetTableDataFilterRepository.build_data_filter(session, context, table.tableUri, data)
 
+            # Create LF Filter
+            lf_client = LakeFormationDataFilterClient(table=table, dataset=dataset)
+            lf_client.create_table_row_filter(data_filter) if data.get('filterType') == DataFilterType.ROW.value else lf_client.create_table_column_filter(data_filter)
+
+            # Save to RDS
             DatasetTableDataFilterRepository.save(session, data_filter=data_filter)
         return data_filter
 
     @staticmethod
-    @ResourcePolicyService.has_resource_permission(DELETE_TABLE_DATA_FILTER)
+    @ResourcePolicyService.has_resource_permission(DELETE_TABLE_DATA_FILTER, parent_resource=_get_table_uri_from_filter)
     def delete_table_data_filter(uri: str):
         with get_context().db_engine.scoped_session() as session:
-            data_filter = DatasetTableDataFilterRepository.find_by_uri(session, uri=uri)
-            return DatasetTableDataFilterRepository.delete_table_data_filter(session, data_filter)
+            data_filter = DatasetTableDataFilterRepository.get_data_filter_by_uri(session, filter_uri=uri)
+
+            # TODO: Check if Shares before Delete
+
+            # Delete LF Filter
+            table = DatasetTableRepository.get_dataset_table_by_uri(session, data_filter.tableUri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
+            lf_client = LakeFormationDataFilterClient(table=table, dataset=dataset)
+            lf_client.delete_table_data_filter(data_filter)
+
+            # Delete from RDS
+            return DatasetTableDataFilterRepository.delete(session, data_filter)
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(LIST_TABLE_DATA_FILTERS)
     def list_table_data_filters(uri: str, data: dict):
-        return DatasetTableDataFilterRepository.paginated_data_filters(table_uri=uri, data=data)
+        with get_context().db_engine.scoped_session() as session:
+            return DatasetTableDataFilterRepository.paginated_data_filters(session, table_uri=uri, data=data)

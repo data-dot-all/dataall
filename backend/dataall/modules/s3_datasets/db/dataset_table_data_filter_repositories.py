@@ -2,12 +2,24 @@ import logging
 
 from dataall.base.db import exceptions
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTableDataFilter
+from dataall.modules.s3_datasets.services.dataset_table_data_filter_enums import DataFilterType
 from dataall.base.db import paginate
 
 logger = logging.getLogger(__name__)
 
 
 class DatasetTableDataFilterRepository:
+    @staticmethod
+    def build_data_filter(session, context, table_uri, data):
+        return DatasetTableDataFilter(
+            tableUri=table_uri,
+            label=data.get('filterName'),
+            filterType=data.get('filterType'),
+            rowExpression=data.get('rowExpression') if data.get('filterType') == DataFilterType.ROW.value else None,
+            includedCols=data.get('includedCols') if data.get('filterType') == DataFilterType.COLUMN.value else None,
+            owner=context.username,
+        )
+
     @staticmethod
     def save(session, data_filter: DatasetTableDataFilter):
         session.add(data_filter)
@@ -16,6 +28,7 @@ class DatasetTableDataFilterRepository:
     @staticmethod
     def delete(session, data_filter: DatasetTableDataFilter):
         session.delete(data_filter)
+        return True
 
     @staticmethod
     def get_data_filter_by_uri(session, filter_uri):

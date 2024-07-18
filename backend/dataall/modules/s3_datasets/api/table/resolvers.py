@@ -4,10 +4,9 @@ from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.s3_datasets.api.dataset.resolvers import get_dataset
 from dataall.base.api.context import Context
-from dataall.modules.s3_datasets.services.dataset_table_service import (
-    DatasetTableService,
-    DatasetTableDataFilterService,
-)
+from dataall.modules.s3_datasets.services.dataset_table_service import DatasetTableService
+from dataall.modules.s3_datasets.services.dataset_table_data_filter_service import DatasetTableDataFilterService
+
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 
 log = logging.getLogger(__name__)
@@ -72,4 +71,4 @@ def delete_table_data_filter(context: Context, source, filterUri: str = None):
 def list_table_data_filters(context: Context, source, tableUri: str = None, filter: dict = None):
     if not filter:
         filter = {'page': 1, 'pageSize': 5}
-    return DatasetTableDataFilterService.list_table_data_filter(uri=tableUri, data=filter)
+    return DatasetTableDataFilterService.list_table_data_filters(uri=tableUri, data=filter)
