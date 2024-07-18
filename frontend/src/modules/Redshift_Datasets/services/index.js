@@ -8,3 +8,4 @@ export * from './listRedshiftDatasetTables';
 export * from './listRedshiftConnectionSchemas';
 export * from './listRedshiftSchemaDatasetTables';
 export * from './listRedshiftSchemaTables';
+export * from './updateRedshiftDataset';

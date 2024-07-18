@@ -26,6 +26,23 @@ ImportRedshiftDatasetInput = gql.InputType(
 )
 
 
+ModifyRedshiftDatasetInput = gql.InputType(
+    name='ModifyRedshiftDatasetInput',
+    arguments=[
+        gql.Argument('label', gql.String),
+        gql.Argument('description', gql.String),
+        gql.Argument('tags', gql.ArrayType(gql.String)),
+        gql.Argument('topics', gql.ArrayType(gql.Ref('Topic'))),
+        gql.Argument('terms', gql.ArrayType(gql.String)),
+        gql.Argument('businessOwnerDelegationEmails', gql.ArrayType(gql.String)),
+        gql.Argument('businessOwnerEmail', gql.String),
+        gql.Argument('language', gql.Ref('Language')),
+        gql.Argument('confidentiality', gql.String),
+        gql.Argument(name='stewards', type=gql.String),
+        gql.Argument(name='autoApprovalEnabled', type=gql.Boolean),
+    ],
+)
+
 RedshiftDatasetTableFilter = gql.InputType(  # TODO: this filter should be generic in Core, very duplicated
     name='RedshiftDatasetTableFilter',
     arguments=[

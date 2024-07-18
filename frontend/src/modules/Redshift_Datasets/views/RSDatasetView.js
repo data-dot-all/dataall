@@ -1,14 +1,17 @@
 import {
   ForumOutlined,
   Info,
-  LockOpen,
+  //LockOpen,
   //ShareOutlined,
-  ViewArrayOutlined
+  ViewArrayOutlined,
+  Warning
 } from '@mui/icons-material';
 import {
   Box,
   Breadcrumbs,
   Button,
+  Card,
+  CardContent,
   CircularProgress,
   Container,
   Divider,
@@ -26,7 +29,7 @@ import { useNavigate } from 'react-router';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import {
   ChevronRightIcon,
-  DeleteObjectWithFrictionModal,
+  DeleteObjectModal,
   PencilAltIcon,
   UpVoteButton,
   useSettings
@@ -37,7 +40,7 @@ import { deleteRedshiftDataset, getRedshiftDataset } from '../services';
 // import { ShareBoxList } from 'modules/Shares';
 import { FeedComments } from 'modules/Shared';
 import { RedshiftDatasetTables, RedshiftDatasetOverview } from '../components';
-import { RequestAccessModal } from 'modules/Catalog/components';
+//import { RequestAccessModal } from 'modules/Catalog/components';
 
 const RSDatasetView = () => {
   const dispatch = useDispatch();
@@ -92,16 +95,16 @@ const RSDatasetView = () => {
     [client]
   );
 
-  const [isRequestAccessOpen, setIsRequestAccessOpen] = useState(false);
-  const [isOpeningModal, setIsOpeningModal] = useState(false);
-  const handleRequestAccessModalOpen = () => {
-    setIsOpeningModal(true);
-    setIsRequestAccessOpen(true);
-  };
-
-  const handleRequestAccessModalClose = () => {
-    setIsRequestAccessOpen(false);
-  };
+  // const [isRequestAccessOpen, setIsRequestAccessOpen] = useState(false);
+  // const [isOpeningModal, setIsOpeningModal] = useState(false);
+  // const handleRequestAccessModalOpen = () => {
+  //   setIsOpeningModal(true);
+  //   setIsRequestAccessOpen(true);
+  // };
+  //
+  // const handleRequestAccessModalClose = () => {
+  //   setIsRequestAccessOpen(false);
+  // };
   const reloadVotes = async () => {
     const response = await client.query(countUpVotes(params.uri, 'dataset'));
     if (!response.errors && response.data.countUpVotes !== null) {
@@ -200,7 +203,7 @@ const RSDatasetView = () => {
           <Grid container justifyContent="space-between" spacing={3}>
             <Grid item>
               <Typography color="textPrimary" variant="h5">
-                Dataset {dataset.label}
+                Redshift Dataset {dataset.label}
               </Typography>
               <Breadcrumbs
                 aria-label="breadcrumb"
@@ -230,7 +233,6 @@ const RSDatasetView = () => {
                 </Link>
               </Breadcrumbs>
             </Grid>
-
             <Grid item>
               <Box sx={{ m: -1 }}>
                 {isAdmin && (
@@ -272,31 +274,31 @@ const RSDatasetView = () => {
                     </Button>
                   </span>
                 )}
-                {isOpeningModal ? (
-                  <CircularProgress size={20} />
-                ) : (
-                  <Button
-                    color="primary"
-                    startIcon={<LockOpen size={15} />}
-                    onClick={handleRequestAccessModalOpen}
-                    type="button"
-                    sx={{ mt: 1, ml: 1 }}
-                    variant="outlined"
-                  >
-                    Request Access
-                  </Button>
-                )}
-                <RequestAccessModal
-                  onApply={handleRequestAccessModalClose}
-                  onClose={handleRequestAccessModalClose}
-                  open={isRequestAccessOpen}
-                  stopLoader={() => setIsOpeningModal(false)}
-                  hit={{
-                    _id: dataset.datasetUri,
-                    resourceKind: 'dataset',
-                    label: dataset.label
-                  }}
-                />
+                {/*{isOpeningModal ? (*/}
+                {/*  <CircularProgress size={20} />*/}
+                {/*) : (*/}
+                {/*  <Button*/}
+                {/*    color="primary"*/}
+                {/*    startIcon={<LockOpen size={15} />}*/}
+                {/*    onClick={handleRequestAccessModalOpen}*/}
+                {/*    type="button"*/}
+                {/*    sx={{ mt: 1, ml: 1 }}*/}
+                {/*    variant="outlined"*/}
+                {/*  >*/}
+                {/*    Request Access*/}
+                {/*  </Button>*/}
+                {/*)}*/}
+                {/*<RequestAccessModal*/}
+                {/*  onApply={handleRequestAccessModalClose}*/}
+                {/*  onClose={handleRequestAccessModalClose}*/}
+                {/*  open={isRequestAccessOpen}*/}
+                {/*  stopLoader={() => setIsOpeningModal(false)}*/}
+                {/*  hit={{*/}
+                {/*    _id: dataset.datasetUri,*/}
+                {/*    resourceKind: 'dataset',*/}
+                {/*    label: dataset.label*/}
+                {/*  }}*/}
+                {/*/>*/}
               </Box>
             </Grid>
           </Grid>
@@ -335,13 +337,23 @@ const RSDatasetView = () => {
         </Container>
       </Box>
       {isAdmin && (
-        <DeleteObjectWithFrictionModal
+        <DeleteObjectModal
           objectName={dataset.label}
           onApply={handleDeleteObjectModalClose}
           onClose={handleDeleteObjectModalClose}
           open={isDeleteObjectModalOpen}
           deleteFunction={removeDataset}
-          isAWSResource
+          deleteMessage={
+            <Card>
+              <CardContent>
+                <Typography gutterBottom variant="body2">
+                  <Warning /> Redshift Dataset will be deleted from data.all
+                  catalog, but its tables and schema will still be available in
+                  Amazon Redshift.
+                </Typography>
+              </CardContent>
+            </Card>
+          }
         />
       )}
       {openFeed && (

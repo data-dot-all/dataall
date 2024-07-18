@@ -312,7 +312,7 @@ export const RedshiftDatasetTables = (props) => {
               <CardContent>
                 <Typography gutterBottom variant="body2">
                   <Warning /> Redshift Table will be deleted from data.all
-                  catalog, but will still be available on Amazon Redshift.
+                  catalog, but will still be available in Amazon Redshift.
                 </Typography>
               </CardContent>
             </Card>

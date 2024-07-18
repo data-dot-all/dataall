@@ -13,6 +13,8 @@ from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
 from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import (
     MANAGE_REDSHIFT_DATASETS,
     IMPORT_REDSHIFT_DATASET,
+    UPDATE_REDSHIFT_DATASET,
+    DELETE_REDSHIFT_DATASET,
     GET_REDSHIFT_DATASET,
     REDSHIFT_DATASET_ALL,
     REDSHIFT_DATASET_READ,
@@ -75,6 +77,71 @@ class RedshiftDatasetService:
                 )
 
         return dataset
+    @staticmethod
+    # @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    # @ResourcePolicyService.has_resource_permission(UPDATE_REDSHIFT_DATASET)
+    def update_redshift_dataset(uri, data: dict):
+        context = get_context()
+        username = context.username
+        with context.db_engine.scoped_session() as session:
+            dataset: RedshiftDataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, uri)
+            if data and isinstance(data, dict):
+                for k in data.keys():
+                    if k not in ['stewards']:
+                        setattr(dataset, k, data.get(k))
+                # TODO: move to datasetbase logic
+                # if data.get('stewards') and data.get('stewards') != dataset.stewards:
+                #     if data.get('stewards') != dataset.SamlAdminGroupName:
+                #         DatasetService._transfer_stewardship_to_new_stewards(session, dataset, data['stewards'])
+                #         dataset.stewards = data['stewards']
+                #     else:
+                #         DatasetService._transfer_stewardship_to_owners(session, dataset)
+                #         dataset.stewards = dataset.SamlAdminGroupName
+
+                ResourcePolicyService.attach_resource_policy(
+                    session=session,
+                    group=dataset.SamlAdminGroupName,
+                    permissions=REDSHIFT_DATASET_ALL,
+                    resource_uri=dataset.datasetUri,
+                    resource_type=RedshiftDataset.__name__,
+                )
+                # TODO move to datasetsbase
+                # if data.get('terms'):
+                #     GlossaryRepository.set_glossary_terms_links(session, username, uri, 'RedshiftDataset', data.get('terms'))
+                #DatasetBaseRepository.update_dataset_activity(session, dataset, username)
+
+            #TODO: DatasetIndexer.upsert(session, dataset_uri=uri)
+            return dataset
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    @ResourcePolicyService.has_resource_permission(DELETE_REDSHIFT_DATASET)
+    def delete_redshift_dataset(uri):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            dataset: RedshiftDataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, uri)
+
+            # TODO: when adding sharing, add check_on_delete for shared items
+            tables: [RedshiftTable] = RedshiftDatasetRepository.list_redshift_dataset_tables(session, dataset.datasetUri)
+            for table in tables:
+                # TODO: delete from catalog
+                session.delete(table)
+
+            ResourcePolicyService.delete_resource_policy(
+                session=session, resource_uri=uri, group=dataset.SamlAdminGroupName
+            )
+            env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
+            if dataset.SamlAdminGroupName != env.SamlGroupName:
+                ResourcePolicyService.delete_resource_policy(session=session, resource_uri=uri, group=env.SamlGroupName)
+            if dataset.stewards:
+                ResourcePolicyService.delete_resource_policy(session=session, resource_uri=uri, group=dataset.stewards)
+
+            # TODO: delete from catalog
+            # TODO: DatasetService.delete_dataset_term_links(session, uri)
+            # todo: VoteRepository.delete_votes(session, dataset.datasetUri, 'dataset')
+            session.delete(dataset)
+            session.commit()
+            return True
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)

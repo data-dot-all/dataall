@@ -20,6 +20,15 @@ def import_redshift_dataset(context: Context, source, input=None):
     uri = input['environmentUri']
     return RedshiftDatasetService.import_redshift_dataset(uri=uri, admin_group=admin_group, data=input)
 
+def update_redshift_dataset(context: Context, source, datasetUri: str, input: dict):
+    _required_param('datasetUri', datasetUri)
+    return RedshiftDatasetService.update_redshift_dataset(uri=datasetUri, data=input)
+
+def delete_redshift_dataset(context: Context, source, datasetUri: str):
+    _required_param('datasetUri', datasetUri)
+    # TODO: validate input
+    return RedshiftDatasetService.delete_redshift_dataset(uri=datasetUri)
+
 def list_redshift_schema_dataset_tables(context: Context, source, datasetUri: str):
     _required_param('datasetUri', datasetUri)
     return RedshiftDatasetService.list_redshift_schema_dataset_tables(uri=datasetUri)
