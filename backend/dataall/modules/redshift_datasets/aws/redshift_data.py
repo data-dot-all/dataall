@@ -144,6 +144,10 @@ class RedshiftData:
             log.error(e)
             raise e
 
+def redshift_data_client(account_id: str, region: str, connection: RedshiftConnection) -> RedshiftData:
+    """Factory method to retrieve the client to send request to AWS"""
+    return RedshiftData(account_id, region, connection)
+
     # TODO IT WILL BE USED IN SHARING
     # def create_datashare(self, datashare: str):
     #     """
@@ -245,3 +249,5 @@ class RedshiftData:
     #         )
     #         raise e
     #
+
+

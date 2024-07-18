@@ -32,3 +32,7 @@ class RedshiftServerless:
         except ClientError as e:
             log.error(e)
             raise e
+
+def redshift_serverless_client(account_id: str, region: str, role=None) -> RedshiftServerless:
+    """Factory method to retrieve the client to send request to AWS"""
+    return RedshiftServerless(account_id, region, role)
