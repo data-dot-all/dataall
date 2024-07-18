@@ -64,6 +64,8 @@ export const AddTablesModal = (props) => {
         },
         variant: 'success'
       });
+      fetchItems();
+      setSelectedTables(null);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -154,7 +156,7 @@ export const AddTablesModal = (props) => {
                 setSelectedTables(newSelectionModel);
               }}
               sx={{
-                wordWrap: 'break-word', //TODO: create a generic styled datagrid to be used across features
+                wordWrap: 'break-word',
                 '& .MuiDataGrid-row': {
                   borderBottom: '1px solid rgba(145, 158, 171, 0.24)'
                 },

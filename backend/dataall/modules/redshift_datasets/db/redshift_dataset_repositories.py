@@ -6,10 +6,6 @@ from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db import paginate
 from dataall.base.db.exceptions import ObjectNotFound
-from dataall.base.utils.naming_convention import (
-    NamingConventionService,
-    NamingConventionPattern,
-)
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification, Language
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset, RedshiftTable
@@ -103,6 +99,10 @@ class RedshiftDatasetRepository(EnvironmentResource):
     def paginated_redshift_dataset_tables(session, dataset_uri, data=None) -> dict:
         query = RedshiftDatasetRepository._query_redshift_dataset_tables(session, dataset_uri, data)
         return paginate(query=query, page_size=data.get('pageSize', 10), page=data.get('page', 1)).to_dict()
+
+    @staticmethod
+    def count_dataset_tables(session, dataset_uri) -> int:
+        return RedshiftDatasetRepository._query_redshift_dataset_tables(session, dataset_uri).count()
 
     @staticmethod
     def get_redshift_table_by_uri(session, table_uri) -> RedshiftTable:

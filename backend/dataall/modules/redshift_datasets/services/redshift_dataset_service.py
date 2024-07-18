@@ -23,6 +23,8 @@ from dataall.modules.redshift_datasets.db.redshift_dataset_repositories import R
 from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset, RedshiftTable
 from dataall.modules.redshift_datasets.aws.redshift_data import RedshiftData
+from dataall.modules.redshift_datasets.indexers.dataset_indexer import DatasetIndexer
+from dataall.modules.redshift_datasets.indexers.table_indexer import DatasetTableIndexer
 
 
 log = logging.getLogger(__name__)
@@ -66,15 +68,16 @@ class RedshiftDatasetService:
                     resource_uri=dataset.datasetUri,
                     resource_type=RedshiftDataset.__name__,
                 )
-            # DatasetIndexer.upsert(session=session, dataset_uri=dataset.datasetUri) #TODO: UNCOMMENT
+            DatasetIndexer.upsert(session=session, dataset_uri=dataset.datasetUri)
 
             for table in data.get('tables', []):
-                RedshiftDatasetRepository.create_redshift_table(
+                rs_table = RedshiftDatasetRepository.create_redshift_table(
                     session=session,
                     username=context.username,
                     dataset_uri=dataset.datasetUri,
                     data={'name': table},
                 )
+                DatasetTableIndexer.upsert(session=session, table_uri=rs_table.rsTableUri)
 
         return dataset
     @staticmethod
@@ -110,7 +113,7 @@ class RedshiftDatasetService:
                 #     GlossaryRepository.set_glossary_terms_links(session, username, uri, 'RedshiftDataset', data.get('terms'))
                 #DatasetBaseRepository.update_dataset_activity(session, dataset, username)
 
-            #TODO: DatasetIndexer.upsert(session, dataset_uri=uri)
+            DatasetIndexer.upsert(session, dataset_uri=uri)
             return dataset
 
     @staticmethod
@@ -124,7 +127,7 @@ class RedshiftDatasetService:
             # TODO: when adding sharing, add check_on_delete for shared items
             tables: [RedshiftTable] = RedshiftDatasetRepository.list_redshift_dataset_tables(session, dataset.datasetUri)
             for table in tables:
-                # TODO: delete from catalog
+                DatasetTableIndexer.delete_doc(doc_id=table.rsTableUri)
                 session.delete(table)
 
             ResourcePolicyService.delete_resource_policy(
@@ -136,7 +139,7 @@ class RedshiftDatasetService:
             if dataset.stewards:
                 ResourcePolicyService.delete_resource_policy(session=session, resource_uri=uri, group=dataset.stewards)
 
-            # TODO: delete from catalog
+            DatasetTableIndexer.delete_doc(doc_id=dataset.datasetUri)
             # TODO: DatasetService.delete_dataset_term_links(session, uri)
             # todo: VoteRepository.delete_votes(session, dataset.datasetUri, 'dataset')
             session.delete(dataset)
@@ -150,13 +153,16 @@ class RedshiftDatasetService:
         context = get_context()
         datasetUri = uri
         with context.db_engine.scoped_session() as session:
+            dataset_tables = RedshiftDatasetRepository.list_redshift_dataset_tables(session, datasetUri)
+            tables = [new_t for new_t in tables if new_t not in [t.name for t in dataset_tables]]
             for table in tables:
-                RedshiftDatasetRepository.create_redshift_table(
+                rs_table = RedshiftDatasetRepository.create_redshift_table(
                     session=session,
                     username=context.username,
                     dataset_uri=datasetUri,
                     data={'name': table},
                 )
+                DatasetTableIndexer.upsert(session=session, table_uri=rs_table.rsTableUri)
         return True
 
     @staticmethod
@@ -166,6 +172,7 @@ class RedshiftDatasetService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             table: RedshiftTable = RedshiftDatasetRepository.get_redshift_table_by_uri(session, rsTableUri)
+            DatasetTableIndexer.delete_doc(doc_id=table.rsTableUri)
             session.delete(table)
             session.commit()
         return True
