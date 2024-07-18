@@ -8,7 +8,7 @@ import {
   Typography
 } from '@mui/material';
 import PostAddIcon from '@mui/icons-material/PostAdd';
-import { DataGrid } from '@mui/x-data-grid';
+import { DataGrid, GridRowParams } from '@mui/x-data-grid';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { useSnackbar } from 'notistack';
@@ -49,28 +49,25 @@ export const AddTablesModal = (props) => {
     setLoading(false);
   }, [client, dispatch, dataset]);
 
-  const addTables = useCallback(
-    async (item) => {
-      const response = await client.mutate(
-        addRedshiftDatasetTables({
-          datasetUri: dataset.datasetUri,
-          tables: selectedTables
-        })
-      );
-      if (!response.errors) {
-        enqueueSnackbar('Item added', {
-          anchorOrigin: {
-            horizontal: 'right',
-            vertical: 'top'
-          },
-          variant: 'success'
-        });
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-    },
-    [client, dispatch]
-  );
+  const addTables = async (selected_tables) => {
+    const response = await client.mutate(
+      addRedshiftDatasetTables({
+        datasetUri: dataset.datasetUri,
+        tables: selected_tables
+      })
+    );
+    if (!response.errors) {
+      enqueueSnackbar('Tables added', {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'success'
+      });
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+  };
 
   useEffect(() => {
     if (client && dataset) {
@@ -121,6 +118,9 @@ export const AddTablesModal = (props) => {
             <DataGrid
               autoHeight
               checkboxSelection
+              isRowSelectable={(params: GridRowParams) =>
+                params.row.alreadyAdded === 'false'
+              }
               getRowId={(node) => node.name}
               rows={items}
               columns={[
@@ -134,7 +134,7 @@ export const AddTablesModal = (props) => {
                 {
                   field: 'alreadyAdded',
                   headerName: 'Already added',
-                  flex: 0.5,
+                  flex: 0.2,
                   editable: false
                 }
               ]}
@@ -153,7 +153,15 @@ export const AddTablesModal = (props) => {
               onSelectionModelChange={(newSelectionModel) => {
                 setSelectedTables(newSelectionModel);
               }}
-              sx={{ wordWrap: 'break-word' }}
+              sx={{
+                wordWrap: 'break-word', //TODO: create a generic styled datagrid to be used across features
+                '& .MuiDataGrid-row': {
+                  borderBottom: '1px solid rgba(145, 158, 171, 0.24)'
+                },
+                '& .MuiDataGrid-columnHeaders': {
+                  borderBottom: 0.5
+                }
+              }}
             />
           </Box>
         </Scrollbar>
@@ -161,8 +169,11 @@ export const AddTablesModal = (props) => {
           color="primary"
           startIcon={<PostAddIcon fontSize="small" />}
           sx={{ m: 1 }}
-          onClick={addTables}
+          onClick={() => {
+            addTables(selectedTables);
+          }}
           variant="contained"
+          disabled={!selectedTables || selectedTables.length === 0}
         >
           Add Tables
         </Button>

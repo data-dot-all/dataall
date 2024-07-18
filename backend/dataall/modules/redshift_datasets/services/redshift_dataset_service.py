@@ -151,16 +151,17 @@ class RedshiftDatasetService:
     def list_redshift_schema_dataset_tables(uri):
         with get_context().db_engine.scoped_session() as session:
             dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, uri)
-            dataset_tables = RedshiftDatasetRepository.list_redshift_dataset_tables(session, dataset.datasetUri)
+            dataset_tables_names = [t.name for t in RedshiftDatasetRepository.list_redshift_dataset_tables(session, dataset.datasetUri)]
             connection = RedshiftConnectionRepository.find_redshift_connection(session, dataset.connectionUri)
             environment = EnvironmentService.get_environment_by_uri(session, connection.environmentUri)
             tables = RedshiftData(
                 account_id=environment.AwsAccountId, region=environment.region, connection=connection
             ).list_redshift_tables(dataset.schema)
             for table in tables:
-                if table['name'] in [t['name'] for t in dataset_tables]:
-                    table['already_added'] = True
-            log.info(f'Response: {tables}')
+                if table['name'] in dataset_tables_names:
+                    table.update({'alreadyAdded': True})
+                else:
+                    table.update({'alreadyAdded': False})
             return tables
 
 

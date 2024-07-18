@@ -74,6 +74,7 @@ export const RedshiftDatasetTables = (props) => {
   };
   const handleAddTablesModalClose = () => {
     setIsAddTablesModalOpen(false);
+    fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
   };
 
   const handleTableSchemaModalOpen = () => {

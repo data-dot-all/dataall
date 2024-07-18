@@ -6,7 +6,7 @@ export const listRedshiftSchemaDatasetTables = ({ datasetUri }) => ({
   },
   query: gql`
     query listRedshiftSchemaDatasetTables($datasetUri: String!) {
-      listRedshiftSchemaTables(datasetUri: $datasetUri) {
+      listRedshiftSchemaDatasetTables(datasetUri: $datasetUri) {
         name
         type
         alreadyAdded
