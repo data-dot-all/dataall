@@ -73,7 +73,9 @@ class DatasetTableDataFilterService:
 
             # Create LF Filter
             lf_client = LakeFormationDataFilterClient(table=table, dataset=dataset)
-            lf_client.create_table_row_filter(data_filter) if data.get('filterType') == DataFilterType.ROW.value else lf_client.create_table_column_filter(data_filter)
+            lf_client.create_table_row_filter(data_filter) if data.get(
+                'filterType'
+            ) == DataFilterType.ROW.value else lf_client.create_table_column_filter(data_filter)
 
             # Save to RDS
             DatasetTableDataFilterRepository.save(session, data_filter=data_filter)

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-export const createTableDataFilter = ({tableUri, input}) => ({
+export const createTableDataFilter = ({ tableUri, input }) => ({
   variables: {
     tableUri,
     input

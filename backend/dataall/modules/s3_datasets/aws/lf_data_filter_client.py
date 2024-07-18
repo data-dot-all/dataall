@@ -18,21 +18,23 @@ class LakeFormationDataFilterClient:
         self._client = aws_session.client('lakeformation', region_name=table.region)
         self._table = table
 
-
     def delete_table_data_filter(self, data_filter: DatasetTableDataFilter):
-        return self._client.delete_data_cells_filter(
-          TableCatalogId=self._table.AWSAccountId,
-          DatabaseName=self._table.GlueDatabaseName,
-          TableName=self._table.name,
-          Name=data_filter.label
-        )
+        try:
+            self._client.delete_data_cells_filter(
+                TableCatalogId=self._table.AWSAccountId,
+                DatabaseName=self._table.GlueDatabaseName,
+                TableName=self._table.name,
+                Name=data_filter.label,
+            )
+        except self._client.exceptions.EntityNotFoundException:
+            log.info(f'Data filter {data_filter.label} not found, passing...')
 
     def create_table_row_filter(self, data_filter: DatasetTableDataFilter):
         RowFilter = {
             'RowFilter': {
                 'FilterExpression': data_filter.rowExpression,
             },
-            'ColumnWildcard': {},
+            'ColumnWildcard': {'ExcludedColumnNames': []},
         }
         self._create_table_data_filter(data_filter, RowFilter)
 

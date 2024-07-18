@@ -110,7 +110,8 @@ export const TableFilters = ({ table }) => {
     try {
       const response = await client.query(
         listTableDataFilters({
-          tableUri: table.tableUri, filter: filter
+          tableUri: table.tableUri,
+          filter: filter
         })
       );
       // setItems({

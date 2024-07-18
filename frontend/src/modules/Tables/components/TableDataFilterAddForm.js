@@ -273,23 +273,19 @@ export const TableDataFilterAddForm = (props) => {
         rowExpressionString = null;
       } else if (values.filterType === 'ROW') {
         includedColumns = null;
-  
-        rowExpressionString = rowExpressionRows
-          .map(
-            (row) => {
-              const c = columns.find((col) => col.name === row.columnName);
-              let usrVal;
-              if (!row.userValue) {
-                usrVal = '';
-              } else if (stringLikeDataTypes.includes(c.columnType)) {
-                usrVal = '\'' + row.userValue + '\'';
-              } else {
-                usrVal = row.userValue;
-              }
-              return '\"' + row.columnName + '\"' + ' ' + row.operator + ' ' + usrVal;
-            }
 
-          )
+        rowExpressionString = rowExpressionRows
+          .map((row) => {
+            let usrVal;
+            if (!row.userValue) {
+              usrVal = '';
+            } else {
+              usrVal = row.userValue;
+            }
+            return (
+              '"' + row.columnName + '"' + ' ' + row.operator + ' ' + usrVal
+            );
+          })
           .join(' OR ');
       }
 
