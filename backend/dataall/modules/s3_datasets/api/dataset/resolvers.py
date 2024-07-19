@@ -153,10 +153,10 @@ def list_datasets_owned_by_env_group(
         filter = {}
     return DatasetService.list_datasets_owned_by_env_group(environmentUri, groupUri, filter)
 
-def generate_metadata(context : Context, source: S3Dataset, resourceUri):
-    if not resourceUri: #raise error
-        return None
-    return DatasetTableService.generate_metadata(resourceUri=resourceUri)
+def generate_metadata(context : Context, source: S3Dataset, resourceUri, type, version):
+    RequestValidator.validate_generation_request(data=resourceUri)
+
+    return DatasetTableService.generate_metadata(resourceUri=resourceUri,type=type, version=version)
 
 class RequestValidator:
     @staticmethod
@@ -169,10 +169,14 @@ class RequestValidator:
             raise RequiredParameter('group')
         if not data.get('label'):
             raise RequiredParameter('label')
+    
         ConfidentialityClassification.validate_confidentiality_level(data.get('confidentiality', ''))
         if len(data['label']) > 52:
             raise InvalidInput('Dataset name', data['label'], 'less than 52 characters')
-
+    @staticmethod
+    def validate_generation_request(data):
+        if not data:
+            raise RequiredParameter(data)
     @staticmethod
     def validate_import_request(data):
         RequestValidator.validate_creation_request(data)

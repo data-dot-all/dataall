@@ -273,5 +273,10 @@ class DatasetRepository(EnvironmentResource):
         if data.get('imported'):
             dataset.KmsAlias = data.get('KmsKeyAlias') if data.get('KmsKeyAlias') else 'SSE-S3'
 
-    
+    @staticmethod
+    def get_dataset_table_by_uri(session, table_uri) -> DatasetTable:
+        table: DatasetTable = session.query(DatasetTable).get(table_uri)
+        if not table:
+            raise ObjectNotFound('DatasetTable', table_uri)
+        return table
         

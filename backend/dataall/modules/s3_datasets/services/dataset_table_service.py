@@ -178,8 +178,9 @@ class DatasetTableService:
         )
     @staticmethod 
     # type='table', version='0'
-    def generate_metadata(resourceUri):
+    def generate_metadata(resourceUri, type, version):
        context = get_context()
        with context.db_engine.scoped_session() as session:
-            table_name, table_columns, query_result = DatasetColumnRepository.get_table_info_metadata_generation(session, resourceUri)
-            return BedrockClient(query_result.AWSAccountId,'us-east-1').generate_metadata(table_name,table_columns)
+            table = DatasetRepository.get_dataset_table_by_uri(session, resourceUri)
+            table_column = DatasetColumnRepository.get_table_info_metadata_generation(session, resourceUri)
+            return BedrockClient(table_column.AWSAccountId,'us-east-1').generate_metadata(table, table_column)
