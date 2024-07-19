@@ -9,6 +9,9 @@ import {
 import SecurityIcon from '@mui/icons-material/Security';
 import { LoadingButton } from '@mui/lab';
 import {
+  ListItemText,
+  Menu,
+  MenuItem,
   Box,
   Breadcrumbs,
   Button,
@@ -30,11 +33,13 @@ import {
   Tooltip,
   Typography
 } from '@mui/material';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import CircularProgress from '@mui/material/CircularProgress';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { useTheme } from '@mui/styles';
 import { useSnackbar } from 'notistack';
 import * as PropTypes from 'prop-types';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router';
@@ -69,7 +74,8 @@ import {
   ShareItemsSelectorModal,
   ShareRejectModal,
   UpdateRejectReason,
-  UpdateRequestReason
+  UpdateRequestReason,
+  ShareItemFilterModal
 } from '../components';
 import { generateShareItemLabel } from 'utils';
 import { ShareLogs } from '../components/ShareLogs';
@@ -92,6 +98,8 @@ function ShareViewHeader(props) {
   const [submitting, setSubmitting] = useState(false);
   const [isRejectShareModalOpen, setIsRejectShareModalOpen] = useState(false);
   const [openLogsModal, setOpenLogsModal] = useState(null);
+  const anchorRef = useRef(null);
+  const [openMenu, setOpenMenu] = useState(false);
 
   const [isSubmitShareModalOpen, setIsSubmitShareModalOpen] = useState(false);
 
@@ -167,6 +175,14 @@ function ShareViewHeader(props) {
 
   const handleSubmitShareModalClose = () => {
     setIsSubmitShareModalOpen(false);
+  };
+
+  const handleApproveMenuOpen = () => {
+    setOpenMenu(true);
+  };
+
+  const handleApproveMenuClose = () => {
+    setOpenMenu(false);
   };
 
   const accept = async () => {
@@ -295,13 +311,55 @@ function ShareViewHeader(props) {
                         loading={accepting}
                         color="success"
                         startIcon={<CheckCircleOutlined />}
+                        endIcon={<KeyboardArrowDownIcon />}
                         sx={{ m: 1 }}
-                        onClick={accept}
+                        onClick={handleApproveMenuOpen}
+                        ref={anchorRef}
                         type="button"
                         variant="outlined"
                       >
                         Approve
                       </LoadingButton>
+                      <Menu
+                        anchorEl={anchorRef.current}
+                        anchorOrigin={{
+                          horizontal: 'left',
+                          vertical: 'top'
+                        }}
+                        onClose={handleApproveMenuClose}
+                        open={openMenu}
+                        PaperProps={{
+                          sx: {
+                            maxWidth: '100%',
+                            width: 256
+                          }
+                        }}
+                        transformOrigin={{
+                          horizontal: 'left',
+                          vertical: 'top'
+                        }}
+                      >
+                        <MenuItem
+                          onClick={() => {
+                            accept();
+                          }}
+                        >
+                          <ListItemText>Approve</ListItemText>
+                        </MenuItem>
+                        {sharedItems.nodes
+                          .map((item) => item.itemType)
+                          .includes('Table') && (
+                          <MenuItem
+                            onClick={() => {
+                              accept();
+                            }}
+                          >
+                            <ListItemText>
+                              Approve w/ Table Filters
+                            </ListItemText>
+                          </MenuItem>
+                        )}
+                      </Menu>
                       <LoadingButton
                         loading={rejecting}
                         color="error"
@@ -426,6 +484,15 @@ export function SharedItem(props) {
     fetchItem
   } = props;
   const [isRemovingItem, setIsRemovingItem] = useState(false);
+  const [isFilterModalOpenUri, setIsFilterModalOpenUri] = useState(0);
+
+  const handleFilterModalClose = () => {
+    setIsFilterModalOpenUri(0);
+  };
+
+  const handleFilterModalOpen = (uri) => {
+    setIsFilterModalOpenUri(uri);
+  };
 
   const removeItemFromShareObject = async () => {
     setIsRemovingItem(true);
@@ -482,6 +549,29 @@ export function SharedItem(props) {
               >
                 Delete
               </Button>
+            )}
+            {/* If item status is PENDINGAPPROVAL and is of type table then have a button the is 'Assign Filters' */}
+            {item.status === 'PendingApproval' && item.itemType === 'Table' && (
+              <Button
+                color="primary"
+                startIcon={<FilterAltIcon fontSize="small" />}
+                sx={{ m: 1 }}
+                variant="outlined"
+                onClick={() => {
+                  handleFilterModalOpen(item.shareItemUri);
+                }}
+              >
+                Assign Filters
+              </Button>
+            )}
+            {isFilterModalOpenUri === item.shareItemUri && (
+              <ShareItemFilterModal
+                item={item}
+                onApply={() => handleFilterModalClose()}
+                onClose={() => handleFilterModalClose()}
+                reloadItems={fetchShareItems}
+                open={isFilterModalOpenUri === item.shareItemUri}
+              />
             )}
           </>
         )}

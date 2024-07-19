@@ -410,3 +410,13 @@ class S3ShareObjectRepository:
             .first()
         )
         return share_object
+
+    @staticmethod
+    def update_share_item_filters(
+        session,
+        share_item: str,
+        filterUris: list,
+    ) -> bool:
+        share_item.filterUris = filterUris
+        session.commit()
+        return True

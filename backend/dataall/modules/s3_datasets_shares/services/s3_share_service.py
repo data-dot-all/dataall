@@ -260,3 +260,15 @@ class S3ShareService:
             account_id=targetEnvAwsAccountId, database=old_shared_db_name, region=targetEnvRegion
         ).get_glue_database()
         return old_shared_db_name if database else GlueDatabaseName + '_shared'
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(GET_SHARE_OBJECT, parent_resource=ShareItemService._get_share_uri)
+    def update_filters_table_share_item(uri: str, filterUris: list):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            update_share_item_filters
+            share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
+            if share_item:
+                S3ShareObjectRepository.update_share_item_filters(share_item, filterUris)
+                return True
+            raise Exception('Share item not found')

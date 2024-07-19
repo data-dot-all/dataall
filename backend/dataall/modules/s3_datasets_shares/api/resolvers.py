@@ -72,3 +72,10 @@ def resolve_shared_db_name(context: Context, source, **kwargs):
     return S3ShareService.resolve_shared_db_name(
         source.GlueDatabaseName, source.shareUri, source.targetEnvAwsAccountId, source.targetEnvRegion
     )
+
+
+def update_filters_table_share_item(context: Context, source, input):
+    if shareItemUri := input.get('shareItemUri') is None:
+        RequiredParameter('shareItemUri')
+    filterUris = input.get('filterUris') or []
+    return S3ShareService.update_filters_table_share_item(uri=shareItemUri, filterUris=filterUris)
