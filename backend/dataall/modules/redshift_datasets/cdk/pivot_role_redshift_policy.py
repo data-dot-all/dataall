@@ -88,18 +88,18 @@ class RedshiftDatasetsPivotRole(PivotRoleStatementSet):
                         resources=cluster_arns + workgroup_arns,
                     )
                 )
-                # TODO: review when we implement dataset sharing
-                additional_statements.extend(
-                    split_policy_with_resources_in_statements(
-                        base_sid='RedshiftDataShare',
-                        effect=iam.Effect.ALLOW,
-                        actions=[
-                            'redshift:AuthorizeDataShare',
-                            'redshift:AssociateDataShareConsumer',
-                            'redshift:DescribeDataShares',
-                        ],
-                        resources=datashare_arns,
-                    )
-                )
+                # TODO: part of redshift_dataset sharing
+                # additional_statements.extend(
+                #     split_policy_with_resources_in_statements(
+                #         base_sid='RedshiftDataShare',
+                #         effect=iam.Effect.ALLOW,
+                #         actions=[
+                #             'redshift:AuthorizeDataShare',
+                #             'redshift:AssociateDataShareConsumer',
+                #             'redshift:DescribeDataShares',
+                #         ],
+                #         resources=datashare_arns,
+                #     )
+                # )
 
         return base_statements + additional_statements

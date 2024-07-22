@@ -1,15 +1,21 @@
 import logging
 
-from sqlalchemy import and_, or_
+from sqlalchemy import or_
 from sqlalchemy.orm import Query
 from dataall.base.db import exceptions
-from dataall.core.environment.db.environment_models import Environment
-from dataall.core.organizations.db.organization_repositories import OrganizationRepository
+from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.base.db import paginate
-from dataall.base.db.exceptions import ObjectNotFound
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnection
 
 logger = logging.getLogger(__name__)
+
+
+class RedshiftConnectionEnvironmentResource(EnvironmentResource):
+    """Actions performed on any environment resource on environment operations"""
+
+    @staticmethod
+    def delete_env(session, environment):
+        RedshiftConnectionRepository.delete_all_environment_connections(session, environment.environmentUri)
 
 
 class RedshiftConnectionRepository:
@@ -25,7 +31,7 @@ class RedshiftConnectionRepository:
         session.commit()
 
     @staticmethod
-    def find_redshift_connection(session, uri) -> RedshiftConnection:
+    def get_redshift_connection(session, uri) -> RedshiftConnection:
         """Find Redshift Connection by URI"""
         connection = session.query(RedshiftConnection).get(uri)
         if not connection:
@@ -66,3 +72,7 @@ class RedshiftConnectionRepository:
             page=filter.get('page', RedshiftConnectionRepository._DEFAULT_PAGE),
             page_size=filter.get('pageSize', RedshiftConnectionRepository._DEFAULT_PAGE_SIZE),
         ).to_dict()
+
+    @staticmethod
+    def delete_all_environment_connections(session, environment_uri):
+        session.query(RedshiftConnection).filter(RedshiftConnection.environmentUri == environment_uri).delete()

@@ -73,20 +73,26 @@ def resolve_dataset_organization(context, source: RedshiftDataset, **kwargs):
         return OrganizationRepository.get_organization_by_uri(session, source.organizationUri)
 
 
-def resolve_dataset_environment(context, source: RedshiftDataset, **kwargs):  # TODO- duplicated with S3 datasets
+def resolve_dataset_environment(
+    context, source: RedshiftDataset, **kwargs
+):  # TODO- duplicated with S3 datasets - follow-up PR
     if not source:
         return None
     with context.engine.scoped_session() as session:
         return EnvironmentService.get_environment_by_uri(session, source.environmentUri)
 
 
-def resolve_dataset_owners_group(context, source: RedshiftDataset, **kwargs):  # TODO- duplicated with S3 datasets
+def resolve_dataset_owners_group(
+    context, source: RedshiftDataset, **kwargs
+):  # TODO- duplicated with S3 datasets - follow-up PR
     if not source:
         return None
     return source.SamlAdminGroupName
 
 
-def resolve_dataset_stewards_group(context, source: RedshiftDataset, **kwargs):  # TODO- duplicated with S3 datasets
+def resolve_dataset_stewards_group(
+    context, source: RedshiftDataset, **kwargs
+):  # TODO- duplicated with S3 datasets - follow-up PR
     if not source:
         return None
     return source.stewards

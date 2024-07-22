@@ -30,8 +30,6 @@ RedshiftDataset = gql.ObjectType(
         gql.Field(name='AwsAccountId', type=gql.String),
         gql.Field(name='region', type=gql.String),
         gql.Field(name='SamlAdminGroupName', type=gql.String),
-        gql.Field(name='businessOwnerEmail', type=gql.String),
-        gql.Field(name='businessOwnerDelegationEmails', type=gql.ArrayType(gql.String)),
         gql.Field(name='imported', type=gql.Boolean),
         gql.Field(
             name='environment',
@@ -58,7 +56,6 @@ RedshiftDataset = gql.ObjectType(
             type=DatasetRole.toGraphQLEnum(),
             resolver=resolve_user_role,
         ),
-        gql.Field(name='userRoleInEnvironment', type=EnvironmentPermission.toGraphQLEnum()),
         gql.Field(
             name='terms',
             resolver=resolve_dataset_glossary_terms,
@@ -66,7 +63,6 @@ RedshiftDataset = gql.ObjectType(
         ),
         gql.Field(name='topics', type=gql.ArrayType(gql.Ref('Topic'))),
         gql.Field(name='confidentiality', type=gql.String),
-        gql.Field(name='language', type=gql.Ref('Language')),
         gql.Field(name='autoApprovalEnabled', type=gql.Boolean),
         gql.Field(name='schema', type=gql.String),
         gql.Field(name='upvotes', type=gql.Integer, resolver=resolve_dataset_upvotes),

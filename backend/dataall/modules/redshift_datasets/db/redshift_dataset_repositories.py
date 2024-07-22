@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
@@ -13,8 +13,19 @@ from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset
 logger = logging.getLogger(__name__)
 
 
-class RedshiftDatasetRepository(EnvironmentResource):
+class RedshiftDatasetEnvironmentResource(EnvironmentResource):
+    """Actions performed on any environment resource on environment operations"""
+
+    @staticmethod
+    def count_resources(session, environment, group_uri) -> int:
+        return RedshiftDatasetRepository.count_environment_group_datasets(session, environment, group_uri)
+
+
+class RedshiftDatasetRepository:
     """DAO layer for Redshift Datasets"""
+
+    _DEFAULT_PAGE = 1
+    _DEFAULT_PAGE_SIZE = 10
 
     @classmethod
     def create_redshift_dataset(cls, session, username, env: Environment, data: dict) -> RedshiftDataset:
@@ -32,7 +43,7 @@ class RedshiftDatasetRepository(EnvironmentResource):
             language=data.get('language', Language.English.value),
             confidentiality=data.get('confidentiality', ConfidentialityClassification.Unclassified.value),
             topics=data.get('topics', []),
-            businessOwnerEmail=data.get('businessOwnerEmail'),
+            businessOwnerEmail=data.get('businessOwnerEmail', ''),
             businessOwnerDelegationEmails=data.get('businessOwnerDelegationEmails', []),
             stewards=data.get('stewards') if data.get('stewards') else data['SamlAdminGroupName'],
             autoApprovalEnabled=data.get('autoApprovalEnabled', False),
@@ -77,6 +88,13 @@ class RedshiftDatasetRepository(EnvironmentResource):
         return table
 
     @staticmethod
+    def get_redshift_table_by_uri(session, table_uri) -> RedshiftTable:
+        table: RedshiftTable = session.query(RedshiftTable).get(table_uri)
+        if not table:
+            raise ObjectNotFound('RedshiftTable', table_uri)
+        return table
+
+    @staticmethod
     def _query_redshift_dataset_tables(session, dataset_uri, filter: dict = None):
         query = session.query(RedshiftTable).filter(RedshiftTable.datasetUri == dataset_uri)
         if filter and filter.get('term'):
@@ -98,15 +116,25 @@ class RedshiftDatasetRepository(EnvironmentResource):
     @staticmethod
     def paginated_redshift_dataset_tables(session, dataset_uri, data=None) -> dict:
         query = RedshiftDatasetRepository._query_redshift_dataset_tables(session, dataset_uri, data)
-        return paginate(query=query, page_size=data.get('pageSize', 10), page=data.get('page', 1)).to_dict()
+        return paginate(
+            query=query,
+            page_size=data.get('pageSize', RedshiftDatasetRepository._DEFAULT_PAGE_SIZE),
+            page=data.get('page', RedshiftDatasetRepository._DEFAULT_PAGE),
+        ).to_dict()
 
     @staticmethod
     def count_dataset_tables(session, dataset_uri) -> int:
         return RedshiftDatasetRepository._query_redshift_dataset_tables(session, dataset_uri).count()
 
     @staticmethod
-    def get_redshift_table_by_uri(session, table_uri) -> RedshiftTable:
-        table: RedshiftTable = session.query(RedshiftTable).get(table_uri)
-        if not table:
-            raise ObjectNotFound('RedshiftTable', table_uri)
-        return table
+    def count_environment_group_datasets(session, environment, group_uri) -> int:
+        return (
+            session.query(RedshiftDataset)
+            .filter(
+                and_(
+                    RedshiftDataset.environmentUri == environment.environmentUri,
+                    RedshiftDataset.SamlAdminGroupName == group_uri,
+                )
+            )
+            .count()
+        )

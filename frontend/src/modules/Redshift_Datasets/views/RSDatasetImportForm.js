@@ -301,8 +301,6 @@ const RSDatasetImportForm = (props) => {
                 label: '',
                 description: '',
                 environment: '',
-                businessOwnerEmail: '',
-                businessOwnerDelegationEmails: [],
                 SamlAdminGroupName: '',
                 stewards: '',
                 tags: [],

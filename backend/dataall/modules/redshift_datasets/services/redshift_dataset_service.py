@@ -212,7 +212,7 @@ class RedshiftDatasetService:
             dataset_tables_names = [
                 t.name for t in RedshiftDatasetRepository.list_redshift_dataset_tables(session, dataset.datasetUri)
             ]
-            connection = RedshiftConnectionRepository.find_redshift_connection(session, dataset.connectionUri)
+            connection = RedshiftConnectionRepository.get_redshift_connection(session, dataset.connectionUri)
             environment = EnvironmentService.get_environment_by_uri(session, connection.environmentUri)
             tables = RedshiftData(
                 account_id=environment.AwsAccountId, region=environment.region, connection=connection
@@ -250,7 +250,7 @@ class RedshiftDatasetService:
             dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(
                 session=session, dataset_uri=table.datasetUri
             )
-            connection = RedshiftConnectionRepository.find_redshift_connection(
+            connection = RedshiftConnectionRepository.get_redshift_connection(
                 session=session, uri=dataset.connectionUri
             )
             columns = RedshiftData(

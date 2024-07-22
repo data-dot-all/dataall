@@ -19,11 +19,8 @@ export const getRedshiftDataset = (datasetUri) => ({
         SamlAdminGroupName
         AwsAccountId
         tags
-        businessOwnerEmail
         stewards
-        businessOwnerDelegationEmails
         topics
-        language
         confidentiality
         autoApprovalEnabled
         organization {

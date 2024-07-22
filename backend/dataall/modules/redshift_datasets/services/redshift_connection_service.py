@@ -66,14 +66,14 @@ class RedshiftConnectionService:
     @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_CONNECTION)
     def get_redshift_connection_by_uri(uri) -> RedshiftConnection:
         with get_context().db_engine.scoped_session() as session:
-            connection = RedshiftConnectionRepository.find_redshift_connection(session, uri)
+            connection = RedshiftConnectionRepository.get_redshift_connection(session, uri)
             if not connection:
                 raise exceptions.ObjectNotFound('RedshiftConnection', uri)
             return connection
 
     @staticmethod
     def _get_redshift_connection(session, uri) -> RedshiftConnection:
-        return RedshiftConnectionRepository.find_redshift_connection(session, uri)
+        return RedshiftConnectionRepository.get_redshift_connection(session, uri)
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_CONNECTIONS)

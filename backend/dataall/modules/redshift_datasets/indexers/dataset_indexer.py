@@ -15,14 +15,14 @@ class DatasetIndexer(BaseIndexer):
     @classmethod
     def upsert(cls, session, dataset_uri: str):
         dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session=session, dataset_uri=dataset_uri)
-        connection = RedshiftConnectionRepository.find_redshift_connection(session=session, uri=dataset.connectionUri)
+        connection = RedshiftConnectionRepository.get_redshift_connection(session=session, uri=dataset.connectionUri)
 
         if dataset:
             env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
             org = OrganizationRepository.get_organization_by_uri(session, dataset.organizationUri)
 
             count_tables = RedshiftDatasetRepository.count_dataset_tables(session=session, dataset_uri=dataset_uri)
-            count_upvotes = VoteRepository.count_upvotes(session, dataset_uri, target_type='redshift-dataset')
+            count_upvotes = VoteRepository.count_upvotes(session, dataset_uri, target_type='redshiftdataset')
 
             glossary = BaseIndexer._get_target_glossary_terms(session, dataset_uri)
             BaseIndexer._index(

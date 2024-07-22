@@ -21,7 +21,7 @@ class DatasetTableIndexer(BaseIndexer):
                 if not dataset
                 else dataset
             )
-            connection = RedshiftConnectionRepository.find_redshift_connection(session, dataset.connectionUri)
+            connection = RedshiftConnectionRepository.get_redshift_connection(session, dataset.connectionUri)
             env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri) if not env else env
             org = OrganizationRepository.get_organization_by_uri(session, dataset.organizationUri) if not org else org
             glossary = BaseIndexer._get_target_glossary_terms(session, table_uri)

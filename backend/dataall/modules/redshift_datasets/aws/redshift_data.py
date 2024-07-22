@@ -22,7 +22,7 @@ class RedshiftData:
         if connection.secretArn:
             self.execute_connection_params['SecretArn'] = connection.secretArn
         if connection.redshiftUser and connection.clusterId:
-            # TODO: https://boto3.amazonaws.com/v1/documentation/api/1.26.93/reference/services/redshift-data/client/list_databases.html
+            # https://boto3.amazonaws.com/v1/documentation/api/1.26.93/reference/services/redshift-data/client/list_databases.html
             # We cannot use DbUser with serverless for role federation.
             # It must use the current session IAM role, which in this case would be the pivot role.
             self.execute_connection_params['DbUser'] = connection.redshiftUser
@@ -149,7 +149,7 @@ def redshift_data_client(account_id: str, region: str, connection: RedshiftConne
     """Factory method to retrieve the client to send request to AWS"""
     return RedshiftData(account_id, region, connection)
 
-    # TODO IT WILL BE USED IN SHARING
+    # TODO: part of redshift_dataset sharing
     # def create_datashare(self, datashare: str):
     #     """
     #     Create datashare if not already created

@@ -30,9 +30,6 @@ class RedshiftDataset(DatasetBase):
     }
 
 
-# TODO, migration script: ALTER TYPE SCHEMA.datasettype ADD VALUE 'Redshift';
-
-
 class RedshiftTable(Base, Resource):
     __tablename__ = 'redshift_table'
     datasetUri = Column(String, ForeignKey('redshift_dataset.datasetUri', ondelete='CASCADE'), nullable=False)

@@ -37,6 +37,12 @@ class RedshiftDatasetApiModuleInterface(ModuleInterface):
 
         from dataall.modules.redshift_datasets.indexers.dataset_indexer import DatasetIndexer
         from dataall.modules.redshift_datasets.indexers.table_indexer import DatasetTableIndexer
+        from dataall.modules.redshift_datasets.db.redshift_dataset_repositories import (
+            RedshiftDatasetEnvironmentResource,
+        )
+        from dataall.modules.redshift_datasets.db.redshift_connection_repositories import (
+            RedshiftConnectionEnvironmentResource,
+        )
         from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset, RedshiftTable
         import dataall.modules.redshift_datasets.api
 
@@ -63,7 +69,8 @@ class RedshiftDatasetApiModuleInterface(ModuleInterface):
 
         add_vote_type('redshiftdataset', DatasetIndexer)
 
-        # TODO:EnvironmentResourceManager.register(RedshiftDatasetRepository())
+        EnvironmentResourceManager.register(RedshiftDatasetEnvironmentResource())
+        EnvironmentResourceManager.register(RedshiftConnectionEnvironmentResource())
 
         log.info('API of Redshift datasets has been imported')
 
