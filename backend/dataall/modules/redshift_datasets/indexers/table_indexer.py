@@ -6,8 +6,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.modules.redshift_datasets.db.redshift_dataset_repositories import RedshiftDatasetRepository
 from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
-from dataall.modules.redshift_datasets.indexers.dataset_indexer import DatasetIndexer
-from dataall.modules.redshift_datasets.api.connections.enums import RedshiftType
+from dataall.modules.redshift_datasets.services.redshift_enums import RedshiftType
 from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
 
 
@@ -17,7 +16,11 @@ class DatasetTableIndexer(BaseIndexer):
         table = RedshiftDatasetRepository.get_redshift_table_by_uri(session, table_uri)
 
         if table:
-            dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, table.datasetUri) if not dataset else dataset
+            dataset = (
+                RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, table.datasetUri)
+                if not dataset
+                else dataset
+            )
             connection = RedshiftConnectionRepository.find_redshift_connection(session, dataset.connectionUri)
             env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri) if not env else env
             org = OrganizationRepository.get_organization_by_uri(session, dataset.organizationUri) if not org else org
@@ -35,7 +38,9 @@ class DatasetTableIndexer(BaseIndexer):
                     'description': table.description,
                     'database': connection.database,
                     'schema': dataset.schema,
-                    'source': connection.clusterId if connection.redshiftType == RedshiftType.Cluster.value else connection.nameSpaceId,
+                    'source': connection.clusterId
+                    if connection.redshiftType == RedshiftType.Cluster.value
+                    else connection.nameSpaceId,
                     'classification': re.sub('[^A-Za-z0-9]+', '', dataset.confidentiality),
                     'tags': [t.replace('-', '') for t in tags or []],
                     'topics': dataset.topics,

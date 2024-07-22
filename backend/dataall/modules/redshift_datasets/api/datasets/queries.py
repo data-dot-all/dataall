@@ -41,7 +41,6 @@ listRedshiftSchemaDatasetTables = gql.QueryField(
     args=[
         gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
     ],
-    type=gql.ArrayType(gql.Ref('RedshiftTable')),
+    type=gql.ArrayType(gql.Ref('RedshiftDatasetTable')),
     resolver=list_redshift_schema_dataset_tables,
 )
-

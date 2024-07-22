@@ -16,3 +16,8 @@ class DatashareStatus(Enum):
     NotRegisteredInLF = 'NOT_REGISTERED_IN_LF'
     MissingGlueDatabase = 'MISSING_GLUE_DATABASE'
     Completed = 'COMPLETED'
+
+
+class RedshiftType(Enum):
+    Serverless = 'serverless'
+    Cluster = 'cluster'

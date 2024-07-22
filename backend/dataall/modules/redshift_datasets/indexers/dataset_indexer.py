@@ -7,7 +7,7 @@ from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.modules.redshift_datasets.db.redshift_dataset_repositories import RedshiftDatasetRepository
 from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
-from dataall.modules.redshift_datasets.api.connections.enums import RedshiftType
+from dataall.modules.redshift_datasets.services.redshift_enums import RedshiftType
 from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
 
 
@@ -34,7 +34,9 @@ class DatasetIndexer(BaseIndexer):
                     'admins': dataset.SamlAdminGroupName,
                     'database': connection.database,
                     'schema': dataset.schema,
-                    'source': connection.clusterId if connection.redshiftType == RedshiftType.Cluster.value else connection.nameSpaceId,
+                    'source': connection.clusterId
+                    if connection.redshiftType == RedshiftType.Cluster.value
+                    else connection.nameSpaceId,
                     'resourceKind': 'redshiftdataset',
                     'description': dataset.description,
                     'classification': re.sub('[^A-Za-z0-9]+', '', dataset.confidentiality),

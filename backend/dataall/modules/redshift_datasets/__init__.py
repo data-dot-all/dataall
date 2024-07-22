@@ -44,7 +44,12 @@ class RedshiftDatasetApiModuleInterface(ModuleInterface):
         FeedRegistry.register(FeedDefinition('RedshiftDataset', RedshiftDataset))
 
         GlossaryRegistry.register(
-            GlossaryDefinition(target_type='RedshiftDataset', object_type='RedshiftDataset', model=RedshiftDataset, reindexer=DatasetIndexer)
+            GlossaryDefinition(
+                target_type='RedshiftDataset',
+                object_type='RedshiftDataset',
+                model=RedshiftDataset,
+                reindexer=DatasetIndexer,
+            )
         )
 
         GlossaryRegistry.register(
@@ -58,7 +63,7 @@ class RedshiftDatasetApiModuleInterface(ModuleInterface):
 
         add_vote_type('redshiftdataset', DatasetIndexer)
 
-        #TODO:EnvironmentResourceManager.register(RedshiftDatasetRepository())
+        # TODO:EnvironmentResourceManager.register(RedshiftDatasetRepository())
 
         log.info('API of Redshift datasets has been imported')
 

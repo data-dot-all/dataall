@@ -14,50 +14,52 @@ log = logging.getLogger(__name__)
 
 
 def import_redshift_dataset(context: Context, source, input=None):
-    # TODO: validate input
-
+    RequestValidator.validate_dataset_import_request(input)
     admin_group = input['SamlAdminGroupName']
     uri = input['environmentUri']
     return RedshiftDatasetService.import_redshift_dataset(uri=uri, admin_group=admin_group, data=input)
 
+
 def update_redshift_dataset(context: Context, source, datasetUri: str, input: dict):
-    _required_param('datasetUri', datasetUri)
+    RequestValidator.required_param('datasetUri', datasetUri)
     return RedshiftDatasetService.update_redshift_dataset(uri=datasetUri, data=input)
 
+
 def delete_redshift_dataset(context: Context, source, datasetUri: str):
-    _required_param('datasetUri', datasetUri)
-    # TODO: validate input
+    RequestValidator.required_param('datasetUri', datasetUri)
     return RedshiftDatasetService.delete_redshift_dataset(uri=datasetUri)
 
+
 def list_redshift_schema_dataset_tables(context: Context, source, datasetUri: str):
-    _required_param('datasetUri', datasetUri)
+    RequestValidator.required_param('datasetUri', datasetUri)
     return RedshiftDatasetService.list_redshift_schema_dataset_tables(uri=datasetUri)
 
+
 def add_redshift_dataset_tables(context: Context, source, datasetUri: str, tables: [str]):
-    _required_param('datasetUri', datasetUri)
-    _required_param('tables', tables)
+    RequestValidator.required_param('datasetUri', datasetUri)
+    RequestValidator.required_param('tables', tables)
     return RedshiftDatasetService.add_redshift_dataset_tables(uri=datasetUri, tables=tables)
 
 
 def delete_redshift_dataset_table(context: Context, source, datasetUri: str, rsTableUri: str):
-    _required_param('datasetUri', datasetUri)
-    _required_param('rsTableUri', rsTableUri)
+    RequestValidator.required_param('datasetUri', datasetUri)
+    RequestValidator.required_param('rsTableUri', rsTableUri)
     return RedshiftDatasetService.delete_redshift_dataset_table(uri=datasetUri, rsTableUri=rsTableUri)
 
 
 def get_redshift_dataset(context, source, datasetUri: str):
-    _required_param('datasetUri', datasetUri)
+    RequestValidator.required_param('datasetUri', datasetUri)
     return RedshiftDatasetService.get_redshift_dataset(uri=datasetUri)
 
 
 def list_redshift_dataset_tables(context, source, datasetUri: str, filter: dict = None):
-    _required_param('datasetUri', datasetUri)
+    RequestValidator.required_param('datasetUri', datasetUri)
     return RedshiftDatasetService.list_redshift_dataset_tables(uri=datasetUri, filter=filter)
 
 
 def list_redshift_dataset_table_columns(context, source, datasetUri: str, rsTableUri: str, filter: dict = None):
-    _required_param('datasetUri', datasetUri)
-    _required_param('rsTableUri', rsTableUri)
+    RequestValidator.required_param('datasetUri', datasetUri)
+    RequestValidator.required_param('rsTableUri', rsTableUri)
     return RedshiftDatasetService.list_redshift_dataset_table_columns(
         uri=datasetUri, rsTableUri=rsTableUri, filter=filter
     )
@@ -116,6 +118,17 @@ def resolve_dataset_upvotes(context: Context, source: RedshiftDataset, **kwargs)
     return RedshiftDatasetService.get_dataset_upvotes(uri=source.datasetUri)
 
 
-def _required_param(param_name: str, param_value: Any):
-    if not param_value:
-        raise exceptions.RequiredParameter(param_name)
+class RequestValidator:
+    @staticmethod
+    def required_param(param_name: str, param_value: Any):
+        if not param_value:
+            raise exceptions.RequiredParameter(param_name)
+
+    @staticmethod
+    def validate_dataset_import_request(data):
+        RequestValidator.required_param('input', data)
+        # Validate each value in input
+        RequestValidator.required_param('label', data.get('label'))
+        RequestValidator.required_param('SamlAdminGroupName', data.get('SamlAdminGroupName'))
+        RequestValidator.required_param('connectionUri', data.get('connectionUri'))
+        RequestValidator.required_param('schema', data.get('schema'))

@@ -77,6 +77,14 @@ RedshiftDataset = gql.ObjectType(
     ],
 )
 
+RedshiftDatasetTable = gql.ObjectType(
+    name='RedshiftDatasetTable',
+    fields=[
+        gql.Field(name='name', type=gql.String),
+        gql.Field(name='type', type=gql.String),
+        gql.Field(name='alreadyAdded', type=gql.String),
+    ],
+)
 
 RedshiftDatasetTableListItem = gql.ObjectType(
     name='RedshiftDatasetTableListItem',

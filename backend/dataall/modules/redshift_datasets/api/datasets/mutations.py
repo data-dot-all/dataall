@@ -28,7 +28,7 @@ updateRedshiftDataset = gql.MutationField(
     resolver=update_redshift_dataset,
 )
 
-deleteRedshiftDataset= gql.MutationField(
+deleteRedshiftDataset = gql.MutationField(
     name='deleteRedshiftDataset',
     args=[
         gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),

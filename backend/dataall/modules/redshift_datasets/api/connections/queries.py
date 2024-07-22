@@ -28,4 +28,3 @@ listRedshiftSchemaTables = gql.QueryField(
     type=gql.ArrayType(gql.Ref('RedshiftTable')),
     resolver=list_redshift_schema_tables,
 )
-

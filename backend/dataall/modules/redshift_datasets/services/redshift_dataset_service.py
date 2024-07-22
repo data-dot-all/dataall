@@ -83,6 +83,7 @@ class RedshiftDatasetService:
                 DatasetTableIndexer.upsert(session=session, table_uri=rs_table.rsTableUri)
 
         return dataset
+
     @staticmethod
     # @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
     # @ResourcePolicyService.has_resource_permission(UPDATE_REDSHIFT_DATASET)
@@ -112,10 +113,13 @@ class RedshiftDatasetService:
                     resource_type=RedshiftDataset.__name__,
                 )
                 if data.get('terms'):
-                    GlossaryRepository.set_glossary_terms_links(session, username, uri, 'RedshiftDataset', data.get('terms'))
+                    GlossaryRepository.set_glossary_terms_links(
+                        session, username, uri, 'RedshiftDataset', data.get('terms')
+                    )
                     for table in RedshiftDatasetRepository.list_redshift_dataset_tables(session, dataset.datasetUri):
-                        GlossaryRepository.set_glossary_terms_links(session, username, table.rsTableUri, 'RedshiftDatasetTable',
-                                                                    data.get('terms'))
+                        GlossaryRepository.set_glossary_terms_links(
+                            session, username, table.rsTableUri, 'RedshiftDatasetTable', data.get('terms')
+                        )
                 DatasetBaseRepository.update_dataset_activity(session, dataset, username)
 
             DatasetIndexer.upsert(session, dataset_uri=uri)
@@ -130,7 +134,9 @@ class RedshiftDatasetService:
             dataset: RedshiftDataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, uri)
 
             # TODO: when adding sharing, add check_on_delete for shared items
-            tables: [RedshiftTable] = RedshiftDatasetRepository.list_redshift_dataset_tables(session, dataset.datasetUri)
+            tables: [RedshiftTable] = RedshiftDatasetRepository.list_redshift_dataset_tables(
+                session, dataset.datasetUri
+            )
             for table in tables:
                 DatasetTableIndexer.delete_doc(doc_id=table.rsTableUri)
                 session.delete(table)
@@ -230,7 +236,9 @@ class RedshiftDatasetService:
     def list_redshift_schema_dataset_tables(uri):
         with get_context().db_engine.scoped_session() as session:
             dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, uri)
-            dataset_tables_names = [t.name for t in RedshiftDatasetRepository.list_redshift_dataset_tables(session, dataset.datasetUri)]
+            dataset_tables_names = [
+                t.name for t in RedshiftDatasetRepository.list_redshift_dataset_tables(session, dataset.datasetUri)
+            ]
             connection = RedshiftConnectionRepository.find_redshift_connection(session, dataset.connectionUri)
             environment = EnvironmentService.get_environment_by_uri(session, connection.environmentUri)
             tables = RedshiftData(
@@ -242,7 +250,6 @@ class RedshiftDatasetService:
                 else:
                     table.update({'alreadyAdded': False})
             return tables
-
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)

@@ -139,9 +139,9 @@ class RedshiftConnectionService:
                 )
             if connection.workgroup and connection.workgroup not in [
                 workgroup['workgroupName']
-                for workgroup in redshift_serverless_client(account_id=account_id, region=region).list_workgroups_in_namespace(
-                    namespace['namespaceName']
-                )
+                for workgroup in redshift_serverless_client(
+                    account_id=account_id, region=region
+                ).list_workgroups_in_namespace(namespace['namespaceName'])
             ]:
                 raise Exception(
                     f'Redshift workgroup {connection.workgroup} does not exist or is not associated to namespace {connection.nameSpaceId}'
@@ -155,7 +155,9 @@ class RedshiftConnectionService:
             )
 
         try:
-            redshift_data_client(account_id=account_id, region=region, connection=connection).get_redshift_connection_database()
+            redshift_data_client(
+                account_id=account_id, region=region, connection=connection
+            ).get_redshift_connection_database()
         except Exception as e:
             raise Exception(
                 f'Redshift database {connection.database} does not exist or cannot be accessed with these parameters: {e}'

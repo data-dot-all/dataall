@@ -21,6 +21,7 @@ class Redshift:
             log.error(e)
             raise e
 
+
 def redshift_client(account_id: str, region: str) -> Redshift:
     """Factory method to retrieve the client to send request to AWS"""
     return Redshift(account_id, region)

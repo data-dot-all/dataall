@@ -1,5 +1,6 @@
 from dataall.modules.redshift_datasets.services.redshift_connection_service import RedshiftConnectionService
 
+
 def test_create_redshift_connection(connection1_serverless):
     # When connection1 is created
     # Then
@@ -14,6 +15,7 @@ def test_create_redshift_connection_namespace_not_found(module_mocker):
     )
     pass
 
+
 def test_create_redshift_connection_workgroup_not_in_namespace(module_mocker):
     module_mocker.patch(
         'dataall.modules.redshift_datasets.aws.redshift_serverless.RedshiftServerless.get_namespace_by_id',
@@ -24,11 +26,13 @@ def test_create_redshift_connection_workgroup_not_in_namespace(module_mocker):
         return_value=[],
     )
 
+
 def test_create_redshift_connection_cluster_not_found(module_mocker):
     module_mocker.patch(
         'dataall.modules.redshift_datasets.aws.redshift.Redshift.describe_cluster',
         return_value=False,
     )
+
 
 def test_create_redshift_connection_serverless_database_not_found(module_mocker):
     module_mocker.patch(
@@ -52,8 +56,9 @@ def test_create_redshift_connection_cluster_database_not_found(module_mocker):
     )
     module_mocker.patch(
         'dataall.modules.redshift_datasets.aws.redshift_data.RedshiftData.get_redshift_connection_database',
-        return_value=False, #TODO: return exception
+        return_value=False,  # TODO: return exception
     )
+
 
 def test_get_redshift_connection(patch_redshift):
     # When
@@ -70,11 +75,14 @@ def test_delete_redshift_connection():
     # Then
     assert response == True
 
+
 def test_list_environment_redshift_connections(connection1_serverless, connection2_cluster):
     pass
 
+
 def test_list_environment_redshift_connections_with_filter(connection1_serverless, connection2_cluster):
     pass
+
 
 def test_list_environment_redshift_connections_non_admin_user(connection1_serverless, connection2_cluster):
     pass
@@ -86,4 +94,3 @@ def test_list_connection_schemas(connection1_serverless):
 
 def test_list_schema_tables(connection1_serverless):
     pass
-
