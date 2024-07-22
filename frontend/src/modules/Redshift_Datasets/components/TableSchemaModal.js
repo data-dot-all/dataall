@@ -26,7 +26,6 @@ export const TableSchemaModal = (props) => {
     setLoading(true);
     const response = await client.query(
       getRedshiftDatasetTableColumns({
-        datasetUri: table.datasetUri,
         rsTableUri: table.rsTableUri,
         filter: filter
       })

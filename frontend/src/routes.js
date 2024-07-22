@@ -89,6 +89,10 @@ const RedshiftDatasetEditForm = Loadable(
   lazy(() => import('./modules/Redshift_Datasets/views/RSDatasetEditForm'))
 );
 
+const RedshiftTableView = Loadable(
+  lazy(() => import('./modules/Redshift_Datasets/views/RSTableView'))
+);
+
 const NotebookList = Loadable(
   lazy(() => import('./modules/Notebooks/views/NotebookList'))
 );
@@ -317,6 +321,10 @@ const routes = [
           {
             path: 'redshift-datasets/:uri/edit',
             element: <RedshiftDatasetEditForm />
+          },
+          {
+            path: 'redshift-datasets/table/:uri',
+            element: <RedshiftTableView />
           }
         ]
       },

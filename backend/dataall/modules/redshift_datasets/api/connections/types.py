@@ -32,5 +32,9 @@ RedshiftConnectionSearchResult = gql.ObjectType(
 
 RedshiftTable = gql.ObjectType(
     name='RedshiftTable',
-    fields=[gql.Field(name='name', type=gql.String), gql.Field(name='type', type=gql.String)],
+    fields=[
+        gql.Field(name='name', type=gql.String),
+        gql.Field(name='type', type=gql.String),
+        gql.Field(name='alreadyAdded', type=gql.String),
+    ],
 )

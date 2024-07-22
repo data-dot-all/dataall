@@ -50,7 +50,6 @@ addRedshiftDatasetTables = gql.MutationField(
 deleteRedshiftDatasetTable = gql.MutationField(
     name='deleteRedshiftDatasetTable',
     args=[
-        gql.Argument('datasetUri', gql.NonNullableType(gql.String)),
         gql.Argument(name='rsTableUri', type=gql.NonNullableType(gql.String)),
     ],
     type=gql.Boolean,

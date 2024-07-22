@@ -16,11 +16,16 @@ from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRep
 from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import (
     MANAGE_REDSHIFT_DATASETS,
     IMPORT_REDSHIFT_DATASET,
-    UPDATE_REDSHIFT_DATASET,
+    ADD_TABLES_REDSHIFT_DATASET,
     DELETE_REDSHIFT_DATASET,
+    UPDATE_REDSHIFT_DATASET,
     GET_REDSHIFT_DATASET,
     REDSHIFT_DATASET_ALL,
     REDSHIFT_DATASET_READ,
+    GET_REDSHIFT_DATASET_TABLE,
+    DELETE_REDSHIFT_DATASET_TABLE,
+    REDSHIFT_DATASET_TABLE_ALL,
+    REDSHIFT_DATASET_TABLE_READ,
 )
 from dataall.modules.redshift_datasets.db.redshift_dataset_repositories import RedshiftDatasetRepository
 from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
@@ -35,9 +40,9 @@ log = logging.getLogger(__name__)
 
 class RedshiftDatasetService:
     @staticmethod
-    # @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
-    # @ResourcePolicyService.has_resource_permission(IMPORT_REDSHIFT_DATASET)
-    # @GroupPolicyService.has_group_permission(IMPORT_REDSHIFT_DATASET)
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    @ResourcePolicyService.has_resource_permission(IMPORT_REDSHIFT_DATASET)
+    @GroupPolicyService.has_group_permission(IMPORT_REDSHIFT_DATASET)
     def import_redshift_dataset(uri, admin_group, data: dict):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -47,30 +52,9 @@ class RedshiftDatasetService:
                 session=session, username=context.username, env=environment, data=data
             )
             dataset.userRoleForDataset = DatasetRole.Creator.value
-            ResourcePolicyService.attach_resource_policy(
-                session=session,
-                group=dataset.SamlAdminGroupName,
-                permissions=REDSHIFT_DATASET_ALL,
-                resource_uri=dataset.datasetUri,
-                resource_type=RedshiftDataset.__name__,
-            )
-            if dataset.stewards and dataset.stewards != dataset.SamlAdminGroupName:
-                ResourcePolicyService.attach_resource_policy(
-                    session=session,
-                    group=dataset.stewards,
-                    permissions=REDSHIFT_DATASET_READ,
-                    resource_uri=dataset.datasetUri,
-                    resource_type=RedshiftDataset.__name__,
-                )
 
-            if environment.SamlGroupName != dataset.SamlAdminGroupName:
-                ResourcePolicyService.attach_resource_policy(
-                    session=session,
-                    group=environment.SamlGroupName,
-                    permissions=REDSHIFT_DATASET_ALL,
-                    resource_uri=dataset.datasetUri,
-                    resource_type=RedshiftDataset.__name__,
-                )
+            RedshiftDatasetService._attach_dataset_permissions(session, dataset, environment)
+
             DatasetIndexer.upsert(session=session, dataset_uri=dataset.datasetUri)
 
             for table in data.get('tables', []):
@@ -80,13 +64,14 @@ class RedshiftDatasetService:
                     dataset_uri=dataset.datasetUri,
                     data={'name': table},
                 )
+                RedshiftDatasetService._attach_table_permissions(session, dataset, environment, rs_table)
                 DatasetTableIndexer.upsert(session=session, table_uri=rs_table.rsTableUri)
 
         return dataset
 
     @staticmethod
-    # @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
-    # @ResourcePolicyService.has_resource_permission(UPDATE_REDSHIFT_DATASET)
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    @ResourcePolicyService.has_resource_permission(UPDATE_REDSHIFT_DATASET)
     def update_redshift_dataset(uri, data: dict):
         context = get_context()
         username = context.username
@@ -159,11 +144,12 @@ class RedshiftDatasetService:
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
-    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
+    @ResourcePolicyService.has_resource_permission(ADD_TABLES_REDSHIFT_DATASET)
     def add_redshift_dataset_tables(uri, tables):
         context = get_context()
         datasetUri = uri
         with context.db_engine.scoped_session() as session:
+            dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, datasetUri)
             dataset_tables = RedshiftDatasetRepository.list_redshift_dataset_tables(session, datasetUri)
             tables = [new_t for new_t in tables if new_t not in [t.name for t in dataset_tables]]
             for table in tables:
@@ -173,16 +159,23 @@ class RedshiftDatasetService:
                     dataset_uri=datasetUri,
                     data={'name': table},
                 )
+                ResourcePolicyService.attach_resource_policy(
+                    session=session,
+                    group=dataset.SamlAdminGroupName,
+                    permissions=REDSHIFT_DATASET_TABLE_ALL,
+                    resource_uri=rs_table.rsTableUri,
+                    resource_type=RedshiftTable.__name__,
+                )
                 DatasetTableIndexer.upsert(session=session, table_uri=rs_table.rsTableUri)
         return True
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
-    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
-    def delete_redshift_dataset_table(uri, rsTableUri):
+    @ResourcePolicyService.has_resource_permission(DELETE_REDSHIFT_DATASET_TABLE)
+    def delete_redshift_dataset_table(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            table: RedshiftTable = RedshiftDatasetRepository.get_redshift_table_by_uri(session, rsTableUri)
+            table: RedshiftTable = RedshiftDatasetRepository.get_redshift_table_by_uri(session, uri)
             DatasetTableIndexer.delete_doc(doc_id=table.rsTableUri)
             session.delete(table)
             session.commit()
@@ -213,26 +206,6 @@ class RedshiftDatasetService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
     @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
-    def list_redshift_dataset_table_columns(uri, rsTableUri, filter):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            table = RedshiftDatasetRepository.get_redshift_table_by_uri(session=session, table_uri=rsTableUri)
-            dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(
-                session=session, dataset_uri=table.datasetUri
-            )
-            connection = RedshiftConnectionRepository.find_redshift_connection(
-                session=session, uri=dataset.connectionUri
-            )
-            columns = RedshiftData(
-                account_id=dataset.AwsAccountId, region=dataset.region, connection=connection
-            ).list_redshift_table_columns(dataset.schema, table.name)
-            return paginate_list(
-                items=columns, page_size=filter.get('pageSize', 10), page=filter.get('page', 1)
-            ).to_dict()
-
-    @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
-    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
     def list_redshift_schema_dataset_tables(uri):
         with get_context().db_engine.scoped_session() as session:
             dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, uri)
@@ -257,6 +230,88 @@ class RedshiftDatasetService:
     def get_dataset_upvotes(uri):
         with get_context().db_engine.scoped_session() as session:
             return VoteRepository.count_upvotes(session, uri, target_type='redshiftdataset') or 0
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET_TABLE)
+    def get_redshift_dataset_table(uri):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            table = RedshiftDatasetRepository.get_redshift_table_by_uri(session, uri)
+            return table
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET_TABLE)
+    def list_redshift_dataset_table_columns(uri, filter):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            table = RedshiftDatasetRepository.get_redshift_table_by_uri(session=session, table_uri=uri)
+            dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(
+                session=session, dataset_uri=table.datasetUri
+            )
+            connection = RedshiftConnectionRepository.find_redshift_connection(
+                session=session, uri=dataset.connectionUri
+            )
+            columns = RedshiftData(
+                account_id=dataset.AwsAccountId, region=dataset.region, connection=connection
+            ).list_redshift_table_columns(dataset.schema, table.name)
+            return paginate_list(
+                items=columns, page_size=filter.get('pageSize', 10), page=filter.get('page', 1)
+            ).to_dict()
+
+    @staticmethod
+    def _attach_dataset_permissions(session, dataset, environment):
+        ResourcePolicyService.attach_resource_policy(
+            session=session,
+            group=dataset.SamlAdminGroupName,
+            permissions=REDSHIFT_DATASET_ALL,
+            resource_uri=dataset.datasetUri,
+            resource_type=RedshiftDataset.__name__,
+        )
+        if dataset.stewards and dataset.stewards != dataset.SamlAdminGroupName:
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                group=dataset.stewards,
+                permissions=REDSHIFT_DATASET_READ,
+                resource_uri=dataset.datasetUri,
+                resource_type=RedshiftDataset.__name__,
+            )
+
+        if environment.SamlGroupName != dataset.SamlAdminGroupName:
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                group=environment.SamlGroupName,
+                permissions=REDSHIFT_DATASET_ALL,
+                resource_uri=dataset.datasetUri,
+                resource_type=RedshiftDataset.__name__,
+            )
+
+    @staticmethod
+    def _attach_table_permissions(session, dataset, environment, table):
+        ResourcePolicyService.attach_resource_policy(
+            session=session,
+            group=dataset.SamlAdminGroupName,
+            permissions=REDSHIFT_DATASET_TABLE_ALL,
+            resource_uri=table.rsTableUri,
+            resource_type=RedshiftTable.__name__,
+        )
+        if dataset.stewards and dataset.stewards != dataset.SamlAdminGroupName:
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                group=dataset.stewards,
+                permissions=REDSHIFT_DATASET_TABLE_READ,
+                resource_uri=table.rsTableUri,
+                resource_type=RedshiftTable.__name__,
+            )
+        if environment.SamlGroupName != dataset.SamlAdminGroupName:
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                group=environment.SamlGroupName,
+                permissions=REDSHIFT_DATASET_TABLE_ALL,
+                resource_uri=table.rsTableUri,
+                resource_type=RedshiftTable.__name__,
+            )
 
     @staticmethod
     def _transfer_stewardship_to_owners(session, dataset):

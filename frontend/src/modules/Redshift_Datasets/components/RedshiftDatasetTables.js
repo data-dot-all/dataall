@@ -103,7 +103,6 @@ export const RedshiftDatasetTables = (props) => {
   const deleteTable = async () => {
     const response = await client.mutate(
       deleteRedshiftDatasetTable({
-        datasetUri: dataset.datasetUri,
         rsTableUri: tableToDelete.rsTableUri
       })
     );

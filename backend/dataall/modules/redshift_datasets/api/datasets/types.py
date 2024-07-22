@@ -10,6 +10,7 @@ from dataall.modules.redshift_datasets.api.datasets.resolvers import (
     resolve_dataset_glossary_terms,
     resolve_dataset_connection,
     resolve_dataset_upvotes,
+    resolve_table_dataset,
 )
 from dataall.core.environment.api.enums import EnvironmentPermission
 
@@ -80,9 +81,17 @@ RedshiftDataset = gql.ObjectType(
 RedshiftDatasetTable = gql.ObjectType(
     name='RedshiftDatasetTable',
     fields=[
+        gql.Field(name='rsTableUri', type=gql.ID),
+        gql.Field(name='datasetUri', type=gql.String),
+        gql.Field(name='label', type=gql.String),
         gql.Field(name='name', type=gql.String),
-        gql.Field(name='type', type=gql.String),
-        gql.Field(name='alreadyAdded', type=gql.String),
+        gql.Field(name='description', type=gql.String),
+        gql.Field(name='owner', type=gql.String),
+        gql.Field(name='created', type=gql.String),
+        gql.Field(name='updated', type=gql.String),
+        gql.Field(name='region', type=gql.String),
+        gql.Field(name='tags', type=gql.ArrayType(gql.String)),
+        gql.Field(name='dataset', type=gql.Ref('RedshiftDataset'), resolver=resolve_table_dataset),
     ],
 )
 

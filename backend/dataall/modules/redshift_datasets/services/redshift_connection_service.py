@@ -8,14 +8,12 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.stacks.services.stack_service import StackService
 from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
 
-from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import (
-    MANAGE_REDSHIFT_DATASETS,
-    IMPORT_REDSHIFT_DATASET,
-)
 from dataall.modules.redshift_datasets.services.redshift_connection_permissions import (
+    MANAGE_REDSHIFT_CONNECTIONS,
     REDSHIFT_CONNECTION_ALL,
     DELETE_REDSHIFT_CONNECTION,
     GET_REDSHIFT_CONNECTION,
+    CREATE_REDSHIFT_CONNECTION,
     LIST_ENVIRONMENT_REDSHIFT_CONNECTIONS,
 )
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnection
@@ -28,9 +26,9 @@ log = logging.getLogger(__name__)
 
 class RedshiftConnectionService:
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
-    @ResourcePolicyService.has_resource_permission(IMPORT_REDSHIFT_DATASET)
-    @GroupPolicyService.has_group_permission(IMPORT_REDSHIFT_DATASET)
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_CONNECTIONS)
+    @ResourcePolicyService.has_resource_permission(CREATE_REDSHIFT_CONNECTION)
+    @GroupPolicyService.has_group_permission(CREATE_REDSHIFT_CONNECTION)
     def create_redshift_connection(uri, admin_group, data: dict) -> RedshiftConnection:
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -78,6 +76,7 @@ class RedshiftConnectionService:
         return RedshiftConnectionRepository.find_redshift_connection(session, uri)
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_CONNECTIONS)
     @ResourcePolicyService.has_resource_permission(DELETE_REDSHIFT_CONNECTION)
     def delete_redshift_connection(uri) -> bool:
         context = get_context()
@@ -93,7 +92,6 @@ class RedshiftConnectionService:
         return True
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
     @ResourcePolicyService.has_resource_permission(LIST_ENVIRONMENT_REDSHIFT_CONNECTIONS)
     def list_environment_redshift_connections(uri, filter):
         context = get_context()

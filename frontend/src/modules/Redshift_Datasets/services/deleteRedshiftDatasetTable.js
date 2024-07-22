@@ -1,19 +1,12 @@
 import { gql } from 'apollo-boost';
 
-export const deleteRedshiftDatasetTable = ({ datasetUri, rsTableUri }) => ({
+export const deleteRedshiftDatasetTable = ({ rsTableUri }) => ({
   variables: {
-    datasetUri,
     rsTableUri
   },
   mutation: gql`
-    mutation deleteRedshiftDatasetTable(
-      $datasetUri: String!
-      $rsTableUri: String!
-    ) {
-      deleteRedshiftDatasetTable(
-        rsTableUri: $rsTableUri
-        datasetUri: $datasetUri
-      )
+    mutation deleteRedshiftDatasetTable($rsTableUri: String!) {
+      deleteRedshiftDatasetTable(rsTableUri: $rsTableUri)
     }
   `
 });

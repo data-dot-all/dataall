@@ -6,7 +6,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
-from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset
+from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset, RedshiftTable
 from dataall.modules.redshift_datasets.services.redshift_dataset_service import RedshiftDatasetService
 from dataall.modules.redshift_datasets.services.redshift_connection_service import RedshiftConnectionService
 
@@ -41,10 +41,9 @@ def add_redshift_dataset_tables(context: Context, source, datasetUri: str, table
     return RedshiftDatasetService.add_redshift_dataset_tables(uri=datasetUri, tables=tables)
 
 
-def delete_redshift_dataset_table(context: Context, source, datasetUri: str, rsTableUri: str):
-    RequestValidator.required_param('datasetUri', datasetUri)
+def delete_redshift_dataset_table(context: Context, source, rsTableUri: str):
     RequestValidator.required_param('rsTableUri', rsTableUri)
-    return RedshiftDatasetService.delete_redshift_dataset_table(uri=datasetUri, rsTableUri=rsTableUri)
+    return RedshiftDatasetService.delete_redshift_dataset_table(uri=rsTableUri)
 
 
 def get_redshift_dataset(context, source, datasetUri: str):
@@ -57,12 +56,14 @@ def list_redshift_dataset_tables(context, source, datasetUri: str, filter: dict 
     return RedshiftDatasetService.list_redshift_dataset_tables(uri=datasetUri, filter=filter)
 
 
-def list_redshift_dataset_table_columns(context, source, datasetUri: str, rsTableUri: str, filter: dict = None):
-    RequestValidator.required_param('datasetUri', datasetUri)
+def get_redshift_dataset_table(context, source, rsTableUri: str):
     RequestValidator.required_param('rsTableUri', rsTableUri)
-    return RedshiftDatasetService.list_redshift_dataset_table_columns(
-        uri=datasetUri, rsTableUri=rsTableUri, filter=filter
-    )
+    return RedshiftDatasetService.get_redshift_dataset_table(uri=rsTableUri)
+
+
+def list_redshift_dataset_table_columns(context, source, rsTableUri: str, filter: dict = None):
+    RequestValidator.required_param('rsTableUri', rsTableUri)
+    return RedshiftDatasetService.list_redshift_dataset_table_columns(uri=rsTableUri, filter=filter)
 
 
 def resolve_dataset_organization(context, source: RedshiftDataset, **kwargs):
@@ -118,6 +119,10 @@ def resolve_dataset_upvotes(context: Context, source: RedshiftDataset, **kwargs)
     return RedshiftDatasetService.get_dataset_upvotes(uri=source.datasetUri)
 
 
+def resolve_table_dataset(context: Context, source: RedshiftTable, **kwargs):
+    return RedshiftDatasetService.get_redshift_dataset(uri=source.datasetUri)
+
+
 class RequestValidator:
     @staticmethod
     def required_param(param_name: str, param_value: Any):
@@ -127,7 +132,6 @@ class RequestValidator:
     @staticmethod
     def validate_dataset_import_request(data):
         RequestValidator.required_param('input', data)
-        # Validate each value in input
         RequestValidator.required_param('label', data.get('label'))
         RequestValidator.required_param('SamlAdminGroupName', data.get('SamlAdminGroupName'))
         RequestValidator.required_param('connectionUri', data.get('connectionUri'))
