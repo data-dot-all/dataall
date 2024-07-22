@@ -25,8 +25,10 @@ import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { BsTable } from 'react-icons/bs';
+import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
 import {
+  ArrowRightIcon,
   Defaults,
   DeleteObjectModal,
   Pager,
@@ -50,6 +52,7 @@ export const RedshiftDatasetTables = (props) => {
   const client = useClient();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
   const [items, setItems] = useState(Defaults.pagedResponse);
   const [filter, setFilter] = useState(Defaults.filter);
   const [loading, setLoading] = useState(null);
@@ -277,6 +280,15 @@ export const RedshiftDatasetTables = (props) => {
                               <DeleteOutlined fontSize="small" />
                             </IconButton>
                           )}
+                          <IconButton
+                            onClick={() => {
+                              navigate(
+                                `/console/redshift-datasets/table/${table.tableUri}`
+                              );
+                            }}
+                          >
+                            <ArrowRightIcon fontSize="small" />
+                          </IconButton>
                         </TableCell>
                       </TableRow>
                     ))
