@@ -136,8 +136,8 @@ class RedshiftDatasetService:
                 ResourcePolicyService.delete_resource_policy(session=session, resource_uri=uri, group=dataset.stewards)
 
             DatasetTableIndexer.delete_doc(doc_id=dataset.datasetUri)
-            # TODO: DatasetService.delete_dataset_term_links(session, uri)
-            # todo: VoteRepository.delete_votes(session, dataset.datasetUri, 'dataset')
+            RedshiftDatasetService._delete_dataset_term_links(session, uri)
+            VoteRepository.delete_votes(session, dataset.datasetUri, 'redshiftdataset')
             session.delete(dataset)
             session.commit()
             return True
@@ -259,6 +259,13 @@ class RedshiftDatasetService:
             return paginate_list(
                 items=columns, page_size=filter.get('pageSize', 10), page=filter.get('page', 1)
             ).to_dict()
+
+    @staticmethod
+    def _delete_dataset_term_links(session, dataset_uri):
+        tables = [t.rsTableUri for t in RedshiftDatasetRepository.list_redshift_dataset_tables(session, dataset_uri)]
+        for table_uri in tables:
+            GlossaryRepository.delete_glossary_terms_links(session, table_uri, 'RedshiftDataset')
+        GlossaryRepository.delete_glossary_terms_links(session, dataset_uri, 'RedshiftDatasetTable')
 
     @staticmethod
     def _attach_dataset_permissions(session, dataset, environment):
