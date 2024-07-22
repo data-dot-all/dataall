@@ -4,6 +4,7 @@ from dataall.modules.s3_datasets_shares.api.resolvers import (
     list_shared_tables_by_env_dataset,
     list_shared_databases_tables_with_env_group,
     get_s3_consumption_data,
+    list_share_item_data_filters,
 )
 
 
@@ -42,4 +43,13 @@ listS3DatasetsSharedWithEnvGroup = gql.QueryField(
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
     ],
     type=gql.ArrayType(gql.Ref('SharedDatabaseTableItem')),
+)
+
+listShareItemDataFilters = gql.QueryField(
+    name='listShareItemDataFilters',
+    args=[
+        gql.Argument(name='shareItemUri', type=gql.NonNullableType(gql.String)),
+    ],
+    type=gql.ArrayType(gql.String),
+    resolver=list_share_item_data_filters,
 )

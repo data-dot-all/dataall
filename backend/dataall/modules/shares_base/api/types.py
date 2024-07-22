@@ -31,6 +31,7 @@ ShareItem = gql.ObjectType(
         gql.Field('healthStatus', ShareItemHealthStatus.toGraphQLEnum()),
         gql.Field('healthMessage', gql.String),
         gql.Field('lastVerificationTime', gql.String),
+        gql.Field('dataFilters', gql.ArrayType(gql.String)),
     ],
 )
 

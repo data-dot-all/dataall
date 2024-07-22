@@ -13,8 +13,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
-import * as Yup from 'yup';
-import { Defaults, Scrollbar } from 'design';
+import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import CircularProgress from '@mui/material/CircularProgress';
 import { listTableDataFilters, useClient } from 'services';
@@ -26,6 +25,7 @@ export const ShareItemFilterModal = (props) => {
   const dispatch = useDispatch();
   const client = useClient();
   const [pageSize, setPageSize] = useState(5);
+  const [selectionModel, setSelectionModel] = useState([]);
 
   const columns = [
     { field: 'id', hide: true },
@@ -33,30 +33,40 @@ export const ShareItemFilterModal = (props) => {
       field: 'label',
       headerName: 'Filter Name',
       flex: 1,
+      // minWidth: 200,
+      // resizable: true,
       editable: false
     },
     {
       field: 'description',
       headerName: 'Description',
       flex: 1,
+      // minWidth: 400,
+      // resizable: true,
       editable: false
     },
     {
       field: 'filterType',
       headerName: 'Filter Type',
       flex: 0.5,
+      // minWidth: 100,
+      // resizable: true,
       editable: false
     },
     {
       field: 'includedCols',
       headerName: 'Included Columns',
       flex: 2,
+      // minWidth: 400,
+      // resizable: true,
       editable: false
     },
     {
       field: 'rowExpression',
       headerName: 'Row Expression',
       flex: 2,
+      // minWidth: 400,
+      // resizable: true,
       editable: false
     }
   ];
@@ -92,7 +102,7 @@ export const ShareItemFilterModal = (props) => {
       const response = await client.mutate(
         updateFiltersTableShareItem({
           shareItemUri: item.shareItemUri,
-          filterUris: values.filterUris
+          filterUris: selectionModel
         })
       );
       if (!response.errors) {
@@ -124,6 +134,9 @@ export const ShareItemFilterModal = (props) => {
 
   useEffect(() => {
     if (client) {
+      if (item.dataFilters) {
+        setSelectionModel(item.dataFilters);
+      }
       fetchFilters().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
@@ -135,7 +148,7 @@ export const ShareItemFilterModal = (props) => {
   }
 
   return (
-    <Dialog maxWidth="md" fullWidth onClose={onClose} open={open} {...other}>
+    <Dialog maxWidth="lg" fullWidth onClose={onClose} open={open} {...other}>
       <Box sx={{ p: 3 }}>
         <Typography
           align="center"
@@ -153,11 +166,8 @@ export const ShareItemFilterModal = (props) => {
         <Box sx={{ p: 3 }}>
           <Formik
             initialValues={{
-              filterUris: item.filterUris || []
+              filterUris: item.dataFilters
             }}
-            validationSchema={Yup.object().shape({
-              filterUris: Yup.array().min(1).required()
-            })}
             onSubmit={async (
               values,
               { setErrors, setStatus, setSubmitting }
@@ -181,77 +191,28 @@ export const ShareItemFilterModal = (props) => {
                 ) : (
                   <>
                     <CardHeader fullWidth title="Select Data Filters" />
-                    <Scrollbar>
-                      <Box fullWidth>
-                        <DataGrid
-                          fullWidth
-                          autoHeight
-                          rowSpacingType="border"
-                          autosizeOptions={{
-                            columns: ['rowExpression', 'includedCols'],
-                            includeOutliers: true,
-                            includeHeaders: true
-                          }}
-                          rows={filters}
-                          getRowId={(filter) => filter.filterUri}
-                          columns={columns}
-                          pageSize={pageSize}
-                          rowsPerPageOptions={[5, 10, 20]}
-                          onPageSizeChange={(newPageSize) =>
-                            setPageSize(newPageSize)
-                          }
-                          checkboxSelection
-                          rowSelectionModel={item.filterUris || []}
-                          onSelectionModelChange={(newSelection) => {
-                            setFieldValue('filterUris', newSelection);
-                          }}
-                          // selectionModel={values.filterUris}
-                          loading={loading}
-                        />
-                      </Box>
-                    </Scrollbar>
-
-                    {/* <CardContent fullWidth>
-                            <Autocomplete
-                              multiple
-                              id="tags-filled"
-                              options={filters}
-                              getOptionLabel={(opt) => `${opt.label} (${opt.description})`}
-                              onChange={(event, value) => {
-                                setFieldValue('filterUris', value);
-                              }}
-                              renderTags={(tagValue, getTagProps) =>
-                                tagValue.map((option, index) => (
-                                  <Chip
-                                    label={option.label}
-                                    {...getTagProps({ index })}
-                                  />
-                                ))
-                              }
-                              renderInput={(p) => (
-                                <TextField
-                                  {...p}
-                                  variant="outlined"
-                                  label="Data Filters"
-                                  error={Boolean(
-                                    touched.filterUris && errors.filterUris
-                                  )}
-                                  helperText={touched.filterUris && errors.filterUris}
-                                />
-                              )}
-                            />
-                          {/* <ChipInput
-                            error={Boolean(touched.tags && errors.tags)}
-                            fullWidth
-                            helperText={touched.tags && errors.tags}
-                            variant="outlined"
-                            label="Data Filters"
-                            placeholder="Hit enter after typing value"
-                            onChange={(chip) => {
-                              setFieldValue('filterUris', [...chip]);
-                            }}
-                          /> 
-                        </CardContent> */}
+                    <Box fullWidth>
+                      <DataGrid
+                        fullWidth
+                        autoHeight
+                        scrollbarSize={50}
+                        rowSpacingType="border"
+                        rows={filters}
+                        getRowId={(filter) => filter.filterUri}
+                        columns={columns}
+                        pageSize={pageSize}
+                        rowsPerPageOptions={[5, 10, 20]}
+                        onPageSizeChange={(newPageSize) =>
+                          setPageSize(newPageSize)
+                        }
+                        checkboxSelection
+                        onSelectionModelChange={(newSelection) => {
+                          setSelectionModel(newSelection);
+                        }}
+                        selectionModel={selectionModel}
+                        loading={loading}
+                      />
+                    </Box>
                     {errors.submit && (
                       <Box sx={{ mt: 3 }}>
                         <FormHelperText error>{errors.submit}</FormHelperText>

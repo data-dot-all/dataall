@@ -15,3 +15,4 @@ export * from './verifyItemsShareObject';
 export * from './reApplyItemsShareObject';
 export * from './verifyDatasetShareObjects';
 export * from './updateFiltersTableShareItem';
+export * from './listShareItemDataFilters';

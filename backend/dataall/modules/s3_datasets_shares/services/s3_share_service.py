@@ -266,9 +266,21 @@ class S3ShareService:
     def update_filters_table_share_item(uri: str, filterUris: list):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            update_share_item_filters
             share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
             if share_item:
-                S3ShareObjectRepository.update_share_item_filters(share_item, filterUris)
+                if share_item.itemType != ShareableType.Table.value:
+                    raise Exception('Share item is not a table')
+                S3ShareObjectRepository.update_share_item_filters(session, share_item, filterUris)
                 return True
             raise Exception('Share item not found')
+
+    @staticmethod
+    def list_share_item_data_filters(uri: str):
+        with get_context().db_engine.scoped_session() as session:
+            share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
+            if share_item.dataFilters:
+                return [
+                    f.label
+                    for f in S3ShareObjectRepository.list_data_filters_on_share_item(session, share_item=share_item)
+                ]
+            return None

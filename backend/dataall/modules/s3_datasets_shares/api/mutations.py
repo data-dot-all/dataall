@@ -22,7 +22,7 @@ reApplyShareObjectItemsOnDataset = gql.MutationField(
 
 updateFiltersTableShareItem = gql.MutationField(
     name='updateFiltersTableShareItem',
-    args=[gql.Argument(name='input', type=gql.NonNullableType(ModifyFiltersTableShareItemInput))],
+    args=[gql.Argument(name='input', type=gql.NonNullableType(gql.Ref('ModifyFiltersTableShareItemInput')))],
     type=gql.Boolean,
     resolver=update_filters_table_share_item,
 )

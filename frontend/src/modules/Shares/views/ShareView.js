@@ -16,6 +16,7 @@ import {
   Breadcrumbs,
   Button,
   Card,
+  Chip,
   CardContent,
   CardHeader,
   Container,
@@ -67,7 +68,8 @@ import {
   revokeItemsShareObject,
   verifyItemsShareObject,
   reApplyItemsShareObject,
-  getS3ConsumptionData
+  getS3ConsumptionData,
+  listShareItemDataFilters
 } from '../services';
 import {
   AddShareItemModal,
@@ -485,9 +487,42 @@ export function SharedItem(props) {
   } = props;
   const [isRemovingItem, setIsRemovingItem] = useState(false);
   const [isFilterModalOpenUri, setIsFilterModalOpenUri] = useState(0);
+  const [isLoadingFilters, setIsLoadingFilters] = useState(false);
+  const [dataFilterNames, setDataFilterNames] = useState([]);
+
+  const listItemDataFilters = async () => {
+    setIsLoadingFilters(true);
+    try {
+      const response = await client.query(
+        listShareItemDataFilters({ shareItemUri: item.shareItemUri })
+      );
+      if (!response.errors) {
+        if (
+          response.data &&
+          response.data.listShareItemDataFilters &&
+          Array.isArray(response.data.listShareItemDataFilters)
+        ) {
+          setDataFilterNames(response.data.listShareItemDataFilters);
+        }
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    } finally {
+      setIsLoadingFilters(false);
+    }
+  };
+
+  useEffect(() => {
+    if (client && item.itemType === 'Table') {
+      listItemDataFilters();
+    }
+  }, [client, item, dispatch]);
 
   const handleFilterModalClose = () => {
     setIsFilterModalOpenUri(0);
+    listItemDataFilters();
   };
 
   const handleFilterModalOpen = (uri) => {
@@ -521,6 +556,24 @@ export function SharedItem(props) {
       <TableCell>{item.itemName}</TableCell>
       <TableCell>
         <ShareStatus status={item.status} />
+      </TableCell>
+      <TableCell>
+        {isLoadingFilters ? (
+          <CircularProgress size={15} />
+        ) : (
+          <>
+            {dataFilterNames &&
+              dataFilterNames.length > 0 &&
+              dataFilterNames.map((dfilter) => (
+                <Chip
+                  sx={{ mr: 0.5, mb: 0.5 }}
+                  key={dfilter}
+                  label={dfilter}
+                  variant="outlined"
+                />
+              ))}
+          </>
+        )}
       </TableCell>
       <TableCell>
         {isRemovingItem ? (
@@ -1203,6 +1256,7 @@ const ShareView = () => {
                             <TableCell>Type</TableCell>
                             <TableCell>Name</TableCell>
                             <TableCell>Status</TableCell>
+                            <TableCell>Data Filters</TableCell>
                             <TableCell>Action</TableCell>
                             <TableCell>Health Status</TableCell>
                             <TableCell>Health Message</TableCell>

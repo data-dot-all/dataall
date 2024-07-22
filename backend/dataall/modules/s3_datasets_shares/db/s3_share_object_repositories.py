@@ -18,6 +18,7 @@ from dataall.modules.shares_base.db.share_object_repositories import ShareObject
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTableDataFilter
 
 logger = logging.getLogger(__name__)
 
@@ -417,6 +418,14 @@ class S3ShareObjectRepository:
         share_item: str,
         filterUris: list,
     ) -> bool:
-        share_item.filterUris = filterUris
+        share_item.dataFilters = filterUris
         session.commit()
         return True
+
+    @staticmethod
+    def list_data_filters_on_share_item(session, share_item: ShareObjectItem):
+        return (
+            session.query(DatasetTableDataFilter)
+            .filter(DatasetTableDataFilter.filterUri.in_(share_item.dataFilters))
+            .all()
+        )

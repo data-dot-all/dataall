@@ -75,7 +75,13 @@ def resolve_shared_db_name(context: Context, source, **kwargs):
 
 
 def update_filters_table_share_item(context: Context, source, input):
-    if shareItemUri := input.get('shareItemUri') is None:
+    shareItemUri = input.get('shareItemUri')
+    if not shareItemUri:
         RequiredParameter('shareItemUri')
-    filterUris = input.get('filterUris') or []
-    return S3ShareService.update_filters_table_share_item(uri=shareItemUri, filterUris=filterUris)
+    return S3ShareService.update_filters_table_share_item(uri=shareItemUri, filterUris=input.get('filterUris') or [])
+
+
+def list_share_item_data_filters(context: Context, source, shareItemUri: str = None):
+    if not shareItemUri:
+        RequiredParameter('shareItemUri')
+    return S3ShareService.list_share_item_data_filters(uri=shareItemUri)
