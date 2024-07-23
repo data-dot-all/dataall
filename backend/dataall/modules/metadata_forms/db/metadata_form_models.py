@@ -28,7 +28,7 @@ class MetadataForm(Base):
 class MetadataFormEnforcementRule(Base):
     __tablename__ = 'metadata_form_enforcement_rule'
     uri = Column(String, primary_key=True, default=utils.uuid('rule'))
-    metadataForm = Column(String, ForeignKey('metadata_form.uri'))
+    metadataFormUri = Column(String, ForeignKey('metadata_form.uri'))
     level = Column(String, nullable=False)  # enum MetadataFormEnforcementScope
     entityTypes = Column(ARRAY(String), nullable=False)  # enum MetadataFormEntityTypes
     severity = Column(String, nullable=False)  # enum MetadataFormEnforcementSeverity
@@ -36,7 +36,7 @@ class MetadataFormEnforcementRule(Base):
 
 class MetadataFormField(Base):
     __tablename__ = 'metadata_form_field'
-    metadataForm = Column(String, ForeignKey('metadata_form.uri'))
+    metadataFormUri = Column(String, ForeignKey('metadata_form.uri'))
     uri = Column(String, primary_key=True, default=utils.uuid('field'))
     name = Column(String, nullable=False)
     type = Column(String, nullable=False)  # enum MetadataFormFieldType
@@ -47,7 +47,7 @@ class MetadataFormField(Base):
 
 class AttachedMetadataForm(Base):
     __tablename__ = 'attached_metadata_form'
-    metadataForm = Column(String, ForeignKey('metadata_form.uri'), nullable=False)
+    metadataFormUri = Column(String, ForeignKey('metadata_form.uri'), nullable=False)
     uri = Column(String, primary_key=True, default=utils.uuid('attached_form'))
     entityUri = Column(String, nullable=False)
     entityType = Column(String, nullable=False)

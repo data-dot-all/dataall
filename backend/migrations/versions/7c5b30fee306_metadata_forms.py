@@ -31,26 +31,26 @@ def upgrade():
     )
     op.create_table(
         'attached_metadata_form',
-        sa.Column('metadataForm', sa.String(), nullable=False),
+        sa.Column('metadataFormUri', sa.String(), nullable=False),
         sa.Column('uri', sa.String(), nullable=False),
         sa.Column('entityUri', sa.String(), nullable=False),
         sa.Column('entityType', sa.String(), nullable=False),
-        sa.ForeignKeyConstraint(['metadataForm'], ['metadata_form.uri'], name='fk_attached_mf_uri'),
+        sa.ForeignKeyConstraint(['metadataFormUri'], ['metadata_form.uri'], name='fk_attached_mf_uri'),
         sa.PrimaryKeyConstraint('uri', name='pk_attached_metadata_form'),
     )
     op.create_table(
         'metadata_form_enforcement_rule',
         sa.Column('uri', sa.String(), nullable=False),
-        sa.Column('metadataForm', sa.String(), nullable=False),
+        sa.Column('metadataFormUri', sa.String(), nullable=False),
         sa.Column('level', sa.String(), nullable=False),
         sa.Column('entityTypes', postgresql.ARRAY(sa.String()), nullable=False),
         sa.Column('severity', sa.String(), nullable=False),
-        sa.ForeignKeyConstraint(['metadataForm'], ['metadata_form.uri'], name='fk_mf_enforced_uri'),
+        sa.ForeignKeyConstraint(['metadataFormUri'], ['metadata_form.uri'], name='fk_mf_enforced_uri'),
         sa.PrimaryKeyConstraint('uri', name='pk_metadata_form_enforcement_rule'),
     )
     op.create_table(
         'metadata_form_field',
-        sa.Column('metadataForm', sa.String(), nullable=True),
+        sa.Column('metadataFormUri', sa.String(), nullable=True),
         sa.Column('uri', sa.String(), nullable=False),
         sa.Column('name', sa.String(), nullable=False),
         sa.Column('type', sa.String(), nullable=False),
@@ -58,7 +58,7 @@ def upgrade():
         sa.Column('glossaryTerm', sa.String(), nullable=True),
         sa.Column('possibleValues', postgresql.ARRAY(sa.String()), nullable=True),
         sa.ForeignKeyConstraint(['glossaryTerm'], ['term_link.linkUri'], name='fk_mf_field_term_link'),
-        sa.ForeignKeyConstraint(['metadataForm'], ['metadata_form.uri'], name='fk_mf_filed_form_uri'),
+        sa.ForeignKeyConstraint(['metadataFormUri'], ['metadata_form.uri'], name='fk_mf_filed_form_uri'),
         sa.PrimaryKeyConstraint('uri', name='pk_metadata_form_field'),
     )
     op.create_table(
