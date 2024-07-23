@@ -77,7 +77,7 @@ class StringAttachedMetadataFormField(AttachedMetadataFormField):
     __tablename__ = 'string_attached_metadata_form_field'
     attachedFormUri = Column(String, primary_key=True)
     fieldUri = Column(String, primary_key=True)
-    sValue = Column(String, nullable=False)
+    value = Column(String, nullable=False)
     __mapper_args__ = {'polymorphic_identity': MetadataFormFieldType.String}
 
     __table_args__ = (
@@ -87,16 +87,12 @@ class StringAttachedMetadataFormField(AttachedMetadataFormField):
         ),
     )
 
-    @property
-    def value(self):
-        return self.sValue
-
 
 class BooleanAttachedMetadataFormField(AttachedMetadataFormField):
     __tablename__ = 'boolean_attached_metadata_form_field'
     attachedFormUri = Column(String, primary_key=True)
     fieldUri = Column(String, primary_key=True)
-    bValue = Column(Boolean, nullable=False)
+    value = Column(Boolean, nullable=False)
     __mapper_args__ = {'polymorphic_identity': 'Boolean'}
 
     __table_args__ = (
@@ -106,16 +102,12 @@ class BooleanAttachedMetadataFormField(AttachedMetadataFormField):
         ),
     )
 
-    @property
-    def value(self):
-        return self.bValue
-
 
 class IntegerAttachedMetadataFormField(AttachedMetadataFormField):
     __tablename__ = 'integer_attached_metadata_form_field'
     attachedFormUri = Column(String, primary_key=True)
     fieldUri = Column(String, primary_key=True)
-    iValue = Column(Integer, nullable=False)
+    value = Column(Integer, nullable=False)
     __mapper_args__ = {'polymorphic_identity': 'Integer'}
 
     __table_args__ = (
@@ -125,16 +117,12 @@ class IntegerAttachedMetadataFormField(AttachedMetadataFormField):
         ),
     )
 
-    @property
-    def value(self):
-        return self.iValue
-
 
 class GlossaryTermAttachedMetadataFormField(AttachedMetadataFormField):
     __tablename__ = 'glossary_term_attached_metadata_form_field'
     attachedFormUri = Column(String, primary_key=True)
     fieldUri = Column(String, primary_key=True)
-    gtValue = Column(String, nullable=False)
+    value = Column(String, nullable=False)
     __mapper_args__ = {'polymorphic_identity': 'Glossary Term'}
 
     __table_args__ = (
@@ -143,7 +131,3 @@ class GlossaryTermAttachedMetadataFormField(AttachedMetadataFormField):
             ['attached_metadata_form_field.attachedFormUri', 'attached_metadata_form_field.fieldUri'],
         ),
     )
-
-    @property
-    def value(self):
-        return self.gtValue

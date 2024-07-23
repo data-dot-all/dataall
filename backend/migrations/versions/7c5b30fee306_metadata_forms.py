@@ -74,7 +74,7 @@ def upgrade():
         'boolean_attached_metadata_form_field',
         sa.Column('attachedFormUri', sa.String(), nullable=False),
         sa.Column('fieldUri', sa.String(), nullable=False),
-        sa.Column('bValue', sa.Boolean(), nullable=False),
+        sa.Column('value', sa.Boolean(), nullable=False),
         sa.ForeignKeyConstraint(
             ['attachedFormUri', 'fieldUri'],
             ['attached_metadata_form_field.attachedFormUri', 'attached_metadata_form_field.fieldUri'],
@@ -86,7 +86,7 @@ def upgrade():
         'glossary_term_attached_metadata_form_field',
         sa.Column('attachedFormUri', sa.String(), nullable=False),
         sa.Column('fieldUri', sa.String(), nullable=False),
-        sa.Column('gtValue', sa.String(), nullable=False),
+        sa.Column('value', sa.String(), nullable=False),
         sa.ForeignKeyConstraint(
             ['attachedFormUri', 'fieldUri'],
             ['attached_metadata_form_field.attachedFormUri', 'attached_metadata_form_field.fieldUri'],
@@ -98,7 +98,7 @@ def upgrade():
         'integer_attached_metadata_form_field',
         sa.Column('attachedFormUri', sa.String(), nullable=False),
         sa.Column('fieldUri', sa.String(), nullable=False),
-        sa.Column('iValue', sa.Integer(), nullable=False),
+        sa.Column('value', sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
             ['attachedFormUri', 'fieldUri'],
             ['attached_metadata_form_field.attachedFormUri', 'attached_metadata_form_field.fieldUri'],
@@ -110,7 +110,7 @@ def upgrade():
         'string_attached_metadata_form_field',
         sa.Column('attachedFormUri', sa.String(), nullable=False),
         sa.Column('fieldUri', sa.String(), nullable=False),
-        sa.Column('sValue', sa.String(), nullable=False),
+        sa.Column('value', sa.String(), nullable=False),
         sa.ForeignKeyConstraint(
             ['attachedFormUri', 'fieldUri'],
             ['attached_metadata_form_field.attachedFormUri', 'attached_metadata_form_field.fieldUri'],
