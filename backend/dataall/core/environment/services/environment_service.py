@@ -45,7 +45,6 @@ from dataall.core.permissions.services.organization_permissions import LINK_ENVI
 from dataall.core.permissions.services import environment_permissions
 from dataall.core.permissions.services.tenant_permissions import MANAGE_ENVIRONMENTS
 from dataall.core.stacks.db.stack_repositories import StackRepository
-from dataall.core.stacks.services.stack_service import StackService
 from dataall.core.vpc.db.vpc_repositories import VpcRepository
 
 log = logging.getLogger(__name__)
@@ -305,11 +304,6 @@ class EnvironmentService:
                 targetType='env',
             )
             session.add(activity)
-            StackService.create_stack(
-                environment_uri=env.environmentUri, target_type='environment', target_uri=env.environmentUri
-            )
-
-            StackService.deploy_stack(targetUri=env.environmentUri)
             return env
 
     @staticmethod

@@ -29,6 +29,11 @@ def create_environment(context: Context, source, input={}):
         uri=input.get('organizationUri'),
         data=input,
     )
+    StackService.create_stack(
+        environment_uri=env.environmentUri, target_type='environment', target_uri=env.environmentUri
+    )
+
+    StackService.deploy_stack(targetUri=env.environmentUri)
     return env
 
 

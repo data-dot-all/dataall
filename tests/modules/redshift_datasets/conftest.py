@@ -8,7 +8,6 @@ from dataall.modules.redshift_datasets.services.redshift_connection_service impo
 
 ENVNAME = os.environ.get('envname', 'pytest')
 
-
 class MockRedshiftDataClient:
     def get_redshift_connection_database(self, *args, **kwargs):
         return True
@@ -69,9 +68,21 @@ def patch_redshift(module_mocker):
         return_value=MockRedshiftServerlessClient(),
     )
 
+@pytest.fixture(scope='function')
+def api_context_1(user, group):
+    engine = get_engine(envname=ENVNAME)
+    yield set_context(RequestContext(db_engine=engine, username=user.username, groups=[group.name], user_id=user.username))
+    dispose_context()
+
+@pytest.fixture(scope='function')
+def api_context_2(user2, group2):
+    engine = get_engine(envname=ENVNAME)
+    yield set_context(RequestContext(db_engine=engine, username=user2.username, groups=[group2.name], user_id=user2.username))
+    dispose_context()
+
 
 @pytest.fixture(scope='module')
-def connection1_serverless(user1, group1, env1, module_mocker):
+def connection1_serverless(user, group, env_fixture,module_mocker):
     module_mocker.patch(
         'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_client',
         return_value=MockRedshiftClient(),
@@ -85,10 +96,10 @@ def connection1_serverless(user1, group1, env1, module_mocker):
         return_value=MockRedshiftServerlessClient(),
     )
     engine = get_engine(envname=ENVNAME)
-    set_context(RequestContext(db_engine=engine, username=user1.username, groups=[group1.name], user_id=user1.username))
+    set_context(RequestContext(db_engine=engine, username=user.username, groups=[group.name], user_id=user.username))
     connection = RedshiftConnectionService.create_redshift_connection(
-        uri=env1.environmentUri,
-        admin_group=group1.name,
+        uri=env_fixture.environmentUri,
+        admin_group=group.name,
         data={
             'connectionName': 'connection1',
             'redshiftType': 'serverless',
@@ -105,7 +116,7 @@ def connection1_serverless(user1, group1, env1, module_mocker):
 
 
 @pytest.fixture(scope='module')
-def connection2_cluster(user1, group1, env1, module_mocker):
+def connection2_cluster(user, group, env_fixture, module_mocker):
     module_mocker.patch(
         'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_client',
         return_value=MockRedshiftClient(),
@@ -119,10 +130,10 @@ def connection2_cluster(user1, group1, env1, module_mocker):
         return_value=MockRedshiftServerlessClient(),
     )
     engine = get_engine(envname=ENVNAME)
-    set_context(RequestContext(db_engine=engine, username=user1.username, groups=[group1.name], user_id=user1.username))
+    set_context(RequestContext(db_engine=engine, username=user.username, groups=[group.name], user_id=user.username))
     connection = RedshiftConnectionService.create_redshift_connection(
-        uri=env1.environmentUri,
-        admin_group=group1.name,
+        uri=env_fixture.environmentUri,
+        admin_group=group.name,
         data={
             'connectionName': 'connection2',
             'redshiftType': 'cluster',
