@@ -3,7 +3,6 @@ import logging
 from botocore.exceptions import ClientError
 
 from dataall.base.aws.sts import SessionHelper
-from dataall.modules.redshift_datasets.services.redshift_enums import DatashareStatus
 
 log = logging.getLogger(__name__)
 

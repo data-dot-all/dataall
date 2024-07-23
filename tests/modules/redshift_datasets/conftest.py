@@ -1,21 +1,21 @@
+import os
 import pytest
 
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
-from dataall.core.organizations.db.organization_models import Organization
-from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.base.context import set_context, dispose_context, RequestContext
+from dataall.base.db import get_engine
 
-from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnection
 from dataall.modules.redshift_datasets.services.redshift_connection_service import RedshiftConnectionService
 
+ENVNAME = os.environ.get('envname', 'pytest')
 
 class MockRedshiftDataClient:
-    def get_redshift_connection_database(self, database):
+    def get_redshift_connection_database(self, *args, **kwargs):
         return True
 
-    def list_redshift_schemas(self, schema):
-        return [schema]
+    def list_redshift_schemas(self, *args, **kwargs):
+        return ['public', 'dev']
 
-    def list_redshift_tables(self):
+    def list_redshift_tables(self, *args, **kwargs):
         return [
             {'name': 'table1', 'type': 'TABLE'},
             {'name': 'table2', 'type': 'TABLE'},
@@ -23,7 +23,7 @@ class MockRedshiftDataClient:
             {'name': 'table4', 'type': 'TABLE'},
         ]
 
-    def list_redshift_table_columns(self):
+    def list_redshift_table_columns(self, *args, **kwargs):
         return [
             {'name': 'column1', 'type': 'VARCHAR', 'nullable': True},
             {'name': 'column2', 'type': 'INTEGER', 'nullable': False},
@@ -33,15 +33,15 @@ class MockRedshiftDataClient:
 
 
 class MockRedshiftClient:
-    def describe_cluster(self):
+    def describe_cluster(self, *args, **kwargs):
         return {'ClusterIdentifier': 'cluster_id_1', 'ClusterStatus': 'available'}
 
 
 class MockRedshiftServerlessClient:
-    def get_namespace_by_id(self):
+    def get_namespace_by_id(self, *args, **kwargs):
         return {'namespaceId': 'XXXXXXXXXXXXXX', 'namespaceName': 'namespace_name_1'}
 
-    def list_workgroups_in_namespace(self):
+    def list_workgroups_in_namespace(self, *args, **kwargs):
         return [
             {
                 'workgroupName': 'workgroup_name_1',
@@ -49,44 +49,57 @@ class MockRedshiftServerlessClient:
             }
         ]
 
-    def get_workgroup_arn(self):
+    def get_workgroup_arn(self, *args, **kwargs):
         return 'arn:aws:redshift-serverless:eu-west-1:XXXXXXXXXXXXXX:workgroup/workgroup_name_1'
 
 
 @pytest.fixture(scope='function')
-def patch_redshift_client(module_mocker):
+def patch_redshift(module_mocker):
     module_mocker.patch(
         'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_client',
         return_value=MockRedshiftClient(),
     )
-
-
-@pytest.fixture(scope='function')
-def patch_redshift_data_client(module_mocker):
     module_mocker.patch(
         'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_data_client',
         return_value=MockRedshiftDataClient(),
     )
-
-
-@pytest.fixture(scope='function')
-def patch_redshift_serverless_client(module_mocker):
     module_mocker.patch(
         'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_serverless_client',
         return_value=MockRedshiftServerlessClient(),
     )
 
+@pytest.fixture(scope='function')
+def api_context_1(user, group):
+    engine = get_engine(envname=ENVNAME)
+    yield set_context(RequestContext(db_engine=engine, username=user.username, groups=[group.name], user_id=user.username))
+    dispose_context()
 
 @pytest.fixture(scope='function')
-def patch_redshift(patch_redshift_client, patch_redshift_data_client, patch_redshift_serverless_client):
-    yield patch_redshift_client, patch_redshift_data_client, patch_redshift_serverless_client
+def api_context_2(user2, group2):
+    engine = get_engine(envname=ENVNAME)
+    yield set_context(RequestContext(db_engine=engine, username=user2.username, groups=[group2.name], user_id=user2.username))
+    dispose_context()
 
 
-@pytest.fixture(scope='session')
-def connection1_serverless(env1, group1, patch_redshift):
+@pytest.fixture(scope='module')
+def connection1_serverless(user, group, env_fixture,module_mocker):
+    module_mocker.patch(
+        'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_client',
+        return_value=MockRedshiftClient(),
+    )
+    module_mocker.patch(
+        'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_data_client',
+        return_value=MockRedshiftDataClient(),
+    )
+    module_mocker.patch(
+        'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_serverless_client',
+        return_value=MockRedshiftServerlessClient(),
+    )
+    engine = get_engine(envname=ENVNAME)
+    set_context(RequestContext(db_engine=engine, username=user.username, groups=[group.name], user_id=user.username))
     connection = RedshiftConnectionService.create_redshift_connection(
-        uri=env1.environmentUri,
-        admin_group=group1,
+        uri=env_fixture.environmentUri,
+        admin_group=group.name,
         data={
             'connectionName': 'connection1',
             'redshiftType': 'serverless',
@@ -95,26 +108,42 @@ def connection1_serverless(env1, group1, patch_redshift):
             'workgroup': 'workgroup_name_1',
             'database': 'database_1',
             'redshiftUser': None,
-            'secretArn': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+            'secretArn': 'arn:aws:secretsmanager:*:111111111111:secret:secret-1',
         },
     )
+    dispose_context()
     yield connection
 
 
-@pytest.fixture(scope='session')
-def connection2_cluster(env1, group1, patch_redshift):
+@pytest.fixture(scope='module')
+def connection2_cluster(user, group, env_fixture, module_mocker):
+    module_mocker.patch(
+        'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_client',
+        return_value=MockRedshiftClient(),
+    )
+    module_mocker.patch(
+        'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_data_client',
+        return_value=MockRedshiftDataClient(),
+    )
+    module_mocker.patch(
+        'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_serverless_client',
+        return_value=MockRedshiftServerlessClient(),
+    )
+    engine = get_engine(envname=ENVNAME)
+    set_context(RequestContext(db_engine=engine, username=user.username, groups=[group.name], user_id=user.username))
     connection = RedshiftConnectionService.create_redshift_connection(
-        uri=env1.environmentUri,
-        admin_group=group1,
+        uri=env_fixture.environmentUri,
+        admin_group=group.name,
         data={
             'connectionName': 'connection2',
             'redshiftType': 'cluster',
-            'clusterId': 'XXXXXXXXXXXXXX',
+            'clusterId': 'cluster-id',
             'nameSpaceId': None,
             'workgroup': None,
             'database': 'database_1',
             'redshiftUser': None,
-            'secretArn': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+            'secretArn': 'arn:aws:secretsmanager:*:111111111111:secret:secret-2',
         },
     )
+    dispose_context()
     yield connection
