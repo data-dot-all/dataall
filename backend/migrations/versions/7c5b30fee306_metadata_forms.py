@@ -55,9 +55,9 @@ def upgrade():
         sa.Column('name', sa.String(), nullable=False),
         sa.Column('type', sa.String(), nullable=False),
         sa.Column('required', sa.Boolean(), nullable=False),
-        sa.Column('glossaryTerm', sa.String(), nullable=True),
+        sa.Column('glossaryNodeUri', sa.String(), nullable=True),
         sa.Column('possibleValues', postgresql.ARRAY(sa.String()), nullable=True),
-        sa.ForeignKeyConstraint(['glossaryTerm'], ['term_link.linkUri'], name='fk_mf_field_term_link'),
+        sa.ForeignKeyConstraint(['glossaryNodeUri'], ['glossary_node.nodeUri'], name='fk_mf_field_glossary_node'),
         sa.ForeignKeyConstraint(['metadataFormUri'], ['metadata_form.uri'], name='fk_mf_filed_form_uri'),
         sa.PrimaryKeyConstraint('uri', name='pk_metadata_form_field'),
     )

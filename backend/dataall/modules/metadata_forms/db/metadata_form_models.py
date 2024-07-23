@@ -41,7 +41,7 @@ class MetadataFormField(Base):
     name = Column(String, nullable=False)
     type = Column(String, nullable=False)  # enum MetadataFormFieldType
     required = Column(Boolean, nullable=False)
-    glossaryTerm = Column(String, ForeignKey('term_link.linkUri'), nullable=True)
+    glossaryNodeUri = Column(String, ForeignKey('glossary_node.nodeUri'), nullable=True)
     possibleValues = Column(ARRAY(String), nullable=True)
 
 
