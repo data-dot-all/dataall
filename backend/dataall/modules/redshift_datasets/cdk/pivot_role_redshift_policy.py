@@ -49,7 +49,7 @@ class RedshiftDatasetsPivotRole(PivotRoleStatementSet):
         ]
         engine = db.get_engine(envname=os.environ.get('envname', 'local'))
         with engine.scoped_session() as session:
-            connections = RedshiftConnectionRepository.query_environment_redshift_connections(
+            connections = RedshiftConnectionRepository.list_environment_redshift_connections(
                 session, environment_uri=self.environmentUri
             )
             additional_statements = []
@@ -66,11 +66,6 @@ class RedshiftDatasetsPivotRole(PivotRoleStatementSet):
                     if conn.workgroup != ''
                 ]
                 # namespaces_arns = [conn.nameSpaceId for conn in connections if conn.nameSpaceId != '']
-                datashare_arns = [
-                    f'arn:aws:redshift:{self.region}:{self.account}:datashare:{conn.nameSpaceId}/*'
-                    for conn in connections
-                    if conn.nameSpaceId != ''
-                ]
                 additional_statements.extend(
                     split_policy_with_resources_in_statements(
                         base_sid='RedshiftData',

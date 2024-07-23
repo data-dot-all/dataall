@@ -309,22 +309,26 @@ export const GlossarySearchResultItem = ({ hit }) => {
         }}
       >
         <Box>
-          {isOpeningModal || isOpeningDashboardModal ? (
-            <CircularProgress size={20} />
-          ) : (
-            <Button
-              color="primary"
-              startIcon={<LockOpen fontSize="small" />}
-              onClick={() =>
-                hit.resourceKind === 'dashboard'
-                  ? handleRequestDashboardAccessModalOpen()
-                  : handleRequestAccessModalOpen()
-              }
-              type="button"
-            >
-              Request Access
-            </Button>
-          )}
+          {hit.resourceKind === 'redshift-dataset' ||
+          hit.resourceKind === 'redshift-table' ? (
+            isOpeningModal || isOpeningDashboardModal ? (
+              <CircularProgress size={20} />
+            ) : (
+              <Button
+                color="primary"
+                startIcon={<LockOpen fontSize="small" />}
+                onClick={() =>
+                  hit.resourceKind === 'dashboard'
+                    ? handleRequestDashboardAccessModalOpen()
+                    : handleRequestAccessModalOpen()
+                }
+                type="button"
+              >
+                Request Access
+              </Button>
+            )
+          ) : null}
+          )
           <RequestAccessModal
             hit={hit}
             onApply={handleRequestAccessModalClose}

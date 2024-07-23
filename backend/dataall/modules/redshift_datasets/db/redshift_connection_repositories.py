@@ -60,9 +60,9 @@ class RedshiftConnectionRepository:
         return query.order_by(RedshiftConnection.label)
 
     @staticmethod
-    def query_environment_redshift_connections(session, environment_uri) -> Query:
+    def list_environment_redshift_connections(session, environment_uri):
         query = session.query(RedshiftConnection).filter(RedshiftConnection.environmentUri == environment_uri)
-        return query.order_by(RedshiftConnection.label)
+        return query.order_by(RedshiftConnection.label).all()
 
     @staticmethod
     def paginated_user_redshift_connections(session, username, groups, filter={}) -> dict:
