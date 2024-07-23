@@ -38,7 +38,7 @@ import {
   listEnvironmentGroups,
   listValidEnvironments
 } from 'services';
-import { Topics, ConfidentialityList } from '../../constants';
+import {Topics, ConfidentialityList, ExpirationSettings} from '../../constants';
 import config from '../../../generated/config.json';
 import { isFeatureEnabled } from 'utils';
 
@@ -60,8 +60,7 @@ const DatasetCreateForm = (props) => {
       : ConfidentialityList
   );
   const [showAdvancedControls, setShowAdvancedControl] = useState(false);
-  const [showExpirationMenu, setShowExpirationMenu] = useState(false);
-  const [expirationMenu] = useState(['Quarterly', 'Monthly']);
+  const [expirationMenu] = useState(ExpirationSettings);
   const [enableShareExpiration, setEnableShareExpiration] = useState(false);
   const topicsData = Topics.map((t) => ({ label: t, value: t }));
 
@@ -116,16 +115,8 @@ const DatasetCreateForm = (props) => {
   }, [client, fetchEnvironments, dispatch]);
 
 
-  const validateInput = async(values) =>{
-    // Validate of the values of the
-    if (values.minValidity > values.maxValidity){
-      throw new Error('Minimum allowed expiration cannot be greater than maximum allowed expiration');
-    }
-  }
-
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
-      await validateInput(values)
       const response = await client.mutate(
         createDataset({
           organizationUri: values.environment.organization.organizationUri,
@@ -138,7 +129,11 @@ const DatasetCreateForm = (props) => {
           description: values.description,
           topics: values.topics ? values.topics.map((t) => t.value) : [],
           confidentiality: values.confidentiality,
-          autoApprovalEnabled: values.autoApprovalEnabled
+          autoApprovalEnabled: values.autoApprovalEnabled,
+          enableExpiration: enableShareExpiration,
+          expirySetting: enableShareExpiration ? values.expirationSetting : null,
+          expiryMinDuration: enableShareExpiration ? values.minValidity : null,
+          expiryMaxDuration: enableShareExpiration ? values.maxValidity : null
         })
       );
       if (!response.errors) {
@@ -164,16 +159,6 @@ const DatasetCreateForm = (props) => {
       setSubmitting(false);
       dispatch({ type: SET_ERROR, error: err.message });
     }
-  }
-
-  const handleEnableShareExpiration = async() => {
-      // Check once this goes to enabled
-      // Enable the minimum and maximum validity of the share
-    console.log("Handling Enable Share Expiration")
-    setEnableShareExpiration(!enableShareExpiration);
-    setShowExpirationMenu(!enableShareExpiration);
-    return "";
-
   }
 
   if (loading) {
@@ -277,8 +262,8 @@ const DatasetCreateForm = (props) => {
                   '*AutoApproval property is required'
                 ),
                 expirationSetting: Yup.string(),
-                minValidity: enableShareExpiration ? Yup.number().required("*Minimum allowed expiration cannot be negative") :  Yup.number(),
-                maxValidity: enableShareExpiration ? Yup.number().required("*Maximum allowed expiration cannot be negative") :  Yup.number()
+                minValidity: enableShareExpiration ? Yup.number().required("*Minimum allowed expiration is required") :  Yup.number(),
+                maxValidity: enableShareExpiration ? Yup.number().required("*Maximum allowed expiration is required") :  Yup.number()
               })}
               onSubmit={async (
                 values,
@@ -453,19 +438,11 @@ const DatasetCreateForm = (props) => {
                           )}
                         </CardContent>
                       </Card>
-
                       <Card sx={{ mt: 3 }}>
-                        <Box alignItems="center" display="flex" sx={{ p: 1 }}>
+                        <Box alignItems="center" display="flex">
                           <Box sx={{ flexGrow: 1 }}>
                             <CardHeader title="Advanced Controls" />
                           </Box>
-                          {/*<Button color="primary"*/}
-                          {/*        startIcon={<Article fontSize="small" />}*/}
-                          {/*        sx={{ m: 1 }}*/}
-                          {/*        variant="outlined"*/}
-                          {/*        onClick={() => {setShowAdvancedControl(!showAdvancedControls)}}*/}
-                          {/*        value="Collapse"> Collapse*/}
-                          {/*</Button>*/}
                           <ExpandMoreIcon sx={{ m: 1 }}
                           variant="outlined"
                           onClick={() => {setShowAdvancedControl(!showAdvancedControls)}}
@@ -473,13 +450,12 @@ const DatasetCreateForm = (props) => {
                         </Box>
                         <Collapse in={showAdvancedControls}>
                           <CardContent>
-                            <Box display="flex" sx={{ p: 1 }} alignItems="center">
-                            {/*<Stack alignItems="center" direction="row" gap={1}>*/}
+                            <Box display="flex" alignItems="center">
                               <Typography>Enable Share Expiration</Typography>
-                              <Switch checked={enableShareExpiration} onChange={handleEnableShareExpiration}/>
-                            {/*</Stack>*/}
+                              <Switch checked={enableShareExpiration} onChange={() => {setEnableShareExpiration(!enableShareExpiration)}}/>
                             </Box>
-                            <Collapse in={showExpirationMenu}>
+                          </CardContent>
+                            <Collapse in={enableShareExpiration}>
                               <CardContent>
                                 <TextField
                                  fullWidth
@@ -504,14 +480,13 @@ const DatasetCreateForm = (props) => {
                                 </MenuItem>
                               ))}
                                 </TextField>
-
                               </CardContent>
                                 <CardContent>
                                   <TextField
                                   error={Boolean(touched.minValidity && errors.minValidity)}
                                   fullWidth
                                   helperText={touched.minValidity && errors.minValidity}
-                                  label="Minimum allowed number of months / quarters"
+                                  label="Minimum access period in months / quarters"
                                   name="minValidity"
                                   onBlur={handleBlur}
                                   onChange={handleChange}
@@ -523,7 +498,7 @@ const DatasetCreateForm = (props) => {
                                   error={Boolean(touched.maxValidity && errors.maxValidity)}
                                   fullWidth
                                   helperText={touched.maxValidity && errors.maxValidity}
-                                  label="Maximum allowed number of months / quarters"
+                                  label="Maximum access period in months / quarters"
                                   name="maxValidity"
                                   onBlur={handleBlur}
                                   onChange={handleChange}
@@ -531,7 +506,6 @@ const DatasetCreateForm = (props) => {
                                   inputProps={{ type: 'number'}}
                                 /></CardContent>
                             </Collapse>
-                          </CardContent>
                         </Collapse>
                       </Card>
                     </Grid>

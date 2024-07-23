@@ -38,7 +38,7 @@ import {
   useClient
 } from 'services';
 import { updateDataset } from '../services';
-import { ConfidentialityList, Topics } from '../../constants';
+import {ConfidentialityList, ExpirationSettings, Topics} from '../../constants';
 import config from '../../../generated/config.json';
 import { isFeatureEnabled } from 'utils';
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -64,10 +64,8 @@ const DatasetEditForm = (props) => {
       : ConfidentialityList
   );
   const [showAdvancedControls, setShowAdvancedControl] = useState(false);
-  const [showExpirationMenu, setShowExpirationMenu] = useState(false);
-  const [expirationMenu] = useState(['Quarterly', 'Monthly']);
+  const [expirationMenu] = useState(ExpirationSettings);
   const [enableShareExpiration, setEnableShareExpiration] = useState(false);
-
   const topicsData = Topics.map((t) => ({ label: t, value: t }));
 
   const fetchGroups = useCallback(
@@ -101,6 +99,7 @@ const DatasetEditForm = (props) => {
     const response = await client.query(getDataset(params.uri));
     if (!response.errors && response.data.getDataset !== null) {
       setDataset(response.data.getDataset);
+      setEnableShareExpiration(response.data.getDataset.enableExpiration)
       fetchGroups(response.data.getDataset.environment.environmentUri).catch(
         (e) => dispatch({ type: SET_ERROR, error: e.message })
       );
@@ -166,7 +165,11 @@ const DatasetEditForm = (props) => {
               : values.terms.map((t) => t.nodeUri),
             confidentiality: values.confidentiality,
             KmsAlias: values.KmsAlias,
-            autoApprovalEnabled: values.autoApprovalEnabled
+            autoApprovalEnabled: values.autoApprovalEnabled,
+            enableExpiration: enableShareExpiration,
+            expirySetting: enableShareExpiration ? values.expirationSetting : null,
+            expiryMinDuration: enableShareExpiration ? values.minValidity : null,
+            expiryMaxDuration: enableShareExpiration ? values.maxValidity : null
           }
         })
       );
@@ -193,23 +196,6 @@ const DatasetEditForm = (props) => {
       setSubmitting(false);
       dispatch({ type: SET_ERROR, error: err.message });
     }
-  }
-
-  const validateInput = async(values) =>{
-    // Validate of the values of the
-    if (values.minValidity > values.maxValidity){
-      throw new Error('Minimum allowed expiration cannot be greater than maximum allowed expiration');
-    }
-  }
-
-  const handleEnableShareExpiration = async() => {
-      // Check once this goes to enabled
-      // Enable the minimum and maximum validity of the share
-    console.log("Handling Enable Share Expiration")
-    setEnableShareExpiration(!enableShareExpiration);
-    setShowExpirationMenu(!enableShareExpiration);
-    return "";
-
   }
 
   if (loading || !(dataset && dataset.environment)) {
@@ -293,9 +279,9 @@ const DatasetEditForm = (props) => {
                 confidentiality: dataset.confidentiality,
                 KmsAlias: dataset.KmsAlias,
                 autoApprovalEnabled: dataset.autoApprovalEnabled,
-                expirationSetting: '', // Todo Change the value to dataset.expiration
-                minValidity: 0, // Todo  Change the value to dataset.minValidity
-                maxValidity: 0 // Todo Change the value to dataset.maxValidity
+                expirationSetting: dataset.expirySetting,
+                minValidity: dataset.expiryMinDuration,
+                maxValidity: dataset.expiryMaxDuration
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -319,8 +305,8 @@ const DatasetEditForm = (props) => {
                   '*AutoApproval property is required'
                 ),
                 expirationSetting: Yup.string(),
-                minValidity: enableShareExpiration ? Yup.number().required("*Minimum allowed expiration cannot be negative") :  Yup.number(),
-                maxValidity: enableShareExpiration ? Yup.number().required("*Maximum allowed expiration cannot be negative") :  Yup.number()
+                minValidity: enableShareExpiration ? Yup.number().required("*Minimum allowed expiration is required") :  Yup.number(),
+                maxValidity: enableShareExpiration ? Yup.number().required("*Maximum allowed expiration is required") :  Yup.number()
               })}
               onSubmit={async (
                 values,
@@ -549,14 +535,14 @@ const DatasetEditForm = (props) => {
                             onClick={() => {setShowAdvancedControl(!showAdvancedControls)}}
                           />
                         </Box>
-                        <Collapse in={true}>
-                          {/* Todo Show all the controls if dataset's expiration is enabled*/}
+                        <Collapse in={showAdvancedControls}>
                           <CardContent>
                             <Box display="flex" alignItems="center">
                               <Typography>Enable Share Expiration</Typography>
-                              <Switch checked={enableShareExpiration} onChange={handleEnableShareExpiration}/>
+                              <Switch checked={enableShareExpiration} onChange={() => {setEnableShareExpiration(!enableShareExpiration);}}/>
                             </Box>
-                            <Collapse in={showExpirationMenu}>
+                          </CardContent>
+                          <Collapse in={enableShareExpiration}>
                               <CardContent>
                                 <TextField
                                  fullWidth
@@ -588,27 +574,28 @@ const DatasetEditForm = (props) => {
                                   error={Boolean(touched.minValidity && errors.minValidity)}
                                   fullWidth
                                   helperText={touched.minValidity && errors.minValidity}
-                                  label="Minimum allowed number of months / quarters"
+                                  label="Minimum access period in months / quarters"
                                   name="minValidity"
                                   onBlur={handleBlur}
                                   onChange={handleChange}
                                   variant="outlined"
                                   inputProps={{ type: 'number'}}
+                                  value={values.minValidity}
                                 /></CardContent>
                                 <CardContent>
                                   <TextField
                                   error={Boolean(touched.maxValidity && errors.maxValidity)}
                                   fullWidth
                                   helperText={touched.maxValidity && errors.maxValidity}
-                                  label="Maximum allowed number of months / quarters"
+                                  label="Maximum access period in months / quarters"
                                   name="maxValidity"
                                   onBlur={handleBlur}
                                   onChange={handleChange}
                                   variant="outlined"
                                   inputProps={{ type: 'number'}}
+                                  value={values.maxValidity}
                                 /></CardContent>
                             </Collapse>
-                          </CardContent>
                         </Collapse>
                       </Card>
 

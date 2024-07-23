@@ -101,6 +101,9 @@ def get_dataset_stewards_group(context, source: S3Dataset, **kwargs):
 
 
 def update_dataset(context, source, datasetUri: str = None, input: dict = None):
+    if input.get('enableExpiration', False):
+        if input.get('expiryMinDuration') > input.get('expiryMaxDuration'):
+            raise InvalidInput('Minimum expiration duration ', input.get('expiryMinDuration'), f'cannot be greater than max expiration {input.get("expiryMaxDuration")}')
     return DatasetService.update_dataset(uri=datasetUri, data=input)
 
 
@@ -167,6 +170,9 @@ class RequestValidator:
         ConfidentialityClassification.validate_confidentiality_level(data.get('confidentiality', ''))
         if len(data['label']) > 52:
             raise InvalidInput('Dataset name', data['label'], 'less than 52 characters')
+        if data.get('enableExpiration', False):
+            if data.get('expiryMinDuration') > data.get('expiryMaxDuration'):
+                raise InvalidInput('Minimum expiration duration ', data.get('expiryMinDuration'), f'cannot be greater than max expiration {data.get("expiryMaxDuration")}')
 
     @staticmethod
     def validate_import_request(data):

@@ -46,6 +46,10 @@ class DatasetRepository(EnvironmentResource):
             businessOwnerDelegationEmails=data.get('businessOwnerDelegationEmails', []),
             stewards=data.get('stewards') if data.get('stewards') else data['SamlAdminGroupName'],
             autoApprovalEnabled=data.get('autoApprovalEnabled', False),
+            enableExpiration=data.get('enableExpiration', False),
+            expirySetting=data.get('expirySetting'),
+            expiryMinDuration=data.get('expiryMinDuration'),
+            expiryMaxDuration=data.get('expiryMaxDuration')
         )
 
         cls._set_import_data(dataset, data)

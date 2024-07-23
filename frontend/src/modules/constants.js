@@ -14,3 +14,5 @@ export const Topics = [
 ];
 
 export const ConfidentialityList = ['Unclassified', 'Official', 'Secret'];
+
+export const ExpirationSettings = ['Quarterly', 'Monthly']
