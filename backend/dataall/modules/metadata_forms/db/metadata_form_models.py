@@ -20,7 +20,7 @@ class MetadataForm(Base):
     uri = Column(String, primary_key=True, default=utils.uuid('metadata_form'))
     name = Column(String, nullable=False)
     description = Column(String, nullable=False)
-    SamlGroupName = Column(String, nullable=True)
+    SamlGroupName = Column(String, nullable=False)
     visibility = Column(String, nullable=False)  # enum MetadataFormVisibility
     homeEntity = Column(String, nullable=True)
 

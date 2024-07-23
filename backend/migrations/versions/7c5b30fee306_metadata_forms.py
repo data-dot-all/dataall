@@ -24,7 +24,7 @@ def upgrade():
         sa.Column('uri', sa.String(), nullable=False),
         sa.Column('name', sa.String(), nullable=False),
         sa.Column('description', sa.String(), nullable=False),
-        sa.Column('SamlGroupName', sa.String(), nullable=True),
+        sa.Column('SamlGroupName', sa.String(), nullable=False),
         sa.Column('visibility', sa.String(), nullable=False),
         sa.Column('homeEntity', sa.String(), nullable=True),
         sa.PrimaryKeyConstraint('uri', name='pk_metadata_form'),
