@@ -66,7 +66,6 @@ class RedshiftConnectionRepository:
 
     @staticmethod
     def paginated_user_redshift_connections(session, username, groups, filter={}) -> dict:
-        """Returns a page of sagemaker studio users for a data.all user"""
         return paginate(
             query=RedshiftConnectionRepository._query_user_redshift_connections(session, username, groups, filter),
             page=filter.get('page', RedshiftConnectionRepository._DEFAULT_PAGE),

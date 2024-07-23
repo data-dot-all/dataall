@@ -28,22 +28,35 @@ class RedshiftDatasetsPivotRole(PivotRoleStatementSet):
                 conditions={
                     'StringEquals': {
                         'aws:ResourceTag/dataall': 'True',
-                        # TODO: add in instructions that it is needed to tag the resource also with Redshift tag
                     },
                 },
             ),
             iam.PolicyStatement(
-                sid='RedshiftRead',
+                sid='RedshiftReadAllResources',  # These permissions can only be applied to *
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'redshift-data:DescribeStatement',
                     'redshift:DescribeClusters',
                     'redshift-serverless:ListNamespaces',
-                    'redshift-serverless:GetWorkgroup',
                     'redshift-serverless:ListWorkgroups',
                 ],
                 resources=[
                     '*',
+                ],
+            ),
+            iam.PolicyStatement(
+                sid='RedshiftRead',
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'redshift-data:ListDatabases',
+                    'redshift-serverless:GetWorkgroup',
+                    'redshift:GetClusterCredentials',
+                ],
+                resources=[
+                    f'arn:aws:redshift-serverless:{self.region}:{self.account}:workgroup/*',
+                    f'arn:aws:redshift:{self.region}:{self.account}:cluster:*',
+                    f'arn:aws:redshift:{self.region}:{self.account}:dbuser:*/*',
+                    f'arn:aws:redshift:{self.region}:{self.account}:dbname:*/*',
                 ],
             ),
         ]
@@ -57,25 +70,23 @@ class RedshiftDatasetsPivotRole(PivotRoleStatementSet):
                 cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(
                     accountid=self.account, region=self.region
                 )
-                # TODO: SCOPE DOWN PERMISSIONS and keep elaborating on the arns (cluster is not done)
                 rs_client = RedshiftServerless(account_id=self.account, region=self.region, role=cdk_look_up_role_arn)
-                cluster_arns = [conn.clusterId for conn in connections if conn.clusterId != '']
+                cluster_arns = [
+                    f'arn:aws:redshift:{self.region}:{self.account}:cluster:{conn.clusterId}'
+                    for conn in connections
+                    if conn.clusterId != ''
+                ]
                 workgroup_arns = [
                     rs_client.get_workgroup_arn(workgroup_name=conn.workgroup)
                     for conn in connections
                     if conn.workgroup != ''
                 ]
-                # namespaces_arns = [conn.nameSpaceId for conn in connections if conn.nameSpaceId != '']
                 additional_statements.extend(
                     split_policy_with_resources_in_statements(
                         base_sid='RedshiftData',
                         effect=iam.Effect.ALLOW,
                         actions=[
                             'redshift-data:ListSchemas',
-                            'redshift-data:ListDatabases',
-                            'redshift-serverless:GetCredentials',
-                            'redshift:GetClusterCredentials',
-                            'redshift:GetClusterCredentialsWithIAM',
                             'redshift-data:ListTables',
                             'redshift-data:ExecuteStatement',
                             'redshift-data:DescribeTable',
@@ -84,4 +95,4 @@ class RedshiftDatasetsPivotRole(PivotRoleStatementSet):
                     )
                 )
 
-        return base_statements + additional_statements
+            return base_statements + additional_statements

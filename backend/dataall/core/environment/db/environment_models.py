@@ -2,7 +2,7 @@
 
 import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Enum, String, ForeignKey
+from sqlalchemy import Boolean, Column, DateTime, String, ForeignKey
 from sqlalchemy.orm import query_expression
 from dataall.base.db import Resource, Base, utils
 

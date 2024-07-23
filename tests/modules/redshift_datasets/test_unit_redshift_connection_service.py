@@ -22,7 +22,10 @@ def test_create_redshift_cluster_connection(connection2_cluster):
 
 def test_create_redshift_connection_namespace_not_found(env_fixture, api_context_1, group, module_mocker):
     mock_serverless = MagicMock()
-    module_mocker.patch('dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_serverless_client', return_value=mock_serverless)
+    module_mocker.patch(
+        'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_serverless_client',
+        return_value=mock_serverless,
+    )
     mock_serverless.get_namespace_by_id.return_value = None
 
     # Then
@@ -38,14 +41,17 @@ def test_create_redshift_connection_namespace_not_found(env_fixture, api_context
             'database': 'database_1',
             'redshiftUser': None,
             'secretArn': 'arn:aws:secretsmanager:*:111111111111:secret:secret-2',
-        }
+        },
     ).contains('Redshift namespaceId not-existent-id does not exist')
 
 
 def test_create_redshift_connection_workgroup_not_in_namespace(env_fixture, api_context_1, group, module_mocker):
     # Given a namespace but a workgroup that does not belong to it
     mock_serverless = MagicMock()
-    module_mocker.patch('dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_serverless_client', return_value=mock_serverless)
+    module_mocker.patch(
+        'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_serverless_client',
+        return_value=mock_serverless,
+    )
     mock_serverless.get_namespace_by_id.return_value = MockRedshiftServerlessClient().get_namespace_by_id()
     mock_serverless.list_workgroups_in_namespace.return_value = []
 
@@ -62,14 +68,17 @@ def test_create_redshift_connection_workgroup_not_in_namespace(env_fixture, api_
             'database': 'database_1',
             'redshiftUser': None,
             'secretArn': 'arn:aws:secretsmanager:*:111111111111:secret:secret-2',
-        }
+        },
     ).contains('Redshift workgroup workgroup-id does not exist or is not associated to namespace not-existent-id')
 
 
 def test_create_redshift_connection_cluster_not_found(env_fixture, api_context_1, group, module_mocker):
     # Given a redshift cluster id that does not exist
     mock_redshift = MagicMock()
-    module_mocker.patch('dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_client', return_value=mock_redshift)
+    module_mocker.patch(
+        'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_client',
+        return_value=mock_redshift,
+    )
     mock_redshift.describe_cluster.return_value = False
 
     # Then
@@ -85,17 +94,23 @@ def test_create_redshift_connection_cluster_not_found(env_fixture, api_context_1
             'database': 'database_1',
             'redshiftUser': None,
             'secretArn': 'arn:aws:secretsmanager:*:111111111111:secret:secret-2',
-        }
+        },
     ).contains('Redshift cluster cluster-id does not exist or cannot be accessed with these parameters')
 
 
 def test_create_redshift_connection_database_not_found(env_fixture, api_context_1, group, module_mocker):
     # Given a redshift cluster id
     mock_redshift = MagicMock()
-    module_mocker.patch('dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_client', return_value=mock_redshift)
+    module_mocker.patch(
+        'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_client',
+        return_value=mock_redshift,
+    )
     mock_redshift.describe_cluster.return_value = MockRedshiftClient().describe_cluster()
     mock_redshift_data = MagicMock()
-    module_mocker.patch('dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_data_client', return_value=mock_redshift_data)
+    module_mocker.patch(
+        'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_data_client',
+        return_value=mock_redshift_data,
+    )
     mock_redshift_data.get_redshift_connection_database.side_effect = Exception
 
     # Then
@@ -111,7 +126,7 @@ def test_create_redshift_connection_database_not_found(env_fixture, api_context_
             'database': 'database_1',
             'redshiftUser': None,
             'secretArn': 'arn:aws:secretsmanager:*:111111111111:secret:secret-2',
-        }
+        },
     ).contains('Redshift database database_1 does not exist or cannot be accessed with these parameters')
 
 
@@ -175,7 +190,9 @@ def test_delete_redshift_connection_unauthorized(connection1_serverless, api_con
 
 def test_list_environment_redshift_connections(connection1_serverless, connection2_cluster, api_context_1, env_fixture):
     # When
-    response = RedshiftConnectionService.list_environment_redshift_connections(uri=env_fixture.environmentUri, filter={})
+    response = RedshiftConnectionService.list_environment_redshift_connections(
+        uri=env_fixture.environmentUri, filter={}
+    )
     # Then
     assert_that(response).contains_entry(count=2)
     assert_that(response).contains_key('page', 'pages', 'pageSize', 'nodes')
@@ -183,9 +200,13 @@ def test_list_environment_redshift_connections(connection1_serverless, connectio
     assert_that(connections).is_equal_to([connection1_serverless.connectionUri, connection2_cluster.connectionUri])
 
 
-def test_list_environment_redshift_connections_with_filter(connection1_serverless, connection2_cluster, api_context_1, env_fixture):
+def test_list_environment_redshift_connections_with_filter(
+    connection1_serverless, connection2_cluster, api_context_1, env_fixture
+):
     # When
-    response = RedshiftConnectionService.list_environment_redshift_connections(uri=env_fixture.environmentUri, filter={'term':connection1_serverless.name})
+    response = RedshiftConnectionService.list_environment_redshift_connections(
+        uri=env_fixture.environmentUri, filter={'term': connection1_serverless.name}
+    )
     # Then
     assert_that(response).contains_entry(count=1)
     assert_that(response).contains_key('page', 'pages', 'pageSize', 'nodes')
@@ -193,10 +214,12 @@ def test_list_environment_redshift_connections_with_filter(connection1_serverles
     assert_that(connections).is_equal_to([connection1_serverless.connectionUri])
 
 
-def test_list_environment_redshift_connections_unauthorized(connection1_serverless, connection2_cluster, api_context_2, env_fixture):
+def test_list_environment_redshift_connections_unauthorized(
+    connection1_serverless, connection2_cluster, api_context_2, env_fixture
+):
     # When
     assert_that(RedshiftConnectionService.list_environment_redshift_connections).raises(Exception).when_called_with(
-        uri=env_fixture.environmentUri,  filter={}
+        uri=env_fixture.environmentUri, filter={}
     ).contains('UnauthorizedOperation', 'LIST_ENVIRONMENT_REDSHIFT_CONNECTIONS', env_fixture.environmentUri)
 
 
@@ -213,7 +236,7 @@ def test_list_connection_schemas_unauthorized(connection1_serverless, api_contex
     ).contains('UnauthorizedOperation', 'GET_REDSHIFT_CONNECTION', connection1_serverless.connectionUri)
 
 
-def test_list_schema_tables(connection1_serverless, api_context_1 , patch_redshift):
+def test_list_schema_tables(connection1_serverless, api_context_1, patch_redshift):
     # When
     response = RedshiftConnectionService.list_schema_tables(uri=connection1_serverless.connectionUri, schema='schema1')
     assert_that(response).is_equal_to(MockRedshiftDataClient().list_redshift_tables())
