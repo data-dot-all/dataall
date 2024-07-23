@@ -29,6 +29,7 @@
     "@mui/styles": "^5.5.1",
     "@mui/x-data-grid": "^5.17.26",
     "@mui/x-date-pickers": "^5.0.0",
+    "@mui/x-tree-view": "^6.17.0",
     "@reduxjs/toolkit": "^1.8.0",
     "@testing-library/jest-dom": "^5.16.2",
     "@testing-library/react": "^12.1.4",
