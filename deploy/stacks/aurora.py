@@ -63,6 +63,8 @@ class AuroraServerlessStack(pyNestedClass):
             self, f'{resource_prefix}-{envname}-aurora-db', username='dtaadmin', encryption_key=key
         )
 
+        database_name = f'{envname}db'
+
         database = rds.ServerlessCluster(
             self,
             f'AuroraDatabase{envname}',
@@ -73,7 +75,7 @@ class AuroraServerlessStack(pyNestedClass):
                 self, 'ParameterGroup', 'default.aurora-postgresql13'
             ),
             enable_data_api=True,
-            default_database_name=f'{envname}db',
+            default_database_name=database_name,
             backup_retention=Duration.days(30) if prod_sizing else None,
             subnet_group=db_subnet_group,
             vpc=vpc,
@@ -145,7 +147,7 @@ class AuroraServerlessStack(pyNestedClass):
             self,
             'DatabaseDb',
             parameter_name=f'/dataall/{envname}/aurora/db',
-            string_value=f'{envname}db',
+            string_value=database_name,
         )
 
         ssm.StringParameter(
@@ -166,7 +168,7 @@ class AuroraServerlessStack(pyNestedClass):
             self,
             'DatabaseResourceArn',
             parameter_name=f'/dataall/{envname}/aurora/resource_arn',
-            string_value=f'arn:aws:rds:{self.region}:{self.account}:cluster:dataall{envname}db',
+            string_value=database.cluster_arn,
         )
 
         ssm.StringParameter(
