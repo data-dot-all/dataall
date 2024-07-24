@@ -15,4 +15,10 @@
       </list>
     </option>
   </component>
+  <component name="connectionManager">
+    <option name="activeConnectionId" value="sso-session:amzn" />
+  </component>
+  <component name="explorerToolWindow">
+    <option name="selectedTab" value="Explorer" />
+  </component>
 </project>

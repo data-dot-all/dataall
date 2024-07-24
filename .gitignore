@@ -3,3 +3,11 @@ _site
 .jekyll-cache
 .jekyll-metadata
 vendor
+.DS_Store
+*cdk.out*
+/node_modules/
+*venv*
+*__pycache__*
+*__pytest_cache__*
+/frontend/
+/backend/
