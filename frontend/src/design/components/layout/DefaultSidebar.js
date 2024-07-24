@@ -53,6 +53,13 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
       active: isModuleEnabled(ModuleNames.GLOSSARIES)
     };
 
+    const metadataFormSection = {
+      title: 'Metadata Forms',
+      path: '/console/metadataforms',
+      icon: <BsIcons.BsTag size={15} />,
+      active: isModuleEnabled(ModuleNames.METADATA_FORMS)
+    };
+
     const worksheetsSection = {
       title: 'Worksheets',
       path: '/console/worksheets',
@@ -117,7 +124,8 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
             catalogSection,
             datasetsSection,
             sharesSection,
-            glossariesSection
+            glossariesSection,
+            metadataFormSection
           ]
         },
         {
