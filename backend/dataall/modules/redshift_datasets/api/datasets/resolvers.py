@@ -46,6 +46,11 @@ def delete_redshift_dataset_table(context: Context, source, rsTableUri: str):
     return RedshiftDatasetService.delete_redshift_dataset_table(uri=rsTableUri)
 
 
+def update_redshift_dataset_table(context: Context, source, rsTableUri: str, input: dict):
+    RequestValidator.required_param('rsTableUri', rsTableUri)
+    return RedshiftDatasetService.update_redshift_dataset_table(uri=rsTableUri, data=input)
+
+
 def get_redshift_dataset(context, source, datasetUri: str):
     RequestValidator.required_param('datasetUri', datasetUri)
     return RedshiftDatasetService.get_redshift_dataset(uri=datasetUri)

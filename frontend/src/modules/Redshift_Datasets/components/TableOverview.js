@@ -28,7 +28,7 @@ export const TableOverview = (props) => {
           environment={table.dataset.environment}
           region={table.dataset.region}
           organization={table.dataset.organization}
-          owner={table.owner}
+          owner={table.dataset.owner}
           admins={table.dataset.SamlAdminGroupName || '-'}
           created={table.created}
           status={table.LastGlueTableStatus}

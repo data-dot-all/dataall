@@ -9,6 +9,7 @@ from dataall.modules.redshift_datasets.api.datasets.resolvers import (
     delete_redshift_dataset_table,
     import_redshift_dataset,
     update_redshift_dataset,
+    update_redshift_dataset_table,
 )
 
 importRedshiftDataset = gql.MutationField(
@@ -54,4 +55,14 @@ deleteRedshiftDatasetTable = gql.MutationField(
     ],
     type=gql.Boolean,
     resolver=delete_redshift_dataset_table,
+)
+
+updateRedshiftDatasetTable = gql.MutationField(
+    name='updateRedshiftDatasetTable',
+    args=[
+        gql.Argument(name='rsTableUri', type=gql.String),
+        gql.Argument(name='input', type=ModifyRedshiftDatasetInput),
+    ],
+    type=gql.Ref('RedshiftDatasetTable'),
+    resolver=update_redshift_dataset_table,
 )

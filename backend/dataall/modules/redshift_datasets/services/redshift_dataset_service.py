@@ -24,6 +24,7 @@ from dataall.modules.redshift_datasets.services.redshift_dataset_permissions imp
     REDSHIFT_DATASET_READ,
     GET_REDSHIFT_DATASET_TABLE,
     DELETE_REDSHIFT_DATASET_TABLE,
+    UPDATE_REDSHIFT_DATASET_TABLE,
     REDSHIFT_DATASET_TABLE_ALL,
     REDSHIFT_DATASET_TABLE_READ,
 )
@@ -101,10 +102,6 @@ class RedshiftDatasetService:
                     GlossaryRepository.set_glossary_terms_links(
                         session, username, uri, 'RedshiftDataset', data.get('terms')
                     )
-                    for table in RedshiftDatasetRepository.list_redshift_dataset_tables(session, dataset.datasetUri):
-                        GlossaryRepository.set_glossary_terms_links(
-                            session, username, table.rsTableUri, 'RedshiftDatasetTable', data.get('terms')
-                        )
                 DatasetBaseRepository.update_dataset_activity(session, dataset, username)
 
             DatasetIndexer.upsert(session, dataset_uri=uri)
@@ -180,6 +177,25 @@ class RedshiftDatasetService:
             session.delete(table)
             session.commit()
         return True
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
+    @ResourcePolicyService.has_resource_permission(UPDATE_REDSHIFT_DATASET_TABLE)
+    def update_redshift_dataset_table(uri, data: dict):
+        context = get_context()
+        username = context.username
+        with context.db_engine.scoped_session() as session:
+            table: RedshiftTable = RedshiftDatasetRepository.get_redshift_table_by_uri(session, uri)
+            if data and isinstance(data, dict):
+                for k in data.keys():
+                    setattr(table, k, data.get(k))
+
+                if data.get('terms'):
+                    GlossaryRepository.set_glossary_terms_links(
+                        session, username, table.rsTableUri, 'RedshiftDatasetTable', data.get('terms')
+                    )
+            DatasetTableIndexer.upsert(session, table_uri=uri)
+            return table
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)

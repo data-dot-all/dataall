@@ -19,6 +19,13 @@ export const getRedshiftDatasetTable = ({ rsTableUri }) => ({
           name
           label
           userRoleForDataset
+          organization {
+            label
+          }
+          environment {
+            label
+          }
+          region
         }
       }
     }

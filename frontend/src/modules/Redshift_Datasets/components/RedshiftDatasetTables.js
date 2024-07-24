@@ -283,7 +283,7 @@ export const RedshiftDatasetTables = (props) => {
                           <IconButton
                             onClick={() => {
                               navigate(
-                                `/console/redshift-datasets/table/${table.tableUri}`
+                                `/console/redshift-datasets/table/${table.rsTableUri}`
                               );
                             }}
                           >

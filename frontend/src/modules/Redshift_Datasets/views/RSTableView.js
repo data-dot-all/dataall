@@ -24,7 +24,7 @@ import { Link as RouterLink, useParams } from 'react-router-dom';
 import {
   ChevronRightIcon,
   DeleteObjectModal,
-  //PencilAltIcon,
+  PencilAltIcon,
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
@@ -34,9 +34,12 @@ import {
   getRedshiftDatasetTable,
   deleteRedshiftDatasetTable
 } from '../services';
-import { TableOverview } from '../components';
+import { TableColumns, TableOverview } from '../components';
 
-const tabs = [{ label: 'Overview', value: 'overview' }];
+const tabs = [
+  { label: 'Overview', value: 'overview' },
+  { label: 'Columns', value: 'columns' }
+];
 
 function TablePageHeader(props) {
   const { table, handleDeleteObjectModalOpen, isAdmin } = props;
@@ -103,16 +106,16 @@ function TablePageHeader(props) {
             >
               Chat
             </Button>
-            {/*<Button*/}
-            {/*  color="primary"*/}
-            {/*  component={RouterLink}*/}
-            {/*  startIcon={<PencilAltIcon fontSize="small" />}*/}
-            {/*  sx={{ m: 1 }}*/}
-            {/*  to={`/console/redshift-datasets/table/${table.tableUri}/edit`}*/}
-            {/*  variant="outlined"*/}
-            {/*>*/}
-            {/*  Edit*/}
-            {/*</Button>*/}
+            <Button
+              color="primary"
+              component={RouterLink}
+              startIcon={<PencilAltIcon fontSize="small" />}
+              sx={{ m: 1 }}
+              to={`/console/redshift-datasets/table/${table.rsTableUri}/edit`}
+              variant="outlined"
+            >
+              Edit
+            </Button>
             <Button
               color="primary"
               startIcon={<FaTrash size={15} />}
@@ -268,6 +271,7 @@ const RSTableView = () => {
             {currentTab === 'overview' && (
               <TableOverview table={table} isAdmin={isAdmin} />
             )}
+            {currentTab === 'columns' && <TableColumns table={table} />}
           </Box>
         </Container>
       </Box>
