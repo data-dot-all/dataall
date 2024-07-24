@@ -12,7 +12,7 @@ import React from 'react';
 import * as FaIcons from 'react-icons/fa';
 import * as FiIcons from 'react-icons/fi';
 import { useNavigate } from 'react-router';
-import { IconAvatar,  useCardStyle } from 'design';
+import { IconAvatar, useCardStyle } from 'design';
 
 export const MetadataFormListItem = (props) => {
   const { metadata_form } = props;
@@ -87,8 +87,12 @@ export const MetadataFormListItem = (props) => {
               WebkitLineClamp: 2
             }}
           >
-            <Tooltip title={metadata_form.description || 'No description provided'}>
-              <span>{metadata_form.description || 'No description provided'}</span>
+            <Tooltip
+              title={metadata_form.description || 'No description provided'}
+            >
+              <span>
+                {metadata_form.description || 'No description provided'}
+              </span>
             </Tooltip>
           </Typography>
         </Box>
@@ -133,7 +137,7 @@ export const MetadataFormListItem = (props) => {
           <Grid
             alignItems="center"
             container
-            key={dataset.visibility}
+            key={metadata_form.visibility}
             justifyContent="space-between"
             spacing={3}
           />

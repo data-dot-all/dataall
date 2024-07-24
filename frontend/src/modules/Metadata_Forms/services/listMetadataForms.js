@@ -13,12 +13,12 @@ export const listMetadataForms = (filter) => ({
         hasNext
         hasPrevious
         nodes {
-         uri
-         name
-         description
-         SamlGroupName
-         visibility
-         homeEntity
+          uri
+          name
+          description
+          SamlGroupName
+          visibility
+          homeEntity
         }
       }
     }
