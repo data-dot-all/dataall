@@ -5,6 +5,7 @@ from dataall.base.context import set_context, dispose_context, RequestContext
 from dataall.base.db import get_engine
 
 from dataall.modules.redshift_datasets.services.redshift_connection_service import RedshiftConnectionService
+from dataall.modules.redshift_datasets.services.redshift_dataset_service import RedshiftDatasetService
 
 ENVNAME = os.environ.get('envname', 'pytest')
 
@@ -56,6 +57,7 @@ class MockRedshiftServerlessClient:
 
 @pytest.fixture(scope='function')
 def patch_redshift(module_mocker):
+    # Mocking connection service
     module_mocker.patch(
         'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_client',
         return_value=MockRedshiftClient(),
@@ -67,6 +69,11 @@ def patch_redshift(module_mocker):
     module_mocker.patch(
         'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_serverless_client',
         return_value=MockRedshiftServerlessClient(),
+    )
+    # Mocking dataset service
+    module_mocker.patch(
+        'dataall.modules.redshift_datasets.services.redshift_dataset_service.redshift_data_client',
+        return_value=MockRedshiftDataClient(),
     )
 
 
@@ -154,3 +161,51 @@ def connection2_cluster(user, group, env_fixture, module_mocker):
     )
     dispose_context()
     yield connection
+
+
+@pytest.fixture(scope='module')
+def imported_redshift_dataset_1_no_tables(user, group, env_fixture, connection1_serverless, module_mocker):
+    engine = get_engine(envname=ENVNAME)
+    set_context(RequestContext(db_engine=engine, username=user.username, groups=[group.name], user_id=user.username))
+    dataset = RedshiftDatasetService.import_redshift_dataset(
+        uri=env_fixture.environmentUri,
+        admin_group=group.name,
+        data={
+            'label': 'imported_redshift_dataset_1',
+            'SamlAdminGroupName': group.name,
+            'connectionUri': connection1_serverless.connectionUri,
+            'schema': 'public',
+        },
+    )
+    dispose_context()
+    yield dataset
+
+
+@pytest.fixture(scope='module')
+def imported_redshift_dataset_2_with_tables(user, group, env_fixture, connection1_serverless, module_mocker):
+    engine = get_engine(envname=ENVNAME)
+    set_context(RequestContext(db_engine=engine, username=user.username, groups=[group.name], user_id=user.username))
+    dataset = RedshiftDatasetService.import_redshift_dataset(
+        uri=env_fixture.environmentUri,
+        admin_group=group.name,
+        data={
+            'label': 'imported_redshift_dataset_2',
+            'SamlAdminGroupName': group.name,
+            'connectionUri': connection1_serverless.connectionUri,
+            'schema': 'public',
+            'tables': ['table1', 'table2'],
+        },
+    )
+    dispose_context()
+    yield dataset
+
+
+@pytest.fixture(scope='module')
+def imported_dataset_2_table_1(user, group, env_fixture, imported_redshift_dataset_2_with_tables):
+    engine = get_engine(envname=ENVNAME)
+    set_context(RequestContext(db_engine=engine, username=user.username, groups=[group.name], user_id=user.username))
+    tables = RedshiftDatasetService.list_redshift_dataset_tables(
+        uri=imported_redshift_dataset_2_with_tables.datasetUri, filter={'term': 'table1'}
+    )
+    dispose_context()
+    yield tables['nodes'][0]
