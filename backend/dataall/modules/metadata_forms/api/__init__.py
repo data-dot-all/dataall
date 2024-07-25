@@ -1,10 +1,10 @@
 from . import (
     input_types,
-    queries,
-    mutations,
-    resolvers,
     types,
-    enums
+    resolvers,
+    enums,
+    mutations,
+    queries,
 )
 
-__all__ = ['resolvers', 'types', 'input_types', 'queries', 'mutations', 'enums']
+__all__ = ['enums', 'resolvers', 'types', 'input_types', 'queries', 'mutations']

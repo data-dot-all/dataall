@@ -1,5 +1,5 @@
 from dataall.base.context import get_context
-from dataall.base.db import exceptions
+from dataall.base.db import exceptions, paginate
 
 from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
@@ -16,8 +16,8 @@ class MetadataFormParamValidationService:
             raise exceptions.RequiredParameter('SamlGroupName')
 
         if 'homeEntity' not in data and (
-            visibility == MetadataFormVisibility.Organization.value
-            or visibility == MetadataFormVisibility.Environment.value
+                visibility == MetadataFormVisibility.Organization.value
+                or visibility == MetadataFormVisibility.Environment.value
         ):
             raise exceptions.RequiredParameter('homeEntity')
 
@@ -51,3 +51,14 @@ class MetadataFormService:
     def list_metadata_forms(filter=None):
         with get_context().db_engine.scoped_session() as session:
             return MetadataFormRepository.list_metadata_forms(session, filter)
+
+    @staticmethod
+    def paginated_metadata_form_list(data=None) -> dict:
+        context = get_context()
+        data = data if data is not None else {}
+        with context.db_engine.scoped_session() as session:
+            return paginate(
+                query=MetadataFormRepository.list_metadata_forms(session, filter),
+                page=data.get('page', 1),
+                page_size=data.get('pageSize', 5),
+            ).to_dict()

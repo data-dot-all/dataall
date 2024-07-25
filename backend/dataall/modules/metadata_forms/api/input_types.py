@@ -1,4 +1,4 @@
-from dataall.base.api import gql, GraphQLEnumMapper
+from dataall.base.api import gql
 from dataall.base.api.constants import SortDirection
 from dataall.modules.metadata_forms.api.enums import EnvironmentSortField
 
