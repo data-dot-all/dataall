@@ -227,4 +227,4 @@ def test_list_redshift_dataset_table_columns(api_context_1, imported_dataset_2_t
     )
     # Then
     assert_that(response).contains_key('count', 'page', 'pages', 'nodes')
-    assert_that(response['nodes']).is_equal_to(MockRedshiftDataClient.list_redshift_table_columns())
+    assert_that(response['nodes']).is_equal_to(MockRedshiftDataClient().list_redshift_table_columns())

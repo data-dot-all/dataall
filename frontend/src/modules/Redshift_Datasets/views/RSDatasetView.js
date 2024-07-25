@@ -27,7 +27,7 @@ import { useNavigate } from 'react-router';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import {
   ChevronRightIcon,
-  DeleteObjectModal,
+  DeleteObjectWithFrictionModal,
   PencilAltIcon,
   UpVoteButton,
   useSettings
@@ -75,7 +75,9 @@ const RSDatasetView = () => {
 
   const getUserDatasetVote = useCallback(
     async (datasetUri) => {
-      const response = await client.query(getVote(datasetUri, 'dataset'));
+      const response = await client.query(
+        getVote(datasetUri, 'redshiftdataset')
+      );
       if (!response.errors && response.data.getVote !== null) {
         setIsUpVoted(response.data.getVote.upvote);
       }
@@ -84,7 +86,9 @@ const RSDatasetView = () => {
   );
 
   const reloadVotes = async () => {
-    const response = await client.query(countUpVotes(params.uri, 'dataset'));
+    const response = await client.query(
+      countUpVotes(params.uri, 'redshiftdataset')
+    );
     if (!response.errors && response.data.countUpVotes !== null) {
       setUpvotes(response.data.countUpVotes);
     } else {
@@ -116,7 +120,7 @@ const RSDatasetView = () => {
           response.data.getRedshiftDataset.userRoleForDataset
         ) !== -1
       );
-      // setUpvotes(response.data.getRedshiftDataset.statistics.upvotes);
+      setUpvotes(response.data.getRedshiftDataset.upvotes);
     } else {
       const error = response.errors
         ? response.errors[0].message
@@ -252,31 +256,6 @@ const RSDatasetView = () => {
                     </Button>
                   </span>
                 )}
-                {/*{isOpeningModal ? (*/}
-                {/*  <CircularProgress size={20} />*/}
-                {/*) : (*/}
-                {/*  <Button*/}
-                {/*    color="primary"*/}
-                {/*    startIcon={<LockOpen size={15} />}*/}
-                {/*    onClick={handleRequestAccessModalOpen}*/}
-                {/*    type="button"*/}
-                {/*    sx={{ mt: 1, ml: 1 }}*/}
-                {/*    variant="outlined"*/}
-                {/*  >*/}
-                {/*    Request Access*/}
-                {/*  </Button>*/}
-                {/*)}*/}
-                {/*<RequestAccessModal*/}
-                {/*  onApply={handleRequestAccessModalClose}*/}
-                {/*  onClose={handleRequestAccessModalClose}*/}
-                {/*  open={isRequestAccessOpen}*/}
-                {/*  stopLoader={() => setIsOpeningModal(false)}*/}
-                {/*  hit={{*/}
-                {/*    _id: dataset.datasetUri,*/}
-                {/*    resourceKind: 'dataset',*/}
-                {/*    label: dataset.label*/}
-                {/*  }}*/}
-                {/*/>*/}
               </Box>
             </Grid>
           </Grid>
@@ -308,14 +287,11 @@ const RSDatasetView = () => {
             {currentTab === 'overview' && (
               <RedshiftDatasetOverview dataset={dataset} isAdmin={isAdmin} />
             )}
-            {/*{isAdmin && currentTab === 'shares' && (*/}
-            {/*  <ShareBoxList tab={'inbox'} dataset={dataset} />*/}
-            {/*)}*/}
           </Box>
         </Container>
       </Box>
       {isAdmin && (
-        <DeleteObjectModal
+        <DeleteObjectWithFrictionModal
           objectName={dataset.label}
           onApply={handleDeleteObjectModalClose}
           onClose={handleDeleteObjectModalClose}
@@ -332,6 +308,7 @@ const RSDatasetView = () => {
               </CardContent>
             </Card>
           }
+          isAWSResource={false}
         />
       )}
       {openFeed && (
