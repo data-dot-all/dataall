@@ -7,6 +7,7 @@ from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.s3_datasets.aws.athena_table_client import AthenaTableClient
 from dataall.modules.s3_datasets.aws.bedrock_metadata_client import BedrockClient
+from dataall.modules.s3_datasets.aws.s3_dataset_client import S3DatasetClient
 from dataall.modules.s3_datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.s3_datasets.indexers.table_indexer import DatasetTableIndexer
@@ -30,6 +31,7 @@ from dataall.modules.s3_datasets.services.dataset_service import DatasetService
 from dataall.base.utils import json_utils
 from dataall.modules.s3_datasets.api.dataset.enums import MetadataGenerationTargets
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
+from dataall.modules.s3_datasets.db.dataset_location_repositories import DatasetLocationRepository
 log = logging.getLogger(__name__)
 
 
@@ -192,5 +194,16 @@ class DatasetTableService:
             dataset = DatasetBaseRepository.get_dataset_by_uri(session, resourceUri)
            # tables = DatasetRepository.get_dataset_tables(session, resourceUri)
             tables = [t.label for t in DatasetRepository.get_dataset_tables(session, resourceUri)]
-            log.info(f'tables={tables}')
             return BedrockClient(dataset.AwsAccountId, 'us-east-1').generate_metadata_dataset(dataset, tables)
+        
+        elif type == MetadataGenerationTargets.Folder.value:
+            folder = DatasetLocationRepository.get_location_by_uri(session, resourceUri)
+            log.info(f'folder={folder}')
+            dataset = DatasetRepository.get_dataset_by_uri(session, folder.datasetUri)
+
+            files = S3DatasetClient(dataset).list_bucket_files(folder.S3BucketName, folder.S3Prefix)
+            log.info("     LOOK AT HEREEEE!!!!!!!")
+            log.info(folder.S3BucketName)
+            log.info(folder.S3Prefix)
+            file_names = [f['Key'] for f in files]
+            return BedrockClient(folder.AWSAccountId, 'us-east-1').generate_metadata_folder(folder,file_names)

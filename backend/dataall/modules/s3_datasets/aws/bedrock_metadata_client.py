@@ -25,17 +25,17 @@ class BedrockClient:
         #if table this the prompt
         prompt_data = f"""
         Generate a detailed metadata description for a database table using following provided data: 
-              table name: {table_column.GlueTableName}, 
+              folder name: {table.label}, 
               column names: {','.join(table_column.label)} 
               Try to use following inputs as well, but do not use these data if it says: "No description provided" for generation
               current column descriptions: ({','.join(table_column.description)}) 
               table_description: {table.description if table.description else ''}
               table_label: {table.label if table.label else ''}
-              Your goal is generate Tags,Topic, Description and column descriptions for this table using above data and with your knowledge. Return:
+              Your goal is generate Tags,Topic, Description and column descriptions for this table using above data and with your knowledge. All the parameters you return has value String. Return:
               Topic: <topic>. 
               TableName: <table_name>
               Tags: <tags>
-              Table_Description: <description>
+              Description: <description>
               Column_Descriptions: 
               <column1>:<column1_description>
               <column2>:<column2_description>
@@ -74,9 +74,6 @@ class BedrockClient:
 
     
     def generate_metadata_dataset(self, dataset, tabels): #enforce type annotations , metadata_query_result -> table
-        #if table this the prompt
-        log.info("Generating metadata for dataset %s", dataset.label)
-        log.info("TABLEEEEEEEEEEEEEEEEEEEEEEEEESSSS!!!!!!!")
         prompt_data = f"""
         Generate a detailed metadata description for a database table using following provided data: 
               table name: {dataset.label}, 
@@ -84,11 +81,90 @@ class BedrockClient:
               Try to use following inputs as well, but do not use these data if it says: "No description provided" for generation
               table_description: {dataset.description if dataset.description else ''}
               table_label: {dataset.label if dataset.label else ''}
-              Your goal is generate Tags,Topic, Description and column descriptions for this table using above data and with your knowledge. All the parameters you return has value String. Return:
+              Your goal is generate Tags,Topic, Description and column descriptions for this table using above data and with your knowledge.  All the parameters you return has value String. Return:
               Topic: <topic>. 
               TableName: <table_name>
               Tags: <tags>
-              Table_Description: <description>
+              Description: <description>
+             
+              Evaluate if the given parameters are enough for generating metadata, if not response should be: "NotEnoughData".  Return a python dictionary.
+         """
+        #if dataset there will be another prompt
+        #if folder there will be another prompt
+
+        log.info("Prompt data: \n %s", prompt_data)
+      
+        messages=[{ "role":'user', "content":[{'type':'text','text': prompt_data}]}]
+        body=json.dumps(
+            {
+                "anthropic_version": "bedrock-2023-05-31",
+                "max_tokens": 4096,
+                "messages": messages,
+                "temperature": 0.5,
+                "top_p": 0.5,
+                "stop_sequences": ["\n\nHuman:"],
+                "top_k":250
+            }  
+        )  
+        
+        #modelId = "anthropic.claude-3-haiku-20240307-v1:0"#quota limit? Haiku: cheaper
+        modelId = "anthropic.claude-3-sonnet-20240229-v1:0"
+        response = self._client.invoke_model(body=body, modelId=modelId)
+        response_body = json.loads(response.get('body').read())
+        output_list = response_body.get("content", [])
+        output_str = output_list[0]['text']
+        output_dict = json.loads(output_str)
+        return output_dict
+       
+    def generate_metadata_folder(self, folder, file_names): #enforce type annotations , metadata_query_result -> table
+        prompt_data = f"""
+        Generate a detailed metadata description for a database table using following provided data: 
+              folder name: {folder.label}, 
+              file names: {file_names} 
+              Try to use following inputs as well, but do not use these data if it says: "No description provided" for generation
+              folder_description: {folder.description if folder.description else ''}
+              folder_tags: {folder.tags if folder.tags else ''}
+              Your goal is generate Description and Tags for this folder using above data and with your knowledge. All the parameters you return has value String. Return:
+              Description: <description>
+              Tags: <tags>
+
+              Evaluate if the given parameters are enough for generating metadata, if not response should be: "NotEnoughData".  Return a python dictionary.
+         """
+        #if dataset there will be another prompt
+        #if folder there will be another prompt
+
+
+        messages=[{ "role":'user', "content":[{'type':'text','text': prompt_data}]}]
+        body=json.dumps(
+            {
+                "anthropic_version": "bedrock-2023-05-31",
+                "max_tokens": 4096,
+                "messages": messages,
+                "temperature": 0.5,
+                "top_p": 0.5,
+                "stop_sequences": ["\n\nHuman:"],
+                "top_k":250
+            }
+        )
+
+        #modelId = "anthropic.claude-3-haiku-20240307-v1:0"#quota limit? Haiku: cheaper
+        modelId = "anthropic.claude-3-sonnet-20240229-v1:0"
+        response = self._client.invoke_model(body=body, modelId=modelId)
+        response_body = json.loads(response.get('body').read())
+        output_list = response_body.get("content", [])
+        output_str = output_list[0]['text']
+        output_dict = json.loads(output_str)
+        log.info("Prompt data: \n %s", output_dict)
+
+        return output_dict
+
+    def generate_metadata_column(self, table_column): #enforce type annotations , metadata_query_result -> table
+        prompt_data = f"""
+        Generate a detailed metadata description for a database table using following provided data:
+              column name: {table_column.label},
+              column_description: {table_column.description if table_column.description else ''}e using above data and with your knowledge. All the parameters you return has value String. Return:
+              Tags: <tags>
+              Description: <description>
              
               Evaluate if the given parameters are enough for generating metadata, if not response should be: "NotEnoughData".  Return a python dictionary.
          """

@@ -149,7 +149,7 @@ BedrockPromptResult = gql.ObjectType(
         gql.Field(name='Topic', type=gql.String),
         gql.Field(name='TableName', type=gql.String),
         gql.Field(name='Tags', type=gql.String),
-        gql.Field(name='Table_Description', type=gql.String),
+        gql.Field(name='Description', type=gql.String),
         gql.Field(name='Column_Descriptions', type  =gql.ArrayType(gql.Ref('Column_Descriptions'))),
     ],
 )
