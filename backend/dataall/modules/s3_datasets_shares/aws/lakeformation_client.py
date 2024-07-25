@@ -114,22 +114,6 @@ class LakeFormationClient:
     def grant_permissions_to_table_with_filters(
         self, principals, database_name, table_name, catalog_id, permissions, data_filters=[]
     ) -> True:
-        # resource = {
-        #     'TableWithColumns': {
-        #         'DatabaseName': database_name,
-        #         'Name': table_name,
-        #         'ColumnWildcard': {},
-        #         'CatalogId': catalog_id,
-        #     },
-        # }
-        # check_resource = {
-        #     'Table': {
-        #         'DatabaseName': database_name,
-        #         'Name': table_name,
-        #         'CatalogId': catalog_id,
-        #     },
-        # }
-
         for f_name in data_filters:
             data_filter_resource = {
                 'DataCellsFilter': {
@@ -139,8 +123,6 @@ class LakeFormationClient:
                     'Name': f_name,
                 },
             }
-            # resource.update(**data_filter_resource)
-            # check_resource.update(**data_filter_resource)
             self._grant_permissions_to_resource(
                 principals=principals,
                 resource=data_filter_resource,
@@ -252,14 +234,6 @@ class LakeFormationClient:
     def revoke_permissions_to_table_with_filters(
         self, principals, database_name, table_name, catalog_id, permissions, data_filters
     ) -> True:
-        # resource = {
-        #     'TableWithColumns': {
-        #         'DatabaseName': database_name,
-        #         'Name': table_name,
-        #         'ColumnWildcard': {},
-        #         'CatalogId': catalog_id,
-        #     }
-        # }
 
         for f_name in data_filters:
             data_filter_resource = {
@@ -416,21 +390,6 @@ class LakeFormationClient:
     def check_permissions_to_table_with_filters(
         self, principals, database_name, table_name, catalog_id, permissions, data_filters=[]
     ) -> True:
-        # resource = {
-        #     'TableWithColumns': {
-        #         'DatabaseName': database_name,
-        #         'Name': table_name,
-        #         'ColumnWildcard': {},
-        #         'CatalogId': catalog_id,
-        #     },
-        # }
-        # check_resource = {
-        #     'Table': {
-        #         'DatabaseName': database_name,
-        #         'Name': table_name,
-        #         'CatalogId': catalog_id,
-        #     },
-        # }
         check = []
         for principal in principals:
             for f_name in data_filters:
@@ -442,8 +401,6 @@ class LakeFormationClient:
                         'Name': f_name,
                     },
                 }
-                # resource.update(**data_filter_resource)
-                # check_resource.update(**data_filter_resource)
                 check.append(
                     self._check_permissions_to_resource(
                         principal=principal,

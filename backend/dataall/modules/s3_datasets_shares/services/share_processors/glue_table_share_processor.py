@@ -132,9 +132,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         log.info(f'Processing cross-account permissions for table {table.GlueTableName}...')
                         manager.revoke_iam_allowed_principals_from_table(table)
                         manager.upgrade_lakeformation_settings_in_source()
-                        # manager.grant_target_account_permissions_to_source_table(table)
 
-                    # manager.grant_principals_permissions_to_table_in_target(table)
                     manager.grant_principals_permissions_to_source_table(table, share_item)
                     if manager.cross_account:
                         retries = 0
@@ -151,16 +149,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                                 target_account_id=self.share_data.target_environment.AwsAccountId,
                                 target_region=self.share_data.target_environment.region,
                             )
-                        # if retry_share_table:
-                        #     # manager.grant_target_account_permissions_to_source_table(table)
-                        #     RamClient.accept_ram_invitation(
-                        #         source_account_id=manager.source_account_id,
-                        #         source_region=manager.source_account_region,
-                        #         source_database=manager.source_database_name,
-                        #         source_table_name=table.GlueTableName,
-                        #         target_account_id=self.share_data.target_environment.AwsAccountId,
-                        #         target_region=self.share_data.target_environment.region,
-                        #     )
+
                     resource_link_name = self._build_resource_link_name(table.GlueTableName, share_item.dataFilters)
                     manager.check_if_exists_and_create_resource_link_table_in_shared_database(table, resource_link_name)
                     manager.grant_principals_permissions_to_resource_link_table(resource_link_name)
@@ -258,22 +247,12 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     resource_link_table_exists = manager.check_resource_link_table_exists_in_target_database(
                         resource_link_name
                     )
-                    # other_table_shares_in_env = (
-                    #     True
-                    #     if S3ShareObjectRepository.check_other_approved_share_item_table_exists(
-                    #         self.session,
-                    #         self.share_data.target_environment.environmentUri,
-                    #         share_item.itemUri,
-                    #         share_item.shareItemUri,
-                    #     )
-                    #     else False
-                    # )
+
                     if resource_link_table_exists:
                         log.info('Revoking principal permissions from resource link table')
                         manager.revoke_principals_permissions_to_resource_link_table(resource_link_name)
                         log.info('Revoking principal permissions from table in source')
-                        # manager.revoke_principals_permissions_to_table_in_target(table, other_table_shares_in_env)
-                        manager.revoke_principals_permissions_to_table_in_source(table, share_item)  # TODO: FIXXXXX
+                        manager.revoke_principals_permissions_to_table_in_source(table, share_item)
                         other_table_shares_w_filters_in_env = (
                             True
                             if S3ShareObjectRepository.check_other_approved_share_item_table_exists(
@@ -295,9 +274,6 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                             )
                             manager.grant_pivot_role_drop_permissions_to_resource_link_table(resource_link_name)
                             manager.delete_resource_link_table_in_shared_database(resource_link_name)
-
-                    # if not other_table_shares_in_env:
-                    #     manager.revoke_external_account_access_on_source_account(table)
 
                     if (
                         self.share_data.share.groupUri != self.share_data.dataset.SamlAdminGroupName
@@ -412,8 +388,6 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     manager.check_target_principals_permissions_to_source_table(table, share_item)
 
                     if manager.cross_account:
-                        # manager.check_target_account_permissions_to_source_table(table)
-
                         if not RamClient.check_ram_invitation_status(
                             source_account_id=manager.source_account_id,
                             source_region=manager.source_account_region,
@@ -432,7 +406,6 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                             )
                     resource_link_name = self._build_resource_link_name(table.GlueTableName, share_item.dataFilters)
                     manager.verify_resource_link_table_exists_in_target_database(resource_link_name)
-                    # manager.check_principals_permissions_to_table_in_target(table)
                     manager.check_principals_permissions_to_resource_link_table(resource_link_name)
 
                 except Exception as e:

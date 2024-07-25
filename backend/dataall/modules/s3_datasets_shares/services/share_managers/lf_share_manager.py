@@ -408,23 +408,6 @@ class LFShareManager:
         )
         return True
 
-    # def grant_target_account_permissions_to_source_table(self, table: DatasetTable) -> True:
-    #     """
-    #     Grants 'DESCRIBE' 'SELECT' Lake Formation permissions to target account to the original table in source account
-    #     :param table: DatasetTable
-    #     :return: True if it is successful
-    #     """
-    #     self.lf_client_in_source.grant_permissions_to_table(
-    #         principals=[self.target_environment.AwsAccountId],
-    #         database_name=self.source_database_name,
-    #         table_name=table.GlueTableName,
-    #         catalog_id=self.source_account_id,
-    #         permissions=['DESCRIBE', 'SELECT'],
-    #         permissions_with_grant_options=['DESCRIBE', 'SELECT'],
-    #     )
-    #     time.sleep(2)
-    #     return True
-
     def grant_principals_permissions_to_source_table(self, table: DatasetTable, share_item: ShareObjectItem) -> True:
         """
         Grants 'DESCRIBE' 'SELECT' Lake Formation permissions to target principals to the original table in source account
@@ -487,21 +470,6 @@ class LFShareManager:
             permissions=['DESCRIBE'],
         )
         return True
-
-    # def grant_principals_permissions_to_table_in_target(self, table: DatasetTable) -> True:
-    #     """
-    #     Grants 'DESCRIBE', 'SELECT' Lake Formation permissions to share principals to the table shared in target account
-    #     :param table: DatasetTable
-    #     :return: True if it is successful
-    #     """
-    #     self.lf_client_in_target.grant_permissions_to_table_with_columns(
-    #         principals=self.principals,
-    #         database_name=self.source_database_name,
-    #         table_name=table.GlueTableName,
-    #         catalog_id=self.source_account_id,
-    #         permissions=['DESCRIBE', 'SELECT'],
-    #     )
-    #     return True
 
     def check_principals_permissions_to_resource_link_table(self, resource_link_name: str) -> None:
         """
