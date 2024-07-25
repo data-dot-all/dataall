@@ -12,6 +12,18 @@ export const getRedshiftDatasetTable = ({ rsTableUri }) => ({
         label
         created
         description
+        tags
+        terms {
+          count
+          nodes {
+            __typename
+            ... on Term {
+              nodeUri
+              path
+              label
+            }
+          }
+        }
         dataset {
           owner
           SamlAdminGroupName

@@ -210,7 +210,7 @@ def test_get_redshift_dataset_table(api_context_1, imported_dataset_2_table_1):
     table = RedshiftDatasetService.get_redshift_dataset_table(uri=imported_dataset_2_table_1.rsTableUri)
     # Then
     assert_that(table.rsTableUri).is_equal_to(imported_dataset_2_table_1.rsTableUri)
-    assert_that(table.schema).is_equal_to('public')
+    assert_that(table.name).is_equal_to('table1')
 
 
 def test_list_redshift_dataset_table_columns_unauthorized(api_context_2, imported_dataset_2_table_1):

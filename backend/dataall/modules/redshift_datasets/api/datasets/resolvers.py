@@ -122,6 +122,13 @@ def resolve_dataset_glossary_terms(context: Context, source: RedshiftDataset, **
         return GlossaryRepository.get_glossary_terms_links(session, source.datasetUri, 'RedshiftDataset')
 
 
+def resolve_table_glossary_terms(context: Context, source: RedshiftTable, **kwargs):
+    if not source:
+        return None
+    with context.engine.scoped_session() as session:
+        return GlossaryRepository.get_glossary_terms_links(session, source.rsTableUri, 'RedshiftDatasetTable')
+
+
 def resolve_dataset_connection(context: Context, source: RedshiftDataset, **kwargs):
     return RedshiftConnectionService.get_redshift_connection_by_uri(uri=source.connectionUri)
 

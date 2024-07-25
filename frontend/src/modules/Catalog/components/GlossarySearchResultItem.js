@@ -309,26 +309,24 @@ export const GlossarySearchResultItem = ({ hit }) => {
         }}
       >
         <Box>
-          {hit.resourceKind === 'redshift-dataset' ||
-          hit.resourceKind === 'redshift-table' ? (
-            isOpeningModal || isOpeningDashboardModal ? (
-              <CircularProgress size={20} />
-            ) : (
-              <Button
-                color="primary"
-                startIcon={<LockOpen fontSize="small" />}
-                onClick={() =>
-                  hit.resourceKind === 'dashboard'
-                    ? handleRequestDashboardAccessModalOpen()
-                    : handleRequestAccessModalOpen()
-                }
-                type="button"
-              >
-                Request Access
-              </Button>
-            )
-          ) : null}
-          )
+          {hit.resourceKind === 'redshiftdataset' ||
+          hit.resourceKind === 'redshifttable' ? null : isOpeningModal ||
+            isOpeningDashboardModal ? (
+            <CircularProgress size={20} />
+          ) : (
+            <Button
+              color="primary"
+              startIcon={<LockOpen fontSize="small" />}
+              onClick={() =>
+                hit.resourceKind === 'dashboard'
+                  ? handleRequestDashboardAccessModalOpen()
+                  : handleRequestAccessModalOpen()
+              }
+              type="button"
+            >
+              Request Access
+            </Button>
+          )}
           <RequestAccessModal
             hit={hit}
             onApply={handleRequestAccessModalClose}
@@ -344,7 +342,9 @@ export const GlossarySearchResultItem = ({ hit }) => {
           />
         </Box>
         <Box sx={{ flexGrow: 1 }} />
-        {(hit.resourceKind === 'dashboard' || hit.resourceKind === 'dataset') &&
+        {(hit.resourceKind === 'dashboard' ||
+          hit.resourceKind === 'dataset' ||
+          hit.resourceKind === 'redshiftdataset') &&
           hit.upvotes !== undefined &&
           hit.upvotes >= 0 && (
             <Tooltip title="UpVotes">

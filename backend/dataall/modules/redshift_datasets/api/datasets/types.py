@@ -8,6 +8,7 @@ from dataall.modules.redshift_datasets.api.datasets.resolvers import (
     resolve_dataset_stewards_group,
     resolve_user_role,
     resolve_dataset_glossary_terms,
+    resolve_table_glossary_terms,
     resolve_dataset_connection,
     resolve_dataset_upvotes,
     resolve_table_dataset,
@@ -87,6 +88,11 @@ RedshiftDatasetTable = gql.ObjectType(
         gql.Field(name='updated', type=gql.String),
         gql.Field(name='region', type=gql.String),
         gql.Field(name='tags', type=gql.ArrayType(gql.String)),
+        gql.Field(
+            name='terms',
+            resolver=resolve_table_glossary_terms,
+            type=gql.Ref('TermSearchResult'),
+        ),
         gql.Field(name='dataset', type=gql.Ref('RedshiftDataset'), resolver=resolve_table_dataset),
     ],
 )

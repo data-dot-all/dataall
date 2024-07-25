@@ -1,8 +1,6 @@
 import {
   ForumOutlined,
   Info,
-  //LockOpen,
-  //ShareOutlined,
   ViewArrayOutlined,
   Warning
 } from '@mui/icons-material';
@@ -37,10 +35,8 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { countUpVotes, getVote, upVote, useClient } from 'services';
 import { deleteRedshiftDataset, getRedshiftDataset } from '../services';
-// import { ShareBoxList } from 'modules/Shares';
 import { FeedComments } from 'modules/Shared';
 import { RedshiftDatasetTables, RedshiftDatasetOverview } from '../components';
-//import { RequestAccessModal } from 'modules/Catalog/components';
 
 const RSDatasetView = () => {
   const dispatch = useDispatch();
@@ -66,14 +62,6 @@ const RSDatasetView = () => {
         icon: <ViewArrayOutlined fontSize="small" />
       }
     ];
-    // TODO: add when sharing is enabled
-    // if (isAdmin) {
-    //   tabs.push({
-    //     label: 'Shares',
-    //     value: 'shares',
-    //     icon: <ShareOutlined fontSize="small" />
-    //   });
-    // }
     return tabs;
   };
 
@@ -95,16 +83,6 @@ const RSDatasetView = () => {
     [client]
   );
 
-  // const [isRequestAccessOpen, setIsRequestAccessOpen] = useState(false);
-  // const [isOpeningModal, setIsOpeningModal] = useState(false);
-  // const handleRequestAccessModalOpen = () => {
-  //   setIsOpeningModal(true);
-  //   setIsRequestAccessOpen(true);
-  // };
-  //
-  // const handleRequestAccessModalClose = () => {
-  //   setIsRequestAccessOpen(false);
-  // };
   const reloadVotes = async () => {
     const response = await client.query(countUpVotes(params.uri, 'dataset'));
     if (!response.errors && response.data.countUpVotes !== null) {
@@ -118,7 +96,7 @@ const RSDatasetView = () => {
     const response = await client.mutate(
       upVote({
         targetUri: datasetUri,
-        targetType: 'dataset',
+        targetType: 'redshiftdataset',
         upvote: !isUpVoted
       })
     );

@@ -68,4 +68,4 @@ RESOURCES_ALL.append(IMPORT_REDSHIFT_DATASET)
 for perm in chain(REDSHIFT_DATASET_ALL + REDSHIFT_DATASET_TABLE_ALL):
     RESOURCES_ALL_WITH_DESC[perm] = perm
 
-RESOURCES_ALL_WITH_DESC[IMPORT_REDSHIFT_DATASET] = 'Import redshift datasets on this environment'
+RESOURCES_ALL_WITH_DESC[IMPORT_REDSHIFT_DATASET] = 'Import Redshift Datasets to this environment'
