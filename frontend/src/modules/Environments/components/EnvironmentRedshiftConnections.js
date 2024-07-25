@@ -99,11 +99,6 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
     setIsDeleteModalOpen(0);
   };
 
-  const processRowUpdate = async (newRow) => {
-    //INTRODUCE HERE FUNCTION TO UPDATE THE CONNECTION
-    return newRow;
-  };
-
   const deleteConnection = async (connectionUri) => {
     try {
       const response = await client.mutate(
@@ -356,10 +351,6 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
                 onRowModesModelChange={setRowModesModel}
                 onRowEditStart={handleRowEditStart}
                 onRowEditStop={handleRowEditStop}
-                processRowUpdate={processRowUpdate}
-                onProcessRowUpdateError={(error) =>
-                  dispatch({ type: SET_ERROR, error: error.message })
-                }
                 experimentalFeatures={{ newEditingApi: true }}
                 rowCount={items.count}
                 page={items.page - 1}

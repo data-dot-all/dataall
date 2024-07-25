@@ -59,13 +59,15 @@ const tabs = [
     label: 'Datasets',
     value: 'datasets',
     icon: <FolderOpen fontSize="small" />,
-    active: isModuleEnabled(ModuleNames.S3_DATASETS)
+    active: isModuleEnabled(
+      ModuleNames.S3_DATASETS || ModuleNames.REDSHIFT_DATASETS
+    )
   },
   {
     label: 'Connections',
     value: 'connections',
-    icon: <FolderOpen fontSize="small" />
-    //active: isModuleEnabled(ModuleNames.REDSHIFT_DATASETS) //TODO ADD CONDITION
+    icon: <FolderOpen fontSize="small" />,
+    active: isModuleEnabled(ModuleNames.REDSHIFT_DATASETS)
   },
   {
     label: 'ML Studio Domain',

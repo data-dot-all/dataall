@@ -225,7 +225,7 @@ export const GlossaryAssociations = ({ glossary }) => {
                               underline="hover"
                               color="textPrimary"
                               component={RouterLink}
-                              to={`/console/redshift-datasets/${item.targetUri}`}
+                              to={`/console/redshift-datasets/table/${item.targetUri}`}
                               variant="subtitle2"
                             >
                               {item.target.label}
