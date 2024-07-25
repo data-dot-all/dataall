@@ -2,7 +2,7 @@ import logging
 from warnings import warn
 from typing import List
 
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, func
 from sqlalchemy.orm import Query
 
 from dataall.core.environment.db.environment_models import Environment
@@ -165,9 +165,11 @@ class S3ShareObjectRepository:
         return share
 
     @staticmethod
-    def check_other_approved_share_item_table_exists(session, environment_uri, item_uri, share_item_uri):
+    def check_other_approved_share_item_table_exists(
+        session, environment_uri, item_uri, share_item_uri, data_filters=None
+    ):
         share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
-        return (
+        query = (
             session.query(ShareObject)
             .join(
                 ShareObjectItem,
@@ -182,8 +184,34 @@ class S3ShareObjectRepository:
                     ShareObjectItem.status.in_(share_item_shared_states),
                 )
             )
-            .first()
         )
+        if data_filters:
+            query = query.filter(
+                and_(
+                    *[ShareObjectItem.dataFilters.contains(f'{{{filter_uri}}}') for filter_uri in data_filters],
+                    func.cardinality(ShareObjectItem.dataFilters) == len(data_filters),
+                )
+            )
+        return query.first()
+
+        # query = (
+        #     session.query(ShareObjectItem)
+        #     .join(ShareObject, ShareObjectItem.shareUri == ShareObject.shareUri)
+        #     .filter(
+        #         (
+        #             and_(
+        #                 ShareObjectItem.itemUri == item_uri,
+        #                 ShareObjectItem.itemType == share_type,
+        #                 ShareObject.principalType == principal_type,
+        #                 ShareObject.principalId == principal_uri,
+        #                 ShareObject.shareUri != not_this_share_uri,
+        #             )
+        #         )
+        #     )
+        # )
+        # if item_status:
+        #     query = query.filter(ShareObjectItem.status.in_(item_status))
+        # return query.all()
 
     @staticmethod
     def check_existing_shared_items_of_type(session, uri, item_type):
