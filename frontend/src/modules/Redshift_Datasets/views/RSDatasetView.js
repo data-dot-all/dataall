@@ -314,7 +314,7 @@ const RSDatasetView = () => {
       {openFeed && (
         <FeedComments
           objectOwner={dataset.owner}
-          targetType="Dataset"
+          targetType="RedshiftDataset"
           targetUri={dataset.datasetUri}
           open={openFeed}
           onClose={() => setOpenFeed(false)}
