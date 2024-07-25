@@ -13,6 +13,7 @@ from dataall.modules.s3_datasets.api.dataset.resolvers import (
     start_crawler,
     generate_metadata
 )
+from dataall.modules.s3_datasets.api.dataset.enums import MetadataGenerationTargets
 
 createDataset = gql.MutationField(
     name='createDataset',
@@ -72,8 +73,8 @@ StartGlueCrawler = gql.MutationField(
 generateMetadata = gql.MutationField(
     name='generate_metadata',
     args=[gql.Argument(name='resourceUri', type=gql.NonNullableType(gql.String)),
-          gql.Argument(name='type', type=gql.String),
+          gql.Argument(name='type', type=MetadataGenerationTargets.toGraphQLEnum()),
           gql.Argument(name='version', type=gql.Integer)],
-    type=gql.String,
+    type=gql.Ref('BedrockPromptResult'),
     resolver=generate_metadata,
 )

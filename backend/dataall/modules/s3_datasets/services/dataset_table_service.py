@@ -28,7 +28,8 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
 )
 from dataall.modules.s3_datasets.services.dataset_service import DatasetService
 from dataall.base.utils import json_utils
-
+from dataall.modules.s3_datasets.api.dataset.enums import MetadataGenerationTargets
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 log = logging.getLogger(__name__)
 
 
@@ -180,7 +181,16 @@ class DatasetTableService:
     # type='table', version='0'
     def generate_metadata(resourceUri, type, version):
        context = get_context()
+       #_ -> internal
        with context.db_engine.scoped_session() as session:
+        if type == MetadataGenerationTargets.Table.value:
             table = DatasetRepository.get_dataset_table_by_uri(session, resourceUri)
             table_column = DatasetColumnRepository.get_table_info_metadata_generation(session, resourceUri)
-            return BedrockClient(table_column.AWSAccountId,'us-east-1').generate_metadata(table, table_column)
+            return BedrockClient(table_column.AWSAccountId,'us-east-1').generate_metadata_table(table, table_column)
+        
+        elif type == MetadataGenerationTargets.S3_Dataset.value:
+            dataset = DatasetBaseRepository.get_dataset_by_uri(session, resourceUri)
+           # tables = DatasetRepository.get_dataset_tables(session, resourceUri)
+            tables = [t.label for t in DatasetRepository.get_dataset_tables(session, resourceUri)]
+            log.info(f'tables={tables}')
+            return BedrockClient(dataset.AwsAccountId, 'us-east-1').generate_metadata_dataset(dataset, tables)
