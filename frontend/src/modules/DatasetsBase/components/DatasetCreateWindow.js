@@ -17,7 +17,9 @@ import { isModuleEnabled, ModuleNames } from 'utils';
 
 export const DatasetCreateWindow = (props) => {
   const { onClose, open, ...other } = props;
-  const number_grid_items = isModuleEnabled(ModuleNames.S3_DATASETS) ? 2 : 0;
+  const number_grid_items =
+    (isModuleEnabled(ModuleNames.S3_DATASETS) ? 2 : 0) +
+    (isModuleEnabled(ModuleNames.REDSHIFT_DATASETS) ? 1 : 0);
   const width_grid_item = number_grid_items > 0 ? 12 / number_grid_items : 1;
 
   return (
@@ -87,6 +89,39 @@ export const DatasetCreateWindow = (props) => {
                     startIcon={<CloudDownloadOutlined fontSize="small" />}
                     sx={{ m: 1 }}
                     to="/console/s3-datasets/import"
+                    variant="outlined"
+                  >
+                    Import
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
+          )}
+          {isModuleEnabled(ModuleNames.REDSHIFT_DATASETS) && (
+            <Grid
+              item
+              justifyContent="center"
+              md={width_grid_item}
+              lg={width_grid_item}
+              xl={width_grid_item}
+            >
+              <Card>
+                <CardHeader title="Import Redshift Dataset" />
+                <CardContent>
+                  <Typography
+                    color="textSecondary"
+                    gutterBottom
+                    variant="subtitle2"
+                  >
+                    Data.all will use a data.all Connection to import an
+                    existing Redshift database.
+                  </Typography>
+                  <Button
+                    color="primary"
+                    component={RouterLink}
+                    startIcon={<CloudDownloadOutlined fontSize="small" />}
+                    sx={{ m: 1 }}
+                    to="/console/redshift-datasets/import"
                     variant="outlined"
                   >
                     Import
