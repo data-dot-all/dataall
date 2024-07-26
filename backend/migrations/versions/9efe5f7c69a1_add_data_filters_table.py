@@ -8,8 +8,14 @@ Create Date: 2024-07-17 11:05:26.077658
 
 from alembic import op
 import sqlalchemy as sa
+from alembic import op
+from sqlalchemy import Column, String, DateTime, Enum, ForeignKey, orm
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.ext.declarative import declarative_base
+from dataall.base.db import Base, Resource, utils
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_DATA_FILTERS, DATASET_TABLE_READ
+from dataall.modules.datasets_base.services.datasets_enums import DatasetTypes
 
 # revision identifiers, used by Alembic.
 revision = '9efe5f7c69a1'
@@ -21,9 +27,24 @@ depends_on = None
 Base = declarative_base()
 
 
+class DatasetBase(Resource, Base):
+    __tablename__ = 'dataset'
+    environmentUri = Column(String, ForeignKey('environment.environmentUri'), nullable=False)
+    organizationUri = Column(String, nullable=False)
+    datasetUri = Column(String, primary_key=True, default=utils.uuid('dataset'))
+    stewards = Column(String, nullable=True)
+    SamlAdminGroupName = Column(String, nullable=True)
+    datasetType = Column(Enum(DatasetTypes), nullable=False, default=DatasetTypes.S3)
+
+    __mapper_args__ = {'polymorphic_identity': 'dataset', 'polymorphic_on': datasetType}
+
+
 class S3Dataset(DatasetBase):
     __tablename__ = 's3_dataset'
     datasetUri = Column(String, ForeignKey('dataset.datasetUri'), primary_key=True)
+    __mapper_args__ = {
+        'polymorphic_identity': DatasetTypes.S3,
+    }
 
 
 class DatasetTable(Resource, Base):
@@ -73,7 +94,7 @@ def upgrade():
     bind = op.get_bind()
     session = orm.Session(bind=bind)
     print('Adding DATASET_TABLE_DATA_FILTERS permissions for all s3 dataset tables...')
-    s3_datasets: [S3Dataset] = session.query(Dataset).all()
+    s3_datasets: [S3Dataset] = session.query(S3Dataset).all()
     for dataset in s3_datasets:
         dataset_tables = session.query(DatasetTable).filter(DatasetTable.datasetUri == dataset.datasetUri).all()
         for table in dataset_tables:
@@ -104,7 +125,7 @@ def downgrade():
     bind = op.get_bind()
     session = orm.Session(bind=bind)
     print('Removing DATASET_TABLE_DATA_FILTERS permissions for all s3 dataset tables...')
-    s3_datasets: [S3Dataset] = session.query(Dataset).all()
+    s3_datasets: [S3Dataset] = session.query(S3Dataset).all()
     for dataset in s3_datasets:
         dataset_tables = session.query(DatasetTable).filter(DatasetTable.datasetUri == dataset.datasetUri).all()
         for table in dataset_tables:
@@ -121,9 +142,9 @@ def downgrade():
                     session=session,
                     resource_uri=table.tableUri,
                     resource_type=DatasetTable.__name__,
-                    old_group=dataset.SamlAdminGroupName,
-                    new_group=dataset.SamlAdminGroupName,
-                    new_permissions=DATASET_TABLE_READL,
+                    old_group=dataset.stewards,
+                    new_group=dataset.stewards,
+                    new_permissions=DATASET_TABLE_READ,
                 )
 
     # ### end Alembic commands ###
