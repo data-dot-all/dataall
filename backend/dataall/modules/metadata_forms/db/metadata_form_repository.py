@@ -23,5 +23,5 @@ class MetadataFormRepository:
     @staticmethod
     def list_metadata_forms(session, filter=None):
         # toDo: implement filter
-        query = session.query(MetadataForm)
-        return query.all()
+        return session.query(MetadataForm)
+

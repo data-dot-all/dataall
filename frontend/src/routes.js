@@ -96,7 +96,7 @@ const MetadataFormView = Loadable(
 );
 
 const MetadataFormCreate = Loadable(
-  lazy(() => import('./modules/Metadata_Forms/views/MetadataFormCreate'))
+  lazy(() => import('./modules/Metadata_Forms/views/MetadataFormEdit'))
 );
 
 const MLStudioList = Loadable(

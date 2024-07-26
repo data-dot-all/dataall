@@ -47,10 +47,6 @@ class MetadataFormService:
         with get_context().db_engine.scoped_session() as session:
             return session.delete(mf)
 
-    @staticmethod
-    def list_metadata_forms(filter=None):
-        with get_context().db_engine.scoped_session() as session:
-            return MetadataFormRepository.list_metadata_forms(session, filter)
 
     @staticmethod
     def paginated_metadata_form_list(data=None) -> dict:

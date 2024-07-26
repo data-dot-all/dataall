@@ -11,4 +11,4 @@ def delete_metadata_form(context: Context, source, formUri):
 
 
 def list_metadata_forms(context: Context, source, filter=None):
-    return MetadataFormService.list_metadata_forms(filter)
+    return MetadataFormService.paginated_metadata_form_list(filter)

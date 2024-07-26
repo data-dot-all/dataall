@@ -8,7 +8,7 @@ import {
   Typography
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link as RouterLink } from 'react-router-dom';
 import {
@@ -23,8 +23,20 @@ import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 import { listMetadataForms } from '../services';
 import { MetadataFormListItem } from '../components';
+import { CreateMetadataFormModal } from '../components/createMetadataFormModal';
 
 function MetadataFormsListPageHeader() {
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isOpeningModal, setIsOpeningModal] = useState(false);
+
+  const handleOpenModal = () => {
+    setShowCreateModal(true);
+    setIsOpeningModal(true);
+  };
+  const handleCloseModal = () => {
+    setShowCreateModal(false);
+  };
+
   return (
     <Grid
       alignItems="center"
@@ -32,6 +44,14 @@ function MetadataFormsListPageHeader() {
       justifyContent="space-between"
       spacing={3}
     >
+      {showCreateModal && (
+        <CreateMetadataFormModal
+          onApply={handleCloseModal}
+          onClose={handleCloseModal}
+          open={showCreateModal}
+          stopLoader={() => setIsOpeningModal(false)}
+        ></CreateMetadataFormModal>
+      )}
       <Grid item>
         <Typography color="textPrimary" variant="h5">
           Metedata Forms
@@ -59,9 +79,16 @@ function MetadataFormsListPageHeader() {
         <Box sx={{ m: -1 }}>
           <Button
             color="primary"
-            startIcon={<PlusIcon fontSize="small" />}
+            startIcon={
+              isOpeningModal ? (
+                <CircularProgress size={20} />
+              ) : (
+                <PlusIcon fontSize="small" />
+              )
+            }
             sx={{ m: 1 }}
             variant="contained"
+            onClick={handleOpenModal}
           >
             New Metadata Form
           </Button>
@@ -78,6 +105,7 @@ const MetadataFormsList = () => {
   const { settings } = useSettings();
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);
+
   const client = useClient();
 
   const fetchItems = useCallback(async () => {
