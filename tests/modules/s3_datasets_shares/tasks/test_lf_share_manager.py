@@ -232,7 +232,7 @@ def test_check_resource_link_table_exists_in_target_database_true(manager_with_m
     manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
     glue_client.table_exists.return_value = True
     # When
-    response = manager.check_resource_link_table_exists_in_target_database(table=table1)
+    response = manager.check_resource_link_table_exists_in_target_database(resource_link_name=table1.GlueTableName)
     # Then
     assert response == True
     glue_client.table_exists.assert_called_once()
@@ -246,7 +246,7 @@ def test_check_resource_link_table_exists_in_target_database_false(
     manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
     glue_client.table_exists.return_value = False
     # Then
-    assert manager.check_resource_link_table_exists_in_target_database(table=table1) == False
+    assert manager.check_resource_link_table_exists_in_target_database(resource_link_name=table1.GlueTableName) == False
     glue_client.table_exists.assert_called_once()
     glue_client.table_exists.assert_called_with(table1.GlueTableName)
 
@@ -329,21 +329,24 @@ def test_grant_principals_database_permissions_to_shared_database(manager_with_m
     )
 
 
-def test_grant_target_account_permissions_to_source_table(
-    manager_with_mocked_clients, target_environment: Environment, source_environment: Environment, table1: DatasetTable
+def test_grant_principals_permissions_to_source_table(
+    manager_with_mocked_clients,
+    target_environment: Environment,
+    source_environment: Environment,
+    table1: DatasetTable,
+    share_item: ShareObjectItem,
 ):
     manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
     # When
-    manager.grant_target_account_permissions_to_source_table(table1)
+    manager.grant_principals_permissions_to_source_table(table1, share_item)
     # Then
-    lf_client.grant_permissions_to_table.assert_called_once()
-    lf_client.grant_permissions_to_table.assert_called_with(
-        principals=[target_environment.AwsAccountId],
+    lf_client.grant_permissions_to_table_with_columns.assert_called_once()
+    lf_client.grant_permissions_to_table_with_columns.assert_called_with(
+        principals=manager.principals,
         database_name=table1.GlueDatabaseName,
         table_name=table1.GlueTableName,
         catalog_id=source_environment.AwsAccountId,
         permissions=['DESCRIBE', 'SELECT'],
-        permissions_with_grant_options=['DESCRIBE', 'SELECT'],
     )
 
 
@@ -355,7 +358,7 @@ def test_check_if_exists_and_create_resource_link_table_in_shared_database_false
     glue_client.create_resource_link.return_value = True
 
     # When
-    manager.check_if_exists_and_create_resource_link_table_in_shared_database(table1)
+    manager.check_if_exists_and_create_resource_link_table_in_shared_database(table1, table1.GlueTableName)
 
     # Then
     glue_client.table_exists.assert_called_once()
@@ -376,7 +379,7 @@ def test_check_if_exists_and_create_resource_link_table_in_shared_database_true(
     glue_client.create_resource_link.return_value = True
 
     # When
-    manager.check_if_exists_and_create_resource_link_table_in_shared_database(table1)
+    manager.check_if_exists_and_create_resource_link_table_in_shared_database(table1, table1.GlueTableName)
 
     # Then
     glue_client.table_exists.assert_called_once()
@@ -388,7 +391,7 @@ def test_grant_principals_permissions_to_resource_link_table(
 ):
     manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
     # When
-    manager.grant_principals_permissions_to_resource_link_table(table1)
+    manager.grant_principals_permissions_to_resource_link_table(table1.GlueTableName)
     # Then
     lf_client.grant_permissions_to_table.assert_called_once()
     lf_client.grant_permissions_to_table.assert_called_with(
@@ -409,7 +412,7 @@ def test_grant_pivot_role_drop_permissions_to_resource_link_table(
         return_value='arn:role',
     )
     # When
-    manager.grant_pivot_role_drop_permissions_to_resource_link_table(table1)
+    manager.grant_pivot_role_drop_permissions_to_resource_link_table(table1.GlueTableName)
     # Then
     lf_client.grant_permissions_to_table.assert_called_once()
     lf_client.grant_permissions_to_table.assert_called_with(
@@ -418,23 +421,6 @@ def test_grant_pivot_role_drop_permissions_to_resource_link_table(
         table_name=table1.GlueTableName,
         catalog_id=target_environment.AwsAccountId,
         permissions=['DROP'],
-    )
-
-
-def test_grant_principals_permissions_to_table_in_target(
-    manager_with_mocked_clients, table1: DatasetTable, source_environment: Environment
-):
-    manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
-    # When
-    manager.grant_principals_permissions_to_table_in_target(table1)
-    # Then
-    lf_client.grant_permissions_to_table_with_columns.assert_called_once()
-    lf_client.grant_permissions_to_table_with_columns.assert_called_with(
-        principals=manager.principals,
-        database_name=table1.GlueDatabaseName,
-        table_name=table1.GlueTableName,
-        catalog_id=source_environment.AwsAccountId,
-        permissions=['DESCRIBE', 'SELECT'],
     )
 
 
@@ -543,68 +529,17 @@ def test_verify_table_exists_in_source_database_failed(
     assert len(manager.tbl_level_errors) == 1
 
 
-def test_check_target_account_permissions_to_source_table(
-    manager_with_mocked_clients, target_environment: Environment, source_environment: Environment, table1: DatasetTable
-):
-    manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
-    lf_client.check_permissions_to_table.return_value = True
-    # When
-    manager.check_target_account_permissions_to_source_table(table1)
-    # Then
-    assert len(manager.tbl_level_errors) == 0
-    lf_client.check_permissions_to_table.assert_called_once()
-    lf_client.check_permissions_to_table.assert_called_with(
-        principals=[target_environment.AwsAccountId],
-        database_name=table1.GlueDatabaseName,
-        table_name=table1.GlueTableName,
-        catalog_id=source_environment.AwsAccountId,
-        permissions=['DESCRIBE', 'SELECT'],
-        permissions_with_grant_options=['DESCRIBE', 'SELECT'],
-    )
-
-
-def test_check_target_account_permissions_to_source_table_failed(
-    manager_with_mocked_clients, target_environment: Environment, source_environment: Environment, table1: DatasetTable
-):
-    manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
-    lf_client.check_permissions_to_table.return_value = False
-    # When
-    manager.check_target_account_permissions_to_source_table(table1)
-    # Then
-    assert len(manager.tbl_level_errors) == 1
-
-
-def test_verify_resource_link_table_exists_in_target_database(
-    manager_with_mocked_clients, table1: DatasetTable, mock_glue_client
-):
-    manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
-    glue_client.table_exists.return_value = True
-    # When
-    manager.verify_resource_link_table_exists_in_target_database(table=table1)
-    # Then
-    assert len(manager.tbl_level_errors) == 0
-    glue_client.table_exists.assert_called_once()
-    glue_client.table_exists.assert_called_with(table1.GlueTableName)
-
-
-def test_verify_resource_link_table_exists_in_target_database_failed(
-    manager_with_mocked_clients, table1: DatasetTable, mock_glue_client
-):
-    manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
-    glue_client.table_exists.return_value = False
-    # When
-    manager.verify_resource_link_table_exists_in_target_database(table=table1)
-    # Then
-    assert len(manager.tbl_level_errors) == 1
-
-
-def test_check_principals_permissions_to_resource_link_table(
-    manager_with_mocked_clients, table1: DatasetTable, source_environment: Environment
+def test_check_target_principals_permissions_to_source_table(
+    manager_with_mocked_clients,
+    target_environment: Environment,
+    source_environment: Environment,
+    table1: DatasetTable,
+    share_item: ShareObjectItem,
 ):
     manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
     lf_client.check_permissions_to_table_with_columns.return_value = True
     # When
-    manager.check_principals_permissions_to_resource_link_table(table1)
+    manager.check_target_principals_permissions_to_source_table(table1, share_item)
     # Then
     assert len(manager.tbl_level_errors) == 0
     lf_client.check_permissions_to_table_with_columns.assert_called_once()
@@ -617,24 +552,52 @@ def test_check_principals_permissions_to_resource_link_table(
     )
 
 
-def test_check_principals_permissions_to_resource_link_table_failed(
-    manager_with_mocked_clients, table1: DatasetTable, source_environment: Environment
+def test_check_target_principals_permissions_to_source_table_failed(
+    manager_with_mocked_clients,
+    target_environment: Environment,
+    source_environment: Environment,
+    table1: DatasetTable,
+    share_item: ShareObjectItem,
 ):
     manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
     lf_client.check_permissions_to_table_with_columns.return_value = False
     # When
-    manager.check_principals_permissions_to_resource_link_table(table1)
+    manager.check_target_principals_permissions_to_source_table(table1, share_item)
     # Then
     assert len(manager.tbl_level_errors) == 1
 
 
-def test_check_principals_permissions_to_table_in_target(
+def test_verify_resource_link_table_exists_in_target_database(
+    manager_with_mocked_clients, table1: DatasetTable, mock_glue_client
+):
+    manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
+    glue_client.table_exists.return_value = True
+    # When
+    manager.verify_resource_link_table_exists_in_target_database(resource_link_name=table1.GlueTableName)
+    # Then
+    assert len(manager.tbl_level_errors) == 0
+    glue_client.table_exists.assert_called_once()
+    glue_client.table_exists.assert_called_with(table1.GlueTableName)
+
+
+def test_verify_resource_link_table_exists_in_target_database_failed(
+    manager_with_mocked_clients, table1: DatasetTable, mock_glue_client
+):
+    manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
+    glue_client.table_exists.return_value = False
+    # When
+    manager.verify_resource_link_table_exists_in_target_database(resource_link_name=table1.GlueTableName)
+    # Then
+    assert len(manager.tbl_level_errors) == 1
+
+
+def test_check_principals_permissions_to_resource_link_table(
     manager_with_mocked_clients, table1: DatasetTable, target_environment: Environment
 ):
     manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
-    lf_client.check_permissions_to_table.return_value = True
+    lf_client.check_permissions_to_table_with_columns.return_value = True
     # When
-    manager.check_principals_permissions_to_table_in_target(table1)
+    manager.check_principals_permissions_to_resource_link_table(table1.GlueTableName)
     # Then
     assert len(manager.tbl_level_errors) == 0
     lf_client.check_permissions_to_table.assert_called_once()
@@ -647,13 +610,13 @@ def test_check_principals_permissions_to_table_in_target(
     )
 
 
-def test_check_principals_permissions_to_table_in_target_failed(
-    manager_with_mocked_clients, table1: DatasetTable, target_environment: Environment
+def test_check_principals_permissions_to_resource_link_table_failed(
+    manager_with_mocked_clients, table1: DatasetTable, source_environment: Environment
 ):
     manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
     lf_client.check_permissions_to_table.return_value = False
     # When
-    manager.check_principals_permissions_to_table_in_target(table1)
+    manager.check_principals_permissions_to_resource_link_table(table1.GlueTableName)
     # Then
     assert len(manager.tbl_level_errors) == 1
 
@@ -663,7 +626,7 @@ def test_revoke_principals_permissions_to_resource_link_table(
 ):
     manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
     # When
-    manager.revoke_principals_permissions_to_resource_link_table(table=table1)
+    manager.revoke_principals_permissions_to_resource_link_table(resource_link_name=table1.GlueTableName)
     # Then
     lf_client.revoke_permissions_from_table.assert_called_once()
     lf_client.revoke_permissions_from_table.assert_called_with(
@@ -675,12 +638,12 @@ def test_revoke_principals_permissions_to_resource_link_table(
     )
 
 
-def test_revoke_principals_permissions_to_table_in_target(
-    manager_with_mocked_clients, table1: DatasetTable, source_environment: Environment
+def test_revoke_principals_permissions_to_table_in_source(
+    manager_with_mocked_clients, table1: DatasetTable, source_environment: Environment, share_item: ShareObjectItem
 ):
     manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
     # When
-    manager.revoke_principals_permissions_to_table_in_target(table=table1, other_table_shares_in_env=False)
+    manager.revoke_principals_permissions_to_table_in_source(table=table1, share_item=share_item)
     # Then
     lf_client.revoke_permissions_from_table_with_columns.assert_called_once()
     lf_client.revoke_permissions_from_table_with_columns.assert_called_with(
@@ -695,7 +658,7 @@ def test_revoke_principals_permissions_to_table_in_target(
 def test_delete_resource_link_table_in_shared_database_true(manager_with_mocked_clients, table2: DatasetTable):
     manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
     # When
-    manager.delete_resource_link_table_in_shared_database(table=table2)
+    manager.delete_resource_link_table_in_shared_database(resource_link_name=table2.GlueTableName)
     # Then
     glue_client.table_exists.assert_called_once()
     glue_client.delete_table.assert_called_once()
@@ -722,24 +685,6 @@ def test_delete_shared_database_in_target(
     manager.delete_shared_database_in_target()
     # Then
     glue_client.delete_database.assert_called_once()
-
-
-def test_revoke_external_account_access_on_source_account(
-    manager_with_mocked_clients, table1: DatasetTable, source_environment: Environment, target_environment: Environment
-):
-    manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
-    # When
-    manager.revoke_external_account_access_on_source_account(table1)
-    # Then
-    lf_client.revoke_permissions_from_table_with_columns.assert_called_once()
-    lf_client.revoke_permissions_from_table_with_columns.assert_called_with(
-        principals=[target_environment.AwsAccountId],
-        database_name=table1.GlueDatabaseName,
-        table_name=table1.GlueTableName,
-        catalog_id=source_environment.AwsAccountId,
-        permissions=['DESCRIBE', 'SELECT'],
-        permissions_with_grant_options=['DESCRIBE', 'SELECT'],
-    )
 
 
 def test_check_catalog_account_exists_and_update_processor_with_catalog_exists(
