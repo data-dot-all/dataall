@@ -21,7 +21,7 @@ from dataall.modules.datasets_base.services.datasets_enums import Confidentialit
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 from dataall.modules.s3_datasets.services.dataset_permissions import (
     PREVIEW_DATASET_TABLE,
-    DATASET_TABLE_READ,
+    DATASET_TABLE_ALL,
     GET_DATASET_TABLE,
     CREATE_TABLE_DATA_FILTER,
     DELETE_TABLE_DATA_FILTER,
@@ -165,7 +165,7 @@ class DatasetTableService:
             ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=group,
-                permissions=DATASET_TABLE_READ,
+                permissions=DATASET_TABLE_ALL,
                 resource_uri=table_uri,
                 resource_type=DatasetTable.__name__,
             )

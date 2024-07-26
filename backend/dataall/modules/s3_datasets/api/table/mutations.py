@@ -38,7 +38,7 @@ createTableDataFilter = gql.MutationField(
         gql.Argument(name='tableUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='input', type=gql.NonNullableType(NewTableDataFilterInput)),
     ],
-    type=gql.Ref('DatasetTable'),
+    type=gql.Ref('DatasetTableDataFilter'),
     resolver=create_table_data_filter,
 )
 

@@ -137,8 +137,8 @@ const rowFilterExpressions = [
     acceptsArgument: false
   },
   {
-    value: 'NOT NULL',
-    label: 'NOT NULL',
+    value: 'IS NOT NULL',
+    label: 'IS NOT NULL',
     acceptsArgument: false
   }
 ];
@@ -273,11 +273,19 @@ export const TableDataFilterAddForm = (props) => {
         rowExpressionString = null;
       } else if (values.filterType === 'ROW') {
         includedColumns = null;
+
         rowExpressionString = rowExpressionRows
-          .map(
-            (row) =>
-              '(' + row.columnName + row.operator + (row.userValue || '') + ')'
-          )
+          .map((row) => {
+            let usrVal;
+            if (!row.userValue) {
+              usrVal = '';
+            } else {
+              usrVal = row.userValue;
+            }
+            return (
+              '"' + row.columnName + '"' + ' ' + row.operator + ' ' + usrVal
+            );
+          })
           .join(' OR ');
       }
 

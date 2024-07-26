@@ -26,6 +26,9 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     DATASET_TABLE_READ,
     DATASET_FOLDER_READ,
 )
+from dataall.modules.shares_base.services.share_permissions import (
+    APPROVE_SHARE_OBJECT,
+)
 from dataall.modules.s3_datasets_shares.db.s3_share_object_repositories import S3ShareObjectRepository
 from dataall.modules.s3_datasets_shares.aws.glue_client import GlueClient
 

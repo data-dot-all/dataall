@@ -1,6 +1,6 @@
 from dataall.base.api import gql
 from dataall.modules.s3_datasets.api.table.input_types import DatasetTableFilter
-from dataall.modules.s3_datasets.api.table.resolvers import get_table, preview
+from dataall.modules.s3_datasets.api.table.resolvers import get_table, preview, list_table_data_filters
 from dataall.modules.s3_datasets.api.table.types import (
     DatasetTable,
     DatasetTableSearchResult,

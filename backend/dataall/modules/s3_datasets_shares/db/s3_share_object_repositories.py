@@ -2,7 +2,7 @@ import logging
 from warnings import warn
 from typing import List
 
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, func
 from sqlalchemy.orm import Query
 
 from dataall.core.environment.db.environment_models import Environment
@@ -18,6 +18,7 @@ from dataall.modules.shares_base.db.share_object_repositories import ShareObject
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTableDataFilter
 
 logger = logging.getLogger(__name__)
 
@@ -164,9 +165,11 @@ class S3ShareObjectRepository:
         return share
 
     @staticmethod
-    def check_other_approved_share_item_table_exists(session, environment_uri, item_uri, share_item_uri):
+    def check_other_approved_share_item_table_exists(
+        session, environment_uri, item_uri, share_item_uri, data_filters=None
+    ):
         share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
-        return (
+        query = (
             session.query(ShareObject)
             .join(
                 ShareObjectItem,
@@ -181,8 +184,8 @@ class S3ShareObjectRepository:
                     ShareObjectItem.status.in_(share_item_shared_states),
                 )
             )
-            .first()
         )
+        return query.first()
 
     @staticmethod
     def check_existing_shared_items_of_type(session, uri, item_type):

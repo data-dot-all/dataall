@@ -1,10 +1,10 @@
 import logging
 
 from dataall.base.api.context import Context
+from dataall.base.db.exceptions import InvalidInput, RequiredParameter
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
-from dataall.base.db.exceptions import RequiredParameter
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.shares_base.services.shares_enums import ShareObjectPermission
@@ -46,6 +46,19 @@ class RequestValidator:
             raise RequiredParameter('datasetUri')
         if not data.get('shareUris'):
             raise RequiredParameter('shareUris')
+
+    @staticmethod
+    def validate_update_share_item_filters(data):
+        if not input.get('shareItemUri'):
+            RequiredParameter('shareItemUri')
+        if not data:
+            raise RequiredParameter(data)
+        if not data.get('filterUris'):
+            raise RequiredParameter('filterUris')
+        if not data.get('filterNames'):
+            raise RequiredParameter('filterNames')
+        if not data.get('label'):
+            raise InvalidInput('label')
 
 
 def create_share_object(
@@ -286,3 +299,14 @@ def update_share_reject_purpose(context: Context, source, shareUri: str = None, 
             uri=shareUri,
             reject_purpose=rejectPurpose,
         )
+
+
+def update_filters_table_share_item(context: Context, source, input):
+    RequestValidator.validate_update_share_item_filters(input)
+    return ShareItemService.update_filters_table_share_item(uri=input.get('shareItemUri'), data=input)
+
+
+def get_share_item_data_filters(context: Context, source, attachedDataFilterUri: str = None):
+    if not attachedDataFilterUri:
+        RequiredParameter('attachedDataFilterUri')
+    return ShareItemService.get_share_item_data_filters(uri=attachedDataFilterUri)

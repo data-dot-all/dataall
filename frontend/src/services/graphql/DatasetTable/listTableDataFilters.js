@@ -8,7 +8,7 @@ export const listTableDataFilters = ({ tableUri, filter }) => ({
   query: gql`
     query listTableDataFilters(
       $tableUri: String!
-      $filter: DatasetTableColumnFilter
+      $filter: DatasetTableFilter
     ) {
       listTableDataFilters(tableUri: $tableUri, filter: $filter) {
         count
