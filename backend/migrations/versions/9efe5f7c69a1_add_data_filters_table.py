@@ -8,10 +8,8 @@ Create Date: 2024-07-17 11:05:26.077658
 
 from alembic import op
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy import Column, String, DateTime, Enum, ForeignKey, orm
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.ext.declarative import declarative_base
 from dataall.base.db import Base, Resource, utils
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_DATA_FILTERS, DATASET_TABLE_READ
@@ -22,9 +20,6 @@ revision = '9efe5f7c69a1'
 down_revision = '797dd1012be1'
 branch_labels = None
 depends_on = None
-
-
-Base = declarative_base()
 
 
 class DatasetBase(Resource, Base):
