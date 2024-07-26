@@ -21,7 +21,7 @@ class DatasetBase(Resource, Base):
     confidentiality = Column(String, nullable=False, default=ConfidentialityClassification.Unclassified.value)
     tags = Column(ARRAY(String))
     inProject = query_expression()
-
+    label = Column(String, nullable=False)
     businessOwnerEmail = Column(String, nullable=True)
     businessOwnerDelegationEmails = Column(ARRAY(String), nullable=True)
     stewards = Column(String, nullable=True)
