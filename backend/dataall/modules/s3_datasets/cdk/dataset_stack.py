@@ -482,9 +482,11 @@ class DatasetStack(Stack):
                 job_bookmarks_encryption=glue.CfnSecurityConfiguration.JobBookmarksEncryptionProperty(
                     job_bookmarks_encryption_mode='CSE-KMS', kms_key_arn=glue_sec_conf_enc_key.key_arn
                 ),
-                s3_encryptions=[glue.CfnSecurityConfiguration.S3EncryptionProperty(
-                    s3_encryption_mode='SSE-KMS', kms_key_arn=glue_sec_conf_enc_key.key_arn
-                )],
+                s3_encryptions=[
+                    glue.CfnSecurityConfiguration.S3EncryptionProperty(
+                        s3_encryption_mode='SSE-KMS', kms_key_arn=glue_sec_conf_enc_key.key_arn
+                    )
+                ],
             ),
             name=f'crwlr_sec_config-{dataset.GlueCrawlerName}',
         )
