@@ -10,16 +10,19 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import Column, String, DateTime, Enum, ForeignKey, orm
 from sqlalchemy.dialects import postgresql
-from dataall.base.db import Base, Resource, utils
+from dataall.base.db import Resource, utils
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_DATA_FILTERS, DATASET_TABLE_READ
 from dataall.modules.datasets_base.services.datasets_enums import DatasetTypes
+from sqlalchemy.ext.declarative import declarative_base
 
 # revision identifiers, used by Alembic.
 revision = '9efe5f7c69a1'
 down_revision = '797dd1012be1'
 branch_labels = None
 depends_on = None
+
+Base = declarative_base()
 
 
 class DatasetBase(Resource, Base):
