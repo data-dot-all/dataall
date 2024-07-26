@@ -7,6 +7,7 @@ import {
   Upload,
   ViewArrayOutlined
 } from '@mui/icons-material';
+import AutoModeIcon from '@mui/icons-material/AutoMode';
 import {
   Box,
   Breadcrumbs,
@@ -42,7 +43,8 @@ import {
   DatasetAWSActions,
   DatasetData,
   DatasetOverview,
-  DatasetUpload
+  DatasetUpload,
+  GenerateMetadataModal
 } from '../components';
 import { isFeatureEnabled } from 'utils';
 import { RequestAccessModal } from 'modules/Catalog/components';
@@ -120,6 +122,8 @@ const DatasetView = () => {
 
   const [isRequestAccessOpen, setIsRequestAccessOpen] = useState(false);
   const [isOpeningModal, setIsOpeningModal] = useState(false);
+  const [isGenerateMetadataModalOpen, setIsGenerateMetadataModalOpen] =
+    useState(false);
   const handleRequestAccessModalOpen = () => {
     setIsOpeningModal(true);
     setIsRequestAccessOpen(true);
@@ -128,6 +132,15 @@ const DatasetView = () => {
   const handleRequestAccessModalClose = () => {
     setIsRequestAccessOpen(false);
   };
+
+  const handleGenerateMetadataModalOpen = () => {
+    setIsGenerateMetadataModalOpen(true);
+  };
+
+  const handleGenerateMetadataModalClose = () => {
+    setIsGenerateMetadataModalOpen(false);
+  };
+
   const reloadVotes = async () => {
     const response = await client.query(countUpVotes(params.uri, 'dataset'));
     if (!response.errors && response.data.countUpVotes !== null) {
@@ -259,6 +272,22 @@ const DatasetView = () => {
 
             <Grid item>
               <Box sx={{ m: -1 }}>
+                <Button
+                  color="primary"
+                  startIcon={<AutoModeIcon size={15} />}
+                  sx={{ mt: 1, mr: 1 }}
+                  onClick={handleGenerateMetadataModalOpen}
+                  type="button"
+                  variant="outlined"
+                >
+                  Generate Metadata with AI
+                </Button>
+                <GenerateMetadataModal
+                  onApply={handleGenerateMetadataModalClose}
+                  onClose={handleGenerateMetadataModalClose}
+                  open={isGenerateMetadataModalOpen}
+                  dataset={dataset}
+                />
                 {isAdmin && (
                   <span>
                     <UpVoteButton
