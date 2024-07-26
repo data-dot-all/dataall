@@ -453,6 +453,9 @@ class DatasetStack(Stack):
             removal_policy=RemovalPolicy.DESTROY,
             alias=f'crwlr_log_enc_key_{dataset.GlueCrawlerName}',
             enable_key_rotation=True,
+            admins=[
+                iam.ArnPrincipal(env.CDKRoleArn),
+            ],
         )
 
         glue_sec_conf_enc_key.add_to_resource_policy(
@@ -479,7 +482,9 @@ class DatasetStack(Stack):
                 job_bookmarks_encryption=glue.CfnSecurityConfiguration.JobBookmarksEncryptionProperty(
                     job_bookmarks_encryption_mode='CSE-KMS', kms_key_arn=glue_sec_conf_enc_key.key_arn
                 ),
-                s3_encryptions=glue.CfnSecurityConfiguration.S3EncryptionProperty(s3_encryption_mode='SSE-S3'),
+                s3_encryptions=glue.CfnSecurityConfiguration.S3EncryptionProperty(
+                    s3_encryption_mode='SSE-KMS', kms_key_arn=glue_sec_conf_enc_key.key_arn
+                ),
             ),
             name=f'crwlr_sec_config-{dataset.GlueCrawlerName}',
         )
