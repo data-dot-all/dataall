@@ -9,12 +9,27 @@ Create Date: 2024-07-17 11:05:26.077658
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_DATA_FILTERS, DATASET_TABLE_READ
 
 # revision identifiers, used by Alembic.
 revision = '9efe5f7c69a1'
 down_revision = '797dd1012be1'
 branch_labels = None
 depends_on = None
+
+
+Base = declarative_base()
+
+
+class S3Dataset(DatasetBase):
+    __tablename__ = 's3_dataset'
+    datasetUri = Column(String, ForeignKey('dataset.datasetUri'), primary_key=True)
+
+
+class DatasetTable(Resource, Base):
+    __tablename__ = 'dataset_table'
+    datasetUri = Column(String, nullable=False)
+    tableUri = Column(String, primary_key=True, default=utils.uuid('table'))
 
 
 def upgrade():
@@ -37,12 +52,78 @@ def upgrade():
         sa.PrimaryKeyConstraint('filterUri'),
     )
 
-    op.add_column('share_object_item', sa.Column('dataFilters', postgresql.ARRAY(sa.String()), nullable=True))
+    op.create_table(
+        'share_object_item_data_filter',
+        sa.Column('attachedDataFilterUri', sa.String(), nullable=False),
+        sa.Column('label', sa.String(), nullable=False),
+        sa.Column('dataFilterUris', postgresql.ARRAY(sa.String()), nullable=False),
+        sa.Column('dataFilterNames', postgresql.ARRAY(sa.String()), nullable=False),
+        sa.PrimaryKeyConstraint('attachedDataFilterUri'),
+    )
 
+    op.add_column('share_object_item', sa.Column('attachedDataFilterUri', sa.String(), nullable=True))
+    op.create_foreign_key(
+        'share_object_item_attachedDataFilterUri_fkey',
+        'share_object_item',
+        'share_object_item_data_filter',
+        ['attachedDataFilterUri'],
+        ['attachedDataFilterUri'],
+    )
+
+    bind = op.get_bind()
+    session = orm.Session(bind=bind)
+    print('Adding DATASET_TABLE_DATA_FILTERS permissions for all s3 dataset tables...')
+    s3_datasets: [S3Dataset] = session.query(Dataset).all()
+    for dataset in s3_datasets:
+        dataset_tables = session.query(DatasetTable).filter(DatasetTable.datasetUri == dataset.datasetUri).all()
+        for table in dataset_tables:
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                group=dataset.SamlAdminGroupName,
+                resource_uri=table.tableUri,
+                permissions=DATASET_TABLE_DATA_FILTERS,
+                resource_type=DatasetTable.__name__,
+            )
+            if dataset.stewards is not None and dataset.stewards != dataset.SamlAdminGroupName:
+                ResourcePolicyService.attach_resource_policy(
+                    session=session,
+                    group=dataset.stewards,
+                    resource_uri=table.tableUri,
+                    permissions=DATASET_TABLE_DATA_FILTERS,
+                    resource_type=DatasetTable.__name__,
+                )
     # ### end Alembic commands ###
 
 
 def downgrade():
-    op.drop_column('share_object_item', 'dataFilters')
+    op.drop_constraint('share_object_item_attachedDataFilterUri_fkey', 'share_object_item', type_='foreignkey')
+    op.drop_column('share_object_item', 'attachedDataFilterUri')
+    op.drop_table('share_object_item_data_filter')
     op.drop_table('data_filter')
+
+    bind = op.get_bind()
+    session = orm.Session(bind=bind)
+    print('Removing DATASET_TABLE_DATA_FILTERS permissions for all s3 dataset tables...')
+    s3_datasets: [S3Dataset] = session.query(Dataset).all()
+    for dataset in s3_datasets:
+        dataset_tables = session.query(DatasetTable).filter(DatasetTable.datasetUri == dataset.datasetUri).all()
+        for table in dataset_tables:
+            ResourcePolicyService.update_resource_policy(
+                session=session,
+                resource_uri=table.tableUri,
+                resource_type=DatasetTable.__name__,
+                old_group=dataset.SamlAdminGroupName,
+                new_group=dataset.SamlAdminGroupName,
+                new_permissions=DATASET_TABLE_READ,
+            )
+            if dataset.stewards is not None and dataset.stewards != dataset.SamlAdminGroupName:
+                ResourcePolicyService.update_resource_policy(
+                    session=session,
+                    resource_uri=table.tableUri,
+                    resource_type=DatasetTable.__name__,
+                    old_group=dataset.SamlAdminGroupName,
+                    new_group=dataset.SamlAdminGroupName,
+                    new_permissions=DATASET_TABLE_READL,
+                )
+
     # ### end Alembic commands ###

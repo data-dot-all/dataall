@@ -69,7 +69,7 @@ import {
   verifyItemsShareObject,
   reApplyItemsShareObject,
   getS3ConsumptionData,
-  listShareItemDataFilters
+  getShareItemDataFilters
 } from '../services';
 import {
   AddShareItemModal,
@@ -488,21 +488,19 @@ export function SharedItem(props) {
   const [isRemovingItem, setIsRemovingItem] = useState(false);
   const [isFilterModalOpenUri, setIsFilterModalOpenUri] = useState(0);
   const [isLoadingFilters, setIsLoadingFilters] = useState(false);
-  const [dataFilterNames, setDataFilterNames] = useState([]);
+  const [itemDataFilter, setItemDataFilter] = useState(null);
 
-  const listItemDataFilters = async () => {
+  const getItemDataFilters = async (attachedDataFilterUri) => {
     setIsLoadingFilters(true);
     try {
       const response = await client.query(
-        listShareItemDataFilters({ shareItemUri: item.shareItemUri })
+        getShareItemDataFilters({
+          attachedDataFilterUri: attachedDataFilterUri
+        })
       );
       if (!response.errors) {
-        if (
-          response.data &&
-          response.data.listShareItemDataFilters &&
-          Array.isArray(response.data.listShareItemDataFilters)
-        ) {
-          setDataFilterNames(response.data.listShareItemDataFilters);
+        if (response.data && response.data.getShareItemDataFilters) {
+          setItemDataFilter(response.data.getShareItemDataFilters);
         }
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
@@ -515,14 +513,14 @@ export function SharedItem(props) {
   };
 
   useEffect(() => {
-    if (client && item.itemType === 'Table') {
-      listItemDataFilters();
+    if (client && item.itemType === 'Table' && item.attachedDataFilterUri) {
+      getItemDataFilters(item.attachedDataFilterUri);
     }
   }, [client, item, dispatch]);
 
   const handleFilterModalClose = () => {
     setIsFilterModalOpenUri(0);
-    listItemDataFilters();
+    getItemDataFilters();
   };
 
   const handleFilterModalOpen = (uri) => {
@@ -562,9 +560,9 @@ export function SharedItem(props) {
           <CircularProgress size={15} />
         ) : (
           <>
-            {dataFilterNames &&
-              dataFilterNames.length > 0 &&
-              dataFilterNames.map((dfilter) => (
+            {item.dataFilterNames &&
+              item.dataFilterNames.length > 0 &&
+              item.dataFilterNames.map((dfilter) => (
                 <Chip
                   sx={{ mr: 0.5, mb: 0.5 }}
                   key={dfilter}
@@ -620,6 +618,7 @@ export function SharedItem(props) {
             {isFilterModalOpenUri === item.shareItemUri && (
               <ShareItemFilterModal
                 item={item}
+                itemDataFilter={itemDataFilter}
                 onApply={() => handleFilterModalClose()}
                 onClose={() => handleFilterModalClose()}
                 reloadItems={fetchShareItems}

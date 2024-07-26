@@ -10,10 +10,12 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemStatus,
     ShareItemActions,
     ShareItemHealthStatus,
+    ShareableType,
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
+from dataall.modules.shares_base.db.share_object_item_repositories import ShareObjectItemRepository
 from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
     ShareItemSM,
@@ -204,3 +206,33 @@ class ShareItemService:
     def paginated_shared_with_environment_datasets(session, uri, data) -> dict:
         share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
         return ShareObjectRepository.paginate_shared_datasets(session, uri, data, share_item_shared_states)
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(APPROVE_SHARE_OBJECT, parent_resource=_get_share_uri)
+    def update_filters_table_share_item(uri: str, data: dict):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
+            if share_item:
+                if share_item.itemType != ShareableType.Table.value:
+                    raise Exception(f'Share item is not type {ShareableType.Table.value} - required for data filters')
+
+                if share_item.status in ShareStatusRepository.get_share_item_shared_states():
+                    raise Exception(f'Share item already shared in state {share_item.status} - can not assign filters')
+
+                if share_item.attachedDataFilterUri:
+                    share_item_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(
+                        session, share_item.attachedDataFilterUri
+                    )
+                    ShareObjectItemRepository.update_share_item_filters(session, share_item_filter, data)
+                    return True
+
+                share_item_filter = ShareObjectItemRepository.create_share_item_filters(session, share_item, data)
+                share_item.attachedDataFilterUri = share_item_filter.attachedDataFilterUri
+                return True
+            raise Exception('Share item not found')
+
+    @staticmethod
+    def get_share_item_data_filters(uri: str):
+        with get_context().db_engine.scoped_session() as session:
+            return ShareObjectItemRepository.get_share_item_filter_by_uri(session, uri)

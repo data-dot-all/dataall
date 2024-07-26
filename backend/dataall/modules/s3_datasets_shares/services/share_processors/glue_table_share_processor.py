@@ -12,12 +12,14 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareableType,
 )
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable
+from dataall.modules.shares_base.db.share_object_models import ShareObjectItemDataFilter
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers import LFShareManager
 from dataall.modules.s3_datasets_shares.aws.ram_client import RamClient
 from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.s3_datasets_shares.services.s3_share_service import S3ShareService
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_object_item_repositories import ShareObjectItemRepository
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.s3_datasets_shares.db.s3_share_object_repositories import S3ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
@@ -39,9 +41,10 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
     def _initialize_share_manager(self, tables):
         return LFShareManager(session=self.session, share_data=self.share_data, tables=tables)
 
-    def _build_resource_link_name(self, table_name: str, share_item_filters: List[str]):
-        share_item_filters.sort()
-        return f"{table_name}_{'_'.join(share_item_filters)}" if share_item_filters else table_name
+    def _build_resource_link_name(self, table_name: str, share_item_filter: ShareObjectItemDataFilter):
+        if share_item_filter:
+            return f'{table_name}_{share_item_filter.label}'
+        return table_name
 
     def process_approved_shares(self) -> bool:
         """
@@ -126,6 +129,12 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     shared_item_SM.update_state_single_item(self.session, share_item, new_state)
 
                 try:
+                    share_item_filter = None
+                    if share_item.attachedDataFilterUri:
+                        share_item_filter = ShareObjectItemRepository.find_share_item_filter(
+                            self.session, table.tableUri, share_item.attachedDataFilterUri
+                        )
+
                     manager.check_table_exists_in_source_database(share_item, table)
 
                     if manager.cross_account:
@@ -150,7 +159,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                                 target_region=self.share_data.target_environment.region,
                             )
 
-                    resource_link_name = self._build_resource_link_name(table.GlueTableName, share_item.dataFilters)
+                    resource_link_name = self._build_resource_link_name(table.GlueTableName, share_item_filter)
                     manager.check_if_exists_and_create_resource_link_table_in_shared_database(table, resource_link_name)
                     manager.grant_principals_permissions_to_resource_link_table(resource_link_name)
 
@@ -232,6 +241,11 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                 share_item = ShareObjectRepository.find_sharable_item(
                     self.session, self.share_data.share.shareUri, table.tableUri
                 )
+                share_item_filter = None
+                if share_item.attachedDataFilterUri:
+                    share_item_filter = ShareObjectItemRepository.find_share_item_filter(
+                        self.session, table.tableUri, share_item.attachedDataFilterUri
+                    )
 
                 revoked_item_SM = ShareItemSM(ShareItemStatus.Revoke_Approved.value)
                 new_state = revoked_item_SM.run_transition(ShareObjectActions.Start.value)
@@ -242,7 +256,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     manager.check_table_exists_in_source_database(share_item, table)
 
                     log.info('Check resource link table exists')
-                    resource_link_name = self._build_resource_link_name(table.GlueTableName, share_item.dataFilters)
+                    resource_link_name = self._build_resource_link_name(table.GlueTableName, share_item_filter)
 
                     resource_link_table_exists = manager.check_resource_link_table_exists_in_target_database(
                         resource_link_name
@@ -253,20 +267,22 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         manager.revoke_principals_permissions_to_resource_link_table(resource_link_name)
                         log.info('Revoking principal permissions from table in source')
                         manager.revoke_principals_permissions_to_table_in_source(table, share_item)
-                        other_table_shares_w_filters_in_env = (
-                            True
-                            if S3ShareObjectRepository.check_other_approved_share_item_table_exists(
-                                self.session,
-                                self.share_data.target_environment.environmentUri,
-                                share_item.itemUri,
-                                share_item.shareItemUri,
-                                share_item.dataFilters,
+                        if share_item_filter:
+                            can_delete_resource_link = True
+                        else:
+                            can_delete_resource_link = (
+                                False
+                                if S3ShareObjectRepository.check_other_approved_share_item_table_exists(
+                                    self.session,
+                                    self.share_data.target_environment.environmentUri,
+                                    share_item.itemUri,
+                                    share_item.shareItemUri,
+                                    share_item_filter.dataFilterUris if share_item_filter else None,
+                                )
+                                else True
                             )
-                            else False
-                        )
-                        if (
-                            manager.is_new_share and not other_table_shares_w_filters_in_env
-                        ) or not manager.is_new_share:
+
+                        if (manager.is_new_share and can_delete_resource_link) or not manager.is_new_share:
                             warn(
                                 'share_manager.is_new_share will be deprecated in v2.6.0',
                                 DeprecationWarning,
@@ -384,6 +400,11 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     share_item = ShareObjectRepository.find_sharable_item(
                         self.session, self.share_data.share.shareUri, table.tableUri
                     )
+                    share_item_filter = None
+                    if share_item.attachedDataFilterUri:
+                        share_item_filter = ShareObjectItemRepository.find_share_item_filter(
+                            self.session, table.tableUri, share_item.attachedDataFilterUri
+                        )
                     manager.verify_table_exists_in_source_database(share_item, table)
                     manager.check_target_principals_permissions_to_source_table(table, share_item)
 
@@ -404,7 +425,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                                     f'{manager.source_database_name}.{table.GlueTableName}',
                                 )
                             )
-                    resource_link_name = self._build_resource_link_name(table.GlueTableName, share_item.dataFilters)
+                    resource_link_name = self._build_resource_link_name(table.GlueTableName, share_item_filter)
                     manager.verify_resource_link_table_exists_in_target_database(resource_link_name)
                     manager.check_principals_permissions_to_resource_link_table(resource_link_name)
 

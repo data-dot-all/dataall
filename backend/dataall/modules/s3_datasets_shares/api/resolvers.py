@@ -1,7 +1,7 @@
 import logging
 
 from dataall.base.api.context import Context
-from dataall.base.db.exceptions import RequiredParameter
+from dataall.base.db.exceptions import RequiredParameter, InvalidInput
 from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.modules.s3_datasets_shares.services.s3_share_service import S3ShareService
 
@@ -72,16 +72,3 @@ def resolve_shared_db_name(context: Context, source, **kwargs):
     return S3ShareService.resolve_shared_db_name(
         source.GlueDatabaseName, source.shareUri, source.targetEnvAwsAccountId, source.targetEnvRegion
     )
-
-
-def update_filters_table_share_item(context: Context, source, input):
-    shareItemUri = input.get('shareItemUri')
-    if not shareItemUri:
-        RequiredParameter('shareItemUri')
-    return S3ShareService.update_filters_table_share_item(uri=shareItemUri, filterUris=input.get('filterUris') or [])
-
-
-def list_share_item_data_filters(context: Context, source, shareItemUri: str = None):
-    if not shareItemUri:
-        RequiredParameter('shareItemUri')
-    return S3ShareService.list_share_item_data_filters(uri=shareItemUri)

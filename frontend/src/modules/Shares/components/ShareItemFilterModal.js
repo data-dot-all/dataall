@@ -5,7 +5,8 @@ import {
   CardHeader,
   Dialog,
   FormHelperText,
-  Typography
+  Typography,
+  TextField
 } from '@mui/material';
 import { Formik } from 'formik';
 import { DataGrid } from '@mui/x-data-grid';
@@ -17,15 +18,24 @@ import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import CircularProgress from '@mui/material/CircularProgress';
 import { listTableDataFilters, useClient } from 'services';
-import { updateFiltersTableShareItem } from '../services';
+import { updateShareItemFilters } from '../services';
 
 export const ShareItemFilterModal = (props) => {
-  const { item, onApply, onClose, open, reloadItems, ...other } = props;
+  const {
+    item,
+    itemDataFilter,
+    onApply,
+    onClose,
+    open,
+    reloadItems,
+    ...other
+  } = props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const client = useClient();
   const [pageSize, setPageSize] = useState(5);
   const [selectionModel, setSelectionModel] = useState([]);
+  const [selectionModelNames, setSelectionModelNames] = useState([]);
 
   const columns = [
     { field: 'id', hide: true },
@@ -100,9 +110,11 @@ export const ShareItemFilterModal = (props) => {
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
       const response = await client.mutate(
-        updateFiltersTableShareItem({
+        updateShareItemFilters({
           shareItemUri: item.shareItemUri,
-          filterUris: selectionModel
+          label: values.label,
+          filterUris: selectionModel,
+          filterNames: selectionModelNames
         })
       );
       if (!response.errors) {
@@ -134,8 +146,9 @@ export const ShareItemFilterModal = (props) => {
 
   useEffect(() => {
     if (client) {
-      if (item.dataFilters) {
-        setSelectionModel(item.dataFilters);
+      if (itemDataFilter) {
+        setSelectionModel(itemDataFilter.dataFilterUris);
+        setSelectionModelNames(itemDataFilter.dataFilterNames);
       }
       fetchFilters().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
@@ -166,7 +179,8 @@ export const ShareItemFilterModal = (props) => {
         <Box sx={{ p: 3 }}>
           <Formik
             initialValues={{
-              filterUris: item.dataFilters
+              label: itemDataFilter?.label || '',
+              filterUris: itemDataFilter?.dataFilterUris || []
             }}
             onSubmit={async (
               values,
@@ -190,6 +204,19 @@ export const ShareItemFilterModal = (props) => {
                   <CircularProgress sx={{ mt: 1 }} size={20} />
                 ) : (
                   <>
+                    <CardContent>
+                      <TextField
+                        error={Boolean(touched.label && errors.label)}
+                        fullWidth
+                        helperText={touched.label && errors.label}
+                        label="Item Filter Name"
+                        name="label"
+                        onBlur={handleBlur}
+                        onChange={handleChange}
+                        value={values.label}
+                        variant="outlined"
+                      />
+                    </CardContent>
                     <CardHeader fullWidth title="Select Data Filters" />
                     <Box fullWidth>
                       <DataGrid
@@ -208,6 +235,14 @@ export const ShareItemFilterModal = (props) => {
                         checkboxSelection
                         onSelectionModelChange={(newSelection) => {
                           setSelectionModel(newSelection);
+                          setSelectionModelNames(
+                            newSelection.map((uri) => {
+                              const filter = filters.find(
+                                (filter) => filter.filterUri === uri
+                              );
+                              return filter.label;
+                            })
+                          );
                         }}
                         selectionModel={selectionModel}
                         loading={loading}
@@ -243,6 +278,7 @@ export const ShareItemFilterModal = (props) => {
 
 ShareItemFilterModal.propTypes = {
   item: PropTypes.object.isRequired,
+  itemDataFilter: PropTypes.object,
   onApply: PropTypes.func,
   onClose: PropTypes.func,
   reloadItems: PropTypes.func,

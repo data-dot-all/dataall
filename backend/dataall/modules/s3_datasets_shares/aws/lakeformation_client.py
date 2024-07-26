@@ -234,7 +234,6 @@ class LakeFormationClient:
     def revoke_permissions_to_table_with_filters(
         self, principals, database_name, table_name, catalog_id, permissions, data_filters
     ) -> True:
-
         for f_name in data_filters:
             data_filter_resource = {
                 'DataCellsFilter': {

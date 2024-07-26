@@ -1,15 +1,15 @@
 import { gql } from 'apollo-boost';
 
-export const updateFiltersTableShareItem = (input) => {
+export const updateShareItemFilters = (input) => {
   return {
     variables: {
       input
     },
     mutation: gql`
-      mutation updateFiltersTableShareItem(
+      mutation updateShareItemFilters(
         $input: ModifyFiltersTableShareItemInput!
       ) {
-        updateFiltersTableShareItem(input: $input)
+        updateShareItemFilters(input: $input)
       }
     `
   };

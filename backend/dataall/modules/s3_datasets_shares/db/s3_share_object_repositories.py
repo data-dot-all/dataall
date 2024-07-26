@@ -185,33 +185,7 @@ class S3ShareObjectRepository:
                 )
             )
         )
-        if data_filters:
-            query = query.filter(
-                and_(
-                    *[ShareObjectItem.dataFilters.contains(f'{{{filter_uri}}}') for filter_uri in data_filters],
-                    func.cardinality(ShareObjectItem.dataFilters) == len(data_filters),
-                )
-            )
         return query.first()
-
-        # query = (
-        #     session.query(ShareObjectItem)
-        #     .join(ShareObject, ShareObjectItem.shareUri == ShareObject.shareUri)
-        #     .filter(
-        #         (
-        #             and_(
-        #                 ShareObjectItem.itemUri == item_uri,
-        #                 ShareObjectItem.itemType == share_type,
-        #                 ShareObject.principalType == principal_type,
-        #                 ShareObject.principalId == principal_uri,
-        #                 ShareObject.shareUri != not_this_share_uri,
-        #             )
-        #         )
-        #     )
-        # )
-        # if item_status:
-        #     query = query.filter(ShareObjectItem.status.in_(item_status))
-        # return query.all()
 
     @staticmethod
     def check_existing_shared_items_of_type(session, uri, item_type):
@@ -439,21 +413,3 @@ class S3ShareObjectRepository:
             .first()
         )
         return share_object
-
-    @staticmethod
-    def update_share_item_filters(
-        session,
-        share_item: str,
-        filterUris: list,
-    ) -> bool:
-        share_item.dataFilters = filterUris
-        session.commit()
-        return True
-
-    @staticmethod
-    def list_data_filters_on_share_item(session, share_item: ShareObjectItem):
-        return (
-            session.query(DatasetTableDataFilter)
-            .filter(DatasetTableDataFilter.filterUri.in_(share_item.dataFilters))
-            .all()
-        )

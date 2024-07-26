@@ -21,7 +21,7 @@ from dataall.modules.shares_base.services.shares_enums import (
 )
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable
 from dataall.modules.s3_datasets_shares.services.s3_share_alarm_service import S3ShareAlarmService
-from dataall.modules.shares_base.db.share_object_models import ShareObjectItem
+from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObjectItemDataFilter
 from dataall.modules.s3_datasets_shares.services.share_managers.share_manager_utils import ShareErrorFormatter
 from dataall.modules.shares_base.services.sharing_service import ShareData
 
@@ -328,7 +328,7 @@ class LFShareManager:
     #         )
 
     def check_target_principals_permissions_to_source_table(
-        self, table: DatasetTable, share_item: ShareObjectItem
+        self, table: DatasetTable, share_item: ShareObjectItem, share_item_filter: ShareObjectItemDataFilter = None
     ) -> None:
         """
         Checks 'DESCRIBE' 'SELECT' Lake Formation permissions to target principals to the original table in source account
@@ -336,18 +336,14 @@ class LFShareManager:
         :param table: DatasetTable
         :return: None
         """
-        if share_item.dataFilters:
-            data_filter_names = [
-                f.label
-                for f in S3ShareObjectRepository.list_data_filters_on_share_item(self.session, share_item=share_item)
-            ]
+        if share_item_filter:
             if not self.lf_client_in_source.check_permissions_to_table_with_filters(
                 principals=self.principals,
                 database_name=self.source_database_name,
                 table_name=table.GlueTableName,
                 catalog_id=self.source_account_id,
                 permissions=['SELECT'],
-                data_filters=data_filter_names,
+                data_filters=share_item_filter.dataFilterNames,
             ):
                 self.tbl_level_errors.append(
                     ShareErrorFormatter.missing_permission_error_msg(
@@ -408,24 +404,22 @@ class LFShareManager:
         )
         return True
 
-    def grant_principals_permissions_to_source_table(self, table: DatasetTable, share_item: ShareObjectItem) -> True:
+    def grant_principals_permissions_to_source_table(
+        self, table: DatasetTable, share_item: ShareObjectItem, share_item_filter: ShareObjectItemDataFilter = None
+    ) -> True:
         """
         Grants 'DESCRIBE' 'SELECT' Lake Formation permissions to target principals to the original table in source account
         :param table: DatasetTable
         :return: True if it is successful
         """
-        if share_item.dataFilters:
-            data_filter_names = [
-                f.label
-                for f in S3ShareObjectRepository.list_data_filters_on_share_item(self.session, share_item=share_item)
-            ]
+        if share_item_filter:
             self.lf_client_in_source.grant_permissions_to_table_with_filters(
                 principals=self.principals,
                 database_name=self.source_database_name,
                 table_name=table.GlueTableName,
                 catalog_id=self.source_account_id,
                 permissions=['SELECT'],
-                data_filters=data_filter_names,
+                data_filters=share_item_filter.dataFilterNames,
             )
         else:
             self.lf_client_in_source.grant_permissions_to_table_with_columns(
@@ -613,7 +607,7 @@ class LFShareManager:
     #     return True
 
     def revoke_principals_permissions_to_table_in_source(
-        self, table: DatasetTable, share_item: ShareObjectItem
+        self, table: DatasetTable, share_item: ShareObjectItem, share_item_filter: ShareObjectItemDataFilter = None
     ) -> True:
         """
         Revokes 'SELECT' Lake Formation permissions to target principals to the original table in source account
@@ -623,18 +617,14 @@ class LFShareManager:
         :return: True if it is successful
         """
 
-        if share_item.dataFilters:
-            data_filter_names = [
-                f.label
-                for f in S3ShareObjectRepository.list_data_filters_on_share_item(self.session, share_item=share_item)
-            ]
+        if share_item_filter:
             self.lf_client_in_source.revoke_permissions_to_table_with_filters(
                 principals=self.principals,
                 database_name=self.source_database_name,
                 table_name=table.GlueTableName,
                 catalog_id=self.source_account_id,
                 permissions=['SELECT'],
-                data_filters=data_filter_names,
+                data_filters=share_item_filter.dataFilterNames,
             )
         else:
             self.lf_client_in_source.revoke_permissions_from_table_with_columns(
