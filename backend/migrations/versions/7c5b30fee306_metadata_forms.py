@@ -1,7 +1,7 @@
 """metadata_forms
 
 Revision ID: 7c5b30fee306
-Revises: 797dd1012be1
+Revises: 9efe5f7c69a1
 Create Date: 2024-07-19 15:03:20.671575
 
 """
@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '7c5b30fee306'
-down_revision = '797dd1012be1'
+down_revision = '9efe5f7c69a1'
 branch_labels = None
 depends_on = None
 
