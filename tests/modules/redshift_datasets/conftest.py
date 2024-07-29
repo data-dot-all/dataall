@@ -78,19 +78,16 @@ def patch_redshift(module_mocker):
 
 
 @pytest.fixture(scope='function')
-def api_context_1(user, group):
-    engine = get_engine(envname=ENVNAME)
-    yield set_context(
-        RequestContext(db_engine=engine, username=user.username, groups=[group.name], user_id=user.username)
-    )
+def api_context_1(db, user, group):
+    yield set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
     dispose_context()
 
 
 @pytest.fixture(scope='function')
-def api_context_2(user2, group2):
+def api_context_2(db, user2, group2):
     engine = get_engine(envname=ENVNAME)
     yield set_context(
-        RequestContext(db_engine=engine, username=user2.username, groups=[group2.name], user_id=user2.username)
+        RequestContext(db_engine=db, username=user2.username, groups=[group2.name], user_id=user2.username)
     )
     dispose_context()
 
