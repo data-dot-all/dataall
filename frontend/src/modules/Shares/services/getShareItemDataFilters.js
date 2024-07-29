@@ -6,7 +6,12 @@ export const getShareItemDataFilters = ({ attachedDataFilterUri }) => ({
   },
   query: gql`
     query getShareItemDataFilters($attachedDataFilterUri: String!) {
-      getShareItemDataFilters(attachedDataFilterUri: $attachedDataFilterUri)
+      getShareItemDataFilters(attachedDataFilterUri: $attachedDataFilterUri) {
+        attachedDataFilterUri
+        label
+        dataFilterUris
+        dataFilterNames
+      }
     }
   `
 });

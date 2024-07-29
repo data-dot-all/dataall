@@ -39,8 +39,12 @@ class ShareItemService:
     @staticmethod
     def _get_share_uri(session, uri):
         share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
-        share = ShareObjectRepository.get_share_by_uri(session, share_item.shareUri)
-        return share.shareUri
+        return share_item.shareUri
+
+    @staticmethod
+    def _get_share_uri_from_item_filter_uri(session, uri):
+        share_item = ShareObjectItemRepository.get_share_item_by_item_filter_uri(session, uri)
+        return share_item.shareUri
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(GET_SHARE_OBJECT)
@@ -236,3 +240,12 @@ class ShareItemService:
     def get_share_item_data_filters(uri: str):
         with get_context().db_engine.scoped_session() as session:
             return ShareObjectItemRepository.get_share_item_filter_by_uri(session, uri)
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(
+        APPROVE_SHARE_OBJECT, parent_resource=_get_share_uri_from_item_filter_uri
+    )
+    def remove_share_item_data_filters(uri: str):
+        with get_context().db_engine.scoped_session() as session:
+            item_data_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(session, uri)
+            return ShareObjectItemRepository.delete_share_item_filter(session, item_data_filter)

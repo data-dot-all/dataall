@@ -99,7 +99,7 @@ class S3ShareObjectRepository:
                         ),
                     )
                 )
-                .delete()
+                .delete(synchronize_session=False)
             )
             session.delete(share)
 

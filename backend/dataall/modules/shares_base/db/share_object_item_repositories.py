@@ -30,6 +30,14 @@ class ShareObjectItemRepository:
         )
 
     @staticmethod
+    def get_share_item_by_item_filter_uri(session, uri):
+        return session.query(ShareObjectItem).filter(ShareObjectItem.attachedDataFilterUri == uri).first()
+
+    @staticmethod
+    def delete_share_item_filter(session, share_item_filter) -> bool:
+        session.delete(share_item_filter)
+
+    @staticmethod
     def update_share_item_filters(
         session,
         share_item_filter: ShareObjectItemDataFilter,

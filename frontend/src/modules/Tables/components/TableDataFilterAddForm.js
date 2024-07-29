@@ -286,7 +286,7 @@ export const TableDataFilterAddForm = (props) => {
               '"' + row.columnName + '"' + ' ' + row.operator + ' ' + usrVal
             );
           })
-          .join(' OR ');
+          .join(' AND ');
       }
 
       const response = await client.mutate(

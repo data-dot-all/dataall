@@ -521,7 +521,6 @@ export function SharedItem(props) {
 
   const handleFilterModalClose = () => {
     setIsFilterModalOpenUri(0);
-    getItemDataFilters();
   };
 
   const handleFilterModalOpen = (uri) => {
@@ -619,7 +618,7 @@ export function SharedItem(props) {
                     handleFilterModalOpen(item.shareItemUri);
                   }}
                 >
-                  Assign Filters
+                  Edit Filters
                 </Button>
               )}
             {isFilterModalOpenUri === item.shareItemUri && (
