@@ -7,4 +7,3 @@ from dataall.modules.maintenance.api.resolvers import get_maintenance_window_sta
 getMaintenanceWindowStatus = gql.QueryField(
     name='getMaintenanceWindowStatus', type=gql.Ref('Maintenance'), resolver=get_maintenance_window_status
 )
-
