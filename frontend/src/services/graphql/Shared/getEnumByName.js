@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-export const getEnumByName = ({ enum_name }) => ({
+const getEnumByName = ({ enum_name }) => ({
   variables: {
     enum_name
   },
@@ -13,3 +13,12 @@ export const getEnumByName = ({ enum_name }) => ({
     }
   `
 });
+
+export const fetchEnum = async (client, enum_name) => {
+  const response = await client.query(getEnumByName({ enum_name: enum_name }));
+  if (!response.errors && response.data[enum_name] != null) {
+    return response.data[enum_name];
+  } else {
+    return [];
+  }
+};
