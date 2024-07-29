@@ -27,15 +27,10 @@ import {
   startMaintenanceWindow,
   startReindexCatalog
 } from '../services';
-import { useClient } from 'services';
+import { getEnumByName, useClient } from 'services';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useSnackbar } from 'notistack';
 import { ModuleNames, isModuleEnabled } from 'utils';
-
-const maintenanceModes = [
-  { value: 'READ-ONLY', label: 'Read-Only' },
-  { value: 'NO-ACCESS', label: 'No-Access' }
-];
 
 const START_MAINTENANCE = 'Start Maintenance';
 const END_MAINTENANCE = 'End Maintenance';
@@ -314,11 +309,32 @@ export const MaintenanceViewer = () => {
     useState(START_MAINTENANCE);
   const [maintenanceWindowStatus, setMaintenanceWindowStatus] =
     useState(INACTIVE_STATUS);
+  const [maintenanceModes, setMaintenanceModes] = useState([]);
   const [dropDownStatus, setDropDownStatus] = useState(false);
   const [refreshingTimer, setRefreshingTimer] = useState('');
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const dispatch = useDispatch();
 
+  const fetchMaintenanceModes = useCallback(async () => {
+    const response = await client.query(
+      getEnumByName({ enum_name: 'MaintenanceModes' })
+    );
+    if (!response.errors && response.data.MaintenanceModes != null) {
+      const modes = response.data.MaintenanceModes;
+      if (modes.length > 0) {
+        setMaintenanceModes(
+          modes.map((m) => {
+            return { value: m.name, label: m.value };
+          })
+        );
+      }
+    } else {
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Could not fetch maintenance modes';
+      dispatch({ type: SET_ERROR, error });
+    }
+  }, [client]);
   const refreshMaintenanceView = async () => {
     setUpdating(true);
     setRefreshing(true);
@@ -467,6 +483,9 @@ export const MaintenanceViewer = () => {
     if (client) {
       initializeMaintenanceView().catch((e) =>
         dispatch({ type: SET_ERROR, e })
+      );
+      fetchMaintenanceModes().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
       );
       const setTimer = setInterval(() => {
         refreshStatus().catch((e) =>
