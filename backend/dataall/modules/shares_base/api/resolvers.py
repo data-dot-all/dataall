@@ -1,4 +1,5 @@
 import logging
+import re
 
 from dataall.base.api.context import Context
 from dataall.base.db.exceptions import InvalidInput, RequiredParameter
@@ -49,7 +50,7 @@ class RequestValidator:
 
     @staticmethod
     def validate_update_share_item_filters(data):
-        if not input.get('shareItemUri'):
+        if not data.get('shareItemUri'):
             RequiredParameter('shareItemUri')
         if not data:
             raise RequiredParameter(data)
@@ -57,8 +58,12 @@ class RequestValidator:
             raise RequiredParameter('filterUris')
         if not data.get('filterNames'):
             raise RequiredParameter('filterNames')
-        if not data.get('label'):
-            raise InvalidInput('label')
+        if not re.search(r'^[a-zA-Z0-9_]*$', data.get('label')):
+            raise InvalidInput(
+                'label',
+                data.get('label'),
+                'must match the pattern ^[a-zA-Z0-9_]*$',
+            )
 
 
 def create_share_object(
@@ -304,6 +309,12 @@ def update_share_reject_purpose(context: Context, source, shareUri: str = None, 
 def update_filters_table_share_item(context: Context, source, input):
     RequestValidator.validate_update_share_item_filters(input)
     return ShareItemService.update_filters_table_share_item(uri=input.get('shareItemUri'), data=input)
+
+
+def remove_filters_table_share_item(context: Context, source, attachedDataFilterUri: str = None):
+    if not attachedDataFilterUri:
+        RequiredParameter('attachedDataFilterUri')
+    return ShareItemService.remove_share_item_data_filters(uri=attachedDataFilterUri)
 
 
 def get_share_item_data_filters(context: Context, source, attachedDataFilterUri: str = None):

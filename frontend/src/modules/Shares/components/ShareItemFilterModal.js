@@ -9,6 +9,7 @@ import {
   TextField
 } from '@mui/material';
 import { Formik } from 'formik';
+import * as Yup from 'yup';
 import { DataGrid } from '@mui/x-data-grid';
 
 import { useSnackbar } from 'notistack';
@@ -182,6 +183,9 @@ export const ShareItemFilterModal = (props) => {
               label: itemDataFilter?.label || '',
               filterUris: itemDataFilter?.dataFilterUris || []
             }}
+            validationSchema={Yup.object().shape({
+              label: Yup.string().max(255).required('*Value is required')
+            })}
             onSubmit={async (
               values,
               { setErrors, setStatus, setSubmitting }

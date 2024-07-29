@@ -124,3 +124,10 @@ updateShareItemFilters = gql.MutationField(
     type=gql.Boolean,
     resolver=update_filters_table_share_item,
 )
+
+removeShareItemFilter = gql.MutationField(
+    name='removeShareItemFilter',
+    args=[gql.Argument(name='attachedDataFilterUri', type=gql.NonNullableType(gql.String))],
+    type=gql.Boolean,
+    resolver=remove_filters_table_share_item,
+)
