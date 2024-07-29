@@ -3,7 +3,7 @@ from dataall.base.api import gql
 
 def generate_enum_resolver(enum_class):
     def resolver(context, source):
-        return [{'name': item.name, 'value': item.value} for item in enum_class]
+        return [{'name': item.name, 'value': str(item.value)} for item in enum_class]
 
     return resolver
 

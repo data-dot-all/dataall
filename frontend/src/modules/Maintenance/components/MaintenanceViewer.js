@@ -27,7 +27,7 @@ import {
   startMaintenanceWindow,
   startReindexCatalog
 } from '../services';
-import { getEnumByName, useClient } from 'services';
+import { useClient, fetchEnum } from 'services';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useSnackbar } from 'notistack';
 import { ModuleNames, isModuleEnabled } from 'utils';
@@ -315,26 +315,19 @@ export const MaintenanceViewer = () => {
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const dispatch = useDispatch();
 
-  const fetchMaintenanceModes = useCallback(async () => {
-    const response = await client.query(
-      getEnumByName({ enum_name: 'MaintenanceModes' })
-    );
-    if (!response.errors && response.data.MaintenanceModes != null) {
-      const modes = response.data.MaintenanceModes;
-      if (modes.length > 0) {
-        setMaintenanceModes(
-          modes.map((m) => {
-            return { value: m.name, label: m.value };
-          })
-        );
-      }
+  const fetchMaintenanceModes = async () => {
+    const maintenanceModesEnum = await fetchEnum(client, 'MaintenanceModes');
+    if (maintenanceModesEnum.length > 0) {
+      setMaintenanceModes(
+        maintenanceModesEnum.map((elem) => {
+          return { label: elem.value, value: elem.name };
+        })
+      );
     } else {
-      const error = response.errors
-        ? response.errors[0].message
-        : 'Could not fetch maintenance modes';
-      dispatch({ type: SET_ERROR, error });
+      dispatch({ type: SET_ERROR, error: 'Could not fetch maintenance modes' });
     }
-  }, [client]);
+  };
+
   const refreshMaintenanceView = async () => {
     setUpdating(true);
     setRefreshing(true);
