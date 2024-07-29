@@ -479,6 +479,7 @@ ShareViewHeader.propTypes = {
 export function SharedItem(props) {
   const {
     item,
+    share,
     client,
     dispatch,
     enqueueSnackbar,
@@ -556,6 +557,9 @@ export function SharedItem(props) {
         <ShareStatus status={item.status} />
       </TableCell>
       <TableCell>
+        <Typography color="textSecondary" variant="subtitle2">
+          Link to Data Filters
+        </Typography>
         {isLoadingFilters ? (
           <CircularProgress size={15} />
         ) : (
@@ -602,19 +606,22 @@ export function SharedItem(props) {
               </Button>
             )}
             {/* If item status is PENDINGAPPROVAL and is of type table then have a button the is 'Assign Filters' */}
-            {item.status === 'PendingApproval' && item.itemType === 'Table' && (
-              <Button
-                color="primary"
-                startIcon={<FilterAltIcon fontSize="small" />}
-                sx={{ m: 1 }}
-                variant="outlined"
-                onClick={() => {
-                  handleFilterModalOpen(item.shareItemUri);
-                }}
-              >
-                Assign Filters
-              </Button>
-            )}
+            {item.status === 'PendingApproval' &&
+              item.itemType === 'Table' &&
+              (share.userRoleForShareObject === 'Approvers' ||
+                share.userRoleForShareObject === 'ApproversAndRequesters') && (
+                <Button
+                  color="primary"
+                  startIcon={<FilterAltIcon fontSize="small" />}
+                  sx={{ m: 1 }}
+                  variant="outlined"
+                  onClick={() => {
+                    handleFilterModalOpen(item.shareItemUri);
+                  }}
+                >
+                  Assign Filters
+                </Button>
+              )}
             {isFilterModalOpenUri === item.shareItemUri && (
               <ShareItemFilterModal
                 item={item}
@@ -652,6 +659,7 @@ export function SharedItem(props) {
 
 SharedItem.propTypes = {
   item: PropTypes.any,
+  share: PropTypes.any,
   client: PropTypes.any,
   dispatch: PropTypes.any,
   enqueueSnackbar: PropTypes.any,
@@ -1270,6 +1278,7 @@ const ShareView = () => {
                                 <SharedItem
                                   key={sharedItem.itemUri}
                                   item={sharedItem}
+                                  share={share}
                                   client={client}
                                   dispatch={dispatch}
                                   enqueueSnackbar={enqueueSnackbar}
