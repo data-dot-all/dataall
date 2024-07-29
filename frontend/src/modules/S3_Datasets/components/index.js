@@ -7,4 +7,4 @@ export * from './DatasetOverview';
 export * from './DatasetStartCrawlerModal';
 export * from './DatasetTables';
 export * from './DatasetUpload';
-export * from './GenerateMetadataModal';
+export * from './MetadataMainModal';

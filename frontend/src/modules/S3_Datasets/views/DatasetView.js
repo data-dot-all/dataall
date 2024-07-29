@@ -44,7 +44,7 @@ import {
   DatasetData,
   DatasetOverview,
   DatasetUpload,
-  GenerateMetadataModal
+  MetadataMainModal
 } from '../components';
 import { isFeatureEnabled } from 'utils';
 import { RequestAccessModal } from 'modules/Catalog/components';
@@ -122,8 +122,7 @@ const DatasetView = () => {
 
   const [isRequestAccessOpen, setIsRequestAccessOpen] = useState(false);
   const [isOpeningModal, setIsOpeningModal] = useState(false);
-  const [isGenerateMetadataModalOpen, setIsGenerateMetadataModalOpen] =
-    useState(false);
+  const [isMetadataModalOpen, setIsMetadataModalOpen] = useState(false);
   const handleRequestAccessModalOpen = () => {
     setIsOpeningModal(true);
     setIsRequestAccessOpen(true);
@@ -133,12 +132,12 @@ const DatasetView = () => {
     setIsRequestAccessOpen(false);
   };
 
-  const handleGenerateMetadataModalOpen = () => {
-    setIsGenerateMetadataModalOpen(true);
+  const handleMetadataModalOpen = () => {
+    setIsMetadataModalOpen(true);
   };
 
-  const handleGenerateMetadataModalClose = () => {
-    setIsGenerateMetadataModalOpen(false);
+  const handleMetadataModalClose = () => {
+    setIsMetadataModalOpen(false);
   };
 
   const reloadVotes = async () => {
@@ -276,16 +275,16 @@ const DatasetView = () => {
                   color="primary"
                   startIcon={<AutoModeIcon size={15} />}
                   sx={{ mt: 1, mr: 1 }}
-                  onClick={handleGenerateMetadataModalOpen}
+                  onClick={handleMetadataModalOpen}
                   type="button"
                   variant="outlined"
                 >
                   Generate Metadata with AI
                 </Button>
-                <GenerateMetadataModal
-                  onApply={handleGenerateMetadataModalClose}
-                  onClose={handleGenerateMetadataModalClose}
-                  open={isGenerateMetadataModalOpen}
+                <MetadataMainModal
+                  onApply={handleMetadataModalClose}
+                  onClose={handleMetadataModalClose}
+                  open={isMetadataModalOpen}
                   dataset={dataset}
                 />
                 {isAdmin && (
