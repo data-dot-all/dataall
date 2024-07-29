@@ -25,7 +25,8 @@ import {
   SearchIcon
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { searchEnvironmentDataItems, useClient } from 'services';
+import { useClient } from 'services';
+import { searchEnvironmentDataItems } from '../services';
 
 export const EnvironmentSharedDatasets = ({ environment }) => {
   const client = useClient();
@@ -135,9 +136,7 @@ export const EnvironmentSharedDatasets = ({ environment }) => {
                   items.nodes.map((item) => (
                     <TableRow hover key={item.itemUri}>
                       <TableCell>{item.itemType}</TableCell>
-                      <TableCell>
-                        {item.GlueTableName || item.S3AccessPointName}
-                      </TableCell>
+                      <TableCell>{item.itemName}</TableCell>
                       <TableCell>{item.datasetName}</TableCell>
                       <TableCell>{item.environmentName}</TableCell>
                       <TableCell>{item.principalId}</TableCell>

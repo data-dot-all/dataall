@@ -1,12 +1,12 @@
 import { GroupAddOutlined } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
+  Autocomplete,
   Box,
   CardContent,
   CircularProgress,
   Dialog,
   FormControlLabel,
-  MenuItem,
   Switch,
   TextField,
   Typography
@@ -154,23 +154,31 @@ export const EnvironmentRoleAddForm = (props) => {
                   />
                 </CardContent>
                 <CardContent>
-                  <TextField
-                    fullWidth
-                    error={Boolean(touched.groupUri && errors.groupUri)}
-                    helperText={touched.groupUri && errors.groupUri}
-                    label="Owners"
-                    name="groupUri"
-                    onChange={handleChange}
-                    select
-                    value={values.groupUri}
-                    variant="outlined"
-                  >
-                    {groupOptions.map((group) => (
-                      <MenuItem key={group.value} value={group.value}>
-                        {group.label}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+                  <Autocomplete
+                    id="SamlAdminGroupName"
+                    disablePortal
+                    options={groupOptions.map((option) => option)}
+                    onChange={(event, value) => {
+                      if (value && value.value) {
+                        setFieldValue('groupUri', value.value);
+                      } else {
+                        setFieldValue('groupUri', '');
+                      }
+                    }}
+                    noOptionsText="No teams found for this environment"
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        fullWidth
+                        error={Boolean(touched.groupUri && errors.groupUri)}
+                        helperText={touched.groupUri && errors.groupUri}
+                        label="Owners"
+                        name="groupUri"
+                        variant="outlined"
+                        value={values.groupUri}
+                      />
+                    )}
+                  />
                 </CardContent>
                 <CardContent>
                   <FormControlLabel

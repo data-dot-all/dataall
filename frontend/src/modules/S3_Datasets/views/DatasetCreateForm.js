@@ -51,7 +51,7 @@ const DatasetCreateForm = (props) => {
   const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [confidentialityOptions] = useState(
-    config.modules.s3_datasets.features.confidentiality_dropdown === true &&
+    config.modules.datasets_base.features.confidentiality_dropdown === true &&
       config.modules.s3_datasets.features.custom_confidentiality_mapping
       ? Object.keys(
           config.modules.s3_datasets.features.custom_confidentiality_mapping
@@ -120,7 +120,7 @@ const DatasetCreateForm = (props) => {
           owner: '',
           stewards: values.stewards,
           label: values.label,
-          SamlAdminGroupName: values.SamlGroupName,
+          SamlAdminGroupName: values.SamlAdminGroupName,
           tags: values.tags,
           description: values.description,
           topics: values.topics ? values.topics.map((t) => t.value) : [],
@@ -220,7 +220,7 @@ const DatasetCreateForm = (props) => {
                 environment: '',
                 stewards: '',
                 confidentiality: '',
-                SamlGroupName: '',
+                SamlAdminGroupName: '',
                 tags: [],
                 topics: [],
                 autoApprovalEnabled: false
@@ -230,17 +230,17 @@ const DatasetCreateForm = (props) => {
                   .max(255)
                   .required('*Dataset name is required'),
                 description: Yup.string().max(5000),
-                SamlGroupName: Yup.string()
+                SamlAdminGroupName: Yup.string()
                   .max(255)
                   .required('*Owners team is required'),
-                topics: isFeatureEnabled('s3_datasets', 'topics_dropdown')
+                topics: isFeatureEnabled('datasets_base', 'topics_dropdown')
                   ? Yup.array().min(1).required('*Topics are required')
                   : Yup.array(),
                 environment: Yup.object().required('*Environment is required'),
                 tags: Yup.array().min(1).required('*Tags are required'),
                 stewards: Yup.string().max(255).nullable(),
                 confidentiality: isFeatureEnabled(
-                  's3_datasets',
+                  'datasets_base',
                   'confidentiality_dropdown'
                 )
                   ? Yup.string()
@@ -321,7 +321,7 @@ const DatasetCreateForm = (props) => {
                       <Card sx={{ mt: 3 }}>
                         <CardHeader title="Classification" />
                         {isFeatureEnabled(
-                          's3_datasets',
+                          'datasets_base',
                           'confidentiality_dropdown'
                         ) && (
                           <CardContent>
@@ -350,7 +350,10 @@ const DatasetCreateForm = (props) => {
                             </TextField>
                           </CardContent>
                         )}
-                        {isFeatureEnabled('s3_datasets', 'topics_dropdown') && (
+                        {isFeatureEnabled(
+                          'datasets_base',
+                          'topics_dropdown'
+                        ) && (
                           <CardContent>
                             <Autocomplete
                               multiple
@@ -398,7 +401,7 @@ const DatasetCreateForm = (props) => {
                           </Box>
                         </CardContent>
                         <CardContent>
-                          {config.modules.s3_datasets.features
+                          {config.modules.datasets_base.features
                             .auto_approval_for_confidentiality_level[
                             values.confidentiality
                           ] === true && (
@@ -426,38 +429,45 @@ const DatasetCreateForm = (props) => {
                       <Card sx={{ mb: 3 }}>
                         <CardHeader title="Deployment" />
                         <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.environment && errors.environment
-                            )}
-                            helperText={
-                              touched.environment && errors.environment
-                            }
-                            label="Environment"
-                            name="environment"
-                            onChange={(event) => {
-                              setFieldValue('SamlGroupName', '');
-                              fetchGroups(
-                                event.target.value.environmentUri
-                              ).catch((e) =>
-                                dispatch({ type: SET_ERROR, error: e.message })
-                              );
-                              setFieldValue('environment', event.target.value);
+                          <Autocomplete
+                            id="environment"
+                            disablePortal
+                            options={environmentOptions.map((option) => option)}
+                            onChange={(event, value) => {
+                              setFieldValue('SamlAdminGroupName', '');
+                              setFieldValue('stewards', '');
+                              if (value && value.environmentUri) {
+                                setFieldValue('environment', value);
+                                fetchGroups(value.environmentUri).catch((e) =>
+                                  dispatch({
+                                    type: SET_ERROR,
+                                    error: e.message
+                                  })
+                                );
+                              } else {
+                                setFieldValue('environment', '');
+                                setGroupOptions([]);
+                              }
                             }}
-                            select
-                            value={values.environment}
-                            variant="outlined"
-                          >
-                            {environmentOptions.map((environment) => (
-                              <MenuItem
-                                key={environment.environmentUri}
-                                value={environment}
-                              >
-                                {environment.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                fullWidth
+                                error={Boolean(
+                                  touched.environmentUri &&
+                                    errors.environmentUri
+                                )}
+                                helperText={
+                                  touched.environmentUri &&
+                                  errors.environmentUri
+                                }
+                                label="Environment"
+                                value={values.environment}
+                                onChange={handleChange}
+                                variant="outlined"
+                              />
+                            )}
+                          />
                         </CardContent>
                         <CardContent>
                           <TextField
@@ -466,7 +476,7 @@ const DatasetCreateForm = (props) => {
                             label="Region"
                             name="region"
                             value={
-                              values.environment
+                              values.environment && values.environment.region
                                 ? values.environment.region
                                 : ''
                             }
@@ -480,7 +490,8 @@ const DatasetCreateForm = (props) => {
                             label="Organization"
                             name="organization"
                             value={
-                              values.environment
+                              values.environment &&
+                              values.environment.organization
                                 ? values.environment.organization.label
                                 : ''
                             }
@@ -491,43 +502,83 @@ const DatasetCreateForm = (props) => {
                       <Card>
                         <CardHeader title="Governance" />
                         <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.SamlGroupName && errors.SamlGroupName
+                          <Autocomplete
+                            id="SamlAdminGroupName"
+                            disablePortal
+                            options={groupOptions.map((option) => option)}
+                            onChange={(event, value) => {
+                              if (value && value.value) {
+                                setFieldValue(
+                                  'SamlAdminGroupName',
+                                  value.value
+                                );
+                              } else {
+                                setFieldValue('SamlAdminGroupName', '');
+                              }
+                            }}
+                            inputValue={values.SamlAdminGroupName}
+                            renderInput={(params) => (
+                              <Box>
+                                {groupOptions.length > 0 ? (
+                                  <TextField
+                                    {...params}
+                                    fullWidth
+                                    error={Boolean(
+                                      touched.SamlAdminGroupName &&
+                                        errors.SamlAdminGroupName
+                                    )}
+                                    helperText={
+                                      touched.SamlAdminGroupName &&
+                                      errors.SamlAdminGroupName
+                                    }
+                                    label="Team"
+                                    onChange={handleChange}
+                                    variant="outlined"
+                                  />
+                                ) : (
+                                  <TextField
+                                    error={Boolean(
+                                      touched.SamlAdminGroupName &&
+                                        errors.SamlAdminGroupName
+                                    )}
+                                    helperText={
+                                      touched.SamlAdminGroupName &&
+                                      errors.SamlAdminGroupName
+                                    }
+                                    fullWidth
+                                    disabled
+                                    label="Team"
+                                    value="No teams found for this environment"
+                                    variant="outlined"
+                                  />
+                                )}
+                              </Box>
                             )}
-                            helperText={
-                              touched.SamlGroupName && errors.SamlGroupName
-                            }
-                            label="Owners"
-                            name="SamlGroupName"
-                            onChange={handleChange}
-                            select
-                            value={values.SamlGroupName}
-                            variant="outlined"
-                          >
-                            {groupOptions.map((group) => (
-                              <MenuItem key={group.value} value={group.value}>
-                                {group.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
+                          />
                         </CardContent>
                         <CardContent>
                           <Autocomplete
                             id="stewards"
-                            freeSolo
-                            options={groupOptions.map((option) => option.value)}
+                            freesolo
+                            options={groupOptions.map((option) => option)}
                             onChange={(event, value) => {
-                              setFieldValue('stewards', value);
+                              if (value && value.value) {
+                                setFieldValue('stewards', value.value);
+                              } else {
+                                setFieldValue('stewards', '');
+                              }
                             }}
-                            renderInput={(renderParams) => (
+                            inputValue={values.stewards}
+                            renderInput={(params) => (
                               <TextField
-                                {...renderParams}
+                                {...params}
+                                fullWidth
+                                error={Boolean(
+                                  touched.stewards && errors.stewards
+                                )}
+                                helperText={touched.stewards && errors.stewards}
                                 label="Stewards"
-                                margin="normal"
                                 onChange={handleChange}
-                                value={values.stewards}
                                 variant="outlined"
                               />
                             )}

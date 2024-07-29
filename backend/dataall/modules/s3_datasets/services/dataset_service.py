@@ -2,6 +2,7 @@ import os
 import json
 import logging
 from typing import List
+from dataall.core.resource_lock.db.resource_lock_repositories import ResourceLockRepository
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db import exceptions
 from dataall.base.utils.naming_convention import NamingConventionPattern
@@ -164,8 +165,6 @@ class DatasetService:
                 DatasetService.check_imported_resources(dataset)
 
             dataset = DatasetRepository.create_dataset(session=session, env=environment, dataset=dataset, data=data)
-            DatasetBaseRepository.create_dataset_lock(session=session, dataset=dataset)
-
             DatasetBucketRepository.create_dataset_bucket(session, dataset, data)
 
             ResourcePolicyService.attach_resource_policy(
@@ -219,6 +218,7 @@ class DatasetService:
             return dataset
 
     @staticmethod
+    @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def get_file_upload_presigned_url(uri: str, data: dict):
         with get_context().db_engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
@@ -411,7 +411,6 @@ class DatasetService:
                 ResourcePolicyService.delete_resource_policy(session=session, resource_uri=uri, group=env.SamlGroupName)
             if dataset.stewards:
                 ResourcePolicyService.delete_resource_policy(session=session, resource_uri=uri, group=dataset.stewards)
-            DatasetBaseRepository.delete_dataset_lock(session=session, dataset=dataset)
             DatasetRepository.delete_dataset(session, dataset)
 
         if delete_from_aws:

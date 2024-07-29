@@ -1,10 +1,8 @@
-import abc
 import logging
 import json
 import time
 from itertools import count
 
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.db import utils
 from dataall.base.aws.sts import SessionHelper
@@ -20,18 +18,18 @@ from dataall.modules.s3_datasets_shares.aws.kms_client import (
     DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID,
 )
 from dataall.base.aws.iam import IAM
-from dataall.modules.shares_base.db.share_object_models import ShareObject
-from dataall.modules.s3_datasets_shares.services.dataset_sharing_alarm_service import DatasetSharingAlarmService
-from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.s3_datasets_shares.services.share_exceptions import PrincipalRoleNotFound
+from dataall.modules.s3_datasets_shares.services.s3_share_alarm_service import S3ShareAlarmService
+from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers.share_manager_utils import ShareErrorFormatter
-from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import (
-    SharePolicyService,
+from dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service import (
+    S3SharePolicyService,
     IAM_S3_ACCESS_POINTS_STATEMENT_SID,
     EMPTY_STATEMENT_SID,
 )
 from dataall.modules.shares_base.services.shares_enums import PrincipalType
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, S3Dataset
+from dataall.modules.shares_base.services.sharing_service import ShareData
 
 logger = logging.getLogger(__name__)
 ACCESS_POINT_CREATION_TIME = 30
@@ -42,51 +40,34 @@ class S3AccessPointShareManager:
     def __init__(
         self,
         session,
-        dataset: S3Dataset,
-        share: ShareObject,
+        share_data: ShareData,
         target_folder: DatasetStorageLocation,
-        source_environment: Environment,
-        target_environment: Environment,
-        source_env_group: EnvironmentGroup,
-        env_group: EnvironmentGroup,
     ):
         self.session = session
-        self.source_env_group = source_env_group
-        self.env_group = env_group
-        self.dataset = dataset
-        self.share = share
+        self.source_env_group = share_data.source_env_group
+        self.env_group = share_data.env_group
+        self.dataset = share_data.dataset
+        self.share = share_data.share
         self.target_folder = target_folder
-        self.source_environment = source_environment
-        self.target_environment = target_environment
+        self.source_environment = share_data.source_environment
+        self.target_environment = share_data.target_environment
         self.share_item = ShareObjectRepository.find_sharable_item(
             session,
-            share.shareUri,
+            share_data.share.shareUri,
             target_folder.locationUri,
         )
-        self.access_point_name = self.share_item.S3AccessPointName
+        self.access_point_name = self.build_access_point_name(share=share_data.share)
 
-        self.source_account_id = dataset.AwsAccountId
-        self.target_account_id = target_environment.AwsAccountId
-        self.source_env_admin = source_env_group.environmentIAMRoleArn
-        self.target_requester_IAMRoleName = share.principalIAMRoleName
+        self.source_account_id = share_data.dataset.AwsAccountId
+        self.target_account_id = share_data.target_environment.AwsAccountId
+        self.source_env_admin = share_data.source_env_group.environmentIAMRoleArn
+        self.target_requester_IAMRoleName = share_data.share.principalIAMRoleName
         self.bucket_name = target_folder.S3BucketName
-        self.dataset_admin = dataset.IAMDatasetAdminRoleArn
-        self.dataset_account_id = dataset.AwsAccountId
-        self.dataset_region = dataset.region
+        self.dataset_admin = share_data.dataset.IAMDatasetAdminRoleArn
+        self.dataset_account_id = share_data.dataset.AwsAccountId
+        self.dataset_region = share_data.dataset.region
         self.s3_prefix = target_folder.S3Prefix
         self.folder_errors = []
-
-    @abc.abstractmethod
-    def process_approved_shares(self, *kwargs) -> bool:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def process_revoked_shares(self, *kwargs) -> bool:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def verify_shares(self, *kwargs) -> bool:
-        raise NotImplementedError
 
     @staticmethod
     def build_access_point_name(share):
@@ -178,7 +159,7 @@ class S3AccessPointShareManager:
         key_alias = f'alias/{self.dataset.KmsAlias}'
         kms_client = KmsClient(self.dataset_account_id, self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
-        share_policy_service = SharePolicyService(
+        share_policy_service = S3SharePolicyService(
             environmentUri=self.target_environment.environmentUri,
             account=self.target_environment.AwsAccountId,
             region=self.target_environment.region,
@@ -211,8 +192,9 @@ class S3AccessPointShareManager:
         version_id, policy_document = IAM.get_managed_policy_default_version(
             self.target_environment.AwsAccountId, self.target_environment.region, share_resource_policy_name
         )
+        logger.info(f'Policy... {policy_document}')
 
-        s3_statement_index = SharePolicyService._get_statement_by_sid(
+        s3_statement_index = S3SharePolicyService._get_statement_by_sid(
             policy_document, f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3'
         )
 
@@ -244,9 +226,37 @@ class S3AccessPointShareManager:
                     f'{self.bucket_name}',
                 )
             )
+        else:
+            policy_check, missing_permissions, extra_permissions = (
+                share_policy_service.check_s3_actions_in_policy_statement(
+                    existing_policy_statement=policy_document['Statement'][s3_statement_index]
+                )
+            )
+            if not policy_check:
+                logger.info(f'IAM Policy Statement {IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3 has invalid actions')
+                if missing_permissions:
+                    self.folder_errors.append(
+                        ShareErrorFormatter.missing_permission_error_msg(
+                            self.target_requester_IAMRoleName,
+                            'IAM Policy Action',
+                            missing_permissions,
+                            'S3 Bucket',
+                            f'{self.bucket_name}',
+                        )
+                    )
+                if extra_permissions:
+                    self.folder_errors.append(
+                        ShareErrorFormatter.not_allowed_permission_error_msg(
+                            self.target_requester_IAMRoleName,
+                            'IAM Policy Action',
+                            extra_permissions,
+                            'S3 Bucket',
+                            f'{self.bucket_name}',
+                        )
+                    )
 
         if kms_key_id:
-            kms_statement_index = SharePolicyService._get_statement_by_sid(
+            kms_statement_index = S3SharePolicyService._get_statement_by_sid(
                 policy_document, f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS'
             )
             kms_target_resources = [f'arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}']
@@ -286,7 +296,7 @@ class S3AccessPointShareManager:
         """
         logger.info(f'Grant target role {self.target_requester_IAMRoleName} access policy')
 
-        share_policy_service = SharePolicyService(
+        share_policy_service = S3SharePolicyService(
             environmentUri=self.target_environment.environmentUri,
             account=self.target_environment.AwsAccountId,
             region=self.target_environment.region,
@@ -637,7 +647,7 @@ class S3AccessPointShareManager:
     def revoke_target_role_access_policy(self):
         logger.info('Deleting target role IAM statements...')
 
-        share_policy_service = SharePolicyService(
+        share_policy_service = S3SharePolicyService(
             environmentUri=self.target_environment.environmentUri,
             account=self.target_environment.AwsAccountId,
             region=self.target_environment.region,
@@ -736,7 +746,7 @@ class S3AccessPointShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        DatasetSharingAlarmService().trigger_folder_sharing_failure_alarm(
+        S3ShareAlarmService().trigger_folder_sharing_failure_alarm(
             self.target_folder, self.share, self.target_environment
         )
 
@@ -753,7 +763,7 @@ class S3AccessPointShareManager:
             f'with target account {self.target_environment.AwsAccountId}/{self.target_environment.region} '
             f'due to: {error}'
         )
-        DatasetSharingAlarmService().trigger_revoke_folder_sharing_failure_alarm(
+        S3ShareAlarmService().trigger_revoke_folder_sharing_failure_alarm(
             self.target_folder, self.share, self.target_environment
         )
         return True

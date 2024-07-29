@@ -1,108 +1,148 @@
-import json
+import datetime
+import logging
 import os
+import re
+import sys
 from dataclasses import dataclass
-from typing import List
 
 import pytest
+from dataclasses_json import dataclass_json
 
 from tests_new.integration_tests.client import Client
 
+logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
-## Define user and groups fixtures - We assume they pre-exist in the AWS account.
+pytest_plugins = [
+    'integration_tests.core.organizations.global_conftest',
+    'integration_tests.core.environment.global_conftest',
+    'integration_tests.modules.s3_datasets.global_conftest',
+]
+
+
+@dataclass_json
 @dataclass
 class User:
     username: str
     password: str
 
-    @staticmethod
-    def from_userdata(userdata, username):
-        return User(username, userdata[username]['password'])
+
+@dataclass_json
+@dataclass
+class Env:
+    accountId: str
+    region: str
 
 
-@pytest.fixture(scope='module', autouse=True)
-def userdata():
-    yield json.loads(os.getenv('USERDATA'))
+@dataclass_json
+@dataclass
+class TestData:
+    users: dict[str, User]
+    envs: dict[str, Env]
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope='session', autouse=True)
+def testdata() -> TestData:
+    try:
+        return TestData.from_json(open('testdata.json').read())
+    except Exception:
+        return TestData.from_json(os.getenv('TESTDATA'))
+
+
+@pytest.fixture(scope='session', autouse=True)
+def userdata(testdata):
+    yield testdata.users
+
+
+@pytest.fixture(scope='session', autouse=True)
 def userTenant(userdata):
     # Existing user with name and password
     # This user needs to belong to `DAAdministrators` group
-    yield User.from_userdata(userdata, 'testUserTenant')
+    yield userdata['testUserTenant']
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope='session', autouse=True)
 def user1(userdata):
     # Existing user with name and password
-    yield User.from_userdata(userdata, 'testUser1')
+    yield userdata['testUser1']
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope='session', autouse=True)
 def user2(userdata):
     # Existing user with name and password
-    yield User.from_userdata(userdata, 'testUser2')
+    yield userdata['testUser2']
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope='session', autouse=True)
 def user3(userdata):
     # Existing user with name and password
-    yield User.from_userdata(userdata, 'testUser3')
+    yield userdata['testUser3']
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope='session', autouse=True)
 def user4(userdata):
     # Existing user with name and password
-    yield User.from_userdata(userdata, 'testUser4')
+    yield userdata['testUser4']
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope='session', autouse=True)
 def group1():
     # Existing Cognito group with name testGroup1
     # Add user1
     yield 'testGroup1'
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope='session', autouse=True)
 def group2():
     # Existing Cognito group with name testGroup2
     # Add user2
     yield 'testGroup2'
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope='session', autouse=True)
 def group3():
     # Existing Cognito group with name testGroup3
     # Add user3
     yield 'testGroup3'
 
 
-@pytest.fixture(scope='module', autouse=True)
+@pytest.fixture(scope='session', autouse=True)
 def group4():
     # Existing Cognito group with name testGroup4
     # Add user4
     yield 'testGroup4'
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='session')
 def client1(user1) -> Client:
     yield Client(user1.username, user1.password)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='session')
 def client2(user2) -> Client:
     yield Client(user2.username, user2.password)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='session')
 def client3(user3) -> Client:
     yield Client(user3.username, user3.password)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='session')
 def client4(user4) -> Client:
     yield Client(user4.username, user4.password)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='session')
 def clientTenant(userTenant) -> Client:
     yield Client(userTenant.username, userTenant.password)
+
+
+@pytest.fixture(scope='session')
+def session_id() -> str:
+    return datetime.datetime.utcnow().isoformat()
+
+
+@pytest.fixture(scope='session')
+def resources_prefix(session_id) -> str:
+    re.sub('[^a-zA-Z0-9-]', '', session_id).lower()
+    return f'dataalltesting{session_id}'

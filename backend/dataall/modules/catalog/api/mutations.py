@@ -7,6 +7,7 @@ from dataall.modules.catalog.api.resolvers import (
     create_term,
     approve_term_association,
     dismiss_term_association,
+    start_reindex_catalog,
 )
 
 
@@ -106,4 +107,11 @@ dismissTermAssociation = gql.MutationField(
     type=gql.Boolean,
     resolver=dismiss_term_association,
     args=[gql.Argument(name='linkUri', type=gql.NonNullableType(gql.String))],
+)
+
+startReindexCatalog = gql.MutationField(
+    name='startReindexCatalog',
+    args=[gql.Argument(name='handleDeletes', type=gql.NonNullableType(gql.Boolean))],
+    type=gql.Boolean,
+    resolver=start_reindex_catalog,
 )

@@ -16,22 +16,44 @@ class S3DatasetsSharesApiModuleInterface(ModuleInterface):
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.notifications import NotificationsModuleInterface
         from dataall.modules.s3_datasets import DatasetApiModuleInterface
-        from dataall.modules.shares_base import SharesBaseModuleInterface
+        from dataall.modules.shares_base import SharesBaseAPIModuleInterface
 
-        return [DatasetApiModuleInterface, NotificationsModuleInterface, SharesBaseModuleInterface]
+        return [DatasetApiModuleInterface, NotificationsModuleInterface, SharesBaseAPIModuleInterface]
 
     def __init__(self):
         from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
         from dataall.modules.s3_datasets_shares import api
-        from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import SharePolicyService
+        from dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service import S3SharePolicyService
         from dataall.modules.s3_datasets.services.dataset_service import DatasetService
         from dataall.modules.datasets_base.services.dataset_list_service import DatasetListService
-        from dataall.modules.s3_datasets_shares.services.dataset_sharing_service import DatasetSharingService
-        from dataall.modules.s3_datasets_shares.db.share_object_repositories import ShareEnvironmentResource
+        from dataall.modules.s3_datasets_shares.services.s3_share_dataset_service import S3ShareDatasetService
+        from dataall.modules.s3_datasets_shares.db.s3_share_object_repositories import S3ShareEnvironmentResource
+        from dataall.modules.shares_base.services.share_processor_manager import (
+            ShareProcessorManager,
+            ShareProcessorDefinition,
+        )
+        from dataall.modules.shares_base.services.shares_enums import ShareableType
+        from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, DatasetBucket, DatasetStorageLocation
 
-        EnvironmentResourceManager.register(ShareEnvironmentResource())
-        DatasetService.register(DatasetSharingService())
-        DatasetListService.register(DatasetSharingService())
+        EnvironmentResourceManager.register(S3ShareEnvironmentResource())
+        DatasetService.register(S3ShareDatasetService())
+        DatasetListService.register(S3ShareDatasetService())
+
+        ShareProcessorManager.register_processor(
+            ShareProcessorDefinition(ShareableType.Table, None, DatasetTable, DatasetTable.tableUri)
+        )
+        ShareProcessorManager.register_processor(
+            ShareProcessorDefinition(ShareableType.S3Bucket, None, DatasetBucket, DatasetBucket.bucketUri)
+        )
+        ShareProcessorManager.register_processor(
+            ShareProcessorDefinition(
+                ShareableType.StorageLocation,
+                None,
+                DatasetStorageLocation,
+                DatasetStorageLocation.locationUri,
+            )
+        )
+
         log.info('API of dataset sharing has been imported')
 
 
@@ -46,14 +68,16 @@ class S3DatasetsSharesAsyncHandlersModuleInterface(ModuleInterface):
     def depends_on() -> List[Type['ModuleInterface']]:
         from dataall.modules.notifications import NotificationsModuleInterface
         from dataall.modules.s3_datasets import DatasetAsyncHandlersModuleInterface
-        from dataall.modules.shares_base import SharesBaseModuleInterface
+        from dataall.modules.shares_base import SharesBaseAsyncHandlerModuleInterface
 
-        return [DatasetAsyncHandlersModuleInterface, NotificationsModuleInterface, SharesBaseModuleInterface]
+        return [
+            DatasetAsyncHandlersModuleInterface,
+            NotificationsModuleInterface,
+            SharesBaseAsyncHandlerModuleInterface,
+        ]
 
     def __init__(self):
-        import dataall.modules.s3_datasets_shares.handlers
-
-        log.info('Sharing handlers have been imported')
+        log.info('s3_datasets_shares handlers have been imported')
 
 
 class S3DatasetsSharesCdkModuleInterface(ModuleInterface):
@@ -65,6 +89,59 @@ class S3DatasetsSharesCdkModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.s3_datasets_shares.cdk
-        from dataall.modules.s3_datasets_shares.services.managed_share_policy_service import SharePolicyService
+        from dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service import S3SharePolicyService
 
-        log.info('CDK module data_sharing has been imported')
+        log.info('CDK module s3_datasets_shares has been imported')
+
+
+class S3DatasetsSharesECSShareModuleInterface(ModuleInterface):
+    """Implements ModuleInterface for data sharing"""
+
+    @staticmethod
+    def is_supported(modes):
+        return ImportMode.SHARES_TASK in modes
+
+    @staticmethod
+    def depends_on() -> List[Type['ModuleInterface']]:
+        from dataall.modules.shares_base import SharesBaseECSTaskModuleInterface
+        from dataall.modules.notifications import NotificationsModuleInterface
+
+        return [SharesBaseECSTaskModuleInterface, NotificationsModuleInterface]
+
+    def __init__(self):
+        from dataall.modules.shares_base.services.share_processor_manager import (
+            ShareProcessorManager,
+            ShareProcessorDefinition,
+        )
+        from dataall.modules.shares_base.services.shares_enums import ShareableType
+        from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, DatasetBucket, DatasetStorageLocation
+        from dataall.modules.s3_datasets_shares.services.share_processors.glue_table_share_processor import (
+            ProcessLakeFormationShare,
+        )
+        from dataall.modules.s3_datasets_shares.services.share_processors.s3_bucket_share_processor import (
+            ProcessS3BucketShare,
+        )
+        from dataall.modules.s3_datasets_shares.services.share_processors.s3_access_point_share_processor import (
+            ProcessS3AccessPointShare,
+        )
+
+        ShareProcessorManager.register_processor(
+            ShareProcessorDefinition(
+                ShareableType.Table, ProcessLakeFormationShare, DatasetTable, DatasetTable.tableUri
+            )
+        )
+        ShareProcessorManager.register_processor(
+            ShareProcessorDefinition(
+                ShareableType.S3Bucket, ProcessS3BucketShare, DatasetBucket, DatasetBucket.bucketUri
+            )
+        )
+        ShareProcessorManager.register_processor(
+            ShareProcessorDefinition(
+                ShareableType.StorageLocation,
+                ProcessS3AccessPointShare,
+                DatasetStorageLocation,
+                DatasetStorageLocation.locationUri,
+            )
+        )
+
+        log.info('ECS Share module s3_datasets_shares has been imported')

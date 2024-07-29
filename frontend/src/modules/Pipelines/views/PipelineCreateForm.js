@@ -29,13 +29,10 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import {
-  listEnvironmentGroups,
-  listValidEnvironments,
-  useClient
-} from 'services';
+import { listValidEnvironments, useClient } from 'services';
 import { createDataPipeline } from '../services';
 import { PipelineEnvironmentCreateForm } from '../components';
+import { EnvironmentTeamDropdown } from 'modules/Shared';
 
 const PipelineCreateForm = (props) => {
   const navigate = useNavigate();
@@ -44,7 +41,6 @@ const PipelineCreateForm = (props) => {
   const client = useClient();
   const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
-  const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const devOptions = [
     { value: 'cdk-trunk', label: 'CDK Pipelines - Trunk-based' },
@@ -78,29 +74,6 @@ const PipelineCreateForm = (props) => {
     setLoading(false);
   }, [client, dispatch]);
 
-  const fetchGroups = async (environmentUri) => {
-    try {
-      const response = await client.query(
-        listEnvironmentGroups({
-          filter: Defaults.selectListFilter,
-          environmentUri
-        })
-      );
-      if (!response.errors) {
-        setGroupOptions(
-          response.data.listEnvironmentGroups.nodes.map((g) => ({
-            value: g.groupUri,
-            label: g.groupUri
-          }))
-        );
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-    } catch (e) {
-      dispatch({ type: SET_ERROR, error: e.message });
-    }
-  };
-
   useEffect(() => {
     if (client) {
       fetchEnvironments().catch((e) =>
@@ -123,7 +96,7 @@ const PipelineCreateForm = (props) => {
               label: values.label,
               environmentUri: values.environment.environmentUri,
               description: values.description,
-              SamlGroupName: values.SamlGroupName,
+              SamlGroupName: values.SamlAdminGroupName,
               tags: values.tags,
               devStrategy: values.devStrategy
             }
@@ -229,7 +202,7 @@ const PipelineCreateForm = (props) => {
               initialValues={{
                 label: '',
                 description: '',
-                SamlGroupName: '',
+                SamlAdminGroupName: '',
                 environment: '',
                 tags: [],
                 devStrategy: 'cdk-trunk'
@@ -239,7 +212,7 @@ const PipelineCreateForm = (props) => {
                   .max(255)
                   .required('*Pipeline name is required'),
                 description: Yup.string().max(5000),
-                SamlGroupName: Yup.string().max(255),
+                SamlAdminGroupName: Yup.string().max(255),
                 environment: Yup.object(),
                 devStrategy: Yup.string().required(
                   '*A CICD strategy is required'
@@ -330,96 +303,13 @@ const PipelineCreateForm = (props) => {
                     <Grid item lg={5} md={6} xs={12}>
                       <Card sx={{ mb: 3 }}>
                         <CardHeader title="CICD" />
-                        <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.environment && errors.environment
-                            )}
-                            helperText={
-                              touched.environment && errors.environment
-                            }
-                            label="CICD Environment"
-                            name="environment"
-                            onChange={(event) => {
-                              setFieldValue('SamlGroupName', '');
-                              fetchGroups(
-                                event.target.value.environmentUri
-                              ).catch((e) =>
-                                dispatch({ type: SET_ERROR, error: e.message })
-                              );
-                              setFieldValue('environment', event.target.value);
-                            }}
-                            select
-                            value={values.environment}
-                            variant="outlined"
-                          >
-                            {environmentOptions.map((environment) => (
-                              <MenuItem
-                                key={environment.environmentUri}
-                                value={environment}
-                              >
-                                {environment.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                        </CardContent>
-                        <CardContent>
-                          <TextField
-                            fullWidth
-                            error={Boolean(
-                              touched.SamlGroupName && errors.SamlGroupName
-                            )}
-                            helperText={
-                              touched.SamlGroupName && errors.SamlGroupName
-                            }
-                            label="Team"
-                            name="SamlGroupName"
-                            onChange={(event) => {
-                              setFieldValue(
-                                'SamlGroupName',
-                                event.target.value
-                              );
-                            }}
-                            select
-                            value={values.SamlGroupName}
-                            variant="outlined"
-                          >
-                            {groupOptions.map((group) => (
-                              <MenuItem key={group.value} value={group.value}>
-                                {group.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                        </CardContent>
-                        <CardContent>
-                          <TextField
-                            disabled
-                            fullWidth
-                            label="Region"
-                            name="region"
-                            value={
-                              values.environment
-                                ? values.environment.region
-                                : ''
-                            }
-                            variant="outlined"
-                          />
-                        </CardContent>
-                        <CardContent>
-                          <TextField
-                            disabled
-                            fullWidth
-                            label="Organization"
-                            name="organization"
-                            value={
-                              values.environment
-                                ? values.environment.organization.label
-                                : ''
-                            }
-                            variant="outlined"
-                          />
-                        </CardContent>
+                        <EnvironmentTeamDropdown
+                          setFieldValue={setFieldValue}
+                          handleChange={handleChange}
+                          values={values}
+                          touched={touched}
+                          errors={errors}
+                        />
                         <CardContent>
                           <TextField
                             fullWidth

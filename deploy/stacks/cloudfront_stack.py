@@ -2,6 +2,7 @@ from builtins import super
 
 from aws_cdk import Stack
 from .cloudfront import CloudfrontDistro
+from .frontend_cognito_config import FrontendCognitoConfig
 from .auth_at_edge import AuthAtEdge
 
 
@@ -16,6 +17,7 @@ class CloudfrontStack(Stack):
         custom_domain=None,
         custom_waf_rules=None,
         custom_auth=None,
+        backend_region=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -42,5 +44,18 @@ class CloudfrontStack(Stack):
             custom_domain=custom_domain,
             custom_waf_rules=custom_waf_rules,
             custom_auth=custom_auth,
+            backend_region=backend_region,
             **kwargs,
         )
+
+        if not custom_auth:
+            FrontendCognitoConfig(
+                self,
+                'FrontendCognitoConfig',
+                envname=envname,
+                resource_prefix=resource_prefix,
+                custom_domain=custom_domain,
+                backend_region=backend_region,
+                execute_after=[distro],
+                **kwargs,
+            )

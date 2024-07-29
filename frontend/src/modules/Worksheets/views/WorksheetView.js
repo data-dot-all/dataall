@@ -32,14 +32,14 @@ import {
   listDatasetTables,
   getSharedDatasetTables,
   listDatasetTableColumns,
+  listS3DatasetsOwnedByEnvGroup,
   listValidEnvironments,
-  searchEnvironmentDataItems,
   useClient
 } from 'services';
 import {
   deleteWorksheet,
   getWorksheet,
-  listS3DatasetsOwnedByEnvGroup,
+  listS3DatasetsSharedWithEnvGroup,
   runAthenaSqlQuery,
   updateWorksheet
 } from '../services';
@@ -140,38 +140,20 @@ const WorksheetView = () => {
         );
       }
       response = await client.query(
-        searchEnvironmentDataItems({
+        listS3DatasetsSharedWithEnvGroup({
           environmentUri: environment.environmentUri,
-          filter: {
-            ...Defaults.selectListFilter,
-            uniqueShares: true,
-            itemTypes: 'DatasetTable'
-          }
+          groupUri: team
         })
       );
       if (response.errors) {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
-      if (response.data.searchEnvironmentDataItems.nodes) {
+      if (response.data.listS3DatasetsSharedWithEnvGroup) {
         sharedWithDatabases =
-          response.data.searchEnvironmentDataItems.nodes.map((d) => ({
-            datasetUri: d.datasetUri,
+          response.data.listS3DatasetsSharedWithEnvGroup?.map((d) => ({
             value: d.datasetUri,
-            label: d.sharedGlueDatabaseName,
-            GlueDatabaseName: d.sharedGlueDatabaseName,
-            environmentUri: d.environmentUri,
-            principalId: d.principalId
+            label: d.sharedGlueDatabaseName
           }));
-        // Remove duplicates based on GlueDatabaseName
-        sharedWithDatabases = sharedWithDatabases.filter(
-          (database, index, self) =>
-            index ===
-            self.findIndex(
-              (d) =>
-                d.GlueDatabaseName === database.GlueDatabaseName &&
-                d.principalId === team
-            )
-        );
       }
       setDatabaseOptions(ownedDatabases.concat(sharedWithDatabases));
       setLoadingDatabases(false);
@@ -182,17 +164,17 @@ const WorksheetView = () => {
     async (environment, dataset) => {
       setLoadingTables(true);
       let response = '';
-      if (dataset.GlueDatabaseName.includes(dataset.datasetUri + '_shared')) {
+      if (dataset.label.includes(dataset.value + '_shared')) {
         response = await client.query(
           getSharedDatasetTables({
-            datasetUri: dataset.datasetUri,
+            datasetUri: dataset.value,
             envUri: environment.environmentUri
           })
         );
       } else {
         response = await client.query(
           listDatasetTables({
-            datasetUri: dataset.datasetUri,
+            datasetUri: dataset.value,
             filter: Defaults.selectListFilter
           })
         );
@@ -200,7 +182,7 @@ const WorksheetView = () => {
 
       if (
         !response.errors &&
-        dataset.GlueDatabaseName.includes(dataset.datasetUri + '_shared')
+        dataset.label.includes(dataset.value + '_shared')
       ) {
         setTableOptions(
           response.data.getSharedDatasetTables.map((t) => ({
@@ -373,7 +355,7 @@ const WorksheetView = () => {
       dispatch({ type: SET_ERROR, error: e.message })
     );
     setSqlBody(
-      `SELECT * FROM "${selectedDatabase.GlueDatabaseName}"."${event.target.value.GlueTableName}" limit 10;`
+      `SELECT * FROM "${selectedDatabase.label}"."${event.target.value.GlueTableName}" limit 10;`
     );
   }
 

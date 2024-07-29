@@ -5,6 +5,7 @@ nav:
     - Administrate:
       - Tenant and Organizations: organizations.md
       - Environments and teams: environments.md
+      - Maintenance Window: maintenance.md
     - Discover:
       - Datasets: datasets.md
       - Tables and Folders: tables.md

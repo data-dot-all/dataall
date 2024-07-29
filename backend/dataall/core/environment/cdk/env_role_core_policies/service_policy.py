@@ -89,6 +89,7 @@ class ServicePolicy(object):
                             'StringEquals': {
                                 'iam:PassedToService': [
                                     'glue.amazonaws.com',
+                                    'omics.amazonaws.com',
                                     'lambda.amazonaws.com',
                                     'sagemaker.amazonaws.com',
                                     'states.amazonaws.com',

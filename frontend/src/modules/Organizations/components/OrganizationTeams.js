@@ -36,6 +36,7 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 import {
+  listInviteOrganizationPermissionsWithDescriptions,
   listOrganizationGroups,
   removeGroupFromOrganization
 } from '../services';
@@ -44,29 +45,22 @@ import {
   OrganizationTeamInviteForm
 } from '../components';
 
-function TeamRow({ team, organization, fetchItems }) {
+function TeamRow({
+  team,
+  permissions,
+  organization,
+  fetchItems,
+  handleDeleteGroupModalOpen,
+  handleDeleteGroupModalClosed,
+  handlePermissionsModalOpen,
+  handlePermissionsModalClose,
+  isDeleteGroupModalOpenId,
+  isPermissionModalOpenId
+}) {
   const client = useClient();
   const dispatch = useDispatch();
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
-  const [isPermissionModalOpen, setIsPermissionsModalOpen] = useState(false);
-  const [isDeleteGroupModalOpen, setIsDeleteGroupModalOpenId] = useState(false);
-
-  const handleDeleteGroupModalClosed = () => {
-    setIsDeleteGroupModalOpenId(false);
-  };
-
-  const handleDeleteGroupModalOpen = () => {
-    setIsDeleteGroupModalOpenId(true);
-  };
-
-  const handlePermissionsModalClose = () => {
-    setIsPermissionsModalOpen(false);
-  };
-
-  const handlePermissionsModalOpen = () => {
-    setIsPermissionsModalOpen(true);
-  };
   const removeGroup = async (groupUri) => {
     try {
       const response = await client.mutate(
@@ -83,6 +77,9 @@ function TeamRow({ team, organization, fetchItems }) {
           },
           variant: 'success'
         });
+        if (handleDeleteGroupModalClosed) {
+          handleDeleteGroupModalClosed();
+        }
         if (fetchItems) {
           fetchItems();
         }
@@ -104,7 +101,9 @@ function TeamRow({ team, organization, fetchItems }) {
       </TableCell>
       <TableCell>
         {team.groupUri !== organization.SamlGroupName ? (
-          <LoadingButton onClick={() => handlePermissionsModalOpen(team)}>
+          <LoadingButton
+            onClick={() => handlePermissionsModalOpen(team.groupUri)}
+          >
             <VscChecklist
               size={20}
               color={
@@ -123,20 +122,24 @@ function TeamRow({ team, organization, fetchItems }) {
             variant="outlined"
           />
         )}
-        {isPermissionModalOpen && (
+        {isPermissionModalOpenId === team.groupUri && (
           <OrganizationTeamInviteEditForm
             organization={organization}
             team={team}
-            open
+            allPermissions={permissions}
+            open={isPermissionModalOpenId === team.groupUri}
+            enqueueSnackbar={enqueueSnackbar}
             reloadTeams={fetchItems}
-            onClose={handlePermissionsModalClose}
+            onClose={() => handlePermissionsModalClose()}
           />
         )}
       </TableCell>
       <TableCell>
         <Box>
           {team.groupUri !== organization.SamlGroupName && (
-            <LoadingButton onClick={() => handleDeleteGroupModalOpen()}>
+            <LoadingButton
+              onClick={() => handleDeleteGroupModalOpen(team.groupUri)}
+            >
               <HiUserRemove
                 size={25}
                 color={
@@ -152,7 +155,7 @@ function TeamRow({ team, organization, fetchItems }) {
               objectName={team.groupUri}
               onApply={() => handleDeleteGroupModalClosed()}
               onClose={() => handleDeleteGroupModalClosed()}
-              open={isDeleteGroupModalOpen}
+              open={isDeleteGroupModalOpenId === team.groupUri}
               isAWSResource={false}
               deleteFunction={() => removeGroup(team.groupUri)}
             />
@@ -166,7 +169,14 @@ function TeamRow({ team, organization, fetchItems }) {
 TeamRow.propTypes = {
   team: PropTypes.any,
   organization: PropTypes.any,
-  fetchItems: PropTypes.any
+  permissions: PropTypes.any,
+  fetchItems: PropTypes.any,
+  handleDeleteGroupModalOpen: PropTypes.any,
+  handleDeleteGroupModalClosed: PropTypes.any,
+  handlePermissionsModalOpen: PropTypes.any,
+  handlePermissionsModalClose: PropTypes.any,
+  isDeleteGroupModalOpenId: PropTypes.string,
+  isPermissionModalOpenId: PropTypes.string
 };
 
 export const OrganizationTeams = ({ organization }) => {
@@ -175,14 +185,61 @@ export const OrganizationTeams = ({ organization }) => {
   const [items, setItems] = useState(Defaults.pagedResponse);
   const [filter, setFilter] = useState(Defaults.filter);
   const [loading, setLoading] = useState(true);
+  const [permissions, setPermissions] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [isTeamInviteModalOpen, setIsTeamInviteModalOpen] = useState(false);
+  const [isPermissionModalOpenId, setIsPermissionsModalOpen] = useState('');
+  const [isDeleteGroupModalOpenId, setIsDeleteGroupModalOpenId] = useState('');
+
+  const handleDeleteGroupModalClosed = () => {
+    setIsDeleteGroupModalOpenId('');
+  };
+
+  const handleDeleteGroupModalOpen = (groupUri) => {
+    setIsDeleteGroupModalOpenId(groupUri);
+  };
+
+  const handlePermissionsModalClose = () => {
+    setIsPermissionsModalOpen('');
+  };
+
+  const handlePermissionsModalOpen = (groupUri) => {
+    setIsPermissionsModalOpen(groupUri);
+  };
+
   const handleTeamInviteModalOpen = () => {
     setIsTeamInviteModalOpen(true);
   };
   const handleTeamInviteModalClose = () => {
     setIsTeamInviteModalOpen(false);
   };
+
+  const fetchPermissions = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await client.query(
+        listInviteOrganizationPermissionsWithDescriptions()
+      );
+      if (!response.errors) {
+        setPermissions(
+          response.data.listInviteOrganizationPermissionsWithDescriptions.map(
+            (g) => ({
+              ...g,
+              name: g.name,
+              description: g.description,
+              selected: true
+            })
+          )
+        );
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    } finally {
+      setLoading(false);
+    }
+  }, [client, dispatch]);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -210,8 +267,11 @@ export const OrganizationTeams = ({ organization }) => {
       fetchItems().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
+      fetchPermissions().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
-  }, [client, filter.page, dispatch, fetchItems]);
+  }, [client, filter.page, dispatch, fetchItems, fetchPermissions]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -292,6 +352,7 @@ export const OrganizationTeams = ({ organization }) => {
             {isTeamInviteModalOpen && (
               <OrganizationTeamInviteForm
                 organization={organization}
+                permissions={permissions}
                 open
                 reloadTeams={fetchItems}
                 onClose={handleTeamInviteModalClose}
@@ -317,8 +378,19 @@ export const OrganizationTeams = ({ organization }) => {
                     items.nodes.map((team) => (
                       <TeamRow
                         team={team}
+                        permissions={permissions}
                         organization={organization}
                         fetchItems={fetchItems}
+                        handleDeleteGroupModalOpen={handleDeleteGroupModalOpen}
+                        handleDeleteGroupModalClosed={
+                          handleDeleteGroupModalClosed
+                        }
+                        handlePermissionsModalOpen={handlePermissionsModalOpen}
+                        handlePermissionsModalClose={
+                          handlePermissionsModalClose
+                        }
+                        isDeleteGroupModalOpenId={isDeleteGroupModalOpenId}
+                        isPermissionModalOpenId={isPermissionModalOpenId}
                       />
                     ))
                   ) : (

@@ -339,6 +339,7 @@ class PipelineStack(Stack):
                     ],
                     resources=[
                         f'arn:aws:iam::*:role/{self.resource_prefix}*',
+                        'arn:aws:iam::*:role/dataall-integration-tests*',
                         'arn:aws:cloudfront::*:distribution/*',
                     ],
                 )
@@ -637,7 +638,6 @@ class PipelineStack(Stack):
                 ip_ranges=target_env.get('ip_ranges'),
                 apig_vpce=target_env.get('apig_vpce'),
                 prod_sizing=target_env.get('prod_sizing', True),
-                quicksight_enabled=target_env.get('enable_quicksight_monitoring', False),
                 enable_cw_rum=target_env.get('enable_cw_rum', False) and target_env.get('custom_auth', None) is None,
                 enable_cw_canaries=target_env.get('enable_cw_canaries', False)
                 and target_env.get('custom_auth', None) is None,
@@ -685,7 +685,7 @@ class PipelineStack(Stack):
                                     'aws sts get-caller-identity --profile buildprofile',
                                     f'export COGNITO_CLIENT=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/cognito/appclient --profile buildprofile --output text --query "Parameter.Value")',
                                     f'export API_ENDPOINT=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/apiGateway/backendUrl --profile buildprofile --output text --query "Parameter.Value")',
-                                    f'export USERDATA=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/cognito-test-users --profile buildprofile --output text --query "Parameter.Value")',
+                                    f'export TESTDATA=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/testdata --profile buildprofile --output text --query "Parameter.Value")',
                                     f'export ENVNAME={target_env["envname"]}',
                                     f'export AWS_REGION={target_env["region"]}',
                                     f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
@@ -756,6 +756,7 @@ class PipelineStack(Stack):
                 custom_domain=target_env.get('custom_domain'),
                 custom_auth=target_env.get('custom_auth', None),
                 custom_waf_rules=target_env.get('custom_waf_rules', None),
+                backend_region=target_env.get('region', self.region),
             )
         )
         front_stage_actions = (
@@ -887,6 +888,7 @@ class PipelineStack(Stack):
                 ip_ranges=target_env.get('ip_ranges'),
                 resource_prefix=self.resource_prefix,
                 custom_auth=target_env.get('custom_auth', None),
+                backend_region=target_env.get('region', self.region),
             ),
             pre=[
                 pipelines.CodeBuildStep(

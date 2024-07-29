@@ -3,7 +3,7 @@ from sqlalchemy.dialects.postgresql import JSON, ARRAY
 from sqlalchemy.orm import query_expression
 from dataall.base.db import Base, Resource, utils
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
-from dataall.modules.datasets_base.services.datasets_enums import DatasetType
+from dataall.modules.datasets_base.services.datasets_enums import DatasetTypes
 
 
 class DatasetTableColumn(Resource, Base):
@@ -114,7 +114,7 @@ class S3Dataset(DatasetBase):
     importedAdminRole = Column(Boolean, default=False)
 
     __mapper_args__ = {
-        'polymorphic_identity': DatasetType.S3,
+        'polymorphic_identity': DatasetTypes.S3,
     }
 
 

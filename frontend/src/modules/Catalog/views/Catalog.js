@@ -173,7 +173,7 @@ const Catalog = () => {
   const classes = useStyles();
   const anchorRef = useRef(null);
   const [openMenu, setOpenMenu] = useState(false);
-  const dataFieldList = ['label', 'name', 'description', 'region', 'tags'];
+  const dataFieldList = ['label', 'name', 'description', 'tags'];
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const handleCreateModalOpen = () => {
@@ -182,11 +182,6 @@ const Catalog = () => {
   const handleCreateModalClose = () => {
     setIsCreateModalOpen(false);
   };
-
-  if (config.modules.s3_datasets.features.topics_dropdown === true)
-    dataFieldList.push('topics');
-  if (config.modules.s3_datasets.features.confidentiality_dropdown === true)
-    dataFieldList.push('classification');
 
   const filterItemsInit = [
     {
@@ -209,14 +204,14 @@ const Catalog = () => {
     }
   ];
 
-  if (config.modules.s3_datasets.features.topics_dropdown === true)
+  if (config.modules.datasets_base.features.topics_dropdown === true)
     filterItemsInit.push({
       title: 'Topics',
       dataField: 'topics',
       componentId: 'TopicSensor',
       filterLabel: 'Topics'
     });
-  if (config.modules.s3_datasets.features.confidentiality_dropdown === true)
+  if (config.modules.datasets_base.features.confidentiality_dropdown === true)
     filterItemsInit.push({
       title: 'Classification',
       dataField: 'classification',
@@ -358,7 +353,7 @@ const Catalog = () => {
                     innerClass={{ input: classes.mainSearch, list: listClass }}
                     autoSuggest
                     showIcon
-                    fuzziness="AUTO"
+                    fuzziness={0}
                     componentId="SearchSensor"
                     filterLabel="text"
                     dataField={dataFieldList}

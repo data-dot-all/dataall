@@ -1,6 +1,7 @@
 export * from './addSharedItem';
 export * from './approveShareObject';
 export * from './deleteShareObject';
+export * from './getS3ConsumptionData';
 export * from './getShareObject';
 export * from './getShareRequestsFromMe';
 export * from './listOwnedDatasets';

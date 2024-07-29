@@ -4,13 +4,9 @@ import {
   CheckCircleOutlined,
   CopyAllOutlined,
   DeleteOutlined,
-  RefreshRounded,
-  RemoveCircleOutlineOutlined
+  RefreshRounded
 } from '@mui/icons-material';
-import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
-import GppBadIcon from '@mui/icons-material/GppBad';
 import SecurityIcon from '@mui/icons-material/Security';
-import PendingIcon from '@mui/icons-material/Pending';
 import { LoadingButton } from '@mui/lab';
 import {
   Box,
@@ -47,9 +43,10 @@ import {
   ChevronRightIcon,
   Defaults,
   Pager,
-  PlusIcon,
+  PencilAltIcon,
   Scrollbar,
   ShareStatus,
+  ShareHealthStatus,
   TextAvatar,
   useSettings
 } from 'design';
@@ -64,7 +61,8 @@ import {
   submitApproval,
   revokeItemsShareObject,
   verifyItemsShareObject,
-  reApplyItemsShareObject
+  reApplyItemsShareObject,
+  getS3ConsumptionData
 } from '../services';
 import {
   AddShareItemModal,
@@ -75,10 +73,12 @@ import {
 } from '../components';
 import { generateShareItemLabel } from 'utils';
 import { ShareLogs } from '../components/ShareLogs';
+import { ShareSubmitModal } from '../components/ShareSubmitModal';
 
 function ShareViewHeader(props) {
   const {
     share,
+    sharedItems,
     client,
     dispatch,
     enqueueSnackbar,
@@ -92,6 +92,8 @@ function ShareViewHeader(props) {
   const [submitting, setSubmitting] = useState(false);
   const [isRejectShareModalOpen, setIsRejectShareModalOpen] = useState(false);
   const [openLogsModal, setOpenLogsModal] = useState(null);
+
+  const [isSubmitShareModalOpen, setIsSubmitShareModalOpen] = useState(false);
 
   const submit = async () => {
     setSubmitting(true);
@@ -124,6 +126,7 @@ function ShareViewHeader(props) {
     );
 
     if (!response.errors) {
+      handleSubmitShareModalClose();
       enqueueSnackbar('Share request deleted', {
         anchorOrigin: {
           horizontal: 'right',
@@ -150,6 +153,20 @@ function ShareViewHeader(props) {
 
   const handleRejectShareModalClose = () => {
     setIsRejectShareModalOpen(false);
+  };
+
+  const handleSubmitShareModalOpen = () => {
+    setIsSubmitShareModalOpen(true);
+  };
+
+  const handleSubmitShareModalApplied = () => {
+    setIsSubmitShareModalOpen(false);
+    fetchItem();
+    fetchItems();
+  };
+
+  const handleSubmitShareModalClose = () => {
+    setIsSubmitShareModalOpen(false);
   };
 
   const accept = async () => {
@@ -207,7 +224,8 @@ function ShareViewHeader(props) {
       <Grid container justifyContent="space-between" spacing={3}>
         <Grid item>
           <Typography color="textPrimary" variant="h5">
-            Share object for {share.dataset?.datasetName}
+            Share object for {share.dataset?.datasetName}{' '}
+            {share.status === 'Draft' ? '(DRAFT)' : ''}
           </Typography>
           <Breadcrumbs
             aria-label="breadcrumb"
@@ -299,23 +317,44 @@ function ShareViewHeader(props) {
                   )}
                 </>
               )}
-
+              <LoadingButton
+                loading={submitting}
+                color="primary"
+                startIcon={<PencilAltIcon />}
+                sx={{ m: 1 }}
+                onClick={handleSubmitShareModalOpen}
+                type="button"
+                variant="outlined"
+              >
+                Edit
+              </LoadingButton>
               {(share.userRoleForShareObject === 'Requesters' ||
                 share.userRoleForShareObject === 'ApproversAndRequesters') && (
                 <>
                   {(share.status === 'Draft' ||
                     share.status === 'Rejected') && (
-                    <LoadingButton
-                      loading={submitting}
-                      color="primary"
-                      startIcon={<CheckCircleOutlined />}
-                      sx={{ m: 1 }}
-                      onClick={submit}
-                      type="button"
-                      variant="contained"
+                    <Tooltip
+                      title={
+                        sharedItems.nodes.length === 0
+                          ? 'There is no items added into the request.'
+                          : ''
+                      }
                     >
-                      Submit
-                    </LoadingButton>
+                      <span>
+                        <LoadingButton
+                          loading={submitting}
+                          color="primary"
+                          startIcon={<CheckCircleOutlined />}
+                          sx={{ m: 1 }}
+                          onClick={submit}
+                          type="button"
+                          variant="contained"
+                          disabled={sharedItems.nodes.length === 0}
+                        >
+                          Submit
+                        </LoadingButton>
+                      </span>
+                    </Tooltip>
                   )}
                 </>
               )}
@@ -341,6 +380,20 @@ function ShareViewHeader(props) {
           rejectFunction={reject}
         />
       )}
+      {isSubmitShareModalOpen && (
+        <ShareSubmitModal
+          share={share}
+          onApply={handleSubmitShareModalApplied}
+          onClose={handleSubmitShareModalClose}
+          open={isSubmitShareModalOpen}
+          submitFunction={submit}
+          client={client}
+          dispatch={dispatch}
+          enqueueSnackbar={enqueueSnackbar}
+          fetchItem={fetchItem}
+          sharedItems={sharedItems}
+        />
+      )}
       {share.canViewLogs && (
         <ShareLogs
           shareUri={share.shareUri}
@@ -363,7 +416,7 @@ ShareViewHeader.propTypes = {
   loading: PropTypes.bool
 };
 
-function SharedItem(props) {
+export function SharedItem(props) {
   const {
     item,
     client,
@@ -434,33 +487,11 @@ function SharedItem(props) {
         )}
       </TableCell>
       <TableCell>
-        <div style={{ display: 'flex', alignItems: 'left' }}>
-          {item.healthStatus === 'Unhealthy' ? (
-            <Tooltip title={<Typography>{item.healthStatus}</Typography>}>
-              <GppBadIcon color={'error'} />
-            </Tooltip>
-          ) : item.healthStatus === 'Healthy' ? (
-            <Tooltip title={<Typography>{item.healthStatus}</Typography>}>
-              <VerifiedUserIcon color={'success'} />
-            </Tooltip>
-          ) : (
-            <Tooltip
-              title={
-                <Typography>{item.healthStatus || 'Undefined'}</Typography>
-              }
-            >
-              <PendingIcon color={'info'} />
-            </Tooltip>
-          )}
-          <Typography color="textSecondary" variant="subtitle2">
-            {(item.lastVerificationTime &&
-              item.lastVerificationTime.substring(
-                0,
-                item.lastVerificationTime.indexOf('.')
-              )) ||
-              ''}
-          </Typography>
-        </div>
+        <ShareHealthStatus
+          status={item.status}
+          healthStatus={item.healthStatus}
+          lastVerificationTime={item.lastVerificationTime}
+        />
       </TableCell>
       <TableCell>
         {item.healthMessage ? (
@@ -504,17 +535,12 @@ const ShareView = () => {
   const [isVerifyItemsModalOpen, setIsVerifyItemsModalOpen] = useState(false);
   const [isReApplyShareItemModalOpen, setIsReApplyShareItemModalOpen] =
     useState(false);
+  const [consumptionData, setConsumptionData] = useState({});
 
-  const handleAddItemModalOpen = () => {
-    setIsAddItemModalOpen(true);
-  };
   const handleAddItemModalClose = () => {
     setIsAddItemModalOpen(false);
   };
 
-  const handleRevokeItemModalOpen = () => {
-    setIsRevokeItemsModalOpen(true);
-  };
   const handleRevokeItemModalClose = () => {
     setIsRevokeItemsModalOpen(false);
   };
@@ -555,6 +581,22 @@ const ShareView = () => {
     );
     if (!response.errors) {
       setShare(response.data.getShareObject);
+      const response_c = await client.query(
+        getS3ConsumptionData({
+          shareUri: response.data.getShareObject.shareUri
+        })
+      );
+      if (!response_c.errors) {
+        setConsumptionData({
+          s3bucketName: response_c.data.getS3ConsumptionData.s3bucketName,
+          s3AccessPointName:
+            response_c.data.getS3ConsumptionData.s3AccessPointName,
+          sharedGlueDatabase:
+            response_c.data.getS3ConsumptionData.sharedGlueDatabase
+        });
+      } else {
+        dispatch({ type: SET_ERROR, error: response_c.errors[0].message });
+      }
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -685,6 +727,7 @@ const ShareView = () => {
         <Container maxWidth={settings.compact ? 'xl' : false}>
           <ShareViewHeader
             share={share}
+            sharedItems={sharedItems}
             client={client}
             dispatch={dispatch}
             navigate={navigate}
@@ -697,10 +740,10 @@ const ShareView = () => {
             <CircularProgress />
           ) : (
             <Box sx={{ mt: 3 }}>
-              <Grid container spacing={3}>
-                <Grid item md={5} xl={5} xs={12}>
-                  <Box sx={{ mb: 3 }}>
-                    <Card {...share} sx={{ width: 1 }}>
+              <Box sx={{ mb: 3 }}>
+                <Grid container spacing={3}>
+                  <Grid item md={4} xl={4} xs={8}>
+                    <Card {...share} sx={{ width: 1, height: '100%' }}>
                       <Box>
                         <CardHeader title="Requested Dataset Details" />
                         <Divider />
@@ -712,10 +755,23 @@ const ShareView = () => {
                               color="textSecondary"
                               variant="subtitle2"
                             >
-                              Dataset
+                              Dataset {share.dataset.datasetName}
                             </Typography>
-                            <Typography color="textPrimary" variant="subtitle2">
-                              {share.dataset.datasetName}
+                            <Typography
+                              color="textPrimary"
+                              variant="subtitle2"
+                              sx={{
+                                mt: 1,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                display: '-webkit-box',
+                                WebkitLineClamp: '3',
+                                WebkitBoxOrient: 'vertical'
+                              }}
+                            >
+                              {share.dataset.description.trim().length !== 0
+                                ? share.dataset.description
+                                : 'No dataset description'}
                             </Typography>
                           </Box>
                           <Box sx={{ mt: 3 }}>
@@ -769,213 +825,333 @@ const ShareView = () => {
                         </Box>
                       </CardContent>
                     </Card>
-                  </Box>
-                </Grid>
-                <Grid item md={7} xl={7} xs={12}>
-                  <Card {...share} style={{ height: '92%' }}>
-                    <CardHeader
-                      avatar={<TextAvatar name={share.owner} />}
-                      disableTypography
-                      subheader={
-                        <Link
-                          underline="hover"
-                          color="textPrimary"
-                          component={RouterLink}
-                          to="#"
-                          variant="subtitle2"
-                        >
-                          {share.owner}
-                        </Link>
-                      }
-                      style={{ paddingBottom: 0 }}
-                      title={
-                        <Typography
-                          color="textPrimary"
-                          display="block"
-                          variant="overline"
-                        >
-                          Request created by
-                        </Typography>
-                      }
-                    />
-                    <CardContent sx={{ pt: 0 }}>
-                      <List>
-                        <ListItem
-                          disableGutters
-                          divider
-                          sx={{
-                            justifyContent: 'space-between',
-                            padding: 2
-                          }}
-                        >
-                          <Typography color="textSecondary" variant="subtitle2">
-                            Principal
-                          </Typography>
+                  </Grid>
+                  <Grid item md={4} xl={4} xs={8}>
+                    <Card {...share} sx={{ height: '100%' }}>
+                      <Box>
+                        <CardHeader title="Comments" />
+                        <Divider />
+                      </Box>
+                      <CardContent>
+                        <Box sx={{ paddingX: 2 }}>
+                          <Grid container spacing={3}>
+                            <Grid item md={11} xl={11} xs={22}>
+                              <Typography
+                                color="textSecondary"
+                                variant="subtitle2"
+                              >
+                                Request Purpose
+                              </Typography>
+                            </Grid>
+                            <Grid item md={1} xl={1} xs={2}>
+                              {(share.userRoleForShareObject === 'Requesters' ||
+                                share.userRoleForShareObject ===
+                                  'ApproversAndRequesters') &&
+                                (share.status === 'Draft' ||
+                                  share.status === 'Processed' ||
+                                  share.status === 'Rejected' ||
+                                  share.status === 'Submitted') && (
+                                  <UpdateRequestReason
+                                    share={share}
+                                    client={client}
+                                    dispatch={dispatch}
+                                    enqueueSnackbar={enqueueSnackbar}
+                                    fetchItem={fetchItem}
+                                  />
+                                )}
+                            </Grid>
+                          </Grid>
+
+                          <Box sx={{ mt: 1 }}>
+                            <Typography
+                              color="textPrimary"
+                              variant="subtitle2"
+                              sx={{ wordBreak: 'break-word' }}
+                            >
+                              {share.requestPurpose || '-'}
+                            </Typography>
+                          </Box>
+                          <Divider sx={{ mt: 2, mb: 2 }} />
+                          <Grid container spacing={3}>
+                            <Grid item md={11} xl={11} xs={22}>
+                              <Typography
+                                color="textSecondary"
+                                variant="subtitle2"
+                              >
+                                Reject Purpose
+                              </Typography>
+                            </Grid>
+                            <Grid item md={1} xl={1} xs={2}>
+                              {(share.userRoleForShareObject === 'Approvers' ||
+                                share.userRoleForShareObject ===
+                                  'ApproversAndRequesters') &&
+                                (share.status === 'Submitted' ||
+                                  share.status === 'Draft') && (
+                                  <UpdateRejectReason
+                                    share={share}
+                                    client={client}
+                                    dispatch={dispatch}
+                                    enqueueSnackbar={enqueueSnackbar}
+                                    fetchItem={fetchItem}
+                                  />
+                                )}
+                            </Grid>
+                          </Grid>
+
+                          <Box sx={{ mt: 1 }}>
+                            <Typography
+                              color="textPrimary"
+                              variant="subtitle2"
+                              sx={{ wordBreak: 'break-word' }}
+                            >
+                              {share.rejectPurpose || '-'}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                  <Grid item md={4} xl={4} xs={8}>
+                    <Card {...share} style={{ height: '100%' }}>
+                      <CardHeader
+                        avatar={<TextAvatar name={share.owner} />}
+                        disableTypography
+                        subheader={
+                          <Link
+                            underline="hover"
+                            color="textPrimary"
+                            component={RouterLink}
+                            to="#"
+                            variant="subtitle2"
+                          >
+                            {share.owner}
+                          </Link>
+                        }
+                        style={{ paddingBottom: 0 }}
+                        title={
                           <Typography
                             color="textPrimary"
-                            variant="body2"
+                            display="block"
+                            variant="overline"
+                          >
+                            Request created by
+                          </Typography>
+                        }
+                      />
+                      <CardContent sx={{ pt: 0 }}>
+                        <List>
+                          <ListItem
+                            disableGutters
                             sx={{
-                              width: '500px',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              WebkitBoxOrient: 'vertical',
-                              WebkitLineClamp: 2
+                              paddingX: 2,
+                              paddingTop: 2,
+                              paddingBottom: 0
                             }}
                           >
-                            <Tooltip
-                              title={share.principal.principalName || '-'}
+                            <Typography
+                              color="textSecondary"
+                              variant="subtitle2"
                             >
-                              <span>
-                                {share.principal.principalName || '-'}
-                              </span>
-                            </Tooltip>
-                          </Typography>
-                        </ListItem>
-                        <ListItem
-                          disableGutters
-                          divider
-                          sx={{
-                            justifyContent: 'space-between',
-                            padding: 2
-                          }}
-                        >
-                          <Typography color="textSecondary" variant="subtitle2">
-                            Requester Team
-                          </Typography>
-                          <Typography color="textPrimary" variant="body2">
-                            {share.principal.SamlGroupName || '-'}
-                          </Typography>
-                        </ListItem>
-                        <ListItem
-                          disableGutters
-                          divider
-                          sx={{
-                            justifyContent: 'space-between',
-                            padding: 2
-                          }}
-                        >
-                          <Typography color="textSecondary" variant="subtitle2">
-                            Requester Environment
-                          </Typography>
-                          <Typography color="textPrimary" variant="body2">
-                            {share.principal.environmentName || '-'}
-                          </Typography>
-                        </ListItem>
-                        <ListItem
-                          disableGutters
-                          divider
-                          sx={{
-                            justifyContent: 'space-between',
-                            padding: 2
-                          }}
-                        >
-                          <Typography color="textSecondary" variant="subtitle2">
-                            Creation time
-                          </Typography>
-                          <Typography color="textPrimary" variant="body2">
-                            {share.created}
-                          </Typography>
-                        </ListItem>
-                        <ListItem
-                          disableGutters
-                          sx={{
-                            justifyContent: 'space-between',
-                            padding: 2
-                          }}
-                        >
-                          <Typography color="textSecondary" variant="subtitle2">
-                            Status
-                          </Typography>
-                          <Typography color="textPrimary" variant="body2">
-                            <ShareStatus status={share.status} />
-                          </Typography>
-                        </ListItem>
-                      </List>
-                    </CardContent>
-                  </Card>
+                              Principal
+                            </Typography>
+                          </ListItem>
+                          <ListItem
+                            disableGutters
+                            divider
+                            sx={{
+                              justifyContent: 'space-between',
+                              paddingX: 2,
+                              paddingTop: 1,
+                              paddingBottom: 2
+                            }}
+                          >
+                            <Typography
+                              color="textPrimary"
+                              variant="body2"
+                              sx={{
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                WebkitBoxOrient: 'vertical',
+                                WebkitLineClamp: 2
+                              }}
+                            >
+                              <Tooltip
+                                title={share.principal.principalName || '-'}
+                              >
+                                <span>
+                                  {share.principal.principalName || '-'}
+                                </span>
+                              </Tooltip>
+                            </Typography>
+                          </ListItem>
+                          <ListItem
+                            disableGutters
+                            divider
+                            sx={{
+                              justifyContent: 'space-between',
+                              padding: 2
+                            }}
+                          >
+                            <Typography
+                              color="textSecondary"
+                              variant="subtitle2"
+                            >
+                              Requester Team
+                            </Typography>
+                            <Typography color="textPrimary" variant="body2">
+                              {share.principal.SamlGroupName || '-'}
+                            </Typography>
+                          </ListItem>
+                          <ListItem
+                            disableGutters
+                            divider
+                            sx={{
+                              justifyContent: 'space-between',
+                              padding: 2
+                            }}
+                          >
+                            <Typography
+                              color="textSecondary"
+                              variant="subtitle2"
+                            >
+                              Requester Environment
+                            </Typography>
+                            <Typography color="textPrimary" variant="body2">
+                              {share.principal.environmentName || '-'}
+                            </Typography>
+                          </ListItem>
+                          <ListItem
+                            disableGutters
+                            divider
+                            sx={{
+                              justifyContent: 'space-between',
+                              padding: 2
+                            }}
+                          >
+                            <Typography
+                              color="textSecondary"
+                              variant="subtitle2"
+                            >
+                              Creation time
+                            </Typography>
+                            <Typography color="textPrimary" variant="body2">
+                              {share.created}
+                            </Typography>
+                          </ListItem>
+                          <ListItem
+                            disableGutters
+                            sx={{
+                              justifyContent: 'space-between',
+                              padding: 2
+                            }}
+                          >
+                            <Typography
+                              color="textSecondary"
+                              variant="subtitle2"
+                            >
+                              Status
+                            </Typography>
+                            {share.status === 'Draft' &&
+                              (share.userRoleForShareObject === 'Requesters' ||
+                                share.userRoleForShareObject ===
+                                  'ApproversAndRequesters') && (
+                                <Typography color="red" variant="body2">
+                                  Don't forget to submit the request!
+                                </Typography>
+                              )}
+                            <Typography color="textPrimary" variant="body2">
+                              <ShareStatus status={share.status} />
+                            </Typography>
+                          </ListItem>
+                        </List>
+                      </CardContent>
+                    </Card>
+                  </Grid>
                 </Grid>
-              </Grid>
-              <Box sx={{ mb: 3 }}>
-                <Card {...share}>
-                  <Box>
-                    <CardHeader title="Dataset Description" />
-                    <Divider />
-                  </Box>
-                  <CardContent>
-                    <Box sx={{ mt: 1 }}>
-                      <Typography
-                        color="textPrimary"
-                        variant="subtitle2"
-                        sx={{ wordBreak: 'break-word' }}
-                        style={{ whiteSpace: 'pre-line' }}
-                      >
-                        {share.dataset.description.trim().length !== 0
-                          ? share.dataset.description
-                          : 'No dataset description'}
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
               </Box>
+
               <Box sx={{ mb: 3 }}>
-                <Card {...share}>
-                  <Box>
-                    <CardHeader title="Share Object Comments" />
-                    <Divider />
-                  </Box>
-                  <CardContent>
-                    <Box sx={{ mt: 3 }}>
-                      <Typography color="textSecondary" variant="subtitle2">
-                        Request Purpose
-                        {(share.userRoleForShareObject === 'Requesters' ||
-                          share.userRoleForShareObject ===
-                            'ApproversAndRequesters') && (
-                          <UpdateRequestReason
-                            share={share}
-                            client={client}
-                            dispatch={dispatch}
-                            enqueueSnackbar={enqueueSnackbar}
-                            fetchItem={fetchItem}
-                          />
-                        )}
-                      </Typography>
-                      <Box sx={{ mt: 1 }}>
-                        <Typography
-                          color="textPrimary"
-                          variant="subtitle2"
-                          sx={{ wordBreak: 'break-word' }}
+                <Card>
+                  <CardHeader
+                    title="Shared Items"
+                    action={
+                      <Box>
+                        <LoadingButton
+                          color="info"
+                          startIcon={<SecurityIcon />}
+                          sx={{ m: 1 }}
+                          onClick={handleVerifyItemModalOpen}
+                          type="button"
+                          variant="outlined"
                         >
-                          {share.requestPurpose || '-'}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Box sx={{ mt: 3 }}>
-                      <Typography color="textSecondary" variant="subtitle2">
-                        Reject Purpose
+                          Verify Item(s) Health Status
+                        </LoadingButton>
                         {(share.userRoleForShareObject === 'Approvers' ||
                           share.userRoleForShareObject ===
                             'ApproversAndRequesters') && (
-                          <UpdateRejectReason
-                            share={share}
-                            client={client}
-                            dispatch={dispatch}
-                            enqueueSnackbar={enqueueSnackbar}
-                            fetchItem={fetchItem}
-                          />
+                          <LoadingButton
+                            color="info"
+                            startIcon={<SecurityIcon />}
+                            sx={{ m: 1 }}
+                            onClick={handleReApplyShareItemModalOpen}
+                            type="button"
+                            variant="outlined"
+                          >
+                            Re-Apply Share
+                          </LoadingButton>
                         )}
-                      </Typography>
-                      <Box sx={{ mt: 1 }}>
-                        <Typography
-                          color="textPrimary"
-                          variant="subtitle2"
-                          sx={{ wordBreak: 'break-word' }}
-                        >
-                          {share.rejectPurpose || '-'}
-                        </Typography>
                       </Box>
+                    }
+                  />
+                  <Divider />
+                  <Scrollbar>
+                    <Box sx={{ minWidth: 600 }}>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Type</TableCell>
+                            <TableCell>Name</TableCell>
+                            <TableCell>Status</TableCell>
+                            <TableCell>Action</TableCell>
+                            <TableCell>Health Status</TableCell>
+                            <TableCell>Health Message</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        {loadingShareItems ? (
+                          <CircularProgress sx={{ mt: 1 }} size={20} />
+                        ) : (
+                          <TableBody>
+                            {sharedItems.nodes.length > 0 ? (
+                              sharedItems.nodes.map((sharedItem) => (
+                                <SharedItem
+                                  key={sharedItem.itemUri}
+                                  item={sharedItem}
+                                  client={client}
+                                  dispatch={dispatch}
+                                  enqueueSnackbar={enqueueSnackbar}
+                                  fetchShareItems={fetchShareItems}
+                                  fetchItem={fetchItem}
+                                />
+                              ))
+                            ) : (
+                              <TableRow>
+                                <TableCell>No items added.</TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        )}
+                      </Table>
+                      {sharedItems.nodes.length > 0 && (
+                        <Pager
+                          mgTop={2}
+                          mgBottom={2}
+                          items={sharedItems}
+                          onChange={handlePageChange}
+                        />
+                      )}
                     </Box>
-                  </CardContent>
+                  </Scrollbar>
                 </Card>
               </Box>
               <Box sx={{ mb: 3 }}>
@@ -999,12 +1175,12 @@ const ShareView = () => {
                           color="textPrimary"
                           variant="subtitle2"
                         >
-                          {` ${share.consumptionData.s3bucketName || '-'}`}
+                          {` ${consumptionData.s3bucketName || '-'}`}
                         </Typography>
                         <Typography color="textPrimary" variant="subtitle2">
                           <CopyToClipboard
                             onCopy={() => copyNotification()}
-                            text={`aws s3 ls s3://${share.consumptionData.s3bucketName}`}
+                            text={`aws s3 ls s3://${consumptionData.s3bucketName}`}
                           >
                             <IconButton>
                               <CopyAllOutlined
@@ -1017,7 +1193,7 @@ const ShareView = () => {
                               />
                             </IconButton>
                           </CopyToClipboard>
-                          {`aws s3 ls s3://${share.consumptionData.s3bucketName}`}
+                          {`aws s3 ls s3://${consumptionData.s3bucketName}`}
                         </Typography>
                       </Box>
                       <Box sx={{ mt: 3 }}>
@@ -1033,12 +1209,12 @@ const ShareView = () => {
                           color="textPrimary"
                           variant="subtitle2"
                         >
-                          {` ${share.consumptionData.s3AccessPointName || '-'}`}
+                          {` ${consumptionData.s3AccessPointName || '-'}`}
                         </Typography>
                         <Typography color="textPrimary" variant="subtitle2">
                           <CopyToClipboard
                             onCopy={() => copyNotification()}
-                            text={`aws s3 ls arn:aws:s3:${share.dataset.region}:${share.dataset.AwsAccountId}:accesspoint/${share.consumptionData.s3AccessPointName}/SHARED_FOLDER/`}
+                            text={`aws s3 ls arn:aws:s3:${share.dataset.region}:${share.dataset.AwsAccountId}:accesspoint/${consumptionData.s3AccessPointName}/SHARED_FOLDER/`}
                           >
                             <IconButton>
                               <CopyAllOutlined
@@ -1051,7 +1227,7 @@ const ShareView = () => {
                               />
                             </IconButton>
                           </CopyToClipboard>
-                          {`aws s3 ls arn:aws:s3:${share.dataset.region}:${share.dataset.AwsAccountId}:accesspoint/${share.consumptionData.s3AccessPointName}/SHARED_FOLDER/`}
+                          {`aws s3 ls arn:aws:s3:${share.dataset.region}:${share.dataset.AwsAccountId}:accesspoint/${consumptionData.s3AccessPointName}/SHARED_FOLDER/`}
                         </Typography>
                       </Box>
                       <Box sx={{ mt: 3 }}>
@@ -1067,14 +1243,12 @@ const ShareView = () => {
                           color="textPrimary"
                           variant="subtitle2"
                         >
-                          {` ${
-                            share.consumptionData.sharedGlueDatabase || '-'
-                          }`}
+                          {` ${consumptionData.sharedGlueDatabase || '-'}`}
                         </Typography>
                         <Typography color="textPrimary" variant="subtitle2">
                           <CopyToClipboard
                             onCopy={() => copyNotification()}
-                            text={`SELECT * FROM ${share.consumptionData.sharedGlueDatabase}.TABLENAME`}
+                            text={`SELECT * FROM ${consumptionData.sharedGlueDatabase}.TABLENAME`}
                           >
                             <IconButton>
                               <CopyAllOutlined
@@ -1087,113 +1261,13 @@ const ShareView = () => {
                               />
                             </IconButton>
                           </CopyToClipboard>
-                          {`SELECT * FROM ${share.consumptionData.sharedGlueDatabase}.TABLENAME`}
+                          {`SELECT * FROM ${consumptionData.sharedGlueDatabase}.TABLENAME`}
                         </Typography>
                       </Box>
                     </Box>
                   </CardContent>
                 </Card>
               </Box>
-              <Card>
-                <CardHeader
-                  title="Shared Items"
-                  action={
-                    <Box>
-                      <LoadingButton
-                        color="primary"
-                        onClick={handleAddItemModalOpen}
-                        startIcon={<PlusIcon fontSize="small" />}
-                        sx={{ m: 1 }}
-                        variant="outlined"
-                      >
-                        Add Item
-                      </LoadingButton>
-                      <LoadingButton
-                        color="error"
-                        startIcon={<RemoveCircleOutlineOutlined />}
-                        sx={{ m: 1 }}
-                        onClick={handleRevokeItemModalOpen}
-                        type="button"
-                        variant="outlined"
-                      >
-                        Revoke Items
-                      </LoadingButton>
-                      <LoadingButton
-                        color="info"
-                        startIcon={<SecurityIcon />}
-                        sx={{ m: 1 }}
-                        onClick={handleVerifyItemModalOpen}
-                        type="button"
-                        variant="outlined"
-                      >
-                        Verify Item(s) Health Status
-                      </LoadingButton>
-                      {(share.userRoleForShareObject === 'Approvers' ||
-                        share.userRoleForShareObject ===
-                          'ApproversAndRequesters') && (
-                        <LoadingButton
-                          color="info"
-                          startIcon={<SecurityIcon />}
-                          sx={{ m: 1 }}
-                          onClick={handleReApplyShareItemModalOpen}
-                          type="button"
-                          variant="outlined"
-                        >
-                          Re-Apply Share
-                        </LoadingButton>
-                      )}
-                    </Box>
-                  }
-                />
-                <Divider />
-                <Scrollbar>
-                  <Box sx={{ minWidth: 600 }}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Type</TableCell>
-                          <TableCell>Name</TableCell>
-                          <TableCell>Status</TableCell>
-                          <TableCell>Action</TableCell>
-                          <TableCell>Health Status</TableCell>
-                          <TableCell>Health Message</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      {loadingShareItems ? (
-                        <CircularProgress sx={{ mt: 1 }} size={20} />
-                      ) : (
-                        <TableBody>
-                          {sharedItems.nodes.length > 0 ? (
-                            sharedItems.nodes.map((sharedItem) => (
-                              <SharedItem
-                                key={sharedItem.itemUri}
-                                item={sharedItem}
-                                client={client}
-                                dispatch={dispatch}
-                                enqueueSnackbar={enqueueSnackbar}
-                                fetchShareItems={fetchShareItems}
-                                fetchItem={fetchItem}
-                              />
-                            ))
-                          ) : (
-                            <TableRow>
-                              <TableCell>No items added.</TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      )}
-                    </Table>
-                    {sharedItems.nodes.length > 0 && (
-                      <Pager
-                        mgTop={2}
-                        mgBottom={2}
-                        items={sharedItems}
-                        onChange={handlePageChange}
-                      />
-                    )}
-                  </Box>
-                </Scrollbar>
-              </Card>
             </Box>
           )}
         </Container>

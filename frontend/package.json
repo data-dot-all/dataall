@@ -27,8 +27,9 @@
     "@mui/lab": "^5.0.0-alpha.74",
     "@mui/material": "^5.5.2",
     "@mui/styles": "^5.5.1",
-    "@mui/x-data-grid": "^5.7.0",
+    "@mui/x-data-grid": "^5.17.26",
     "@mui/x-date-pickers": "^5.0.0",
+    "@mui/x-tree-view": "^6.17.0",
     "@reduxjs/toolkit": "^1.8.0",
     "@testing-library/jest-dom": "^5.16.2",
     "@testing-library/react": "^12.1.4",
@@ -41,6 +42,7 @@
     "classnames": "^2.3.1",
     "date-fns": "^2.28.0",
     "dayjs": "^1.11.0",
+    "dompurify": "^3.0.6",
     "formik": "^2.2.9",
     "graphql-tag": "^2.12.6",
     "json5": "^2.2.2",
@@ -63,13 +65,16 @@
     "react-router": "6.0.0",
     "react-router-dom": "6.0.0",
     "react-scripts": "^5.0.1",
-    "dompurify": "^3.0.6",
     "simplebar": "^5.3.6",
     "simplebar-react": "^2.3.6",
     "web-vitals": "^2.1.4",
-    "yup": "^0.32.11"
+    "yup": "^0.32.11",
+    "braces": "3.0.3"
   },
   "overrides": {
+    "aws-amplify": {
+      "ws": "^6.2.3"
+    },
     "@appbaseio/reactivesearch": {
       "react-redux": "^7.2.6"
     },
@@ -78,7 +83,10 @@
     "merge": "2.1.1",
     "@babel/traverse": "7.23.2",
     "react-scripts": {
-      "resolve-url-loader": "5.0.0"
+      "resolve-url-loader": "5.0.0",
+      "webpack-dev-server": {
+        "ws": "^6.2.3"
+      }
     },
     "postcss": "8.4.31",
     "ip": "1.1.9",
@@ -99,13 +107,14 @@
     "follow-redirects": "1.15.6",
     "webpack-dev-middleware": "5.3.4",
     "express": "4.19.2",
-    "ejs": "3.1.10"
+    "ejs": "3.1.10",
+    "ws": "^8.17.1"
   },
   "devDependencies": {
     "env-cmd": "^10.1.0",
     "eslint-config-prettier": "^8.8.0",
-    "eslint-plugin-import": "^2.27.5",
     "eslint-import-resolver-alias": "^1.1.2",
+    "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-prettier": "^4.2.1",
     "prettier": "2.8.7",
     "watch": "^1.0.2"

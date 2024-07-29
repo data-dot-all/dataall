@@ -13,6 +13,7 @@ from dataall.base.utils import Parameter
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.base.db.exceptions import AWSResourceNotFound
+from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.permissions.services.environment_permissions import (
     ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
     CREDENTIALS_ENVIRONMENT,
@@ -85,6 +86,7 @@ class EnvironmentRequestValidationService:
             raise exceptions.RequiredParameter('region')
         EnvironmentRequestValidationService.validate_resource_prefix(data)
         EnvironmentRequestValidationService.validate_account_region(data, session)
+        EnvironmentRequestValidationService.validate_org_group(data['organizationUri'], data['SamlGroupName'], session)
 
     @staticmethod
     def validate_resource_prefix(data):
@@ -121,6 +123,14 @@ class EnvironmentRequestValidationService:
             raise exceptions.RequiredParameter('groupUri')
         if not data.get('IAMRoleArn'):
             raise exceptions.RequiredParameter('IAMRoleArn')
+
+    @staticmethod
+    def validate_org_group(org_uri, group, session):
+        if OrganizationRepository.find_group_membership(session, [group], org_uri) is None:
+            raise Exception(
+                f'Group {group} is not a member of the organization {org_uri}. '
+                f'Invite this group to the organisation before giving it access to the environment.'
+            )
 
 
 class EnvironmentService:
@@ -352,6 +362,8 @@ class EnvironmentService:
             EnvironmentService.validate_permissions(session, uri, data['permissions'], group)
 
             environment = EnvironmentService.get_environment_by_uri(session, uri)
+
+            EnvironmentRequestValidationService.validate_org_group(environment.organizationUri, group, session)
 
             group_membership = EnvironmentService.find_environment_group(session, group, environment.environmentUri)
             if group_membership:
@@ -856,13 +868,19 @@ class EnvironmentService:
                     f'related objects before proceeding',
                 )
             else:
-                PolicyManager(
-                    role_name=environment.EnvironmentDefaultIAMRoleName,
-                    environmentUri=environment.environmentUri,
-                    account=environment.AwsAccountId,
-                    region=environment.region,
-                    resource_prefix=environment.resourcePrefix,
-                ).delete_all_policies()
+                if StackRepository.find_stack_by_target_uri(session, environment.environmentUri) not in [
+                    StackStatus.ROLLBACK_COMPLETE.value,
+                    StackStatus.ROLLBACK_IN_PROGRESS.value,
+                    StackStatus.CREATE_FAILED.value,
+                    StackStatus.DELETE_COMPLETE.value,
+                ]:
+                    PolicyManager(
+                        role_name=environment.EnvironmentDefaultIAMRoleName,
+                        environmentUri=environment.environmentUri,
+                        account=environment.AwsAccountId,
+                        region=environment.region,
+                        resource_prefix=environment.resourcePrefix,
+                    ).delete_all_policies()
 
                 KeyValueTagRepository.delete_key_value_tags(session, environment.environmentUri, 'environment')
                 EnvironmentResourceManager.delete_env(session, environment)
@@ -984,7 +1002,9 @@ class EnvironmentService:
                     message=f'User: {username} is not member of the environment admins team {environment.SamlGroupName}',
                 )
         else:
-            env_group = EnvironmentService.get_environment_group(session, environment.environmentUri, groupUri)
+            env_group = EnvironmentService.get_environment_group(
+                session, group_uri=groupUri, environment_uri=environment.environmentUri
+            )
             if not env_group:
                 raise exceptions.UnauthorizedOperation(
                     action='ENVIRONMENT_AWS_ACCESS',
@@ -1115,3 +1135,15 @@ class EnvironmentService:
                 )
 
             return S3_client.get_presigned_url(region, resource_bucket, template_key)
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(environment_permissions.GET_ENVIRONMENT)
+    def resolve_consumption_role_policies(uri, IAMRoleName):
+        environment = EnvironmentService.find_environment_by_uri(uri=uri)
+        return PolicyManager(
+            role_name=IAMRoleName,
+            environmentUri=uri,
+            account=environment.AwsAccountId,
+            region=environment.region,
+            resource_prefix=environment.resourcePrefix,
+        ).get_all_policies()

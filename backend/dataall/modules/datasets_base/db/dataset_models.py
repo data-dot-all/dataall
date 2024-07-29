@@ -2,7 +2,7 @@ from sqlalchemy import Boolean, Column, String, Enum, ForeignKey
 from sqlalchemy.dialects.postgresql import JSON, ARRAY
 from sqlalchemy.orm import query_expression
 from dataall.base.db import Base, Resource, utils
-from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification, Language, DatasetType
+from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification, Language, DatasetTypes
 
 
 class DatasetBase(Resource, Base):
@@ -29,7 +29,7 @@ class DatasetBase(Resource, Base):
     SamlAdminGroupName = Column(String, nullable=True)
     autoApprovalEnabled = Column(Boolean, default=False)
 
-    datasetType = Column(Enum(DatasetType), nullable=False, default=DatasetType.S3)
+    datasetType = Column(Enum(DatasetTypes), nullable=False, default=DatasetTypes.S3)
     imported = Column(Boolean, default=False)
 
     __mapper_args__ = {'polymorphic_identity': 'dataset', 'polymorphic_on': datasetType}
@@ -40,15 +40,3 @@ class DatasetBase(Resource, Base):
 
 
 DatasetBase.__name__ = 'Dataset'
-
-
-class DatasetLock(Base):
-    __tablename__ = 'dataset_lock'
-    datasetUri = Column(String, ForeignKey('dataset.datasetUri'), nullable=False, primary_key=True)
-    isLocked = Column(Boolean, default=False)
-    acquiredBy = Column(String, nullable=True)
-
-    def __init__(self, datasetUri, isLocked=False, acquiredBy=None):
-        self.datasetUri = datasetUri
-        self.isLocked = isLocked
-        self.acquiredBy = acquiredBy

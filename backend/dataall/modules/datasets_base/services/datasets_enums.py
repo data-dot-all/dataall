@@ -5,7 +5,7 @@ from dataall.base.db.exceptions import InvalidInput
 custom_confidentiality_mapping = config.get_property('modules.s3_datasets.features.custom_confidentiality_mapping', {})
 
 
-class DatasetType(GraphQLEnumMapper):
+class DatasetTypes(GraphQLEnumMapper):
     S3 = 'S3'
 
 
@@ -40,7 +40,7 @@ class ConfidentialityClassification(GraphQLEnumMapper):
 
     @staticmethod
     def validate_confidentiality_level(confidentiality):
-        if config.get_property('modules.s3_datasets.features.confidentiality_dropdown', False):
+        if config.get_property('modules.datasets_base.features.confidentiality_dropdown', False):
             confidentiality = ConfidentialityClassification.get_confidentiality_level(confidentiality)
             if confidentiality not in [item.value for item in list(ConfidentialityClassification)]:
                 raise InvalidInput(

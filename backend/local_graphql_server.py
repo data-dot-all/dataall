@@ -5,6 +5,7 @@ from ariadne import graphql_sync
 from ariadne.constants import PLAYGROUND_HTML
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from graphql import parse
 
 from dataall.base.api import get_executable_schema
 from dataall.core.tasks.service_handlers import Worker
@@ -30,7 +31,7 @@ engine = get_engine(envname=ENVNAME)
 es = connect(envname=ENVNAME)
 logger.info('Connected')
 # create_schema_and_tables(engine, envname=ENVNAME)
-load_modules(modes={ImportMode.API, ImportMode.HANDLERS})
+load_modules(modes={ImportMode.API, ImportMode.HANDLERS, ImportMode.SHARES_TASK, ImportMode.CATALOG_INDEXER_TASK})
 Base.metadata.create_all(engine.engine)
 CDKPROXY_URL = 'http://cdkproxy:2805' if ENVNAME == 'dkrcompose' else 'http://localhost:2805'
 config.set_property('cdk_proxy_url', CDKPROXY_URL)
@@ -127,6 +128,20 @@ def graphql_server():
     logger.debug(request.data)
     data = request.get_json()
     print('*** Request ***', request.data)
+    logger.info(data)
+
+    # Extract the GraphQL query string from the 'query' key in the data dictionary
+    query_string = data.get('query')
+
+    if not query_string:
+        return jsonify({'error': 'GraphQL query not provided'}), 400
+    try:
+        query = parse(query_string)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+    print('*****    Printing Query      ****** \n\n')
+    print(query)
 
     context = request_context(request.headers, mock=True)
     logger.debug(context)

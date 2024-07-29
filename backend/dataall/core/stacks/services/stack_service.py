@@ -46,7 +46,7 @@ class StackRequestVerifier:
 
 class StackService:
     @staticmethod
-    def get_stack_with_cfn_resources(targetUri: str, environmentUri: str):
+    def resolve_parent_obj_stack(targetUri: str, environmentUri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             env: Environment = EnvironmentRepository.get_environment_by_uri(session, environmentUri)
@@ -141,15 +141,19 @@ class StackService:
         return True
 
     @staticmethod
-    def get_stack_by_uri(stack_uri):
-        with get_context().db_engine.scoped_session() as session:
-            return StackRepository.get_stack_by_uri(session, stack_uri)
-
-    @staticmethod
-    def get_and_describe_stack_in_env(env: Environment, stack_uri):
+    def get_and_describe_stack_in_env(env: Environment, stack_uri, target_uri, target_type):
         StackRequestVerifier.verify_get_and_describe_params(env.environmentUri, stack_uri)
-        stack: Stack = StackService.get_stack_by_uri(stack_uri)
-        with get_context().db_engine.scoped_session() as session:
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            ResourcePolicyService.check_user_resource_permission(
+                session=session,
+                username=context.username,
+                groups=context.groups,
+                resource_uri=target_uri,
+                permission_name=TargetType.get_resource_read_permission_name(target_type),
+            )
+            stack: Stack = StackRepository.get_stack_by_uri(session, stack_uri)
+
             cfn_task = StackService.save_describe_stack_task(session, env, stack, None)
             CloudFormation.describe_stack_resources(engine=get_context().db_engine, task=cfn_task)
         return stack

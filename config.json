@@ -9,22 +9,21 @@
         "datapipelines": {
             "active": true
         },
-        "s3_datasets": {
+        "omics": {
+            "active": false
+        },
+        "datasets_base": {
             "active": true,
             "features": {
-                "file_uploads": true,
-                "file_actions": true,
-                "aws_actions": true,
                 "share_notifications": {
                     "email": {
                         "active": false,
+                        "persistent_reminders": false,
                         "parameters": {
                             "group_notifications": true
                         }
                     }
                 },
-                "preview_data": true,
-                "glue_crawler": true,
                 "confidentiality_dropdown" : true,
                 "topics_dropdown" : true,
                 "auto_approval_for_confidentiality_level" : {
@@ -32,6 +31,16 @@
                     "Official" : true,
                     "Secret" : true
                 }
+            }
+        },
+        "s3_datasets": {
+            "active": true,
+            "features": {
+                "file_uploads": true,
+                "file_actions": true,
+                "aws_actions": true,
+                "preview_data": true,
+                "glue_crawler": true
             }
         },
         "s3_datasets_shares": {
@@ -42,12 +51,16 @@
         },
         "dashboards": {
             "active": true
+        },
+        "maintenance": {
+            "active" : true
         }
     },
     "core": {
         "features": {
             "env_aws_actions": true,
-            "cdk_pivot_role_multiple_environments_same_account": false
+            "cdk_pivot_role_multiple_environments_same_account": false,
+            "enable_quicksight_monitoring": false
         }
     }
 }

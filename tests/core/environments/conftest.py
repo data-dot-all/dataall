@@ -9,7 +9,7 @@ def consumption_role(mock_aws_client, client, org_fixture, env_fixture, user, gr
     mock_aws_client.get_role.return_value = {'Role': {'Arn': test_arn}}
     query = """
         mutation addConsumptionRoleToEnvironment(
-            $input:AddConsumptionRoleToEnvironmentInput
+            $input:AddConsumptionRoleToEnvironmentInput!
         ){
             addConsumptionRoleToEnvironment(
                 input:$input

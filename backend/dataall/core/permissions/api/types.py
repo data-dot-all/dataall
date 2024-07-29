@@ -16,6 +16,14 @@ Permission = gql.ObjectType(
     ],
 )
 
+DescribedPermission = gql.ObjectType(
+    name='DescribedPermission',
+    fields=[
+        gql.Field(name='name', type=gql.NonNullableType(gql.String)),
+        gql.Field(name='description', type=gql.NonNullableType(gql.String)),
+    ],
+)
+
 
 PermissionSearchResult = gql.ObjectType(
     name='PermissionSearchResult',
