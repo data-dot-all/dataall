@@ -54,7 +54,7 @@ function MetadataFormsListPageHeader() {
       )}
       <Grid item>
         <Typography color="textPrimary" variant="h5">
-          Metedata Forms
+          Metadata Forms
         </Typography>
         <Breadcrumbs
           aria-label="breadcrumb"

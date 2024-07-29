@@ -14,19 +14,75 @@ import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { listValidEnvironments, useClient } from 'services';
+import {
+  getEnumByName,
+  listGroups,
+  listValidEnvironments,
+  useClient
+} from 'services';
 import Autocomplete from '@mui/lab/Autocomplete';
+import { listOrganizations } from '../../Organizations/services';
 
 export const CreateMetadataFormModal = (props) => {
   const { onApply, onClose, open, stopLoader, ...other } = props;
   const dispatch = useDispatch();
   const client = useClient();
-  const [loadingEnvs, setLoadingEnvs] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
+  const [organizationOptions, setOrganizationOptions] = useState([]);
   const [visibilityOptions, setVisibilityOptions] = useState([]);
 
+  const fetchGroups = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await client.query(listGroups({ filter: {} }));
+      if (!response.errors) {
+        setGroupOptions(
+          response.data.listGroups.map((e) => ({
+            ...e,
+            value: e.groupName,
+            label: e.groupName
+          }))
+        );
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    } finally {
+      setLoading(false);
+      stopLoader();
+    }
+  }, [client, dispatch]);
+  const fetchOrganizations = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await client.query(
+        listOrganizations({
+          filter: Defaults.selectListFilter
+        })
+      );
+      if (!response.errors) {
+        setOrganizationOptions(
+          response.data.listOrganizations.nodes.map((e) => ({
+            ...e,
+            value: e.organizationUri,
+            label: e.label
+          }))
+        );
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    } finally {
+      setLoading(false);
+      stopLoader();
+    }
+  }, [client, dispatch]);
   const fetchEnvironments = useCallback(async () => {
-    setLoadingEnvs(true);
+    setLoading(true);
     try {
       const response = await client.query(
         listValidEnvironments({
@@ -47,13 +103,27 @@ export const CreateMetadataFormModal = (props) => {
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
     } finally {
-      setLoadingEnvs(false);
+      setLoading(false);
       stopLoader();
     }
   }, [client, dispatch]);
 
   const fetchVisibilityOptions = useCallback(async () => {
-    setVisibilityOptions([{ name: 'Test', description: 'Also Test' }]);
+    try {
+      const response = await client.query(
+        getEnumByName({ enum_name: 'MetadataFormVisibility' })
+      );
+      if (!response.errors && response.data.MetadataFormVisibility != null) {
+        setVisibilityOptions(response.data.MetadataFormVisibility);
+      } else {
+        const error = response.errors
+          ? response.errors[0].message
+          : 'Could not fetch visibility options';
+        dispatch({ type: SET_ERROR, error });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    }
   }, [client, dispatch]);
 
   useEffect(() => {
@@ -62,6 +132,12 @@ export const CreateMetadataFormModal = (props) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
       fetchVisibilityOptions().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+      fetchOrganizations().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+      fetchGroups().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
@@ -78,7 +154,7 @@ export const CreateMetadataFormModal = (props) => {
     }
   }
 
-  if (loadingEnvs) {
+  if (loading) {
     return null;
   }
 
@@ -147,14 +223,34 @@ export const CreateMetadataFormModal = (props) => {
                   <Autocomplete
                     id="visibility"
                     disablePortal
-                    options={visibilityOptions.map(
-                      (option) => option.description
-                    )}
+                    options={visibilityOptions.map((option) => option.value)}
                     renderInput={(params) => (
                       <TextField
                         {...params}
                         fullWidth
                         label="Visibility"
+                        onChange={handleChange}
+                        variant="outlined"
+                      />
+                    )}
+                  />
+                </CardContent>
+                <CardContent>
+                  <Autocomplete
+                    id="organization"
+                    disablePortal
+                    options={organizationOptions.map((option) => option)}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        fullWidth
+                        error={Boolean(
+                          touched.organizationUri && errors.organizationUri
+                        )}
+                        helperText={
+                          touched.organizationUri && errors.organizationUri
+                        }
+                        label="Organization"
                         onChange={handleChange}
                         variant="outlined"
                       />
@@ -177,6 +273,24 @@ export const CreateMetadataFormModal = (props) => {
                           touched.environmentUri && errors.environmentUri
                         }
                         label="Environment"
+                        onChange={handleChange}
+                        variant="outlined"
+                      />
+                    )}
+                  />
+                </CardContent>
+                <CardContent>
+                  <Autocomplete
+                    id="group"
+                    disablePortal
+                    options={groupOptions.map((option) => option)}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        fullWidth
+                        error={Boolean(touched.groupName && errors.groupName)}
+                        helperText={touched.groupName && errors.groupName}
+                        label="Team"
                         onChange={handleChange}
                         variant="outlined"
                       />
