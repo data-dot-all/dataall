@@ -7,20 +7,20 @@ import {
   CircularProgress,
   Dialog,
   TextField,
-  Typography
+  Typography,
+  Autocomplete
 } from '@mui/material';
 import { Formik } from 'formik';
 import PropTypes from 'prop-types';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
-  getEnumByName,
+  fetchEnum,
   listGroups,
   listValidEnvironments,
   useClient
 } from 'services';
-import Autocomplete from '@mui/lab/Autocomplete';
 import { listOrganizations } from '../../Organizations/services';
 
 export const CreateMetadataFormModal = (props) => {
@@ -32,8 +32,9 @@ export const CreateMetadataFormModal = (props) => {
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [organizationOptions, setOrganizationOptions] = useState([]);
   const [visibilityOptions, setVisibilityOptions] = useState([]);
+  const [visibilityDict, setVisibilityDict] = useState({});
 
-  const fetchGroups = useCallback(async () => {
+  const fetchGroups = async () => {
     setLoading(true);
     try {
       const response = await client.query(listGroups({ filter: {} }));
@@ -54,8 +55,8 @@ export const CreateMetadataFormModal = (props) => {
       setLoading(false);
       stopLoader();
     }
-  }, [client, dispatch]);
-  const fetchOrganizations = useCallback(async () => {
+  };
+  const fetchOrganizations = async () => {
     setLoading(true);
     try {
       const response = await client.query(
@@ -80,8 +81,8 @@ export const CreateMetadataFormModal = (props) => {
       setLoading(false);
       stopLoader();
     }
-  }, [client, dispatch]);
-  const fetchEnvironments = useCallback(async () => {
+  };
+  const fetchEnvironments = async () => {
     setLoading(true);
     try {
       const response = await client.query(
@@ -106,25 +107,29 @@ export const CreateMetadataFormModal = (props) => {
       setLoading(false);
       stopLoader();
     }
-  }, [client, dispatch]);
-
-  const fetchVisibilityOptions = useCallback(async () => {
+  };
+  const fetchVisibilityOptions = async () => {
     try {
-      const response = await client.query(
-        getEnumByName({ enum_name: 'MetadataFormVisibility' })
+      const enumVisibilityOptions = await fetchEnum(
+        client,
+        'MetadataFormVisibility'
       );
-      if (!response.errors && response.data.MetadataFormVisibility != null) {
-        setVisibilityOptions(response.data.MetadataFormVisibility);
+      if (enumVisibilityOptions.length > 0) {
+        setVisibilityOptions(enumVisibilityOptions);
+        setVisibilityDict(
+          Object.assign(
+            {},
+            ...enumVisibilityOptions.map((x) => ({ [x.name]: x.value }))
+          )
+        );
       } else {
-        const error = response.errors
-          ? response.errors[0].message
-          : 'Could not fetch visibility options';
+        const error = 'Could not fetch visibility options';
         dispatch({ type: SET_ERROR, error });
       }
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
     }
-  }, [client, dispatch]);
+  };
 
   useEffect(() => {
     if (client && open) {
@@ -141,7 +146,7 @@ export const CreateMetadataFormModal = (props) => {
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, open, fetchEnvironments, dispatch]);
+  }, [client, open, dispatch]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
@@ -196,6 +201,7 @@ export const CreateMetadataFormModal = (props) => {
                     label="Form name"
                     name="name"
                     value={values.name}
+                    onChange={handleChange}
                     variant="outlined"
                   />
                 </CardContent>
@@ -213,6 +219,7 @@ export const CreateMetadataFormModal = (props) => {
                     } characters left`}
                     label="Description"
                     name="description"
+                    onChange={handleChange}
                     multiline
                     rows={3}
                     value={values.description}
@@ -223,7 +230,11 @@ export const CreateMetadataFormModal = (props) => {
                   <Autocomplete
                     id="visibility"
                     disablePortal
+                    value={values.visibility}
                     options={visibilityOptions.map((option) => option.value)}
+                    onChange={(event, value) => {
+                      setFieldValue('visibility', value);
+                    }}
                     renderInput={(params) => (
                       <TextField
                         {...params}
@@ -235,10 +246,19 @@ export const CreateMetadataFormModal = (props) => {
                     )}
                   />
                 </CardContent>
+                {'Is org = ' +
+                  (values.visibility === visibilityDict['Organization'])}
+                {values.organization}
                 <CardContent>
                   <Autocomplete
                     id="organization"
                     disablePortal
+                    visibility={
+                      values.visibility === visibilityDict['Organization']
+                    }
+                    onChange={(event, value) => {
+                      setFieldValue('organization', value.value);
+                    }}
                     options={organizationOptions.map((option) => option)}
                     renderInput={(params) => (
                       <TextField
