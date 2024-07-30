@@ -29,6 +29,7 @@
     "@mui/styles": "^5.5.1",
     "@mui/x-data-grid": "^5.17.26",
     "@mui/x-date-pickers": "^5.0.0",
+    "@mui/x-tree-view": "^6.17.0",
     "@reduxjs/toolkit": "^1.8.0",
     "@testing-library/jest-dom": "^5.16.2",
     "@testing-library/react": "^12.1.4",
@@ -92,7 +93,8 @@
     "follow-redirects": "1.15.6",
     "webpack-dev-middleware": "5.3.4",
     "express": "4.19.2",
-    "ejs": "3.1.10"
+    "ejs": "3.1.10",
+    "fast-xml-parser": "4.4.1"
   },
   "resolutions": {
     "react-redux": "^7.2.6",
@@ -107,7 +109,8 @@
     "webpack-dev-middleware": "5.3.4",
     "express": "4.19.2",
     "ejs": "3.1.10",
-    "ws": "^8.17.1"
+    "ws": "^8.17.1",
+    "fast-xml-parser": "4.4.1"
   },
   "devDependencies": {
     "env-cmd": "^10.1.0",
