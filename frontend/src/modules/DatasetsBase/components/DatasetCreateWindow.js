@@ -25,21 +25,18 @@ export const DatasetCreateWindow = (props) => {
   return (
     <Dialog maxWidth="md" fullWidth onClose={onClose} open={open} {...other}>
       <Box sx={{ m: 4 }}>
-        <Grid
-          container
-          spacing={2}
-          alignItems="flex-start"
-          justifyContent="center"
-        >
+        <Grid container spacing={2}>
           {isModuleEnabled(ModuleNames.S3_DATASETS) && (
             <Grid
               item
-              justifyContent="center"
               md={width_grid_item}
               lg={width_grid_item}
               xl={width_grid_item}
             >
-              <Card>
+              <Card
+                style={{ display: 'flex', flexDirection: 'column' }}
+                sx={{ width: 1, height: '100%' }}
+              >
                 <CardHeader title="Create S3-Glue Dataset" />
                 <CardContent>
                   <Typography
@@ -50,11 +47,12 @@ export const DatasetCreateWindow = (props) => {
                     Data.all will create an S3 Bucket encrypted with KMS key and
                     a Glue database.
                   </Typography>
+                </CardContent>
+                <CardContent style={{ marginTop: 'auto' }}>
                   <Button
                     color="primary"
                     component={RouterLink}
                     startIcon={<PlusIcon fontSize="small" />}
-                    sx={{ m: 1 }}
                     to="/console/s3-datasets/new"
                     variant="contained"
                   >
@@ -67,12 +65,14 @@ export const DatasetCreateWindow = (props) => {
           {isModuleEnabled(ModuleNames.S3_DATASETS) && (
             <Grid
               item
-              justifyContent="center"
               md={width_grid_item}
               lg={width_grid_item}
               xl={width_grid_item}
             >
-              <Card>
+              <Card
+                style={{ display: 'flex', flexDirection: 'column' }}
+                sx={{ width: 1, height: '100%' }}
+              >
                 <CardHeader title="Import S3-Glue Dataset" />
                 <CardContent>
                   <Typography
@@ -83,11 +83,12 @@ export const DatasetCreateWindow = (props) => {
                     Data.all will use the S3 Bucket as it is encrypted and will
                     create a Glue database if you do not provide one.
                   </Typography>
+                </CardContent>
+                <CardContent style={{ marginTop: 'auto' }}>
                   <Button
                     color="primary"
                     component={RouterLink}
                     startIcon={<CloudDownloadOutlined fontSize="small" />}
-                    sx={{ m: 1 }}
                     to="/console/s3-datasets/import"
                     variant="outlined"
                   >
@@ -100,12 +101,14 @@ export const DatasetCreateWindow = (props) => {
           {isModuleEnabled(ModuleNames.REDSHIFT_DATASETS) && (
             <Grid
               item
-              justifyContent="center"
               md={width_grid_item}
               lg={width_grid_item}
               xl={width_grid_item}
             >
-              <Card>
+              <Card
+                style={{ display: 'flex', flexDirection: 'column' }}
+                sx={{ width: 1, height: '100%' }}
+              >
                 <CardHeader title="Import Redshift Dataset" />
                 <CardContent>
                   <Typography
@@ -116,11 +119,12 @@ export const DatasetCreateWindow = (props) => {
                     Data.all will use a data.all Connection to import an
                     existing Redshift database.
                   </Typography>
+                </CardContent>
+                <CardContent style={{ marginTop: 'auto' }}>
                   <Button
                     color="primary"
                     component={RouterLink}
                     startIcon={<CloudDownloadOutlined fontSize="small" />}
-                    sx={{ m: 1 }}
                     to="/console/redshift-datasets/import"
                     variant="outlined"
                   >

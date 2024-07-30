@@ -177,7 +177,7 @@ export const DatasetListItem = (props) => {
             py: 0.5
           }}
         >
-          {dataset.stack && (
+          {dataset.stack && dataset.stack.status && (
             <Grid container>
               <Grid item md={4} xs={12}>
                 <Typography color="textSecondary" variant="body2">

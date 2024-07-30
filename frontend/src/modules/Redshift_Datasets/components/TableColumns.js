@@ -1,4 +1,4 @@
-import { Box, Card, CircularProgress, Dialog, Typography } from '@mui/material';
+import { Box, Card, CircularProgress } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import * as PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -53,26 +53,16 @@ export const TableColumns = (props) => {
   };
 
   if (loading) {
-    return (
-      <Dialog>
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-          <Typography color="textPrimary" variant="subtitle2">
-            Loading table schema
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-          <CircularProgress />
-        </Box>
-      </Dialog>
-    );
+    return <CircularProgress />;
   }
+
   if (!table || !items) {
     return null;
   }
 
   return (
     <Box>
-      <Card sx={{ height: 800, width: '100%' }}>
+      <Card sx={{ width: '100%' }}>
         <Scrollbar>
           <Box sx={{ minWidth: 600 }}>
             <DataGrid
@@ -130,6 +120,9 @@ export const TableColumns = (props) => {
                 },
                 '& .MuiDataGrid-columnHeaders': {
                   borderBottom: 0.5
+                },
+                '&.MuiDataGrid-root--densityStandard .MuiDataGrid-cell': {
+                  py: '15px'
                 }
               }}
             />
