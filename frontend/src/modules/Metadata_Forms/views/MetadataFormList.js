@@ -20,12 +20,13 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { useClient } from 'services';
+import { fetchEnums, useClient } from 'services';
 import { listMetadataForms } from '../services';
 import { MetadataFormListItem } from '../components';
 import { CreateMetadataFormModal } from '../components/createMetadataFormModal';
 
-function MetadataFormsListPageHeader() {
+function MetadataFormsListPageHeader(props) {
+  const { onCreate, visibilityDict } = props;
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isOpeningModal, setIsOpeningModal] = useState(false);
 
@@ -46,9 +47,13 @@ function MetadataFormsListPageHeader() {
     >
       {showCreateModal && (
         <CreateMetadataFormModal
-          onApply={handleCloseModal}
+          onApply={() => {
+            handleCloseModal();
+            onCreate();
+          }}
           onClose={handleCloseModal}
           open={showCreateModal}
+          visibilityDict={visibilityDict}
           stopLoader={() => setIsOpeningModal(false)}
         ></CreateMetadataFormModal>
       )}
@@ -105,6 +110,7 @@ const MetadataFormsList = () => {
   const { settings } = useSettings();
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);
+  const [visibilityDict, setVisibilityDict] = useState({});
 
   const client = useClient();
 
@@ -139,9 +145,35 @@ const MetadataFormsList = () => {
     }
   };
 
+  const fetchVisibilityOptions = async () => {
+    try {
+      const enumVisibilityOptions = await fetchEnums(client, [
+        'MetadataFormVisibility'
+      ]);
+      if (enumVisibilityOptions['MetadataFormVisibility'].length > 0) {
+        setVisibilityDict(
+          Object.assign(
+            {},
+            ...enumVisibilityOptions['MetadataFormVisibility'].map((x) => ({
+              [x.name]: x.value
+            }))
+          )
+        );
+      } else {
+        const error = 'Could not fetch visibility options';
+        dispatch({ type: SET_ERROR, error });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    }
+  };
+
   useEffect(() => {
     if (client) {
       fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+      fetchVisibilityOptions().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
@@ -160,7 +192,10 @@ const MetadataFormsList = () => {
         }}
       >
         <Container maxWidth={settings.compact ? 'xl' : false}>
-          <MetadataFormsListPageHeader />
+          <MetadataFormsListPageHeader
+            onCreate={fetchItems}
+            visibilityDict={visibilityDict}
+          />
           <Box sx={{ mt: 3 }}>
             <SearchInput
               onChange={handleInputChange}
@@ -181,7 +216,10 @@ const MetadataFormsList = () => {
               <Box>
                 <Grid container spacing={3}>
                   {items.nodes.map((node) => (
-                    <MetadataFormListItem metadata_form={node} />
+                    <MetadataFormListItem
+                      metadata_form={node}
+                      visibilityDict={visibilityDict}
+                    />
                   ))}
                 </Grid>
 

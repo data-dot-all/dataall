@@ -30,7 +30,7 @@ class MetadataFormService:
     def create_metadata_form(data):
         MetadataFormParamValidationService.validate_create_form_params(data)
         with get_context().db_engine.scoped_session() as session:
-            form = MetadataFormRepository.create_metadata_form(data)
+            form = MetadataFormRepository.create_metadata_form(session, data)
             return form
 
     # toDo: add permission check

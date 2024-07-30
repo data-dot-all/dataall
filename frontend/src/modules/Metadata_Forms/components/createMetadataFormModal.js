@@ -15,16 +15,13 @@ import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import {
-  fetchOneEnum,
-  listGroups,
-  listValidEnvironments,
-  useClient
-} from 'services';
+import { listGroups, listValidEnvironments, useClient } from 'services';
 import { listOrganizations } from '../../Organizations/services';
+import { createMetadataForm } from '../services';
 
 export const CreateMetadataFormModal = (props) => {
-  const { onApply, onClose, open, stopLoader, ...other } = props;
+  const { visibilityDict, onApply, onClose, open, stopLoader, ...other } =
+    props;
   const dispatch = useDispatch();
   const client = useClient();
   const [loading, setLoading] = useState(false);
@@ -32,7 +29,6 @@ export const CreateMetadataFormModal = (props) => {
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [organizationOptions, setOrganizationOptions] = useState([]);
   const [visibilityOptions, setVisibilityOptions] = useState([]);
-  const [visibilityDict, setVisibilityDict] = useState({});
 
   const fetchGroups = async () => {
     setLoading(true);
@@ -108,35 +104,16 @@ export const CreateMetadataFormModal = (props) => {
       stopLoader();
     }
   };
-  const fetchVisibilityOptions = async () => {
-    try {
-      const enumVisibilityOptions = await fetchOneEnum(
-        client,
-        'MetadataFormVisibility'
-      );
-      if (enumVisibilityOptions.length > 0) {
-        setVisibilityOptions(enumVisibilityOptions);
-        setVisibilityDict(
-          Object.assign(
-            {},
-            ...enumVisibilityOptions.map((x) => ({ [x.name]: x.value }))
-          )
-        );
-      } else {
-        const error = 'Could not fetch visibility options';
-        dispatch({ type: SET_ERROR, error });
-      }
-    } catch (e) {
-      dispatch({ type: SET_ERROR, error: e.message });
-    }
-  };
 
   useEffect(() => {
+    setVisibilityOptions(
+      Object.entries(visibilityDict).map((elem) => {
+        return { name: elem[0], value: elem[1] };
+      })
+    );
+
     if (client && open) {
       fetchEnvironments().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
-      fetchVisibilityOptions().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
       fetchOrganizations().catch((e) =>
@@ -150,6 +127,34 @@ export const CreateMetadataFormModal = (props) => {
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
+      let homeEntity = '';
+      if (values.visibility === visibilityDict.Team) {
+        homeEntity = values.group;
+      }
+      if (values.visibility === visibilityDict.Environment) {
+        homeEntity = values.environment;
+      }
+      if (values.visibility === visibilityDict.Organization) {
+        homeEntity = values.organization;
+      }
+      const response = await client.mutate(
+        createMetadataForm({
+          name: values.name,
+          description: values.description,
+          visibility: values.visibility,
+          SamlGroupName: values.owner,
+          homeEntity: homeEntity
+        })
+      );
+      if (!response.errors) {
+        setStatus({ success: true });
+        setSubmitting(false);
+        onApply();
+      } else {
+        setStatus({ success: false });
+        setErrors({ submit: response.errors[0].message });
+        setSubmitting(false);
+      }
     } catch (err) {
       console.error(err);
       setStatus({ success: false });
@@ -229,6 +234,25 @@ export const CreateMetadataFormModal = (props) => {
                 </CardContent>
                 <CardContent>
                   <Autocomplete
+                    id="owner"
+                    disablePortal
+                    options={groupOptions.map((option) => option)}
+                    onChange={(event, value) => {
+                      setFieldValue('owner', value.value);
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        fullWidth
+                        label="Owner"
+                        onChange={handleChange}
+                        variant="outlined"
+                      />
+                    )}
+                  />
+                </CardContent>
+                <CardContent>
+                  <Autocomplete
                     id="visibility"
                     disablePortal
                     value={values.visibility}
@@ -263,12 +287,6 @@ export const CreateMetadataFormModal = (props) => {
                         <TextField
                           {...params}
                           fullWidth
-                          error={Boolean(
-                            touched.organizationUri && errors.organizationUri
-                          )}
-                          helperText={
-                            touched.organizationUri && errors.organizationUri
-                          }
                           label="Organization"
                           onChange={handleChange}
                           variant="outlined"
@@ -283,16 +301,13 @@ export const CreateMetadataFormModal = (props) => {
                       id="environment"
                       disablePortal
                       options={environmentOptions.map((option) => option)}
+                      onChange={(event, value) => {
+                        setFieldValue('environment', value.value);
+                      }}
                       renderInput={(params) => (
                         <TextField
                           {...params}
                           fullWidth
-                          error={Boolean(
-                            touched.environmentUri && errors.environmentUri
-                          )}
-                          helperText={
-                            touched.environmentUri && errors.environmentUri
-                          }
                           label="Environment"
                           onChange={handleChange}
                           variant="outlined"
@@ -307,12 +322,13 @@ export const CreateMetadataFormModal = (props) => {
                       id="group"
                       disablePortal
                       options={groupOptions.map((option) => option)}
+                      onChange={(event, value) => {
+                        setFieldValue('group', value.value);
+                      }}
                       renderInput={(params) => (
                         <TextField
                           {...params}
                           fullWidth
-                          error={Boolean(touched.groupName && errors.groupName)}
-                          helperText={touched.groupName && errors.groupName}
                           label="Team"
                           onChange={handleChange}
                           variant="outlined"

@@ -8,7 +8,7 @@ MetadataForm = gql.ObjectType(
         gql.Field(name='name', type=gql.String),
         gql.Field(name='description', type=gql.String),
         gql.Field(name='SamlGroupName', type=gql.String),
-        gql.Field(name='visibility', type=MetadataFormVisibility.toGraphQLEnum()),
+        gql.Field(name='visibility', type=gql.String),
         gql.Field(name='homeEntity', type=gql.String),
     ],
 )

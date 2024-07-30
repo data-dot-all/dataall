@@ -4,8 +4,8 @@ export const createMetadataForm = (input) => ({
   variables: {
     input
   },
-  query: gql`
-    query createMetadataForm($input: NewMetadataFormInput) {
+  mutation: gql`
+    mutation createMetadataForm($input: NewMetadataFormInput!) {
       createMetadataForm(input: $input) {
         uri
       }
