@@ -168,6 +168,11 @@ class ShareItemService:
             item_sm = ShareItemSM(share_item.status)
             item_sm.run_transition(ShareItemActions.RemoveItem.value)
             ShareObjectRepository.remove_share_object_item(session, share_item)
+            if share_item.attachedDataFilterUri:
+                share_item_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(
+                    session, share_item.attachedDataFilterUri
+                )
+                ShareObjectItemRepository.delete_share_item_filter(session, share_item_filter)
         return True
 
     @staticmethod
@@ -247,5 +252,11 @@ class ShareItemService:
     )
     def remove_share_item_data_filters(uri: str):
         with get_context().db_engine.scoped_session() as session:
+            share_item = ShareObjectItemRepository.get_share_item_by_item_filter_uri(session, uri)
+            share_item.attachedDataFilterUri = None
+            if share_item.status in ShareStatusRepository.get_share_item_shared_states():
+                raise Exception(
+                    f'Share item in shared state {share_item.status} - can not remove filters, must revoke first...'
+                )
             item_data_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(session, uri)
             return ShareObjectItemRepository.delete_share_item_filter(session, item_data_filter)

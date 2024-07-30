@@ -9,9 +9,6 @@ import {
 import SecurityIcon from '@mui/icons-material/Security';
 import { LoadingButton } from '@mui/lab';
 import {
-  ListItemText,
-  Menu,
-  MenuItem,
   Box,
   Breadcrumbs,
   Button,
@@ -34,7 +31,6 @@ import {
   Tooltip,
   Typography
 } from '@mui/material';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import CircularProgress from '@mui/material/CircularProgress';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { useTheme } from '@mui/styles';
@@ -101,7 +97,6 @@ function ShareViewHeader(props) {
   const [isRejectShareModalOpen, setIsRejectShareModalOpen] = useState(false);
   const [openLogsModal, setOpenLogsModal] = useState(null);
   const anchorRef = useRef(null);
-  const [openMenu, setOpenMenu] = useState(false);
 
   const [isSubmitShareModalOpen, setIsSubmitShareModalOpen] = useState(false);
 
@@ -177,14 +172,6 @@ function ShareViewHeader(props) {
 
   const handleSubmitShareModalClose = () => {
     setIsSubmitShareModalOpen(false);
-  };
-
-  const handleApproveMenuOpen = () => {
-    setOpenMenu(true);
-  };
-
-  const handleApproveMenuClose = () => {
-    setOpenMenu(false);
   };
 
   const accept = async () => {
@@ -313,55 +300,14 @@ function ShareViewHeader(props) {
                         loading={accepting}
                         color="success"
                         startIcon={<CheckCircleOutlined />}
-                        endIcon={<KeyboardArrowDownIcon />}
                         sx={{ m: 1 }}
-                        onClick={handleApproveMenuOpen}
+                        onClick={accept}
                         ref={anchorRef}
                         type="button"
                         variant="outlined"
                       >
                         Approve
                       </LoadingButton>
-                      <Menu
-                        anchorEl={anchorRef.current}
-                        anchorOrigin={{
-                          horizontal: 'left',
-                          vertical: 'top'
-                        }}
-                        onClose={handleApproveMenuClose}
-                        open={openMenu}
-                        PaperProps={{
-                          sx: {
-                            maxWidth: '100%',
-                            width: 256
-                          }
-                        }}
-                        transformOrigin={{
-                          horizontal: 'left',
-                          vertical: 'top'
-                        }}
-                      >
-                        <MenuItem
-                          onClick={() => {
-                            accept();
-                          }}
-                        >
-                          <ListItemText>Approve</ListItemText>
-                        </MenuItem>
-                        {sharedItems.nodes
-                          .map((item) => item.itemType)
-                          .includes('Table') && (
-                          <MenuItem
-                            onClick={() => {
-                              accept();
-                            }}
-                          >
-                            <ListItemText>
-                              Approve w/ Table Filters
-                            </ListItemText>
-                          </MenuItem>
-                        )}
-                      </Menu>
                       <LoadingButton
                         loading={rejecting}
                         color="error"
@@ -563,9 +509,18 @@ export function SharedItem(props) {
           <CircularProgress size={15} />
         ) : (
           <>
-            {item.dataFilterNames &&
-              item.dataFilterNames.length > 0 &&
-              item.dataFilterNames.map((dfilter) => (
+            <Typography
+              sx={{
+                fontSize: 'medium',
+                fontStyle: 'italic',
+                fontWeight: 'bold'
+              }}
+            >
+              {itemDataFilter?.label}
+            </Typography>
+            {itemDataFilter?.dataFilterNames &&
+              itemDataFilter?.dataFilterNames.length > 0 &&
+              itemDataFilter?.dataFilterNames.map((dfilter) => (
                 <Chip
                   sx={{ mr: 0.5, mb: 0.5 }}
                   key={dfilter}
@@ -624,6 +579,7 @@ export function SharedItem(props) {
             {isFilterModalOpenUri === item.shareItemUri && (
               <ShareItemFilterModal
                 item={item}
+                shareUri={share.shareUri}
                 itemDataFilter={itemDataFilter}
                 onApply={() => handleFilterModalClose()}
                 onClose={() => handleFilterModalClose()}

@@ -6,12 +6,13 @@ import {
   Dialog,
   FormHelperText,
   Typography,
-  TextField
+  TextField,
+  Link
 } from '@mui/material';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { DataGrid } from '@mui/x-data-grid';
-
+import { Link as RouterLink } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -19,11 +20,12 @@ import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import CircularProgress from '@mui/material/CircularProgress';
 import { listTableDataFilters, useClient } from 'services';
-import { updateShareItemFilters } from '../services';
+import { removeShareItemFilter, updateShareItemFilters } from '../services';
 
 export const ShareItemFilterModal = (props) => {
   const {
     item,
+    shareUri,
     itemDataFilter,
     onApply,
     onClose,
@@ -83,6 +85,7 @@ export const ShareItemFilterModal = (props) => {
   ];
 
   const [loading, setLoading] = useState(false);
+  const [isRemoving, setRemoving] = useState(false);
 
   const [filters, setFilters] = useState([]);
 
@@ -144,6 +147,31 @@ export const ShareItemFilterModal = (props) => {
       dispatch({ type: SET_ERROR, error: err.message });
     }
   }
+
+  const remove = async (attachedDataFilterUri) => {
+    setRemoving(true);
+    const response = await client.mutate(
+      removeShareItemFilter({ attachedDataFilterUri: attachedDataFilterUri })
+    );
+    if (!response.errors) {
+      enqueueSnackbar('Removed data filters from table item', {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'success'
+      });
+      if (reloadItems) {
+        reloadItems();
+      }
+      if (onApply) {
+        onApply();
+      }
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+    setRemoving(false);
+  };
 
   useEffect(() => {
     if (client) {
@@ -222,6 +250,16 @@ export const ShareItemFilterModal = (props) => {
                       />
                     </CardContent>
                     <CardHeader fullWidth title="Select Data Filters" />
+
+                    <Link
+                      underline="hover"
+                      component={RouterLink}
+                      to={`/console/s3-datasets/table/${item.itemUri}`}
+                      state={{ shareUri: shareUri, tab: 'datafilters' }}
+                      variant="subtitle2"
+                    >
+                      Create New Data Filters
+                    </Link>
                     <Box fullWidth>
                       <DataGrid
                         fullWidth
@@ -267,6 +305,17 @@ export const ShareItemFilterModal = (props) => {
                         >
                           Assign Filters
                         </LoadingButton>
+                        <LoadingButton
+                          loading={isRemoving}
+                          disabled={!item?.attachedDataFilterUri}
+                          color="primary"
+                          sx={{ ml: 1 }}
+                          onClick={() => remove(item.attachedDataFilterUri)}
+                          type="button"
+                          variant="outlined"
+                        >
+                          Remove Filter(s)
+                        </LoadingButton>
                       </CardContent>
                     </Box>
                   </>
@@ -282,6 +331,7 @@ export const ShareItemFilterModal = (props) => {
 
 ShareItemFilterModal.propTypes = {
   item: PropTypes.object.isRequired,
+  shareUri: PropTypes.string,
   itemDataFilter: PropTypes.object,
   onApply: PropTypes.func,
   onClose: PropTypes.func,

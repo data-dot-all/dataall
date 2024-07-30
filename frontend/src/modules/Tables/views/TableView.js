@@ -14,12 +14,13 @@ import {
   Tabs,
   Typography
 } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import * as PropTypes from 'prop-types';
+import { useLocation, Link as RouterLink, useParams } from 'react-router-dom';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
-import { Link as RouterLink, useParams } from 'react-router-dom';
 import {
   ChevronRightIcon,
   DeleteObjectModal,
@@ -165,10 +166,15 @@ const TableView = () => {
   const client = useClient();
   const navigate = useNavigate();
   const [table, setTable] = useState({});
-  const [currentTab, setCurrentTab] = useState(tabs[0].value);
   const [loading, setLoading] = useState(true);
   const [isDeleteObjectModalOpen, setIsDeleteObjectModalOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const location = useLocation();
+  const shareUri = location?.state?.shareUri;
+  const tab = location?.state?.tab;
+
+  const [currentTab, setCurrentTab] = useState(tab || tabs[0].value);
 
   const handleDeleteObjectModalOpen = () => {
     setIsDeleteObjectModalOpen(true);
@@ -242,6 +248,14 @@ const TableView = () => {
             handleDeleteObjectModalOpen={handleDeleteObjectModalOpen}
             isAdmin={isAdmin}
           />
+          {shareUri && (
+            <Button
+              startIcon={<ArrowBackIcon fontSize="small" />}
+              onClick={() => navigate(`/console/shares/${shareUri}`)}
+            >
+              Go Back to Share Object
+            </Button>
+          )}
           <Box sx={{ mt: 3 }}>
             <Tabs
               indicatorColor="primary"
@@ -276,7 +290,7 @@ const TableView = () => {
             {currentTab === 'metrics' && (
               <TableMetrics table={table} isAdmin={isAdmin} />
             )}
-            {currentTab === 'datafilters' && (
+            {currentTab === 'datafilters' && isAdmin && (
               <TableFilters table={table} isAdmin={isAdmin} />
             )}
           </Box>
