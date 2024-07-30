@@ -1,3 +1,5 @@
+from sqlalchemy import or_
+
 from dataall.modules.metadata_forms.db.metadata_form_models import MetadataForm
 from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility
 
@@ -22,5 +24,12 @@ class MetadataFormRepository:
 
     @staticmethod
     def list_metadata_forms(session, filter=None):
-        # toDo: implement filter
-        return session.query(MetadataForm)
+        query = session.query(MetadataForm)
+        if filter and filter.get('search_input'):
+            query = query.filter(
+                or_(
+                    MetadataForm.name.ilike('%' + filter.get('search_input') + '%'),
+                    MetadataForm.description.ilike('%' + filter.get('search_input') + '%'),
+                )
+            )
+        return query

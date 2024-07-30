@@ -26,7 +26,7 @@ MetadataFormFilter = gql.InputType(
     name='MetadataFormFilter',
     arguments=[
         gql.Argument('page', gql.Integer),
-        gql.Argument('SamlGroupName', gql.String),
+        gql.Argument('search_input', gql.String),
         gql.Argument('sort', gql.ArrayType(MetadataFormSortCriteria)),
         gql.Argument('pageSize', gql.Integer),
     ],

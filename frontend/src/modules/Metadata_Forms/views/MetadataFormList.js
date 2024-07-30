@@ -106,7 +106,11 @@ function MetadataFormsListPageHeader(props) {
 const MetadataFormsList = () => {
   const dispatch = useDispatch();
   const [items, setItems] = useState(Defaults.pagedResponse);
-  const [filter, setFilter] = useState({ term: '', page: 1, pageSize: 10 });
+  const [filter, setFilter] = useState({
+    search_input: '',
+    page: 1,
+    pageSize: 10
+  });
   const { settings } = useSettings();
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);
@@ -116,7 +120,7 @@ const MetadataFormsList = () => {
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(listMetadataForms({}));
+    const response = await client.query(listMetadataForms(filter));
     if (!response.errors) {
       setItems(response.data.listMetadataForms);
     } else {
@@ -127,12 +131,12 @@ const MetadataFormsList = () => {
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
-    setFilter({ ...filter, term: event.target.value });
+    setFilter({ ...filter, search_input: event.target.value });
   };
 
   const handleInputKeyup = (event) => {
     if (event.code === 'Enter') {
-      setFilter({ page: 1, term: event.target.value });
+      setFilter({ page: 1, search_input: event.target.value });
       fetchItems().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
@@ -182,7 +186,7 @@ const MetadataFormsList = () => {
   return (
     <>
       <Helmet>
-        <title>Datasets | data.all</title>
+        <title>Metadata Forms| data.all</title>
       </Helmet>
       <Box
         sx={{

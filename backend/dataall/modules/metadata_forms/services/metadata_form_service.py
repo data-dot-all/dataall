@@ -55,7 +55,7 @@ class MetadataFormService:
         data = data if data is not None else {}
         with context.db_engine.scoped_session() as session:
             return paginate(
-                query=MetadataFormRepository.list_metadata_forms(session, filter),
+                query=MetadataFormRepository.list_metadata_forms(session, data),
                 page=data.get('page', 1),
                 page_size=data.get('pageSize', 5),
             ).to_dict()
