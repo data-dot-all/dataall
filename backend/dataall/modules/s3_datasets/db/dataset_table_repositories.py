@@ -45,10 +45,14 @@ class DatasetTableRepository:
         session.delete(table)
 
     @staticmethod
+    def list_data_filters(session, table_uri):
+        return session.query(DatasetTableDataFilter).filter(DatasetTableDataFilter.tableUri == table_uri).all()
+
+    @staticmethod
     def delete_all_table_filters(session, table: DatasetTable):
         session.query(DatasetTableDataFilter).filter(
             and_(
-                DatasetTableDataFilter.itemUri == table.tableUri,
+                DatasetTableDataFilter.tableUri == table.tableUri,
             )
         ).delete()
         session.commit()

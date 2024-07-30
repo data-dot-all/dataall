@@ -4,7 +4,7 @@ from dataall.core.permissions.services.resource_policy_service import ResourcePo
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.tasks.db.task_models import Task
-from dataall.base.db.exceptions import ObjectNotFound, UnauthorizedOperation
+from dataall.base.db.exceptions import ObjectNotFound, UnauthorizedOperation, InvalidInput
 from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
     ShareItemStatus,
@@ -20,6 +20,7 @@ from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
     ShareItemSM,
 )
+from sqlalchemy import exc
 from dataall.modules.shares_base.services.share_exceptions import ShareItemsFound
 from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
 from dataall.modules.shares_base.services.share_permissions import (
@@ -221,25 +222,30 @@ class ShareItemService:
     def update_filters_table_share_item(uri: str, data: dict):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
-            if share_item:
+            if share_item := ShareObjectRepository.get_share_item_by_uri(session, uri):
                 if share_item.itemType != ShareableType.Table.value:
                     raise Exception(f'Share item is not type {ShareableType.Table.value} - required for data filters')
 
                 if share_item.status in ShareStatusRepository.get_share_item_shared_states():
                     raise Exception(f'Share item already shared in state {share_item.status} - can not assign filters')
+                try:
+                    if share_item.attachedDataFilterUri:
+                        share_item_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(
+                            session, share_item.attachedDataFilterUri
+                        )
+                        ShareObjectItemRepository.update_share_item_filters(session, share_item_filter, data)
+                        return True
 
-                if share_item.attachedDataFilterUri:
-                    share_item_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(
-                        session, share_item.attachedDataFilterUri
-                    )
-                    ShareObjectItemRepository.update_share_item_filters(session, share_item_filter, data)
+                    share_item_filter = ShareObjectItemRepository.create_share_item_filters(session, share_item, data)
+                    share_item.attachedDataFilterUri = share_item_filter.attachedDataFilterUri
                     return True
-
-                share_item_filter = ShareObjectItemRepository.create_share_item_filters(session, share_item, data)
-                share_item.attachedDataFilterUri = share_item_filter.attachedDataFilterUri
-                return True
-            raise Exception('Share item not found')
+                except exc.IntegrityError:
+                    raise InvalidInput(
+                        'label',
+                        data.get('label'),
+                        f'same label already exists on another share item for table {share_item.itemName}',
+                    )
+            raise ObjectNotFound('ShareObjectItem', uri)
 
     @staticmethod
     def get_share_item_data_filters(uri: str):

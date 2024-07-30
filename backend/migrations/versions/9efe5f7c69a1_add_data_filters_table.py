@@ -1,7 +1,7 @@
 """describe_changes_shortly
 
 Revision ID: 9efe5f7c69a1
-Revises: 797dd1012be1
+Revises: 852cdf6cf1e0
 Create Date: 2024-07-17 11:05:26.077658
 
 """
@@ -18,7 +18,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 # revision identifiers, used by Alembic.
 revision = '9efe5f7c69a1'
-down_revision = '797dd1012be1'
+down_revision = '852cdf6cf1e0'
 branch_labels = None
 depends_on = None
 

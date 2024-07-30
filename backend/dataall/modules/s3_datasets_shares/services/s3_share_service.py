@@ -170,9 +170,14 @@ class S3ShareService:
     def list_shared_tables_by_env_dataset(dataset_uri: str, env_uri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
+            log.info(
+                S3ShareObjectRepository.query_dataset_tables_shared_with_env(
+                    session, env_uri, dataset_uri, context.username, context.groups
+                )
+            )
             return [
-                {'tableUri': t.tableUri, 'GlueTableName': t.GlueTableName}
-                for t in S3ShareObjectRepository.query_dataset_tables_shared_with_env(
+                {'tableUri': res[0], 'GlueTableName': res[1] + (f'_{res[2]}' if res[2] else '')}
+                for res in S3ShareObjectRepository.query_dataset_tables_shared_with_env(
                     session, env_uri, dataset_uri, context.username, context.groups
                 )
             ]
@@ -231,15 +236,9 @@ class S3ShareService:
                     account_id=dataset.AwsAccountId, region=dataset.region, database=dataset.GlueDatabaseName
                 ).get_glue_database_from_catalog()
 
-                old_shared_db_name = f'{datasetGlueDatabase}_shared_{uri}'[:254]
-                database = GlueClient(
-                    account_id=environment.AwsAccountId, region=environment.region, database=old_shared_db_name
-                ).get_glue_database()
-                warn('old_shared_db_name will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
-                sharedGlueDatabase = old_shared_db_name if database else f'{datasetGlueDatabase}_shared'
                 return {
                     's3AccessPointName': S3AccessPointName,
-                    'sharedGlueDatabase': sharedGlueDatabase,
+                    'sharedGlueDatabase': f'{datasetGlueDatabase}_shared',
                     's3bucketName': dataset.S3BucketName,
                 }
             return {
@@ -258,8 +257,4 @@ class S3ShareService:
 
     @staticmethod
     def resolve_shared_db_name(GlueDatabaseName: str, shareUri: str, targetEnvAwsAccountId: str, targetEnvRegion: str):
-        old_shared_db_name = (GlueDatabaseName + '_shared_' + shareUri)[:254]
-        database = GlueClient(
-            account_id=targetEnvAwsAccountId, database=old_shared_db_name, region=targetEnvRegion
-        ).get_glue_database()
-        return old_shared_db_name if database else GlueDatabaseName + '_shared'
+        return GlueDatabaseName + '_shared'

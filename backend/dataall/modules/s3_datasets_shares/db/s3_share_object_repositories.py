@@ -2,7 +2,7 @@ import logging
 from warnings import warn
 from typing import List
 
-from sqlalchemy import and_, or_, func
+from sqlalchemy import and_, or_, func, case
 from sqlalchemy.orm import Query
 
 from dataall.core.environment.db.environment_models import Environment
@@ -13,12 +13,11 @@ from dataall.modules.shares_base.services.shares_enums import (
     PrincipalType,
 )
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
-from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
+from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject, ShareObjectItemDataFilter
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset, DatasetTableDataFilter
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTableDataFilter
 
 logger = logging.getLogger(__name__)
 
@@ -206,39 +205,39 @@ class S3ShareObjectRepository:
             return True
         return False
 
-    @staticmethod
-    def list_shares_with_existing_shared_items_in_environment(
-        session, dataset_uri, environment_uri=None, item_type=None
-    ) -> [ShareObject]:
-        warn(
-            'S3ShareObjectRepository.list_shares_with_existing_shared_items_in_environment will be deprecated in v2.6.0',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        # When deprecated, use ist_dataset_shares_with_existing_shared_items instead
-        share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
-        query = (
-            session.query(ShareObject)
-            .outerjoin(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
-            .filter(
-                and_(
-                    ShareObject.datasetUri == dataset_uri,
-                    ShareObject.deleted.is_(None),
-                    ShareObjectItem.status.in_(share_item_shared_states),
-                )
-            )
-        )
-        if environment_uri:
-            query = query.filter(ShareObject.environmentUri == environment_uri)
-        if item_type:
-            query = query.filter(ShareObjectItem.itemType == item_type)
-        shares_datasets = []
-        for share in query.all():
-            dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
-            shares_datasets.append(
-                {'shareUri': share.shareUri, 'databaseName': f'{dataset.GlueDatabaseName}_shared_{share.shareUri}'}
-            )
-        return shares_datasets
+    # @staticmethod
+    # def list_shares_with_existing_shared_items_in_environment(
+    #     session, dataset_uri, environment_uri=None, item_type=None
+    # ) -> [ShareObject]:
+    #     warn(
+    #         'S3ShareObjectRepository.list_shares_with_existing_shared_items_in_environment will be deprecated in v2.6.0',
+    #         DeprecationWarning,
+    #         stacklevel=2,
+    #     )
+    #     # When deprecated, use ist_dataset_shares_with_existing_shared_items instead
+    #     share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
+    #     query = (
+    #         session.query(ShareObject)
+    #         .outerjoin(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
+    #         .filter(
+    #             and_(
+    #                 ShareObject.datasetUri == dataset_uri,
+    #                 ShareObject.deleted.is_(None),
+    #                 ShareObjectItem.status.in_(share_item_shared_states),
+    #             )
+    #         )
+    #     )
+    #     if environment_uri:
+    #         query = query.filter(ShareObject.environmentUri == environment_uri)
+    #     if item_type:
+    #         query = query.filter(ShareObjectItem.itemType == item_type)
+    #     shares_datasets = []
+    #     for share in query.all():
+    #         dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
+    #         shares_datasets.append(
+    #             {'shareUri': share.shareUri, 'databaseName': f'{dataset.GlueDatabaseName}_shared_{share.shareUri}'}
+    #         )
+    #     return shares_datasets
 
     @staticmethod
     def query_dataset_tables_shared_with_env(
@@ -249,11 +248,19 @@ class S3ShareObjectRepository:
         for the share object associating the dataset and environment
         """
         share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
-        env_tables_shared = (
-            session.query(DatasetTable)
+        env_tables_shared_query = (
+            session.query(
+                DatasetTable.tableUri,
+                DatasetTable.GlueTableName,
+                ShareObjectItemDataFilter.label,
+            )
             .join(
                 ShareObjectItem,
                 ShareObjectItem.itemUri == DatasetTable.tableUri,
+            )
+            .outerjoin(
+                ShareObjectItemDataFilter,
+                ShareObjectItemDataFilter.attachedDataFilterUri == ShareObjectItem.attachedDataFilterUri,
             )
             .join(
                 ShareObject,
@@ -271,10 +278,8 @@ class S3ShareObjectRepository:
                     ),
                 )
             )
-            .all()
         )
-
-        return env_tables_shared
+        return env_tables_shared_query.all()
 
     @staticmethod
     def query_shared_glue_databases(session, groups, env_uri, group_uri):

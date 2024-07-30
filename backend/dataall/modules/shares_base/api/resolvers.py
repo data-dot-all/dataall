@@ -58,7 +58,7 @@ class RequestValidator:
             raise RequiredParameter('filterUris')
         if not data.get('filterNames'):
             raise RequiredParameter('filterNames')
-        if not re.search(r'^[a-zA-Z0-9_]*$', data.get('label')):
+        if not re.search(r'^[a-z0-9_]*$', data.get('label')):
             raise InvalidInput(
                 'label',
                 data.get('label'),

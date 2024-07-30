@@ -129,6 +129,17 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     shared_item_SM.update_state_single_item(self.session, share_item, new_state)
 
                 try:
+                    if self.reapply:
+                        # CHECK IF SHARING WITH ACCOUNT AND CLEAN UP
+                        warn(
+                            'Clean up of non-direct IAM Principal shares will be deprecated in version >= v2.9.0',
+                            DeprecationWarning,
+                            stacklevel=2,
+                        )
+                        # Revoke Target Account Permissions To Table
+                        log.info('Check & clean up of delegated LF Permission to Target Account...')
+                        manager.clean_up_lf_permissions_account_delegation_pattern(table)
+
                     share_item_filter = None
                     if share_item.attachedDataFilterUri:
                         share_item_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(
@@ -282,12 +293,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                                 else True
                             )
 
-                        if (manager.is_new_share and can_delete_resource_link) or not manager.is_new_share:
-                            warn(
-                                'share_manager.is_new_share will be deprecated in v2.6.0',
-                                DeprecationWarning,
-                                stacklevel=2,
-                            )
+                        if can_delete_resource_link:
                             manager.grant_pivot_role_drop_permissions_to_resource_link_table(resource_link_name)
                             manager.delete_resource_link_table_in_shared_database(resource_link_name)
 
@@ -325,40 +331,16 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         log.info('Revoking permissions to target shared database...')
                         manager.revoke_principals_database_permissions_to_shared_database()
 
-                        if not manager.is_new_share:
-                            log.info('Deleting OLD target shared database...')
-                            warn(
-                                'share_manager.is_new_share will be deprecated in v2.6.0',
-                                DeprecationWarning,
-                                stacklevel=2,
-                            )
-                            manager.delete_shared_database_in_target()
-
                     existing_shares_with_shared_tables_in_environment = (
-                        S3ShareObjectRepository.list_shares_with_existing_shared_items_in_environment(
+                        S3ShareObjectRepository.list_s3_dataset_shares_with_existing_shared_items(
                             session=self.session,
                             dataset_uri=self.share_data.dataset.datasetUri,
                             environment_uri=self.share_data.target_environment.environmentUri,
                             item_type=ShareableType.Table.value,
                         )
                     )
-                    warn(
-                        'S3ShareObjectRepository.list_shares_with_existing_shared_items_in_environment will be deprecated in v2.6.0',
-                        DeprecationWarning,
-                        stacklevel=2,
-                    )
-                    existing_old_shares_bool = [
-                        manager.glue_client_in_target.database_exists(item['databaseName'])
-                        for item in existing_shares_with_shared_tables_in_environment
-                    ]
-                    log.info(
-                        f'Remaining tables shared from this dataset to this environment = {existing_shares_with_shared_tables_in_environment}, {existing_old_shares_bool}'
-                    )
-                    if manager.is_new_share and False not in existing_old_shares_bool:
+                    if not len(existing_shares_with_shared_tables_in_environment):
                         log.info('Deleting target shared database...')
-                        warn(
-                            'share_manager.is_new_share will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2
-                        )
                         manager.delete_shared_database_in_target()
             except Exception as e:
                 log.error(

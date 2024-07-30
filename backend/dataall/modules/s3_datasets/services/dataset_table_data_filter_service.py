@@ -1,5 +1,5 @@
 import logging
-
+import re
 from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.s3_datasets.db.dataset_table_data_filter_repositories import DatasetTableDataFilterRepository
@@ -52,6 +52,12 @@ class DatasetTableDataFilterRequestValidationService:
         DatasetTableDataFilterRequestValidationService._required_param(uri, 'tableUri')
         DatasetTableDataFilterRequestValidationService._required_param(data, 'data')
         DatasetTableDataFilterRequestValidationService._required_param(data.get('filterName'), 'filterName')
+        if not re.search(r'^[a-z0-9_]*$', data.get('filterName')):
+            raise exceptions.InvalidInput(
+                'filterName',
+                data.get('filterName'),
+                'must match the pattern ^[a-zA-Z0-9_]*$',
+            )
         DatasetTableDataFilterRequestValidationService.validate_data_filter_type(data)
 
 

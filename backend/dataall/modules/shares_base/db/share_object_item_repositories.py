@@ -55,8 +55,8 @@ class ShareObjectItemRepository:
         data: dict,
     ) -> bool:
         share_item_filter.label = data.get('label')
-        share_item_filter.dataFilterUris = data.get('dataFilterUris')
-        share_item_filter.dataFilterNames = data.get('dataFilterNames')
+        share_item_filter.dataFilterUris = data.get('filterUris')
+        share_item_filter.dataFilterNames = data.get('filterNames')
         session.commit()
         return share_item_filter
 

@@ -15,6 +15,7 @@ class DatasetTableDataFilterRepository:
             tableUri=table_uri,
             label=data.get('filterName'),
             filterType=data.get('filterType'),
+            description=data.get('description'),
             rowExpression=data.get('rowExpression') if data.get('filterType') == DataFilterType.ROW.value else None,
             includedCols=data.get('includedCols') if data.get('filterType') == DataFilterType.COLUMN.value else None,
             owner=context.username,
@@ -36,10 +37,6 @@ class DatasetTableDataFilterRepository:
         if not data_filter:
             raise exceptions.ObjectNotFound('DatasetTableDataFilter', filter_uri)
         return data_filter
-
-    @staticmethod
-    def list_data_filters(session, table_uri):
-        return session.query(DatasetTableDataFilter).filter(DatasetTableDataFilter.tableUri == table_uri).all()
 
     @staticmethod
     def paginated_data_filters(session, table_uri, data) -> dict:

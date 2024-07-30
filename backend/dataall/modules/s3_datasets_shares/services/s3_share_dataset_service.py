@@ -70,7 +70,6 @@ class S3ShareDatasetService(DatasetServiceInterface):
         """Implemented as part of the DatasetServiceInterface"""
         action = kwargs.get('action')
         if action in [DELETE_DATASET_FOLDER, DELETE_DATASET_TABLE]:
-            # TODO: DELETE DATA FILTERS + ATTACHED FILTERS IF ANY
             ShareObjectItemRepository.delete_all_share_item_filters(session, uri)
             S3ShareObjectRepository.delete_s3_share_item(session, uri)
         elif action in [DELETE_DATASET]:
