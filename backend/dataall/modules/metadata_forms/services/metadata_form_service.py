@@ -18,8 +18,8 @@ class MetadataFormParamValidationService:
             raise exceptions.RequiredParameter('SamlGroupName')
 
         if 'homeEntity' not in data and (
-            visibility == MetadataFormVisibility.Organization.value
-            or visibility == MetadataFormVisibility.Environment.value
+                visibility == MetadataFormVisibility.Organization.value
+                or visibility == MetadataFormVisibility.Environment.value
         ):
             raise exceptions.RequiredParameter('homeEntity')
 
@@ -70,3 +70,5 @@ class MetadataFormService:
         elif metadata_form.visibility == MetadataFormVisibility.Environment.value:
             with get_context().db_engine.scoped_session() as session:
                 return EnvironmentRepository.get_environment_by_uri(session, metadata_form.homeEntity).name
+        else:
+            return ''
