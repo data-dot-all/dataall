@@ -27,7 +27,7 @@ import {
   startMaintenanceWindow,
   startReindexCatalog
 } from '../services';
-import { useClient, fetchOneEnum } from 'services';
+import { useClient, fetchEnums } from 'services';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useSnackbar } from 'notistack';
 import { ModuleNames, isModuleEnabled } from 'utils';
@@ -316,10 +316,10 @@ export const MaintenanceViewer = () => {
   const dispatch = useDispatch();
 
   const fetchMaintenanceModes = async () => {
-    const maintenanceModesEnum = await fetchOneEnum(client, 'MaintenanceModes');
-    if (maintenanceModesEnum.length > 0) {
+    const maintenanceModesEnum = await fetchEnums(client, ['MaintenanceModes']);
+    if (maintenanceModesEnum['MaintenanceModes'].length > 0) {
       setMaintenanceModes(
-        maintenanceModesEnum.map((elem) => {
+        maintenanceModesEnum['MaintenanceModes'].map((elem) => {
           return { label: elem.value, value: elem.name };
         })
       );

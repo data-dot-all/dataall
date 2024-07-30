@@ -12,7 +12,7 @@ from ariadne import (
 
 from dataall.base.api import gql
 from dataall.base.api.constants import GraphQLEnumMapper
-from dataall.base.utils.enum_utils import generate_enum_query
+from dataall.base.api.queries import enumsQuery
 
 
 def bootstrap():
@@ -31,7 +31,6 @@ def bootstrap():
 
     for enumclass in GraphQLEnumMapper.__subclasses__():
         enumclass.toGraphQLEnum()
-    generate_enum_query()
 
     for cls in classes.keys():
         if not cls.class_instances:  # if there are no instances of cls registered in the app
