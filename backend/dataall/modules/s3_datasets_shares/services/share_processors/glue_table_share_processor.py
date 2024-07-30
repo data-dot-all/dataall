@@ -131,8 +131,8 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                 try:
                     share_item_filter = None
                     if share_item.attachedDataFilterUri:
-                        share_item_filter = ShareObjectItemRepository.find_share_item_filter(
-                            self.session, table.tableUri, share_item.attachedDataFilterUri
+                        share_item_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(
+                            self.session, share_item.attachedDataFilterUri
                         )
 
                     manager.check_table_exists_in_source_database(share_item, table)
@@ -142,7 +142,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         manager.revoke_iam_allowed_principals_from_table(table)
                         manager.upgrade_lakeformation_settings_in_source()
 
-                    manager.grant_principals_permissions_to_source_table(table, share_item)
+                    manager.grant_principals_permissions_to_source_table(table, share_item, share_item_filter)
                     if manager.cross_account:
                         retries = 0
                         retry_share_table = False
@@ -243,8 +243,8 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                 )
                 share_item_filter = None
                 if share_item.attachedDataFilterUri:
-                    share_item_filter = ShareObjectItemRepository.find_share_item_filter(
-                        self.session, table.tableUri, share_item.attachedDataFilterUri
+                    share_item_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(
+                        self.session, share_item.attachedDataFilterUri
                     )
 
                 revoked_item_SM = ShareItemSM(ShareItemStatus.Revoke_Approved.value)
@@ -266,7 +266,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         log.info('Revoking principal permissions from resource link table')
                         manager.revoke_principals_permissions_to_resource_link_table(resource_link_name)
                         log.info('Revoking principal permissions from table in source')
-                        manager.revoke_principals_permissions_to_table_in_source(table, share_item)
+                        manager.revoke_principals_permissions_to_table_in_source(table, share_item, share_item_filter)
                         if share_item_filter:
                             can_delete_resource_link = True
                         else:
@@ -402,11 +402,11 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     )
                     share_item_filter = None
                     if share_item.attachedDataFilterUri:
-                        share_item_filter = ShareObjectItemRepository.find_share_item_filter(
-                            self.session, table.tableUri, share_item.attachedDataFilterUri
+                        share_item_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(
+                            self.session, share_item.attachedDataFilterUri
                         )
                     manager.verify_table_exists_in_source_database(share_item, table)
-                    manager.check_target_principals_permissions_to_source_table(table, share_item)
+                    manager.check_target_principals_permissions_to_source_table(table, share_item, share_item_filter)
 
                     if manager.cross_account:
                         if not RamClient.check_ram_invitation_status(

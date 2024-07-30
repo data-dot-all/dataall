@@ -57,20 +57,9 @@ class ShareObjectItemRepository:
     ) -> bool:
         share_item_data_filter = ShareObjectItemDataFilter(
             label=data.get('label'),
-            dataFilterUris=data.get('dataFilterUris'),
-            dataFilterNames=data.get('dataFilterNames'),
+            dataFilterUris=data.get('filterUris'),
+            dataFilterNames=data.get('filterNames'),
         )
         session.add(share_item_data_filter)
         session.commit()
         return share_item_data_filter
-
-    @staticmethod
-    def find_share_item_filter(session, item_uri, attached_filter_uri) -> ShareObjectItem:
-        return (
-            session.query(ShareObjectItemDataFilter)
-            .filter(
-                ShareObjectItemDataFilter.itemUri == item_uri,
-                ShareObjectItemDataFilter.attachedDataFilterUri == attached_filter_uri,
-            )
-            .first()
-        )
