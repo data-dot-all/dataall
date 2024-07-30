@@ -1,7 +1,7 @@
 ariadne==0.17.0
 aws-xray-sdk==2.4.3
-boto3==1.28.23
-botocore==1.31.23
+boto3==1.34.119
+botocore==1.34.119
 fastapi == 0.109.2
 Flask==3.0.3
 flask-cors==4.0.1

@@ -2,7 +2,7 @@ import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
 import { ObjectBrief, ObjectMetadata } from 'design';
 import { DatasetConsoleAccess } from './DatasetConsoleAccess';
-import { DatasetGovernance } from './DatasetGovernance';
+import { DatasetGovernance } from 'modules/DatasetsBase/components/DatasetGovernance';
 
 export const DatasetOverview = (props) => {
   const { dataset, isAdmin, ...other } = props;

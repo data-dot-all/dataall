@@ -77,6 +77,26 @@ const FolderEditForm = Loadable(
   lazy(() => import('./modules/Folders/views/FolderEditForm'))
 );
 
+const RedshiftDatasetView = Loadable(
+  lazy(() => import('./modules/Redshift_Datasets/views/RSDatasetView'))
+);
+
+const RedshiftDatasetImportForm = Loadable(
+  lazy(() => import('./modules/Redshift_Datasets/views/RSDatasetImportForm'))
+);
+
+const RedshiftDatasetEditForm = Loadable(
+  lazy(() => import('./modules/Redshift_Datasets/views/RSDatasetEditForm'))
+);
+
+const RedshiftTableView = Loadable(
+  lazy(() => import('./modules/Redshift_Datasets/views/RSTableView'))
+);
+
+const RedshiftTableEditForm = Loadable(
+  lazy(() => import('./modules/Redshift_Datasets/views/RSTableEditForm'))
+);
+
 const NotebookList = Loadable(
   lazy(() => import('./modules/Notebooks/views/NotebookList'))
 );
@@ -289,6 +309,30 @@ const routes = [
           {
             path: 's3-datasets/folder/:uri/edit',
             element: <FolderEditForm />
+          }
+        ]
+      },
+      isModuleEnabled(ModuleNames.REDSHIFT_DATASETS) && {
+        children: [
+          {
+            path: 'redshift-datasets/:uri',
+            element: <RedshiftDatasetView />
+          },
+          {
+            path: 'redshift-datasets/import',
+            element: <RedshiftDatasetImportForm />
+          },
+          {
+            path: 'redshift-datasets/:uri/edit',
+            element: <RedshiftDatasetEditForm />
+          },
+          {
+            path: 'redshift-datasets/table/:uri',
+            element: <RedshiftTableView />
+          },
+          {
+            path: 'redshift-datasets/table/:uri/edit',
+            element: <RedshiftTableEditForm />
           }
         ]
       },

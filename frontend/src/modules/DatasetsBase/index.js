@@ -5,6 +5,9 @@ export const DatasetsBaseModule = {
   name: 'datasets_base',
   isEnvironmentModule: false,
   resolve_dependency: () => {
-    return getModuleActiveStatus(ModuleNames.S3_DATASETS); // Add other dataset types when needed
+    return (
+      getModuleActiveStatus(ModuleNames.S3_DATASETS) ||
+      getModuleActiveStatus(ModuleNames.REDSHIFT_DATASETS)
+    );
   }
 };

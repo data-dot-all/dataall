@@ -44,3 +44,14 @@ def paginate(query, page, page_size):
     # nosemgrep: python.sqlalchemy.performance.performance-improvements.len-all-count
     total = len(query.order_by(None).all())
     return Page(items, page, page_size, total)
+
+
+def paginate_list(items, page, page_size):
+    if page <= 0:
+        raise AttributeError('page needs to be >= 1')
+    if page_size <= 0:
+        raise AttributeError('page_size needs to be >= 1')
+    start = (page - 1) * page_size
+    end = start + page_size
+    total = len(items)
+    return Page(items[start:end], page, page_size, total)

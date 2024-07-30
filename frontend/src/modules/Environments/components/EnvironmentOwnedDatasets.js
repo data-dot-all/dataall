@@ -123,6 +123,7 @@ export const EnvironmentOwnedDatasets = ({ environment }) => {
             <TableHead>
               <TableRow>
                 <TableCell>Name</TableCell>
+                <TableCell>Dataset type</TableCell>
                 <TableCell>Creator</TableCell>
                 <TableCell>Owners</TableCell>
                 <TableCell>Status</TableCell>
@@ -137,6 +138,13 @@ export const EnvironmentOwnedDatasets = ({ environment }) => {
                   items.nodes.map((dataset) => (
                     <TableRow hover key={dataset.environmentUri}>
                       <TableCell>{dataset.label}</TableCell>
+                      <TableCell>
+                        {dataset.datasetType === 'DatasetTypes.S3'
+                          ? `S3/Glue Dataset`
+                          : dataset.datasetType === 'DatasetTypes.Redshift'
+                          ? `Redshift Dataset`
+                          : '-'}
+                      </TableCell>
                       <TableCell>{dataset.owner}</TableCell>
                       <TableCell>{dataset.SamlAdminGroupName}</TableCell>
                       <TableCell>
@@ -149,9 +157,16 @@ export const EnvironmentOwnedDatasets = ({ environment }) => {
                       <TableCell>
                         <IconButton
                           onClick={() => {
-                            navigate(
+                            let datasetTypeLink =
                               dataset.datasetType === 'DatasetTypes.S3'
-                                ? `/console/s3-datasets/${dataset.datasetUri}`
+                                ? `s3-datasets`
+                                : dataset.datasetType ===
+                                  'DatasetTypes.Redshift'
+                                ? `redshift-datasets`
+                                : '-';
+                            navigate(
+                              datasetTypeLink
+                                ? `/console/${datasetTypeLink}/${dataset.datasetUri}`
                                 : '-'
                             );
                           }}
