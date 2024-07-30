@@ -16,6 +16,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     DELETE_DATASET_TABLE,
     SYNC_DATASET,
 )
+from dataall.modules.s3_datasets.aws.lf_data_filter_client import LakeFormationDataFilterClient
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
@@ -74,7 +75,15 @@ class DatasetTableService:
             table = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
             DatasetService.check_before_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
             DatasetService.execute_on_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
+
+            table_data_filters = DatasetTableRepository.list_data_filters(session.table.tableUri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
+            lf_client = LakeFormationDataFilterClient(table=table, dataset=dataset)
+            # Delete LF Filters
+            for data_filter in table_data_filters:
+                lf_client.delete_table_data_filter(data_filter)
             DatasetTableRepository.delete_all_table_filters(session, table)
+
             DatasetTableRepository.delete(session, table)
             DatasetTableService._delete_dataset_table_read_permission(session, uri)
 

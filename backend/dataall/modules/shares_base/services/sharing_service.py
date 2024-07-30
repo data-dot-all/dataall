@@ -353,7 +353,7 @@ class SharingService:
                                     ShareItemHealthStatus.PendingReApply.value,
                                 )
                                 success = processor.Processor(
-                                    session, share_data, shareable_items
+                                    session, share_data, shareable_items, True
                                 ).process_approved_shares()
                                 log.info(f'Reapplying {type.value} succeeded = {success}')
                                 if not success:

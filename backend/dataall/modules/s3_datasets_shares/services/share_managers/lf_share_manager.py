@@ -46,7 +46,7 @@ class LFShareManager:
         self.source_account_id, self.source_account_region, self.source_database_name = (
             self.init_source_account_details()
         )
-        self.shared_db_name, self.is_new_share = self.build_shared_db_name()
+        self.shared_db_name = self.build_shared_db_name()
         self.principals = self.get_share_principals()
         self.cross_account = self.target_environment.AwsAccountId != self.source_account_id
         self.tbl_level_errors = []
@@ -89,23 +89,7 @@ class LFShareManager:
                 f'arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.share.principalIAMRoleName}'
             )
 
-        principals = [principal_iam_role_arn]
-
-        # TODO: QS ENTITIES NOT COMPATIBLE WITH DIRECT SHARES TO FOREIGN PRINCIPALS IN LF
-        # dashboard_enabled = EnvironmentService.get_boolean_env_param(
-        #     self.session, self.target_environment, 'dashboardsEnabled'
-        # )
-
-        # if dashboard_enabled:
-        #     group = QuicksightClient.create_quicksight_group(
-        #         AwsAccountId=self.target_environment.AwsAccountId, region=self.target_environment.region
-        #     )
-        #     if group and group.get('Group'):
-        #         group_arn = group.get('Group').get('Arn')
-        #         if group_arn:
-        #             principals.append(group_arn)
-
-        return principals
+        return [principal_iam_role_arn]
 
     def build_shared_db_name(self) -> tuple:
         """
@@ -114,20 +98,8 @@ class LFShareManager:
         :return: Shared database name, boolean indicating if it is a new share
         """
         if self.source_database_name is None:
-            return '', True
-        old_shared_db_name = (self.source_database_name + '_shared_' + self.share.shareUri)[:254]
-        warn('old_shared_db_name will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
-        logger.info(f'Checking shared db {old_shared_db_name} exists in {self.target_environment.AwsAccountId}...')
-
-        database = GlueClient(
-            account_id=self.target_environment.AwsAccountId,
-            database=old_shared_db_name,
-            region=self.target_environment.region,
-        ).get_glue_database()
-
-        if database:
-            return old_shared_db_name, False
-        return self.source_database_name + '_shared', True
+            return ''
+        return self.source_database_name + '_shared'
 
     def verify_table_exists_in_source_database(self, share_item: ShareObjectItem, table: DatasetTable) -> None:
         """
@@ -302,31 +274,6 @@ class LFShareManager:
                 )
             )
 
-    # def check_target_account_permissions_to_source_table(self, table: DatasetTable) -> None:
-    #     """
-    #     Checks 'DESCRIBE' 'SELECT' Lake Formation permissions to target account to the original table in source account
-    #     and add to tbl level errors if check fails
-    #     :param table: DatasetTable
-    #     :return: None
-    #     """
-    #     if not self.lf_client_in_source.check_permissions_to_table(
-    #         principals=[self.target_environment.AwsAccountId],
-    #         database_name=self.source_database_name,
-    #         table_name=table.GlueTableName,
-    #         catalog_id=self.source_account_id,
-    #         permissions=['DESCRIBE', 'SELECT'],
-    #         permissions_with_grant_options=['DESCRIBE', 'SELECT'],
-    #     ):
-    #         self.tbl_level_errors.append(
-    #             ShareErrorFormatter.missing_permission_error_msg(
-    #                 self.target_environment.AwsAccountId,
-    #                 'LF',
-    #                 ['DESCRIBE', 'SELECT'],
-    #                 'Glue Table',
-    #                 f'{table.GlueDatabaseName}.{table.GlueTableName}',
-    #             )
-    #         )
-
     def check_target_principals_permissions_to_source_table(
         self, table: DatasetTable, share_item: ShareObjectItem, share_item_filter: ShareObjectItemDataFilter = None
     ) -> None:
@@ -486,30 +433,6 @@ class LFShareManager:
                 )
             )
 
-    # def check_principals_permissions_to_table_in_target(self, table: DatasetTable) -> None:
-    #     """
-    #     Checks 'DESCRIBE', 'SELECT' Lake Formation permissions to share principals to the table shared in target account
-    #     and add to tbl level errors if check fails
-    #     :param table: DatasetTable
-    #     :return: None
-    #     """
-    #     if not self.lf_client_in_target.check_permissions_to_table_with_columns(
-    #         principals=self.principals,
-    #         database_name=self.source_database_name,
-    #         table_name=table.GlueTableName,
-    #         catalog_id=self.source_account_id,
-    #         permissions=['DESCRIBE', 'SELECT'],
-    #     ):
-    #         self.tbl_level_errors.append(
-    #             ShareErrorFormatter.missing_permission_error_msg(
-    #                 self.principals,
-    #                 'LF',
-    #                 ['DESCRIBE', 'SELECT'],
-    #                 'Glue Table',
-    #                 f'{table.GlueDatabaseName}.{table.GlueTableName}',
-    #             )
-    #         )
-
     def revoke_principals_permissions_to_resource_link_table(self, resource_link_name) -> True:
         """
         Revokes 'DESCRIBE' Lake Formation permissions to share principals to the resource link table in target account
@@ -529,28 +452,59 @@ class LFShareManager:
         )
         return True
 
-    # def revoke_principals_permissions_to_table_in_target(self, table: DatasetTable, other_table_shares_in_env) -> True:
-    #     """
-    #     Revokes 'DESCRIBE', 'SELECT' Lake Formation permissions to share principals to the table shared in target account
-    #     If there are no more shares for this table in the environment then revoke to Quicksight group
-    #     :param table: DatasetTable
-    #     :param other_table_shares_in_env: Boolean. Other table shares in this environment for this table
-    #     :return: True if it is successful
-    #     """
-    #     principals = (
-    #         self.principals
-    #         if not other_table_shares_in_env
-    #         else [p for p in self.principals if 'arn:aws:quicksight' not in p]
-    #     )
+    def clean_up_lf_permissions_account_delegation_pattern(self, table: DatasetTable) -> True:
+        """
+        Revokes 'DESCRIBE', 'SELECT' Lake Formation permissions to share principals to the table shared in target account
+        If there are no more shares for this table in the environment then revoke to Quicksight group
+        :param table: DatasetTable
+        :return: True if it is successful
+        """
 
-    #     self.lf_client_in_target.revoke_permissions_from_table_with_columns(
-    #         principals=principals,
-    #         database_name=self.source_database_name,
-    #         table_name=table.GlueTableName,
-    #         catalog_id=self.source_account_id,
-    #         permissions=['DESCRIBE', 'SELECT'],
-    #     )
-    #     return True
+        # Get QS Principal (if applicable)
+        principals = self.principals
+        group_arn = None
+        dashboard_enabled = EnvironmentService.get_boolean_env_param(
+            self.session, self.target_environment, 'dashboardsEnabled'
+        )
+        if EnvironmentService.get_boolean_env_param(self.session, self.target_environment, 'dashboardsEnabled'):
+            if (
+                group_arn := QuicksightClient.create_quicksight_group(
+                    AwsAccountId=self.target_environment.AwsAccountId, region=self.target_environment.region
+                )
+                .get('Group', {})
+                .get('Arn')
+            ):
+                principals.append(group_arn)
+
+        if group_arn:
+            logger.info('Revoking QS Group Permissions to Resource Link...')
+            self.lf_client_in_target.revoke_permissions_from_table(
+                principals=[group_arn],
+                database_name=self.shared_db_name,
+                table_name=table.GlueTableName,
+                catalog_id=self.target_environment.AwsAccountId,
+                permissions=['DESCRIBE'],
+            )
+
+        logger.info('Revoking principal permissions from table in target...')
+        self.lf_client_in_target.revoke_permissions_from_table_with_columns(
+            principals=principals,
+            database_name=self.source_database_name,
+            table_name=table.GlueTableName,
+            catalog_id=self.source_account_id,
+            permissions=['DESCRIBE', 'SELECT'],
+        )
+
+        logger.info('Revoking target account permissions from source table')
+        self.lf_client_in_source.revoke_permissions_from_table_with_columns(
+            principals=[self.target_environment.AwsAccountId],
+            database_name=self.source_database_name,
+            table_name=table.GlueTableName,
+            catalog_id=self.source_account_id,
+            permissions=['DESCRIBE', 'SELECT'],
+            permissions_with_grant_options=['DESCRIBE', 'SELECT'],
+        )
+        return True
 
     def revoke_principals_database_permissions_to_shared_database(self) -> True:
         """
@@ -587,24 +541,6 @@ class LFShareManager:
         logger.info(f'Deleting shared database {self.shared_db_name}')
         self.glue_client_in_target.delete_database()
         return True
-
-    # def revoke_external_account_access_on_source_account(self, table: DatasetTable) -> True:
-    #     """
-    #     Revokes 'DESCRIBE' 'SELECT' Lake Formation permissions to target account to the original table in source account
-    #     If the table is not shared with any other team in the environment,
-    #     it deletes resource_shares on RAM associated to revoked table
-    #     :param table: DatasetTable
-    #     :return: True if it is successful
-    #     """
-    #     self.lf_client_in_source.revoke_permissions_from_table_with_columns(
-    #         principals=[self.target_environment.AwsAccountId],
-    #         database_name=self.source_database_name,
-    #         table_name=table.GlueTableName,
-    #         catalog_id=self.source_account_id,
-    #         permissions=['DESCRIBE', 'SELECT'],
-    #         permissions_with_grant_options=['DESCRIBE', 'SELECT'],
-    #     )
-    #     return True
 
     def revoke_principals_permissions_to_table_in_source(
         self, table: DatasetTable, share_item: ShareObjectItem, share_item_filter: ShareObjectItemDataFilter = None

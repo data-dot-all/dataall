@@ -45,8 +45,7 @@ const previewDataEnabled = isFeatureEnabled('s3_datasets', 'preview_data');
 const tabs = [
   { label: 'Overview', value: 'overview' },
   { label: 'Columns', value: 'columns' },
-  { label: 'Metrics', value: 'metrics' },
-  { label: 'Data Filters', value: 'datafilters' }
+  { label: 'Metrics', value: 'metrics' }
 ];
 
 if (previewDataEnabled) {
@@ -183,6 +182,13 @@ const TableView = () => {
     setIsDeleteObjectModalOpen(false);
   };
 
+  const handleIsAdmin = (adminValue) => {
+    setIsAdmin(adminValue);
+    if (adminValue && !tabs.find((t) => t.value === 'datafilters')) {
+      tabs.push({ label: 'Data Filters', value: 'datafilters' });
+    }
+  };
+
   const deleteTable = async () => {
     const response = await client.mutate(
       deleteDatasetTable({ tableUri: table.tableUri })
@@ -199,7 +205,7 @@ const TableView = () => {
     const response = await client.query(getDatasetTable(params.uri));
     if (!response.errors && response.data.getDatasetTable !== null) {
       setTable(response.data.getDatasetTable);
-      setIsAdmin(
+      handleIsAdmin(
         ['Creator', 'Admin', 'Owner'].indexOf(
           response.data.getDatasetTable.dataset.userRoleForDataset
         ) !== -1
