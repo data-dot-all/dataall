@@ -89,7 +89,14 @@ def upgrade():
         sa.ForeignKeyConstraint(['datasetUri'], ['redshift_dataset.datasetUri'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('rsTableUri'),
     )
-    op.execute("ALTER TYPE datasettypes ADD VALUE 'Redshift'")
+    try:
+        op.execute("ALTER TYPE datasettypes ADD VALUE 'Redshift'")
+    except Exception as e:
+        if 'already exists' in str(e):
+            pass
+        else:
+            raise e
+
     ## Backfilling Redshift permissions
     bind = op.get_bind()
     session = orm.Session(bind=bind)
