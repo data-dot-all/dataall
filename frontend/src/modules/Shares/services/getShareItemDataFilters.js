@@ -11,6 +11,7 @@ export const getShareItemDataFilters = ({ attachedDataFilterUri }) => ({
         label
         dataFilterUris
         dataFilterNames
+        itemUri
       }
     }
   `

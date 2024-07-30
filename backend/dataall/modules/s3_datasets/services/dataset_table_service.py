@@ -74,6 +74,7 @@ class DatasetTableService:
             table = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
             DatasetService.check_before_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
             DatasetService.execute_on_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
+            DatasetTableRepository.delete_all_table_filters(session, table)
             DatasetTableRepository.delete(session, table)
             DatasetTableService._delete_dataset_table_read_permission(session, uri)
 

@@ -75,9 +75,11 @@ def upgrade():
         'share_object_item_data_filter',
         sa.Column('attachedDataFilterUri', sa.String(), nullable=False),
         sa.Column('label', sa.String(), nullable=False),
+        sa.Column('itemUri', sa.String(), nullable=False),
         sa.Column('dataFilterUris', postgresql.ARRAY(sa.String()), nullable=False),
         sa.Column('dataFilterNames', postgresql.ARRAY(sa.String()), nullable=False),
         sa.PrimaryKeyConstraint('attachedDataFilterUri'),
+        sa.Index('ix_itemUri_label', 'itemUri', 'label', unique=True),
     )
 
     op.add_column('share_object_item', sa.Column('attachedDataFilterUri', sa.String(), nullable=True))
@@ -117,6 +119,7 @@ def upgrade():
 def downgrade():
     op.drop_constraint('share_object_item_attachedDataFilterUri_fkey', 'share_object_item', type_='foreignkey')
     op.drop_column('share_object_item', 'attachedDataFilterUri')
+    op.drop_index('ix_itemUri_label', table_name='share_object_item_data_filter')
     op.drop_table('share_object_item_data_filter')
     op.drop_table('data_filter')
 
