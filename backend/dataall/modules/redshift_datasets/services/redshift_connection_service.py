@@ -20,6 +20,8 @@ from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnect
 from dataall.modules.redshift_datasets.aws.redshift_data import redshift_data_client
 from dataall.modules.redshift_datasets.aws.redshift_serverless import redshift_serverless_client
 from dataall.modules.redshift_datasets.aws.redshift import redshift_client
+from dataall.modules.redshift_datasets.aws.kms_redshift import redshift_kms_client
+from dataall.modules.redshift_datasets.services.redshift_enums import RedshiftEncryptionType
 
 log = logging.getLogger(__name__)
 
@@ -48,6 +50,9 @@ class RedshiftConnectionService:
                 secretArn=data.get('secretArn', ''),
             )
             RedshiftConnectionService._check_redshift_connection(
+                account_id=environment.AwsAccountId, region=environment.region, connection=connection
+            )
+            connection.encryptionType = RedshiftConnectionService._get_redshift_encryption(
                 account_id=environment.AwsAccountId, region=environment.region, connection=connection
             )
             RedshiftConnectionRepository.save_redshift_connection(session, connection)
@@ -145,12 +150,16 @@ class RedshiftConnectionService:
                     f'Redshift workgroup {connection.workgroup} does not exist or is not associated to namespace {connection.nameSpaceId}'
                 )
 
-        if connection.clusterId and not redshift_client(account_id=account_id, region=region).describe_cluster(
-            connection.clusterId
-        ):
-            raise Exception(
-                f'Redshift cluster {connection.clusterId} does not exist or cannot be accessed with these parameters'
-            )
+        if connection.clusterId:
+            cluster = redshift_client(account_id=account_id, region=region).describe_cluster(connection.clusterId)
+            if not cluster:
+                raise Exception(
+                    f'Redshift cluster {connection.clusterId} does not exist or cannot be accessed with these parameters'
+                )
+            if not cluster.get('Encrypted', False):
+                raise Exception(
+                    f'Redshift cluster {connection.clusterId} is not encrypted. Data.all clusters MUST be encrypted'
+                )
 
         try:
             redshift_data_client(
@@ -161,3 +170,27 @@ class RedshiftConnectionService:
                 f'Redshift database {connection.database} does not exist or cannot be accessed with these parameters: {e}'
             )
         return
+
+    @staticmethod
+    def _get_redshift_encryption(
+        account_id: str, region: str, connection: RedshiftConnection
+    ) -> RedshiftEncryptionType:
+        if connection.nameSpaceId:
+            namespace = redshift_serverless_client(account_id=account_id, region=region).get_namespace_by_id(
+                connection.nameSpaceId
+            )
+            return (
+                RedshiftEncryptionType.AWS_OWNED_KMS_KEY
+                if namespace.get('KmsKeyId', None) == RedshiftEncryptionType.AWS_OWNED_KMS_KEY.value
+                else RedshiftEncryptionType.CUSTOMER_MANAGED_KMS_KEY
+            )
+        if connection.clusterId:
+            cluster = redshift_client(account_id=account_id, region=region).describe_cluster(connection.clusterId)
+            if key_id := cluster.get('KmsKeyId', None):
+                key = redshift_kms_client(account_id=account_id, region=region).describe_kms_key(key_id=key_id)
+                if key.get('KeyManager', None) == 'AWS':
+                    return RedshiftEncryptionType.AWS_OWNED_KMS_KEY
+                else:
+                    return RedshiftEncryptionType.CUSTOMER_MANAGED_KMS_KEY
+            if cluster.get('HsmStatus', None):
+                return RedshiftEncryptionType.HSM

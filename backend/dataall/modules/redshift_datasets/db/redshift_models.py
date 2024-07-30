@@ -17,6 +17,7 @@ class RedshiftConnection(Base, Resource):
     database = Column(String, nullable=False)
     redshiftUser = Column(String, nullable=True)
     secretArn = Column(String, nullable=True)
+    encryptionType = Column(String, nullable=True)
 
 
 class RedshiftDataset(DatasetBase):
