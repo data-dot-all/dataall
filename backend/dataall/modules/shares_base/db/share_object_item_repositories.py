@@ -11,6 +11,7 @@ from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.notifications.db.notification_models import Notification
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject, ShareObjectItemDataFilter
+from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
@@ -27,6 +28,16 @@ class ShareObjectItemRepository:
             session.query(ShareObjectItemDataFilter)
             .filter(ShareObjectItemDataFilter.attachedDataFilterUri == attached_filter_uri)
             .first()
+        )
+
+    @staticmethod
+    def count_all_share_item_filters_with_data_filter_uri(session, filter_uri):
+        return (
+            session.query(ShareObjectItemDataFilter)
+            .filter(
+                ShareObjectItemDataFilter.dataFilterUris.contains(f'{{{filter_uri}}}'),
+            )
+            .count()
         )
 
     @staticmethod
@@ -57,9 +68,25 @@ class ShareObjectItemRepository:
     ) -> bool:
         share_item_data_filter = ShareObjectItemDataFilter(
             label=data.get('label'),
+            itemUri=share_item.itemUri,
             dataFilterUris=data.get('filterUris'),
             dataFilterNames=data.get('filterNames'),
         )
         session.add(share_item_data_filter)
         session.commit()
         return share_item_data_filter
+
+    @staticmethod
+    def delete_all_share_item_filters(session, item_uri):
+        session.query(ShareObjectItemDataFilter).filter(ShareObjectItemDataFilter.itemUri == item_uri).delete()
+
+    @staticmethod
+    def delete_share_item_filters_with_data_filter_uri(session, filter_uri):
+        share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
+        return (
+            session.query(ShareObjectItemDataFilter)
+            .filter(
+                ShareObjectItemDataFilter.dataFilterUris.contains(f'{{{filter_uri}}}'),
+            )
+            .delete()
+        )

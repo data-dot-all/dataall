@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from uuid import uuid4
 
-from sqlalchemy import Boolean, Column, String, DateTime, ForeignKey
+from sqlalchemy import Boolean, Column, String, DateTime, ForeignKey, Index
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import query_expression
 
@@ -69,3 +69,6 @@ class ShareObjectItemDataFilter(Base):
     label = Column(String, nullable=False)
     dataFilterUris = Column(ARRAY(String), nullable=False)
     dataFilterNames = Column(ARRAY(String), nullable=False)
+    itemUri = Column(String, nullable=False)
+
+    __table_args__ = (Index('ix_itemUri_label', 'itemUri', 'label', unique=True),)

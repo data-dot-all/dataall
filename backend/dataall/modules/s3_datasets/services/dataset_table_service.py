@@ -23,6 +23,9 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     PREVIEW_DATASET_TABLE,
     DATASET_TABLE_ALL,
     GET_DATASET_TABLE,
+    CREATE_TABLE_DATA_FILTER,
+    DELETE_TABLE_DATA_FILTER,
+    LIST_TABLE_DATA_FILTERS,
 )
 from dataall.modules.s3_datasets.services.dataset_service import DatasetService
 from dataall.base.utils import json_utils
@@ -71,6 +74,7 @@ class DatasetTableService:
             table = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
             DatasetService.check_before_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
             DatasetService.execute_on_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
+            DatasetTableRepository.delete_all_table_filters(session, table)
             DatasetTableRepository.delete(session, table)
             DatasetTableService._delete_dataset_table_read_permission(session, uri)
 

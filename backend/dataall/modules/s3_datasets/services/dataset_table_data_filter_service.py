@@ -6,6 +6,7 @@ from dataall.modules.s3_datasets.db.dataset_table_data_filter_repositories impor
 from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.s3_datasets.services.dataset_table_data_filter_enums import DataFilterType
+from dataall.modules.s3_datasets.services.dataset_service import DatasetService
 from dataall.modules.s3_datasets.services.dataset_permissions import (
     CREATE_TABLE_DATA_FILTER,
     DELETE_TABLE_DATA_FILTER,
@@ -87,7 +88,8 @@ class DatasetTableDataFilterService:
         with get_context().db_engine.scoped_session() as session:
             data_filter = DatasetTableDataFilterRepository.get_data_filter_by_uri(session, filter_uri=uri)
 
-            # TODO: Check if Shares before Delete
+            # Check if Share Items w Filter before Delete
+            DatasetService.check_before_delete(session, data_filter.filterUri, action=DELETE_TABLE_DATA_FILTER)
 
             # Delete LF Filter
             table = DatasetTableRepository.get_dataset_table_by_uri(session, data_filter.tableUri)
