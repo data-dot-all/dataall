@@ -180,30 +180,64 @@ class DatasetTableService:
             session=session, group=None, resource_uri=table_uri, resource_type=DatasetTable.__name__
         )
     @staticmethod 
-    # type='table', version='0'
     def generate_metadata(resourceUri, type, version):
        context = get_context()
-       #_ -> internal
        with context.db_engine.scoped_session() as session:
         if type == MetadataGenerationTargets.Table.value:
             table = DatasetRepository.get_dataset_table_by_uri(session, resourceUri)
             table_column = DatasetColumnRepository.get_table_info_metadata_generation(session, resourceUri)
-            return BedrockClient(table_column.AWSAccountId,'us-east-1').generate_metadata_table(table, table_column)
+            return BedrockClient(table_column.AWSAccountId, 'us-east-1').generate_metadata(
+                prompt_type = type,
+                label = table.label,
+                columns = {','.join(table_column.label)},
+                column_descriptions = {','.join(table_column.description)},
+                description = table.description,
+                tags=table.tags
+            )
         
         elif type == MetadataGenerationTargets.S3_Dataset.value:
             dataset = DatasetBaseRepository.get_dataset_by_uri(session, resourceUri)
-           # tables = DatasetRepository.get_dataset_tables(session, resourceUri)
-            tables = [t.label for t in DatasetRepository.get_dataset_tables(session, resourceUri)]
-            return BedrockClient(dataset.AwsAccountId, 'us-east-1').generate_metadata_dataset(dataset, tables)
+            tabel_labels = [t.label for t in DatasetRepository.get_dataset_tables(session, resourceUri)]
+            tabel_descriptions = [t.description for t in DatasetRepository.get_dataset_tables(session, resourceUri)]
+            return BedrockClient(dataset.AwsAccountId, 'us-east-1').generate_metadata(
+                prompt_type = type,
+                label =dataset.label,
+                tabels = tabel_labels,
+                description = dataset.description,
+                table_description = tabel_descriptions,
+                tags = dataset.tags
+            )
         
         elif type == MetadataGenerationTargets.Folder.value:
             folder = DatasetLocationRepository.get_location_by_uri(session, resourceUri)
-            log.info(f'folder={folder}')
             dataset = DatasetRepository.get_dataset_by_uri(session, folder.datasetUri)
-
             files = S3DatasetClient(dataset).list_bucket_files(folder.S3BucketName, folder.S3Prefix)
-            log.info("     LOOK AT HEREEEE!!!!!!!")
-            log.info(folder.S3BucketName)
-            log.info(folder.S3Prefix)
             file_names = [f['Key'] for f in files]
-            return BedrockClient(folder.AWSAccountId, 'us-east-1').generate_metadata_folder(folder,file_names)
+            return BedrockClient(folder.AWSAccountId, 'us-east-1').generate_metadata(
+                prompt_type = type,
+                label = folder.label,
+                files = file_names,
+                description = folder.description,
+                tags=folder.tags
+                )
+    
+    def get_tables_folders(dataset_uri):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            folders = DatasetLocationRepository.get_dataset_folders(session, dataset_uri)
+            log.info(f'folders={folders}')
+            tables = DatasetRepository.get_dataset_tables(session, dataset_uri) 
+            log.info(f'tables={tables}')
+            returnList = []
+            for folder in folders:
+                name = folder.label
+                type = 'folder'
+                targetUri = folder.locationUri
+                returnList.append({'name': name, 'type': type, 'targetUri': targetUri})
+            for table in tables:
+                name = table.GlueTableName
+                type = 'table'
+                targetUri = table.tableUri
+                returnList.append({'name': name, 'type': type, 'targetUri': targetUri})
+            log.info(f'returnList={returnList}')
+            return returnList

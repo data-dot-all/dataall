@@ -136,8 +136,8 @@ GlueCrawler = gql.ObjectType(
         gql.Field(name='status', type=gql.String),
     ],
 )
-Column_Descriptions = gql.ObjectType(
-    name='Column_Descriptions',
+ColumnDescriptions = gql.ObjectType(
+    name='ColumnDescriptions',
     fields=[
         gql.Field(name='Column_Name', type=gql.String),
         gql.Field(name='Column_Description', type=gql.String),
@@ -150,6 +150,14 @@ BedrockPromptResult = gql.ObjectType(
         gql.Field(name='TableName', type=gql.String),
         gql.Field(name='Tags', type=gql.String),
         gql.Field(name='Description', type=gql.String),
-        gql.Field(name='Column_Descriptions', type  =gql.ArrayType(gql.Ref('Column_Descriptions'))),
+        gql.Field(name='Column_Descriptions', type  =gql.ArrayType(gql.Ref('ColumnDescriptions'))),
+    ],
+)
+QueryTableFoldersResult = gql.ObjectType(
+    name='QueryTableFoldersResult',
+    fields=[
+        gql.Field(name='name', type=gql.String),
+        gql.Field(name='type', type=gql.String),
+        gql.Field(name='targetUri', type=gql.String)
     ],
 )

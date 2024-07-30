@@ -156,7 +156,19 @@ def list_datasets_owned_by_env_group(
 def generate_metadata(context : Context, source: S3Dataset, resourceUri, type, version):
     RequestValidator.validate_generation_request(data=resourceUri)
     return DatasetTableService.generate_metadata(resourceUri=resourceUri,type=type, version=version)
+
+def read_sample_data(context : Context, source: S3Dataset, resourceUri):
+    RequestValidator.validate_generation_request(data=resourceUri)
+    return None #read_sample_data
    
+def save_generated_metadata(context : Context, source: S3Dataset, resourceUri):
+    RequestValidator.validate_generation_request(data=resourceUri)
+    return None #save_metadata  
+
+def get_tables_folders(context : Context, source: S3Dataset, datasetUri):
+    RequestValidator.validate_generation_request(data=datasetUri)
+    return DatasetTableService.get_tables_folders(dataset_uri=datasetUri);   
+  
 class RequestValidator:
     @staticmethod
     def validate_creation_request(data):

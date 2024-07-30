@@ -31,8 +31,10 @@ import AutoModeIcon from '@mui/icons-material/AutoMode';
 // import * as Yup from 'yup';
 // import { ChipInput, Defaults } from 'design';
 import { Scrollbar } from 'design';
-//import { SET_ERROR, useDispatch } from 'globalErrors';
-//import { useClient } from 'services';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { getTablesFolders } from '../services';
+import { useCallback } from 'react';
 /* eslint-disable no-console */
 export const GenerateMetadataComponent = (props) => {
   const {
@@ -52,34 +54,52 @@ export const GenerateMetadataComponent = (props) => {
     ...other
   } = props;
   // const { enqueueSnackbar } = useSnackbar();
-  // const dispatch = useDispatch();
-  // const client = useClient();
+  const dispatch = useDispatch();
+
+  const client = useClient();
   const [loadingMetadata, setLoadingMetadata] = useState(false);
 
-  const handleChange = (event) => {
-    console.log('handleChange', event);
-    console.log('targetOptions', targetOptions);
-    console.log('targets', targets);
-    setTargetType(event.target.value);
-    if (event.target.value === 'Dataset') {
-      setTargets([
-        {
-          targetUri: dataset.datasetUri,
-          targetType: 'S3_Dataset'
+  const handleChange = useCallback(
+    async (event) => {
+      console.log('handleChange', event);
+      console.log('targetOptions', targetOptions);
+      console.log('targets', targets);
+      setTargetType(event.target.value);
+      if (event.target.value === 'Dataset') {
+        setTargets([
+          {
+            targetUri: dataset.datasetUri,
+            targetType: 'S3_Dataset'
+          }
+        ]);
+      } else {
+        setLoadingMetadata(true);
+        setTargets([]);
+        setTargetOptions([]);
+        const response = await client.query(
+          getTablesFolders(dataset.datasetUri)
+        );
+        console.log('response', response);
+        if (!response.errors) {
+          setTargetOptions(
+            response.data.getTablesFolders.map((t) => ({
+              targetUri: t.targetUri,
+              targetType: t.type,
+              name: t.name
+            }))
+          );
+        } else {
+          dispatch({
+            type: SET_ERROR,
+            error: response.errors[0].message + dataset.datasetUri
+          });
         }
-      ]);
-      setTargetOptions([
-        {
-          targetUri: dataset.datasetUri,
-          targetType: event.target.value,
-          name: dataset.name
-        }
-      ]);
-    } else {
-      setTargets([]);
-      setTargetOptions([]); //TODO fetch tables and Folders
-    }
-  };
+        setLoadingMetadata(false);
+        //TODO fetch tables and Folders
+      }
+    },
+    [client, dispatch]
+  );
 
   const handleMetadataChange = (event) => {
     setSelectedMetadataTypes({
