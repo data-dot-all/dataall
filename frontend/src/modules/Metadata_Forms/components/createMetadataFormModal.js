@@ -16,7 +16,7 @@ import React, { useEffect, useState } from 'react';
 import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
-  fetchEnum,
+  fetchOneEnum,
   listGroups,
   listValidEnvironments,
   useClient
@@ -110,7 +110,7 @@ export const CreateMetadataFormModal = (props) => {
   };
   const fetchVisibilityOptions = async () => {
     try {
-      const enumVisibilityOptions = await fetchEnum(
+      const enumVisibilityOptions = await fetchOneEnum(
         client,
         'MetadataFormVisibility'
       );
@@ -177,7 +177,8 @@ export const CreateMetadataFormModal = (props) => {
         <Formik
           initialValues={{
             name: '',
-            description: ''
+            description: '',
+            visibility: visibilityDict.Global
           }}
           onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
             await submit(values, setStatus, setSubmitting, setErrors);
@@ -246,77 +247,80 @@ export const CreateMetadataFormModal = (props) => {
                     )}
                   />
                 </CardContent>
-                {'Is org = ' +
-                  (values.visibility === visibilityDict['Organization'])}
-                {values.organization}
-                <CardContent>
-                  <Autocomplete
-                    id="organization"
-                    disablePortal
-                    visibility={
-                      values.visibility === visibilityDict['Organization']
-                    }
-                    onChange={(event, value) => {
-                      setFieldValue('organization', value.value);
-                    }}
-                    options={organizationOptions.map((option) => option)}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        fullWidth
-                        error={Boolean(
-                          touched.organizationUri && errors.organizationUri
-                        )}
-                        helperText={
-                          touched.organizationUri && errors.organizationUri
-                        }
-                        label="Organization"
-                        onChange={handleChange}
-                        variant="outlined"
-                      />
-                    )}
-                  />
-                </CardContent>
-                <CardContent>
-                  <Autocomplete
-                    id="environment"
-                    disablePortal
-                    options={environmentOptions.map((option) => option)}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        fullWidth
-                        error={Boolean(
-                          touched.environmentUri && errors.environmentUri
-                        )}
-                        helperText={
-                          touched.environmentUri && errors.environmentUri
-                        }
-                        label="Environment"
-                        onChange={handleChange}
-                        variant="outlined"
-                      />
-                    )}
-                  />
-                </CardContent>
-                <CardContent>
-                  <Autocomplete
-                    id="group"
-                    disablePortal
-                    options={groupOptions.map((option) => option)}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        fullWidth
-                        error={Boolean(touched.groupName && errors.groupName)}
-                        helperText={touched.groupName && errors.groupName}
-                        label="Team"
-                        onChange={handleChange}
-                        variant="outlined"
-                      />
-                    )}
-                  />
-                </CardContent>
+                {values.visibility === visibilityDict.Organization && (
+                  <CardContent>
+                    <Autocomplete
+                      id="organization"
+                      disablePortal
+                      visibility={
+                        values.visibility === visibilityDict['Organization']
+                      }
+                      onChange={(event, value) => {
+                        setFieldValue('organization', value.value);
+                      }}
+                      options={organizationOptions.map((option) => option)}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          fullWidth
+                          error={Boolean(
+                            touched.organizationUri && errors.organizationUri
+                          )}
+                          helperText={
+                            touched.organizationUri && errors.organizationUri
+                          }
+                          label="Organization"
+                          onChange={handleChange}
+                          variant="outlined"
+                        />
+                      )}
+                    />
+                  </CardContent>
+                )}
+                {values.visibility === visibilityDict.Environment && (
+                  <CardContent>
+                    <Autocomplete
+                      id="environment"
+                      disablePortal
+                      options={environmentOptions.map((option) => option)}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          fullWidth
+                          error={Boolean(
+                            touched.environmentUri && errors.environmentUri
+                          )}
+                          helperText={
+                            touched.environmentUri && errors.environmentUri
+                          }
+                          label="Environment"
+                          onChange={handleChange}
+                          variant="outlined"
+                        />
+                      )}
+                    />
+                  </CardContent>
+                )}
+                {values.visibility === visibilityDict.Team && (
+                  <CardContent>
+                    <Autocomplete
+                      id="group"
+                      disablePortal
+                      options={groupOptions.map((option) => option)}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          fullWidth
+                          error={Boolean(touched.groupName && errors.groupName)}
+                          helperText={touched.groupName && errors.groupName}
+                          label="Team"
+                          onChange={handleChange}
+                          variant="outlined"
+                        />
+                      )}
+                    />
+                  </CardContent>
+                )}
               </Box>
               {isSubmitting ? (
                 <CardContent>

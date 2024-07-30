@@ -10,5 +10,3 @@ listMetadataForms = gql.QueryField(
     resolver=list_metadata_forms,
     test_scope='MetadataForm',
 )
-
-queryMetadataFormVisibility = generate_enum_query(MetadataFormVisibility, 'MetadataForm')
