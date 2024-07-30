@@ -11,4 +11,3 @@ class MetadataFormsApiModuleInterface(ModuleInterface):
     def __init__(self):
         import dataall.modules.metadata_forms.api
         import dataall.modules.metadata_forms.db.enums
-

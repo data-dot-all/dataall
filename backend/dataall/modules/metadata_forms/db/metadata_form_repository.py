@@ -24,4 +24,3 @@ class MetadataFormRepository:
     def list_metadata_forms(session, filter=None):
         # toDo: implement filter
         return session.query(MetadataForm)
-

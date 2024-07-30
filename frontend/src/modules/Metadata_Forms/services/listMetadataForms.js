@@ -19,6 +19,7 @@ export const listMetadataForms = (filter) => ({
           SamlGroupName
           visibility
           homeEntity
+          homeEntityName
         }
       }
     }

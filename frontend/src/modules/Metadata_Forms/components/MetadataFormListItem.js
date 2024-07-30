@@ -160,7 +160,7 @@ export const MetadataFormListItem = (props) => {
                   }}
                 >
                   <Tooltip title={metadata_form.homeEntity || '-'}>
-                    <span>{metadata_form.homeEntity || '-'}</span>
+                    <span>{metadata_form.homeEntityName || '-'}</span>
                   </Tooltip>
                 </Typography>
               </Grid>
