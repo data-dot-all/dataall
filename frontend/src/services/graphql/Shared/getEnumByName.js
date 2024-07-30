@@ -17,6 +17,11 @@ const getEnumByName = ({ enum_names }) => ({
   `
 });
 
+/// function to fetch multiple enums
+/// output -- dictionary
+// {
+//  'enumName': [{name: '...', value: '..'}]
+// }
 export const fetchEnums = async (client, enum_names) => {
   const response = await client.query(
     getEnumByName({ enum_names: enum_names })
