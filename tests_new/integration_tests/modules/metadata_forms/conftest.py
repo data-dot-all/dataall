@@ -2,6 +2,7 @@ import pytest
 from integration_tests.modules.metadata_forms.queries import create_metadata_form, delete_metadata_form
 from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility
 
+
 @pytest.fixture(scope='session')
 def metadata_form_1(client1, group1, session_id):
     """
@@ -14,7 +15,7 @@ def metadata_form_1(client1, group1, session_id):
             'description': 'first session test metadata form',
             'visibility': MetadataFormVisibility.Global.value,
             'SamlGroupName': group1,
-            'homeEntity': None
+            'homeEntity': None,
         }
         mf1 = create_metadata_form(client1, input)
         yield mf1

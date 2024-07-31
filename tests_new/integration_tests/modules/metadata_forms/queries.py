@@ -1,5 +1,6 @@
 # TODO: This file will be replaced by using the SDK directly
 
+
 def create_metadata_form(client, input):
     query = {
         'operationName': 'createMetadataForm',
@@ -48,10 +49,10 @@ def list_metadata_forms(client, filter):
 def delete_metadata_form(client, uri):
     query = {
         'operationName': 'deleteMetadataForm',
-        'variables': {'uri': uri},
+        'variables': {'formUri': uri},
         'query': f"""
-                  mutation deleteMetadataForm($uri: String!) {{
-                    deleteMetadataForm(uri: $uri)
+                  mutation deleteMetadataForm($formUri: String!) {{
+                    deleteMetadataForm(formUri: $formUri)
                   }}
                 """,
     }
