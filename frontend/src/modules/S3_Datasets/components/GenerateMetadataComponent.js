@@ -23,7 +23,7 @@ import {
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 // import { Formik } from 'formik';
-// import { useSnackbar } from 'notistack';
+import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 // import { useCallback, useEffect, useState } from 'react';
 import { useState } from 'react';
@@ -33,8 +33,9 @@ import AutoModeIcon from '@mui/icons-material/AutoMode';
 import { Scrollbar } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { getTablesFolders } from '../services';
+import { getTablesFolders, generateMetadataBedrock } from '../services';
 import { useCallback } from 'react';
+
 /* eslint-disable no-console */
 export const GenerateMetadataComponent = (props) => {
   const {
@@ -53,19 +54,17 @@ export const GenerateMetadataComponent = (props) => {
     setVersion,
     ...other
   } = props;
-  // const { enqueueSnackbar } = useSnackbar();
+  const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
 
   const client = useClient();
   const [loadingMetadata, setLoadingMetadata] = useState(false);
-
   const handleChange = useCallback(
     async (event) => {
-      console.log('handleChange', event);
-      console.log('targetOptions', targetOptions);
-      console.log('targets', targets);
       setTargetType(event.target.value);
       if (event.target.value === 'Dataset') {
+        setTargets([]);
+        setTargetOptions([]);
         setTargets([
           {
             targetUri: dataset.datasetUri,
@@ -73,13 +72,12 @@ export const GenerateMetadataComponent = (props) => {
           }
         ]);
       } else {
-        setLoadingMetadata(true);
         setTargets([]);
         setTargetOptions([]);
+
         const response = await client.query(
           getTablesFolders(dataset.datasetUri)
         );
-        console.log('response', response);
         if (!response.errors) {
           setTargetOptions(
             response.data.getTablesFolders.map((t) => ({
@@ -94,8 +92,6 @@ export const GenerateMetadataComponent = (props) => {
             error: response.errors[0].message + dataset.datasetUri
           });
         }
-        setLoadingMetadata(false);
-        //TODO fetch tables and Folders
       }
     },
     [client, dispatch]
@@ -113,37 +109,67 @@ export const GenerateMetadataComponent = (props) => {
     console.log('generateMetadata');
     console.log('targets', targets);
     console.log('selectedmetadata', selectedMetadataTypes);
+    console.log('targetoption', targetOptions);
     for (let target of targets) {
-      // target.response = await client.mutate(
-      //   generateMetadata(target.targetUri, target.targetType)
-      // );
-      // if (!target.response.errors) {
-      //   enqueueSnackbar(
-      //     `Returned response ${target.response.data.generateMetadata}`,
-      //     {
-      //       anchorOrigin: {
-      //         horizontal: 'right',
-      //         vertical: 'top'
-      //       },
-      //       variant: 'success'
-      //     }
-      //   );
-      target.response = {
-        description: 'some description',
-        label: 'some label'
-      };
+      target.response = await client.mutate(
+        generateMetadataBedrock({
+          resourceUri: target.targetUri,
+          type: target.targetType,
+          version: version
+        })
+      );
+      console.log('target.uri', target.targetUri);
       if (!target.response.errors) {
-        setTargets({
-          ...targets,
-          [target.targetUri]: target.response
+        console.log('target.response', target.response);
+        enqueueSnackbar(`Returned response ${target.response}`, {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'success'
         });
-        setCurrentView('REVIEW_METADATA');
+        if (!target.response.errors) {
+          setTargets({
+            ...targets,
+            [target.targetUri]: target.response
+          });
+          setCurrentView('REVIEW_METADATA');
+        }
       }
+      setVersion(version + 1);
+      setLoadingMetadata(false);
+    } //TODO EDIT THIS CALL WITH INPUT/OUTPUT FROM BACKEND
+    for (let option of targetOptions) {
+      console.log(option);
+      option.response = await client.mutate(
+        generateMetadataBedrock({
+          resourceUri: option.targetUri,
+          type: option.targetType,
+          version: version
+        })
+      );
+      console.log('option.uri', option.targetUri);
+      if (!option.response.errors) {
+        console.log('option.response', option.response);
+        enqueueSnackbar(`Returned response ${option.response}`, {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'success'
+        });
+        if (!option.response.errors) {
+          setTargetOptions({
+            ...targetOptions,
+            [option.targetUri]: option.response
+          });
+          setCurrentView('REVIEW_METADATA');
+        }
+      }
+      setVersion(version + 1);
+      setLoadingMetadata(false);
     }
-    setVersion(version + 1);
-    setLoadingMetadata(false);
-  }; //TODO EDIT THIS CALL WITH INPUT/OUTPUT FROM BACKEND
-
+  };
   return (
     <>
       <Grid
@@ -344,7 +370,7 @@ export const GenerateMetadataComponent = (props) => {
           variant="contained"
           disabled={Object.values(selectedMetadataTypes).every(
             (value) => value === false
-          )}
+          )} // Note: I tested my multiple API call by setting this to {false} directly.
         >
           Generate
         </Button>

@@ -74,7 +74,7 @@ StartGlueCrawler = gql.MutationField(
     type=gql.Ref('GlueCrawler'),
 )
 generateMetadata = gql.MutationField(
-    name='generate_metadata',
+    name='generateMetadata',
     args=[gql.Argument(name='resourceUri', type=gql.NonNullableType(gql.String)),
           gql.Argument(name='type', type=MetadataGenerationTargets.toGraphQLEnum()),
           gql.Argument(name='version', type=gql.Integer)], #add sample data, helper data, additional context

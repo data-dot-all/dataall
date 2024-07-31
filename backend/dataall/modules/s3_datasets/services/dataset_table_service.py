@@ -225,19 +225,20 @@ class DatasetTableService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             folders = DatasetLocationRepository.get_dataset_folders(session, dataset_uri)
-            log.info(f'folders={folders}')
             tables = DatasetRepository.get_dataset_tables(session, dataset_uri) 
-            log.info(f'tables={tables}')
-            returnList = []
-            for folder in folders:
-                name = folder.label
-                type = 'folder'
-                targetUri = folder.locationUri
-                returnList.append({'name': name, 'type': type, 'targetUri': targetUri})
-            for table in tables:
-                name = table.GlueTableName
-                type = 'table'
-                targetUri = table.tableUri
-                returnList.append({'name': name, 'type': type, 'targetUri': targetUri})
-            log.info(f'returnList={returnList}')
+            returnList = [
+                {
+                    'name': folder.label,
+                    'type': 'Folder',
+                    'targetUri': folder.locationUri
+                }
+                for folder in folders
+            ] + [
+                {
+                    'name': table.GlueTableName,
+                    'type': 'Table',
+                    'targetUri': table.tableUri
+                }
+                for table in tables
+            ]
             return returnList

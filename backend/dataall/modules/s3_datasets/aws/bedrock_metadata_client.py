@@ -58,13 +58,13 @@ class BedrockClient:
               dataset name: {common_data['label']}, 
               table names in the dataset: {common_data['tables']} 
               Try to use following inputs as well, but do not use these data if it says: "No description provided" for generation
-              table descriptions: {common_data['table_description']}
-              tags: {common_data['tags'] if common_data['tags'] else ''}
-              Generate meaningful Tags,Topic, Description and column descriptions for this table using above data and with your knowledge. 
-              All the parameters you return has value String! Return:
-              Tags:
-              Description: 
-              Topic:
+              current tags for dataset: {common_data['tags'] if common_data['tags'] else ''}
+              current dataset description: {common_data['description'] if common_data['description'] else ''}
+              Generate meaningful Tags,Topic, Description and column descriptions for this dataset using above data and with your knowledge. 
+              All the parameters you return has type String, tags are also string don't use "[" or "]" in your answer! Return:
+              Tags:<tags>
+              Description:<description>
+              Topic:<topic>
               Evaluate if the given parameters are enough for generating metadata, if not response should be: "NotEnoughData". 
               Return a python dictionary.
          """

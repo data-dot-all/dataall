@@ -8,3 +8,4 @@ export * from './startGlueCrawler';
 export * from './syncTables';
 export * from './updateDataset';
 export * from './getTablesFolders';
+export * from './generateMetadataBedrock';
