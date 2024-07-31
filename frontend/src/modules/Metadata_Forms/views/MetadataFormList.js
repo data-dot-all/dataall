@@ -155,14 +155,11 @@ const MetadataFormsList = () => {
         'MetadataFormVisibility'
       ]);
       if (enumVisibilityOptions['MetadataFormVisibility'].length > 0) {
-        setVisibilityDict(
-          Object.assign(
-            {},
-            ...enumVisibilityOptions['MetadataFormVisibility'].map((x) => ({
-              [x.name]: x.value
-            }))
-          )
-        );
+        let tmpVisibilityDict = {};
+        enumVisibilityOptions['MetadataFormVisibility'].map((x) => {
+          tmpVisibilityDict[x.name] = x.value;
+        });
+        setVisibilityDict(tmpVisibilityDict);
       } else {
         const error = 'Could not fetch visibility options';
         dispatch({ type: SET_ERROR, error });
