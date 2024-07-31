@@ -436,15 +436,12 @@ class LFShareManager:
     def revoke_principals_permissions_to_resource_link_table(self, resource_link_name) -> True:
         """
         Revokes 'DESCRIBE' Lake Formation permissions to share principals to the resource link table in target account
-        At the moment there is one single Quicksight group per environment. Permissions for the Quicksight group
-        are removed when the resource link table is deleted.
         :param table: DatasetTable
         :return: True if it is successful
         """
-        principals = [p for p in self.principals if 'arn:aws:quicksight' not in p]
 
         self.lf_client_in_target.revoke_permissions_from_table(
-            principals=principals,
+            principals=self.principals,
             database_name=self.shared_db_name,
             table_name=resource_link_name,
             catalog_id=self.target_environment.AwsAccountId,
@@ -452,12 +449,12 @@ class LFShareManager:
         )
         return True
 
-    def clean_up_lf_permissions_account_delegation_pattern(self, table: DatasetTable) -> True:
+    def _clean_up_lf_permissions_account_delegation_pattern(self, table: DatasetTable) -> True:
         """
-        Revokes 'DESCRIBE', 'SELECT' Lake Formation permissions to share principals to the table shared in target account
-        If there are no more shares for this table in the environment then revoke to Quicksight group
-        :param table: DatasetTable
-        :return: True if it is successful
+        THIS FUNCTION IS TO CLEAN UP THE SHARING MECHANISM OF DATA.ALL PRIOR TO v2.7 AND MIGRATE EXISTING
+        TABLES SHARES TO DIRECT IAM PRINCIPAL SHARES MOVING FORWARD
+
+        NOTE: THIS FUNCTION TO BE DEPRECATED IN A FUTURE RELEASE
         """
 
         # Get QS Principal (if applicable)
