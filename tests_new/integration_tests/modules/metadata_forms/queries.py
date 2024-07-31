@@ -44,6 +44,7 @@ def list_metadata_forms(client, filter):
     response = client.query(query=query)
     return response.data.listMetadataForms
 
+
 def delete_metadata_form(client, uri):
     query = {
         'operationName': 'deleteMetadataForm',

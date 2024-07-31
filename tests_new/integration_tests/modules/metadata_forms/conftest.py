@@ -1,16 +1,23 @@
 import pytest
-from integration_tests.modules.metadata_forms.queries import create_metadata_form
-
+from integration_tests.modules.metadata_forms.queries import create_metadata_form, delete_metadata_form
+from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility
 
 @pytest.fixture(scope='session')
 def metadata_form_1(client1, group1, session_id):
     """
     Session worksheet owned by group1
     """
-    ws = None
+    mf1 = None
     try:
-        ws = create_worksheet(client1, 'worksheet1', group=group1, tags=[session_id])
-        yield ws
+        input = {
+            'name': 'MF Test 1',
+            'description': 'first session test metadata form',
+            'visibility': MetadataFormVisibility.Global.value,
+            'SamlGroupName': group1,
+            'homeEntity': None
+        }
+        mf1 = create_metadata_form(client1, input)
+        yield mf1
     finally:
-        if ws:
-            delete_worksheet(client1, ws.worksheetUri)
+        if mf1:
+            delete_metadata_form(client1, mf1.uri)
