@@ -76,7 +76,7 @@ class DatasetTableService:
             DatasetService.check_before_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
             DatasetService.execute_on_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
 
-            table_data_filters = DatasetTableRepository.list_data_filters(session.table.tableUri)
+            table_data_filters = DatasetTableRepository.list_data_filters(session, table.tableUri)
             dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
             lf_client = LakeFormationDataFilterClient(table=table, dataset=dataset)
             # Delete LF Filters

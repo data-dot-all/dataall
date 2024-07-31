@@ -229,7 +229,11 @@ def test_sync_tables_and_columns(client, table, dataset_fixture, db):
         assert deleted_table.LastGlueTableStatus == 'Deleted'
 
 
-def test_delete_table(client, table, dataset_fixture, db, group):
+def test_delete_table(module_mocker, client, table, dataset_fixture, db, group):
+    module_mocker.patch('dataall.base.aws.sts.SessionHelper', autospec=True)
+    module_mocker.patch(
+        'dataall.modules.s3_datasets.aws.lf_data_filter_client.LakeFormationDataFilterClient', autospec=True
+    )
     table_to_delete = table(dataset=dataset_fixture, name=f'table_to_update', username=dataset_fixture.owner)
     response = client.query(
         """
