@@ -178,28 +178,11 @@ def test_get_share_principals(
     get_iam_role_arn_mock.assert_called_once()
 
 
-def test_build_shared_db_name(manager_with_mocked_clients, dataset1: S3Dataset, mock_glue_client):
+def test_build_shared_db_name(manager_with_mocked_clients, dataset1: S3Dataset):
     # Given a new share, build db_share name
     manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
-    mock_glue_client().get_glue_database.return_value = False
-    # Reset to remove call in __init__
-    mock_glue_client().get_glue_database.reset_mock()
     # Then
     assert manager.build_shared_db_name() == f'{dataset1.GlueDatabaseName[:247]}_shared'
-    mock_glue_client().get_glue_database.assert_called_once()
-
-
-# def test_build_shared_db_name_old(
-#     manager_with_mocked_clients, dataset1: S3Dataset, share: ShareObject, mock_glue_client
-# ):
-#     # Given an existing old share (shared db name with shareUri), build db_share name
-#     manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
-#     mock_glue_client().get_glue_database.return_value = True
-#     # Reset to remove call in __init__
-#     mock_glue_client().get_glue_database.reset_mock()
-#     # Then
-#     assert manager.build_shared_db_name() == f'{dataset1.GlueDatabaseName}_shared_{share.shareUri}'[:254]
-#     mock_glue_client().get_glue_database.assert_called_once()
 
 
 def test_check_table_exists_in_source_database(
