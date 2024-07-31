@@ -9,6 +9,8 @@ from dataall.core.permissions.services.tenant_policy_service import TenantPolicy
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.tasks.service_handlers import Worker
+from dataall.modules.datasets_base.db.dataset_models import DatasetBase
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.services.share_item_service import ShareItemService
@@ -257,4 +259,14 @@ class S3ShareService:
 
     @staticmethod
     def resolve_shared_db_name(GlueDatabaseName: str, shareUri: str, targetEnvAwsAccountId: str, targetEnvRegion: str):
-        return GlueDatabaseName + '_shared'
+        with get_context().db_engine.scoped_session() as session:
+            share = ShareObjectRepository.get_share_by_uri(session, shareUri)
+            dataset = DatasetBaseRepository.get_dataset_by_uri(session, share.datasetUri)
+            datasetGlueDatabase = GlueClient(
+                account_id=dataset.AwsAccountId, region=dataset.region, database=GlueDatabaseName
+            ).get_glue_database_from_catalog()
+            old_shared_db_name = (datasetGlueDatabase + '_shared_' + shareUri)[:254]
+            database = GlueClient(
+                account_id=targetEnvAwsAccountId, database=old_shared_db_name, region=targetEnvRegion
+            ).get_glue_database()
+            return old_shared_db_name if database else datasetGlueDatabase + '_shared'
