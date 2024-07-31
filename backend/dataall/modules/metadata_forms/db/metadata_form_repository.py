@@ -1,6 +1,6 @@
 from sqlalchemy import or_
 
-from dataall.modules.metadata_forms.db.metadata_form_models import MetadataForm
+from dataall.modules.metadata_forms.db.metadata_form_models import MetadataForm, MetadataFormField
 from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility
 
 
@@ -33,3 +33,21 @@ class MetadataFormRepository:
                 )
             )
         return query
+
+    @staticmethod
+    def get_metadata_form_fields(session, form_uri):
+        return session.query(MetadataFormField).filter(MetadataFormField.formUri == form_uri).all()
+
+    @staticmethod
+    def create_metadata_form_field(session, uri, data):
+        field: MetadataFormField = MetadataFormField(
+            metadataFormUri=uri,
+            name=data.get('name'),
+            type=data.get('type'),
+            required=data.get('required', False),
+            glossaryNodeUri=data.get('glossaryNodeUri', None),
+            possibleValues=data.get('possibleValues', None),
+        )
+        session.add(field)
+        session.commit()
+        return field

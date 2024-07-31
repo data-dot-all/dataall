@@ -3,7 +3,7 @@ from dataall.base.db import exceptions, paginate
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 
-from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility
+from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility, MetadataFormFieldType
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
 
 
@@ -25,6 +25,16 @@ class MetadataFormParamValidationService:
 
         if 'name' not in data:
             data['name'] = 'New Form'
+
+    @staticmethod
+    def validate_create_field_params(data):
+        if 'name' not in data:
+            raise exceptions.RequiredParameter('name')
+        if 'type' not in data:
+            raise exceptions.RequiredParameter('type')
+
+        if data.get('type') == MetadataFormFieldType.GlossaryTerm.value and 'glossaryNodeUri' not in data:
+            raise exceptions.RequiredParameter('glossaryNodeUri')
 
 
 class MetadataFormService:
@@ -72,3 +82,14 @@ class MetadataFormService:
                 return EnvironmentRepository.get_environment_by_uri(session, metadata_form.homeEntity).name
         else:
             return ''
+
+    @staticmethod
+    def get_metadata_form_fields(uri):
+        with get_context().db_engine.scoped_session() as session:
+            return MetadataFormRepository.get_metadata_form_fields(session, uri)
+
+    @staticmethod
+    def create_metadata_form_field(uri, data):
+        MetadataFormParamValidationService.validate_create_field_params(data)
+        with get_context().db_engine.scoped_session() as session:
+            return MetadataFormRepository.create_metadata_form_field(session, uri, data)
