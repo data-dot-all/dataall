@@ -15,7 +15,7 @@ from dataall.core.groups.db.group_models import Group
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.shares_base.services.shares_enums import ShareItemStatus
-from dataall.modules.shares_base.db.share_object_models import ShareObject, ShareObjectItem
+from dataall.modules.shares_base.db.share_object_models import ShareObject, ShareObjectItem, ShareObjectItemDataFilter
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 from dataall.modules.s3_datasets_shares.services.s3_share_alarm_service import S3ShareAlarmService
 from dataall.modules.s3_datasets_shares.services.share_processors.glue_table_share_processor import (
@@ -95,6 +95,35 @@ def share(
 @pytest.fixture(scope='module')
 def share_item(share_item_table: Callable, share: ShareObject, table1: DatasetTable) -> ShareObjectItem:
     yield share_item_table(share=share, table=table1, status=ShareItemStatus.Share_Approved.value)
+
+
+@pytest.fixture(scope='module')
+def table_data_filter_fixture(db, table1, table_data_filter, group, user):
+    table_data_filter = table_data_filter(table=table1, name='datafilter1', filterType='COLUMN')
+    yield table_data_filter
+
+
+@pytest.fixture(scope='module')
+def share_item_data_filter(
+    share_item_table_data_filter: Callable, table1: DatasetTable, table_data_filter_fixture
+) -> ShareObjectItemDataFilter:
+    share_item_data_filter = share_item_table_data_filter(table=table1, table_data_filter=table_data_filter_fixture)
+    yield share_item_data_filter
+
+
+@pytest.fixture(scope='module')
+def share_item_with_filters(
+    share_item_table: Callable,
+    share: ShareObject,
+    table1: DatasetTable,
+    share_item_data_filter: ShareObjectItemDataFilter,
+) -> ShareObjectItem:
+    yield share_item_table(
+        share=share,
+        table=table1,
+        status=ShareItemStatus.Share_Approved.value,
+        attachedDataFilterUri=share_item_data_filter.attachedDataFilterUri,
+    )
 
 
 @pytest.fixture(scope='module')
@@ -532,6 +561,78 @@ def test_check_target_principals_permissions_to_source_table(
         table_name=table1.GlueTableName,
         catalog_id=source_environment.AwsAccountId,
         permissions=['DESCRIBE', 'SELECT'],
+    )
+
+
+def test_check_target_principals_permissions_to_source_table_data_filters(
+    manager_with_mocked_clients,
+    target_environment: Environment,
+    source_environment: Environment,
+    table1: DatasetTable,
+    share_item_with_filters: ShareObjectItem,
+    share_item_data_filter: ShareObjectItemDataFilter,
+):
+    manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
+    lf_client.check_permissions_to_table_with_filters.return_value = True
+    # When
+    manager.check_target_principals_permissions_to_source_table(table1, share_item, share_item_data_filter)
+    # Then
+    assert len(manager.tbl_level_errors) == 0
+    lf_client.check_permissions_to_table_with_filters.assert_called_once()
+    lf_client.check_permissions_to_table_with_filters.assert_called_with(
+        principals=manager.principals,
+        database_name=table1.GlueDatabaseName,
+        table_name=table1.GlueTableName,
+        catalog_id=source_environment.AwsAccountId,
+        permissions=['SELECT'],
+        data_filters=share_item_data_filter.dataFilterNames,
+    )
+
+
+def test_grant_principals_permissions_to_source_table_data_filters(
+    manager_with_mocked_clients,
+    target_environment: Environment,
+    source_environment: Environment,
+    table1: DatasetTable,
+    share_item_with_filters: ShareObjectItem,
+    share_item_data_filter: ShareObjectItemDataFilter,
+):
+    manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
+    # When
+    manager.grant_principals_permissions_to_source_table(table1, share_item, share_item_data_filter)
+    # Then
+    lf_client.grant_permissions_to_table_with_filters.assert_called_once()
+    lf_client.grant_permissions_to_table_with_filters.assert_called_with(
+        principals=manager.principals,
+        database_name=table1.GlueDatabaseName,
+        table_name=table1.GlueTableName,
+        catalog_id=source_environment.AwsAccountId,
+        permissions=['SELECT'],
+        data_filters=share_item_data_filter.dataFilterNames,
+    )
+
+
+def test_revoke_principals_permissions_to_table_in_source_data_filters(
+    manager_with_mocked_clients,
+    table1: DatasetTable,
+    source_environment: Environment,
+    share_item_with_filters: ShareObjectItem,
+    share_item_data_filter: ShareObjectItemDataFilter,
+):
+    manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
+    # When
+    manager.revoke_principals_permissions_to_table_in_source(
+        table=table1, share_item=share_item, share_item_filter=share_item_data_filter
+    )
+    # Then
+    lf_client.revoke_permissions_to_table_with_filters.assert_called_once()
+    lf_client.revoke_permissions_to_table_with_filters.assert_called_with(
+        principals=manager.principals,
+        database_name=table1.GlueDatabaseName,
+        table_name=table1.GlueTableName,
+        catalog_id=source_environment.AwsAccountId,
+        permissions=['SELECT'],
+        data_filters=share_item_data_filter.dataFilterNames,
     )
 
 

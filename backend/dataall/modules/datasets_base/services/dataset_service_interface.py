@@ -50,3 +50,7 @@ class DatasetServiceInterface(ABC):
     def extend_delete_steward_permissions(session, dataset, new_stewards) -> bool:
         """Abstract method to be implemented by dependent modules that want to attach additional permissions to Dataset stewards"""
         ...
+
+    @staticmethod
+    def find_resources_by_uri(session, item_uri):
+        return []

@@ -3,7 +3,6 @@ from typing import List
 from warnings import warn
 from datetime import datetime
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.base.aws.quicksight import QuicksightClient
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
     ShareItemStatus,
@@ -91,10 +90,6 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all'
                     )
                 env = EnvironmentService.get_environment_by_uri(self.session, self.share_data.share.environmentUri)
-                if EnvironmentService.get_boolean_env_param(self.session, env, 'dashboardsEnabled'):
-                    QuicksightClient.check_quicksight_enterprise_subscription(
-                        AwsAccountId=env.AwsAccountId, region=env.region
-                    )
                 manager.initialize_clients()
                 manager.grant_pivot_role_all_database_permissions_to_source_database()
                 manager.check_if_exists_and_create_shared_database_in_target()
@@ -138,7 +133,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         )
                         # Revoke Target Account Permissions To Table
                         log.info('Check & clean up of delegated LF Permission to Target Account...')
-                        manager.clean_up_lf_permissions_account_delegation_pattern(table)
+                        manager._clean_up_lf_permissions_account_delegation_pattern(table)
 
                     share_item_filter = None
                     if share_item.attachedDataFilterUri:

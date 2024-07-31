@@ -33,6 +33,19 @@ class S3ShareDatasetService(DatasetServiceInterface):
         return None
 
     @staticmethod
+    def find_consumption_details_resource_uri(session, uri, group_uri):
+        """Implemented as part of the DatasetServiceInterface"""
+        share_item_details = S3ShareObjectRepository.get_share_item_consumption_details_by_item_attributes(
+            session, uri, [group_uri]
+        )
+        if share_item_details:
+            return {
+                'environmentUri': share_item_details.environmentUri,
+                'resourceLinkSuffix': share_item_details.resourceLinkSuffix,
+            }
+        return {}
+
+    @staticmethod
     def check_before_delete(session, uri, **kwargs):
         """Implemented as part of the DatasetServiceInterface"""
         action = kwargs.get('action')
@@ -70,8 +83,8 @@ class S3ShareDatasetService(DatasetServiceInterface):
         """Implemented as part of the DatasetServiceInterface"""
         action = kwargs.get('action')
         if action in [DELETE_DATASET_FOLDER, DELETE_DATASET_TABLE]:
-            ShareObjectItemRepository.delete_all_share_item_filters(session, uri)
             S3ShareObjectRepository.delete_s3_share_item(session, uri)
+            ShareObjectItemRepository.delete_all_share_item_filters(session, uri)
         elif action in [DELETE_DATASET]:
             S3ShareObjectRepository.delete_s3_shares_with_no_shared_items(session, uri)
         elif action in [DELETE_TABLE_DATA_FILTER]:
