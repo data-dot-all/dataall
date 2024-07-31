@@ -14,12 +14,13 @@ class KmsClient:
         self._account_id = account_id
         self.region = region
 
-    def describe_kms_key(self, key_id: str): ##TODO verify if pivot role has permissions! Maybe changes to cdk pivot role
+    def describe_kms_key(self, key_id: str):
         # The same client function is defined in the data_sharing module. Duplication is allowed to avoid coupling.
         try:
             response = self._client.describe_key(
                 KeyId=key_id,
             )
+            log.info(f'KMS key used to encrypt cluster {response=}')
         except ClientError as e:
             if e.response['Error']['Code'] == 'AccessDenied':
                 raise Exception(
@@ -29,8 +30,3 @@ class KmsClient:
             return None
         else:
             return response['KeyMetadata']
-
-
-def redshift_kms_client(account_id: str, region: str) -> KmsClient:
-    """Factory method to retrieve the client to send request to AWS"""
-    return KmsClient(account_id, region)

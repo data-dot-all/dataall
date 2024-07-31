@@ -38,12 +38,17 @@ class MockRedshiftDataClient:
 
 class MockRedshiftClient:
     def describe_cluster(self, *args, **kwargs):
-        return {'ClusterIdentifier': 'cluster_id_1', 'ClusterStatus': 'available'}
+        return {
+            'ClusterIdentifier': 'cluster_id_1',
+            'ClusterStatus': 'available',
+            'Encrypted': True,
+            'KmsKeyId': 'some-key-id',
+        }
 
 
 class MockRedshiftServerlessClient:
     def get_namespace_by_id(self, *args, **kwargs):
-        return {'namespaceId': 'XXXXXXXXXXXXXX', 'namespaceName': 'namespace_name_1'}
+        return {'namespaceId': 'XXXXXXXXXXXXXX', 'namespaceName': 'namespace_name_1', 'KmsKeyId': 'AWS_OWNED_KMS_KEY'}
 
     def list_workgroups_in_namespace(self, *args, **kwargs):
         return [
@@ -86,6 +91,10 @@ def patch_redshift(mocker):
         return_value=MockRedshiftServerlessClient(),
         autospec=True,
     )
+    mocker.patch(
+        'dataall.modules.redshift_datasets.aws.kms_redshift.KmsClient.describe_kms_key',
+        return_value={'KeyManager': 'AWS'},
+    )
 
 
 @pytest.fixture(scope='function')
@@ -123,6 +132,7 @@ def connection1_serverless(db, user, group, env_fixture, mocker):
         return_value=MockRedshiftServerlessClient(),
         autospec=True,
     )
+
     set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
     connection = RedshiftConnectionService.create_redshift_connection(
         uri=env_fixture.environmentUri,
@@ -165,6 +175,10 @@ def connection2_cluster(db, user, group, env_fixture, mocker):
         '__new__',
         return_value=MockRedshiftServerlessClient(),
         autospec=True,
+    )
+    mocker.patch(
+        'dataall.modules.redshift_datasets.aws.kms_redshift.KmsClient.describe_kms_key',
+        return_value={'KeyManager': 'AWS'},
     )
     set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
     connection = RedshiftConnectionService.create_redshift_connection(
