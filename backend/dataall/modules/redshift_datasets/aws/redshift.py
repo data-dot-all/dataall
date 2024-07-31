@@ -7,7 +7,7 @@ from dataall.base.aws.sts import SessionHelper
 log = logging.getLogger(__name__)
 
 
-class Redshift:
+class RedshiftClient:
     def __init__(self, account_id: str, region: str) -> None:
         session = SessionHelper.remote_session(accountid=account_id, region=region)
         self.client = session.client(service_name='redshift', region_name=region)
@@ -19,8 +19,3 @@ class Redshift:
         except ClientError as e:
             log.error(e)
             raise e
-
-
-def redshift_client(account_id: str, region: str) -> Redshift:
-    """Factory method to retrieve the client to send request to AWS"""
-    return Redshift(account_id, region)

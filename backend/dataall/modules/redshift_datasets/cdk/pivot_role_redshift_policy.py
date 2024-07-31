@@ -6,7 +6,7 @@ from dataall.base.aws.sts import SessionHelper
 from dataall.base.utils.iam_policy_utils import split_policy_with_resources_in_statements
 from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
 from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
-from dataall.modules.redshift_datasets.aws.redshift_serverless import RedshiftServerless
+from dataall.modules.redshift_datasets.aws.redshift_serverless import RedshiftServerlessClient
 
 
 class RedshiftDatasetsPivotRole(PivotRoleStatementSet):
@@ -70,7 +70,9 @@ class RedshiftDatasetsPivotRole(PivotRoleStatementSet):
                 cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(
                     accountid=self.account, region=self.region
                 )
-                rs_client = RedshiftServerless(account_id=self.account, region=self.region, role=cdk_look_up_role_arn)
+                rs_client = RedshiftServerlessClient(
+                    account_id=self.account, region=self.region, role=cdk_look_up_role_arn
+                )
                 cluster_arns = [
                     f'arn:aws:redshift:{self.region}:{self.account}:cluster:{conn.clusterId}'
                     for conn in connections

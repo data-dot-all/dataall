@@ -8,6 +8,10 @@ from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.modules.redshift_datasets.db.redshift_dataset_repositories import RedshiftDatasetRepository
 from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
 from dataall.modules.redshift_datasets.services.redshift_enums import RedshiftType
+from dataall.modules.redshift_datasets.services.redshift_constants import (
+    VOTE_REDSHIFT_DATASET_NAME,
+    INDEXER_REDSHIFT_DATASET_NAME,
+)
 from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
 
 
@@ -22,7 +26,7 @@ class DatasetIndexer(BaseIndexer):
             org = OrganizationRepository.get_organization_by_uri(session, dataset.organizationUri)
 
             count_tables = RedshiftDatasetRepository.count_dataset_tables(session=session, dataset_uri=dataset_uri)
-            count_upvotes = VoteRepository.count_upvotes(session, dataset_uri, target_type='redshiftdataset')
+            count_upvotes = VoteRepository.count_upvotes(session, dataset_uri, target_type=VOTE_REDSHIFT_DATASET_NAME)
 
             glossary = BaseIndexer._get_target_glossary_terms(session, dataset_uri)
             BaseIndexer._index(
@@ -37,7 +41,7 @@ class DatasetIndexer(BaseIndexer):
                     'source': connection.clusterId
                     if connection.redshiftType == RedshiftType.Cluster.value
                     else connection.nameSpaceId,
-                    'resourceKind': 'redshiftdataset',
+                    'resourceKind': INDEXER_REDSHIFT_DATASET_NAME,
                     'description': dataset.description,
                     'classification': re.sub('[^A-Za-z0-9]+', '', dataset.confidentiality),
                     'tags': [t.replace('-', '') for t in dataset.tags or []],

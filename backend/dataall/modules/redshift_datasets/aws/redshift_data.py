@@ -7,7 +7,7 @@ from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnect
 log = logging.getLogger(__name__)
 
 
-class RedshiftData:
+class RedshiftDataClient:
     def __init__(self, account_id: str, region: str, connection: RedshiftConnection) -> None:
         session = SessionHelper.remote_session(accountid=account_id, region=region)
         self.client = session.client(service_name='redshift-data', region_name=region)
@@ -51,7 +51,7 @@ class RedshiftData:
         return f'"{name}"'
 
     def fully_qualified_table_name(self, schema: str, table_name: str) -> str:
-        return f'{RedshiftData.identifier(self.database)}.{RedshiftData.identifier(schema)}.{RedshiftData.identifier(table_name)}'
+        return f'{RedshiftDataClient.identifier(self.database)}.{RedshiftDataClient.identifier(schema)}.{RedshiftDataClient.identifier(table_name)}'
 
     def get_redshift_connection_database(self):
         databases = []
@@ -143,8 +143,3 @@ class RedshiftData:
         except ClientError as e:
             log.error(e)
             raise e
-
-
-def redshift_data_client(account_id: str, region: str, connection: RedshiftConnection) -> RedshiftData:
-    """Factory method to retrieve the client to send request to AWS"""
-    return RedshiftData(account_id, region, connection)

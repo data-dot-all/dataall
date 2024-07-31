@@ -14,7 +14,7 @@ listEnvironmentRedshiftConnections = gql.QueryField(
 
 listRedshiftConnectionSchemas = gql.QueryField(
     name='listRedshiftConnectionSchemas',
-    args=[gql.Argument(name='connectionUri', type=gql.NonNullableType(gql.String))],
+    args=[gql.Argument('connectionUri', gql.NonNullableType(gql.String))],
     type=gql.ArrayType(gql.String),
     resolver=list_redshift_connection_schemas,
 )
@@ -22,8 +22,8 @@ listRedshiftConnectionSchemas = gql.QueryField(
 listRedshiftSchemaTables = gql.QueryField(
     name='listRedshiftSchemaTables',
     args=[
-        gql.Argument(name='connectionUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='schema', type=gql.NonNullableType(gql.String)),
+        gql.Argument('connectionUri', gql.NonNullableType(gql.String)),
+        gql.Argument('schema', gql.NonNullableType(gql.String)),
     ],
     type=gql.ArrayType(gql.Ref('RedshiftTable')),
     resolver=list_redshift_schema_tables,

@@ -3,7 +3,7 @@ from dataall.modules.redshift_datasets.services.redshift_dataset_service import 
 from .conftest import MockRedshiftDataClient
 
 
-def test_import_redshift_dataset_with_no_tables(api_context_1, imported_redshift_dataset_1_no_tables):
+def test_import_redshift_dataset_with_no_tables(imported_redshift_dataset_1_no_tables, api_context_1):
     # When dataset is imported
     # Then
     assert_that(imported_redshift_dataset_1_no_tables).is_not_none()
@@ -17,7 +17,7 @@ def test_import_redshift_dataset_with_no_tables(api_context_1, imported_redshift
     assert_that(tables).contains_entry(count=0)
 
 
-def test_import_redshift_dataset_with_tables(api_context_1, imported_redshift_dataset_2_with_tables):
+def test_import_redshift_dataset_with_tables(imported_redshift_dataset_2_with_tables, api_context_1):
     # When dataset is imported
     # Then
     assert_that(imported_redshift_dataset_2_with_tables).is_not_none()
@@ -31,14 +31,14 @@ def test_import_redshift_dataset_with_tables(api_context_1, imported_redshift_da
     assert_that(tables).contains_entry(count=2)
 
 
-def test_update_redshift_dataset_unauthorized(api_context_2, imported_redshift_dataset_1_no_tables):
+def test_update_redshift_dataset_unauthorized(imported_redshift_dataset_1_no_tables, api_context_2):
     # When
     assert_that(RedshiftDatasetService.update_redshift_dataset).raises(Exception).when_called_with(
         uri=imported_redshift_dataset_1_no_tables.datasetUri, data={'description': 'new description'}
     ).contains('UnauthorizedOperation', 'UPDATE_REDSHIFT_DATASET', imported_redshift_dataset_1_no_tables.datasetUri)
 
 
-def test_update_redshift_dataset(api_context_1, imported_redshift_dataset_1_no_tables, group3, group):
+def test_update_redshift_dataset(imported_redshift_dataset_1_no_tables, group3, group, api_context_1):
     # When
     dataset = RedshiftDatasetService.update_redshift_dataset(
         uri=imported_redshift_dataset_1_no_tables.datasetUri,
@@ -55,14 +55,14 @@ def test_update_redshift_dataset(api_context_1, imported_redshift_dataset_1_no_t
     assert_that(dataset.stewards).is_equal_to(group.name)
 
 
-def test_delete_redshift_dataset_unauthorized(api_context_2, imported_redshift_dataset_1_no_tables):
+def test_delete_redshift_dataset_unauthorized(imported_redshift_dataset_1_no_tables, api_context_2):
     # When
     assert_that(RedshiftDatasetService.delete_redshift_dataset).raises(Exception).when_called_with(
         uri=imported_redshift_dataset_1_no_tables.datasetUri,
     ).contains('UnauthorizedOperation', 'DELETE_REDSHIFT_DATASET', imported_redshift_dataset_1_no_tables.datasetUri)
 
 
-def test_delete_redshift_dataset(api_context_1, env_fixture, group, connection1_serverless):
+def test_delete_redshift_dataset(env_fixture, group, connection1_serverless, api_context_1):
     dataset = RedshiftDatasetService.import_redshift_dataset(
         uri=env_fixture.environmentUri,
         admin_group=group.name,
@@ -81,14 +81,14 @@ def test_delete_redshift_dataset(api_context_1, env_fixture, group, connection1_
     assert_that(response).is_true()
 
 
-def test_add_redshift_dataset_unauthorized(api_context_2, imported_redshift_dataset_1_no_tables):
+def test_add_redshift_dataset_unauthorized(imported_redshift_dataset_1_no_tables, api_context_2):
     # When
     assert_that(RedshiftDatasetService.add_redshift_dataset_tables).raises(Exception).when_called_with(
         uri=imported_redshift_dataset_1_no_tables.datasetUri, tables=['table3']
     ).contains('UnauthorizedOperation', 'ADD_TABLES_REDSHIFT_DATASET', imported_redshift_dataset_1_no_tables.datasetUri)
 
 
-def test_add_redshift_dataset_tables(api_context_1, imported_redshift_dataset_1_no_tables):
+def test_add_redshift_dataset_tables(imported_redshift_dataset_1_no_tables, api_context_1):
     # When
     response = RedshiftDatasetService.add_redshift_dataset_tables(
         uri=imported_redshift_dataset_1_no_tables.datasetUri, tables=['table3']
@@ -100,14 +100,14 @@ def test_add_redshift_dataset_tables(api_context_1, imported_redshift_dataset_1_
     assert_that(tables).contains_entry(count=1)
 
 
-def test_delete_redshift_dataset_table_unauthorized(api_context_2, imported_dataset_2_table_1):
+def test_delete_redshift_dataset_table_unauthorized(imported_dataset_2_table_1, api_context_2):
     # When
     assert_that(RedshiftDatasetService.delete_redshift_dataset_table).raises(Exception).when_called_with(
         uri=imported_dataset_2_table_1.rsTableUri
     ).contains('UnauthorizedOperation', 'DELETE_REDSHIFT_DATASET_TABLE', imported_dataset_2_table_1.rsTableUri)
 
 
-def test_delete_redshift_dataset_table(api_context_1, imported_redshift_dataset_1_no_tables):
+def test_delete_redshift_dataset_table(imported_redshift_dataset_1_no_tables, api_context_1):
     # Given`
     response = RedshiftDatasetService.add_redshift_dataset_tables(
         uri=imported_redshift_dataset_1_no_tables.datasetUri, tables=['table-to-delete']
@@ -120,14 +120,14 @@ def test_delete_redshift_dataset_table(api_context_1, imported_redshift_dataset_
     assert_that(response).is_true()
 
 
-def test_update_redshift_dataset_table_unauthorized(api_context_2, imported_dataset_2_table_1):
+def test_update_redshift_dataset_table_unauthorized(imported_dataset_2_table_1, api_context_2):
     # When
     assert_that(RedshiftDatasetService.update_redshift_dataset_table).raises(Exception).when_called_with(
         uri=imported_dataset_2_table_1.rsTableUri, data={'description': 'new description'}
     ).contains('UnauthorizedOperation', 'UPDATE_REDSHIFT_DATASET_TABLE', imported_dataset_2_table_1.rsTableUri)
 
 
-def test_update_redshift_dataset_table(api_context_1, imported_dataset_2_table_1):
+def test_update_redshift_dataset_table(imported_dataset_2_table_1, api_context_1):
     # When
     table = RedshiftDatasetService.update_redshift_dataset_table(
         uri=imported_dataset_2_table_1.rsTableUri, data={'description': 'new description'}
@@ -136,14 +136,14 @@ def test_update_redshift_dataset_table(api_context_1, imported_dataset_2_table_1
     assert_that(table.description).is_equal_to('new description')
 
 
-def test_get_redshift_dataset_unauthorized(api_context_2, imported_redshift_dataset_1_no_tables):
+def test_get_redshift_dataset_unauthorized(imported_redshift_dataset_1_no_tables, api_context_2):
     # When
     assert_that(RedshiftDatasetService.get_redshift_dataset).raises(Exception).when_called_with(
         uri=imported_redshift_dataset_1_no_tables.datasetUri
     ).contains('UnauthorizedOperation', 'GET_REDSHIFT_DATASET', imported_redshift_dataset_1_no_tables.datasetUri)
 
 
-def test_get_redshift_dataset(api_context_1, imported_redshift_dataset_1_no_tables):
+def test_get_redshift_dataset(imported_redshift_dataset_1_no_tables, api_context_1):
     # When
     dataset = RedshiftDatasetService.get_redshift_dataset(uri=imported_redshift_dataset_1_no_tables.datasetUri)
     # Then
@@ -151,14 +151,14 @@ def test_get_redshift_dataset(api_context_1, imported_redshift_dataset_1_no_tabl
     assert_that(dataset.schema).is_equal_to('public')
 
 
-def test_list_redshift_dataset_tables_unauthorized(api_context_2, imported_redshift_dataset_1_no_tables):
+def test_list_redshift_dataset_tables_unauthorized(imported_redshift_dataset_1_no_tables, api_context_2):
     # When
     assert_that(RedshiftDatasetService.list_redshift_dataset_tables).raises(Exception).when_called_with(
         uri=imported_redshift_dataset_1_no_tables.datasetUri, filter={}
     ).contains('UnauthorizedOperation', 'GET_REDSHIFT_DATASET', imported_redshift_dataset_1_no_tables.datasetUri)
 
 
-def test_list_redshift_dataset_tables(api_context_1, imported_redshift_dataset_2_with_tables):
+def test_list_redshift_dataset_tables(imported_redshift_dataset_2_with_tables, api_context_1):
     # When
     response = RedshiftDatasetService.list_redshift_dataset_tables(
         uri=imported_redshift_dataset_2_with_tables.datasetUri, filter={}
@@ -167,14 +167,14 @@ def test_list_redshift_dataset_tables(api_context_1, imported_redshift_dataset_2
     assert_that(response).contains_key('count', 'page', 'pages', 'nodes')
 
 
-def test_list_redshift_schema_dataset_tables_unauthorized(api_context_2, imported_redshift_dataset_1_no_tables):
+def test_list_redshift_schema_dataset_tables_unauthorized(imported_redshift_dataset_1_no_tables, api_context_2):
     # When
     assert_that(RedshiftDatasetService.list_redshift_schema_dataset_tables).raises(Exception).when_called_with(
         uri=imported_redshift_dataset_1_no_tables.datasetUri
     ).contains('UnauthorizedOperation', 'GET_REDSHIFT_DATASET', imported_redshift_dataset_1_no_tables.datasetUri)
 
 
-def test_list_redshift_schema_dataset_tables(api_context_1, imported_redshift_dataset_1_no_tables, patch_redshift):
+def test_list_redshift_schema_dataset_tables(imported_redshift_dataset_1_no_tables, patch_redshift, api_context_1):
     # When
     tables = RedshiftDatasetService.list_redshift_schema_dataset_tables(
         uri=imported_redshift_dataset_1_no_tables.datasetUri
@@ -184,28 +184,28 @@ def test_list_redshift_schema_dataset_tables(api_context_1, imported_redshift_da
     assert_that(tables[0]).contains_key('alreadyAdded', 'type', 'name')
 
 
-def test_get_dataset_upvotes_unauthorized(api_context_2, imported_redshift_dataset_1_no_tables):
+def test_get_dataset_upvotes_unauthorized(imported_redshift_dataset_1_no_tables, api_context_2):
     # When
     assert_that(RedshiftDatasetService.get_dataset_upvotes).raises(Exception).when_called_with(
         uri=imported_redshift_dataset_1_no_tables.datasetUri
     ).contains('UnauthorizedOperation', 'GET_REDSHIFT_DATASET', imported_redshift_dataset_1_no_tables.datasetUri)
 
 
-def test_get_dataset_upvotes(api_context_1, imported_redshift_dataset_1_no_tables):
+def test_get_dataset_upvotes(imported_redshift_dataset_1_no_tables, api_context_1):
     # When
     response = RedshiftDatasetService.get_dataset_upvotes(uri=imported_redshift_dataset_1_no_tables.datasetUri)
     # Then
     assert_that(response).is_equal_to(0)
 
 
-def test_get_redshift_dataset_table_unauthorized(api_context_2, imported_dataset_2_table_1):
+def test_get_redshift_dataset_table_unauthorized(imported_dataset_2_table_1, api_context_2):
     # When
     assert_that(RedshiftDatasetService.get_redshift_dataset_table).raises(Exception).when_called_with(
         uri=imported_dataset_2_table_1.rsTableUri
     ).contains('UnauthorizedOperation', 'GET_REDSHIFT_DATASET_TABLE', imported_dataset_2_table_1.rsTableUri)
 
 
-def test_get_redshift_dataset_table(api_context_1, imported_dataset_2_table_1):
+def test_get_redshift_dataset_table(imported_dataset_2_table_1, api_context_1):
     # When
     table = RedshiftDatasetService.get_redshift_dataset_table(uri=imported_dataset_2_table_1.rsTableUri)
     # Then
@@ -213,14 +213,14 @@ def test_get_redshift_dataset_table(api_context_1, imported_dataset_2_table_1):
     assert_that(table.name).is_equal_to('table1')
 
 
-def test_list_redshift_dataset_table_columns_unauthorized(api_context_2, imported_dataset_2_table_1):
+def test_list_redshift_dataset_table_columns_unauthorized(imported_dataset_2_table_1, api_context_2):
     # When
     assert_that(RedshiftDatasetService.list_redshift_dataset_table_columns).raises(Exception).when_called_with(
         uri=imported_dataset_2_table_1.rsTableUri, filter={}
     ).contains('UnauthorizedOperation', 'GET_REDSHIFT_DATASET_TABLE', imported_dataset_2_table_1.rsTableUri)
 
 
-def test_list_redshift_dataset_table_columns(api_context_1, imported_dataset_2_table_1):
+def test_list_redshift_dataset_table_columns(imported_dataset_2_table_1, api_context_1):
     # When
     response = RedshiftDatasetService.list_redshift_dataset_table_columns(
         uri=imported_dataset_2_table_1.rsTableUri, filter={}
