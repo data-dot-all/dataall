@@ -13,6 +13,8 @@ from sqlalchemy.dialects import postgresql
 
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.permission_service import PermissionService
+from dataall.core.permissions.api.enums import PermissionType
 
 
 # revision identifiers, used by Alembic.
@@ -27,6 +29,10 @@ CREATE_REDSHIFT_CONNECTION = 'CREATE_REDSHIFT_CONNECTION'
 IMPORT_REDSHIFT_DATASET = 'IMPORT_REDSHIFT_DATASET'
 
 ENVIRONMENT_REDSHIFT_ALL = [LIST_ENVIRONMENT_REDSHIFT_CONNECTIONS, CREATE_REDSHIFT_CONNECTION, IMPORT_REDSHIFT_DATASET]
+ENVIRONMENT_REDSHIFT_ALL_WITH_DESC = {}
+ENVIRONMENT_REDSHIFT_ALL_WITH_DESC[LIST_ENVIRONMENT_REDSHIFT_CONNECTIONS] = 'LIST_ENVIRONMENT_REDSHIFT_CONNECTIONS'
+ENVIRONMENT_REDSHIFT_ALL_WITH_DESC[CREATE_REDSHIFT_CONNECTION] = 'Create Redshift Connection in this environment'
+ENVIRONMENT_REDSHIFT_ALL_WITH_DESC[IMPORT_REDSHIFT_DATASET] = 'Import Redshift Datasets to this environment'
 
 
 def upgrade():
@@ -98,8 +104,16 @@ def upgrade():
             raise e
 
     ## Backfilling Redshift permissions
+    # First we need to create the permissions as save_perms runs after the migrations
     bind = op.get_bind()
     session = orm.Session(bind=bind)
+    for perm in ENVIRONMENT_REDSHIFT_ALL:
+        PermissionService.save_permission(
+            session,
+            name=perm,
+            description=ENVIRONMENT_REDSHIFT_ALL_WITH_DESC[perm],
+            permission_type=PermissionType.RESOURCE.name,
+        )
     all_environments = session.query(Environment).all()
     for env in all_environments:
         ResourcePolicyService.attach_resource_policy(

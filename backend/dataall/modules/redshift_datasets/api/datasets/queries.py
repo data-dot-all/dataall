@@ -11,7 +11,7 @@ from dataall.modules.redshift_datasets.api.datasets.input_types import RedshiftD
 
 getRedshiftDataset = gql.QueryField(
     name='getRedshiftDataset',
-    args=[gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String))],
+    args=[gql.Argument('datasetUri', gql.NonNullableType(gql.String))],
     type=gql.Ref('RedshiftDataset'),
     resolver=get_redshift_dataset,
 )
@@ -19,7 +19,7 @@ getRedshiftDataset = gql.QueryField(
 listRedshiftDatasetTables = gql.QueryField(
     name='listRedshiftDatasetTables',
     args=[
-        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument('datasetUri', gql.NonNullableType(gql.String)),
         gql.Argument('filter', RedshiftDatasetTableFilter),
     ],
     type=gql.Ref('RedshiftDatasetTableSearchResult'),
@@ -28,7 +28,7 @@ listRedshiftDatasetTables = gql.QueryField(
 
 getRedshiftDatasetTable = gql.QueryField(
     name='getRedshiftDatasetTable',
-    args=[gql.Argument(name='rsTableUri', type=gql.NonNullableType(gql.String))],
+    args=[gql.Argument('rsTableUri', gql.NonNullableType(gql.String))],
     type=gql.Ref('RedshiftDatasetTable'),
     resolver=get_redshift_dataset_table,
 )
@@ -36,7 +36,7 @@ getRedshiftDatasetTable = gql.QueryField(
 getRedshiftDatasetTableColumns = gql.QueryField(
     name='getRedshiftDatasetTableColumns',
     args=[
-        gql.Argument(name='rsTableUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument('rsTableUri', gql.NonNullableType(gql.String)),
         gql.Argument('filter', RedshiftDatasetTableFilter),
     ],
     type=gql.Ref('RedshiftDatasetTableColumnSearchResult'),
@@ -46,7 +46,7 @@ getRedshiftDatasetTableColumns = gql.QueryField(
 listRedshiftSchemaDatasetTables = gql.QueryField(
     name='listRedshiftSchemaDatasetTables',
     args=[
-        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument('datasetUri', gql.NonNullableType(gql.String)),
     ],
     type=gql.ArrayType(gql.Ref('RedshiftTable')),
     resolver=list_redshift_schema_dataset_tables,
