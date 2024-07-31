@@ -31,6 +31,7 @@ import {
 } from 'services';
 import { ShareEditForm } from '../../Shared/Shares/ShareEditForm';
 import { getShareObject } from '../../Shares/services';
+import {getDatasetExpirationDetails} from "../../DatasetsBase/services/getDatasetDetails";
 
 export const RequestAccessModal = (props) => {
   const { hit, onApply, onClose, open, stopLoader, ...other } = props;
@@ -51,6 +52,8 @@ export const RequestAccessModal = (props) => {
   const [share, setShare] = useState(false);
   const [loading, setLoading] = useState(false);
   const [alreadyExisted, setAlreadyExisted] = useState(false);
+  const [datasetExpirationEnabled, setDatasetExpirationEnabled] = useState(true);
+  const [datasetExpirationDetails, setDatasetExpirationDetails] = useState({enableExpiration : false});
 
   const fetchEnvironments = useCallback(async () => {
     setStep(0);
@@ -172,11 +175,37 @@ export const RequestAccessModal = (props) => {
     }
   };
 
+  const fetchDatasetExpirationDetails = async (datasetUri) => {
+    console.log(datasetUri)
+    try{
+      const response = await client.query(
+          getDatasetExpirationDetails({
+            datasetUri
+          })
+      )
+      if (!response.errors) {
+        setDatasetExpirationDetails({
+          enableExpiration : response.data.getDataset.enableExpiration,
+          expirySetting: response.data.getDataset.expirySetting,
+          expiryMinDuration: response.data.getDataset.expiryMinDuration,
+          expiryMaxDuration: response.data.getDataset.expiryMaxDuration
+        })
+      }else{
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    }catch (e){
+      dispatch({ type: SET_ERROR, error: e.message });
+    }
+  }
+
   useEffect(() => {
     if (client && open) {
       fetchEnvironments().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
+      fetchDatasetExpirationDetails(hit._id).catch((e) => {
+        dispatch({ type: SET_ERROR, error: e.message })
+      })
     }
   }, [client, open, fetchEnvironments, dispatch]);
 
@@ -303,7 +332,8 @@ export const RequestAccessModal = (props) => {
               initialValues={{
                 environmentUri: '',
                 comment: '',
-                attachMissingPolicies: false
+                attachMissingPolicies: false,
+                shareExpirationPeriod : ''
               }}
               validationSchema={Yup.object().shape({
                 environmentUri: Yup.string().required(
@@ -311,7 +341,8 @@ export const RequestAccessModal = (props) => {
                 ),
                 groupUri: Yup.string().required('*Team is required'),
                 consumptionRole: Yup.object(),
-                comment: Yup.string().max(5000)
+                comment: Yup.string().max(5000),
+                shareExpirationPeriod: datasetExpirationDetails.enableExpiration ? Yup.number().min(datasetExpirationDetails.expiryMinDuration, `Minimum share expiration duration is ${datasetExpirationDetails.expiryMinDuration} ${datasetExpirationDetails.expirySetting === 'Monthly' ? 'month(s)' : 'quarter(s)'}`).max(datasetExpirationDetails.expiryMaxDuration, `Maximum share expiration duration is ${datasetExpirationDetails.expiryMinDuration} ${datasetExpirationDetails.expirySetting === 'Monthly' ? 'month(s)' : 'quarter(s)'}`).required('Incorrect input provided') :  Yup.number()
               })}
               onSubmit={async (
                 values,
@@ -547,6 +578,26 @@ export const RequestAccessModal = (props) => {
                               )}
                             </Box>
                           )}
+                        </CardContent>
+                        <CardContent>
+                          <Box>
+                            {datasetExpirationDetails.enableExpiration ? (
+                                <TextField
+                                  error={Boolean(touched.shareExpirationPeriod && errors.shareExpirationPeriod)}
+                                  fullWidth
+                                  helperText={touched.shareExpirationPeriod && errors.shareExpirationPeriod}
+                                  label="Share Expiration Period - Request access for dataset in months / quarters"
+                                  onBlur={handleBlur}
+                                  onChange={(event, value) => {
+                                    setFieldValue('shareExpirationPeriod', event.target.value)
+                                  } }
+                                  variant="outlined"
+                                  inputProps={{ type: 'number'}}
+                                />
+                            ) : (
+                                <Box></Box>
+                            )}
+                          </Box>
                         </CardContent>
                       </Box>
                     )}
