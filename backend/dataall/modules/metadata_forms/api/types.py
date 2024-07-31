@@ -11,7 +11,7 @@ MetadataForm = gql.ObjectType(
         gql.Field(name='visibility', type=gql.String),
         gql.Field(name='homeEntity', type=gql.String),
         gql.Field(name='homeEntityName', type=gql.String, resolver=get_home_entity_name),
-        gql.Field(name='fields', type=gql.ArrayType(gql.Ref('MetadataForm')), resolver=get_form_fields),
+        gql.Field(name='fields', type=gql.ArrayType(gql.Ref('MetadataFormField')), resolver=get_form_fields),
     ],
 )
 

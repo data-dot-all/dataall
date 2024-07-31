@@ -36,7 +36,7 @@ class MetadataFormRepository:
 
     @staticmethod
     def get_metadata_form_fields(session, form_uri):
-        return session.query(MetadataFormField).filter(MetadataFormField.formUri == form_uri).all()
+        return session.query(MetadataFormField).filter(MetadataFormField.metadataFormUri == form_uri).all()
 
     @staticmethod
     def create_metadata_form_field(session, uri, data):

@@ -9,14 +9,14 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import * as FaIcons from 'react-icons/fa';
-//import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { IconAvatar, useCardStyle } from 'design';
 import { BallotOutlined } from '@mui/icons-material';
 
 export const MetadataFormListItem = (props) => {
   const { metadata_form, visibilityDict } = props;
   const classes = useCardStyle();
-  //  const navigate = useNavigate();
+  const navigate = useNavigate();
 
   return (
     <Grid item key={metadata_form.uri} md={3} xs={12} {...props}>
@@ -49,7 +49,7 @@ export const MetadataFormListItem = (props) => {
                     color="textPrimary"
                     variant="h6"
                     onClick={() => {
-                      //navigate(`/console/metadata-forms/${metadata_form.uri}`);
+                      navigate(`/console/metadata-forms/${metadata_form.uri}`);
                     }}
                   >
                     <Tooltip title={metadata_form.name}>
