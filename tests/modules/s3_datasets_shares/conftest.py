@@ -11,7 +11,12 @@ from dataall.modules.shares_base.db.share_object_models import ShareObject, Shar
 from dataall.modules.shares_base.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_ALL
-from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetTable, DatasetStorageLocation
+from dataall.modules.s3_datasets.db.dataset_models import (
+    S3Dataset,
+    DatasetTable,
+    DatasetStorageLocation,
+    DatasetTableDataFilter,
+)
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_ALL
 
@@ -207,6 +212,29 @@ def table(db):
 
 
 @pytest.fixture(scope='module')
+def table_data_filter(db):
+    def factory(
+        table: DatasetTable,
+        name,
+        filterType,
+    ) -> DatasetTableDataFilter:
+        with db.scoped_session() as session:
+            data_filter = DatasetTableDataFilter(
+                tableUri=table.tableUri,
+                label=name,
+                filterType=filterType,
+                rowExpression=None,
+                includedCols=['id1', 'id2'],
+                owner='foo',
+            )
+            session.add(data_filter)
+            session.commit()
+            return data_filter
+
+    yield factory
+
+
+@pytest.fixture(scope='module')
 def dataset_fixture(env_fixture, org_fixture, dataset, group) -> S3Dataset:
     yield dataset(
         org=org_fixture,
@@ -242,6 +270,12 @@ def table_fixture(db, dataset_fixture, table, group, user):
             resource_type=DatasetTable.__name__,
         )
     yield table1
+
+
+# @pytest.fixture(scope='module')
+# def table_data_filter_fixture(db, table_fixture, table_data_filter, group, user):
+#     table_data_filter = table_data_filter(table=table_fixture, name='datafilter1', filterType='COLUMN')
+#     yield table_data_filter
 
 
 @pytest.fixture(scope='module')

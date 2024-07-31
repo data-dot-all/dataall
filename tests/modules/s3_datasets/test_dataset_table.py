@@ -1,5 +1,19 @@
 from dataall.modules.s3_datasets.services.dataset_table_service import DatasetTableService
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTableColumn, DatasetTable
+import pytest
+import boto3
+from unittest.mock import MagicMock
+
+
+@pytest.fixture(scope='function')
+def mock_lf_client(mocker, mock_aws_client):
+    mocker.patch('dataall.modules.s3_datasets.aws.lf_data_filter_client.SessionHelper', autospec=True)
+
+    mock_class = mocker.patch(
+        'dataall.modules.s3_datasets.aws.lf_data_filter_client.LakeFormationDataFilterClient', autospec=True
+    )
+
+    mock_class._create_table_data_filter.return_value = {}
 
 
 def test_add_tables(table, dataset_fixture, db):
@@ -229,11 +243,7 @@ def test_sync_tables_and_columns(client, table, dataset_fixture, db):
         assert deleted_table.LastGlueTableStatus == 'Deleted'
 
 
-def test_delete_table(module_mocker, client, table, dataset_fixture, db, group):
-    module_mocker.patch('dataall.base.aws.sts.SessionHelper', autospec=True)
-    module_mocker.patch(
-        'dataall.modules.s3_datasets.aws.lf_data_filter_client.LakeFormationDataFilterClient', autospec=True
-    )
+def test_delete_table(mock_lf_client, client, table, dataset_fixture, db, group):
     table_to_delete = table(dataset=dataset_fixture, name=f'table_to_update', username=dataset_fixture.owner)
     response = client.query(
         """
@@ -246,3 +256,152 @@ def test_delete_table(module_mocker, client, table, dataset_fixture, db, group):
         tableUri=table_to_delete.tableUri,
     )
     assert response.data.deleteDatasetTable
+
+
+def create_data_filter(client, tableUri, username, groups, input):
+    return client.query(
+        """
+        mutation createTableDataFilter($tableUri: String!,$input: NewTableDataFilterInput!) {
+            createTableDataFilter(tableUri: $tableUri, input: $input) {
+                filterUri
+                label
+                description
+                filterType
+                includedCols
+            }
+        }
+        """,
+        tableUri=tableUri,
+        groups=groups,
+        username=username,
+        input=input,
+    )
+
+
+def list_data_filters(client, tableUri, username, groups):
+    return client.query(
+        """
+        query listTableDataFilters(
+          $tableUri: String!
+          $filter: DatasetTableFilter
+        ) {
+          listTableDataFilters(tableUri: $tableUri, filter: $filter) {
+            count
+            page
+            pages
+            hasNext
+            hasPrevious
+            nodes {
+              filterUri
+              label
+              description
+              filterType
+              includedCols
+              rowExpression
+            }
+          }
+        }
+        """,
+        tableUri=tableUri,
+        groups=groups,
+        username=username,
+    )
+
+
+def delete_data_filters(client, filterUri, username, groups):
+    return client.query(
+        """
+        mutation deleteTableDataFilter($filterUri: String!) {
+            deleteTableDataFilter(filterUri: $filterUri)
+        }
+        """,
+        filterUri=filterUri,
+        groups=groups,
+        username=username,
+    )
+
+
+def test_create_table_data_filter_column(mock_lf_client, client, table_fixture, db, user, group):
+    filterName = 'colfilter'
+    filterType = 'COLUMN'
+    input = {
+        'filterName': filterName,
+        'description': 'mylocation',
+        'filterType': filterType,
+        'rowExpression': '',
+        'includedCols': ['id_col', 'id2_col'],
+    }
+    response = create_data_filter(client, table_fixture.tableUri, user.username, [group.name], input)
+
+    assert response.data.createTableDataFilter
+    assert response.data.createTableDataFilter.filterUri
+    assert response.data.createTableDataFilter.label == filterName
+    assert response.data.createTableDataFilter.filterType == filterType
+    assert response.data.createTableDataFilter.rowExpression is None
+
+
+def test_create_table_data_filter_row(mock_lf_client, client, table_fixture, db, user, group):
+    filterName = 'rowfilter'
+    filterType = 'ROW'
+    input = {
+        'filterName': filterName,
+        'description': 'mylocation',
+        'filterType': filterType,
+        'rowExpression': 'id_col IS NOT NULL AND id2_col > 100',
+        'includedCols': [],
+    }
+    response = create_data_filter(client, table_fixture.tableUri, user.username, [group.name], input)
+
+    assert response.data.createTableDataFilter
+    assert response.data.createTableDataFilter.filterUri
+    assert response.data.createTableDataFilter.label == filterName
+    assert response.data.createTableDataFilter.filterType == filterType
+    assert response.data.createTableDataFilter.includedCols is None
+
+
+def test_create_table_data_filter_invalid_input(mock_lf_client, client, table_fixture, db, user, group):
+    filterName = 'RowFilter ###'
+    filterType = 'ROW'
+    input = {
+        'filterName': filterName,
+        'description': 'mylocation',
+        'filterType': filterType,
+        'rowExpression': 'id_col IS NOT NULL AND id2_col > 100',
+        'includedCols': [],
+    }
+
+    response = create_data_filter(client, table_fixture.tableUri, user.username, [group.name], input)
+
+    assert response.errors
+    assert 'InvalidInput' in response.errors[0].message
+
+
+def test_create_table_data_filter_invalid_type(mock_lf_client, client, table_fixture, db, user, group):
+    filterName = 'filter'
+    filterType = 'NEWTYPE'
+    input = {
+        'filterName': filterName,
+        'description': 'mylocation',
+        'filterType': filterType,
+        'rowExpression': 'id_col IS NOT NULL AND id2_col > 100',
+        'includedCols': [],
+    }
+
+    response = create_data_filter(client, table_fixture.tableUri, user.username, [group.name], input)
+
+    assert response.errors
+    assert 'InvalidInput' in response.errors[0].message
+
+
+def test_list_table_data_filters(mock_lf_client, client, table_fixture, db, user, group):
+    response = list_data_filters(client, table_fixture.tableUri, user.username, [group.name])
+
+    assert response.data.listTableDataFilters.count == 2
+    for dfilter in response.data.listTableDataFilters.nodes:
+        assert dfilter.filterType in ['COLUMN', 'ROW']
+
+
+def test_delete_table_data_filter(mock_lf_client, client, table_fixture, db, user, group):
+    response = list_data_filters(client, table_fixture.tableUri, user.username, [group.name])
+    for dfilter in response.data.listTableDataFilters.nodes:
+        response = delete_data_filters(client, dfilter.filterUri, user.username, [group.name])

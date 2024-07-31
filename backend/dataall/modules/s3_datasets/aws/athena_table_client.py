@@ -5,7 +5,7 @@ from pyathena import connect
 from botocore.exceptions import ClientError
 
 from dataall.base.aws.sts import SessionHelper
-from dataall.core.environment.db.environment_models import Environment
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable
 from dataall.base.utils import json_utils, sql_utils
 
@@ -13,36 +13,35 @@ log = logging.getLogger(__name__)
 
 
 class AthenaTableClient:
-    def __init__(self, env: Environment, table: DatasetTable):
-        session = SessionHelper.remote_session(accountid=table.AWSAccountId, region=env.region)
+    def __init__(self, env: Environment, table: DatasetTable, env_group: EnvironmentGroup = None):
+        session = SessionHelper.remote_session(accountid=env.AwsAccountId, region=env.region)
+        if env_group:
+            session = SessionHelper.get_session(base_session=session, role_arn=env_group.environmentIAMRoleArn)
+
         self._client = session.client('athena', region_name=env.region)
         self._creds = session.get_credentials()
         self._env = env
+        self._env_group = env_group
         self._table = table
 
-    def get_table(self, dataset_uri):
-        env = self._env
-        table = self._table
-        creds = self._creds
-
-        env_workgroup = {}
-        try:
-            env_workgroup = self._client.get_work_group(WorkGroup=env.EnvironmentDefaultAthenaWorkGroup)
-        except ClientError as e:
-            log.info(f'Workgroup {env.EnvironmentDefaultAthenaWorkGroup} can not be found' f'due to: {e}')
-
+    def get_table(self, database_name: str, resource_link_name: str = None):
+        env_workgroup_name = (
+            self._env_group.environmentAthenaWorkGroup
+            if self._env_group
+            else self._env.EnvironmentDefaultAthenaWorkGroup
+        )
         connection = connect(
-            aws_access_key_id=creds.access_key,
-            aws_secret_access_key=creds.secret_key,
-            aws_session_token=creds.token,
-            work_group=env_workgroup.get('WorkGroup', {}).get('Name', 'primary'),
-            s3_staging_dir=f's3://{env.EnvironmentDefaultBucketName}/preview/{dataset_uri}/{table.tableUri}',
-            region_name=table.region,
+            aws_access_key_id=self._creds.access_key,
+            aws_secret_access_key=self._creds.secret_key,
+            aws_session_token=self._creds.token,
+            work_group=env_workgroup_name,
+            s3_staging_dir=f's3://{self._env.EnvironmentDefaultBucketName}/athenaqueries/{env_workgroup_name}/',
+            region_name=self._env.region,
         )
         cursor = connection.cursor()
 
         sql = 'select * from {table_identifier} limit 50'.format(
-            table_identifier=sql_utils.Identifier(table.GlueDatabaseName, table.GlueTableName)
+            table_identifier=sql_utils.Identifier(database_name, resource_link_name or self._table.GlueTableName)
         )
         cursor.execute(sql)  # nosemgrep
         # it is not possible to build the query string with the table.X parameters using Pyathena connect
