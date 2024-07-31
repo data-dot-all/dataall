@@ -502,9 +502,6 @@ export function SharedItem(props) {
         <ShareStatus status={item.status} />
       </TableCell>
       <TableCell>
-        <Typography color="textSecondary" variant="subtitle2">
-          Link to Data Filters
-        </Typography>
         {isLoadingFilters ? (
           <CircularProgress size={15} />
         ) : (
