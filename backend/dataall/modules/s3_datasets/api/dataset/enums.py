@@ -8,3 +8,4 @@ class MetadataGenerationTargets(GraphQLEnumMapper):
     Table = 'Table'
     Folder = 'Folder'
     S3_Dataset = 'S3_Dataset'
+

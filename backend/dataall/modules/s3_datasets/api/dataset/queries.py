@@ -4,7 +4,7 @@ from dataall.modules.s3_datasets.api.dataset.resolvers import (
     get_dataset_assume_role_url,
     get_file_upload_presigned_url,
     list_datasets_owned_by_env_group,
-    get_tables_folders
+    list_dataset_tables_folders
 )
 
 getDataset = gql.QueryField(
@@ -46,9 +46,12 @@ listS3DatasetsOwnedByEnvGroup = gql.QueryField(
     resolver=list_datasets_owned_by_env_group,
     test_scope='Dataset',
 )
-getTablesFolders = gql.QueryField(
-    name='getTablesFolders',
-    args=[gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String))],
-    type=gql.ArrayType(gql.Ref('QueryTableFoldersResult')),
-    resolver=get_tables_folders,
+listDatasetTablesFolders = gql.QueryField(
+    name='listDatasetTablesFolders',
+    args=[
+        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='filter', type=gql.Ref('DatasetFilter')),
+    ],
+    type=gql.Ref('DatasetItemsSearchResult'),
+    resolver=list_dataset_tables_folders,
 )

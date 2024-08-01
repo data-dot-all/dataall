@@ -165,9 +165,12 @@ def save_generated_metadata(context : Context, source: S3Dataset, resourceUri):
     RequestValidator.validate_generation_request(data=resourceUri)
     return None #save_metadata  
 
-def get_tables_folders(context : Context, source: S3Dataset, datasetUri):
+def list_dataset_tables_folders(context : Context, source: S3Dataset, datasetUri, filter: dict = None
+):
+    if not filter:
+        filter = {}
     RequestValidator.validate_generation_request(data=datasetUri)
-    return DatasetTableService.get_tables_folders(dataset_uri=datasetUri);   
+    return DatasetService.list_dataset_tables_folders(dataset_uri=datasetUri, filter=filter);
   
 class RequestValidator:
     @staticmethod

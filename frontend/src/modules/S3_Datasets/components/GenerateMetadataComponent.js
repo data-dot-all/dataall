@@ -30,10 +30,10 @@ import { useState } from 'react';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
 // import * as Yup from 'yup';
 // import { ChipInput, Defaults } from 'design';
-import { Scrollbar } from 'design';
+import { Defaults, Scrollbar } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { getTablesFolders, generateMetadataBedrock } from '../services';
+import { listDatasetTablesFolders, generateMetadataBedrock } from '../services';
 import { useCallback } from 'react';
 
 /* eslint-disable no-console */
@@ -59,6 +59,8 @@ export const GenerateMetadataComponent = (props) => {
 
   const client = useClient();
   const [loadingMetadata, setLoadingMetadata] = useState(false);
+  const [loadingTableFolder, setLoadingTableFolder] = useState(false);
+  const [tableFolderFilter, setTableFolderFilter] = useState(Defaults.filter);
   const handleChange = useCallback(
     async (event) => {
       setTargetType(event.target.value);
@@ -74,24 +76,22 @@ export const GenerateMetadataComponent = (props) => {
       } else {
         setTargets([]);
         setTargetOptions([]);
-
+        setLoadingTableFolder(true);
         const response = await client.query(
-          getTablesFolders(dataset.datasetUri)
+          listDatasetTablesFolders({
+            datasetUri: dataset.datasetUri,
+            filter: tableFolderFilter
+          })
         );
         if (!response.errors) {
-          setTargetOptions(
-            response.data.getTablesFolders.map((t) => ({
-              targetUri: t.targetUri,
-              targetType: t.type,
-              name: t.name
-            }))
-          );
+          setTargetOptions(response.data.listDatasetTablesFolders);
         } else {
           dispatch({
             type: SET_ERROR,
             error: response.errors[0].message + dataset.datasetUri
           });
         }
+        setLoadingTableFolder(false);
       }
     },
     [client, dispatch]
@@ -102,6 +102,13 @@ export const GenerateMetadataComponent = (props) => {
       ...selectedMetadataTypes,
       [event.target.name]: event.target.checked
     });
+  };
+
+  const handlePageChange = async (page) => {
+    page += 1; //expecting 1-indexing
+    if (page <= targetOptions.pages && page !== targetOptions.page) {
+      await setTableFolderFilter({ ...tableFolderFilter, page: page });
+    }
   };
 
   const generateMetadata = async () => {
@@ -270,7 +277,7 @@ export const GenerateMetadataComponent = (props) => {
                   autoHeight
                   checkboxSelection
                   getRowId={(node) => node.targetUri}
-                  rows={targetOptions}
+                  rows={targetOptions.nodes}
                   columns={[
                     { field: 'targetUri', hide: true },
                     {
@@ -286,17 +293,24 @@ export const GenerateMetadataComponent = (props) => {
                       editable: false
                     }
                   ]}
-                  // rowCount={items.count}
-                  // page={items.page - 1}
-                  // pageSize={filter.pageSize}
-                  // paginationMode="server"
-                  // onPageChange={handlePageChange}
-                  // loading={loading}
-                  // onPageSizeChange={(pageSize) => {
-                  //   setFilter({ ...filter, pageSize: pageSize });
-                  // }}
+                  rowCount={targetOptions.count}
+                  page={targetOptions.page - 1}
+                  pageSize={targetOptions.pageSize}
+                  paginationMode="server"
+                  onPageChange={handlePageChange}
+                  loading={loadingTableFolder}
+                  onPageSizeChange={(pageSize) => {
+                    setTableFolderFilter({
+                      ...tableFolderFilter,
+                      pageSize: pageSize
+                    });
+                  }}
                   getRowHeight={() => 'auto'}
                   disableSelectionOnClick
+                  onSelectionModelChange={(newSelectionModel) => {
+                    console.log('selectionModel', newSelectionModel);
+                    setTargets(newSelectionModel);
+                  }}
                   sx={{
                     wordWrap: 'break-word',
                     '& .MuiDataGrid-row': {

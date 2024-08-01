@@ -523,3 +523,10 @@ class DatasetService:
         for table_uri in tables:
             GlossaryRepository.delete_glossary_terms_links(session, table_uri, 'DatasetTable')
         GlossaryRepository.delete_glossary_terms_links(session, dataset_uri, 'Dataset')
+
+    @staticmethod
+    def list_dataset_tables_folders(dataset_uri, filter):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            return DatasetRepository.paginated_dataset_tables_folders(session, dataset_uri, filter)
+

@@ -153,11 +153,27 @@ BedrockPromptResult = gql.ObjectType(
         gql.Field(name='Column_Descriptions', type  =gql.ArrayType(gql.Ref('ColumnDescriptions'))),
     ],
 )
-QueryTableFoldersResult = gql.ObjectType(
-    name='QueryTableFoldersResult',
+
+DatasetItem = gql.ObjectType(
+    name='DatasetItem',
     fields=[
         gql.Field(name='name', type=gql.String),
-        gql.Field(name='type', type=gql.String),
+        gql.Field(name='targetType', type=gql.String),
         gql.Field(name='targetUri', type=gql.String)
+    ],
+)
+
+DatasetItemsSearchResult = gql.ObjectType(
+    name='DatasetItemsSearchResult',
+    fields=[
+        gql.Field(name='count', type=gql.Integer),
+        gql.Field(name='nodes', type=gql.ArrayType(DatasetItem)),
+        gql.Field(name='pageSize', type=gql.Integer),
+        gql.Field(name='nextPage', type=gql.Integer),
+        gql.Field(name='pages', type=gql.Integer),
+        gql.Field(name='page', type=gql.Integer),
+        gql.Field(name='previousPage', type=gql.Integer),
+        gql.Field(name='hasNext', type=gql.Boolean),
+        gql.Field(name='hasPrevious', type=gql.Boolean),
     ],
 )

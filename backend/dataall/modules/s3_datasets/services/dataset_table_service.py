@@ -184,7 +184,7 @@ class DatasetTableService:
        context = get_context()
        with context.db_engine.scoped_session() as session:
         if type == MetadataGenerationTargets.Table.value:
-            table = DatasetRepository.get_dataset_table_by_uri(session, resourceUri)
+            table = DatasetTableRepository.get_dataset_table_by_uri(session, resourceUri)
             table_column = DatasetColumnRepository.get_table_info_metadata_generation(session, resourceUri)
             return BedrockClient(table_column.AWSAccountId, 'us-east-1').generate_metadata(
                 prompt_type = type,
@@ -220,25 +220,3 @@ class DatasetTableService:
                 description = folder.description,
                 tags=folder.tags
                 )
-    
-    def get_tables_folders(dataset_uri):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            folders = DatasetLocationRepository.get_dataset_folders(session, dataset_uri)
-            tables = DatasetRepository.get_dataset_tables(session, dataset_uri) 
-            returnList = [
-                {
-                    'name': folder.label,
-                    'type': 'Folder',
-                    'targetUri': folder.locationUri
-                }
-                for folder in folders
-            ] + [
-                {
-                    'name': table.GlueTableName,
-                    'type': 'Table',
-                    'targetUri': table.tableUri
-                }
-                for table in tables
-            ]
-            return returnList
