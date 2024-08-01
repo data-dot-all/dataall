@@ -15,14 +15,34 @@ permissions:
 
 jobs:
   build:
-
+    env:
+      CDK_DEFAULT_REGION: eu-west-1
+      CDK_DEFAULT_ACCOUNT: 111111111111
+      GITHUB_ACTIONS: true
+    strategy:
+      matrix:
+        python-version: [3.9]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
+      - name: Git clone
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+      - name: Install CDK 
+        run: |
+          npm install -g aws-cdk cdk-nag
+          cdk --version
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: ${{ matrix.python-version }}
+      - name: Upgrade Pip
+        run: python -m pip install --upgrade pip
+      - name: Install Requirements
+        run: python -m pip install -r deploy/requirements.txt
+      - name: CDK Synth
+        run: |
+          npx cdk synth
       - name: Test with Checkov
         id: checkov
         uses: bridgecrewio/checkov-action@master
