@@ -1,6 +1,7 @@
 import { Dialog } from '@mui/material';
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
+import { Defaults } from 'design';
 import { GenerateMetadataComponent } from './GenerateMetadataComponent';
 import { ReviewMetadataComponent } from './ReviewMetadataComponent';
 
@@ -23,7 +24,7 @@ export const MetadataMainModal = (props) => {
       setCurrentView('GENERATE_FORM');
       setTargetType('');
       setTargets([]);
-      setTargetOptions([]);
+      setTargetOptions(Defaults.pagedResponse);
       setSelectedMetadataTypes({});
       setVersion(0);
     }

@@ -1,20 +1,28 @@
 import { gql } from 'apollo-boost';
 
-export const generateMetadataBedrock = ({ resourceUri, type, version }) => ({
+export const generateMetadataBedrock = ({
+  resourceUri,
+  targetType,
+  metadataTypes,
+  version
+}) => ({
   variables: {
     resourceUri,
-    type,
+    targetType,
+    metadataTypes,
     version
   },
   mutation: gql`
     mutation generateMetadata(
       $resourceUri: String!
-      $type: MetadataGenerationTargets
+      $targetType: MetadataGenerationTargets
+      $metadataTypes: [String]
       $version: Int
     ) {
       generateMetadata(
         resourceUri: $resourceUri
-        type: $type
+        targetType: $targetType
+        metadataTypes: $metadataTypes
         version: $version
       ) {
         Description

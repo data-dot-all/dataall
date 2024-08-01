@@ -65,8 +65,6 @@ export const GenerateMetadataComponent = (props) => {
     async (event) => {
       setTargetType(event.target.value);
       if (event.target.value === 'Dataset') {
-        setTargets([]);
-        setTargetOptions([]);
         setTargets([
           {
             targetUri: dataset.datasetUri,
@@ -75,7 +73,6 @@ export const GenerateMetadataComponent = (props) => {
         ]);
       } else {
         setTargets([]);
-        setTargetOptions([]);
         setLoadingTableFolder(true);
         const response = await client.query(
           listDatasetTablesFolders({
@@ -121,7 +118,10 @@ export const GenerateMetadataComponent = (props) => {
       target.response = await client.mutate(
         generateMetadataBedrock({
           resourceUri: target.targetUri,
-          type: target.targetType,
+          targetType: target.targetType,
+          metadataTypes: Object.entries(selectedMetadataTypes)
+            .filter(([key, value]) => value === true)
+            .map(([key]) => key),
           version: version
         })
       );
@@ -146,36 +146,6 @@ export const GenerateMetadataComponent = (props) => {
       setVersion(version + 1);
       setLoadingMetadata(false);
     } //TODO EDIT THIS CALL WITH INPUT/OUTPUT FROM BACKEND
-    for (let option of targetOptions) {
-      console.log(option);
-      option.response = await client.mutate(
-        generateMetadataBedrock({
-          resourceUri: option.targetUri,
-          type: option.targetType,
-          version: version
-        })
-      );
-      console.log('option.uri', option.targetUri);
-      if (!option.response.errors) {
-        console.log('option.response', option.response);
-        enqueueSnackbar(`Returned response ${option.response}`, {
-          anchorOrigin: {
-            horizontal: 'right',
-            vertical: 'top'
-          },
-          variant: 'success'
-        });
-        if (!option.response.errors) {
-          setTargetOptions({
-            ...targetOptions,
-            [option.targetUri]: option.response
-          });
-          setCurrentView('REVIEW_METADATA');
-        }
-      }
-      setVersion(version + 1);
-      setLoadingMetadata(false);
-    }
   };
   return (
     <>
@@ -308,8 +278,17 @@ export const GenerateMetadataComponent = (props) => {
                   getRowHeight={() => 'auto'}
                   disableSelectionOnClick
                   onSelectionModelChange={(newSelectionModel) => {
-                    console.log('selectionModel', newSelectionModel);
-                    setTargets(newSelectionModel);
+                    console.log('selectionModel2', newSelectionModel);
+                    const selectedTargets = newSelectionModel.map((id) =>
+                      targetOptions.nodes.find(
+                        (option) => option.targetUri === id
+                      )
+                    );
+                    console.log('selectedTargets', selectedTargets);
+                    setTargets(selectedTargets);
+                    if (newSelectionModel.length === 0) {
+                      setSelectedMetadataTypes({});
+                    }
                   }}
                   sx={{
                     wordWrap: 'break-word',
