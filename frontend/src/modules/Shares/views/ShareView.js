@@ -6,6 +6,7 @@ import {
   DeleteOutlined,
   RefreshRounded
 } from '@mui/icons-material';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import SecurityIcon from '@mui/icons-material/Security';
 import { LoadingButton } from '@mui/lab';
 import {
@@ -13,7 +14,6 @@ import {
   Breadcrumbs,
   Button,
   Card,
-  Chip,
   CardContent,
   CardHeader,
   Container,
@@ -436,6 +436,8 @@ export function SharedItem(props) {
   const [isFilterModalOpenUri, setIsFilterModalOpenUri] = useState(0);
   const [isLoadingFilters, setIsLoadingFilters] = useState(false);
   const [itemDataFilter, setItemDataFilter] = useState(null);
+  const [isAssignedFilterModalOpen, setIsAssignedFilterModalOpen] =
+    useState('');
 
   const getItemDataFilters = async (attachedDataFilterUri) => {
     setIsLoadingFilters(true);
@@ -473,6 +475,13 @@ export function SharedItem(props) {
     setIsFilterModalOpenUri(uri);
   };
 
+  const handleAssignedFilterModalOpen = (label) => {
+    setIsAssignedFilterModalOpen(label);
+  };
+  const handleAssignedFilterModalClose = () => {
+    setIsAssignedFilterModalOpen('');
+  };
+
   const removeItemFromShareObject = async () => {
     setIsRemovingItem(true);
     const response = await client.mutate(
@@ -506,25 +515,32 @@ export function SharedItem(props) {
           <CircularProgress size={15} />
         ) : (
           <>
-            <Typography
-              sx={{
-                fontSize: 'medium',
-                fontStyle: 'italic',
-                fontWeight: 'bold'
-              }}
-            >
-              {itemDataFilter?.label}
-            </Typography>
-            {itemDataFilter?.dataFilterNames &&
-              itemDataFilter?.dataFilterNames.length > 0 &&
-              itemDataFilter?.dataFilterNames.map((dfilter) => (
-                <Chip
-                  sx={{ mr: 0.5, mb: 0.5 }}
-                  key={dfilter}
-                  label={dfilter}
+            {itemDataFilter &&
+              itemDataFilter?.dataFilterNames &&
+              itemDataFilter?.dataFilterNames.length > 0 && (
+                <Button
+                  color="primary"
+                  startIcon={<OpenInNewIcon fontSize="small" />}
+                  sx={{ mr: 1 }}
                   variant="outlined"
-                />
-              ))}
+                  onClick={() => {
+                    handleAssignedFilterModalOpen(itemDataFilter.label);
+                  }}
+                >
+                  {itemDataFilter?.label}
+                </Button>
+              )}
+            {isAssignedFilterModalOpen === itemDataFilter?.label && (
+              <ShareItemFilterModal
+                item={item}
+                shareUri={share.shareUri}
+                itemDataFilter={itemDataFilter}
+                onApply={() => handleAssignedFilterModalClose()}
+                onClose={() => handleAssignedFilterModalClose()}
+                open={isAssignedFilterModalOpen === itemDataFilter?.label}
+                viewOnly={true}
+              />
+            )}
           </>
         )}
       </TableCell>

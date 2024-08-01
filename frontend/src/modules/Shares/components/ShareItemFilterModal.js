@@ -29,8 +29,9 @@ export const ShareItemFilterModal = (props) => {
     itemDataFilter,
     onApply,
     onClose,
-    open,
     reloadItems,
+    open,
+    viewOnly,
     ...other
   } = props;
   const { enqueueSnackbar } = useSnackbar();
@@ -189,6 +190,42 @@ export const ShareItemFilterModal = (props) => {
     return null;
   }
 
+  if (viewOnly) {
+    return (
+      <Dialog maxWidth="lg" fullWidth onClose={onClose} open={open} {...other}>
+        <Box fullWidth sx={{ p: 3 }}>
+          <Typography
+            align="center"
+            color="textPrimary"
+            gutterBottom
+            variant="h4"
+          >
+            Data filters assigned to {item.itemName}
+          </Typography>
+          {loading ? (
+            <CircularProgress sx={{ mt: 1 }} size={20} />
+          ) : (
+            <DataGrid
+              fullWidth
+              autoHeight
+              scrollbarSize={50}
+              rowSpacingType="border"
+              rows={filters.filter((f) =>
+                itemDataFilter.dataFilterUris.includes(f.filterUri)
+              )}
+              getRowId={(filter) => filter.filterUri}
+              columns={columns}
+              pageSize={pageSize}
+              rowsPerPageOptions={[5, 10, 20]}
+              onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+              loading={loading}
+            />
+          )}
+        </Box>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog maxWidth="lg" fullWidth onClose={onClose} open={open} {...other}>
       <Box sx={{ p: 3 }}>
@@ -336,5 +373,6 @@ ShareItemFilterModal.propTypes = {
   onApply: PropTypes.func,
   onClose: PropTypes.func,
   reloadItems: PropTypes.func,
-  open: PropTypes.bool.isRequired
+  open: PropTypes.bool.isRequired,
+  viewOnly: PropTypes.bool
 };
