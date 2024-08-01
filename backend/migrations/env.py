@@ -19,6 +19,7 @@ from dataall.modules.vote.db.vote_models import Vote
 from dataall.modules.worksheets.db.worksheet_models import WorksheetQueryResult, Worksheet
 from dataall.modules.omics.db.omics_models import OmicsWorkflow, OmicsRun
 from dataall.modules.metadata_forms.db.metadata_form_models import *
+from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset, RedshiftTable, RedshiftConnection
 # fmt: on
 # enable ruff-format back
 

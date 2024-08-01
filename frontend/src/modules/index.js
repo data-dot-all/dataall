@@ -7,6 +7,7 @@ export * from './Notebooks';
 export * from './Notifications';
 export * from './Omics';
 export * from './Pipelines';
+export * from './Redshift_Datasets';
 export * from './S3_Datasets';
 export * from './Shares';
 export * from './Worksheets';
