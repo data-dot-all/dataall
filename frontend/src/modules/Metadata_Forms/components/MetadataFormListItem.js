@@ -34,13 +34,8 @@ export const MetadataFormListItem = (props) => {
                 <Box
                   sx={{
                     ml: 2,
-                    width: '99%',
                     whiteSpace: 'nowrap',
-                    alignItems: 'left',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    WebkitBoxOrient: 'vertical',
-                    WebkitLineClamp: 2
+                    alignItems: 'left'
                   }}
                 >
                   <Link
@@ -50,6 +45,11 @@ export const MetadataFormListItem = (props) => {
                     variant="h6"
                     onClick={() => {
                       navigate(`/console/metadata-forms/${metadata_form.uri}`);
+                    }}
+                    sx={{
+                      maxWidth: '200px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
                     }}
                   >
                     <Tooltip title={metadata_form.name}>
@@ -81,7 +81,6 @@ export const MetadataFormListItem = (props) => {
             color="textSecondary"
             variant="body2"
             sx={{
-              width: '200px',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -164,6 +163,7 @@ export const MetadataFormListItem = (props) => {
                       color="textPrimary"
                       variant="subtitle2"
                       underline="false"
+                      sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
                     >
                       {metadata_form.homeEntityName || '-'}
                     </Link>
