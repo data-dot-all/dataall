@@ -1,6 +1,7 @@
 import logging
 
-from sqlalchemy import and_, or_, func
+import sqlalchemy
+from sqlalchemy import and_, or_, literal
 from sqlalchemy.orm import Query
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import Environment
@@ -279,18 +280,16 @@ class DatasetRepository(EnvironmentResource):
                 S3Dataset.datasetUri,
                 DatasetTable.tableUri.label('targetUri'),
                 DatasetTable.name.label('name'),
-                func.concat('DatasetTable').label('itemType'),
-
+                literal("Table", type_=sqlalchemy.types.String).label('targetType'),
             ).join(
                 DatasetTable,
                 DatasetTable.datasetUri == S3Dataset.datasetUri,
             ).filter(S3Dataset.datasetUri == dataset_uri)
-
         q2 = session.query(
                 S3Dataset.datasetUri,
                 DatasetStorageLocation.locationUri.label('targetUri'),
                 DatasetStorageLocation.name.label('name'),
-                func.concat('DatasetFolder').label('itemType'),
+                literal('Folder', type_=sqlalchemy.types.String).label('targetType'),
             ).join(
                 DatasetStorageLocation,
                 DatasetStorageLocation.datasetUri == S3Dataset.datasetUri,
