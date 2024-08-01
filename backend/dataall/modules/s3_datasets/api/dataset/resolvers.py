@@ -153,13 +153,13 @@ def list_datasets_owned_by_env_group(
         filter = {}
     return DatasetService.list_datasets_owned_by_env_group(environmentUri, groupUri, filter)
 
-def generate_metadata(context : Context, source: S3Dataset, resourceUri, type, version):
+def generate_metadata(context : Context, source: S3Dataset, resourceUri, targetType, version, metadataTypes):
     RequestValidator.validate_generation_request(data=resourceUri)
-    return DatasetTableService.generate_metadata(resourceUri=resourceUri,type=type, version=version)
+    return DatasetTableService.generate_metadata(resourceUri=resourceUri,targetType=targetType, version=version, metadataTypes=metadataTypes)
 
-def read_sample_data(context : Context, source: S3Dataset, resourceUri):
-    RequestValidator.validate_generation_request(data=resourceUri)
-    return None #read_sample_data
+def read_sample_data(context : Context, source: S3Dataset, tableUri):
+    RequestValidator.validate_generation_request(data=tableUri)
+    return DatasetTableService.preview(uri=tableUri)
    
 def save_generated_metadata(context : Context, source: S3Dataset, resourceUri):
     RequestValidator.validate_generation_request(data=resourceUri)

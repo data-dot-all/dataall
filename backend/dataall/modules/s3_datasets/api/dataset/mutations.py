@@ -12,7 +12,6 @@ from dataall.modules.s3_datasets.api.dataset.resolvers import (
     import_dataset,
     start_crawler,
     generate_metadata,
-    read_sample_data,
     save_generated_metadata,
     
 )
@@ -76,18 +75,14 @@ StartGlueCrawler = gql.MutationField(
 generateMetadata = gql.MutationField(
     name='generateMetadata',
     args=[gql.Argument(name='resourceUri', type=gql.NonNullableType(gql.String)),
-          gql.Argument(name='type', type=MetadataGenerationTargets.toGraphQLEnum()),
-          gql.Argument(name='version', type=gql.Integer)], #add sample data, helper data, additional context
+          gql.Argument(name='targetType', type=MetadataGenerationTargets.toGraphQLEnum()),
+          gql.Argument(name='version', type=gql.Integer), #add sample data, helper data, additional context
+          gql.Argument(name='metadataTypes', type=gql.ArrayType(gql.String))],
     type=gql.Ref('BedrockPromptResult'),
     resolver=generate_metadata,
 )
 
-readSampleData = gql.MutationField(
-    name='read_sample_data',
-    args=[gql.Argument(name='resourceUri', type=gql.NonNullableType(gql.String))],
-    type=gql.Ref('BedrockPromptResult'), #basically returns nothing...? 
-    resolver=read_sample_data,
-) #return the data -> user invokes generateMetadata again + sample data ; similar api exists
+
 saveGeneratedMetadata = gql.MutationField(
     name='save_generated_metadata',
     args=[gql.Argument(name='resourceUri', type=gql.NonNullableType(gql.String))],

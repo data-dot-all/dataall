@@ -114,6 +114,9 @@ export const GenerateMetadataComponent = (props) => {
     console.log('targets', targets);
     console.log('selectedmetadata', selectedMetadataTypes);
     console.log('targetoption', targetOptions);
+    const _selectedMetadataTypes = Object.keys(selectedMetadataTypes).filter(
+      (key) => selectedMetadataTypes[key]
+    );
     for (let target of targets) {
       target.response = await client.mutate(
         generateMetadataBedrock({

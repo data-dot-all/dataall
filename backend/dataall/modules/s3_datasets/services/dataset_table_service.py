@@ -180,43 +180,51 @@ class DatasetTableService:
             session=session, group=None, resource_uri=table_uri, resource_type=DatasetTable.__name__
         )
     @staticmethod 
-    def generate_metadata(resourceUri, type, version):
+    def generate_metadata(resourceUri, targetType, version, metadataTypes):
        context = get_context()
+       #metadataTypes = metadataTypes.join(',')
        with context.db_engine.scoped_session() as session:
-        if type == MetadataGenerationTargets.Table.value:
+        if targetType == MetadataGenerationTargets.Table.value:
             table = DatasetTableRepository.get_dataset_table_by_uri(session, resourceUri)
             table_column = DatasetColumnRepository.get_table_info_metadata_generation(session, resourceUri)
             return BedrockClient(table_column.AWSAccountId, 'us-east-1').generate_metadata(
-                prompt_type = type,
+                prompt_type = targetType,
                 label = table.label,
                 columns = {','.join(table_column.label)},
                 column_descriptions = {','.join(table_column.description)},
                 description = table.description,
-                tags=table.tags
+                tags = table.tags,
+                metadata_type = metadataTypes
             )
         
-        elif type == MetadataGenerationTargets.S3_Dataset.value:
+        elif targetType == MetadataGenerationTargets.S3_Dataset.value:
             dataset = DatasetBaseRepository.get_dataset_by_uri(session, resourceUri)
-            tabel_labels = [t.label for t in DatasetRepository.get_dataset_tables(session, resourceUri)]
-            tabel_descriptions = [t.description for t in DatasetRepository.get_dataset_tables(session, resourceUri)]
+            table_labels = [t.label for t in DatasetRepository.get_dataset_tables(session, resourceUri)]
+            table_descriptions = [t.description for t in DatasetRepository.get_dataset_tables(session, resourceUri)]
+            folders = [f.label for f in DatasetLocationRepository.get_dataset_folders(session, resourceUri)]
             return BedrockClient(dataset.AwsAccountId, 'us-east-1').generate_metadata(
-                prompt_type = type,
+                prompt_type = targetType,
                 label =dataset.label,
-                tabels = tabel_labels,
+                tables = table_labels,
                 description = dataset.description,
-                table_description = tabel_descriptions,
-                tags = dataset.tags
+                table_description = table_descriptions,
+                tags = dataset.tags,
+                metadata_type = metadataTypes,
+                folders = folders
+
             )
         
-        elif type == MetadataGenerationTargets.Folder.value:
+        elif targetType == MetadataGenerationTargets.Folder.value:
             folder = DatasetLocationRepository.get_location_by_uri(session, resourceUri)
             dataset = DatasetRepository.get_dataset_by_uri(session, folder.datasetUri)
             files = S3DatasetClient(dataset).list_bucket_files(folder.S3BucketName, folder.S3Prefix)
             file_names = [f['Key'] for f in files]
             return BedrockClient(folder.AWSAccountId, 'us-east-1').generate_metadata(
-                prompt_type = type,
+                prompt_type = targetType,
                 label = folder.label,
                 files = file_names,
                 description = folder.description,
-                tags=folder.tags
+                tags=folder.tags,
+                metadata_type= metadataTypes
                 )
+

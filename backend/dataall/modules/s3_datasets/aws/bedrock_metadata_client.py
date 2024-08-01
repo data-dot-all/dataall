@@ -15,7 +15,7 @@ class BedrockClient:
         self.region = region
   
     def _generate_prompt(self, **kwargs):
-        prompt_type = kwargs.get('prompt_type', 'table')
+        prompt_type = kwargs.get('prompt_type', 'Table')
         common_data = {
             'label': kwargs.get('label', ''),
             'description': kwargs.get('description', ''),
@@ -26,48 +26,53 @@ class BedrockClient:
             'folder_name': kwargs.get('folder_name', ''),
             'folder_description': kwargs.get('folder_description', ''),
             'folder_tags': kwargs.get('folder_tags', ''),
-            'tables': kwargs.get('tables', ''),
-            'table_description' : kwargs.get('table_descriptions', '')
+            'tables': kwargs.get('tables', []),
+            'table_description' : kwargs.get('table_descriptions', ''),
+            'metadata_types' : kwargs.get('metadata_type', []),
+            'folders': kwargs.get('folders', [])
             }
-
+        log.info("metadata", common_data['metadata_types'])
         if prompt_type == 'Table':
             return f"""
-            Generate a detailed metadata description for a database table using following provided data: 
-                table name: {common_data['label']}, 
-                column names: {common_data['columns']} 
-                Try to use following inputs as well, but do not use these data if it says: "No description provided" for generation
-                current column descriptions: ({common_data['column_descriptions']}) 
-                table_description: {common_data['description'] if common_data['description'] else ''}
-                tags : {common_data['tags'] if common_data['tags'] else ''}
-                Your goal is generate Tags,Topic, Description and column descriptions for this table using above data and with your knowledge. All the parameters you return has value String. Return:
-                Topic: <topic>. 
-                TableName: <table_name>
+             Generate or improve metadata for a common_data['label'] table using the following provided data:
+                - Table name: {common_data['label'] if common_data['label'] else 'No description provided'}
+                - Column names: {common_data['columns'] if common_data['columns'] else 'No description provided'}
+                - Column descriptions: ({common_data['column_descriptions'] if common_data['column_descriptions'] else 'No description provided'})
+                - Table description: {common_data['description'] if common_data['description'] else 'No description provided'}
+                - Tags: {common_data['tags'] if common_data['tags'] else 'No description provided'}
+                **Important**: 
+                - If the data indicates "No description provided," do not use that particular input for generating metadata, these data is optional you should still generate in that case.
+                - Only focus on generating the following metadata types as specified by the user: {common_data['metadata_types']}. Do not include any other metadata types.
+                Your response must strictly contain all the requested metadata types. Don't use ' ' in your response, use " ".
+                For example, if the requested metadata types are "Tags" and "Column_Description", the response should be:
                 Tags: <tags>
-                Description: <description>
                 Column_Descriptions: 
-                <column1>:<column1_description>
-                <column2>:<column2_description>
-                    ,...,
-                <columnN>:<columnN_description>
-                
-                Evaluate if the given parameters are enough for generating metadata, if not response should be: "NotEnoughData".  Return a python dictionary. Column_Descriptions is another dictionary within the existing dictionary, rest of them are strings.
+                                <column1>:<column1_description>
+                                <column2>:<column2_description>
+                                    ,...,
+                                <columnN>:<columnN_description>
+                Evaluate if the given parameters are sufficient for generating the requested metadata. If not, respond with "NotEnoughData".
+                Return the result as a Python dictionary where the keys are the requested metadata types and the values are the corresponding generated metadata. Column_Descriptions is another dictionary within the existing dictionary, rest of them are strings. For tags, ensure the output is a string without "[" or "]".
             """
         elif prompt_type == 'S3_Dataset':
             return f"""
-              Generate a detailed metadata description for a database table using following provided data: 
-              dataset name: {common_data['label']}, 
-              table names in the dataset: {common_data['tables']} 
-              Try to use following inputs as well, but do not use these data if it says: "No description provided" for generation
-              current tags for dataset: {common_data['tags'] if common_data['tags'] else ''}
-              current dataset description: {common_data['description'] if common_data['description'] else ''}
-              Generate meaningful Tags,Topic, Description and column descriptions for this dataset using above data and with your knowledge. 
-              All the parameters you return has type String, tags are also string don't use "[" or "]" in your answer! Return:
-              Tags:<tags>
-              Description:<description>
-              Topic:<topic>
-              Evaluate if the given parameters are enough for generating metadata, if not response should be: "NotEnoughData". 
-              Return a python dictionary.
-         """
+              Generate or improve metadata for a dataset using the following provided data:
+                - Dataset name: {common_data['label'] if common_data['label'] else 'No description provided'}
+                - Table names in the dataset: {common_data['tables'] if common_data['tables'] else 'No description provided'}
+                - Folder names in the dataset: {common_data['folders'] if common_data['folders'] else 'No description provided'}
+                - Current tags for dataset: {common_data['tags'] if common_data['tags'] else 'No description provided'}
+                - Current dataset description: {common_data['description'] if common_data['description'] else 'No description provided'}
+                **Important**: 
+                    - If the data indicates "No description provided," do not use that particular input for generating metadata.
+                    - Only focus on generating the following metadata types as specified by the user: {common_data['metadata_types']}. Do not include any other metadata types.
+                    - Return the result as a Python dictionary where the keys are the requested metadata types and the values are the corresponding generated metadata.
+                Your response should strictly contain the requested metadata types. Don't use ' ' in your response, use " ".
+                For example, if the requested metadata types are "Tags" and "Description", the response should be:
+                    "Tags":<tags>
+                    "Description":<description>
+                Evaluate if the given parameters are sufficient for generating the requested metadata. If not, respond with "NotEnoughData".
+                For tags, ensure the output is a string without "[" or "]".
+            """
         elif prompt_type == 'Folder':
             return f"""
               Generate a detailed metadata description for a database table using following provided data: 
@@ -76,7 +81,7 @@ class BedrockClient:
               Try to use following inputs as well, but do not use these data if it says: "No description provided" for generation
               folder_description: {common_data['description'] if common_data['description'] else ''}
               folder_tags: {common_data['tags'] if common_data['tags'] else ''}
-              Your goal is generate Description and Tags for this folder using above data and with your knowledge. All the parameters you return has value String. Return:
+              Your goal is generate {common_data['metadata_types']} for this folder using above data and with your knowledge. All the parameters you return has value String. Return:
               Description: <description>
               Tags: <tags>
 
@@ -99,14 +104,14 @@ class BedrockClient:
         modelId = "anthropic.claude-3-sonnet-20240229-v1:0"
         response = self._client.invoke_model(body=body, modelId=modelId)
         response_body = json.loads(response.get('body').read())
+        log.info("Prompt response: \n %s", response_body)
         return response_body.get("content", [])
     
     def _parse_response(self, response_content):
         output_str = response_content[0]['text']
-        log.info("Prompt data: \n %s", output_str)
+        log.info("Prompt output: \n %s", output_str)
         output_dict = json.loads(output_str)
-        log.info("Prompt data: \n %s", output_dict)
-
+        log.info("Prompt output dict: \n %s", output_dict)
         if output_dict.get('Column_Descriptions'):
             output_dict["Column_Descriptions"] = [
                 {"Column_Name": key, "Column_Description": value}
@@ -116,5 +121,6 @@ class BedrockClient:
   
     def generate_metadata(self, **kwargs):
         prompt = self._generate_prompt(**kwargs)
+        log.info("Prompt: \n %s", prompt)
         response_content = self._invoke_model(prompt)
         return self._parse_response(response_content)
