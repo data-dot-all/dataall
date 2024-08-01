@@ -13,6 +13,7 @@ from dataall.modules.s3_datasets.api.dataset.resolvers import (
     start_crawler,
     generate_metadata,
     save_generated_metadata,
+    test_read
     
 )
 from dataall.modules.s3_datasets.api.dataset.enums import MetadataGenerationTargets
@@ -77,7 +78,8 @@ generateMetadata = gql.MutationField(
     args=[gql.Argument(name='resourceUri', type=gql.NonNullableType(gql.String)),
           gql.Argument(name='targetType', type=MetadataGenerationTargets.toGraphQLEnum()),
           gql.Argument(name='version', type=gql.Integer), #add sample data, helper data, additional context
-          gql.Argument(name='metadataTypes', type=gql.ArrayType(gql.String))],
+          gql.Argument(name='metadataTypes', type=gql.ArrayType(gql.String)),
+          gql.Argument(name='sampleData', type=gql.Ref('SampleDataInput'))],
     type=gql.Ref('BedrockPromptResult'),
     resolver=generate_metadata,
 )
@@ -88,4 +90,13 @@ saveGeneratedMetadata = gql.MutationField(
     args=[gql.Argument(name='resourceUri', type=gql.NonNullableType(gql.String))],
     type=gql.Boolean, #"Success or fail can be string as well"
     resolver=save_generated_metadata,
+)
+test = gql.MutationField(
+    name='test',
+    args=[gql.Argument(name='resourceUri', type=gql.NonNullableType(gql.String)),
+          gql.Argument(name='targetType', type=MetadataGenerationTargets.toGraphQLEnum()),
+          gql.Argument(name='version', type=gql.Integer), #add sample data, helper data, additional context
+          gql.Argument(name='metadataTypes', type=gql.ArrayType(gql.String))],
+    type=gql.Ref('BedrockPromptResult'),
+    resolver=test_read,
 )

@@ -180,13 +180,14 @@ class DatasetTableService:
             session=session, group=None, resource_uri=table_uri, resource_type=DatasetTable.__name__
         )
     @staticmethod 
-    def generate_metadata(resourceUri, targetType, version, metadataTypes):
+    def generate_metadata(resourceUri, targetType, version, metadataTypes, sampleData):
        context = get_context()
        #metadataTypes = metadataTypes.join(',')
        with context.db_engine.scoped_session() as session:
         if targetType == MetadataGenerationTargets.Table.value:
             table = DatasetTableRepository.get_dataset_table_by_uri(session, resourceUri)
             table_column = DatasetColumnRepository.get_table_info_metadata_generation(session, resourceUri)
+            log.info(sampleData)
             return BedrockClient(table_column.AWSAccountId, 'us-east-1').generate_metadata(
                 prompt_type = targetType,
                 label = table.label,
@@ -194,7 +195,8 @@ class DatasetTableService:
                 column_descriptions = {','.join(table_column.description)},
                 description = table.description,
                 tags = table.tags,
-                metadata_type = metadataTypes
+                metadata_type = metadataTypes,
+                sample_data = sampleData
             )
         
         elif targetType == MetadataGenerationTargets.S3_Dataset.value:

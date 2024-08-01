@@ -29,7 +29,8 @@ class BedrockClient:
             'tables': kwargs.get('tables', []),
             'table_description' : kwargs.get('table_descriptions', ''),
             'metadata_types' : kwargs.get('metadata_type', []),
-            'folders': kwargs.get('folders', [])
+            'folders': kwargs.get('folders', []),
+            'sample_data': kwargs.get('sample_data', [])
             }
         log.info("metadata", common_data['metadata_types'])
         if prompt_type == 'Table':
@@ -40,10 +41,12 @@ class BedrockClient:
                 - Column descriptions: ({common_data['column_descriptions'] if common_data['column_descriptions'] else 'No description provided'})
                 - Table description: {common_data['description'] if common_data['description'] else 'No description provided'}
                 - Tags: {common_data['tags'] if common_data['tags'] else 'No description provided'}
+                - (Only Input) Sample data: {common_data['sample_data'] if common_data['sample_data'] else 'No sample data'}
                 **Important**: 
                 - If the data indicates "No description provided," do not use that particular input for generating metadata, these data is optional you should still generate in that case.
                 - Only focus on generating the following metadata types as specified by the user: {common_data['metadata_types']}. Do not include any other metadata types.
-                Your response must strictly contain all the requested metadata types. Don't use ' ' in your response, use " ".
+                - Sample data is only input for you to understand the table better, do not generate sample data.
+                Your response must strictly contain all the requested metadata types, do not include any of the metadata types if it is not specified by the user. Don't use ' ' in your response, use " ".
                 For example, if the requested metadata types are "Tags" and "Column_Description", the response should be:
                 Tags: <tags>
                 Column_Descriptions: 
