@@ -316,6 +316,7 @@ class DatasetStack(Stack):
                     actions=[
                         'logs:CreateLogGroup',
                         'logs:CreateLogStream',
+                        'logs:AssociateKmsKey',
                     ],
                     effect=iam.Effect.ALLOW,
                     resources=[
@@ -332,6 +333,7 @@ class DatasetStack(Stack):
                     resources=[
                         f'arn:aws:logs:{dataset.region}:{dataset.AwsAccountId}:log-group:/aws-glue/crawlers:log-stream:{dataset.GlueCrawlerName}',
                         f'arn:aws:logs:{dataset.region}:{dataset.AwsAccountId}:log-group:/aws-glue/crawlers-role/{dataset.GlueCrawlerName}*:log-stream:{dataset.GlueCrawlerName}*',
+                        f'arn:aws:logs:{dataset.region}:{dataset.AwsAccountId}:log-group:/aws-glue/crawlers-role/{env.resourcePrefix}*:log-stream:{env.resourcePrefix}*',
                         f'arn:aws:logs:{dataset.region}:{dataset.AwsAccountId}:log-group:/aws-glue/jobs/*',
                     ],
                 ),
