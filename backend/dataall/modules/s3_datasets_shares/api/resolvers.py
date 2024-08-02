@@ -1,7 +1,7 @@
 import logging
 
 from dataall.base.api.context import Context
-from dataall.base.db.exceptions import RequiredParameter, InvalidInput
+from dataall.base.db.exceptions import RequiredParameter
 from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.modules.s3_datasets_shares.services.s3_share_service import S3ShareService
 

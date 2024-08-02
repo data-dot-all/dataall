@@ -2,7 +2,7 @@ import logging
 from warnings import warn
 from typing import List
 
-from sqlalchemy import and_, or_, func, case
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query
 
 from dataall.core.environment.db.environment_models import Environment

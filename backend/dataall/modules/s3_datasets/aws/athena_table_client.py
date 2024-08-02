@@ -5,7 +5,7 @@ from pyathena import connect
 from botocore.exceptions import ClientError
 
 from dataall.base.aws.sts import SessionHelper
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable
 from dataall.base.utils import json_utils, sql_utils
 
@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 
 class AthenaTableClient:
     def __init__(self, env: Environment, table: DatasetTable):
-        session = SessionHelper.remote_session(accountid=env.AwsAccountId, region=env.region)
+        session = SessionHelper.remote_session(accountid=table.AWSAccountId, region=table.region)
 
         self._client = session.client('athena', region_name=env.region)
         self._creds = session.get_credentials()
