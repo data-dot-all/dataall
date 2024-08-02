@@ -17,10 +17,10 @@ from dataall.modules.redshift_datasets.services.redshift_connection_permissions 
     LIST_ENVIRONMENT_REDSHIFT_CONNECTIONS,
 )
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnection
-from dataall.modules.redshift_datasets.aws.redshift_data import RedshiftDataClient
-from dataall.modules.redshift_datasets.aws.redshift_serverless import RedshiftServerlessClient
-from dataall.modules.redshift_datasets.aws.redshift import RedshiftClient
-from dataall.modules.redshift_datasets.aws.kms_redshift import KmsClient
+from dataall.modules.redshift_datasets.aws.redshift_data import redshift_data_client
+from dataall.modules.redshift_datasets.aws.redshift_serverless import redshift_serverless_client
+from dataall.modules.redshift_datasets.aws.redshift import redshift_client
+from dataall.modules.redshift_datasets.aws.kms_redshift import kms_redshift_client
 from dataall.modules.redshift_datasets.services.redshift_enums import (
     RedshiftType,
     RedshiftEncryptionType,
@@ -58,7 +58,7 @@ class RedshiftConnectionService:
                 account_id=environment.AwsAccountId, region=environment.region, connection=connection
             )
             if connection.redshiftType == RedshiftType.Cluster.value:
-                connection.nameSpaceId = RedshiftClient(
+                connection.nameSpaceId = redshift_client(
                     account_id=environment.AwsAccountId,
                     region=environment.region,
                 ).get_cluster_namespaceId(connection.clusterId)
@@ -134,7 +134,7 @@ class RedshiftConnectionService:
         with context.db_engine.scoped_session() as session:
             connection = RedshiftConnectionService.get_redshift_connection_by_uri(uri=uri)
             environment = EnvironmentService.get_environment_by_uri(session, connection.environmentUri)
-            response = RedshiftDataClient(
+            response = redshift_data_client(
                 account_id=environment.AwsAccountId, region=environment.region, connection=connection
             ).list_redshift_tables(schema)
             return response
@@ -143,7 +143,7 @@ class RedshiftConnectionService:
     def _check_redshift_connection(account_id: str, region: str, connection: RedshiftConnection):
         if connection.redshiftType == RedshiftType.Serverless.value:
             if (
-                namespace := RedshiftServerlessClient(account_id=account_id, region=region).get_namespace_by_id(
+                namespace := redshift_serverless_client(account_id=account_id, region=region).get_namespace_by_id(
                     connection.nameSpaceId
                 )
             ) is None:
@@ -152,7 +152,7 @@ class RedshiftConnectionService:
                 )
             if connection.workgroup and connection.workgroup not in [
                 workgroup['workgroupName']
-                for workgroup in RedshiftServerlessClient(
+                for workgroup in redshift_serverless_client(
                     account_id=account_id, region=region
                 ).list_workgroups_in_namespace(namespace['namespaceName'])
             ]:
@@ -161,7 +161,7 @@ class RedshiftConnectionService:
                 )
 
         if connection.redshiftType == RedshiftType.Cluster.value:
-            cluster = RedshiftClient(account_id=account_id, region=region).describe_cluster(connection.clusterId)
+            cluster = redshift_client(account_id=account_id, region=region).describe_cluster(connection.clusterId)
             if not cluster:
                 raise Exception(
                     f'Redshift cluster {connection.clusterId} does not exist or cannot be accessed with these parameters'
@@ -171,7 +171,7 @@ class RedshiftConnectionService:
                     f'Redshift cluster {connection.clusterId} is not encrypted. Data.all clusters MUST be encrypted'
                 )
         try:
-            RedshiftDataClient(
+            redshift_data_client(
                 account_id=account_id, region=region, connection=connection
             ).get_redshift_connection_database()
         except Exception as e:
@@ -185,7 +185,7 @@ class RedshiftConnectionService:
         account_id: str, region: str, connection: RedshiftConnection
     ) -> RedshiftEncryptionType:
         if connection.redshiftType == RedshiftType.Serverless.value:
-            namespace = RedshiftServerlessClient(account_id=account_id, region=region).get_namespace_by_id(
+            namespace = redshift_serverless_client(account_id=account_id, region=region).get_namespace_by_id(
                 connection.nameSpaceId
             )
             return (
@@ -194,9 +194,9 @@ class RedshiftConnectionService:
                 else RedshiftEncryptionType.CUSTOMER_MANAGED_KMS_KEY
             )
         if connection.redshiftType == RedshiftType.Cluster.value:
-            cluster = RedshiftClient(account_id=account_id, region=region).describe_cluster(connection.clusterId)
+            cluster = redshift_client(account_id=account_id, region=region).describe_cluster(connection.clusterId)
             if key_id := cluster.get('KmsKeyId', None):
-                key = KmsClient(account_id=account_id, region=region).describe_kms_key(key_id=key_id)
+                key = kms_redshift_client(account_id=account_id, region=region).describe_kms_key(key_id=key_id)
                 if key.get('KeyManager', None) == 'AWS':
                     return RedshiftEncryptionType.AWS_OWNED_KMS_KEY
                 elif key.get('KeyManager', None) == 'CUSTOMER':

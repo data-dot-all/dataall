@@ -21,3 +21,8 @@ class RedshiftClient:
         return self.client.describe_clusters(ClusterIdentifier=clusterId)['Clusters'][0]['ClusterNamespaceArn'].split(
             ':'
         )[-1]
+
+
+def redshift_client(account_id: str, region: str) -> RedshiftClient:
+    "Factory of Client"
+    return RedshiftClient(account_id=account_id, region=region)
