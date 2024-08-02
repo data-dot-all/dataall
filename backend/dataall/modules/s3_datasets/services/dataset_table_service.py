@@ -24,9 +24,6 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     PREVIEW_DATASET_TABLE,
     DATASET_TABLE_ALL,
     GET_DATASET_TABLE,
-    CREATE_TABLE_DATA_FILTER,
-    DELETE_TABLE_DATA_FILTER,
-    LIST_TABLE_DATA_FILTERS,
 )
 from dataall.modules.s3_datasets.services.dataset_service import DatasetService
 from dataall.base.utils import json_utils

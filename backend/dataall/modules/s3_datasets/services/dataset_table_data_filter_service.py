@@ -76,7 +76,9 @@ class DatasetTableDataFilterService:
         with context.db_engine.scoped_session() as session:
             table = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
             dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
-            data_filter = DatasetTableDataFilterRepository.build_data_filter(session, context, table.tableUri, data)
+            data_filter = DatasetTableDataFilterRepository.build_data_filter(
+                session, context.username, table.tableUri, data
+            )
 
             # Create LF Filter
             lf_client = LakeFormationDataFilterClient(table=table, dataset=dataset)
