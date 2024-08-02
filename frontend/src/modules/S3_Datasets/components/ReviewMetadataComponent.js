@@ -64,17 +64,17 @@ export const ReviewMetadataComponent = (props) => {
                 autoHeight
                 rows={targets} // Replace with your data array
                 getRowId={(node) => node.targetUri}
+                rowHeight={80}
                 columns={[
                   // Define your columns here
                   { field: 'targetUri', hide: true },
                   { field: 'name', headerName: 'Name', flex: 2 },
-                  { field: 'targetType', headerName: 'TargetType', flex: 1 },
+                  { field: 'targetType', headerName: 'Target Type', flex: 1 },
                   { field: 'label', headerName: 'Label', flex: 1 },
                   {
                     field: 'description',
                     headerName: 'Description',
                     flex: 3,
-                    rowHeight: 500,
                     //rowHeight: (params) => getRowHeight(params.value),
                     renderCell: (params) => (
                       <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
@@ -82,8 +82,26 @@ export const ReviewMetadataComponent = (props) => {
                       </div>
                     )
                   },
-                  { field: 'tags', headerName: 'Tags', flex: 2 },
-                  { field: 'topic', headerName: 'Topic', flex: 2 }
+                  {
+                    field: 'tags',
+                    headerName: 'Tags',
+                    flex: 2,
+                    renderCell: (params) => (
+                      <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
+                        {params.value}
+                      </div>
+                    )
+                  },
+                  {
+                    field: 'topic',
+                    headerName: 'Topics',
+                    flex: 2,
+                    renderCell: (params) => (
+                      <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
+                        {params.value}
+                      </div>
+                    )
+                  }
                   // Add more columns as needed
                 ]}
                 pageSize={10} // Replace with your desired page size

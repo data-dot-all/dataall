@@ -342,7 +342,7 @@ export const GenerateMetadataComponent = (props) => {
                     onChange={handleMetadataChange}
                   />
                 }
-                label="Topic"
+                label="Topics"
               />
             </FormGroup>
           )}
