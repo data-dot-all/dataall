@@ -123,7 +123,7 @@ class RedshiftConnectionService:
         with context.db_engine.scoped_session() as session:
             connection = RedshiftConnectionService.get_redshift_connection_by_uri(uri=uri)
             environment = EnvironmentService.get_environment_by_uri(session, connection.environmentUri)
-            return RedshiftDataClient(
+            return redshift_data_client(
                 account_id=environment.AwsAccountId, region=environment.region, connection=connection
             ).list_redshift_schemas()
 
