@@ -18,6 +18,7 @@ MetadataForm = gql.ObjectType(
 MetadataFormField = gql.ObjectType(
     name='MetadataFormField',
     fields=[
+        gql.Field(name='uri', type=gql.ID),
         gql.Field(name='name', type=gql.String),
         gql.Field(name='type', type=gql.String),
         gql.Field(name='required', type=gql.Boolean),

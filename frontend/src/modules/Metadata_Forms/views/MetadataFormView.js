@@ -22,6 +22,7 @@ import { ChevronRightIcon, PencilAltIcon, useSettings } from '../../../design';
 import { FaTrash } from 'react-icons/fa';
 import {
   MetadataFormInfo,
+  MetadataFormFields,
   MetadataFormPreview,
   MetadataFormEnforcement
 } from '../components';
@@ -33,6 +34,7 @@ const MetadataFormView = () => {
   const { settings } = useSettings();
   const tabs = [
     { label: 'Form Info', value: 'info' },
+    { label: 'Fields', value: 'fields' },
     { label: 'Enforcement', value: 'enforcement' },
     { label: 'Preview', value: 'preview' }
   ];
@@ -40,6 +42,7 @@ const MetadataFormView = () => {
   const [currentTab, setCurrentTab] = useState(null);
   const [loading, setLoading] = useState(true);
   const [visibilityDict, setVisibilityDict] = useState({});
+  const [fieldTypeOptions, setFieldTypeOptions] = useState([]);
 
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);
@@ -61,19 +64,26 @@ const MetadataFormView = () => {
     setLoading(false);
   }, [client, dispatch, params.uri]);
 
-  const fetchVisibilityOptions = async () => {
+  const fetchMFEnums = async () => {
     try {
-      const enumVisibilityOptions = await fetchEnums(client, [
-        'MetadataFormVisibility'
+      const enums = await fetchEnums(client, [
+        'MetadataFormVisibility',
+        'MetadataFormFieldType'
       ]);
-      if (enumVisibilityOptions['MetadataFormVisibility'].length > 0) {
+      if (enums['MetadataFormVisibility'].length > 0) {
         let tmpVisibilityDict = {};
-        enumVisibilityOptions['MetadataFormVisibility'].map((x) => {
+        enums['MetadataFormVisibility'].map((x) => {
           tmpVisibilityDict[x.name] = x.value;
         });
         setVisibilityDict(tmpVisibilityDict);
       } else {
         const error = 'Could not fetch visibility options';
+        dispatch({ type: SET_ERROR, error });
+      }
+      if (enums['MetadataFormFieldType'].length > 0) {
+        setFieldTypeOptions(enums['MetadataFormFieldType']);
+      } else {
+        const error = 'Could not fetch field type options';
         dispatch({ type: SET_ERROR, error });
       }
     } catch (e) {
@@ -86,7 +96,7 @@ const MetadataFormView = () => {
       fetchMetadataForm().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
-      fetchVisibilityOptions().catch((e) =>
+      fetchMFEnums().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
@@ -216,6 +226,13 @@ const MetadataFormView = () => {
               <MetadataFormInfo
                 metadataForm={metadataForm}
                 visibilityDict={visibilityDict}
+              />
+            )}
+            {currentTab === 'fields' && (
+              <MetadataFormFields
+                metadataForm={metadataForm}
+                visibilityDict={visibilityDict}
+                fieldTypeOptions={fieldTypeOptions}
               />
             )}
             {currentTab === 'enforcement' && (

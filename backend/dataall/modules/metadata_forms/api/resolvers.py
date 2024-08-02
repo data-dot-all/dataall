@@ -27,5 +27,8 @@ def get_form_fields(context: Context, source: MetadataForm):
     return MetadataFormService.get_metadata_form_fields(source.uri)
 
 
-def create_metadata_form_field(context: Context, source, formUri, data):
-    return MetadataFormService.create_metadata_form_field(formUri, data)
+def create_metadata_form_fields(context: Context, source, formUri, input):
+    return MetadataFormService.create_metadata_form_fields(formUri, input)
+
+def delete_metadata_form_field(context: Context, source, formUri, fieldUri):
+    return MetadataFormService.delete_metadata_form_field(formUri, fieldUri)

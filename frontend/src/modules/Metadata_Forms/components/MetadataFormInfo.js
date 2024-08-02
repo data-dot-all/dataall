@@ -130,5 +130,6 @@ export const MetadataFormInfo = (props) => {
 };
 
 MetadataFormInfo.propTypes = {
-  metadataForm: PropTypes.any.isRequired
+  metadataForm: PropTypes.any.isRequired,
+  visibilityDict: PropTypes.any.isRequired
 };

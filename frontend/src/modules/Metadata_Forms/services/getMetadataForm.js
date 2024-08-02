@@ -15,6 +15,7 @@ export const getMetadataForm = (uri) => ({
         homeEntity
         homeEntityName
         fields {
+          uri
           metadataFormUri
           name
           required

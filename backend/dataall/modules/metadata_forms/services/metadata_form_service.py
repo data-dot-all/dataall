@@ -89,7 +89,25 @@ class MetadataFormService:
             return MetadataFormRepository.get_metadata_form_fields(session, uri)
 
     @staticmethod
+    def get_metadata_form_field_by_uri(uri):
+        with get_context().db_engine.scoped_session() as session:
+            return MetadataFormRepository.get_metadata_form_field_by_uri(session, uri)
+
+    @staticmethod
     def create_metadata_form_field(uri, data):
         MetadataFormParamValidationService.validate_create_field_params(data)
         with get_context().db_engine.scoped_session() as session:
             return MetadataFormRepository.create_metadata_form_field(session, uri, data)
+
+    @staticmethod
+    def create_metadata_form_fields(uri, data_arr):
+        fields = []
+        for data in data_arr:
+            fields.append(MetadataFormService.create_metadata_form_field(uri, data))
+        return fields
+
+    @staticmethod
+    def delete_metadata_form_field(uri, fieldUri):
+        mf = MetadataFormService.get_metadata_form_field_by_uri(fieldUri)
+        with get_context().db_engine.scoped_session() as session:
+            return session.delete(mf)

@@ -51,3 +51,7 @@ class MetadataFormRepository:
         session.add(field)
         session.commit()
         return field
+
+    @staticmethod
+    def get_metadata_form_field_by_uri(session, uri):
+        return session.query(MetadataFormField).get(uri)
