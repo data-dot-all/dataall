@@ -70,11 +70,11 @@ class BedrockClient:
                 **Important**: 
                     - If the data indicates "No description provided," do not use that particular input for generating metadata.
                     - Only focus on generating the following metadata types as specified by the user: {common_data['metadata_types']}. Do not include any other metadata types.
-                    -  Return the result as a Python dictionary.
+                    - Return the result as a Python dictionary.
                 Your response should strictly contain the requested metadata types. Don't use ' ' in your response, use " ".
                 For example, if the requested metadata types are "tags" and "description", the response should be:
                     "tags":<tags>
-                    "tescription":<description>
+                    "description":<description>
                 Evaluate if the given parameters are sufficient for generating the requested metadata. If not, respond with "NotEnoughData".
                 For tags, ensure the output is a string without "[" or "]".
                 Return the result as a Python dictionary where the keys are the requested metadata types, all the keys must be lowercase and the values are the corresponding generated metadata.
@@ -84,15 +84,20 @@ class BedrockClient:
             return f"""
               Generate a detailed metadata description for a database table using following provided data: 
               folder name: {common_data['label']}, 
-              file names: {common_data['file_names']} 
-              Try to use following inputs as well, but do not use these data if it says: "No description provided" for generation
-              folder_description: {common_data['description'] if common_data['description'] else ''}
-              folder_tags: {common_data['tags'] if common_data['tags'] else ''}
-              Your goal is generate {common_data['metadata_types']} for this folder using above data and with your knowledge. All the parameters you return has value String. Return:
-              description: <description>
-              tags: <tags>
-
-              Evaluate if the given parameters are enough for generating metadata, if not response should be: "NotEnoughData".    Your response should strictly contain the requested metadata types. Return a python dictionary, all the keys must be lowercase.
+              file names: {common_data['file_names'] if common_data['file_names'] else 'No description provided'} 
+              folder_description: {common_data['description'] if common_data['description'] else 'No description provided'}
+              folder_tags: {common_data['tags'] if common_data['tags'] else 'No description provided'}
+                **Important**: 
+                    - If the data indicates "No description provided," do not use that particular input for generating metadata.
+                    - Only focus on generating the following metadata types as specified by the user: {common_data['metadata_types']}. Do not include any other metadata types.
+                    - Return the result as a Python dictionary.
+              Your response should strictly contain the requested metadata types.
+              For example, if the requested metadata types are "tags" and "description", the response should be:
+                  "tags":<tags>
+                  "description":<description>
+              Evaluate if the given parameters are enough for generating metadata, if not response should be: "NotEnoughData".    Your response should strictly contain the requested metadata types. 
+              For tags, ensure the output is a string without "[" or "]".
+              Return a python dictionary, all the keys must be lowercase. Don't use ' ' in your response, use " ".
          """
     
     def _invoke_model(self, prompt):
@@ -114,12 +119,15 @@ class BedrockClient:
         log.info("Prompt response: \n %s", response_body)
         return response_body.get("content", [])
     
-    def _parse_response(self, response_content, targetType):
+    def _parse_response(self, response_content, targetName ):
         output_str = response_content[0]['text']
         log.info("Prompt output: \n %s", output_str)
 
+        
         output_dict = json.loads(output_str)
-        #output_dict["type"] = targetType
+        if not output_dict.get("name"):
+            output_dict["name"] = targetName
+            
         log.info("Prompt output dict: \n %s", output_dict)
         # if output_dict.get('Column_Descriptions'):
         #     output_dict["Column_Descriptions"] = [
@@ -132,4 +140,4 @@ class BedrockClient:
         prompt = self._generate_prompt(**kwargs)
         log.info("Prompt: \n %s", prompt)
         response_content = self._invoke_model(prompt)
-        return self._parse_response(response_content, kwargs.get('prompt_type', ' '))
+        return self._parse_response(response_content, kwargs.get('label', ' '))

@@ -145,6 +145,7 @@ GeneratedMetadata = gql.ObjectType(
         gql.Field(name='topic', type=gql.String),
         gql.Field(name='tags', type=gql.String),
         gql.Field(name='description', type=gql.String),
+        gql.Field(name='name', type=gql.String),
     ],
 )
 

@@ -128,6 +128,7 @@ export const GenerateMetadataComponent = (props) => {
       if (!response.errors) {
         target.description = response.data.generateMetadata.description;
         target.label = response.data.generateMetadata.label;
+        target.name = response.data.generateMetadata.name;
         target.tags = response.data.generateMetadata.tags;
         target.topic = response.data.generateMetadata.topic;
         console.log('target.response', target.response);
@@ -336,12 +337,12 @@ export const GenerateMetadataComponent = (props) => {
               <FormControlLabel
                 control={
                   <Switch
-                    name="topics"
+                    name="topic"
                     checked={selectedMetadataTypes.topics}
                     onChange={handleMetadataChange}
                   />
                 }
-                label="Topics"
+                label="Topic"
               />
             </FormGroup>
           )}

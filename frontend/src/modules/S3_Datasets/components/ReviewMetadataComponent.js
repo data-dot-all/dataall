@@ -46,13 +46,20 @@ export const ReviewMetadataComponent = (props) => {
   // const { enqueueSnackbar } = useSnackbar();
   // const dispatch = useDispatch();
   // const client = useClient();
-
+  // const getRowHeight = (description) => {
+  //   const lineHeight = 20; // Adjust this value based on your font size and line height
+  //   console.log(description.valueOf());
+  //   const lines = description.split('\n').length; // Count the number of lines in the description
+  //   const maxLines = 5; // Set the maximum number of lines to display
+  //   const height = Math.min(lines, maxLines) * lineHeight + 16; // Calculate the height based on the number of lines
+  //   return height;
+  // };
   return (
     <>
       {Array.isArray(targets) && targets.length > 0 ? (
         <Box>
           <Scrollbar>
-            <Box sx={{ minWidth: 600 }}>
+            <Box sx={{ minWidth: 900 }}>
               <DataGrid
                 autoHeight
                 rows={targets} // Replace with your data array
@@ -63,9 +70,20 @@ export const ReviewMetadataComponent = (props) => {
                   { field: 'name', headerName: 'Name', flex: 2 },
                   { field: 'targetType', headerName: 'TargetType', flex: 1 },
                   { field: 'label', headerName: 'Label', flex: 1 },
-                  { field: 'description', headerName: 'Description', flex: 3 },
+                  {
+                    field: 'description',
+                    headerName: 'Description',
+                    flex: 3,
+                    rowHeight: 500,
+                    //rowHeight: (params) => getRowHeight(params.value),
+                    renderCell: (params) => (
+                      <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
+                        {params.value}
+                      </div>
+                    )
+                  },
                   { field: 'tags', headerName: 'Tags', flex: 2 },
-                  { field: 'topics', headerName: 'Topics', flex: 2 }
+                  { field: 'topic', headerName: 'Topic', flex: 2 }
                   // Add more columns as needed
                 ]}
                 pageSize={10} // Replace with your desired page size
