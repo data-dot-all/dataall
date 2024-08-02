@@ -54,6 +54,9 @@ export const ReviewMetadataComponent = (props) => {
   //   const height = Math.min(lines, maxLines) * lineHeight + 16; // Calculate the height based on the number of lines
   //   return height;
   // };
+  const saveMetadata = () => {
+    console.log('Saving metadata...');
+  };
   return (
     <>
       {Array.isArray(targets) && targets.length > 0 ? (
@@ -62,20 +65,34 @@ export const ReviewMetadataComponent = (props) => {
             <Box sx={{ minWidth: 900 }}>
               <DataGrid
                 autoHeight
-                rows={targets} // Replace with your data array
+                rows={targets}
                 getRowId={(node) => node.targetUri}
                 rowHeight={80}
                 columns={[
-                  // Define your columns here
                   { field: 'targetUri', hide: true },
-                  { field: 'name', headerName: 'Name', flex: 2 },
-                  { field: 'targetType', headerName: 'Target Type', flex: 1 },
-                  { field: 'label', headerName: 'Label', flex: 1 },
+                  {
+                    field: 'name',
+                    headerName: 'Name',
+                    flex: 2,
+                    editable: true
+                  },
+                  {
+                    field: 'targetType',
+                    headerName: 'Target Type',
+                    flex: 1,
+                    editable: true
+                  },
+                  {
+                    field: 'label',
+                    headerName: 'Label',
+                    flex: 1,
+                    editable: true
+                  },
                   {
                     field: 'description',
                     headerName: 'Description',
                     flex: 3,
-                    //rowHeight: (params) => getRowHeight(params.value),
+                    editable: true,
                     renderCell: (params) => (
                       <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
                         {params.value}
@@ -86,6 +103,7 @@ export const ReviewMetadataComponent = (props) => {
                     field: 'tags',
                     headerName: 'Tags',
                     flex: 2,
+                    editable: true,
                     renderCell: (params) => (
                       <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
                         {params.value}
@@ -96,18 +114,25 @@ export const ReviewMetadataComponent = (props) => {
                     field: 'topic',
                     headerName: 'Topics',
                     flex: 2,
+                    editable: true,
                     renderCell: (params) => (
                       <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
                         {params.value}
                       </div>
                     )
                   }
-                  // Add more columns as needed
                 ]}
-                pageSize={10} // Replace with your desired page size
-                rowsPerPageOptions={[5, 10, 20]} // Customize row options
+                pageSize={10}
+                rowsPerPageOptions={[5, 10, 20]}
                 pagination
                 disableSelectionOnClick
+                processRowUpdate={(newRow, oldRow) => {
+                  console.log('Updated row:', newRow);
+                  return newRow;
+                }}
+                onProcessRowUpdateError={(error) => {
+                  console.error('Error updating row:', error);
+                }}
                 sx={{
                   wordWrap: 'break-word',
                   '& .MuiDataGrid-row': {
@@ -129,7 +154,7 @@ export const ReviewMetadataComponent = (props) => {
         size="small"
         //startIcon={<AutoModeIcon size={15} />}
         sx={{ m: 2 }}
-        //onClick={saveMetadata}
+        onClick={saveMetadata}
         type="button"
         variant="contained"
       >
