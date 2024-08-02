@@ -4,6 +4,17 @@
     "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": false,
     "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": true,
     "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
-    "@aws-cdk/core:stackRelativeExports": false
+    "@aws-cdk/core:stackRelativeExports": false,
+    "repository_source": "codestar_connection",
+    "repo_string":"mourya-33/aws-dataall",
+    "repo_connection_arn":"arn:aws:codestar-connections:us-east-2:017820696756:connection/a55a3588-7ec5-4c79-bad2-096aa4d185d1",
+    "DeploymentEnvironments": [
+      {
+        "envname": "sandbox",
+        "account": "017820696756",
+        "region": "us-east-1",
+        "enable_pivot_role_auto_create": true
+      }
+    ]
   }
 }
