@@ -29,7 +29,6 @@ export const generateMetadataBedrock = ({
         version: $version
         sampleData: $sampleData
       ) {
-        resourceUri
         type
         label
         description
