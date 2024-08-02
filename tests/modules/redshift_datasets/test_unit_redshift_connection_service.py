@@ -70,12 +70,14 @@ def test_create_redshift_connection_cluster_not_found(env_fixture, api_context_1
     ).contains('Redshift cluster cluster-id does not exist or cannot be accessed with these parameters')
 
 
-def test_create_redshift_connection_cluster_not_encrypted(env_fixture, api_context_1, group, mocker):
-    # Given a redshift cluster id
-    mocker.patch(
-        'dataall.modules.redshift_datasets.aws.redshift.RedshiftClient.describe_cluster',
-        return_value={'ClusterIdentifier': 'cluster_id_1', 'ClusterStatus': 'available', 'Encrypted': False},
-    )
+def test_create_redshift_connection_cluster_not_encrypted(env_fixture, api_context_1, group, patch_redshift):
+    # Given a redshift cluster id that is not encrypted
+    patch_redshift.return_value.describe_cluster.return_value = {
+        'ClusterIdentifier': 'cluster_id_1',
+        'ClusterStatus': 'available',
+        'Encrypted': False,
+    }
+
     # Then
     assert_that(RedshiftConnectionService.create_redshift_connection).raises(Exception).when_called_with(
         uri=env_fixture.environmentUri,

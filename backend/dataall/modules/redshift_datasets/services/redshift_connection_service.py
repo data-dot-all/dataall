@@ -20,12 +20,13 @@ from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnect
 from dataall.modules.redshift_datasets.aws.redshift_data import redshift_data_client
 from dataall.modules.redshift_datasets.aws.redshift_serverless import redshift_serverless_client
 from dataall.modules.redshift_datasets.aws.redshift import redshift_client
-from dataall.modules.redshift_datasets.aws.kms_redshift import KmsClient
+from dataall.modules.redshift_datasets.aws.kms_redshift import kms_redshift_client
 from dataall.modules.redshift_datasets.services.redshift_enums import (
     RedshiftType,
     RedshiftEncryptionType,
     RedshiftConnectionTypes,
 )
+
 log = logging.getLogger(__name__)
 
 
@@ -190,7 +191,7 @@ class RedshiftConnectionService:
         if connection.redshiftType == RedshiftType.Cluster.value:
             cluster = redshift_client(account_id=account_id, region=region).describe_cluster(connection.clusterId)
             if key_id := cluster.get('KmsKeyId', None):
-                key = KmsClient(account_id=account_id, region=region).describe_kms_key(key_id=key_id)
+                key = kms_redshift_client(account_id=account_id, region=region).describe_kms_key(key_id=key_id)
                 if key.get('KeyManager', None) == 'AWS':
                     return RedshiftEncryptionType.AWS_OWNED_KMS_KEY
                 elif key.get('KeyManager', None) == 'CUSTOMER':

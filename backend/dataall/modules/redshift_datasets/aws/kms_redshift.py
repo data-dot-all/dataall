@@ -30,3 +30,8 @@ class KmsClient:
             return None
         else:
             return response['KeyMetadata']
+
+
+def kms_redshift_client(account_id: str, region: str) -> KmsClient:
+    "Factory of Client"
+    return KmsClient(account_id=account_id, region=region)
