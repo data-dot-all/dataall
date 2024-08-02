@@ -31,7 +31,7 @@ from dataall.modules.redshift_datasets.services.redshift_dataset_permissions imp
 from dataall.modules.redshift_datasets.db.redshift_dataset_repositories import RedshiftDatasetRepository
 from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset, RedshiftTable
-from dataall.modules.redshift_datasets.aws.redshift_data import RedshiftDataClient
+from dataall.modules.redshift_datasets.aws.redshift_data import redshift_data_client
 from dataall.modules.redshift_datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.redshift_datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.redshift_datasets.services.redshift_constants import (
@@ -235,7 +235,7 @@ class RedshiftDatasetService:
             ]
             connection = RedshiftConnectionRepository.get_redshift_connection(session, dataset.connectionUri)
             environment = EnvironmentService.get_environment_by_uri(session, connection.environmentUri)
-            tables = RedshiftDataClient(
+            tables = redshift_data_client(
                 account_id=environment.AwsAccountId, region=environment.region, connection=connection
             ).list_redshift_tables(dataset.schema)
             for table in tables:
@@ -274,7 +274,7 @@ class RedshiftDatasetService:
             connection = RedshiftConnectionRepository.get_redshift_connection(
                 session=session, uri=dataset.connectionUri
             )
-            columns = RedshiftDataClient(
+            columns = redshift_data_client(
                 account_id=dataset.AwsAccountId, region=dataset.region, connection=connection
             ).list_redshift_table_columns(dataset.schema, table.name)
             return paginate_list(
