@@ -62,7 +62,7 @@ class RequestValidator:
             raise InvalidInput(
                 'label',
                 data.get('label'),
-                'must match the pattern ^[a-zA-Z0-9_]*$',
+                'must match the pattern ^[a-z0-9_]*$',
             )
 
 

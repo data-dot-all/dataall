@@ -46,7 +46,10 @@ class DatasetTableDataFilterRepository:
             .order_by(DatasetTableDataFilter.created.desc())
         )
 
-        if data and data.get('term'):
-            query = query.filter(DatasetTableDataFilter.name.ilike('%' + data.get('term') + '%'))
+        if filterUris := data.get('filterUris'):
+            query = query.filter(DatasetTableDataFilter.filterUri.in_(filterUris))
+
+        if term := data.get('term'):
+            query = query.filter(DatasetTableDataFilter.name.ilike('%' + term + '%'))
 
         return paginate(query=query, page_size=data.get('pageSize', 10), page=data.get('page', 1)).to_dict()

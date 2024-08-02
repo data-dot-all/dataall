@@ -9,6 +9,8 @@ from dataall.core.permissions.services.tenant_policy_service import TenantPolicy
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.tasks.service_handlers import Worker
+from dataall.modules.datasets_base.db.dataset_models import DatasetBase
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.services.share_item_service import ShareItemService
@@ -17,6 +19,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareableType,
     ShareItemStatus,
 )
+from dataall.modules.s3_datasets.services.dataset_permissions import GET_DATASET_TABLE
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem
 from dataall.modules.s3_datasets.services.dataset_table_data_filter_enums import DataFilterType
 
@@ -261,6 +264,7 @@ class S3ShareService:
             )
 
     @staticmethod
+    @ResourcePolicyService.has_resource_permission(GET_DATASET_TABLE)
     def paginate_active_columns_for_table_share(uri: str, shareUri: str, filter=None):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -278,9 +282,22 @@ class S3ShareService:
                         filtered_columns = None
                         break
                     elif data_filter.filterType == DataFilterType.COLUMN.value:
-                        filtered_columns.append(data_filter.includedCols)
-            filter['filteredColumns'] = filtered_columns
+                        filtered_columns.extend(data_filter.includedCols)
+            if filtered_columns:
+                filter['filteredColumns'] = list(set(filtered_columns))
             return DatasetColumnRepository.paginate_active_columns_for_table(session, uri, filter)
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(
+        GET_SHARE_OBJECT, parent_resource=ShareItemService._get_share_uri_from_item_filter_uri
+    )
+    def list_table_data_filters_by_attached(uri: str, data: dict):
+        with get_context().db_engine.scoped_session() as session:
+            item_data_filter = S3ShareObjectRepository.get_share_item_data_filter_by_uri(session, uri)
+            data['filterUris'] = item_data_filter.dataFilterUris
+            return DatasetTableDataFilterRepository.paginated_data_filters(
+                session, table_uri=item_data_filter.itemUri, data=data
+            )
 
     @staticmethod
     def resolve_shared_db_name(GlueDatabaseName: str, shareUri: str, targetEnvAwsAccountId: str, targetEnvRegion: str):

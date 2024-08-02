@@ -56,7 +56,7 @@ class DatasetTableDataFilterRequestValidationService:
             raise exceptions.InvalidInput(
                 'filterName',
                 data.get('filterName'),
-                'must match the pattern ^[a-zA-Z0-9_]*$',
+                'must match the pattern ^[a-z0-9_]*$',
             )
         DatasetTableDataFilterRequestValidationService.validate_data_filter_type(data)
 
