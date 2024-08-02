@@ -12,6 +12,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareableType,
     PrincipalType,
 )
+from dataall.base.db import exceptions
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject, ShareObjectItemDataFilter
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
@@ -164,31 +165,6 @@ class S3ShareObjectRepository:
         return share
 
     @staticmethod
-    def get_share_item_consumption_details_by_item_attributes(session, item_uri, groups=[]):
-        share_item: ShareObject = (
-            session.query(
-                ShareObject.environmentUri.label('environmentUri'),
-                case(
-                    [
-                        (
-                            ShareObjectItemDataFilter.label.isnot(None),
-                            func.concat(ShareObjectItem.itemName, '_', ShareObjectItemDataFilter.label),
-                        )
-                    ],
-                    else_=ShareObjectItem.itemName,
-                ).label('resourceLinkSuffix'),
-            )
-            .outerjoin(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
-            .outerjoin(
-                ShareObjectItemDataFilter,
-                ShareObjectItemDataFilter.attachedDataFilterUri == ShareObjectItem.attachedDataFilterUri,
-            )
-            .filter(and_(ShareObjectItem.itemUri == item_uri, ShareObject.principalId.in_(groups)))
-            .first()
-        )
-        return share_item
-
-    @staticmethod
     def check_other_approved_share_item_table_exists(
         session, environment_uri, item_uri, share_item_uri, data_filters=None
     ):
@@ -271,6 +247,13 @@ class S3ShareObjectRepository:
             )
         )
         return env_tables_shared_query.all()
+
+    @staticmethod
+    def get_share_item_data_filter_by_uri(session, attached_filter_uri):
+        item_data_filter: ShareObjectItemDataFilter = session.query(ShareObjectItemDataFilter).get(attached_filter_uri)
+        if not item_data_filter:
+            raise exceptions.ObjectNotFound('ShareObjectItemDataFilter', attached_filter_uri)
+        return item_data_filter
 
     @staticmethod
     def query_shared_glue_databases(session, groups, env_uri, group_uri):

@@ -32,6 +32,7 @@ import {
   listDatasetTables,
   getSharedDatasetTables,
   listDatasetTableColumns,
+  listSharedDatasetTableColumns,
   listS3DatasetsOwnedByEnvGroup,
   listValidEnvironments,
   useClient
@@ -152,7 +153,8 @@ const WorksheetView = () => {
         sharedWithDatabases =
           response.data.listS3DatasetsSharedWithEnvGroup?.map((d) => ({
             value: d.datasetUri,
-            label: d.sharedGlueDatabaseName
+            label: d.sharedGlueDatabaseName,
+            shareUri: d?.shareUri
           }));
       }
       setDatabaseOptions(ownedDatabases.concat(sharedWithDatabases));
@@ -209,12 +211,24 @@ const WorksheetView = () => {
   const fetchColumns = useCallback(
     async (table) => {
       setLoadingColumns(true);
-      const response = await client.query(
-        listDatasetTableColumns({
-          tableUri: table.tableUri,
-          filter: Defaults.selectListFilter
-        })
-      );
+      let response;
+      if (selectedDatabase?.shareUri) {
+        response = await client.query(
+          listSharedDatasetTableColumns({
+            tableUri: table.tableUri,
+            shareUri: selectedDatabase.shareUri,
+            filter: Defaults.selectListFilter
+          })
+        );
+      } else {
+        response = await client.query(
+          listDatasetTableColumns({
+            tableUri: table.tableUri,
+            filter: Defaults.selectListFilter
+          })
+        );
+      }
+
       if (!response.errors) {
         setColumns(
           response.data.listDatasetTableColumns.nodes.map((c) => ({

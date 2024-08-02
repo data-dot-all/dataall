@@ -17,8 +17,13 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareableType,
     ShareItemStatus,
 )
+from dataall.modules.shares_base.db.share_object_models import ShareObjectItem
+from dataall.modules.s3_datasets.services.dataset_table_data_filter_enums import DataFilterType
+
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, DatasetStorageLocation
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_table_data_filter_repositories import DatasetTableDataFilterRepository
+from dataall.modules.s3_datasets.db.dataset_column_repositories import DatasetColumnRepository
 from dataall.modules.s3_datasets.services.dataset_permissions import (
     MANAGE_DATASETS,
     UPDATE_DATASET,
@@ -254,6 +259,28 @@ class S3ShareService:
             return S3ShareObjectRepository.query_shared_glue_databases(
                 session=session, groups=context.groups, env_uri=environmentUri, group_uri=groupUri
             )
+
+    @staticmethod
+    def paginate_active_columns_for_table_share(uri: str, shareUri: str, filter=None):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            share_item: ShareObjectItem = ShareObjectRepository.find_sharable_item(session, shareUri, uri)
+            filtered_columns = []
+            if share_item.attachedDataFilterUri:
+                item_data_filter = S3ShareObjectRepository.get_share_item_data_filter_by_uri(
+                    session, share_item.attachedDataFilterUri
+                )
+                for filter_uri in item_data_filter.dataFilterUris:
+                    data_filter = DatasetTableDataFilterRepository.get_data_filter_by_uri(
+                        session, filter_uri=filter_uri
+                    )
+                    if data_filter.filterType == DataFilterType.ROW.value:
+                        filtered_columns = None
+                        break
+                    elif data_filter.filterType == DataFilterType.COLUMN.value:
+                        filtered_columns.append(data_filter.includedCols)
+            filter['filteredColumns'] = filtered_columns
+            return DatasetColumnRepository.paginate_active_columns_for_table(session, uri, filter)
 
     @staticmethod
     def resolve_shared_db_name(GlueDatabaseName: str, shareUri: str, targetEnvAwsAccountId: str, targetEnvRegion: str):

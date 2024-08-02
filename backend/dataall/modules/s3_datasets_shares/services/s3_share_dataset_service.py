@@ -33,19 +33,6 @@ class S3ShareDatasetService(DatasetServiceInterface):
         return None
 
     @staticmethod
-    def find_consumption_details_resource_uri(session, uri, group_uri):
-        """Implemented as part of the DatasetServiceInterface"""
-        share_item_details = S3ShareObjectRepository.get_share_item_consumption_details_by_item_attributes(
-            session, uri, [group_uri]
-        )
-        if share_item_details:
-            return {
-                'environmentUri': share_item_details.environmentUri,
-                'resourceLinkSuffix': share_item_details.resourceLinkSuffix,
-            }
-        return {}
-
-    @staticmethod
     def check_before_delete(session, uri, **kwargs):
         """Implemented as part of the DatasetServiceInterface"""
         action = kwargs.get('action')

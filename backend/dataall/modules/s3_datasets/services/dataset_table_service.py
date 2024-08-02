@@ -96,49 +96,16 @@ class DatasetTableService:
         with context.db_engine.scoped_session() as session:
             table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
             dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
-            env_group = None
-            resource_link_name = None
-            database_name = table.GlueDatabaseName
             if (
                 ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality)
                 != ConfidentialityClassification.Unclassified.value
-            ):
-                resource_policy = ResourcePolicyService.check_user_resource_permission(
-                    session=session,
-                    username=context.username,
-                    groups=context.groups,
-                    resource_uri=table.tableUri,
-                    permission_name=PREVIEW_DATASET_TABLE,
+            ) and (dataset.SamlAdminGroupName not in context.groups and dataset.stewards not in context.groups):
+                raise exceptions.UnauthorizedOperation(
+                    action=PREVIEW_DATASET_TABLE,
+                    message='User is not authorized to Preview Table for Confidential datasets',
                 )
-
-                if not (
-                    (dataset.SamlAdminGroupName in context.groups)
-                    or (dataset.stewards in context.groups)
-                    or (dataset.owner == context.username)
-                ):
-                    consumption_details = DatasetService._resolve_consumption_details_resource_uri(
-                        session, table.tableUri, resource_policy.principalId
-                    )
-                    if not consumption_details:
-                        raise exceptions.ResourceUnauthorized(
-                            username=context.username,
-                            action=PREVIEW_DATASET_TABLE,
-                            resource_uri=table.tableUri,
-                        )
-                    database_name = database_name + '_shared'
-                    env_group = EnvironmentService.get_environment_group(
-                        session, resource_policy.principalId, consumption_details.get('environmentUri')
-                    )
-                    resource_link_name = (
-                        consumption_details.get('resourceLinkSuffix')
-                        if consumption_details.get('resourceLinkSuffix')
-                        else table.GlueTableName
-                    )
-            env_uri = env_group.environmentUri if env_group else dataset.environmentUri
-            env = EnvironmentService.get_environment_by_uri(session, env_uri)
-            return AthenaTableClient(env, table, env_group).get_table(
-                database_name=database_name, resource_link_name=resource_link_name
-            )
+            env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
+            return AthenaTableClient(env, table).get_table()
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(GET_DATASET_TABLE)

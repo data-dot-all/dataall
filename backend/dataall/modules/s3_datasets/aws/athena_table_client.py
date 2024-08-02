@@ -13,35 +13,32 @@ log = logging.getLogger(__name__)
 
 
 class AthenaTableClient:
-    def __init__(self, env: Environment, table: DatasetTable, env_group: EnvironmentGroup = None):
+    def __init__(self, env: Environment, table: DatasetTable):
         session = SessionHelper.remote_session(accountid=env.AwsAccountId, region=env.region)
-        if env_group:
-            session = SessionHelper.get_session(base_session=session, role_arn=env_group.environmentIAMRoleArn)
 
         self._client = session.client('athena', region_name=env.region)
         self._creds = session.get_credentials()
         self._env = env
-        self._env_group = env_group
         self._table = table
 
-    def get_table(self, database_name: str, resource_link_name: str = None):
-        env_workgroup_name = (
-            self._env_group.environmentAthenaWorkGroup
-            if self._env_group
-            else self._env.EnvironmentDefaultAthenaWorkGroup
-        )
+    def get_table(self):
+        try:
+            env_workgroup = self._client.get_work_group(WorkGroup=self._env.EnvironmentDefaultAthenaWorkGroup)
+        except ClientError as e:
+            log.info(f'Workgroup {self._env.EnvironmentDefaultAthenaWorkGroup} can not be found' f'due to: {e}')
+
         connection = connect(
             aws_access_key_id=self._creds.access_key,
             aws_secret_access_key=self._creds.secret_key,
             aws_session_token=self._creds.token,
-            work_group=env_workgroup_name,
-            s3_staging_dir=f's3://{self._env.EnvironmentDefaultBucketName}/athenaqueries/{env_workgroup_name}/',
-            region_name=self._env.region,
+            work_group=env_workgroup.get('WorkGroup', {}).get('Name', 'primary'),
+            s3_staging_dir=f's3://{self._env.EnvironmentDefaultBucketName}/preview/{self._table.datasetUri}/{self._table.tableUri}',
+            region_name=self._table.region,
         )
         cursor = connection.cursor()
 
         sql = 'select * from {table_identifier} limit 50'.format(
-            table_identifier=sql_utils.Identifier(database_name, resource_link_name or self._table.GlueTableName)
+            table_identifier=sql_utils.Identifier(self._table.GlueDatabaseName, self._table.GlueTableName)
         )
         cursor.execute(sql)  # nosemgrep
         # it is not possible to build the query string with the table.X parameters using Pyathena connect
