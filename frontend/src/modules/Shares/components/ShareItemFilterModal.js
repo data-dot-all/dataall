@@ -47,40 +47,30 @@ export const ShareItemFilterModal = (props) => {
       field: 'label',
       headerName: 'Filter Name',
       flex: 1,
-      // minWidth: 200,
-      // resizable: true,
       editable: false
     },
     {
       field: 'description',
       headerName: 'Description',
       flex: 1,
-      // minWidth: 400,
-      // resizable: true,
       editable: false
     },
     {
       field: 'filterType',
       headerName: 'Filter Type',
       flex: 0.5,
-      // minWidth: 100,
-      // resizable: true,
       editable: false
     },
     {
       field: 'includedCols',
       headerName: 'Included Columns',
       flex: 2,
-      // minWidth: 400,
-      // resizable: true,
       editable: false
     },
     {
       field: 'rowExpression',
       headerName: 'Row Expression',
       flex: 2,
-      // minWidth: 400,
-      // resizable: true,
       editable: false
     }
   ];

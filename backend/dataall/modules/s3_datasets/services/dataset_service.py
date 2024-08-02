@@ -57,16 +57,6 @@ class DatasetService:
         cls._interfaces.append(interface)
 
     @classmethod
-    def _resolve_consumption_details_resource_uri(cls, session, uri, group_uri) -> list:
-        """Find resources from other modules that need to be accessed"""
-        for interface in cls._interfaces:
-            consumption_detail = interface.find_consumption_details_resource_uri(session, uri, group_uri)
-            if consumption_detail:
-                return consumption_detail
-
-        return None
-
-    @classmethod
     def get_other_modules_dataset_user_role(cls, session, uri, username, groups) -> str:
         """All other user role types that might come from other modules"""
         for interface in cls._interfaces:

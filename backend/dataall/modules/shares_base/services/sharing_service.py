@@ -118,14 +118,14 @@ class SharingService:
                                 share_uri,
                                 old_status=ShareItemStatus.Share_Approved.value,
                                 new_status=ShareItemStatus.Share_Failed.value,
-                                share_item_type=processor,
+                                share_item_type=processor.type,
                             )
                             ShareStatusRepository.update_share_item_status_batch(
                                 session,
                                 share_uri,
                                 old_status=ShareItemStatus.Share_In_Progress.value,
                                 new_status=ShareItemStatus.Share_Failed.value,
-                                share_item_type=processor,
+                                share_item_type=processor.type,
                             )
                             share_successful = False
                 return share_successful

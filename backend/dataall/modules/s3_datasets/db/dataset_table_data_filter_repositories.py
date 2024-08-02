@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class DatasetTableDataFilterRepository:
     @staticmethod
-    def build_data_filter(session, context, table_uri, data):
+    def build_data_filter(session, username, table_uri, data):
         return DatasetTableDataFilter(
             tableUri=table_uri,
             label=data.get('filterName'),
@@ -18,7 +18,7 @@ class DatasetTableDataFilterRepository:
             description=data.get('description'),
             rowExpression=data.get('rowExpression') if data.get('filterType') == DataFilterType.ROW.value else None,
             includedCols=data.get('includedCols') if data.get('filterType') == DataFilterType.COLUMN.value else None,
-            owner=context.username,
+            owner=username,
         )
 
     @staticmethod

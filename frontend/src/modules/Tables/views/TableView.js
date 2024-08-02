@@ -42,11 +42,7 @@ import { isFeatureEnabled } from 'utils';
 
 const previewDataEnabled = isFeatureEnabled('s3_datasets', 'preview_data');
 
-const tabs = [
-  { label: 'Overview', value: 'overview' },
-  { label: 'Columns', value: 'columns' },
-  { label: 'Metrics', value: 'metrics' }
-];
+const tabs = [{ label: 'Overview', value: 'overview' }];
 
 if (previewDataEnabled) {
   tabs.unshift({ label: 'Preview', value: 'preview' });
@@ -182,9 +178,16 @@ const TableView = () => {
     setIsDeleteObjectModalOpen(false);
   };
 
-  const handleIsAdmin = (adminValue) => {
+  const handleUserRole = (userRole) => {
+    const adminValue = ['Creator', 'Admin', 'Owner'].indexOf(userRole) !== -1;
+    const stewardValue = ['DataSteward'].indexOf(userRole) !== -1;
     setIsAdmin(adminValue);
-    if (adminValue && !tabs.find((t) => t.value === 'datafilters')) {
+    if (
+      (adminValue || stewardValue) &&
+      !tabs.find((t) => t.value === 'datafilters')
+    ) {
+      tabs.push({ label: 'Columns', value: 'columns' });
+      tabs.push({ label: 'Metrics', value: 'metrics' });
       tabs.push({ label: 'Data Filters', value: 'datafilters' });
     }
   };
@@ -205,11 +208,7 @@ const TableView = () => {
     const response = await client.query(getDatasetTable(params.uri));
     if (!response.errors && response.data.getDatasetTable !== null) {
       setTable(response.data.getDatasetTable);
-      handleIsAdmin(
-        ['Creator', 'Admin', 'Owner'].indexOf(
-          response.data.getDatasetTable.dataset.userRoleForDataset
-        ) !== -1
-      );
+      handleUserRole(response.data.getDatasetTable.dataset.userRoleForDataset);
     } else {
       setTable(null);
       const error = response.errors
@@ -296,7 +295,7 @@ const TableView = () => {
             {currentTab === 'metrics' && (
               <TableMetrics table={table} isAdmin={isAdmin} />
             )}
-            {currentTab === 'datafilters' && isAdmin && (
+            {currentTab === 'datafilters' && (
               <TableFilters table={table} isAdmin={isAdmin} />
             )}
           </Box>

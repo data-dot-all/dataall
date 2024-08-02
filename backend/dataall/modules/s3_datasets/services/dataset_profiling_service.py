@@ -3,6 +3,7 @@ import json
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
+from dataall.base.db import exceptions
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.tasks.db.task_models import Task
@@ -106,12 +107,9 @@ class DatasetProfilingService:
         if (
             ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality)
             != ConfidentialityClassification.Unclassified.value
-        ):
-            ResourcePolicyService.check_user_resource_permission(
-                session=session,
-                username=context.username,
-                groups=context.groups,
-                resource_uri=table.tableUri,
-                permission_name=PREVIEW_DATASET_TABLE,
+        ) and (dataset.SamlAdminGroupName not in context.groups and dataset.stewards not in context.groups):
+            raise exceptions.UnauthorizedOperation(
+                action='GET_TABLE_PROFILING_METRICS',
+                message='User is not authorized to view Profiling Metrics for Confidential datasets',
             )
         return True
