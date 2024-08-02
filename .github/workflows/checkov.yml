@@ -19,6 +19,7 @@ jobs:
       CDK_DEFAULT_REGION: eu-west-1
       CDK_DEFAULT_ACCOUNT: 111111111111
       GITHUB_ACTIONS: true
+      DATAALL_REPO_BRANCH: main
     strategy:
       matrix:
         python-version: [3.9]

@@ -1,6 +1,8 @@
 import pytest
 from aws_cdk import App
 from aws_cdk.assertions import Template, Match
+import os
+import json
 
 from dataall.core.environment.cdk.environment_stack import EnvironmentSetup
 from dataall.core.environment.db.environment_models import EnvironmentGroup
@@ -140,3 +142,17 @@ def test_resources_created(env_fixture, org_fixture, mocker):
     template.resource_count_is('AWS::SSM::Parameter', 5)
     template.resource_count_is('AWS::IAM::Role', 5)
     template.resource_count_is('AWS::IAM::Policy', 4)
+
+
+@pytest.mark.skipif(
+    not os.getenv('GITHUB_ACTIONS'), reason='Pytest used for Checkov Scan CDK Synth Output'
+)
+def test_checkov(env_fixture, org_fixture, mocker):
+    app = App()
+    mocker.patch(
+        'dataall.core.environment.services.managed_iam_policies.PolicyManager.get_all_policies', return_value=[]
+    )
+    stack = EnvironmentSetup(app, 'Environment', target_uri=env_fixture.environmentUri)    
+    template = json.dumps(app.synth().get_stack_by_name('Environment').template)
+    with open('checkov_environment_synth.json', 'w') as f:
+        f.write(template)
