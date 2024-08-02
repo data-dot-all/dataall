@@ -1,19 +1,18 @@
 // import { LoadingButton } from '@mui/lab';
 import {
   // Autocomplete,
-  Avatar,
   Button,
   // CardContent,
   // CardHeader,
   // Checkbox,
   Box,
-  Chip,
+  // Chip,
   // Divider,
   // FormControl,
   // FormGroup,
   // FormControlLabel,
   // FormLabel,
-  Grid,
+  // Grid,
   // InputLabel,
   // MenuItem,
   // Select,
@@ -21,7 +20,7 @@ import {
   // TextField,
   Typography
 } from '@mui/material';
-// import { DataGrid } from '@mui/x-data-grid';
+import { DataGrid } from '@mui/x-data-grid';
 // import { Formik } from 'formik';
 // import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
@@ -30,20 +29,19 @@ import PropTypes from 'prop-types';
 //import AutoModeIcon from '@mui/icons-material/AutoMode';
 // import * as Yup from 'yup';
 // import { ChipInput, Defaults } from 'design';
-//import { Scrollbar } from 'design';
+import { Scrollbar } from 'design';
 //import { SET_ERROR, useDispatch } from 'globalErrors';
 //import { useClient } from 'services';
 /* eslint-disable no-console */
 export const ReviewMetadataComponent = (props) => {
   const {
-    dataset,
-    targetType,
-    targets,
-    setTargets,
-    selectedMetadataTypes,
-    version,
-    setVersion,
-    ...other
+    // dataset,
+    // targetType,
+    targets
+    // setTargets,
+    // selectedMetadataTypes,
+    // version,
+    // setVersion
   } = props;
   // const { enqueueSnackbar } = useSnackbar();
   // const dispatch = useDispatch();
@@ -51,72 +49,45 @@ export const ReviewMetadataComponent = (props) => {
 
   return (
     <>
-      <Grid
-        container
-        sx={{ m: 1 }}
-        spacing={3}
-        justifyContent="flex-start"
-        {...other}
-      >
-        <Grid item lg={2} xl={2} md={2} sm={2} xs={2}>
-          <Chip
-            avatar={<Avatar>1</Avatar>}
-            label={`Generated Metadata:`}
-            color="primary"
-            variant="outlined"
-          />
-        </Grid>
-        {Array.isArray(targets) && targets.length > 0 ? (
-          targets.map((target) => (
-            <Grid
-              item
-              key={target.targetUri}
-              lg={10}
-              xl={10}
-              md={10}
-              sm={10}
-              xs={10}
-            >
-              {target.response && !target.response.errors && (
-                <Box>
-                  <Typography variant="h6">{target.targetUri}</Typography>
-                  {Object.entries(target.response).map(([key, value]) => (
-                    <Box key={key}>
-                      <Typography variant="subtitle1">{key}:</Typography>
-                      <Typography variant="body1">{value}</Typography>
-                    </Box>
-                  ))}
-                </Box>
-              )}
-            </Grid>
-          ))
-        ) : (
-          <Grid item lg={10} xl={10} md={10} sm={10} xs={10}>
-            <Typography variant="body1">No metadata available</Typography>
-          </Grid>
-        )}
-        {/* <Grid
-          item
-          key={targets.targetUri}
-          lg={10}
-          xl={10}
-          md={10}
-          sm={10}
-          xs={10}
-        >
-          {targets.response && !targets.response.errors && (
-            <Box>
-              <Typography variant="h6">{targets.targetUri}</Typography>
-              {Object.entries(targets.response).map(([key, value]) => (
-                <Box key={key}>
-                  <Typography variant="subtitle1">{key}:</Typography>
-                  <Typography variant="body1">{value}</Typography>
-                </Box>
-              ))}
+      {Array.isArray(targets) && targets.length > 0 ? (
+        <Box>
+          <Scrollbar>
+            <Box sx={{ minWidth: 600 }}>
+              <DataGrid
+                autoHeight
+                rows={targets} // Replace with your data array
+                getRowId={(node) => node.targetUri}
+                columns={[
+                  // Define your columns here
+                  { field: 'targetUri', hide: true },
+                  { field: 'name', headerName: 'Name', flex: 2 },
+                  { field: 'targetType', headerName: 'TargetType', flex: 1 },
+                  { field: 'label', headerName: 'Label', flex: 1 },
+                  { field: 'description', headerName: 'Description', flex: 3 },
+                  { field: 'tags', headerName: 'Tags', flex: 2 },
+                  { field: 'topics', headerName: 'Topics', flex: 2 }
+                  // Add more columns as needed
+                ]}
+                pageSize={10} // Replace with your desired page size
+                rowsPerPageOptions={[5, 10, 20]} // Customize row options
+                pagination
+                disableSelectionOnClick
+                sx={{
+                  wordWrap: 'break-word',
+                  '& .MuiDataGrid-row': {
+                    borderBottom: '1px solid rgba(145, 158, 171, 0.24)'
+                  },
+                  '& .MuiDataGrid-columnHeaders': {
+                    borderBottom: 0.5
+                  }
+                }}
+              />
             </Box>
-          )}
-        </Grid> */}
-      </Grid>
+          </Scrollbar>
+        </Box>
+      ) : (
+        <Typography variant="body1">No metadata available</Typography>
+      )}
       <Button
         color="primary"
         size="small"

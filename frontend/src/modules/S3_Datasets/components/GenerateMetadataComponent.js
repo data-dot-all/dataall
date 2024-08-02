@@ -50,6 +50,8 @@ export const GenerateMetadataComponent = (props) => {
     setSelectedMetadataTypes,
     currentView,
     setCurrentView,
+    loadingMetadata,
+    setLoadingMetadata,
     version,
     setVersion,
     ...other
@@ -58,7 +60,6 @@ export const GenerateMetadataComponent = (props) => {
   const dispatch = useDispatch();
 
   const client = useClient();
-  const [loadingMetadata, setLoadingMetadata] = useState(false);
   const [loadingTableFolder, setLoadingTableFolder] = useState(false);
   const [tableFolderFilter, setTableFolderFilter] = useState(Defaults.filter);
   const handleChange = useCallback(
@@ -109,13 +110,10 @@ export const GenerateMetadataComponent = (props) => {
   };
 
   const generateMetadata = async () => {
-    setLoadingMetadata(true);
+    setCurrentView('REVIEW_METADATA');
     console.log('generateMetadata');
-    console.log('targets', targets);
-    console.log('selectedmetadata', selectedMetadataTypes);
-    console.log('targetoption', targetOptions);
     for (let target of targets) {
-      target.response = await client.mutate(
+      let response = await client.mutate(
         generateMetadataBedrock({
           resourceUri: target.targetUri,
           targetType: target.targetType,
@@ -127,7 +125,11 @@ export const GenerateMetadataComponent = (props) => {
         })
       );
       console.log('target.uri', target.targetUri);
-      if (!target.response.errors) {
+      if (!response.errors) {
+        target.description = response.data.generateMetadata.description;
+        target.label = response.data.generateMetadata.label;
+        target.tags = response.data.generateMetadata.tags;
+        target.topic = response.data.generateMetadata.topic;
         console.log('target.response', target.response);
         enqueueSnackbar(`Returned response ${target.response}`, {
           anchorOrigin: {
@@ -136,17 +138,9 @@ export const GenerateMetadataComponent = (props) => {
           },
           variant: 'success'
         });
-        if (!target.response.errors) {
-          setTargets({
-            ...targets,
-            [target.targetUri]: target.response
-          });
-          setCurrentView('REVIEW_METADATA');
-        }
+        setVersion(version + 1);
       }
-      setVersion(version + 1);
-      setLoadingMetadata(false);
-    } //TODO EDIT THIS CALL WITH INPUT/OUTPUT FROM BACKEND
+    }
   };
   return (
     <>
