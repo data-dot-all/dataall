@@ -11,6 +11,8 @@ from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole, ConfidentialityClassification
 from dataall.modules.s3_datasets.services.dataset_service import DatasetService
 from dataall.modules.s3_datasets.services.dataset_table_service import DatasetTableService
+from dataall.modules.s3_datasets.services.dataset_location_service import DatasetLocationService
+from dataall.modules.s3_datasets.services.dataset_enums import MetadataGenerationTargets
 
 log = logging.getLogger(__name__)
 
@@ -153,13 +155,27 @@ def list_datasets_owned_by_env_group(
         filter = {}
     return DatasetService.list_datasets_owned_by_env_group(environmentUri, groupUri, filter)
 
-def generate_metadata(context : Context, source: S3Dataset, resourceUri, targetType, version, metadataTypes, sampleData):
+def generate_metadata(context : Context, source: S3Dataset, resourceUri, targetType, version, metadataTypes, sampleData): #TODO add type hints
     RequestValidator.validate_generation_request(data=resourceUri)
-    return DatasetTableService.generate_metadata(resourceUri=resourceUri,targetType=targetType, version=version, metadataTypes=metadataTypes,sampleData=sampleData)
+    if targetType == MetadataGenerationTargets.S3_Dataset.value:
+        return DatasetService.generate_metadata_for_dataset(resourceUri=resourceUri, version=version,
+                                                metadataTypes=metadataTypes, sampleData=sampleData)
+
+    elif targetType == MetadataGenerationTargets.Table.value:
+        return DatasetTableService.generate_metadata_for_table(resourceUri=resourceUri,
+                                                            version=version,
+                                                            metadataTypes=metadataTypes, sampleData=sampleData)
+    elif targetType == MetadataGenerationTargets.Folder.value:
+        return DatasetLocationService.generate_metadata_for_folder(resourceUri=resourceUri,
+                                                            version=version,
+                                                            metadataTypes=metadataTypes, sampleData=sampleData)
+    else:
+        raise Exception("Unsupported target type for metadata generation")
 
 def read_sample_data(context : Context, source: S3Dataset, tableUri):
     RequestValidator.validate_generation_request(data=tableUri)
     return DatasetTableService.preview(uri=tableUri)
+
 def test_read(context : Context, source: S3Dataset, resourceUri, targetType, version, metadataTypes):
     RequestValidator.validate_generation_request(data=resourceUri)
     sample_data = DatasetTableService.preview(uri=resourceUri)

@@ -4,13 +4,15 @@ export const generateMetadataBedrock = ({
   resourceUri,
   targetType,
   metadataTypes,
-  version
+  version,
+  sampleData
 }) => ({
   variables: {
     resourceUri,
     targetType,
     metadataTypes,
-    version
+    version,
+    sampleData
   },
   mutation: gql`
     mutation generateMetadata(
@@ -18,21 +20,21 @@ export const generateMetadataBedrock = ({
       $targetType: MetadataGenerationTargets
       $metadataTypes: [String]
       $version: Int
+      $sampleData: SampleDataInput
     ) {
       generateMetadata(
         resourceUri: $resourceUri
         targetType: $targetType
         metadataTypes: $metadataTypes
         version: $version
+        sampleData: $sampleData
       ) {
-        Description
-        Tags
-        Topic
-        Column_Descriptions {
-          Column_Description
-          Column_Name
-        }
-        TableName
+        resourceUri
+        type
+        label
+        description
+        tags
+        topic
       }
     }
   `

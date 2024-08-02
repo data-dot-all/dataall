@@ -136,21 +136,15 @@ GlueCrawler = gql.ObjectType(
         gql.Field(name='status', type=gql.String),
     ],
 )
-ColumnDescriptions = gql.ObjectType(
-    name='ColumnDescriptions',
+
+GeneratedMetadata = gql.ObjectType(
+    name='GeneratedMetadata',
     fields=[
-        gql.Field(name='Column_Name', type=gql.String),
-        gql.Field(name='Column_Description', type=gql.String),
-    ],
-)
-BedrockPromptResult = gql.ObjectType(
-    name='BedrockPromptResult',
-    fields=[
-        gql.Field(name='Topic', type=gql.String),
-        gql.Field(name='TableName', type=gql.String),
-        gql.Field(name='Tags', type=gql.String),
-        gql.Field(name='Description', type=gql.String),
-        gql.Field(name='Column_Descriptions', type  =gql.ArrayType(gql.Ref('ColumnDescriptions'))),
+        gql.Field(name='type', type=gql.String), #Table, Column,  Folder, Dataset
+        gql.Field(name='label', type=gql.String),
+        gql.Field(name='topic', type=gql.String),
+        gql.Field(name='tags', type=gql.String),
+        gql.Field(name='description', type=gql.String),
     ],
 )
 

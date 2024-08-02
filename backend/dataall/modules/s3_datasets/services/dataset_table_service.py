@@ -6,8 +6,6 @@ from dataall.core.permissions.services.tenant_policy_service import TenantPolicy
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.s3_datasets.aws.athena_table_client import AthenaTableClient
-from dataall.modules.s3_datasets.aws.bedrock_metadata_client import BedrockClient
-from dataall.modules.s3_datasets.aws.s3_dataset_client import S3DatasetClient
 from dataall.modules.s3_datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.s3_datasets.indexers.table_indexer import DatasetTableIndexer
@@ -19,7 +17,6 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     SYNC_DATASET,
 )
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.db.dataset_column_repositories import DatasetColumnRepository
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 from dataall.modules.s3_datasets.services.dataset_permissions import (
@@ -29,9 +26,11 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
 )
 from dataall.modules.s3_datasets.services.dataset_service import DatasetService
 from dataall.base.utils import json_utils
-from dataall.modules.s3_datasets.api.dataset.enums import MetadataGenerationTargets
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
-from dataall.modules.s3_datasets.db.dataset_location_repositories import DatasetLocationRepository
+from dataall.modules.s3_datasets.aws.bedrock_metadata_client import BedrockClient
+from dataall.modules.s3_datasets.db.dataset_column_repositories import DatasetColumnRepository
+from dataall.modules.s3_datasets.services.dataset_enums import MetadataGenerationTargets
+
+
 log = logging.getLogger(__name__)
 
 
@@ -179,54 +178,22 @@ class DatasetTableService:
         ResourcePolicyService.delete_resource_policy(
             session=session, group=None, resource_uri=table_uri, resource_type=DatasetTable.__name__
         )
-    @staticmethod 
-    def generate_metadata(resourceUri, targetType, version, metadataTypes, sampleData):
-       context = get_context()
-       #metadataTypes = metadataTypes.join(',')
-       with context.db_engine.scoped_session() as session:
-        if targetType == MetadataGenerationTargets.Table.value:
+
+    @staticmethod
+    def generate_metadata_for_table(resourceUri, version, metadataTypes, sampleData):
+        context = get_context()
+        # metadataTypes = metadataTypes.join(',')
+        with context.db_engine.scoped_session() as session:
             table = DatasetTableRepository.get_dataset_table_by_uri(session, resourceUri)
             table_column = DatasetColumnRepository.get_table_info_metadata_generation(session, resourceUri)
             log.info(sampleData)
             return BedrockClient(table_column.AWSAccountId, 'us-east-1').generate_metadata(
-                prompt_type = targetType,
-                label = table.label,
-                columns = {','.join(table_column.label)},
-                column_descriptions = {','.join(table_column.description)},
-                description = table.description,
-                tags = table.tags,
-                metadata_type = metadataTypes,
-                sample_data = sampleData
+                prompt_type=MetadataGenerationTargets.Table.value,
+                label=table.label,
+                columns={','.join(table_column.label)},
+                column_descriptions={','.join(table_column.description)},
+                description=table.description,
+                tags=table.tags,
+                metadata_type=metadataTypes,
+                sample_data=sampleData
             )
-        
-        elif targetType == MetadataGenerationTargets.S3_Dataset.value:
-            dataset = DatasetBaseRepository.get_dataset_by_uri(session, resourceUri)
-            table_labels = [t.label for t in DatasetRepository.get_dataset_tables(session, resourceUri)]
-            table_descriptions = [t.description for t in DatasetRepository.get_dataset_tables(session, resourceUri)]
-            folders = [f.label for f in DatasetLocationRepository.get_dataset_folders(session, resourceUri)]
-            return BedrockClient(dataset.AwsAccountId, 'us-east-1').generate_metadata(
-                prompt_type = targetType,
-                label =dataset.label,
-                tables = table_labels,
-                description = dataset.description,
-                table_description = table_descriptions,
-                tags = dataset.tags,
-                metadata_type = metadataTypes,
-                folders = folders
-
-            )
-        
-        elif targetType == MetadataGenerationTargets.Folder.value:
-            folder = DatasetLocationRepository.get_location_by_uri(session, resourceUri)
-            dataset = DatasetRepository.get_dataset_by_uri(session, folder.datasetUri)
-            files = S3DatasetClient(dataset).list_bucket_files(folder.S3BucketName, folder.S3Prefix)
-            file_names = [f['Key'] for f in files]
-            return BedrockClient(folder.AWSAccountId, 'us-east-1').generate_metadata(
-                prompt_type = targetType,
-                label = folder.label,
-                files = file_names,
-                description = folder.description,
-                tags=folder.tags,
-                metadata_type= metadataTypes
-                )
-
