@@ -122,7 +122,8 @@ export const GenerateMetadataComponent = (props) => {
           metadataTypes: Object.entries(selectedMetadataTypes)
             .filter(([key, value]) => value === true)
             .map(([key]) => key),
-          version: version
+          version: version,
+          sampleData: {}
         })
       );
       console.log('target.uri', target.targetUri);
