@@ -6,19 +6,20 @@ import {
   // CardContent,
   // CardHeader,
   // Checkbox,
+  Box,
   Chip,
   // Divider,
   // FormControl,
   // FormGroup,
   // FormControlLabel,
   // FormLabel,
-  Grid
+  Grid,
   // InputLabel,
   // MenuItem,
   // Select,
   // Switch,
   // TextField,
-  //Typography
+  Typography
 } from '@mui/material';
 // import { DataGrid } from '@mui/x-data-grid';
 // import { Formik } from 'formik';
@@ -60,11 +61,61 @@ export const ReviewMetadataComponent = (props) => {
         <Grid item lg={2} xl={2} md={2} sm={2} xs={2}>
           <Chip
             avatar={<Avatar>1</Avatar>}
-            label="HOLA"
+            label={`Generated Metadata:`}
             color="primary"
             variant="outlined"
           />
         </Grid>
+        {Array.isArray(targets) && targets.length > 0 ? (
+          targets.map((target) => (
+            <Grid
+              item
+              key={target.targetUri}
+              lg={10}
+              xl={10}
+              md={10}
+              sm={10}
+              xs={10}
+            >
+              {target.response && !target.response.errors && (
+                <Box>
+                  <Typography variant="h6">{target.targetUri}</Typography>
+                  {Object.entries(target.response).map(([key, value]) => (
+                    <Box key={key}>
+                      <Typography variant="subtitle1">{key}:</Typography>
+                      <Typography variant="body1">{value}</Typography>
+                    </Box>
+                  ))}
+                </Box>
+              )}
+            </Grid>
+          ))
+        ) : (
+          <Grid item lg={10} xl={10} md={10} sm={10} xs={10}>
+            <Typography variant="body1">No metadata available</Typography>
+          </Grid>
+        )}
+        {/* <Grid
+          item
+          key={targets.targetUri}
+          lg={10}
+          xl={10}
+          md={10}
+          sm={10}
+          xs={10}
+        >
+          {targets.response && !targets.response.errors && (
+            <Box>
+              <Typography variant="h6">{targets.targetUri}</Typography>
+              {Object.entries(targets.response).map(([key, value]) => (
+                <Box key={key}>
+                  <Typography variant="subtitle1">{key}:</Typography>
+                  <Typography variant="body1">{value}</Typography>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Grid> */}
       </Grid>
       <Button
         color="primary"
