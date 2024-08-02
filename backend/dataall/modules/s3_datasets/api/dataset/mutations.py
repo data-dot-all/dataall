@@ -80,7 +80,7 @@ generateMetadata = gql.MutationField(
           gql.Argument(name='version', type=gql.Integer),
           gql.Argument(name='metadataTypes', type=gql.ArrayType(gql.String)),
           gql.Argument(name='sampleData', type=gql.Ref('SampleDataInput'))],
-    type=gql.ArrayType(gql.Ref('GeneratedMetadata')),
+    type=gql.Ref('GeneratedMetadata'),
     resolver=generate_metadata,
 )
 

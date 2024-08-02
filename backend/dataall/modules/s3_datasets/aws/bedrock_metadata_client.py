@@ -38,7 +38,6 @@ class BedrockClient:
              Generate or improve metadata for a common_data['label'] table using the following provided data:
                 - Table name: {common_data['label'] if common_data['label'] else 'No description provided'}
                 - Column names: {common_data['columns'] if common_data['columns'] else 'No description provided'}
-                - Column descriptions: ({common_data['column_descriptions'] if common_data['column_descriptions'] else 'No description provided'})
                 - Table description: {common_data['description'] if common_data['description'] else 'No description provided'}
                 - Tags: {common_data['tags'] if common_data['tags'] else 'No description provided'}
                 - (Only Input) Sample data: {common_data['sample_data'] if common_data['sample_data'] else 'No sample data'}
@@ -47,16 +46,19 @@ class BedrockClient:
                 - Only focus on generating the following metadata types as specified by the user: {common_data['metadata_types']}. Do not include any other metadata types.
                 - Sample data is only input for you to understand the table better, do not generate sample data.
                 Your response must strictly contain all the requested metadata types, do not include any of the metadata types if it is not specified by the user. Don't use ' ' in your response, use " ".
-                For example, if the requested metadata types are "Tags" and "Column_Description", the response should be:
-                Tags: <tags>
-                Column_Descriptions: 
-                                <column1>:<column1_description>
-                                <column2>:<column2_description>
-                                    ,...,
-                                <columnN>:<columnN_description>
+                For example, if the requested metadata types are "Tags", the response should be:
+                tags: <tags>
                 Evaluate if the given parameters are sufficient for generating the requested metadata. If not, respond with "NotEnoughData".
-                Return the result as a Python dictionary where the keys are the requested metadata types and the values are the corresponding generated metadata. Column_Descriptions is another dictionary within the existing dictionary, rest of them are strings. For tags, ensure the output is a string without "[" or "]".
+                Return the result as a Python dictionary where the keys are the requested metadata types, all the keys must be lowercase and the values are the corresponding generated metadata. 
+                For tags, ensure the output is a string without "[" or "]".
             """
+        #             Column_Descriptions: 
+        #                         <column1>:<column1_description>
+        #                         <column2>:<column2_description>
+        #                             ,...,
+        #                         <columnN>:<columnN_description>
+        #Column_Descriptions is another dictionary within the existing dictionary, rest of them are strings.
+        #- Column descriptions: ({common_data['column_descriptions'] if common_data['column_descriptions'] else 'No description provided'})
         elif prompt_type == 'S3_Dataset':
             return f"""
               Generate or improve metadata for a dataset using the following provided data:
@@ -68,13 +70,15 @@ class BedrockClient:
                 **Important**: 
                     - If the data indicates "No description provided," do not use that particular input for generating metadata.
                     - Only focus on generating the following metadata types as specified by the user: {common_data['metadata_types']}. Do not include any other metadata types.
-                    - Return the result as a Python dictionary where the keys are the requested metadata types and the values are the corresponding generated metadata.
+                    -  Return the result as a Python dictionary.
                 Your response should strictly contain the requested metadata types. Don't use ' ' in your response, use " ".
-                For example, if the requested metadata types are "Tags" and "Description", the response should be:
-                    "Tags":<tags>
-                    "Description":<description>
+                For example, if the requested metadata types are "tags" and "description", the response should be:
+                    "tags":<tags>
+                    "tescription":<description>
                 Evaluate if the given parameters are sufficient for generating the requested metadata. If not, respond with "NotEnoughData".
                 For tags, ensure the output is a string without "[" or "]".
+                Return the result as a Python dictionary where the keys are the requested metadata types, all the keys must be lowercase and the values are the corresponding generated metadata.
+
             """
         elif prompt_type == 'Folder':
             return f"""
@@ -85,10 +89,10 @@ class BedrockClient:
               folder_description: {common_data['description'] if common_data['description'] else ''}
               folder_tags: {common_data['tags'] if common_data['tags'] else ''}
               Your goal is generate {common_data['metadata_types']} for this folder using above data and with your knowledge. All the parameters you return has value String. Return:
-              Description: <description>
-              Tags: <tags>
+              description: <description>
+              tags: <tags>
 
-              Evaluate if the given parameters are enough for generating metadata, if not response should be: "NotEnoughData".  Return a python dictionary.
+              Evaluate if the given parameters are enough for generating metadata, if not response should be: "NotEnoughData".    Your response should strictly contain the requested metadata types. Return a python dictionary, all the keys must be lowercase.
          """
     
     def _invoke_model(self, prompt):
@@ -110,20 +114,22 @@ class BedrockClient:
         log.info("Prompt response: \n %s", response_body)
         return response_body.get("content", [])
     
-    def _parse_response(self, response_content):
+    def _parse_response(self, response_content, targetType):
         output_str = response_content[0]['text']
         log.info("Prompt output: \n %s", output_str)
+
         output_dict = json.loads(output_str)
+        #output_dict["type"] = targetType
         log.info("Prompt output dict: \n %s", output_dict)
-        if output_dict.get('Column_Descriptions'):
-            output_dict["Column_Descriptions"] = [
-                {"Column_Name": key, "Column_Description": value}
-                for key, value in output_dict["Column_Descriptions"].items()
-            ]
+        # if output_dict.get('Column_Descriptions'):
+        #     output_dict["Column_Descriptions"] = [
+        #         {"Column_Name": key, "Column_Description": value}
+        #         for key, value in output_dict["Column_Descriptions"].items()
+        #     ]
         return output_dict
   
     def generate_metadata(self, **kwargs):
         prompt = self._generate_prompt(**kwargs)
         log.info("Prompt: \n %s", prompt)
         response_content = self._invoke_model(prompt)
-        return self._parse_response(response_content)
+        return self._parse_response(response_content, kwargs.get('prompt_type', ' '))
