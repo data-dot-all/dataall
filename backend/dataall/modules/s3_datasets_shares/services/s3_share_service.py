@@ -301,4 +301,14 @@ class S3ShareService:
 
     @staticmethod
     def resolve_shared_db_name(GlueDatabaseName: str, shareUri: str, targetEnvAwsAccountId: str, targetEnvRegion: str):
-        return GlueDatabaseName + '_shared'
+        with get_context().db_engine.scoped_session() as session:
+            share = ShareObjectRepository.get_share_by_uri(session, shareUri)
+            dataset = DatasetBaseRepository.get_dataset_by_uri(session, share.datasetUri)
+            try:
+                datasetGlueDatabase = GlueClient(
+                    account_id=dataset.AwsAccountId, region=dataset.region, database=GlueDatabaseName
+                ).get_glue_database_from_catalog()
+            except Exception as e:
+                log.info(f'Error while calling the get_glue_database_from_catalog when resolving db name due to: {e}')
+                datasetGlueDatabase = GlueDatabaseName
+            return datasetGlueDatabase + '_shared'
