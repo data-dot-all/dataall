@@ -309,9 +309,16 @@ export const MetadataFormFields = (props) => {
                       <TableCell></TableCell>
                       <TableCell>{field.possibleValues}</TableCell>
                       <TableCell>
-                        <Button onClick={() => deleteField(field.uri)}>
-                          Delete
-                        </Button>
+                        <GridActionsCellItem
+                          icon={<DeleteIcon />}
+                          label="Save"
+                          sx={{
+                            color: 'primary.main'
+                          }}
+                          onClick={async () => {
+                            await deleteField(field.uri);
+                          }}
+                        />
                       </TableCell>
                     </TableRow>
                   ))
