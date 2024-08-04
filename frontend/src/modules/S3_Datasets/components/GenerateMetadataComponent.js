@@ -131,7 +131,7 @@ export const GenerateMetadataComponent = (props) => {
         target.label = response.data.generateMetadata.label;
         target.name = response.data.generateMetadata.name;
         target.tags = response.data.generateMetadata.tags;
-        target.topic = response.data.generateMetadata.topic;
+        target.topics = response.data.generateMetadata.topics;
         console.log('target.response', target.response);
         enqueueSnackbar(`Returned response ${target.response}`, {
           anchorOrigin: {
@@ -338,7 +338,7 @@ export const GenerateMetadataComponent = (props) => {
               <FormControlLabel
                 control={
                   <Switch
-                    name="topic"
+                    name="topics"
                     checked={selectedMetadataTypes.topics}
                     onChange={handleMetadataChange}
                   />

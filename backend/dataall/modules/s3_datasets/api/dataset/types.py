@@ -142,8 +142,8 @@ GeneratedMetadata = gql.ObjectType(
     fields=[
         gql.Field(name='type', type=gql.String), #Table, Column,  Folder, Dataset
         gql.Field(name='label', type=gql.String),
-        gql.Field(name='topic', type=gql.String),
-        gql.Field(name='tags', type=gql.String),
+        gql.Field(name='topics', type=gql.ArrayType(gql.String)),
+        gql.Field(name='tags', type=gql.ArrayType(gql.String)),
         gql.Field(name='description', type=gql.String),
         gql.Field(name='name', type=gql.String),
     ],

@@ -33,7 +33,7 @@ export const generateMetadataBedrock = ({
         label
         description
         tags
-        topic
+        topics
         name
       }
     }

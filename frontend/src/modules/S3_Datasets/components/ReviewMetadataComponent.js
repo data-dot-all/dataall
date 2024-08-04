@@ -194,7 +194,7 @@ export const ReviewMetadataComponent = (props) => {
                     editable: true,
                     renderCell: (params) => (
                       <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
-                        {params.value}
+                        {params?.value ? params.value.join() : ''}
                       </div>
                     )
                   },

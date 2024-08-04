@@ -13,9 +13,7 @@ from dataall.modules.s3_datasets.api.dataset.resolvers import (
     import_dataset,
     start_crawler,
     generate_metadata,
-    test_read,
-    update_dataset_metadata
-    
+    test_read
 )
 from dataall.modules.s3_datasets.api.dataset.enums import MetadataGenerationTargets
 
@@ -35,16 +33,6 @@ updateDataset = gql.MutationField(
     ],
     type=gql.Ref('Dataset'),
     resolver=update_dataset,
-    test_scope='Dataset',
-)
-updateDatasetMetadata = gql.MutationField(
-    name='updateDatasetMetadata',
-    args=[
-        gql.Argument(name='datasetUri', type=gql.String),
-        gql.Argument(name='input', type=DatasetMetadataInput),
-    ],
-    type=gql.Ref('Dataset'),
-    resolver=update_dataset_metadata,
     test_scope='Dataset',
 )
 

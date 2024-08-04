@@ -46,11 +46,13 @@ class BedrockClient:
                 - Only focus on generating the following metadata types as specified by the user: {common_data['metadata_types']}. Do not include any other metadata types.
                 - Sample data is only input for you to understand the table better, do not generate sample data.
                 Your response must strictly contain all the requested metadata types, do not include any of the metadata types if it is not specified by the user. Don't use ' ' in your response, use " ".
-                For example, if the requested metadata types are "Tags", the response should be:
+                For example, if the requested metadata types are "Tags" and "Topics", the response should be:
                 tags: <tags>
+                topics: <topics>
                 Evaluate if the given parameters are sufficient for generating the requested metadata. If not, respond with "NotEnoughData".
                 Return the result as a Python dictionary where the keys are the requested metadata types, all the keys must be lowercase and the values are the corresponding generated metadata. 
-                For tags, ensure the output is a string without "[" or "]".
+                For tags and topics, ensure the output is a string list.
+
             """
         #             Column_Descriptions: 
         #                         <column1>:<column1_description>
@@ -76,7 +78,7 @@ class BedrockClient:
                     "tags":<tags>
                     "description":<description>
                 Evaluate if the given parameters are sufficient for generating the requested metadata. If not, respond with "NotEnoughData".
-                For tags, ensure the output is a string without "[" or "]".
+                For tags and topics, ensure the output is a string list.
                 Return the result as a Python dictionary where the keys are the requested metadata types, all the keys must be lowercase and the values are the corresponding generated metadata.
 
             """
@@ -95,8 +97,7 @@ class BedrockClient:
               For example, if the requested metadata types are "tags" and "description", the response should be:
                   "tags":<tags>
                   "description":<description>
-              Evaluate if the given parameters are enough for generating metadata, if not response should be: "NotEnoughData".    Your response should strictly contain the requested metadata types. 
-              For tags, ensure the output is a string without "[" or "]".
+              For tags and topics, ensure the output is a string list.
               Return a python dictionary, all the keys must be lowercase. Don't use ' ' in your response, use " ".
          """
     
