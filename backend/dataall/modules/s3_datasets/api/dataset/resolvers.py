@@ -188,7 +188,7 @@ def test_read(context : Context, source: S3Dataset, resourceUri, targetType, ver
         sampleData=sample_data)
 def save_generated_metadata(context : Context, source: S3Dataset, resourceUri):
     RequestValidator.validate_generation_request(data=resourceUri)
-    return None #save_metadata  
+    return DatasetService.update_dataset(uri=resourceUri, data=input)
 
 def list_dataset_tables_folders(context : Context, source: S3Dataset, datasetUri, filter: dict = None
 ):

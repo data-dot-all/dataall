@@ -22,41 +22,90 @@ import {
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 // import { Formik } from 'formik';
-// import { useSnackbar } from 'notistack';
+import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
-// import { useCallback, useEffect, useState } from 'react';
 
 //import AutoModeIcon from '@mui/icons-material/AutoMode';
 // import * as Yup from 'yup';
 // import { ChipInput, Defaults } from 'design';
 import { Scrollbar } from 'design';
-//import { SET_ERROR, useDispatch } from 'globalErrors';
-//import { useClient } from 'services';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { useClient } from 'services';
+import { updateDataset } from '../services';
 /* eslint-disable no-console */
 export const ReviewMetadataComponent = (props) => {
   const {
     // dataset,
     // targetType,
-    targets
-    // setTargets,
+    targets,
+    setTargets
     // selectedMetadataTypes,
     // version,
     // setVersion
   } = props;
-  // const { enqueueSnackbar } = useSnackbar();
-  // const dispatch = useDispatch();
-  // const client = useClient();
-  // const getRowHeight = (description) => {
-  //   const lineHeight = 20; // Adjust this value based on your font size and line height
-  //   console.log(description.valueOf());
-  //   const lines = description.split('\n').length; // Count the number of lines in the description
-  //   const maxLines = 5; // Set the maximum number of lines to display
-  //   const height = Math.min(lines, maxLines) * lineHeight + 16; // Calculate the height based on the number of lines
-  //   return height;
-  // };
-  const saveMetadata = () => {
-    console.log('Saving metadata...');
-  };
+  const { enqueueSnackbar } = useSnackbar();
+  const dispatch = useDispatch();
+  const client = useClient();
+  async function saveMetadata(targets) {
+    try {
+      const updatedTargets = targets.map(async (target) => {
+        const response = await client.mutate(
+          updateDataset({
+            datasetUri: target.targetUri, // Use target.targetUri instead of dataset.datasetUri
+            input: {
+              label: target.label,
+              description: target.description,
+              tags: target.tags,
+              topics: target.topics ? target.topics.map((t) => t.value) : [],
+              targets: [target] // Include the current target in the input
+            }
+          })
+        );
+
+        if (!response.errors) {
+          return { ...target, success: true }; // Return the updated target with success flag
+        } else {
+          dispatch({ type: SET_ERROR, error: response.errors[0].message });
+          return { ...target, success: false }; // Return the target with success flag set to false
+        }
+      });
+
+      const updatedTargetsResolved = await Promise.all(updatedTargets);
+
+      const successfulTargets = updatedTargetsResolved.filter(
+        (target) => target.success
+      );
+      const failedTargets = updatedTargetsResolved.filter(
+        (target) => !target.success
+      );
+
+      if (successfulTargets.length > 0) {
+        enqueueSnackbar(
+          `${successfulTargets.length} target(s) updated successfully`,
+          {
+            anchorOrigin: {
+              horizontal: 'right',
+              vertical: 'top'
+            },
+            variant: 'success'
+          }
+        );
+      }
+
+      if (failedTargets.length > 0) {
+        enqueueSnackbar(`${failedTargets.length} target(s) failed to update`, {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'error'
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      dispatch({ type: SET_ERROR, error: err.message });
+    }
+  }
   return (
     <>
       {Array.isArray(targets) && targets.length > 0 ? (
@@ -126,9 +175,16 @@ export const ReviewMetadataComponent = (props) => {
                 rowsPerPageOptions={[5, 10, 20]}
                 pagination
                 disableSelectionOnClick
-                processRowUpdate={(newRow, oldRow) => {
-                  console.log('Updated row:', newRow);
-                  return newRow;
+                onCellEditCommit={(params) => {
+                  const { value, id, field } = params;
+                  const updatedTargets = targets.map((target) => {
+                    const newTarget = { ...target };
+                    if (newTarget.targetUri === id) {
+                      newTarget[field] = value;
+                    }
+                    return newTarget;
+                  });
+                  setTargets(updatedTargets);
                 }}
                 onProcessRowUpdateError={(error) => {
                   console.error('Error updating row:', error);

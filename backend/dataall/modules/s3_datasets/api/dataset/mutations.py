@@ -87,8 +87,9 @@ generateMetadata = gql.MutationField(
 
 saveGeneratedMetadata = gql.MutationField(
     name='save_generated_metadata',
-    args=[gql.Argument(name='resourceUri', type=gql.NonNullableType(gql.String))],
-    type=gql.Boolean, #"Success or fail can be string as well"
+    args=[gql.Argument(name='resourceUri', type=gql.NonNullableType(gql.String)),
+           gql.Argument(name='input', type=ModifyDatasetInput),],
+    type=gql.Ref('Dataset'), #"Success or fail can be string as well"
     resolver=save_generated_metadata,
 )
 test = gql.MutationField(
