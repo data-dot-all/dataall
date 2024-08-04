@@ -38,6 +38,16 @@ ModifyDatasetInput = gql.InputType(
         gql.Argument(name='autoApprovalEnabled', type=gql.Boolean),
     ],
 )
+DatasetMetadataInput = gql.InputType(
+    name='DatasetMetadataInput',
+    arguments=[
+        gql.Argument('label', gql.String),
+        gql.Argument('description', gql.String),
+        gql.Argument('tags', gql.ArrayType(gql.String)),
+        gql.Argument('topics', gql.ArrayType(gql.Ref('Topic'))),
+        
+    ],
+)
 
 DatasetPresignedUrlInput = gql.InputType(
     name='DatasetPresignedUrlInput',

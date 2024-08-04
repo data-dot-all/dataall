@@ -186,7 +186,7 @@ def test_read(context : Context, source: S3Dataset, resourceUri, targetType, ver
         version=version,
         metadataTypes=metadataTypes,
         sampleData=sample_data)
-def save_generated_metadata(context : Context, source: S3Dataset, resourceUri):
+def update_dataset_metadata(context : Context, source: S3Dataset, resourceUri):
     RequestValidator.validate_generation_request(data=resourceUri)
     return DatasetService.update_dataset(uri=resourceUri, data=input)
 

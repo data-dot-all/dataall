@@ -32,14 +32,16 @@ import { Scrollbar } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 import { updateDataset } from '../services';
+import { updateDatasetTable } from 'modules/Tables/services';
+import { updateDatasetStorageLocation } from 'modules/Folders/services';
 /* eslint-disable no-console */
 export const ReviewMetadataComponent = (props) => {
   const {
-    // dataset,
+    dataset,
     // targetType,
     targets,
-    setTargets
-    // selectedMetadataTypes,
+    setTargets,
+    selectedMetadataTypes
     // version,
     // setVersion
   } = props;
@@ -48,25 +50,62 @@ export const ReviewMetadataComponent = (props) => {
   const client = useClient();
   async function saveMetadata(targets) {
     try {
+      console.log({ selectedMetadataTypes });
       const updatedTargets = targets.map(async (target) => {
-        const response = await client.mutate(
-          updateDataset({
-            datasetUri: target.targetUri, // Use target.targetUri instead of dataset.datasetUri
-            input: {
-              label: target.label,
-              description: target.description,
-              tags: target.tags,
-              topics: target.topics ? target.topics.map((t) => t.value) : [],
-              targets: [target] // Include the current target in the input
-            }
-          })
-        );
+        console.log({ v: target.targetType });
+        const updatedMetadata = {};
 
-        if (!response.errors) {
-          return { ...target, success: true }; // Return the updated target with success flag
-        } else {
-          dispatch({ type: SET_ERROR, error: response.errors[0].message });
-          return { ...target, success: false }; // Return the target with success flag set to false
+        // Loop through selectedMetadataTypes and add the corresponding key-value pairs to updatedMetadata
+        Object.entries(selectedMetadataTypes).forEach(
+          ([metadataType, checked]) => {
+            if (checked) {
+              updatedMetadata[metadataType] = target[metadataType];
+            }
+          }
+        );
+        if (target.targetType === 'S3_Dataset') {
+          updatedMetadata.KmsAlias = dataset.KmsAlias;
+          const response = await client.mutate(
+            updateDataset({
+              datasetUri: target.targetUri, // Use target.targetUri instead of dataset.datasetUri
+              input: updatedMetadata
+            })
+          );
+
+          if (!response.errors) {
+            return { ...target, success: true }; // Return the updated target with success flag
+          } else {
+            dispatch({ type: SET_ERROR, error: response.errors[0].message });
+            return { ...target, success: false }; // Return the target with success flag set to false
+          }
+        } else if (target.targetType === 'Table') {
+          const response = await client.mutate(
+            updateDatasetTable({
+              tableUri: target.targetUri, // Use target.targetUri instead of dataset.datasetUri
+              input: updatedMetadata
+            })
+          );
+
+          if (!response.errors) {
+            return { ...target, success: true }; // Return the updated target with success flag
+          } else {
+            dispatch({ type: SET_ERROR, error: response.errors[0].message });
+            return { ...target, success: false }; // Return the target with success flag set to false
+          }
+        } else if (target.targetType === 'Folder') {
+          const response = await client.mutate(
+            updateDatasetStorageLocation({
+              locationUri: target.targetUri, // Use target.targetUri instead of dataset.datasetUri
+              input: updatedMetadata
+            })
+          );
+
+          if (!response.errors) {
+            return { ...target, success: true }; // Return the updated target with success flag
+          } else {
+            dispatch({ type: SET_ERROR, error: response.errors[0].message });
+            return { ...target, success: false }; // Return the target with success flag set to false
+          }
         }
       });
 
@@ -210,7 +249,7 @@ export const ReviewMetadataComponent = (props) => {
         size="small"
         //startIcon={<AutoModeIcon size={15} />}
         sx={{ m: 2 }}
-        onClick={saveMetadata}
+        onClick={() => saveMetadata(targets)}
         type="button"
         variant="contained"
       >

@@ -3,6 +3,7 @@ from dataall.modules.s3_datasets.api.dataset.input_types import (
     ModifyDatasetInput,
     NewDatasetInput,
     ImportDatasetInput,
+    DatasetMetadataInput,
 )
 from dataall.modules.s3_datasets.api.dataset.resolvers import (
     create_dataset,
@@ -12,8 +13,8 @@ from dataall.modules.s3_datasets.api.dataset.resolvers import (
     import_dataset,
     start_crawler,
     generate_metadata,
-    save_generated_metadata,
-    test_read
+    test_read,
+    update_dataset_metadata
     
 )
 from dataall.modules.s3_datasets.api.dataset.enums import MetadataGenerationTargets
@@ -34,6 +35,16 @@ updateDataset = gql.MutationField(
     ],
     type=gql.Ref('Dataset'),
     resolver=update_dataset,
+    test_scope='Dataset',
+)
+updateDatasetMetadata = gql.MutationField(
+    name='updateDatasetMetadata',
+    args=[
+        gql.Argument(name='datasetUri', type=gql.String),
+        gql.Argument(name='input', type=DatasetMetadataInput),
+    ],
+    type=gql.Ref('Dataset'),
+    resolver=update_dataset_metadata,
     test_scope='Dataset',
 )
 
@@ -85,13 +96,7 @@ generateMetadata = gql.MutationField(
 )
 
 
-saveGeneratedMetadata = gql.MutationField(
-    name='save_generated_metadata',
-    args=[gql.Argument(name='resourceUri', type=gql.NonNullableType(gql.String)),
-           gql.Argument(name='input', type=ModifyDatasetInput),],
-    type=gql.Ref('Dataset'), #"Success or fail can be string as well"
-    resolver=save_generated_metadata,
-)
+
 test = gql.MutationField(
     name='test',
     args=[gql.Argument(name='resourceUri', type=gql.NonNullableType(gql.String)),

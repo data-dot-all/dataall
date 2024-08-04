@@ -65,6 +65,7 @@ export const GenerateMetadataComponent = (props) => {
   const handleChange = useCallback(
     async (event) => {
       setTargetType(event.target.value);
+      console.log('event.target.value', event.target.value);
       if (event.target.value === 'Dataset') {
         setTargets([
           {

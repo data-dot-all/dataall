@@ -293,7 +293,6 @@ class DatasetService:
         DatasetService._deploy_dataset_stack(dataset)
 
         return dataset
-
     @staticmethod
     def get_dataset_statistics(dataset: S3Dataset):
         with get_context().db_engine.scoped_session() as session:
