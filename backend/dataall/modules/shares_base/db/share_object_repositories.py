@@ -385,17 +385,16 @@ class ShareObjectRepository:
         A method used by the scheduled ECS Task to run fetch_submitted_shares_with_notifications() process against ALL shared objects in ALL
         active share objects within dataall
         """
-        with session() as session:
-            pending_shares = (
-                session.query(ShareObject)
-                .join(
-                    Notification,
-                    and_(
-                        ShareObject.shareUri == func.split_part(Notification.target_uri, '|', 1),
-                        ShareObject.datasetUri == func.split_part(Notification.target_uri, '|', 2),
-                    ),
-                )
-                .filter(and_(Notification.type == 'SHARE_OBJECT_SUBMITTED', ShareObject.status == 'Submitted'))
-                .all()
+        pending_shares = (
+            session.query(ShareObject)
+            .join(
+                Notification,
+                and_(
+                    ShareObject.shareUri == func.split_part(Notification.target_uri, '|', 1),
+                    ShareObject.datasetUri == func.split_part(Notification.target_uri, '|', 2),
+                ),
             )
-            return pending_shares
+            .filter(and_(Notification.type == 'SHARE_OBJECT_SUBMITTED', ShareObject.status == 'Submitted'))
+            .all()
+        )
+        return pending_shares

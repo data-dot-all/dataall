@@ -1,11 +1,10 @@
 import logging
 import os
 import sys
+from dataall.base.loader import load_modules, ImportMode
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.base.db import get_engine
-from dataall.base.aws.sqs import SqsQueue
-from dataall.core.tasks.service_handlers import Worker
-from backend.dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 
@@ -15,7 +14,6 @@ root.setLevel(logging.INFO)
 if not root.hasHandlers():
     root.addHandler(logging.StreamHandler(sys.stdout))
 log = logging.getLogger(__name__)
-Worker.queue = SqsQueue.send
 
 
 def persistent_email_reminders(engine):
@@ -40,6 +38,7 @@ def persistent_email_reminders(engine):
 
 
 if __name__ == '__main__':
+    load_modules(modes={ImportMode.SHARES_TASK})
     ENVNAME = os.environ.get('envname', 'local')
     ENGINE = get_engine(envname=ENVNAME)
     persistent_email_reminders(engine=ENGINE)
