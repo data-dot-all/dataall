@@ -29,6 +29,11 @@ export const EnvironmentRedshiftConnectionAddForm = (props) => {
 
   let { groupOptions, loadingGroups } = useFetchGroups(environment);
 
+  const connectionOptions = [
+    { value: 'DATA_USER', label: 'Data User' },
+    { value: 'ADMIN', label: 'Admin' }
+  ];
+
   const clusterOptions = [
     { value: 'serverless', label: 'Serverless' },
     { value: 'cluster', label: 'Provisioned Cluster' }
@@ -47,7 +52,8 @@ export const EnvironmentRedshiftConnectionAddForm = (props) => {
           workgroup: values.workgroup,
           database: values.database,
           redshiftUser: values.redshiftUser,
-          secretArn: values.secretArn
+          secretArn: values.secretArn,
+          connectionType: values.connectionType
         })
       );
       if (!response.errors) {
@@ -112,7 +118,8 @@ export const EnvironmentRedshiftConnectionAddForm = (props) => {
               workgroup: '',
               database: '',
               redshiftUser: '',
-              secretArn: ''
+              secretArn: '',
+              connectionType: ''
             }}
             validationSchema={Yup.object().shape({
               connectionName: Yup.string()
@@ -129,7 +136,10 @@ export const EnvironmentRedshiftConnectionAddForm = (props) => {
               workgroup: Yup.string().max(255),
               database: Yup.string().max(255).required('*Database is required'),
               redshiftUser: Yup.string().max(255),
-              secretArn: Yup.string().max(255)
+              secretArn: Yup.string().max(255),
+              connectionType: Yup.string()
+                .max(255)
+                .required('*ConnectionType is required')
             })}
             onSubmit={async (
               values,
@@ -165,6 +175,29 @@ export const EnvironmentRedshiftConnectionAddForm = (props) => {
                       value={values.connectionName}
                       variant="outlined"
                     />
+                  </CardContent>
+                  <CardContent>
+                    <TextField
+                      fullWidth
+                      error={Boolean(
+                        touched.connectionType && errors.connectionType
+                      )}
+                      helperText={
+                        touched.connectionType && errors.connectionType
+                      }
+                      label="Connection type"
+                      name="connectionType"
+                      onChange={handleChange}
+                      select
+                      value={values.connectionType}
+                      variant="outlined"
+                    >
+                      {connectionOptions.map((r) => (
+                        <MenuItem key={r.value} value={r.value}>
+                          {r.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
                   </CardContent>
                   <CardContent>
                     <Autocomplete

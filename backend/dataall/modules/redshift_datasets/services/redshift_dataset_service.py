@@ -34,6 +34,11 @@ from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset
 from dataall.modules.redshift_datasets.aws.redshift_data import redshift_data_client
 from dataall.modules.redshift_datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.redshift_datasets.indexers.table_indexer import DatasetTableIndexer
+from dataall.modules.redshift_datasets.services.redshift_constants import (
+    GLOSSARY_REDSHIFT_DATASET_NAME,
+    GLOSSARY_REDSHIFT_DATASET_TABLE_NAME,
+    VOTE_REDSHIFT_DATASET_NAME,
+)
 
 
 log = logging.getLogger(__name__)
@@ -100,7 +105,7 @@ class RedshiftDatasetService:
                 )
                 if data.get('terms'):
                     GlossaryRepository.set_glossary_terms_links(
-                        session, username, uri, 'RedshiftDataset', data.get('terms')
+                        session, username, uri, GLOSSARY_REDSHIFT_DATASET_NAME, data.get('terms')
                     )
                 DatasetBaseRepository.update_dataset_activity(session, dataset, username)
 
@@ -134,7 +139,7 @@ class RedshiftDatasetService:
 
             DatasetTableIndexer.delete_doc(doc_id=dataset.datasetUri)
             RedshiftDatasetService._delete_dataset_term_links(session, uri)
-            VoteRepository.delete_votes(session, dataset.datasetUri, 'redshiftdataset')
+            VoteRepository.delete_votes(session, dataset.datasetUri, VOTE_REDSHIFT_DATASET_NAME)
             session.delete(dataset)
             session.commit()
             return True
@@ -192,7 +197,7 @@ class RedshiftDatasetService:
 
                 if data.get('terms'):
                     GlossaryRepository.set_glossary_terms_links(
-                        session, username, table.rsTableUri, 'RedshiftDatasetTable', data.get('terms')
+                        session, username, table.rsTableUri, GLOSSARY_REDSHIFT_DATASET_TABLE_NAME, data.get('terms')
                     )
             DatasetTableIndexer.upsert(session, table_uri=uri)
             return table
@@ -245,7 +250,7 @@ class RedshiftDatasetService:
     @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
     def get_dataset_upvotes(uri):
         with get_context().db_engine.scoped_session() as session:
-            return VoteRepository.count_upvotes(session, uri, target_type='redshiftdataset') or 0
+            return VoteRepository.count_upvotes(session, uri, target_type=VOTE_REDSHIFT_DATASET_NAME) or 0
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
@@ -280,8 +285,8 @@ class RedshiftDatasetService:
     def _delete_dataset_term_links(session, dataset_uri):
         tables = [t.rsTableUri for t in RedshiftDatasetRepository.list_redshift_dataset_tables(session, dataset_uri)]
         for table_uri in tables:
-            GlossaryRepository.delete_glossary_terms_links(session, table_uri, 'RedshiftDataset')
-        GlossaryRepository.delete_glossary_terms_links(session, dataset_uri, 'RedshiftDatasetTable')
+            GlossaryRepository.delete_glossary_terms_links(session, table_uri, GLOSSARY_REDSHIFT_DATASET_TABLE_NAME)
+        GlossaryRepository.delete_glossary_terms_links(session, dataset_uri, GLOSSARY_REDSHIFT_DATASET_NAME)
 
     @staticmethod
     def _attach_dataset_permissions(session, dataset, environment):

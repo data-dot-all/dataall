@@ -22,6 +22,7 @@ import { listEnvironmentRedshiftConnections, useClient } from 'services';
 import {
   Defaults,
   DeleteObjectWithFrictionModal,
+  Label,
   RefreshTableMenu,
   Scrollbar,
   SearchIcon
@@ -140,13 +141,11 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
                 id: item.connectionUri,
                 redshiftId:
                   item.redshiftType === 'serverless'
-                    ? item.nameSpaceId
+                    ? item.workgroup
                     : item.clusterId,
-                connectionType: item.secretArn ? 'SecretArn' : 'Redshift User',
                 connectionDetails: item.secretArn
                   ? item.secretArn
-                  : item.redshiftUser,
-                workgroup: item.workgroup ? item.workgroup : '-'
+                  : item.redshiftUser
               })
             )
           ]
@@ -172,7 +171,6 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
   if (loading) {
     return <CircularProgress />;
   }
-
   return (
     <Box>
       <Box sx={{ mt: 3 }}>
@@ -256,6 +254,21 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
                     editable: true
                   },
                   {
+                    field: 'connectionType',
+                    headerName: 'Connection Type',
+                    flex: 1,
+                    editable: false,
+                    renderCell: (params) => {
+                      return (
+                        <Label
+                          color={params.value === 'ADMIN' ? 'success' : 'info'}
+                        >
+                          {params.value}
+                        </Label>
+                      );
+                    }
+                  },
+                  {
                     field: 'SamlGroupName',
                     headerName: 'Team',
                     flex: 1,
@@ -268,20 +281,14 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
                     editable: false
                   },
                   {
+                    field: 'nameSpaceId',
+                    headerName: 'Namespace Id',
+                    flex: 1,
+                    editable: false
+                  },
+                  {
                     field: 'redshiftId',
-                    headerName: 'NamespaceId/ClusterId',
-                    flex: 1,
-                    editable: false
-                  },
-                  {
-                    field: 'workgroup',
-                    headerName: 'Workgroup',
-                    flex: 1,
-                    editable: false
-                  },
-                  {
-                    field: 'connectionType',
-                    headerName: 'Connection Type',
+                    headerName: 'Workgroup/ClusterId',
                     flex: 1,
                     editable: false
                   },

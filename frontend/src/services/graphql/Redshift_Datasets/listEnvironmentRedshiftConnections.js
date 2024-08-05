@@ -23,6 +23,7 @@ export const listEnvironmentRedshiftConnections = ({ filter }) => ({
           database
           redshiftUser
           secretArn
+          connectionType
         }
       }
     }

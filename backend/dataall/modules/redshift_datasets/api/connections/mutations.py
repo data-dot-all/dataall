@@ -9,14 +9,14 @@ from dataall.modules.redshift_datasets.api.connections.types import (
 
 createRedshiftConnection = gql.MutationField(
     name='createRedshiftConnection',
-    args=[gql.Argument(name='input', type=gql.Ref('CreateRedshiftConnectionInput'))],
+    args=[gql.Argument('input', gql.Ref('CreateRedshiftConnectionInput'))],
     type=RedshiftConnection,
     resolver=create_redshift_connection,
 )
 
 deleteRedshiftConnection = gql.MutationField(
     name='deleteRedshiftConnection',
-    args=[gql.Argument(name='connectionUri', type=gql.NonNullableType(gql.String))],
+    args=[gql.Argument('connectionUri', gql.NonNullableType(gql.String))],
     type=gql.Boolean,
     resolver=delete_redshift_connection,
 )

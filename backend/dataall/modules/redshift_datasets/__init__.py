@@ -44,14 +44,22 @@ class RedshiftDatasetApiModuleInterface(ModuleInterface):
             RedshiftConnectionEnvironmentResource,
         )
         from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset, RedshiftTable
+        from dataall.modules.redshift_datasets.services.redshift_constants import (
+            GLOSSARY_REDSHIFT_DATASET_NAME,
+            GLOSSARY_REDSHIFT_DATASET_TABLE_NAME,
+            FEED_REDSHIFT_DATASET_NAME,
+            FEED_REDSHIFT_DATASET_TABLE_NAME,
+            VOTE_REDSHIFT_DATASET_NAME,
+        )
+
         import dataall.modules.redshift_datasets.api
 
-        FeedRegistry.register(FeedDefinition('RedshiftDatasetTable', RedshiftTable))
-        FeedRegistry.register(FeedDefinition('RedshiftDataset', RedshiftDataset))
+        FeedRegistry.register(FeedDefinition(FEED_REDSHIFT_DATASET_TABLE_NAME, RedshiftTable))
+        FeedRegistry.register(FeedDefinition(FEED_REDSHIFT_DATASET_NAME, RedshiftDataset))
 
         GlossaryRegistry.register(
             GlossaryDefinition(
-                target_type='RedshiftDataset',
+                target_type=GLOSSARY_REDSHIFT_DATASET_NAME,
                 object_type='RedshiftDataset',
                 model=RedshiftDataset,
                 reindexer=DatasetIndexer,
@@ -60,14 +68,14 @@ class RedshiftDatasetApiModuleInterface(ModuleInterface):
 
         GlossaryRegistry.register(
             GlossaryDefinition(
-                target_type='RedshiftDatasetTable',
+                target_type=GLOSSARY_REDSHIFT_DATASET_TABLE_NAME,
                 object_type='RedshiftDatasetTable',
                 model=RedshiftTable,
                 reindexer=DatasetTableIndexer,
             )
         )
 
-        add_vote_type('redshiftdataset', DatasetIndexer)
+        add_vote_type(VOTE_REDSHIFT_DATASET_NAME, DatasetIndexer)
 
         EnvironmentResourceManager.register(RedshiftDatasetEnvironmentResource())
         EnvironmentResourceManager.register(RedshiftConnectionEnvironmentResource())

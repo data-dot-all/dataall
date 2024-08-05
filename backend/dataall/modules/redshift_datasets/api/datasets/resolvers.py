@@ -9,6 +9,10 @@ from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftDataset, RedshiftTable
 from dataall.modules.redshift_datasets.services.redshift_dataset_service import RedshiftDatasetService
 from dataall.modules.redshift_datasets.services.redshift_connection_service import RedshiftConnectionService
+from dataall.modules.redshift_datasets.services.redshift_constants import (
+    GLOSSARY_REDSHIFT_DATASET_NAME,
+    GLOSSARY_REDSHIFT_DATASET_TABLE_NAME,
+)
 
 log = logging.getLogger(__name__)
 
@@ -119,14 +123,16 @@ def resolve_dataset_glossary_terms(context: Context, source: RedshiftDataset, **
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return GlossaryRepository.get_glossary_terms_links(session, source.datasetUri, 'RedshiftDataset')
+        return GlossaryRepository.get_glossary_terms_links(session, source.datasetUri, GLOSSARY_REDSHIFT_DATASET_NAME)
 
 
 def resolve_table_glossary_terms(context: Context, source: RedshiftTable, **kwargs):
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return GlossaryRepository.get_glossary_terms_links(session, source.rsTableUri, 'RedshiftDatasetTable')
+        return GlossaryRepository.get_glossary_terms_links(
+            session, source.rsTableUri, GLOSSARY_REDSHIFT_DATASET_TABLE_NAME
+        )
 
 
 def resolve_dataset_connection(context: Context, source: RedshiftDataset, **kwargs):

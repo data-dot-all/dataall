@@ -11,13 +11,13 @@ ImportRedshiftDatasetInput = gql.InputType(
         gql.Argument('tags', gql.ArrayType(gql.String)),
         gql.Argument('owner', gql.NonNullableType(gql.String)),
         gql.Argument('topics', gql.ArrayType(gql.Ref('Topic'))),
-        gql.Argument(name='SamlAdminGroupName', type=gql.NonNullableType(gql.String)),
+        gql.Argument('SamlAdminGroupName', gql.NonNullableType(gql.String)),
         gql.Argument('confidentiality', gql.String),
-        gql.Argument(name='stewards', type=gql.String),
-        gql.Argument(name='autoApprovalEnabled', type=gql.Boolean),
+        gql.Argument('stewards', gql.String),
+        gql.Argument('autoApprovalEnabled', gql.Boolean),
         gql.Argument('connectionUri', gql.NonNullableType(gql.String)),
         gql.Argument('schema', gql.NonNullableType(gql.String)),
-        gql.Argument(name='tables', type=gql.ArrayType(gql.String)),
+        gql.Argument('tables', gql.ArrayType(gql.String)),
     ],
 )
 
@@ -31,8 +31,8 @@ ModifyRedshiftDatasetInput = gql.InputType(
         gql.Argument('topics', gql.ArrayType(gql.Ref('Topic'))),
         gql.Argument('terms', gql.ArrayType(gql.String)),
         gql.Argument('confidentiality', gql.String),
-        gql.Argument(name='stewards', type=gql.String),
-        gql.Argument(name='autoApprovalEnabled', type=gql.Boolean),
+        gql.Argument('stewards', gql.String),
+        gql.Argument('autoApprovalEnabled', gql.Boolean),
     ],
 )
 
