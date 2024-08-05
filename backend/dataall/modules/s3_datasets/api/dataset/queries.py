@@ -56,8 +56,8 @@ listDatasetTablesFolders = gql.QueryField(
     type=gql.Ref('DatasetItemsSearchResult'),
     resolver=list_dataset_tables_folders,
 )
-ListSampleData = gql.QueryField(
-    name='read_sample_data',
+listSampleData = gql.QueryField(
+    name='listSampleData',
     args=[gql.Argument(name='tableUri', type=gql.NonNullableType(gql.String))],
     type=gql.Ref('QueryPreviewResult'), #basically returns nothing...? 
     resolver=read_sample_data,

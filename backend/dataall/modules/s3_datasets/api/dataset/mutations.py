@@ -13,7 +13,8 @@ from dataall.modules.s3_datasets.api.dataset.resolvers import (
     import_dataset,
     start_crawler,
     generate_metadata,
-    test_read
+    test_read,
+    read_sample_data
 )
 from dataall.modules.s3_datasets.api.dataset.enums import MetadataGenerationTargets
 

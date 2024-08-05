@@ -24,7 +24,6 @@ import { DataGrid } from '@mui/x-data-grid';
 // import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
-
 //import AutoModeIcon from '@mui/icons-material/AutoMode';
 // import * as Yup from 'yup';
 // import { ChipInput, Defaults } from 'design';
@@ -33,7 +32,11 @@ import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 import { updateDataset } from '../services';
 import { updateDatasetTable } from 'modules/Tables/services';
+import { listSampleData } from '../services/listSampleData';
 import { updateDatasetStorageLocation } from 'modules/Folders/services';
+import SampleDataPopup from './SampleDataPopup';
+import React, { useState } from 'react';
+
 /* eslint-disable no-console */
 export const ReviewMetadataComponent = (props) => {
   const {
@@ -48,11 +51,47 @@ export const ReviewMetadataComponent = (props) => {
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const client = useClient();
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [sampleData, setSampleData] = useState(null);
+
+  const openPopup = (data) => {
+    setSampleData(data);
+    setPopupOpen(true);
+  };
+
+  const closePopup = () => {
+    setPopupOpen(false);
+    setSampleData(null);
+  };
+  async function handleRegenerate(table) {
+    try {
+      const response = await client.query(
+        listSampleData({
+          tableUri: table.targetUri
+        })
+      );
+      console.log(response);
+      openPopup(response.data.listSampleData);
+      if (!response.errors) {
+        enqueueSnackbar('Successfully regenerated sample data', {
+          variant: 'success'
+        });
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (err) {
+      dispatch({ type: SET_ERROR, error: err.message });
+    }
+  }
+  const handleAcceptAndRegenerate = () => {
+    // Perform any necessary actions for accepting and regenerating the data
+    console.log('Accept and Regenerate clicked');
+    closePopup();
+  };
+
   async function saveMetadata(targets) {
     try {
-      console.log({ selectedMetadataTypes });
       const updatedTargets = targets.map(async (target) => {
-        console.log({ v: target.targetType });
         const updatedMetadata = {};
 
         // Loop through selectedMetadataTypes and add the corresponding key-value pairs to updatedMetadata
@@ -208,6 +247,17 @@ export const ReviewMetadataComponent = (props) => {
                         {params.value}
                       </div>
                     )
+                  },
+                  {
+                    field: 'regenerate',
+                    headerName: 'Regenerate',
+                    flex: 2,
+                    type: 'boolean',
+                    renderCell: (params) => (
+                      <button onClick={() => handleRegenerate(params.row)}>
+                        Read Sample Data
+                      </button>
+                    )
                   }
                 ]}
                 pageSize={10}
@@ -255,6 +305,12 @@ export const ReviewMetadataComponent = (props) => {
       >
         Save
       </Button>
+      <SampleDataPopup
+        open={popupOpen}
+        sampleData={sampleData}
+        handleClose={closePopup}
+        handleRegenerate={handleAcceptAndRegenerate}
+      />
     </>
   );
 };

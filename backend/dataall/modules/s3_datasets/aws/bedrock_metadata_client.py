@@ -49,9 +49,9 @@ class BedrockClient:
                 For example, if the requested metadata types are "Tags" and "Topics", the response should be:
                 tags: <tags>
                 topics: <topics>
-                Evaluate if the given parameters are sufficient for generating the requested metadata. If not, respond with "NotEnoughData".
+                Evaluate if the given parameters are sufficient for generating the requested metadata, if not, respond with "NotEnoughData" for all values of dictionary keys.
                 Return the result as a Python dictionary where the keys are the requested metadata types, all the keys must be lowercase and the values are the corresponding generated metadata. 
-                For tags and topics, ensure the output is a string list.
+                For tags and topics, ensure the output is a string list.  Label is singular so you should return only one label as string.
 
             """
         #             Column_Descriptions: 
@@ -77,8 +77,8 @@ class BedrockClient:
                 For example, if the requested metadata types are "tags" and "description", the response should be:
                     "tags":<tags>
                     "description":<description>
-                Evaluate if the given parameters are sufficient for generating the requested metadata. If not, respond with "NotEnoughData".
-                For tags and topics, ensure the output is a string list.
+                Evaluate if the given parameters are sufficient for generating the requested metadata, if not, respond with "NotEnoughData" for all values of dictionary keys.
+                For tags and topics, ensure the output is a string list.  Label is singular so you should return only one label as string.
                 Return the result as a Python dictionary where the keys are the requested metadata types, all the keys must be lowercase and the values are the corresponding generated metadata.
 
             """
@@ -96,9 +96,10 @@ class BedrockClient:
               Your response should strictly contain the requested metadata types.
               For example, if the requested metadata types are "tags" and "description", the response should be:
                   "tags":<tags>
-                  "description":<description>
-              For tags and topics, ensure the output is a string list.
-              Return a python dictionary, all the keys must be lowercase. Don't use ' ' in your response, use " ".
+                  "description":<description>   
+              For tags and topics, ensure the output is a string list. Label is singular so you should return only one label as string.
+              Return a python dictionary, all the keys must be lowercase. Don't use ' ' in your response, use " ".   
+              Evaluate if the given parameters are sufficient for generating the requested metadata, if not, respond with "NotEnoughData" for all values of dictionary keys.
          """
     
     def _invoke_model(self, prompt):
