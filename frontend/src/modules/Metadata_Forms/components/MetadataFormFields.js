@@ -1,5 +1,4 @@
 import { useDispatch } from 'react-redux';
-import SaveIcon from '@mui/icons-material/Save';
 
 import React, { useState } from 'react';
 
@@ -16,185 +15,265 @@ import {
   InputAdornment,
   Divider,
   Button,
-  Autocomplete
+  Autocomplete,
+  Tooltip
 } from '@mui/material';
-import { Scrollbar, SearchIcon, AsteriskIcon } from '../../../design';
+import {
+  Scrollbar,
+  SearchIcon,
+  AsteriskIcon,
+  PencilAltIcon,
+  SaveIcon
+} from '../../../design';
 import { SET_ERROR } from '../../../globalErrors';
 import Checkbox from '@mui/material/Checkbox';
 import {
-  createMetadataFormFields,
-  getMetadataForm,
-  deleteMetadataFormField
+  //  createMetadataFormFields,
+  getMetadataForm
+  //  deleteMetadataFormField
 } from '../services';
 import { useClient } from '../../../services';
 import { GridActionsCellItem } from '@mui/x-data-grid';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import SettingsBackupRestoreOutlinedIcon from '@mui/icons-material/SettingsBackupRestoreOutlined';
 
-const NewFieldRow = (props) => {
-  const { onRemove, onChange, fieldTypeOptions, saveField } = props;
-  const [name, setName] = useState('');
-  const [type, setType] = useState('String');
-  const [required, setRequired] = useState(false);
-  const [possibleValues, setPossibleValues] = useState('');
+const EditTable = (props) => {
+  const { fields, fieldTypeOptions, saveChanges } = props;
+  const [deleted, setDeleted] = useState({});
+  const [localFields, setLocalFields] = useState(fields);
 
-  const saveChanged = () => {
-    const data = {
-      name: name.length > 0 ? name : null,
-      type: type,
-      required: required,
-      possibleValues: possibleValues.split(',')
+  const updateField = (index, propertyName, value) => {
+    localFields[index] = {
+      ...localFields[index],
+      propertyName: value
     };
-    onChange(data);
-  };
-
-  const save = () => {
-    const data = {
-      name: name.length > 0 ? name : null,
-      type: type,
-      required: required,
-      possibleValues: possibleValues.split(',')
-    };
-    saveField(data);
+    setLocalFields([...localFields]);
   };
 
   return (
-    <TableRow>
-      <TableCell>
-        <Checkbox
-          onChange={(event) => {
-            setRequired(event.target.value === 'on');
-            saveChanged();
-          }}
-        />
-      </TableCell>
-      <TableCell>
-        <TextField
-          onChange={(event) => {
-            setName(event.target.value);
-            saveChanged();
-          }}
-          sx={{ width: '100%' }}
-        />
-      </TableCell>
-      <TableCell>
-        <Autocomplete
-          disablePortal
-          options={fieldTypeOptions.map((option) => option.value)}
-          defaultValue={fieldTypeOptions[0].value}
-          onChange={(event, value) => {
-            if (value) {
-              setType(value);
-            } else {
-              setType(fieldTypeOptions[0].value);
-            }
-            saveChanged();
-          }}
-          renderInput={(params) => (
-            <TextField
-              sx={{ minWidth: '150px' }}
-              {...params}
-              label="Type"
+    <Table>
+      <TableHead>
+        <TableRow>
+          <TableCell sx={{ width: '20px' }}>Required</TableCell>
+          <TableCell>Name</TableCell>
+          <TableCell>Type</TableCell>
+          <TableCell sx={{ width: '30%' }}>Description</TableCell>
+          <TableCell sx={{ width: '15%' }}>
+            Values (any, if not specified)
+          </TableCell>
+          <TableCell sx={{ width: '20px' }}>
+            <Button
+              color="primary"
+              startIcon={<SaveIcon size={15} />}
+              sx={{ mt: 1 }}
+              onClick={() => {
+                saveChanges(localFields);
+              }}
+              type="button"
               variant="outlined"
-            />
-          )}
-        />
-      </TableCell>
-      <TableCell>
-        <TextField sx={{ width: '100%' }} />
-      </TableCell>
-      <TableCell>
-        <TextField
-          onChange={(event) => {
-            setPossibleValues(event.target.value);
-            saveChanged();
-          }}
-          sx={{ width: '100%' }}
-        />
-      </TableCell>
-      <TableCell>
-        <GridActionsCellItem
-          icon={<SaveIcon />}
-          label="Save"
-          sx={{
-            color: 'primary.main'
-          }}
-          onClick={save}
-        />
-        <GridActionsCellItem
-          icon={<DeleteIcon />}
-          label="Save"
-          sx={{
-            color: 'primary.main'
-          }}
-          onClick={() => {
-            onRemove();
-          }}
-        />
-      </TableCell>
-    </TableRow>
+            >
+              Save
+            </Button>
+          </TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {localFields.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={6} align="center">
+              No fields found
+            </TableCell>
+          </TableRow>
+        ) : (
+          localFields.map((field, index) => (
+            <TableRow
+              sx={{
+                backgroundColor: deleted[field.uri] ? 'whitesmoke' : 'white'
+              }}
+            >
+              <TableCell>
+                <Checkbox
+                  defaultChecked={field.required}
+                  disabled={deleted[field.uri]}
+                  onKeyUp={(event) => {
+                    updateField(index, 'required', event.target.value === 'on');
+                  }}
+                />
+              </TableCell>
+              <TableCell>
+                <TextField
+                  disabled={deleted[field.uri]}
+                  defaultValue={field.name}
+                  onKeyUp={(event) => {
+                    updateField(index, 'name', event.target.value);
+                  }}
+                  sx={{ width: '100%' }}
+                />
+              </TableCell>
+              <TableCell>
+                <Autocomplete
+                  disablePortal
+                  disabled={deleted[field.uri]}
+                  options={fieldTypeOptions.map((option) => option.value)}
+                  defaultValue={field.type}
+                  onKeyUp={(event, value) => {
+                    updateField(
+                      index,
+                      'type',
+                      value || fieldTypeOptions[0].value
+                    );
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      sx={{ minWidth: '150px' }}
+                      {...params}
+                      label="Type"
+                      variant="outlined"
+                    />
+                  )}
+                />
+              </TableCell>
+              <TableCell>
+                <TextField
+                  disabled={deleted[field.uri]}
+                  sx={{ width: '100%' }}
+                />
+              </TableCell>
+              <TableCell>
+                <TextField
+                  defaultValue={field.possibleValues.join(', ')}
+                  disabled={field.deleted}
+                  onKeyUp={(event) => {
+                    updateField(
+                      index,
+                      'possibleValues',
+                      event.target.value.split(',')
+                    );
+                  }}
+                  sx={{ width: '100%' }}
+                />
+              </TableCell>
+              <TableCell
+                sx={{
+                  width: '20px',
+                  alignContent: 'center',
+                  textAlign: 'center'
+                }}
+              >
+                <Tooltip title={deleted[field.uri] ? 'Restore' : 'Delete'}>
+                  <GridActionsCellItem
+                    icon={
+                      deleted[field.uri] ? (
+                        <SettingsBackupRestoreOutlinedIcon />
+                      ) : (
+                        <DeleteIcon />
+                      )
+                    }
+                    label={deleted[field.uri] ? 'Restore' : 'Delete'}
+                    sx={{
+                      color: 'primary.main'
+                    }}
+                    onClick={() => {
+                      updateField(index, 'deleted', !field.deleted);
+                      setDeleted({
+                        ...deleted,
+                        [field.uri]: !deleted[field.uri]
+                      });
+                    }}
+                  />
+                </Tooltip>
+              </TableCell>
+            </TableRow>
+          ))
+        )}
+      </TableBody>
+    </Table>
   );
 };
 
-NewFieldRow.propTypes = {
-  onRemove: PropTypes.func.isRequired,
-  onChange: PropTypes.func.isRequired,
+EditTable.propTypes = {
+  fields: PropTypes.array.isRequired,
   fieldTypeOptions: PropTypes.array.isRequired,
-  saveField: PropTypes.func.isRequired
+  saveChanges: PropTypes.func.isRequired
+};
+
+const DisplayTable = (props) => {
+  const { fields, startEdit } = props;
+  return (
+    <Table>
+      <TableHead>
+        <TableRow>
+          <TableCell sx={{ width: '20px' }}>Required</TableCell>
+          <TableCell>Name</TableCell>
+          <TableCell>Type</TableCell>
+          <TableCell sx={{ width: '30%' }}>Description</TableCell>
+          <TableCell sx={{ width: '15%' }}>
+            Values (any, if not specified)
+          </TableCell>
+          <TableCell sx={{ width: '20px', alignContent: 'center' }}>
+            <Button
+              color="primary"
+              startIcon={<PencilAltIcon size={15} />}
+              sx={{ mt: 1 }}
+              onClick={startEdit}
+              type="button"
+              variant="outlined"
+            >
+              Edit
+            </Button>
+          </TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {fields.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={6} align="center">
+              No fields found
+            </TableCell>
+          </TableRow>
+        ) : (
+          fields.map((field) => (
+            <TableRow key={field.uri}>
+              <TableCell
+                sx={{
+                  textAlign: 'center'
+                }}
+              >
+                {field.required ? <AsteriskIcon /> : ''}
+              </TableCell>
+              <TableCell>{field.name}</TableCell>
+              <TableCell>{field.type}</TableCell>
+              <TableCell></TableCell>
+              <TableCell>{field.possibleValues}</TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+          ))
+        )}
+      </TableBody>
+    </Table>
+  );
+};
+DisplayTable.propTypes = {
+  fields: PropTypes.array.isRequired,
+  startEdit: PropTypes.func.isRequired
 };
 
 export const MetadataFormFields = (props) => {
   const dispatch = useDispatch();
   const client = useClient();
   const { metadataForm, fieldTypeOptions } = props;
+  const [editOn, setEditOn] = useState(false);
   const [fields, setFields] = useState(metadataForm.fields);
   const [inputValue, setInputValue] = useState('');
   const [filter, setFilter] = useState({});
-  const [newFields, setNewFields] = useState([]);
-  const handleAddField = () => {
-    setNewFields([...newFields, {}]);
-  };
-
-  const handleRemoveNewField = (index) => {
-    newFields.splice(index, 1);
-    setNewFields([...newFields]);
-  };
-
-  const handleFieldChange = (index, value) => {
-    const newFieldsArray = [...newFields];
-    newFieldsArray[index] = value;
-    setNewFields(newFieldsArray);
-  };
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
     setFilter({ ...filter, term: event.target.value });
   };
 
-  const saveAllNewFields = async () => {
-    const data = newFields.map((field) => {
-      return {
-        name: field.name,
-        type: field.type,
-        required: field.required,
-        possibleValues: field.possibleValues
-      };
-    });
-    await saveFields(metadataForm.uri, data);
-    setNewFields([]);
-  };
-
-  const saveFields = async (uri, data) => {
-    const response = await client.mutate(
-      createMetadataFormFields(metadataForm.uri, data)
-    );
-    if (!response.errors) {
-      await fetchItems();
-    }
-  };
-
-  const deleteField = async (uri) => {
-    await client.mutate(deleteMetadataFormField(metadataForm.uri, uri));
-    await fetchItems();
+  const startEdit = () => {
+    setEditOn(true);
   };
 
   const fetchItems = async () => {
@@ -207,6 +286,10 @@ export const MetadataFormFields = (props) => {
         : 'Metadata Forms not found';
       dispatch({ type: SET_ERROR, error });
     }
+  };
+
+  const saveChanges = (updatedFields) => {
+    setEditOn(false);
   };
 
   const handleInputKeyup = (event) => {
@@ -230,6 +313,7 @@ export const MetadataFormFields = (props) => {
           }}
         >
           <TextField
+            disabled="true"
             fullWidth
             InputProps={{
               startAdornment: (
@@ -240,21 +324,12 @@ export const MetadataFormFields = (props) => {
             }}
             onChange={handleInputChange}
             onKeyUp={handleInputKeyup}
-            placeholder="Search"
+            placeholder="Search (temporary deisabled)"
             value={inputValue}
             variant="outlined"
           />
         </Box>
         <Divider />
-        <Box
-          sx={{
-            pl: 2,
-            pt: 2
-          }}
-        >
-          <Button onClick={handleAddField}>Add field</Button>
-          <Button onClick={saveAllNewFields}>Save fields</Button>
-        </Box>
         <Scrollbar>
           <Box
             sx={{
@@ -262,69 +337,15 @@ export const MetadataFormFields = (props) => {
               minHeight: '400px'
             }}
           >
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ width: '20px' }}>Required</TableCell>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Type</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell>Values (any, if not specified)</TableCell>
-                  <TableCell></TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {newFields.map((field, index) => (
-                  <NewFieldRow
-                    onRemove={() => handleRemoveNewField(index)}
-                    onChange={(value) => handleFieldChange(index, value)}
-                    fieldTypeOptions={fieldTypeOptions}
-                    saveField={async (data) => {
-                      setNewFields([...newFields.splice(index, 1)]);
-                      await saveFields(metadataForm.uri, [data]);
-                    }}
-                    index={() => {
-                      return index;
-                    }}
-                  />
-                ))}
-                {fields.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center">
-                      No fields found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  fields.map((field) => (
-                    <TableRow key={field.uri}>
-                      <TableCell
-                        sx={{
-                          textAlign: 'center'
-                        }}
-                      >
-                        {field.required ? <AsteriskIcon /> : ''}
-                      </TableCell>
-                      <TableCell>{field.name}</TableCell>
-                      <TableCell>{field.type}</TableCell>
-                      <TableCell></TableCell>
-                      <TableCell>{field.possibleValues}</TableCell>
-                      <TableCell>
-                        <GridActionsCellItem
-                          icon={<DeleteIcon />}
-                          label="Save"
-                          sx={{
-                            color: 'primary.main'
-                          }}
-                          onClick={async () => {
-                            await deleteField(field.uri);
-                          }}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+            {editOn ? (
+              <EditTable
+                fields={fields}
+                fieldTypeOptions={fieldTypeOptions}
+                saveChanges={saveChanges}
+              />
+            ) : (
+              <DisplayTable fields={fields} startEdit={startEdit} />
+            )}
           </Box>
         </Scrollbar>
       </Card>

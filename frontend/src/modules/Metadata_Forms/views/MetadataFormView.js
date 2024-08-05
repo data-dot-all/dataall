@@ -18,7 +18,7 @@ import {
   Tabs,
   Typography
 } from '@mui/material';
-import { ChevronRightIcon, PencilAltIcon, useSettings } from '../../../design';
+import { ChevronRightIcon, useSettings } from '../../../design';
 import { FaTrash } from 'react-icons/fa';
 import {
   MetadataFormInfo,
@@ -178,16 +178,6 @@ const MetadataFormView = () => {
 
             <Grid item>
               <Box sx={{ m: -1 }}>
-                <Button
-                  color="primary"
-                  component={RouterLink}
-                  startIcon={<PencilAltIcon fontSize="small" />}
-                  sx={{ mt: 1, mr: 1 }}
-                  to={`/console/metadata-forms/${metadataForm.uri}/edit`}
-                  variant="outlined"
-                >
-                  Edit
-                </Button>
                 <Button
                   color="primary"
                   startIcon={<FaTrash size={15} />}
