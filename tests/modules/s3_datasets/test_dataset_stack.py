@@ -84,7 +84,7 @@ def test_resources_created(template):
     assert 'AWS::Glue::Job' in template
 
 
-@pytest.mark.skipif(os.getenv('GITHUB_ACTIONS', 'false') != 'true', reason='Pytest used for Checkov Scan CDK Synth Output')
+@pytest.mark.skipif(os.getenv('CHECKOV_ACTIONS', 'false') != 'true', reason='Pytest used for Checkov Scan CDK Synth Output')
 def test_checkov(template):
     with open('checkov_s3_dataset_synth.json', 'w') as f:
         f.write(template)

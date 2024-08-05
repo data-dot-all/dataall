@@ -144,7 +144,7 @@ def test_resources_created(env_fixture, org_fixture, mocker):
     template.resource_count_is('AWS::IAM::Policy', 4)
 
 
-@pytest.mark.skipif(os.getenv('GITHUB_ACTIONS', 'false') != 'true', reason='Pytest used for Checkov Scan CDK Synth Output')
+@pytest.mark.skipif(os.getenv('CHECKOV_ACTIONS', 'false') != 'true', reason='Pytest used for Checkov Scan CDK Synth Output')
 def test_checkov(env_fixture, org_fixture, mocker):
     app = App()
     mocker.patch(

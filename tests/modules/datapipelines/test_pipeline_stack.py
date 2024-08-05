@@ -104,7 +104,7 @@ def test_resources_created(pipeline_db):
     template.resource_count_is('AWS::CodeBuild::Project', 1)
 
 
-@pytest.mark.skipif(os.getenv('GITHUB_ACTIONS', 'false') != 'true', reason='Pytest used for Checkov Scan CDK Synth Output')
+@pytest.mark.skipif(os.getenv('CHECKOV_ACTIONS', 'false') != 'true', reason='Pytest used for Checkov Scan CDK Synth Output')
 def test_checkov(pipeline_db):
     app = App()
     stack = PipelineStack(app, 'Pipeline', target_uri=pipeline_db.DataPipelineUri)
