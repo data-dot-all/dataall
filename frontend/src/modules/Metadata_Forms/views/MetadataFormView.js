@@ -26,11 +26,14 @@ import {
   MetadataFormPreview,
   MetadataFormEnforcement
 } from '../components';
+import { deleteMetadataForm } from '../services/deleteMetadataForm';
+import { useNavigate } from 'react-router';
 
 const MetadataFormView = () => {
   const params = useParams();
   const dispatch = useDispatch();
   const client = useClient();
+  const navigate = useNavigate();
   const { settings } = useSettings();
   const tabs = [
     { label: 'Form Info', value: 'info' },
@@ -48,7 +51,14 @@ const MetadataFormView = () => {
     setCurrentTab(value);
   };
 
-  const handleDeleteObjectModalOpen = () => {};
+  const deleteForm = async () => {
+    const response = await client.mutate(deleteMetadataForm(params.uri));
+    if (!response.errors) {
+      navigate('/console/metadata-forms');
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+  };
 
   const fetchMetadataForm = useCallback(async () => {
     setLoading(true);
@@ -182,7 +192,7 @@ const MetadataFormView = () => {
                   color="primary"
                   startIcon={<FaTrash size={15} />}
                   sx={{ mt: 1 }}
-                  onClick={handleDeleteObjectModalOpen}
+                  onClick={deleteForm}
                   type="button"
                   variant="outlined"
                 >
