@@ -22,6 +22,7 @@ import { useCardStyle } from 'design';
 import { dayjs } from 'utils';
 import { RequestAccessModal } from './RequestAccessModal';
 import { RequestDashboardAccessModal } from './RequestDashboardAccessModal';
+import { RequestRedshiftAccessModal } from './RequestRedshiftAccessModal';
 
 const HitICon = ({ hit }) => (
   <ReactIf.Switch>
@@ -71,6 +72,9 @@ export const GlossarySearchResultItem = ({ hit }) => {
   const [isRequestDashboardAccessOpen, setIsRequestDashboardAccessOpen] =
     useState(false);
   const [isOpeningDashboardModal, setIsOpeningDashboardModal] = useState(false);
+  const [isRequestRedshiftAccessOpen, setIsRequestRedshiftAccessOpen] =
+    useState(false);
+  const [isOpeningRedshiftModal, setIsOpeningRedshiftModal] = useState(false);
   const handleRequestAccessModalOpen = () => {
     setIsOpeningModal(true);
     setIsRequestAccessOpen(true);
@@ -88,6 +92,16 @@ export const GlossarySearchResultItem = ({ hit }) => {
   const handleRequestDashboardAccessModalClose = () => {
     setIsOpeningDashboardModal(false);
     setIsRequestDashboardAccessOpen(false);
+  };
+
+  const handleRequestRedshiftAccessModalOpen = () => {
+    setIsOpeningRedshiftModal(true);
+    setIsRequestRedshiftAccessOpen(true);
+  };
+
+  const handleRequestRedshiftAccessModalClose = () => {
+    setIsOpeningRedshiftModal(false);
+    setIsRequestRedshiftAccessOpen(false);
   };
 
   return (
@@ -345,7 +359,9 @@ export const GlossarySearchResultItem = ({ hit }) => {
         }}
       >
         <Box>
-          {isOpeningModal || isOpeningDashboardModal ? (
+          {isOpeningModal ||
+          isOpeningDashboardModal ||
+          isOpeningRedshiftModal ? (
             <CircularProgress size={20} />
           ) : (
             <Button
@@ -354,7 +370,14 @@ export const GlossarySearchResultItem = ({ hit }) => {
               onClick={() =>
                 hit.resourceKind === 'dashboard'
                   ? handleRequestDashboardAccessModalOpen()
-                  : handleRequestAccessModalOpen()
+                  : hit.resourceKind === 'dataset' ||
+                    hit.resourceKind === 'table' ||
+                    hit.resourceKind === 'folder'
+                  ? handleRequestAccessModalOpen()
+                  : hit.resourceKind === 'redshiftdataset' ||
+                    hit.resourceKind === 'redshifttable'
+                  ? handleRequestRedshiftAccessModalOpen()
+                  : '-'
               }
               type="button"
             >
@@ -366,6 +389,12 @@ export const GlossarySearchResultItem = ({ hit }) => {
             onApply={handleRequestAccessModalClose}
             open={isRequestAccessOpen}
             stopLoader={() => setIsOpeningModal(false)}
+          />
+          <RequestRedshiftAccessModal
+            hit={hit}
+            onApply={handleRequestRedshiftAccessModalClose}
+            open={isRequestRedshiftAccessOpen}
+            stopLoader={() => setIsOpeningRedshiftModal(false)}
           />
           <RequestDashboardAccessModal
             hit={hit}
