@@ -18,8 +18,8 @@ class MetadataFormParamValidationService:
             raise exceptions.RequiredParameter('SamlGroupName')
 
         if 'homeEntity' not in data and (
-            visibility == MetadataFormVisibility.Organization.value
-            or visibility == MetadataFormVisibility.Environment.value
+                visibility == MetadataFormVisibility.Organization.value
+                or visibility == MetadataFormVisibility.Environment.value
         ):
             raise exceptions.RequiredParameter('homeEntity')
 
@@ -111,3 +111,20 @@ class MetadataFormService:
         mf = MetadataFormService.get_metadata_form_field_by_uri(fieldUri)
         with get_context().db_engine.scoped_session() as session:
             return session.delete(mf)
+
+    @staticmethod
+    def batch_metadata_form_field_update(uri, data):
+        for item in data:
+            if 'uri' not in item:
+                MetadataFormService.create_metadata_form_field(uri, data)
+            elif 'uri' in item and item['uri'] is not None:
+                if 'deleted' in item and item['deleted']:
+                    MetadataFormService.delete_metadata_form_field(uri, item['uri'])
+                else:
+                    MetadataFormService.update_metadata_form_field(uri, item['uri'], item)
+        return MetadataFormService.get_metadata_form_fields(uri)
+
+    @staticmethod
+    def update_metadata_form_field(uri, fieldUri, data):
+        with get_context().db_engine.scoped_session() as session:
+            return MetadataFormRepository.update_metadata_form_field(session, fieldUri, data)

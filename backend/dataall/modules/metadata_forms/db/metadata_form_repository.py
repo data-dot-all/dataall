@@ -55,3 +55,15 @@ class MetadataFormRepository:
     @staticmethod
     def get_metadata_form_field_by_uri(session, uri):
         return session.query(MetadataFormField).get(uri)
+
+    @staticmethod
+    def update_metadata_form_field(session, fieldUri, data):
+        mf = MetadataFormRepository.get_metadata_form_field_by_uri(session, fieldUri)
+        mf.name = data.get('name', mf.name)
+        mf.type = data.get('type', mf.type)
+        mf.glossaryNodeUri = data.get('glossaryNodeUri', mf.glossaryNodeUri)
+        mf.required = data.get('required', mf.required)
+        mf.possibleValues = data.get('possibleValues', mf.possibleValues)
+        session.update(mf)
+        session.commit()
+        return mf
