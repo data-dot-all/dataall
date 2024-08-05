@@ -52,11 +52,13 @@ const MetadataFormView = () => {
   };
 
   const deleteForm = async () => {
+    setLoading(true);
     const response = await client.mutate(deleteMetadataForm(params.uri));
     if (!response.errors) {
       navigate('/console/metadata-forms');
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      setLoading(false);
     }
   };
 
