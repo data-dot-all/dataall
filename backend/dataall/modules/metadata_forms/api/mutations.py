@@ -4,7 +4,7 @@ from dataall.modules.metadata_forms.api.resolvers import (
     delete_metadata_form,
     create_metadata_form_fields,
     delete_metadata_form_field,
-    batch_metadata_form_field_update
+    batch_metadata_form_field_update,
 )
 
 createMetadataForm = gql.MutationField(

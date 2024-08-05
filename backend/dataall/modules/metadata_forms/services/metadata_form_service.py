@@ -18,8 +18,8 @@ class MetadataFormParamValidationService:
             raise exceptions.RequiredParameter('SamlGroupName')
 
         if 'homeEntity' not in data and (
-                visibility == MetadataFormVisibility.Organization.value
-                or visibility == MetadataFormVisibility.Environment.value
+            visibility == MetadataFormVisibility.Organization.value
+            or visibility == MetadataFormVisibility.Environment.value
         ):
             raise exceptions.RequiredParameter('homeEntity')
 

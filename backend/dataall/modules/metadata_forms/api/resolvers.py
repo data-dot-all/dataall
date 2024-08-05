@@ -30,8 +30,10 @@ def get_form_fields(context: Context, source: MetadataForm):
 def create_metadata_form_fields(context: Context, source, formUri, input):
     return MetadataFormService.create_metadata_form_fields(formUri, input)
 
+
 def delete_metadata_form_field(context: Context, source, formUri, fieldUri):
     return MetadataFormService.delete_metadata_form_field(formUri, fieldUri)
+
 
 def batch_metadata_form_field_update(context: Context, source, formUri, input):
     return MetadataFormService.batch_metadata_form_field_update(formUri, input)
