@@ -559,7 +559,7 @@ const DatasetCreateForm = (props) => {
                         <CardContent>
                           <Autocomplete
                             id="stewards"
-                            disablePortal
+                            freesolo
                             options={groupOptions.map((option) => option)}
                             onChange={(event, value) => {
                               if (value && value.value) {
@@ -570,37 +570,17 @@ const DatasetCreateForm = (props) => {
                             }}
                             inputValue={values.stewards}
                             renderInput={(params) => (
-                              <Box>
-                                {groupOptions.length > 0 ? (
-                                  <TextField
-                                    {...params}
-                                    fullWidth
-                                    error={Boolean(
-                                      touched.stewards && errors.stewards
-                                    )}
-                                    helperText={
-                                      touched.stewards && errors.stewards
-                                    }
-                                    label="Stewards"
-                                    onChange={handleChange}
-                                    variant="outlined"
-                                  />
-                                ) : (
-                                  <TextField
-                                    error={Boolean(
-                                      touched.stewards && errors.stewards
-                                    )}
-                                    helperText={
-                                      touched.stewards && errors.stewards
-                                    }
-                                    fullWidth
-                                    disabled
-                                    label="Stewards"
-                                    value="No teams found for this environment"
-                                    variant="outlined"
-                                  />
+                              <TextField
+                                {...params}
+                                fullWidth
+                                error={Boolean(
+                                  touched.stewards && errors.stewards
                                 )}
-                              </Box>
+                                helperText={touched.stewards && errors.stewards}
+                                label="Stewards"
+                                onChange={handleChange}
+                                variant="outlined"
+                              />
                             )}
                           />
                         </CardContent>

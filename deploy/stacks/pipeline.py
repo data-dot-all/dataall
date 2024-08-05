@@ -339,6 +339,7 @@ class PipelineStack(Stack):
                     ],
                     resources=[
                         f'arn:aws:iam::*:role/{self.resource_prefix}*',
+                        'arn:aws:iam::*:role/dataall-integration-tests*',
                         'arn:aws:cloudfront::*:distribution/*',
                     ],
                 )
@@ -755,6 +756,7 @@ class PipelineStack(Stack):
                 custom_domain=target_env.get('custom_domain'),
                 custom_auth=target_env.get('custom_auth', None),
                 custom_waf_rules=target_env.get('custom_waf_rules', None),
+                backend_region=target_env.get('region', self.region),
             )
         )
         front_stage_actions = (
@@ -886,6 +888,7 @@ class PipelineStack(Stack):
                 ip_ranges=target_env.get('ip_ranges'),
                 resource_prefix=self.resource_prefix,
                 custom_auth=target_env.get('custom_auth', None),
+                backend_region=target_env.get('region', self.region),
             ),
             pre=[
                 pipelines.CodeBuildStep(

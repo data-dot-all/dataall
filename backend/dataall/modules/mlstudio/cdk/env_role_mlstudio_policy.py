@@ -17,7 +17,6 @@ class SagemakerStudioPolicy(ServicePolicy):
             iam.PolicyStatement(
                 actions=[
                     'sagemaker:List*',
-                    'sagemaker:List*',
                     'sagemaker:Describe*',
                     'sagemaker:BatchGet*',
                     'sagemaker:BatchDescribe*',
@@ -99,6 +98,12 @@ class SagemakerStudioPolicy(ServicePolicy):
                     f'arn:aws:sagemaker:{self.region}:{self.account}:project/*',
                 ],
                 conditions={'StringEquals': {f'aws:ResourceTag/{self.tag_key}': [self.tag_value]}},
+            ),
+            iam.PolicyStatement(
+                actions=['sagemaker:*Space*'],
+                resources=[
+                    f'arn:aws:sagemaker:{self.region}:{self.account}:space/*',
+                ],
             ),
             iam.PolicyStatement(
                 actions=['sagemaker:InvokeEndpoint', 'sagemaker:InvokeEndpointAsync'],

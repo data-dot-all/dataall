@@ -27,10 +27,18 @@ import { RequestDashboardAccessModal } from './RequestDashboardAccessModal';
 
 const HitICon = ({ hit }) => (
   <ReactIf.Switch>
-    <ReactIf.Case condition={hit.resourceKind === 'dataset'}>
+    <ReactIf.Case
+      condition={
+        hit.resourceKind === 'dataset' || hit.resourceKind === 'redshiftdataset'
+      }
+    >
       <IconAvatar icon={<FiIcons.FiPackage size={18} />} />
     </ReactIf.Case>
-    <ReactIf.Case condition={hit.resourceKind === 'table'}>
+    <ReactIf.Case
+      condition={
+        hit.resourceKind === 'table' || hit.resourceKind === 'redshifttable'
+      }
+    >
       <IconAvatar icon={<BsIcons.BsTable size={18} />} />
     </ReactIf.Case>
     <ReactIf.Case condition={hit.resourceKind === 'folder'}>
@@ -122,6 +130,28 @@ export const GlossarySearchResultItem = ({ hit }) => {
                 color="textPrimary"
                 component={RouterLink}
                 to={`/console/dashboards/${hit._id}/`} /*eslint-disable-line*/
+                variant="h6"
+              >
+                {hit.label}
+              </Link>
+            )}
+            {hit.resourceKind === 'redshiftdataset' && (
+              <Link
+                underline="hover"
+                color="textPrimary"
+                component={RouterLink}
+                to={`/console/redshift-datasets/${hit._id}/`} /*eslint-disable-line*/
+                variant="h6"
+              >
+                {hit.label}
+              </Link>
+            )}
+            {hit.resourceKind === 'redshifttable' && (
+              <Link
+                underline="hover"
+                color="textPrimary"
+                component={RouterLink}
+                to={`/console/redshift-datasets/${hit.datasetUri}/`} /*eslint-disable-line*/
                 variant="h6"
               >
                 {hit.label}
@@ -279,7 +309,9 @@ export const GlossarySearchResultItem = ({ hit }) => {
         }}
       >
         <Box>
-          {isOpeningModal || isOpeningDashboardModal ? (
+          {hit.resourceKind === 'redshiftdataset' ||
+          hit.resourceKind === 'redshifttable' ? null : isOpeningModal ||
+            isOpeningDashboardModal ? (
             <CircularProgress size={20} />
           ) : (
             <Button
@@ -310,7 +342,9 @@ export const GlossarySearchResultItem = ({ hit }) => {
           />
         </Box>
         <Box sx={{ flexGrow: 1 }} />
-        {(hit.resourceKind === 'dashboard' || hit.resourceKind === 'dataset') &&
+        {(hit.resourceKind === 'dashboard' ||
+          hit.resourceKind === 'dataset' ||
+          hit.resourceKind === 'redshiftdataset') &&
           hit.upvotes !== undefined &&
           hit.upvotes >= 0 && (
             <Tooltip title="UpVotes">

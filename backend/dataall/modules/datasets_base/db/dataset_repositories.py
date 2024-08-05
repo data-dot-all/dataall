@@ -5,25 +5,13 @@ from sqlalchemy.orm import Query
 from dataall.base.db import paginate
 from dataall.base.db.exceptions import ObjectNotFound
 from dataall.core.activity.db.activity_models import Activity
-from dataall.modules.datasets_base.db.dataset_models import DatasetBase, DatasetLock
+from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 
 logger = logging.getLogger(__name__)
 
 
 class DatasetBaseRepository:
     """DAO layer for GENERIC Datasets"""
-
-    @staticmethod
-    def create_dataset_lock(session, dataset: DatasetBase):
-        dataset_lock = DatasetLock(datasetUri=dataset.datasetUri, isLocked=False, acquiredBy='')
-        session.add(dataset_lock)
-        session.commit()
-
-    @staticmethod
-    def delete_dataset_lock(session, dataset: DatasetBase):
-        dataset_lock = session.query(DatasetLock).filter(DatasetLock.datasetUri == dataset.datasetUri).first()
-        session.delete(dataset_lock)
-        session.commit()
 
     @staticmethod
     def update_dataset_activity(session, dataset: DatasetBase, username):
@@ -74,10 +62,12 @@ class DatasetListRepository:
             query = all_subqueries[0].union(*all_subqueries[1:])
 
         if filter and filter.get('term'):
+            term = filter['term']
             query = query.filter(
                 or_(
-                    DatasetBase.description.ilike(filter.get('term') + '%%'),
-                    DatasetBase.label.ilike(filter.get('term') + '%%'),
+                    DatasetBase.description.ilike(term + '%%'),
+                    DatasetBase.label.ilike(term + '%%'),
+                    DatasetBase.tags.contains(f'{{{term}}}'),
                 )
             )
         return query.order_by(DatasetBase.label).distinct(DatasetBase.datasetUri, DatasetBase.label)

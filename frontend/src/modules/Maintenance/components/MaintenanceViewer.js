@@ -3,6 +3,7 @@ import {
   Button,
   Card,
   CardHeader,
+  CardContent,
   CircularProgress,
   Dialog,
   Divider,
@@ -10,25 +11,26 @@ import {
   IconButton,
   MenuItem,
   TextField,
-  Typography
+  Switch,
+  Typography,
+  FormControlLabel,
+  FormGroup,
+  Alert
 } from '@mui/material';
-import React, { useCallback, useEffect, useState } from 'react';
 import { Article, CancelRounded, SystemUpdate } from '@mui/icons-material';
+import React, { useCallback, useEffect, useState } from 'react';
 import { LoadingButton } from '@mui/lab';
 import { Label } from 'design';
 import {
   getMaintenanceStatus,
   stopMaintenanceWindow,
-  startMaintenanceWindow
+  startMaintenanceWindow,
+  startReindexCatalog
 } from '../services';
-import { useClient } from 'services';
+import { useClient, fetchEnums } from 'services';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useSnackbar } from 'notistack';
-
-const maintenanceModes = [
-  { value: 'READ-ONLY', label: 'Read-Only' },
-  { value: 'NO-ACCESS', label: 'No-Access' }
-];
+import { ModuleNames, isModuleEnabled } from 'utils';
 
 const START_MAINTENANCE = 'Start Maintenance';
 const END_MAINTENANCE = 'End Maintenance';
@@ -162,21 +164,169 @@ export const MaintenanceConfirmationPopUp = (props) => {
   );
 };
 
+export const ReIndexConfirmationPopUp = (props) => {
+  const { popUpReIndex, setPopUpReIndex, setUpdatingReIndex } = props;
+  const client = useClient();
+  const dispatch = useDispatch();
+  const { enqueueSnackbar } = useSnackbar();
+  const [withDelete, setWithDelete] = useState(false);
+
+  const handleReindexStart = async () => {
+    setUpdatingReIndex(true);
+    if (!client) {
+      dispatch({
+        type: SET_ERROR,
+        error: 'Client not initialized for re-indexing catalog task'
+      });
+    }
+    const response = await client.mutate(
+      startReindexCatalog({ handleDeletes: withDelete })
+    );
+    if (!response.errors && response.data.startReindexCatalog != null) {
+      const respData = response.data.startReindexCatalog;
+      if (respData === true) {
+        enqueueSnackbar('Re Index Task has Started. Please check the status', {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'success'
+        });
+      } else {
+        enqueueSnackbar('Could not start re index task', {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'success'
+        });
+      }
+    } else {
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Something went wrong while starting re index task. Please check gql logs';
+      dispatch({ type: SET_ERROR, error });
+    }
+    setPopUpReIndex(false);
+    setUpdatingReIndex(false);
+  };
+
+  return (
+    <Dialog maxWidth="sm" fullWidth open={popUpReIndex}>
+      <Box sx={{ p: 3 }}>
+        <Typography
+          align="center"
+          color="textPrimary"
+          gutterBottom
+          variant="h5"
+        >
+          Start Data.all Catalog Reindexing Task?
+        </Typography>
+        <Divider />
+        <Box>
+          <CardContent>
+            <Alert severity="warning" sx={{ mr: 1 }}>
+              Starting a reindexing job will update all catalog objects in
+              data.all with the latest information found in RDS.
+            </Alert>
+          </CardContent>
+        </Box>
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          sx={{ mb: 3 }}
+        >
+          <FormGroup>
+            <FormControlLabel
+              control={
+                <Switch
+                  color="primary"
+                  onChange={() => {
+                    setWithDelete(!withDelete);
+                  }}
+                  edge="start"
+                  name="withDelete"
+                />
+              }
+              label={
+                <div>
+                  With Deletes
+                  <Alert severity="error" sx={{ mr: 1 }}>
+                    Specifying <b>withDeletes</b> will identify catalog objects
+                    no longer in data.all's DB (if any) and attempt to delete /
+                    clean up the catalog
+                  </Alert>
+                </div>
+              }
+            />
+          </FormGroup>
+        </Box>
+        <Divider />
+        <Box display="flex" sx={{ mt: 1 }}>
+          <CardContent>
+            <Typography color="textPrimary">
+              Please confirm if you want to start the reindexing task:
+            </Typography>
+            <Button
+              color="primary"
+              startIcon={<Article fontSize="small" />}
+              sx={{ m: 1 }}
+              variant="outlined"
+              onClick={handleReindexStart}
+            >
+              Start
+            </Button>
+            <Button
+              color="primary"
+              startIcon={<Article fontSize="small" />}
+              sx={{ m: 1 }}
+              variant="outlined"
+              onClick={() => {
+                setPopUpReIndex(false);
+              }}
+            >
+              Cancel
+            </Button>
+          </CardContent>
+        </Box>
+      </Box>
+    </Dialog>
+  );
+};
+
 export const MaintenanceViewer = () => {
   const client = useClient();
   const [refreshing, setRefreshing] = useState(false);
+  const refreshingReIndex = false;
+  const [updatingReIndex, setUpdatingReIndex] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [mode, setMode] = useState('');
   const [popUp, setPopUp] = useState(false);
+  const [popUpReIndex, setPopUpReIndex] = useState(false);
   const [confirmedMode, setConfirmedMode] = useState('');
   const [maintenanceButtonText, setMaintenanceButtonText] =
     useState(START_MAINTENANCE);
   const [maintenanceWindowStatus, setMaintenanceWindowStatus] =
     useState(INACTIVE_STATUS);
+  const [maintenanceModes, setMaintenanceModes] = useState([]);
   const [dropDownStatus, setDropDownStatus] = useState(false);
   const [refreshingTimer, setRefreshingTimer] = useState('');
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const dispatch = useDispatch();
+
+  const fetchMaintenanceModes = async () => {
+    const maintenanceModesEnum = await fetchEnums(client, ['MaintenanceModes']);
+    if (maintenanceModesEnum['MaintenanceModes'].length > 0) {
+      setMaintenanceModes(
+        maintenanceModesEnum['MaintenanceModes'].map((elem) => {
+          return { label: elem.value, value: elem.name };
+        })
+      );
+    } else {
+      dispatch({ type: SET_ERROR, error: 'Could not fetch maintenance modes' });
+    }
+  };
 
   const refreshMaintenanceView = async () => {
     setUpdating(true);
@@ -327,6 +477,9 @@ export const MaintenanceViewer = () => {
       initializeMaintenanceView().catch((e) =>
         dispatch({ type: SET_ERROR, e })
       );
+      fetchMaintenanceModes().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
       const setTimer = setInterval(() => {
         refreshStatus().catch((e) =>
           dispatch({ type: SET_ERROR, error: e.message })
@@ -339,6 +492,37 @@ export const MaintenanceViewer = () => {
 
   return (
     <Box>
+      {refreshingReIndex ? (
+        <CircularProgress />
+      ) : (
+        <div>
+          {isModuleEnabled(ModuleNames.CATALOG) && (
+            <Box display="flex" paddingBottom={3} width="25%">
+              <Card>
+                <CardHeader title={<Box>Re-Index Data.all Catalog</Box>} />
+                <Divider />
+                <Box>
+                  <LoadingButton
+                    color="primary"
+                    loading={updatingReIndex}
+                    onClick={() => setPopUpReIndex(true)}
+                    startIcon={<SystemUpdate fontSize="small" />}
+                    sx={{ m: 1 }}
+                    variant="contained"
+                  >
+                    Start Re-Index Catalog Task
+                  </LoadingButton>
+                </Box>
+              </Card>
+              <ReIndexConfirmationPopUp
+                popUpReIndex={popUpReIndex}
+                setPopUpReIndex={setPopUpReIndex}
+                setUpdatingReIndex={setUpdatingReIndex}
+              />
+            </Box>
+          )}
+        </div>
+      )}
       {refreshing ? (
         <CircularProgress />
       ) : (

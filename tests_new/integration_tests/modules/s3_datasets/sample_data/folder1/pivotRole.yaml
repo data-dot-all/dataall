@@ -1,0 +1,499 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: IAM Role used by dataall platform to run AWS short running tasks
+Parameters:
+  AwsAccountId:
+    Description: AWS AccountId of the dataall INFRASTRUCTURE account that we wish to link this environment with.
+    Type: String
+  ExternalId:
+    Description: ExternalId to secure dataall assume role (copy/paste from the UI)
+    Type: String
+  PivotRoleName:
+    Description: IAM role name (copy/paste from the UI)
+    Type: String
+  EnvironmentResourcePrefix:
+    Description: The resource prefix value of the dataall environment. It MUST match the resource prefix that we use when we create the environment.
+    Type: String
+Resources:
+  PivotRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Ref PivotRoleName
+      Path: /
+      MaxSessionDuration: 43200
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lakeformation.amazonaws.com
+                - lambda.amazonaws.com
+                - glue.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !Ref AwsAccountId
+            Action:
+              - 'sts:AssumeRole'
+            Condition:
+              StringEquals:
+                'sts:ExternalId': !Ref ExternalId
+              StringLike:
+                'aws:PrincipalArn': [
+                  !Sub "arn:aws:iam::${AwsAccountId}:role/*graphql-role",
+                  !Sub "arn:aws:iam::${AwsAccountId}:role/*awsworker-role",
+                  !Sub "arn:aws:iam::${AwsAccountId}:role/*ecs-tasks-role"
+                ]
+  PivotRolePolicy0:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ReadBuckets
+            Action:
+              - 's3:ListAllMyBuckets'
+              - 's3:GetBucketLocation'
+              - 's3:PutBucketTagging'
+              - 's3:GetEncryptionConfiguration'
+            Effect: Allow
+            Resource: '*'
+          - Sid: ManagedBuckets
+            Action:
+              - 's3:List*'
+              - 's3:Delete*'
+              - 's3:Get*'
+              - 's3:Put*'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:s3:::${EnvironmentResourcePrefix}*'
+          - Sid: ImportedBuckets
+            Action:
+              - 's3:List*'
+              - 's3:GetBucket*'
+              - 's3:GetLifecycleConfiguration'
+              - 's3:GetObject'
+              - 's3:PutBucketPolicy'
+              - 's3:PutBucketTagging'
+              - 's3:PutObject'
+              - 's3:PutObjectAcl'
+              - 's3:PutBucketOwnershipControls'
+            Effect: Allow
+            Resource:
+              - 'arn:aws:s3:::*'
+          - Sid: KMS
+            Action:
+              - 'kms:Decrypt'
+              - 'kms:Encrypt'
+              - 'kms:GenerateDataKey*'
+              - 'kms:GetKeyPolicy'
+              - 'kms:PutKeyPolicy'
+              - 'kms:ReEncrypt*'
+              - 'kms:TagResource'
+              - 'kms:UntagResource'
+            Effect: Allow
+            Resource:
+              - '*'
+          - Sid: KMSList
+            Action:
+              - 'kms:List*'
+              - 'kms:DescribeKey'
+            Effect: Allow
+            Resource: '*'
+          - Sid: AthenaWorkgroups
+            Action:
+              - 'athena:GetWorkGroup'
+              - 'athena:GetQueryExecution'
+              - 'athena:GetQueryResults'
+              - 'athena:StartQueryExecution'
+            Effect: Allow
+            Resource: !Sub 'arn:aws:athena:*:${AWS::AccountId}:workgroup/${EnvironmentResourcePrefix}*'
+          - Sid: ManagedAccessPoints
+            Action:
+              - 's3:GetAccessPoint'
+              - 's3:GetAccessPointPolicy'
+              - 's3:ListAccessPoints'
+              - 's3:CreateAccessPoint'
+              - 's3:DeleteAccessPoint'
+              - 's3:GetAccessPointPolicyStatus'
+              - 's3:DeleteAccessPointPolicy'
+              - 's3:PutAccessPointPolicy'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:s3:*:${AWS::AccountId}:accesspoint/*'
+          - Sid: GlueCatalog
+            Action:
+              - 'glue:BatchCreatePartition'
+              - 'glue:BatchDeletePartition'
+              - 'glue:BatchDeleteTable'
+              - 'glue:CreateDatabase'
+              - 'glue:CreatePartition'
+              - 'glue:CreateTable'
+              - 'glue:DeleteDatabase'
+              - 'glue:DeletePartition'
+              - 'glue:DeleteTable'
+              - 'glue:BatchGet*'
+              - 'glue:Get*'
+              - 'glue:List*'
+              - 'glue:SearchTables'
+              - 'glue:UpdateDatabase'
+              - 'glue:UpdatePartition'
+              - 'glue:UpdateTable'
+              - 'glue:TagResource'
+              - 'glue:DeleteResourcePolicy'
+              - 'glue:PutResourcePolicy'
+            Effect: Allow
+            Resource: '*'
+          - Sid: GlueETL
+            Action:
+              - 'glue:StartCrawler'
+              - 'glue:StartJobRun'
+              - 'glue:StartTrigger'
+              - 'glue:UpdateTrigger'
+              - 'glue:UpdateJob'
+              - 'glue:UpdateCrawler'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:glue:*:${AWS::AccountId}:crawler/${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:aws:glue:*:${AWS::AccountId}:job/${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:aws:glue:*:${AWS::AccountId}:trigger/${EnvironmentResourcePrefix}*'
+          - Sid: SNSPublish
+            Action:
+              - 'sns:Publish'
+              - 'sns:SetTopicAttributes'
+              - 'sns:GetTopicAttributes'
+              - 'sns:DeleteTopic'
+              - 'sns:Subscribe'
+              - 'sns:TagResource'
+              - 'sns:UntagResource'
+              - 'sns:CreateTopic'
+            Effect: Allow
+            Resource: !Sub 'arn:aws:sns:*:${AWS::AccountId}:${EnvironmentResourcePrefix}*'
+          - Sid: SNSList
+            Action:
+              - 'sns:ListTopics'
+            Effect: Allow
+            Resource: '*'
+          - Sid: SQSList
+            Action:
+              - 'sqs:ListQueues'
+            Effect: Allow
+            Resource: '*'
+          - Sid: SQS
+            Action:
+              - 'sqs:ReceiveMessage'
+              - 'sqs:SendMessage'
+            Effect: Allow
+            Resource: !Sub 'arn:aws:sqs:*:${AWS::AccountId}:${EnvironmentResourcePrefix}*'
+          - Sid: AWSLoggingBuckets
+            Action:
+              - 's3:PutBucketAcl'
+              - 's3:PutBucketNotification'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:s3:::${EnvironmentResourcePrefix}-logging-*'
+          - Sid: CWMetrics
+            Action:
+              - 'cloudwatch:PutMetricData'
+              - 'cloudwatch:GetMetricData'
+              - 'cloudwatch:GetMetricStatistics'
+            Effect: Allow
+            Resource: '*'
+          - Sid: Logs
+            Effect: Allow
+            Action:
+              - 'logs:CreateLogGroup'
+              - 'logs:CreateLogStream'
+            Resource:
+              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:log-group:/aws/lambda/*'
+              - !Sub 'arn:aws:logs:*:${AWS::AccountId}:log-group:/${EnvironmentResourcePrefix}*'
+          - Sid: Logging
+            Action:
+              - 'logs:PutLogEvents'
+            Effect: Allow
+            Resource: '*'
+      ManagedPolicyName: !Sub ${EnvironmentResourcePrefix}-pivotrole-policy-0
+      Roles:
+        - !Ref PivotRoleName
+    DependsOn: PivotRole
+
+  PivotRolePolicy1:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: EC2SG
+            Effect: Allow
+            Action:
+              - 'ec2:DescribeSubnets'
+              - 'ec2:DescribeSecurityGroups'
+              - 'ec2:DescribeVpcs'
+              - 'ec2:DescribeInstances'
+              - 'ec2:DescribeNetworkInterfaces'
+            Resource: '*'
+          - Sid: SageMakerNotebookActions
+            Effect: Allow
+            Action:
+              - 'sagemaker:ListTags'
+              - 'sagemaker:DescribeUserProfile'
+              - 'sagemaker:StopNotebookInstance'
+              - 'sagemaker:CreatePresignedNotebookInstanceUrl'
+              - 'sagemaker:DescribeNotebookInstance'
+              - 'sagemaker:StartNotebookInstance'
+              - 'sagemaker:AddTags'
+              - 'sagemaker:DescribeDomain'
+              - 'sagemaker:CreatePresignedDomainUrl'
+            Resource:
+              - !Sub 'arn:aws:sagemaker:*:${AWS::AccountId}:notebook-instance/${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:aws:sagemaker:*:${AWS::AccountId}:domain/*'
+              - !Sub 'arn:aws:sagemaker:*:${AWS::AccountId}:user-profile/*/*'
+          - Sid: SagemakerNotebookInstances
+            Effect: Allow
+            Action:
+             - 'sagemaker:ListNotebookInstances'
+             - 'sagemaker:ListDomains'
+             - 'sagemaker:ListApps'
+             - 'sagemaker:DeleteApp'
+            Resource: '*'
+          - Sid: RamTag
+            Effect: Allow
+            Action:
+              - 'ram:TagResource'
+            Resource: '*'
+            Condition:
+              'ForAllValues:StringLike':
+                'ram:ResourceShareName':
+                  - LakeFormation*
+          - Sid: RamCreateResource
+            Effect: Allow
+            Action:
+              - 'ram:CreateResourceShare'
+            Resource: '*'
+            Condition:
+              'ForAllValues:StringEquals':
+                'ram:RequestedResourceType':
+                  - 'glue:Table'
+                  - 'glue:Database'
+                  - 'glue:Catalog'
+          - Sid: RamUpdateResource
+            Effect: Allow
+            Action:
+              - 'ram:UpdateResourceShare'
+            Resource: !Sub 'arn:aws:ram:*:${AWS::AccountId}:resource-share/*'
+            Condition:
+              'ForAllValues:StringLike':
+                'ram:ResourceShareName':
+                  - LakeFormation*
+          - Sid: RamAssociateResource
+            Effect: Allow
+            Action:
+              - 'ram:AssociateResourceShare'
+              - 'ram:DisassociateResourceShare'
+            Resource: !Sub 'arn:aws:ram:*:${AWS::AccountId}:resource-share/*'
+            Condition:
+              'ForAllValues:StringLike':
+                'ram:ResourceShareName':
+                  - LakeFormation*
+          - Sid: RamDeleteResource
+            Effect: Allow
+            Action:
+              - 'ram:DeleteResourceShare'
+            Resource: !Sub 'arn:aws:ram:*:${AWS::AccountId}:resource-share/*'
+          - Sid: RamInvitations
+            Effect: Allow
+            Action:
+              - "ram:AcceptResourceShareInvitation"
+              - "ram:RejectResourceShareInvitation"
+              - "ram:EnableSharingWithAwsOrganization"
+            Resource: '*'
+          - Sid: RamRead
+            Effect: Allow
+            Action:
+              - 'ram:Get*'
+              - 'ram:List*'
+            Resource: '*'
+          - Sid: CloudFormation
+            Effect: Allow
+            Action:
+              - 'cloudformation:DescribeStacks'
+              - 'cloudformation:DescribeStackResources'
+              - 'cloudformation:DescribeStackEvents'
+              - 'cloudformation:DeleteStack'
+              - 'cloudformation:ContinueUpdateRollback'
+            Resource:
+              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/${EnvironmentResourcePrefix}*/*'
+              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/CDKToolkit/*'
+          - Sid: CloudFormationDataPipelines
+            Effect: Allow
+            Action:
+              - 'cloudformation:DescribeStacks'
+              - 'cloudformation:DescribeStackResources'
+              - 'cloudformation:DescribeStackEvents'
+              - 'cloudformation:DeleteStack'
+            Resource:
+              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/*/*'
+      ManagedPolicyName: !Sub ${EnvironmentResourcePrefix}-pivotrole-policy-1
+      Roles:
+        - !Ref PivotRoleName
+    DependsOn: PivotRole
+
+  PivotRolepolicy2:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: LakeFormation
+            Effect: Allow
+            Action:
+              - "lakeformation:UpdateResource"
+              - "lakeformation:DescribeResource"
+              - "lakeformation:AddLFTagsToResource"
+              - "lakeformation:RemoveLFTagsFromResource"
+              - "lakeformation:GetResourceLFTags"
+              - "lakeformation:ListLFTags"
+              - "lakeformation:CreateLFTag"
+              - "lakeformation:GetLFTag"
+              - "lakeformation:UpdateLFTag"
+              - "lakeformation:DeleteLFTag"
+              - "lakeformation:SearchTablesByLFTags"
+              - "lakeformation:SearchDatabasesByLFTags"
+              - 'lakeformation:ListResources'
+              - 'lakeformation:ListPermissions'
+              - 'lakeformation:GrantPermissions'
+              - 'lakeformation:BatchGrantPermissions'
+              - 'lakeformation:RevokePermissions'
+              - 'lakeformation:BatchRevokePermissions'
+              - 'lakeformation:PutDataLakeSettings'
+              - 'lakeformation:GetDataLakeSettings'
+              - 'lakeformation:GetDataAccess'
+              - 'lakeformation:GetWorkUnits'
+              - 'lakeformation:StartQueryPlanning'
+              - 'lakeformation:GetWorkUnitResults'
+              - 'lakeformation:GetQueryState'
+              - 'lakeformation:GetQueryStatistics'
+              - 'lakeformation:GetTableObjects'
+              - 'lakeformation:UpdateTableObjects'
+              - 'lakeformation:DeleteObjectsOnCancel'
+            Resource: '*'
+          - Sid: QuickSight
+            Effect: Allow
+            Action:
+              - "quicksight:CreateGroup"
+              - "quicksight:DescribeGroup"
+              - "quicksight:ListDashboards"
+              - "quicksight:DescribeDataSource"
+              - "quicksight:DescribeDashboard"
+              - "quicksight:DescribeUser"
+              - "quicksight:SearchDashboards"
+              - "quicksight:GenerateEmbedUrlForRegisteredUser"
+              - "quicksight:GenerateEmbedUrlForAnonymousUser"
+              - "quicksight:UpdateUser"
+              - "quicksight:ListUserGroups"
+              - "quicksight:RegisterUser"
+              - "quicksight:DescribeDashboardPermissions"
+              - "quicksight:UpdateDashboardPermissions"
+              - "quicksight:GetAuthCode"
+              - "quicksight:CreateGroupMembership"
+              - "quicksight:DescribeAccountSubscription"
+              - "quicksight:DescribeAccountSettings"
+            Resource:
+            - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:group/default/*"
+            - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:user/default/*"
+            - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:datasource/*"
+            - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:user/*"
+            - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:dashboard/*"
+            - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:namespace/default"
+            - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:account/*"
+            - !Sub "arn:aws:quicksight:*:${AWS::AccountId}:*"
+          - Sid: QuickSightSession
+            Effect: Allow
+            Action:
+              - 'quicksight:GetSessionEmbedUrl'
+            Resource: '*'
+      ManagedPolicyName: !Sub ${EnvironmentResourcePrefix}-pivotrole-policy-2
+      Roles:
+        - !Ref PivotRoleName
+    DependsOn: PivotRole
+
+  PivotRolepolicy3:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ParameterStore
+            Effect: Allow
+            Action:
+              - "ssm:GetParameter"
+            Resource:
+              - !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/${EnvironmentResourcePrefix}/*'
+              - !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/dataall/*'
+              - !Sub 'arn:aws:ssm:*:${AWS::AccountId}:parameter/cdk*'
+          - Sid: IAMListGet
+            Action:
+              - 'iam:Get*'
+              - 'iam:ListRoles'
+            Effect: Allow
+            Resource: '*'
+          - Sid: IAMRolePolicy
+            Action:
+              - 'iam:PutRolePolicy'
+              - 'iam:DeleteRolePolicy'
+            Effect: Allow
+            Resource: '*'
+          - Sid: IAMPassRole
+            Action:
+              - 'iam:PassRole'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/${PivotRoleName}'
+          - Sid: IAMPassRoleGlue
+            Action:
+              - 'iam:PassRole'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/${EnvironmentResourcePrefix}*'
+            Condition:
+              StringEquals:
+                'iam:PassedToService': [ "glue.amazonaws.com" ]
+          - Sid: STS
+            Action:
+              - 'sts:AssumeRole'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/cdk-*'
+          - Sid: CodeCommit
+            Action:
+              - 'codecommit:GetFile'
+              - 'codecommit:ListBranches'
+              - 'codecommit:GetFolder'
+              - 'codecommit:GetCommit'
+              - 'codecommit:GitPull'
+              - 'codecommit:GetRepository'
+              - 'codecommit:TagResource'
+              - 'codecommit:UntagResource'
+              - 'codecommit:CreateBranch'
+              - 'codecommit:CreateCommit'
+              - 'codecommit:CreateRepository'
+              - 'codecommit:DeleteRepository'
+              - 'codecommit:GitPush'
+              - 'codecommit:PutFile'
+              - 'codecommit:GetBranch'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:codecommit:*:${AWS::AccountId}:${EnvironmentResourcePrefix}*'
+      ManagedPolicyName: !Sub ${EnvironmentResourcePrefix}-pivotrole-policy-3
+      Roles:
+        - !Ref PivotRoleName
+    DependsOn: PivotRole
+Outputs:
+  PivotRoleOutput:
+    Description: Platform Pivot Role
+    Value: PivotRole
+    Export:
+      Name: !Sub '${AWS::StackName}-PivotRole'
