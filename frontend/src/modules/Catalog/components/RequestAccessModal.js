@@ -241,7 +241,8 @@ export const RequestAccessModal = (props) => {
       principalId: principal,
       principalType: type,
       requestPurpose: values.comment,
-      attachMissingPolicies: values.attachMissingPolicies
+      attachMissingPolicies: values.attachMissingPolicies,
+      shareExpirationPeriod: datasetExpirationDetails.enableExpiration ? parseInt(values.shareExpirationPeriod) : null
     };
 
     if (hit.resourceKind === 'dataset') {
@@ -333,7 +334,7 @@ export const RequestAccessModal = (props) => {
                 environmentUri: '',
                 comment: '',
                 attachMissingPolicies: false,
-                shareExpirationPeriod : ''
+                shareExpirationPeriod : 0
               }}
               validationSchema={Yup.object().shape({
                 environmentUri: Yup.string().required(

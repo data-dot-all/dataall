@@ -11,6 +11,7 @@ NewShareObjectInput = gql.InputType(
         gql.Argument(name='principalType', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='requestPurpose', type=gql.String),
         gql.Argument(name='attachMissingPolicies', type=gql.NonNullableType(gql.Boolean)),
+        gql.Argument(name='shareExpirationPeriod', type=gql.Integer)
     ],
 )
 

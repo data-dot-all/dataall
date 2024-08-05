@@ -1,4 +1,6 @@
+import calendar
 import os
+from datetime import date, datetime
 
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.tasks.service_handlers import Worker
@@ -73,6 +75,7 @@ class ShareObjectService:
         principal_type,
         requestPurpose,
         attachMissingPolicies,
+        shareExpirationPeriod
     ):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -140,6 +143,29 @@ class ShareObjectService:
 
             share = ShareObjectRepository.find_share(session, dataset, environment, principal_id, group_uri)
             already_existed = share is not None
+
+            # Check if the expiration time is monthly or quarterly
+            if dataset.enableExpiration and ( shareExpirationPeriod > dataset.expiryMaxDuration or shareExpirationPeriod < dataset.expiryMinDuration ):
+                raise Exception('Share expiration period is not within the maximum and the minimum expiration duration')
+
+            shareExpiryDate = None
+            if dataset.enableExpiration:
+                currentDate = date.today()
+                if dataset.expirySetting == 'Quarterly':
+                    quarter_mapping = {1: 3, 2: 6, 3: 9, 4: 12}
+                    year = currentDate.year + shareExpirationPeriod // 4
+                    month = currentDate.month + (shareExpirationPeriod * 3) % 12
+                    quarter_month = quarter_mapping.get(month // 4)
+                    day = calendar.monthrange(year, quarter_month)[1]
+                    shareExpiryDate = datetime(year, month, day)
+                if dataset.expirySetting == 'Monthly':
+                    year = currentDate.year + (currentDate.month + shareExpirationPeriod - 1) // 12
+                    month = currentDate.month + ( currentDate.month + shareExpirationPeriod )  % 12
+                    monthEndDay = calendar.monthrange(year, month)[1]
+                    shareExpiryDate = datetime(year, month, monthEndDay)
+                else:
+                    shareExpiryDate = None
+
             if not share:
                 share = ShareObject(
                     datasetUri=dataset.datasetUri,
@@ -151,6 +177,7 @@ class ShareObjectService:
                     principalIAMRoleName=principal_iam_role_name,
                     status=ShareObjectStatus.Draft.value,
                     requestPurpose=requestPurpose,
+                    expiryDate=shareExpiryDate
                 )
                 ShareObjectRepository.save_and_commit(session, share)
 
@@ -303,6 +330,15 @@ class ShareObjectService:
             session.commit()
             return True
 
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(REJECT_SHARE_OBJECT)
+    def update_share_extension_purpose(uri: str, extension_purpose) -> bool:
+        with get_context().db_engine.scoped_session() as session:
+            share = ShareObjectRepository.get_share_by_uri(session, uri)
+            share.extensionReason = extension_purpose
+            session.commit()
+            return True
+
     @classmethod
     @ResourcePolicyService.has_resource_permission(REJECT_SHARE_OBJECT)
     def reject_share_object(cls, uri: str, reject_purpose: str):
@@ -311,13 +347,19 @@ class ShareObjectService:
             share, dataset, states = cls._get_share_data(session, uri)
             cls._run_transitions(session, share, states, ShareObjectActions.Reject)
 
+            if share.submittedForExtension:
+                ShareNotificationService(session=session, dataset=dataset, share=share).notify_share_object_extension_rejection(
+                    email_id=context.username
+                )
+            else:
+                ShareNotificationService(session=session, dataset=dataset, share=share).notify_share_object_rejection(
+                    email_id=context.username
+                )
+
             # Update Reject Purpose
             share.rejectPurpose = reject_purpose
+            share.submittedForExtension = False
             session.commit()
-
-            ShareNotificationService(session=session, dataset=dataset, share=share).notify_share_object_rejection(
-                email_id=context.username
-            )
 
             return share
 

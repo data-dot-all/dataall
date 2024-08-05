@@ -16,6 +16,9 @@ export const getShareObject = ({ shareUri, filter }) => ({
         rejectPurpose
         userRoleForShareObject
         canViewLogs
+        expiryDate
+        submittedForExtension
+        extensionReason
         principal {
           principalId
           principalType
@@ -56,6 +59,7 @@ export const getShareObject = ({ shareUri, filter }) => ({
           region
           exists
           description
+          enableExpiration
         }
       }
     }

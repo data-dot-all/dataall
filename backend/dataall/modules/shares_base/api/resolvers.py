@@ -68,6 +68,7 @@ def create_share_object(
         principal_type=input['principalType'],
         requestPurpose=input.get('requestPurpose'),
         attachMissingPolicies=input.get('attachMissingPolicies'),
+        shareExpirationPeriod=input.get('shareExpirationPeriod')
     )
 
 
@@ -187,6 +188,7 @@ def resolve_dataset(context: Context, source: ShareObject, **kwargs):
                 'region': env.region if env else 'NotFound',
                 'exists': True if ds else False,
                 'description': ds.description,
+                'enableExpiration': ds.enableExpiration
             }
 
 
@@ -281,8 +283,13 @@ def update_share_request_purpose(context: Context, source, shareUri: str = None,
 
 
 def update_share_reject_purpose(context: Context, source, shareUri: str = None, rejectPurpose: str = None):
-    with context.engine.scoped_session() as session:
-        return ShareObjectService.update_share_reject_purpose(
-            uri=shareUri,
-            reject_purpose=rejectPurpose,
-        )
+    return ShareObjectService.update_share_reject_purpose(
+        uri=shareUri,
+        reject_purpose=rejectPurpose,
+    )
+
+def update_share_extension_purpose(context: Context, source, shareUri: str = None, extensionPurpose: str = None):
+     return ShareObjectService.update_share_extension_purpose(
+         uri=shareUri,
+         extension_purpose=extensionPurpose,
+     )

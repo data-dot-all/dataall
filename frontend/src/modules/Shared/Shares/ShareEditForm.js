@@ -10,7 +10,7 @@ import {
   TableRow,
   Tooltip,
   TextField,
-  Typography
+  Typography, Collapse
 } from '@mui/material';
 import { Defaults, Pager, ShareHealthStatus, ShareStatus } from 'design';
 import SendIcon from '@mui/icons-material/Send';
@@ -24,9 +24,10 @@ import {
   updateShareRequestReason
 } from '../../Shares/services';
 import { SET_ERROR } from '../../../globalErrors';
-import { DeleteOutlined } from '@mui/icons-material';
+import {DeleteOutlined, RefreshRounded} from '@mui/icons-material';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
+import EditIcon from "@mui/icons-material/Edit";
 
 const ItemRow = (props) => {
   const {
@@ -220,6 +221,7 @@ export const ShareEditForm = (props) => {
   const [loading, setLoading] = useState(false);
   const [requestPurpose, setRequestPurpose] = useState('');
   const [smthChanged, setSmthChanged] = useState(false);
+  const [editShareExpiration, setEditShareExpiration] = useState(false);
 
   const canUpdateRequestPurpose = () => {
     return (
@@ -376,6 +378,10 @@ export const ShareEditForm = (props) => {
     }
   }, [client, fetchShareItems, dispatch, share]);
 
+  const handleOpenEditCollapsableWindow = async () => {
+    setEditShareExpiration(!editShareExpiration)
+  }
+
   if (loading) {
     return (
       <Box sx={{ p: 3, minHeight: 800 }}>
@@ -468,6 +474,31 @@ export const ShareEditForm = (props) => {
               }}
             />
           </CardContent>
+          {share.dataset.enableExpiration && (
+              <CardContent>
+                <Box display="flex" alignItems="center">
+            <Typography sx={{ flexGrow: 1 }} color='red' variant="subtitle2">
+              Share Expiration Date : {share.expiryDate}
+            </Typography>
+                <Button
+              color="primary"
+              startIcon={<EditIcon fontSize="small" />}
+              variant="outlined"
+              onClick={handleOpenEditCollapsableWindow}
+            >
+              Edit Share Expiration
+            </Button>
+                </Box>
+                <Collapse in={editShareExpiration}>
+                  <TextField
+                     fullWidth
+                     label="Share Expiration Period - Request access for dataset in months / quarters"
+                     variant="outlined"
+                     inputProps={{ type: 'number'}}
+                  />
+                </Collapse>
+          </CardContent>
+          )}
         </Box>
       </Box>
       {shareStatus.toUpperCase() === 'DRAFT' &&

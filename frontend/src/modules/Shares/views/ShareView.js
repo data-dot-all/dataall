@@ -74,6 +74,7 @@ import {
 import { generateShareItemLabel } from 'utils';
 import { ShareLogs } from '../components/ShareLogs';
 import { ShareSubmitModal } from '../components/ShareSubmitModal';
+import {UpdateExtensionReason} from "../components/ShareUpdateExtension";
 
 function ShareViewHeader(props) {
   const {
@@ -169,7 +170,11 @@ function ShareViewHeader(props) {
     setIsSubmitShareModalOpen(false);
   };
 
-  const accept = async () => {
+  const handleApproveExtensionShare = async () => {
+    return
+  }
+
+  const handleApproveShare = async () => {
     setAccepting(true);
     const response = await client.mutate(
       approveShareObject({
@@ -193,7 +198,7 @@ function ShareViewHeader(props) {
     setAccepting(false);
   };
 
-  const reject = async (rejectPurpose) => {
+  const handleRejectShare = async (rejectPurpose) => {
     setRejecting(true);
     const response = await client.mutate(
       rejectShareObject({
@@ -289,14 +294,14 @@ function ShareViewHeader(props) {
               {(share.userRoleForShareObject === 'Approvers' ||
                 share.userRoleForShareObject === 'ApproversAndRequesters') && (
                 <>
-                  {share.status === 'Submitted' && (
+                  {share.status === 'Submitted' && !share.submittedForExtension && (
                     <>
                       <LoadingButton
                         loading={accepting}
                         color="success"
                         startIcon={<CheckCircleOutlined />}
                         sx={{ m: 1 }}
-                        onClick={accept}
+                        onClick={handleApproveShare}
                         type="button"
                         variant="outlined"
                       >
@@ -315,6 +320,30 @@ function ShareViewHeader(props) {
                       </LoadingButton>
                     </>
                   )}
+                  {share.status === 'Submitted' && share.submittedForExtension && (<>
+                      <LoadingButton
+                        loading={accepting}
+                        color="success"
+                        startIcon={<CheckCircleOutlined />}
+                        sx={{ m: 1 }}
+                        onClick={handleApproveExtensionShare}
+                        type="button"
+                        variant="outlined"
+                      >
+                        Approve Extension
+                      </LoadingButton>
+                      <LoadingButton
+                        loading={rejecting}
+                        color="error"
+                        sx={{ m: 1 }}
+                        startIcon={<BlockOutlined />}
+                        onClick={handleRejectShareModalOpen}
+                        type="button"
+                        variant="outlined"
+                      >
+                        Reject Extension
+                      </LoadingButton>
+                    </>)}
                 </>
               )}
               <LoadingButton
@@ -377,7 +406,7 @@ function ShareViewHeader(props) {
           onApply={handleRejectShareModalClose}
           onClose={handleRejectShareModalClose}
           open={isRejectShareModalOpen}
-          rejectFunction={reject}
+          rejectFunction={handleRejectShare}
         />
       )}
       {isSubmitShareModalOpen && (
@@ -822,6 +851,26 @@ const ShareView = () => {
                               </Typography>
                             </Box>
                           </Box>
+                          {share.dataset.enableExpiration && (
+                              <Box sx={{ mt: 3 }}>
+                                <Tooltip title={"Please submit an extension share request before this date to avoid losing access data. For submitting a share request, click on edit"}>
+                                   <Typography
+                              color="textSecondary"
+                              variant="subtitle2"
+                            >
+                              Share Expiration Date
+                            </Typography>
+                                </Tooltip>
+                            <Box sx={{ mt: 1 }}>
+                              <Typography
+                                color="textPrimary"
+                                variant="subtitle2"
+                              >
+                                {new Date(share.expiryDate).toDateString()}
+                              </Typography>
+                            </Box>
+                          </Box>)}
+
                         </Box>
                       </CardContent>
                     </Card>
@@ -907,6 +956,48 @@ const ShareView = () => {
                               {share.rejectPurpose || '-'}
                             </Typography>
                           </Box>
+
+                          {/*SHARE EXTENSION REASON*/}
+                          {share.dataset.enableExpiration && (
+                              <div>
+                                <Divider sx={{ mt: 2, mb: 2 }} />
+                          <Grid container spacing={3}>
+                            <Grid item md={11} xl={11} xs={22}>
+                              <Tooltip title={"Extension Reason for when the share was last extended"}>
+                              <Typography
+                                color="textSecondary"
+                                variant="subtitle2"
+                              >
+                                Extension Purpose
+                              </Typography>
+                            </Tooltip>
+                            </Grid>
+                            <Grid item md={1} xl={1} xs={2}>
+                              {(share.userRoleForShareObject === 'Requesters' ||
+                                share.userRoleForShareObject ===
+                                  'ApproversAndRequesters') &&
+                                (share.status === 'Submitted' ||
+                                  share.status === 'Draft') && (share.submittedForExtension) && (
+                                  <UpdateExtensionReason
+                                    share={share}
+                                    client={client}
+                                    dispatch={dispatch}
+                                    enqueueSnackbar={enqueueSnackbar}
+                                    fetchItem={fetchItem}
+                                  />
+                                )}
+                            </Grid>
+                          </Grid>
+                              <Box sx={{ mt: 1 }}>
+                            <Typography
+                              color="textPrimary"
+                              variant="subtitle2"
+                              sx={{ wordBreak: 'break-word' }}
+                            >
+                              {share.extensionReason || '-'}
+                            </Typography>
+                          </Box></div>
+                            )}
                         </Box>
                       </CardContent>
                     </Card>
