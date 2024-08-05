@@ -159,6 +159,7 @@ const EditTable = (props) => {
               <TableCell>
                 <TextField
                   disabled={field.deleted}
+                  defaultValue={field.description}
                   sx={{ width: '100%' }}
                   onKeyUp={(event) => {
                     updateField(index, 'description', event.target.value);
@@ -266,7 +267,7 @@ const DisplayTable = (props) => {
               </TableCell>
               <TableCell>{field.name}</TableCell>
               <TableCell>{field.type}</TableCell>
-              <TableCell></TableCell>
+              <TableCell>{field.description}</TableCell>
               <TableCell>{field.possibleValues}</TableCell>
               <TableCell></TableCell>
             </TableRow>
