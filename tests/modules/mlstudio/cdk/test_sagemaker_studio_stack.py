@@ -116,7 +116,9 @@ def test_resources_sgmstudio_extension_stack_created(db, env_fixture):
     template.resource_count_is('AWS::SageMaker::Domain', 1)
 
 
-@pytest.mark.skipif(os.getenv('CHECKOV_ACTIONS', 'false') != 'true', reason='Pytest used for Checkov Scan CDK Synth Output')
+@pytest.mark.skipif(
+    os.getenv('CHECKOV_ACTIONS', 'false') != 'true', reason='Pytest used for Checkov Scan CDK Synth Output'
+)
 def test_checkov_smstudio_extension(db, env_fixture):
     app = App()
     stack = MockEnvironmentSageMakerExtension(
@@ -131,7 +133,9 @@ def test_checkov_smstudio_extension(db, env_fixture):
         f.write(template)
 
 
-@pytest.mark.skipif(os.getenv('CHECKOV_ACTIONS', 'false') != 'true', reason='Pytest used for Checkov Scan CDK Synth Output')
+@pytest.mark.skipif(
+    os.getenv('CHECKOV_ACTIONS', 'false') != 'true', reason='Pytest used for Checkov Scan CDK Synth Output'
+)
 def test_checkov_smstudio_user(sgm_studio):
     app = App()
     # Create the Stack

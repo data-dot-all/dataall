@@ -9,6 +9,13 @@ from dataall.core.environment.db.environment_models import EnvironmentGroup
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 
 
+@pytest.fixture(scope='module')
+def env_fixture_fixed_naming(env, environment_group, org_fixture, user, group, tenant, env_params):
+    env1 = env(org_fixture, 'dev', 'alice', 'testadmins', '111111111111', parameters=env_params, envUri='111111')
+    environment_group(env1, group.name)
+    yield env1
+
+
 @pytest.fixture(scope='function', autouse=True)
 def patch_extensions(mocker):
     for extension in EnvironmentSetup._EXTENSIONS:
@@ -20,10 +27,10 @@ def patch_extensions(mocker):
 
 
 @pytest.fixture(scope='function', autouse=True)
-def another_group(db, env_fixture):
+def another_group(db, env_fixture_fixed_naming):
     with db.scoped_session() as session:
         env_group: EnvironmentGroup = EnvironmentGroup(
-            environmentUri=env_fixture.environmentUri,
+            environmentUri=env_fixture_fixed_naming.environmentUri,
             groupUri='anothergroup',
             environmentIAMRoleArn='aontherGroupArn',
             environmentIAMRoleName='anotherGroupRole',
@@ -32,12 +39,12 @@ def another_group(db, env_fixture):
         session.add(env_group)
         dataset = S3Dataset(
             label='thisdataset',
-            environmentUri=env_fixture.environmentUri,
-            organizationUri=env_fixture.organizationUri,
+            environmentUri=env_fixture_fixed_naming.environmentUri,
+            organizationUri=env_fixture_fixed_naming.organizationUri,
             name='anotherdataset',
             description='test',
-            AwsAccountId=env_fixture.AwsAccountId,
-            region=env_fixture.region,
+            AwsAccountId=env_fixture_fixed_naming.AwsAccountId,
+            region=env_fixture_fixed_naming.region,
             S3BucketName='bucket',
             GlueDatabaseName='db',
             IAMDatasetAdminRoleArn='role',
@@ -55,7 +62,7 @@ def another_group(db, env_fixture):
 
 
 @pytest.fixture(scope='function', autouse=True)
-def patch_methods(mocker, db, env_fixture, another_group, permissions):
+def patch_methods(mocker, db, env_fixture_fixed_naming, another_group, permissions):
     mocker.patch(
         'dataall.core.environment.cdk.environment_stack.EnvironmentSetup.get_engine',
         return_value=db,
@@ -70,7 +77,7 @@ def patch_methods(mocker, db, env_fixture, another_group, permissions):
     )
     mocker.patch(
         'dataall.core.environment.cdk.environment_stack.EnvironmentSetup.get_target',
-        return_value=env_fixture,
+        return_value=env_fixture_fixed_naming,
     )
     mocker.patch(
         'dataall.core.environment.cdk.environment_stack.EnvironmentSetup.get_environment_groups',
@@ -83,7 +90,7 @@ def patch_methods(mocker, db, env_fixture, another_group, permissions):
     mocker.patch('dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_engine', return_value=db)
     mocker.patch(
         'dataall.core.stacks.services.runtime_stacks_tagging.TagsUtil.get_target',
-        return_value=env_fixture,
+        return_value=env_fixture_fixed_naming,
     )
     mocker.patch(
         'dataall.core.environment.cdk.environment_stack.EnvironmentSetup.get_environment_group_permissions',
@@ -95,14 +102,14 @@ def patch_methods(mocker, db, env_fixture, another_group, permissions):
     )
 
 
-def test_resources_created(env_fixture, org_fixture, mocker):
+def test_resources_created(env_fixture_fixed_naming, org_fixture, mocker):
     app = App()
     mocker.patch(
         'dataall.core.environment.services.managed_iam_policies.PolicyManager.get_all_policies', return_value=[]
     )
 
     # Create the Stack
-    stack = EnvironmentSetup(app, 'Environment', target_uri=env_fixture.environmentUri)
+    stack = EnvironmentSetup(app, 'Environment', target_uri=env_fixture_fixed_naming.environmentUri)
     app.synth()
     # Prepare the stack for assertions.
     template = Template.from_stack(stack)
@@ -111,7 +118,7 @@ def test_resources_created(env_fixture, org_fixture, mocker):
     template.resource_properties_count_is(
         type='AWS::S3::Bucket',
         props={
-            'BucketName': env_fixture.EnvironmentDefaultBucketName,
+            'BucketName': env_fixture_fixed_naming.EnvironmentDefaultBucketName,
             'BucketEncryption': {
                 'ServerSideEncryptionConfiguration': [{'ServerSideEncryptionByDefault': {'SSEAlgorithm': 'AES256'}}]
             },
@@ -144,13 +151,15 @@ def test_resources_created(env_fixture, org_fixture, mocker):
     template.resource_count_is('AWS::IAM::Policy', 4)
 
 
-@pytest.mark.skipif(os.getenv('CHECKOV_ACTIONS', 'false') != 'true', reason='Pytest used for Checkov Scan CDK Synth Output')
-def test_checkov(env_fixture, org_fixture, mocker):
+@pytest.mark.skipif(
+    os.getenv('CHECKOV_ACTIONS', 'false') != 'true', reason='Pytest used for Checkov Scan CDK Synth Output'
+)
+def test_checkov(env_fixture_fixed_naming, org_fixture, mocker):
     app = App()
     mocker.patch(
         'dataall.core.environment.services.managed_iam_policies.PolicyManager.get_all_policies', return_value=[]
     )
-    stack = EnvironmentSetup(app, 'Environment', target_uri=env_fixture.environmentUri)
+    stack = EnvironmentSetup(app, 'Environment', target_uri=env_fixture_fixed_naming.environmentUri)
     template = json.dumps(app.synth().get_stack_by_name('Environment').template)
     with open('checkov_environment_synth.json', 'w') as f:
         f.write(template)

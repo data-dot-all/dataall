@@ -493,61 +493,61 @@
             "file": "/checkov_environment_synth.json",
             "findings": [
                 {
-                    "resource": "AWS::IAM::ManagedPolicy.dataallanothergrouppn85uso6servicespolicy1C7AF1358",
+                    "resource": "AWS::IAM::ManagedPolicy.dataallanothergroup111111servicespolicy19AC37181",
                     "check_ids": [
                         "CKV_AWS_111"
                     ]
                 },
                 {
-                    "resource": "AWS::IAM::ManagedPolicy.dataallanothergrouppn85uso6servicespolicy2A9CDE4A",
+                    "resource": "AWS::IAM::ManagedPolicy.dataallanothergroup111111servicespolicy2E85AF510",
+                    "check_ids": [
+                        "CKV_AWS_111"
+                    ]
+                },
+                {
+                    "resource": "AWS::IAM::ManagedPolicy.dataallanothergroup111111servicespolicy306EE0E93",
+                    "check_ids": [
+                        "CKV_AWS_111"
+                    ]
+                },
+                {
+                    "resource": "AWS::IAM::ManagedPolicy.dataallanothergroup111111servicespolicy7BF536CC5",
                     "check_ids": [
                         "CKV_AWS_109"
                     ]
                 },
                 {
-                    "resource": "AWS::IAM::ManagedPolicy.dataallanothergrouppn85uso6servicespolicy2BADC187D",
-                    "check_ids": [
-                        "CKV_AWS_111"
-                    ]
-                },
-                {
-                    "resource": "AWS::IAM::ManagedPolicy.dataallanothergrouppn85uso6servicespolicy3A9490E04",
-                    "check_ids": [
-                        "CKV_AWS_111"
-                    ]
-                },
-                {
-                    "resource": "AWS::IAM::ManagedPolicy.dataallanothergrouppn85uso6servicespolicy783D26BB8",
+                    "resource": "AWS::IAM::ManagedPolicy.dataallanothergroup111111servicespolicyCC720210",
                     "check_ids": [
                         "CKV_AWS_109"
                     ]
                 },
                 {
-                    "resource": "AWS::IAM::ManagedPolicy.dataalltestadminspn85uso6servicespolicy1655FB4BE",
+                    "resource": "AWS::IAM::ManagedPolicy.dataalltestadmins111111servicespolicy1A0C96958",
                     "check_ids": [
                         "CKV_AWS_111"
                     ]
                 },
                 {
-                    "resource": "AWS::IAM::ManagedPolicy.dataalltestadminspn85uso6servicespolicy27A8AB1C0",
+                    "resource": "AWS::IAM::ManagedPolicy.dataalltestadmins111111servicespolicy2B12D381A",
                     "check_ids": [
                         "CKV_AWS_111"
                     ]
                 },
                 {
-                    "resource": "AWS::IAM::ManagedPolicy.dataalltestadminspn85uso6servicespolicy364925B09",
+                    "resource": "AWS::IAM::ManagedPolicy.dataalltestadmins111111servicespolicy391D03768",
                     "check_ids": [
                         "CKV_AWS_111"
                     ]
                 },
                 {
-                    "resource": "AWS::IAM::ManagedPolicy.dataalltestadminspn85uso6servicespolicy4B03A81C",
+                    "resource": "AWS::IAM::ManagedPolicy.dataalltestadmins111111servicespolicy3E3CBA9E",
                     "check_ids": [
                         "CKV_AWS_109"
                     ]
                 },
                 {
-                    "resource": "AWS::IAM::ManagedPolicy.dataalltestadminspn85uso6servicespolicy789AF3445",
+                    "resource": "AWS::IAM::ManagedPolicy.dataalltestadmins111111servicespolicy7DCF428B2",
                     "check_ids": [
                         "CKV_AWS_109"
                     ]
@@ -607,7 +607,7 @@
             "file": "/checkov_notebook_synth.json",
             "findings": [
                 {
-                    "resource": "AWS::SageMaker::NotebookInstance.Notebookdfy7tylz",
+                    "resource": "AWS::SageMaker::NotebookInstance.Notebook111111",
                     "check_ids": [
                         "CKV2_AWS_68",
                         "CKV_AWS_371"

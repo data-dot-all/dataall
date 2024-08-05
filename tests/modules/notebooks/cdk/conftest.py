@@ -8,6 +8,7 @@ from dataall.modules.notebooks.db.notebook_models import SagemakerNotebook
 def notebook(db, env_fixture: Environment) -> SagemakerNotebook:
     with db.scoped_session() as session:
         notebook = SagemakerNotebook(
+            notebookUri='111111',
             label='thistable',
             NotebookInstanceStatus='RUNNING',
             owner='me',
