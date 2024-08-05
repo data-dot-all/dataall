@@ -60,9 +60,9 @@ class ContainerStack(pyNestedClass):
         if custom_domain and custom_domain.get('hosted_zone_name'):
             self.env_vars.update({'frontend_domain_url': f'https://{custom_domain["hosted_zone_name"]}'})
             email_sender = (
-                    custom_domain.get('email_notification_sender_email_id', 'noreply')
-                    + '@'
-                    + custom_domain.get('hosted_zone_name')
+                custom_domain.get('email_notification_sender_email_id', 'noreply')
+                + '@'
+                + custom_domain.get('hosted_zone_name')
             )
             self.env_vars.update({'email_sender_id': email_sender})
 
