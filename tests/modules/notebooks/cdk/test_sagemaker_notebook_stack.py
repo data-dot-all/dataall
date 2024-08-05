@@ -42,9 +42,8 @@ def template(notebook):
 def test_resources_created(template):
     assert 'AWS::SageMaker::NotebookInstance' in template
 
-@pytest.mark.skipif(
-    not os.getenv('GITHUB_ACTIONS'), reason='Pytest used for Checkov Scan CDK Synth Output'
-)
+
+@pytest.mark.skipif(not os.getenv('GITHUB_ACTIONS'), reason='Pytest used for Checkov Scan CDK Synth Output')
 def test_checkov(template):
     with open('checkov_notebook_synth.json', 'w') as f:
         f.write(template)

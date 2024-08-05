@@ -44,9 +44,11 @@ jobs:
       - name: CDK Synth
         run: |
           npx cdk synth
+      - name: Resources CDK Synth
+        run: make checkov-synth
       - name: Test with Checkov
         id: checkov
-        uses: bridgecrewio/checkov-action@master
+        uses: bridgecrewio/checkov-action@12.2845.0
         with:
           directory: .
           quiet: true
