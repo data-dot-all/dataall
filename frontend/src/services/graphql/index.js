@@ -12,6 +12,7 @@ export * from './MLStudio';
 export * from './Notification';
 export * from './Organization';
 export * from './Principal';
+export * from './Redshift_Datasets';
 export * from './SavedQuery';
 export * from './Shared';
 export * from './Search';
