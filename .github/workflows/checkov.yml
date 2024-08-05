@@ -48,7 +48,7 @@ jobs:
         run: make checkov-synth
       - name: Test with Checkov
         id: checkov
-        uses: bridgecrewio/checkov-action@12.2845.0
+        uses: bridgecrewio/checkov-action@v12.2845.0
         with:
           directory: .
           quiet: true
