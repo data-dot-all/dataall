@@ -31,13 +31,12 @@ import AutoModeIcon from '@mui/icons-material/AutoMode';
 import { Scrollbar } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { updateDataset } from '../services';
+import { updateDataset, generateMetadataBedrock } from '../services';
 import { updateDatasetTable } from 'modules/Tables/services';
 import { listSampleData } from '../services/listSampleData';
 import { updateDatasetStorageLocation } from 'modules/Folders/services';
 import SampleDataPopup from './SampleDataPopup';
 import React, { useState } from 'react';
-
 /* eslint-disable no-console */
 export const ReviewMetadataComponent = (props) => {
   const {
@@ -45,8 +44,8 @@ export const ReviewMetadataComponent = (props) => {
     // targetType,
     targets,
     setTargets,
-    selectedMetadataTypes
-    // version,
+    selectedMetadataTypes,
+    version
     // setVersion
   } = props;
   const { enqueueSnackbar } = useSnackbar();
@@ -54,7 +53,7 @@ export const ReviewMetadataComponent = (props) => {
   const client = useClient();
   const [popupOpen, setPopupOpen] = useState(false);
   const [sampleData, setSampleData] = useState(null);
-
+  const [targetUri, setTargetUri] = useState(null);
   const openPopup = (data) => {
     setSampleData(data);
     setPopupOpen(true);
@@ -73,6 +72,7 @@ export const ReviewMetadataComponent = (props) => {
       );
       console.log(response);
       openPopup(response.data.listSampleData);
+      setTargetUri(table.targetUri);
       if (!response.errors) {
         enqueueSnackbar('Successfully regenerated sample data', {
           variant: 'success'
@@ -84,10 +84,58 @@ export const ReviewMetadataComponent = (props) => {
       dispatch({ type: SET_ERROR, error: err.message });
     }
   }
-  const handleAcceptAndRegenerate = () => {
+  const handleAcceptAndRegenerate = async () => {
     // Perform any necessary actions for accepting and regenerating the data
     console.log('Accept and Regenerate clicked');
-    closePopup();
+    try {
+      const targetIndex = targets.findIndex((t) => t.targetUri === targetUri);
+
+      console.log(sampleData);
+      if (targetIndex !== -1) {
+        const { __typename, ...sampleDataWithoutTypename } = sampleData;
+        const response = await client.mutate(
+          generateMetadataBedrock({
+            resourceUri: targets[targetIndex].targetUri,
+            targetType: targets[targetIndex].targetType,
+            metadataTypes: Object.entries(selectedMetadataTypes)
+              .filter(([key, value]) => value === true)
+              .map(([key]) => key),
+            version: version, // You'll need to pass the `version` prop here
+            sampleData: sampleDataWithoutTypename // You can pass the sample data here if needed
+          })
+        );
+
+        if (!response.errors) {
+          const updatedTarget = {
+            ...targets[targetIndex],
+            description: response.data.generateMetadata.description,
+            label: response.data.generateMetadata.label,
+            name: response.data.generateMetadata.name,
+            tags: response.data.generateMetadata.tags,
+            topics: response.data.generateMetadata.topics
+          };
+
+          const updatedTargets = [...targets];
+          updatedTargets[targetIndex] = updatedTarget;
+
+          setTargets(updatedTargets);
+
+          enqueueSnackbar(`Generated metadata`, {
+            anchorOrigin: {
+              horizontal: 'right',
+              vertical: 'top'
+            },
+            variant: 'success'
+          });
+        }
+      } else {
+        console.error(`Target with targetUri not found`);
+      }
+
+      closePopup(); // Close the popup after generating the metadata
+    } catch (err) {
+      dispatch({ type: SET_ERROR, error: err.message });
+    }
   };
 
   async function saveMetadata(targets) {
