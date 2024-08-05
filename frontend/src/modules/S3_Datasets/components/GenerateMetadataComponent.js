@@ -113,6 +113,7 @@ export const GenerateMetadataComponent = (props) => {
   const generateMetadata = async () => {
     setCurrentView('REVIEW_METADATA');
     console.log('generateMetadata');
+    console.log('selectedMetadata', selectedMetadataTypes);
     for (let target of targets) {
       let response = await client.mutate(
         generateMetadataBedrock({
@@ -341,6 +342,7 @@ export const GenerateMetadataComponent = (props) => {
                     name="topics"
                     checked={selectedMetadataTypes.topics}
                     onChange={handleMetadataChange}
+                    disabled={targetType === 'TablesAndFolders'}
                   />
                 }
                 label="Topics"

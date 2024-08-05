@@ -6,7 +6,7 @@ import {
   // CardHeader,
   // Checkbox,
   Box,
-  // Chip,
+  Chip,
   // Divider,
   // FormControl,
   // FormGroup,
@@ -18,13 +18,14 @@ import {
   // Select,
   // Switch,
   // TextField,
-  Typography
+  Typography,
+  CircularProgress
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 // import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
-//import AutoModeIcon from '@mui/icons-material/AutoMode';
+import AutoModeIcon from '@mui/icons-material/AutoMode';
 // import * as Yup from 'yup';
 // import { ChipInput, Defaults } from 'design';
 import { Scrollbar } from 'design';
@@ -200,66 +201,117 @@ export const ReviewMetadataComponent = (props) => {
                   {
                     field: 'name',
                     headerName: 'Name',
-                    flex: 2,
-                    editable: true
+                    flex: 1.5,
+                    editable: false
                   },
                   {
                     field: 'targetType',
                     headerName: 'Target Type',
-                    flex: 1,
-                    editable: true
+                    flex: 1.5,
+                    editable: false
                   },
                   {
                     field: 'label',
                     headerName: 'Label',
-                    flex: 1,
-                    editable: true
+                    flex: 2,
+                    editable: true,
+                    renderCell: (params) =>
+                      params.value === undefined ? (
+                        <CircularProgress color="primary" />
+                      ) : params.value === 'NotEnoughData' ? (
+                        <Chip label={params.value} color="error" />
+                      ) : (
+                        <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
+                          {params.value}
+                        </div>
+                      )
                   },
                   {
                     field: 'description',
                     headerName: 'Description',
                     flex: 3,
                     editable: true,
-                    renderCell: (params) => (
-                      <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
-                        {params.value}
-                      </div>
-                    )
+                    renderCell: (params) =>
+                      params.value === undefined ? (
+                        <CircularProgress color="primary" />
+                      ) : params.value === 'NotEnoughData' ? (
+                        <Chip label={params.value} color="error" />
+                      ) : (
+                        <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
+                          {params.value}
+                        </div>
+                      )
                   },
                   {
                     field: 'tags',
                     headerName: 'Tags',
                     flex: 2,
                     editable: true,
-                    renderCell: (params) => (
-                      <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
-                        {params?.value ? params.value.join() : ''}
-                      </div>
-                    )
+                    renderCell: (params) =>
+                      params.value === undefined ? (
+                        <CircularProgress color="primary" />
+                      ) : params.value[0] === 'NotEnoughData' ? (
+                        <Chip label={params.value} color="error" />
+                      ) : (
+                        <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
+                          {params?.value ? params.value.join() : ''}
+                        </div>
+                      )
                   },
                   {
-                    field: 'topic',
+                    field: 'topics',
                     headerName: 'Topics',
                     flex: 2,
                     editable: true,
-                    renderCell: (params) => (
-                      <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
-                        {params.value}
-                      </div>
-                    )
+                    renderCell: (params) =>
+                      params.value === undefined ? (
+                        <CircularProgress color="primary" />
+                      ) : params.value[0] === 'NotEnoughData' ? (
+                        <Chip label={params.value} color="error" />
+                      ) : (
+                        <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
+                          {params.value}
+                        </div>
+                      )
                   },
                   {
                     field: 'regenerate',
                     headerName: 'Regenerate',
-                    flex: 2,
+                    flex: 3,
                     type: 'boolean',
-                    renderCell: (params) => (
-                      <button onClick={() => handleRegenerate(params.row)}>
-                        Read Sample Data
-                      </button>
-                    )
+                    renderCell: (params) =>
+                      params.row.targetType === 'Table' ? (
+                        <Button
+                          color="primary"
+                          size="small"
+                          startIcon={<AutoModeIcon size={15} />}
+                          sx={{ m: 4 }}
+                          onClick={() => handleRegenerate(params.row)}
+                          type="button"
+                          variant="outlined"
+                        >
+                          Read Sample Data
+                        </Button>
+                      ) : (
+                        '-'
+                      )
                   }
                 ]}
+                columnVisibilityModel={{
+                  targetUri: false,
+                  label: selectedMetadataTypes['label']
+                    ? selectedMetadataTypes['label']
+                    : false,
+                  description: selectedMetadataTypes['description']
+                    ? selectedMetadataTypes['description']
+                    : false,
+                  tags: selectedMetadataTypes['tags']
+                    ? selectedMetadataTypes['tags']
+                    : false,
+                  topics: selectedMetadataTypes['topics']
+                    ? selectedMetadataTypes['topics']
+                    : false
+                }}
                 pageSize={10}
                 rowsPerPageOptions={[5, 10, 20]}
                 pagination
