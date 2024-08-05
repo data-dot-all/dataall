@@ -112,26 +112,26 @@ class SharingService:
                             if not success:
                                 share_successful = False
                         except Exception as e:
-                            log.error(f'Error occurred during sharing of {type.value}: {e}')
+                            log.exception(f'Error occurred during sharing of {type.value}')
                             ShareStatusRepository.update_share_item_status_batch(
                                 session,
                                 share_uri,
                                 old_status=ShareItemStatus.Share_Approved.value,
                                 new_status=ShareItemStatus.Share_Failed.value,
-                                share_item_type=processor.type.value,
+                                share_item_type=processor.type,
                             )
                             ShareStatusRepository.update_share_item_status_batch(
                                 session,
                                 share_uri,
                                 old_status=ShareItemStatus.Share_In_Progress.value,
                                 new_status=ShareItemStatus.Share_Failed.value,
-                                share_item_type=processor.type.value,
+                                share_item_type=processor.type,
                             )
                             share_successful = False
                 return share_successful
 
             except Exception as e:
-                log.error(f'Error occurred during share approval: {e}')
+                log.exception('Error occurred during share approval')
                 new_share_item_state = share_item_sm.run_transition(ShareItemActions.Failure.value)
                 share_item_sm.update_state(session, share_data.share.shareUri, new_share_item_state)
                 return False
@@ -373,7 +373,7 @@ class SharingService:
                 )
 
             except Exception as e:
-                log.error(f'Error occurred during share approval: {e}')
+                log.exception('Error occurred during share approval')
                 return False
 
     @staticmethod
