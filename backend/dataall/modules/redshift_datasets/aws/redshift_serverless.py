@@ -32,3 +32,8 @@ class RedshiftServerlessClient:
         except ClientError as e:
             log.error(e)
             raise e
+
+
+def redshift_serverless_client(account_id: str, region: str, role: str = None) -> RedshiftServerlessClient:
+    "Factory of Client"
+    return RedshiftServerlessClient(account_id=account_id, region=region, role=role)
