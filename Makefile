@@ -52,7 +52,7 @@ check-security: upgrade-pip install-backend install-cdkproxy
 	safety check --ignore=51668,70612,70624
 
 checkov-synth: upgrade-pip install-backend install-cdkproxy install-tests
-	export PYTHONPATH=./backend:/./tests
+	export PYTHONPATH=./backend:/./tests && \
 	python -m pytest -v -ra -k test_checkov tests
 
 test:
