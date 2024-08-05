@@ -1,11 +1,13 @@
 import os
 import pytest
-
+import boto3
 from dataall.base.context import set_context, dispose_context, RequestContext
-from dataall.base.db import get_engine
 
 from dataall.modules.redshift_datasets.services.redshift_connection_service import RedshiftConnectionService
 from dataall.modules.redshift_datasets.services.redshift_dataset_service import RedshiftDatasetService
+from dataall.modules.redshift_datasets.aws.redshift import RedshiftClient
+from dataall.modules.redshift_datasets.aws.redshift_serverless import RedshiftServerlessClient
+from dataall.modules.redshift_datasets.aws.redshift_data import RedshiftDataClient
 
 ENVNAME = os.environ.get('envname', 'pytest')
 
@@ -55,25 +57,34 @@ class MockRedshiftServerlessClient:
         return 'arn:aws:redshift-serverless:eu-west-1:XXXXXXXXXXXXXX:workgroup/workgroup_name_1'
 
 
+@pytest.fixture(scope='module', autouse=True)
+def patch_sts_remote_session(module_mocker):
+    module_mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.remote_session',
+        return_value=boto3.Session(),
+    )
+
+
 @pytest.fixture(scope='function')
-def patch_redshift(module_mocker):
-    # Mocking connection service
-    module_mocker.patch(
-        'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_client',
+def patch_redshift(mocker):
+    # autospec=True ensures methods called in the MockClient correspond to real client methods
+    mocker.patch.object(
+        RedshiftClient,
+        '__new__',
         return_value=MockRedshiftClient(),
+        autospec=True,
     )
-    module_mocker.patch(
-        'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_data_client',
+    mocker.patch.object(
+        RedshiftDataClient,
+        '__new__',
         return_value=MockRedshiftDataClient(),
+        autospec=True,
     )
-    module_mocker.patch(
-        'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_serverless_client',
+    mocker.patch.object(
+        RedshiftServerlessClient,
+        '__new__',
         return_value=MockRedshiftServerlessClient(),
-    )
-    # Mocking dataset service
-    module_mocker.patch(
-        'dataall.modules.redshift_datasets.services.redshift_dataset_service.redshift_data_client',
-        return_value=MockRedshiftDataClient(),
+        autospec=True,
     )
 
 
@@ -85,28 +96,33 @@ def api_context_1(db, user, group):
 
 @pytest.fixture(scope='function')
 def api_context_2(db, user2, group2):
-    # engine = get_engine(envname=ENVNAME)
     yield set_context(
         RequestContext(db_engine=db, username=user2.username, groups=[group2.name], user_id=user2.username)
     )
     dispose_context()
 
 
-@pytest.fixture(scope='module')
-def connection1_serverless(db, user, group, env_fixture, module_mocker):
-    module_mocker.patch(
-        'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_client',
+@pytest.fixture(scope='function')
+def connection1_serverless(db, user, group, env_fixture, mocker):
+    # autospec=True ensures methods called in the MockClient correspond to real client methods
+    mocker.patch.object(
+        RedshiftClient,
+        '__new__',
         return_value=MockRedshiftClient(),
+        autospec=True,
     )
-    module_mocker.patch(
-        'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_data_client',
+    mocker.patch.object(
+        RedshiftDataClient,
+        '__new__',
         return_value=MockRedshiftDataClient(),
+        autospec=True,
     )
-    module_mocker.patch(
-        'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_serverless_client',
+    mocker.patch.object(
+        RedshiftServerlessClient,
+        '__new__',
         return_value=MockRedshiftServerlessClient(),
+        autospec=True,
     )
-    # engine = get_engine(envname=ENVNAME)
     set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
     connection = RedshiftConnectionService.create_redshift_connection(
         uri=env_fixture.environmentUri,
@@ -124,23 +140,32 @@ def connection1_serverless(db, user, group, env_fixture, module_mocker):
     )
     dispose_context()
     yield connection
+    set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
+    RedshiftConnectionService.delete_redshift_connection(uri=connection.connectionUri)
+    dispose_context()
 
 
-@pytest.fixture(scope='module')
-def connection2_cluster(db, user, group, env_fixture, module_mocker):
-    module_mocker.patch(
-        'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_client',
+@pytest.fixture(scope='function')
+def connection2_cluster(db, user, group, env_fixture, mocker):
+    # autospec=True ensures methods called in the MockClient correspond to real client methods
+    mocker.patch.object(
+        RedshiftClient,
+        '__new__',
         return_value=MockRedshiftClient(),
+        autospec=True,
     )
-    module_mocker.patch(
-        'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_data_client',
+    mocker.patch.object(
+        RedshiftDataClient,
+        '__new__',
         return_value=MockRedshiftDataClient(),
+        autospec=True,
     )
-    module_mocker.patch(
-        'dataall.modules.redshift_datasets.services.redshift_connection_service.redshift_serverless_client',
+    mocker.patch.object(
+        RedshiftServerlessClient,
+        '__new__',
         return_value=MockRedshiftServerlessClient(),
+        autospec=True,
     )
-    # engine = get_engine(envname=ENVNAME)
     set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
     connection = RedshiftConnectionService.create_redshift_connection(
         uri=env_fixture.environmentUri,
@@ -158,11 +183,13 @@ def connection2_cluster(db, user, group, env_fixture, module_mocker):
     )
     dispose_context()
     yield connection
+    set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
+    RedshiftConnectionService.delete_redshift_connection(uri=connection.connectionUri)
+    dispose_context()
 
 
-@pytest.fixture(scope='module')
-def imported_redshift_dataset_1_no_tables(db, user, group, env_fixture, connection1_serverless, module_mocker):
-    # engine = get_engine(envname=ENVNAME)
+@pytest.fixture(scope='function')
+def imported_redshift_dataset_1_no_tables(db, user, group, env_fixture, connection1_serverless):
     set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
     dataset = RedshiftDatasetService.import_redshift_dataset(
         uri=env_fixture.environmentUri,
@@ -176,11 +203,13 @@ def imported_redshift_dataset_1_no_tables(db, user, group, env_fixture, connecti
     )
     dispose_context()
     yield dataset
+    set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
+    RedshiftDatasetService.delete_redshift_dataset(uri=dataset.datasetUri)
+    dispose_context()
 
 
-@pytest.fixture(scope='module')
-def imported_redshift_dataset_2_with_tables(db, user, group, env_fixture, connection1_serverless, module_mocker):
-    # engine = get_engine(envname=ENVNAME)
+@pytest.fixture(scope='function')
+def imported_redshift_dataset_2_with_tables(db, user, group, env_fixture, connection1_serverless):
     set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
     dataset = RedshiftDatasetService.import_redshift_dataset(
         uri=env_fixture.environmentUri,
@@ -195,11 +224,13 @@ def imported_redshift_dataset_2_with_tables(db, user, group, env_fixture, connec
     )
     dispose_context()
     yield dataset
+    set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
+    RedshiftDatasetService.delete_redshift_dataset(uri=dataset.datasetUri)
+    dispose_context()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def imported_dataset_2_table_1(db, user, group, env_fixture, imported_redshift_dataset_2_with_tables):
-    # engine = get_engine(envname=ENVNAME)
     set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
     tables = RedshiftDatasetService.list_redshift_dataset_tables(
         uri=imported_redshift_dataset_2_with_tables.datasetUri, filter={'term': 'table1'}

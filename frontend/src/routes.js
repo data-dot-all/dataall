@@ -107,6 +107,18 @@ const NotebookCreateForm = Loadable(
   lazy(() => import('./modules/Notebooks/views/NotebookCreateForm'))
 );
 
+const MetadataFormList = Loadable(
+  lazy(() => import('./modules/Metadata_Forms/views/MetadataFormList'))
+);
+
+const MetadataFormView = Loadable(
+  lazy(() => import('./modules/Metadata_Forms/views/MetadataFormView'))
+);
+
+const MetadataFormCreate = Loadable(
+  lazy(() => import('./modules/Metadata_Forms/views/MetadataFormEdit'))
+);
+
 const MLStudioList = Loadable(
   lazy(() => import('./modules/MLStudio/views/MLStudioList'))
 );
@@ -309,6 +321,23 @@ const routes = [
           {
             path: 's3-datasets/folder/:uri/edit',
             element: <FolderEditForm />
+          }
+        ]
+      },
+
+      isModuleEnabled(ModuleNames.METADATA_FORMS) && {
+        children: [
+          {
+            path: 'metadata-forms',
+            element: <MetadataFormList />
+          },
+          {
+            path: 'metadata-forms/:uri',
+            element: <MetadataFormView />
+          },
+          {
+            path: 'metadata-forms/new',
+            element: <MetadataFormCreate />
           }
         ]
       },

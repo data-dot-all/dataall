@@ -62,6 +62,7 @@ class RedshiftDatasetRepository:
             targetType='redshift-dataset',
         )
         session.add(activity)
+        session.commit()
         return dataset
 
     @staticmethod

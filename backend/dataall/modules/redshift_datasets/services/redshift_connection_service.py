@@ -17,9 +17,9 @@ from dataall.modules.redshift_datasets.services.redshift_connection_permissions 
     LIST_ENVIRONMENT_REDSHIFT_CONNECTIONS,
 )
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnection
-from dataall.modules.redshift_datasets.aws.redshift_data import redshift_data_client
-from dataall.modules.redshift_datasets.aws.redshift_serverless import redshift_serverless_client
-from dataall.modules.redshift_datasets.aws.redshift import redshift_client
+from dataall.modules.redshift_datasets.aws.redshift_data import RedshiftDataClient
+from dataall.modules.redshift_datasets.aws.redshift_serverless import RedshiftServerlessClient
+from dataall.modules.redshift_datasets.aws.redshift import RedshiftClient
 
 log = logging.getLogger(__name__)
 
@@ -108,7 +108,7 @@ class RedshiftConnectionService:
         with context.db_engine.scoped_session() as session:
             connection = RedshiftConnectionService.get_redshift_connection_by_uri(uri=uri)
             environment = EnvironmentService.get_environment_by_uri(session, connection.environmentUri)
-            return redshift_data_client(
+            return RedshiftDataClient(
                 account_id=environment.AwsAccountId, region=environment.region, connection=connection
             ).list_redshift_schemas()
 
@@ -119,7 +119,7 @@ class RedshiftConnectionService:
         with context.db_engine.scoped_session() as session:
             connection = RedshiftConnectionService.get_redshift_connection_by_uri(uri=uri)
             environment = EnvironmentService.get_environment_by_uri(session, connection.environmentUri)
-            response = redshift_data_client(
+            response = RedshiftDataClient(
                 account_id=environment.AwsAccountId, region=environment.region, connection=connection
             ).list_redshift_tables(schema)
             return response
@@ -128,7 +128,7 @@ class RedshiftConnectionService:
     def _check_redshift_connection(account_id: str, region: str, connection: RedshiftConnection):
         if connection.nameSpaceId:
             if (
-                namespace := redshift_serverless_client(account_id=account_id, region=region).get_namespace_by_id(
+                namespace := RedshiftServerlessClient(account_id=account_id, region=region).get_namespace_by_id(
                     connection.nameSpaceId
                 )
             ) is None:
@@ -137,7 +137,7 @@ class RedshiftConnectionService:
                 )
             if connection.workgroup and connection.workgroup not in [
                 workgroup['workgroupName']
-                for workgroup in redshift_serverless_client(
+                for workgroup in RedshiftServerlessClient(
                     account_id=account_id, region=region
                 ).list_workgroups_in_namespace(namespace['namespaceName'])
             ]:
@@ -145,7 +145,7 @@ class RedshiftConnectionService:
                     f'Redshift workgroup {connection.workgroup} does not exist or is not associated to namespace {connection.nameSpaceId}'
                 )
 
-        if connection.clusterId and not redshift_client(account_id=account_id, region=region).describe_cluster(
+        if connection.clusterId and not RedshiftClient(account_id=account_id, region=region).describe_cluster(
             connection.clusterId
         ):
             raise Exception(
@@ -153,7 +153,7 @@ class RedshiftConnectionService:
             )
 
         try:
-            redshift_data_client(
+            RedshiftDataClient(
                 account_id=account_id, region=region, connection=connection
             ).get_redshift_connection_database()
         except Exception as e:
