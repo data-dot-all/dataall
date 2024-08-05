@@ -19,7 +19,7 @@ def patch_sts_remote_session(module_mocker):
 
 
 @pytest.fixture(scope='function')
-def patch_redshift(mocker):
+def mock_redshift(mocker):
     redshiftClient = mocker.patch('dataall.modules.redshift_datasets.aws.redshift.RedshiftClient', autospec=True)
     redshiftClient.return_value.describe_cluster.return_value = {
         'ClusterIdentifier': 'cluster_id_1',
@@ -31,7 +31,7 @@ def patch_redshift(mocker):
 
 
 @pytest.fixture(scope='function')
-def patch_redshift_data(mocker):
+def mock_redshift_data(mocker):
     redshiftDataClient = mocker.patch(
         'dataall.modules.redshift_datasets.aws.redshift_data.RedshiftDataClient', autospec=True
     )
@@ -53,7 +53,7 @@ def patch_redshift_data(mocker):
 
 
 @pytest.fixture(scope='function')
-def patch_redshift_serverless(mocker):
+def mock_redshift_serverless(mocker):
     redshiftServerlessClient = mocker.patch(
         'dataall.modules.redshift_datasets.aws.redshift_serverless.RedshiftServerlessClient', autospec=True
     )
@@ -75,7 +75,7 @@ def patch_redshift_serverless(mocker):
 
 
 @pytest.fixture(scope='function')
-def patch_redshift_kms(mocker):
+def mock_redshift_kms(mocker):
     kmsClient = mocker.patch('dataall.modules.redshift_datasets.aws.kms_redshift.KmsClient', autospec=True)
     kmsClient.return_value.describe_kms_key.return_value = {'KeyManager': 'AWS'}
     yield kmsClient
@@ -96,7 +96,7 @@ def api_context_2(db, user2, group2):
 
 
 @pytest.fixture(scope='function')
-def connection1_serverless(db, user, group, env_fixture, patch_redshift_serverless, patch_redshift_data, api_context_1):
+def connection1_serverless(db, user, group, env_fixture, mock_redshift_serverless, mock_redshift_data, api_context_1):
     connection = RedshiftConnectionService.create_redshift_connection(
         uri=env_fixture.environmentUri,
         admin_group=group.name,
@@ -119,7 +119,7 @@ def connection1_serverless(db, user, group, env_fixture, patch_redshift_serverle
 
 @pytest.fixture(scope='function')
 def connection2_cluster(
-    db, user, group, env_fixture, patch_redshift, patch_redshift_data, patch_redshift_kms, api_context_1
+    db, user, group, env_fixture, mock_redshift, mock_redshift_data, mock_redshift_kms, api_context_1
 ):
     connection = RedshiftConnectionService.create_redshift_connection(
         uri=env_fixture.environmentUri,
