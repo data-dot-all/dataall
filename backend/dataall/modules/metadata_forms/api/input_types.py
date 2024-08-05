@@ -29,6 +29,7 @@ MetadataFormFieldUpdateInput = gql.InputType(
     name='MetadataFormFieldUpdateInput',
     arguments=[
         gql.Field(name='uri', type=gql.String),
+        gql.Field(name='metadataFormUri', type=gql.String),
         gql.Field(name='deleted', type=gql.Boolean),
         gql.Field(name='name', type=gql.String),
         gql.Field(name='type', type=gql.String),

@@ -115,10 +115,12 @@ class MetadataFormService:
     @staticmethod
     def batch_metadata_form_field_update(uri, data):
         for item in data:
+            if item.get('metadataFormUri') != uri:
+                raise Exception('property metadataFormUri does not match form uri')
             if 'uri' not in item:
-                MetadataFormService.create_metadata_form_field(uri, data)
-            elif 'uri' in item and item['uri'] is not None:
-                if 'deleted' in item and item['deleted']:
+                MetadataFormService.create_metadata_form_field(uri, item)
+            elif item.get('uri') is not None:
+                if item.get('deleted', False):
                     MetadataFormService.delete_metadata_form_field(uri, item['uri'])
                 else:
                     MetadataFormService.update_metadata_form_field(uri, item['uri'], item)

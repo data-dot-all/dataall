@@ -64,6 +64,5 @@ class MetadataFormRepository:
         mf.glossaryNodeUri = data.get('glossaryNodeUri', mf.glossaryNodeUri)
         mf.required = data.get('required', mf.required)
         mf.possibleValues = data.get('possibleValues', mf.possibleValues)
-        session.update(mf)
         session.commit()
         return mf

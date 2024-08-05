@@ -23,7 +23,8 @@ import {
   SearchIcon,
   AsteriskIcon,
   PencilAltIcon,
-  SaveIcon
+  SaveIcon,
+  PlusIcon
 } from '../../../design';
 import { SET_ERROR } from '../../../globalErrors';
 import Checkbox from '@mui/material/Checkbox';
@@ -36,17 +37,26 @@ import { useClient } from '../../../services';
 import { GridActionsCellItem } from '@mui/x-data-grid';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import SettingsBackupRestoreOutlinedIcon from '@mui/icons-material/SettingsBackupRestoreOutlined';
+import { batchMetadataFormFieldUpdates } from '../services/batchMetadataFormFieldUpdates';
+import CircularProgress from '@mui/material/CircularProgress';
 
 const EditTable = (props) => {
-  const { fields, fieldTypeOptions, saveChanges } = props;
-  const [deleted, setDeleted] = useState({});
+  const { fields, fieldTypeOptions, saveChanges, formUri } = props;
   const [localFields, setLocalFields] = useState(fields);
 
   const updateField = (index, propertyName, value) => {
-    localFields[index] = {
-      ...localFields[index],
-      propertyName: value
-    };
+    localFields[index][propertyName] = value;
+    setLocalFields([...localFields]);
+  };
+  const addField = () => {
+    localFields.push({
+      name: 'New Field',
+      required: false,
+      metadataFormUri: formUri,
+      type: fieldTypeOptions[0].value,
+      possibleValues: [],
+      deleted: false
+    });
     setLocalFields([...localFields]);
   };
 
@@ -78,6 +88,19 @@ const EditTable = (props) => {
         </TableRow>
       </TableHead>
       <TableBody>
+        <TableRow>
+          <TableCell colSpan={6}>
+            <Button
+              color="primary"
+              startIcon={<PlusIcon size={15} />}
+              sx={{ mt: 1 }}
+              onClick={addField}
+              type="button"
+            >
+              Add field
+            </Button>
+          </TableCell>
+        </TableRow>
         {localFields.length === 0 ? (
           <TableRow>
             <TableCell colSpan={6} align="center">
@@ -88,21 +111,21 @@ const EditTable = (props) => {
           localFields.map((field, index) => (
             <TableRow
               sx={{
-                backgroundColor: deleted[field.uri] ? 'whitesmoke' : 'white'
+                backgroundColor: field.deleted ? 'whitesmoke' : 'white'
               }}
             >
               <TableCell>
                 <Checkbox
                   defaultChecked={field.required}
-                  disabled={deleted[field.uri]}
-                  onKeyUp={(event) => {
+                  disabled={field.deleted}
+                  onChange={(event) => {
                     updateField(index, 'required', event.target.value === 'on');
                   }}
                 />
               </TableCell>
               <TableCell>
                 <TextField
-                  disabled={deleted[field.uri]}
+                  disabled={field.deleted}
                   defaultValue={field.name}
                   onKeyUp={(event) => {
                     updateField(index, 'name', event.target.value);
@@ -113,7 +136,7 @@ const EditTable = (props) => {
               <TableCell>
                 <Autocomplete
                   disablePortal
-                  disabled={deleted[field.uri]}
+                  disabled={field.deleted}
                   options={fieldTypeOptions.map((option) => option.value)}
                   defaultValue={field.type}
                   onKeyUp={(event, value) => {
@@ -134,10 +157,7 @@ const EditTable = (props) => {
                 />
               </TableCell>
               <TableCell>
-                <TextField
-                  disabled={deleted[field.uri]}
-                  sx={{ width: '100%' }}
-                />
+                <TextField disabled={field.deleted} sx={{ width: '100%' }} />
               </TableCell>
               <TableCell>
                 <TextField
@@ -160,25 +180,21 @@ const EditTable = (props) => {
                   textAlign: 'center'
                 }}
               >
-                <Tooltip title={deleted[field.uri] ? 'Restore' : 'Delete'}>
+                <Tooltip title={field.deleted ? 'Restore' : 'Delete'}>
                   <GridActionsCellItem
                     icon={
-                      deleted[field.uri] ? (
+                      field.deleted ? (
                         <SettingsBackupRestoreOutlinedIcon />
                       ) : (
                         <DeleteIcon />
                       )
                     }
-                    label={deleted[field.uri] ? 'Restore' : 'Delete'}
+                    label={field.deleted ? 'Restore' : 'Delete'}
                     sx={{
                       color: 'primary.main'
                     }}
                     onClick={() => {
                       updateField(index, 'deleted', !field.deleted);
-                      setDeleted({
-                        ...deleted,
-                        [field.uri]: !deleted[field.uri]
-                      });
                     }}
                   />
                 </Tooltip>
@@ -194,7 +210,8 @@ const EditTable = (props) => {
 EditTable.propTypes = {
   fields: PropTypes.array.isRequired,
   fieldTypeOptions: PropTypes.array.isRequired,
-  saveChanges: PropTypes.func.isRequired
+  saveChanges: PropTypes.func.isRequired,
+  formUri: PropTypes.string.isRequired
 };
 
 const DisplayTable = (props) => {
@@ -262,6 +279,7 @@ export const MetadataFormFields = (props) => {
   const dispatch = useDispatch();
   const client = useClient();
   const { metadataForm, fieldTypeOptions } = props;
+  const [loading, setLoading] = useState(false);
   const [editOn, setEditOn] = useState(false);
   const [fields, setFields] = useState(metadataForm.fields);
   const [inputValue, setInputValue] = useState('');
@@ -277,6 +295,7 @@ export const MetadataFormFields = (props) => {
   };
 
   const fetchItems = async () => {
+    setLoading(true);
     const response = await client.query(getMetadataForm(metadataForm.uri));
     if (!response.errors && response.data.getMetadataForm !== null) {
       setFields(response.data.getMetadataForm.fields);
@@ -286,10 +305,33 @@ export const MetadataFormFields = (props) => {
         : 'Metadata Forms not found';
       dispatch({ type: SET_ERROR, error });
     }
+    setLoading(false);
   };
 
-  const saveChanges = (updatedFields) => {
-    setEditOn(false);
+  const saveChanges = async (updatedFields) => {
+    setLoading(true);
+    // remove new fields (not yet saved in DB), that were deleted during editing
+    const data = updatedFields.filter((field) => !field.deleted || field.uri);
+    data.forEach((field) => {
+      delete field.__typename;
+    });
+    const response = await client.mutate(
+      batchMetadataFormFieldUpdates(metadataForm.uri, data)
+    );
+    if (
+      !response.errors &&
+      response.data &&
+      response.data.batchMetadataFormFieldUpdates !== null
+    ) {
+      setFields(response.data.batchMetadataFormFieldUpdates);
+      setEditOn(false);
+    } else {
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Update failed';
+      dispatch({ type: SET_ERROR, error });
+    }
+    setLoading(false);
   };
 
   const handleInputKeyup = (event) => {
@@ -330,24 +372,39 @@ export const MetadataFormFields = (props) => {
           />
         </Box>
         <Divider />
-        <Scrollbar>
+        {loading ? (
           <Box
             sx={{
               p: 2,
-              minHeight: '400px'
+              minHeight: '400px',
+              alignContent: 'center',
+              display: 'flex',
+              justifyContent: 'center'
             }}
           >
-            {editOn ? (
-              <EditTable
-                fields={fields}
-                fieldTypeOptions={fieldTypeOptions}
-                saveChanges={saveChanges}
-              />
-            ) : (
-              <DisplayTable fields={fields} startEdit={startEdit} />
-            )}
+            <CircularProgress size={100} />
           </Box>
-        </Scrollbar>
+        ) : (
+          <Scrollbar>
+            <Box
+              sx={{
+                p: 2,
+                minHeight: '400px'
+              }}
+            >
+              {editOn ? (
+                <EditTable
+                  fields={fields}
+                  fieldTypeOptions={fieldTypeOptions}
+                  saveChanges={saveChanges}
+                  formUri={metadataForm.uri}
+                />
+              ) : (
+                <DisplayTable fields={fields} startEdit={startEdit} />
+              )}
+            </Box>
+          </Scrollbar>
+        )}
       </Card>
     </Box>
   );
