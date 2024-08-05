@@ -5,9 +5,9 @@ from assertpy import assert_that
 from dataall.modules.redshift_datasets.services.redshift_connection_service import RedshiftConnectionService
 
 
-def test_create_redshift_connection_namespace_not_found(env_fixture, api_context_1, group, patch_redshift_serverless):
+def test_create_redshift_connection_namespace_not_found(env_fixture, api_context_1, group, mock_redshift_serverless):
     # Given a namespace that does not exist
-    patch_redshift_serverless.return_value.get_namespace_by_id.return_value = None
+    mock_redshift_serverless.return_value.get_namespace_by_id.return_value = None
 
     # Then
     assert_that(RedshiftConnectionService.create_redshift_connection).raises(Exception).when_called_with(
@@ -27,10 +27,10 @@ def test_create_redshift_connection_namespace_not_found(env_fixture, api_context
 
 
 def test_create_redshift_connection_workgroup_not_in_namespace(
-    env_fixture, api_context_1, group, patch_redshift_serverless
+    env_fixture, api_context_1, group, mock_redshift_serverless
 ):
     # Given a workgroup that is not in the namespace
-    patch_redshift_serverless.return_value.list_workgroups_in_namespace.return_value = []
+    mock_redshift_serverless.return_value.list_workgroups_in_namespace.return_value = []
 
     # Then
     assert_that(RedshiftConnectionService.create_redshift_connection).raises(Exception).when_called_with(
@@ -49,9 +49,9 @@ def test_create_redshift_connection_workgroup_not_in_namespace(
     ).contains('Redshift workgroup workgroup-id does not exist or is not associated to namespace not-existent-id')
 
 
-def test_create_redshift_connection_cluster_not_found(env_fixture, api_context_1, group, patch_redshift):
+def test_create_redshift_connection_cluster_not_found(env_fixture, api_context_1, group, mock_redshift):
     # Given a redshift cluster id that does not exist
-    patch_redshift.return_value.describe_cluster.return_value = False
+    mock_redshift.return_value.describe_cluster.return_value = False
 
     # Then
     assert_that(RedshiftConnectionService.create_redshift_connection).raises(Exception).when_called_with(
@@ -71,10 +71,10 @@ def test_create_redshift_connection_cluster_not_found(env_fixture, api_context_1
 
 
 def test_create_redshift_connection_database_not_found(
-    env_fixture, api_context_1, group, patch_redshift, patch_redshift_data
+    env_fixture, api_context_1, group, mock_redshift, mock_redshift_data
 ):
     # Given a redshift cluster id
-    patch_redshift_data.return_value.get_redshift_connection_database.side_effect = Exception
+    mock_redshift_data.return_value.get_redshift_connection_database.side_effect = Exception
 
     # Then
     assert_that(RedshiftConnectionService.create_redshift_connection).raises(Exception).when_called_with(
@@ -126,7 +126,7 @@ def test_get_redshift_connection_unauthorized(connection1_serverless, api_contex
     ).contains('UnauthorizedOperation', 'GET_REDSHIFT_CONNECTION', connection1_serverless.connectionUri)
 
 
-def test_delete_redshift_connection(api_context_1, env_fixture, group, patch_redshift_serverless, patch_redshift_data):
+def test_delete_redshift_connection(api_context_1, env_fixture, group, mock_redshift_serverless, mock_redshift_data):
     connection = RedshiftConnectionService.create_redshift_connection(
         uri=env_fixture.environmentUri,
         admin_group=group.name,
@@ -189,7 +189,7 @@ def test_list_environment_redshift_connections_unauthorized(
     ).contains('UnauthorizedOperation', 'LIST_ENVIRONMENT_REDSHIFT_CONNECTIONS', env_fixture.environmentUri)
 
 
-def test_list_connection_schemas(connection1_serverless, api_context_1, patch_redshift_data):
+def test_list_connection_schemas(connection1_serverless, api_context_1, mock_redshift_data):
     # When
     response = RedshiftConnectionService.list_connection_schemas(uri=connection1_serverless.connectionUri)
     assert_that(response).contains('public', 'dev')
@@ -202,7 +202,7 @@ def test_list_connection_schemas_unauthorized(connection1_serverless, api_contex
     ).contains('UnauthorizedOperation', 'GET_REDSHIFT_CONNECTION', connection1_serverless.connectionUri)
 
 
-def test_list_schema_tables(connection1_serverless, api_context_1, patch_redshift_data):
+def test_list_schema_tables(connection1_serverless, api_context_1, mock_redshift_data):
     # When
     response = RedshiftConnectionService.list_schema_tables(uri=connection1_serverless.connectionUri, schema='schema1')
     assert_that(response).is_length(4)

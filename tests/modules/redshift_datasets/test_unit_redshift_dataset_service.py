@@ -173,7 +173,7 @@ def test_list_redshift_schema_dataset_tables_unauthorized(imported_redshift_data
     ).contains('UnauthorizedOperation', 'GET_REDSHIFT_DATASET', imported_redshift_dataset_1_no_tables.datasetUri)
 
 
-def test_list_redshift_schema_dataset_tables(imported_redshift_dataset_1_no_tables, patch_redshift, api_context_1):
+def test_list_redshift_schema_dataset_tables(imported_redshift_dataset_1_no_tables, mock_redshift, api_context_1):
     # When
     tables = RedshiftDatasetService.list_redshift_schema_dataset_tables(
         uri=imported_redshift_dataset_1_no_tables.datasetUri
