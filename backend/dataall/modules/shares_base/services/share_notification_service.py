@@ -9,6 +9,7 @@ from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.base.context import get_context
 from dataall.modules.shares_base.services.shares_enums import ShareObjectStatus
 from dataall.modules.notifications.db.notification_repositories import NotificationRepository
+from dataall.modules.notifications.services.ses_email_notification_service import SESEmailNotificationService
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 
 log = logging.getLogger(__name__)
@@ -56,7 +57,7 @@ class ShareNotificationService:
         self._create_notification_task(subject=subject, msg=email_notification_msg)
         return notifications
 
-    def notify_persistent_email_reminder(self, email_id: str, engine):
+    def notify_persistent_email_reminder(self, email_id: str):
         share_link_text = ''
         if os.environ.get('frontend_domain_url'):
             share_link_text = (
@@ -66,14 +67,11 @@ class ShareNotificationService:
             )
 
         msg_intro = f"""Dear User,
-
         This is a reminder that a share request for the dataset "{self.dataset.label}" submitted by {email_id} 
         on behalf of principal "{self.share.principalId}" is still pending and has not been addressed.
-
         """
 
         msg_end = """Your prompt attention to this matter is greatly appreciated.
-
         Best regards,
         The Data.all Team
         """
@@ -85,7 +83,7 @@ class ShareNotificationService:
             notification_type=DataSharingNotificationType.SHARE_OBJECT_SUBMITTED.value, msg=msg_intro
         )
 
-        self._create_persistent_reminder_notification_task(subject=subject, msg=email_notification_msg, engine=engine)
+        self._create_persistent_reminder_notification_task(subject=subject, msg=email_notification_msg)
         return notifications
 
     def notify_share_object_approval(self, email_id: str):
@@ -207,7 +205,7 @@ class ShareNotificationService:
         else:
             log.info('Notifications are not active')
 
-    def _create_persistent_reminder_notification_task(self, subject, msg, engine):
+    def _create_persistent_reminder_notification_task(self, subject, msg):
         """
         At the moment just for notification_config_type = email, but designed for additional notification types
         Emails sent to:
@@ -238,7 +236,9 @@ class ShareNotificationService:
                         self.session.add(notification_task)
                         self.session.commit()
 
-                        Worker.queue(engine=engine, task_ids=[notification_task.taskUri])
+                        SESEmailNotificationService.send_email_task(
+                            subject, msg, notification_recipient_groups_list, []
+                        )
                 else:
                     log.info(f'Notification type : {share_notification_config_type} is not active')
         else:
