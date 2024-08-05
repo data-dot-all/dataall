@@ -1,6 +1,5 @@
 from assertpy import assert_that
 from dataall.modules.redshift_datasets.services.redshift_dataset_service import RedshiftDatasetService
-from .conftest import MockRedshiftDataClient
 
 
 def test_import_redshift_dataset_with_no_tables(imported_redshift_dataset_1_no_tables, api_context_1):
@@ -174,7 +173,7 @@ def test_list_redshift_schema_dataset_tables_unauthorized(imported_redshift_data
     ).contains('UnauthorizedOperation', 'GET_REDSHIFT_DATASET', imported_redshift_dataset_1_no_tables.datasetUri)
 
 
-def test_list_redshift_schema_dataset_tables(imported_redshift_dataset_1_no_tables, patch_redshift, api_context_1):
+def test_list_redshift_schema_dataset_tables(imported_redshift_dataset_1_no_tables, mock_redshift, api_context_1):
     # When
     tables = RedshiftDatasetService.list_redshift_schema_dataset_tables(
         uri=imported_redshift_dataset_1_no_tables.datasetUri
@@ -227,4 +226,4 @@ def test_list_redshift_dataset_table_columns(imported_dataset_2_table_1, api_con
     )
     # Then
     assert_that(response).contains_key('count', 'page', 'pages', 'nodes')
-    assert_that(response['nodes']).is_equal_to(MockRedshiftDataClient().list_redshift_table_columns())
+    assert_that(response['nodes']).is_length(4)

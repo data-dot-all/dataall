@@ -19,3 +19,8 @@ class RedshiftClient:
         except ClientError as e:
             log.error(e)
             raise e
+
+
+def redshift_client(account_id: str, region: str) -> RedshiftClient:
+    "Factory of Client"
+    return RedshiftClient(account_id=account_id, region=region)
