@@ -14,6 +14,7 @@ export const batchMetadataFormFieldUpdates = (formUri, input) => ({
         uri
         metadataFormUri
         name
+        description
         required
         type
         glossaryNodeUri

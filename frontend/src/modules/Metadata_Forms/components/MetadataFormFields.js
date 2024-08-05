@@ -157,7 +157,13 @@ const EditTable = (props) => {
                 />
               </TableCell>
               <TableCell>
-                <TextField disabled={field.deleted} sx={{ width: '100%' }} />
+                <TextField
+                  disabled={field.deleted}
+                  sx={{ width: '100%' }}
+                  onKeyUp={(event) => {
+                    updateField(index, 'description', event.target.value);
+                  }}
+                />
               </TableCell>
               <TableCell>
                 <TextField

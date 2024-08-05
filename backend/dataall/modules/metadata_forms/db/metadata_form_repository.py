@@ -43,6 +43,7 @@ class MetadataFormRepository:
         field: MetadataFormField = MetadataFormField(
             metadataFormUri=uri,
             name=data.get('name'),
+            description=data.get('description'),
             type=data.get('type'),
             required=data.get('required', False),
             glossaryNodeUri=data.get('glossaryNodeUri', None),
@@ -60,6 +61,7 @@ class MetadataFormRepository:
     def update_metadata_form_field(session, fieldUri, data):
         mf = MetadataFormRepository.get_metadata_form_field_by_uri(session, fieldUri)
         mf.name = data.get('name', mf.name)
+        mf.description = data.get('description', mf.description)
         mf.type = data.get('type', mf.type)
         mf.glossaryNodeUri = data.get('glossaryNodeUri', mf.glossaryNodeUri)
         mf.required = data.get('required', mf.required)
