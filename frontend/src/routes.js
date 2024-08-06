@@ -115,10 +115,6 @@ const MetadataFormView = Loadable(
   lazy(() => import('./modules/Metadata_Forms/views/MetadataFormView'))
 );
 
-const MetadataFormCreate = Loadable(
-  lazy(() => import('./modules/Metadata_Forms/views/MetadataFormEdit'))
-);
-
 const MLStudioList = Loadable(
   lazy(() => import('./modules/MLStudio/views/MLStudioList'))
 );
@@ -334,10 +330,6 @@ const routes = [
           {
             path: 'metadata-forms/:uri',
             element: <MetadataFormView />
-          },
-          {
-            path: 'metadata-forms/new',
-            element: <MetadataFormCreate />
           }
         ]
       },

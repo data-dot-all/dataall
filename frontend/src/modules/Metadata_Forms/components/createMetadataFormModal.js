@@ -15,45 +15,23 @@ import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { listGroups, listValidEnvironments, useClient } from 'services';
+import { listValidEnvironments, useClient, useGroups } from 'services';
 import { listOrganizations } from '../../Organizations/services';
 import { createMetadataForm } from '../services';
+import * as Yup from 'yup';
 
 export const CreateMetadataFormModal = (props) => {
   const { visibilityDict, onApply, onClose, open, stopLoader, ...other } =
     props;
   const dispatch = useDispatch();
   const client = useClient();
+  const groups = useGroups();
   const [loading, setLoading] = useState(false);
-  const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [organizationOptions, setOrganizationOptions] = useState([]);
   const [visibilityOptions, setVisibilityOptions] = useState([]);
 
-  const fetchGroups = async () => {
-    setLoading(true);
-    try {
-      const response = await client.query(listGroups({ filter: {} }));
-      if (!response.errors) {
-        setGroupOptions(
-          response.data.listGroups.map((e) => ({
-            ...e,
-            value: e.groupName,
-            label: e.groupName
-          }))
-        );
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-    } catch (e) {
-      dispatch({ type: SET_ERROR, error: e.message });
-    } finally {
-      setLoading(false);
-      stopLoader();
-    }
-  };
   const fetchOrganizations = async () => {
-    setLoading(true);
     try {
       const response = await client.query(
         listOrganizations({
@@ -73,13 +51,9 @@ export const CreateMetadataFormModal = (props) => {
       }
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
-    } finally {
-      setLoading(false);
-      stopLoader();
     }
   };
   const fetchEnvironments = async () => {
-    setLoading(true);
     try {
       const response = await client.query(
         listValidEnvironments({
@@ -99,9 +73,6 @@ export const CreateMetadataFormModal = (props) => {
       }
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
-    } finally {
-      setLoading(false);
-      stopLoader();
     }
   };
 
@@ -113,15 +84,15 @@ export const CreateMetadataFormModal = (props) => {
     );
 
     if (client && open) {
+      setLoading(true);
       fetchEnvironments().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
       fetchOrganizations().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
-      fetchGroups().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
+      setLoading(false);
+      stopLoader();
     }
   }, [client, open, dispatch]);
 
@@ -183,8 +154,32 @@ export const CreateMetadataFormModal = (props) => {
           initialValues={{
             name: '',
             description: '',
-            visibility: visibilityDict.Global
+            visibility: visibilityDict.Global,
+            owner: '',
+            environment: '',
+            group: '',
+            organization: ''
           }}
+          validationSchema={Yup.object().shape({
+            name: Yup.string()
+              .max(255)
+              .required('*Metadata forms name is required'),
+            description: Yup.string().max(200),
+            owner: Yup.string().required('*Owner is required'),
+            visibility: Yup.string().required('*Visibility is required'),
+            environment: Yup.string().when('visibility', {
+              is: visibilityDict.Environment,
+              then: Yup.string().required('*Environment is required')
+            }),
+            group: Yup.string().when('visibility', {
+              is: visibilityDict.Team,
+              then: Yup.string().required('*Team is required')
+            }),
+            organization: Yup.string().when('visibility', {
+              is: visibilityDict.Organization,
+              then: Yup.string().required('*Organization is required')
+            })
+          })}
           onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
             await submit(values, setStatus, setSubmitting, setErrors);
           }}
@@ -206,6 +201,8 @@ export const CreateMetadataFormModal = (props) => {
                     fullWidth
                     label="Form name"
                     name="name"
+                    error={touched.name && errors.name}
+                    helperText={touched.name && errors.name}
                     value={values.name}
                     onChange={handleChange}
                     variant="outlined"
@@ -225,6 +222,7 @@ export const CreateMetadataFormModal = (props) => {
                     } characters left`}
                     label="Description"
                     name="description"
+                    error={touched.description && errors.description}
                     onChange={handleChange}
                     multiline
                     rows={3}
@@ -236,14 +234,16 @@ export const CreateMetadataFormModal = (props) => {
                   <Autocomplete
                     id="owner"
                     disablePortal
-                    options={groupOptions.map((option) => option)}
+                    options={groups}
                     onChange={(event, value) => {
-                      setFieldValue('owner', value.value);
+                      setFieldValue('owner', value);
                     }}
                     renderInput={(params) => (
                       <TextField
                         {...params}
                         fullWidth
+                        error={Boolean(touched.owner && errors.owner)}
+                        helperText={touched.owner && errors.owner}
                         label="Owner"
                         onChange={handleChange}
                         variant="outlined"
@@ -265,6 +265,8 @@ export const CreateMetadataFormModal = (props) => {
                         {...params}
                         fullWidth
                         label="Visibility"
+                        error={Boolean(touched.visibility && errors.visibility)}
+                        helperText={touched.visibility && errors.visibility}
                         onChange={handleChange}
                         variant="outlined"
                       />
@@ -287,6 +289,12 @@ export const CreateMetadataFormModal = (props) => {
                         <TextField
                           {...params}
                           fullWidth
+                          error={Boolean(
+                            touched.organization && errors.organization
+                          )}
+                          helperText={
+                            touched.organization && errors.organization
+                          }
                           label="Organization"
                           onChange={handleChange}
                           variant="outlined"
@@ -308,6 +316,10 @@ export const CreateMetadataFormModal = (props) => {
                         <TextField
                           {...params}
                           fullWidth
+                          error={Boolean(
+                            touched.environment && errors.environment
+                          )}
+                          helperText={touched.environment && errors.environment}
                           label="Environment"
                           onChange={handleChange}
                           variant="outlined"
@@ -321,14 +333,16 @@ export const CreateMetadataFormModal = (props) => {
                     <Autocomplete
                       id="group"
                       disablePortal
-                      options={groupOptions.map((option) => option)}
+                      options={groups}
                       onChange={(event, value) => {
-                        setFieldValue('group', value.value);
+                        setFieldValue('group', value);
                       }}
                       renderInput={(params) => (
                         <TextField
                           {...params}
                           fullWidth
+                          error={Boolean(touched.group && errors.group)}
+                          helperText={touched.group && errors.group}
                           label="Team"
                           onChange={handleChange}
                           variant="outlined"

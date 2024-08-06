@@ -9,7 +9,6 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import * as FaIcons from 'react-icons/fa';
-//import { useNavigate } from 'react-router';
 import { IconAvatar, useCardStyle } from 'design';
 import { BallotOutlined } from '@mui/icons-material';
 
@@ -130,23 +129,25 @@ export const MetadataFormListItem = (props) => {
             </Grid>
           </Grid>
         </Box>
-        {metadata_form.visibility !== visibilityDict.Global && (
-          <Box
-            sx={{
-              px: 3,
-              py: 0.5
-            }}
-          >
-            <Grid container>
-              <Grid item md={4} xs={12}>
+        <Box
+          sx={{
+            px: 3,
+            py: 0.5
+          }}
+        >
+          <Grid container sx={{ minHeight: '25px' }}>
+            <Grid item md={4} xs={12}>
+              {metadata_form.visibility !== visibilityDict.Global && (
                 <Typography color="textSecondary" variant="body2">
                   <FaIcons.FaUsersCog />{' '}
                   {Object.keys(visibilityDict).find(
                     (key) => visibilityDict[key] === metadata_form.visibility
                   )}
                 </Typography>
-              </Grid>
-              <Grid item md={8} xs={12}>
+              )}
+            </Grid>
+            <Grid item md={8} xs={12}>
+              {metadata_form.visibility !== visibilityDict.Global && (
                 <Typography
                   color="textPrimary"
                   variant="body2"
@@ -169,10 +170,10 @@ export const MetadataFormListItem = (props) => {
                     </Link>
                   </Tooltip>
                 </Typography>
-              </Grid>
+              )}
             </Grid>
-          </Box>
-        )}
+          </Grid>
+        </Box>
 
         <Divider />
       </Card>
