@@ -2,14 +2,13 @@ from dataall.base.api import gql
 from dataall.base.api.constants import SortDirection
 from dataall.modules.metadata_forms.api.enums import EnvironmentSortField
 
-
 NewMetadataFormInput = gql.InputType(
     name='NewMetadataFormInput',
     arguments=[
-        gql.Field(name='name', type=gql.String),
+        gql.Field(name='name', type=gql.NonNullableType(gql.String)),
         gql.Field(name='description', type=gql.String),
-        gql.Field(name='SamlGroupName', type=gql.String),
-        gql.Field(name='visibility', type=gql.String),
+        gql.Field(name='SamlGroupName', type=gql.NonNullableType(gql.String)),
+        gql.Field(name='visibility', type=gql.NonNullableType(gql.String)),
         gql.Field(name='homeEntity', type=gql.String),
     ],
 )
