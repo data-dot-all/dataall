@@ -17,9 +17,7 @@ class MetadataFormParamValidationService:
         if not data.get('SamlGroupName'):
             raise exceptions.RequiredParameter('SamlGroupName')
 
-        if (not data.get('homeEntity')) and (
-                visibility != MetadataFormVisibility.Global.value
-        ):
+        if (not data.get('homeEntity')) and (visibility != MetadataFormVisibility.Global.value):
             raise exceptions.RequiredParameter('homeEntity')
 
         if not data.get('name'):
