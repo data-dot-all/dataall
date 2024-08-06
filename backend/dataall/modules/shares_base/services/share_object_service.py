@@ -260,7 +260,9 @@ class ShareObjectService:
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
 
-            if not ShareObjectService.verify_principal_role(session, share):
+            if not ShareObjectService.verify_principal_role(
+                session, share
+            ):  # TODO make it generic to non IAM role principals
                 raise PrincipalRoleNotFound(
                     action='Approve Share Object',
                     message=f'The principal role {share.principalIAMRoleName} is not found.',

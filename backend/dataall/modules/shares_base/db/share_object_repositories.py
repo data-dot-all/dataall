@@ -322,6 +322,11 @@ class ShareObjectRepository:
 
     @staticmethod
     def list_shareable_items_of_type(session, share, type, share_type_model, share_type_uri, status=None):
+        """
+        type: ShareableType e.g. ShareableType.StorageLocation
+        share_type_model: ShareProcessorDefinition.shareable_type e.g. DatasetStorageLocation
+        share_type_uri: ShareProcessorDefinition.shareable_uri e.g DatasetStorageLocation.locationUri
+        """
         logger.info(f'Getting all shareable items {status=}, for {share_type_model=}')
         query = (
             session.query(

@@ -105,12 +105,15 @@ class SharingService:
                                 processor.shareable_uri,
                                 status=ShareItemStatus.Share_Approved.value,
                             )
-                            success = processor.Processor(
-                                session, share_data, shareable_items
-                            ).process_approved_shares()
-                            log.info(f'Sharing {type.value} succeeded = {success}')
-                            if not success:
-                                share_successful = False
+                            if shareable_items:
+                                success = processor.Processor(
+                                    session, share_data, shareable_items
+                                ).process_approved_shares()
+                                log.info(f'Sharing {type.value} succeeded = {success}')
+                                if not success:
+                                    share_successful = False
+                            else:
+                                log.info(f'There are no items to share of type{type.value}')
                         except Exception as e:
                             log.exception(f'Error occurred during sharing of {type.value}')
                             ShareStatusRepository.update_share_item_status_batch(
