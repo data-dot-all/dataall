@@ -7,7 +7,7 @@ from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.base.db.exceptions import RequiredParameter
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
-from dataall.modules.shares_base.services.shares_enums import ShareObjectPermission
+from dataall.modules.shares_base.services.shares_enums import ShareObjectPermission, PrincipalType
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.shares_base.services.share_item_service import ShareItemService
 from dataall.modules.shares_base.services.share_object_service import ShareObjectService
@@ -187,6 +187,7 @@ def resolve_dataset(context: Context, source: ShareObject, **kwargs):
                 'region': env.region if env else 'NotFound',
                 'exists': True if ds else False,
                 'description': ds.description,
+                'datasetType': ds.datasetType,
             }
 
 
@@ -195,17 +196,19 @@ def resolve_principal(context: Context, source: ShareObject, **kwargs):
         return None
 
     with context.engine.scoped_session() as session:
-        if source.principalType in ['Group', 'ConsumptionRole']:
+        if source.principalType in set(item.value for item in PrincipalType):
             environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)
             organization = OrganizationRepository.get_organization_by_uri(session, environment.organizationUri)
-            if source.principalType in ['ConsumptionRole']:
+            if source.principalType == PrincipalType.ConsumptionRole.value:
                 principal = EnvironmentService.get_environment_consumption_role(
                     session, source.principalId, source.environmentUri
                 )
                 principalName = f'{principal.consumptionRoleName} [{principal.IAMRoleArn}]'
-            else:
+            elif source.principalType == PrincipalType.Group.value:
                 principal = EnvironmentService.get_environment_group(session, source.groupUri, source.environmentUri)
                 principalName = f'{source.groupUri} [{principal.environmentIAMRoleArn}]'
+            else:
+                principalName = source.principalId
 
             return {
                 'principalId': source.principalId,
