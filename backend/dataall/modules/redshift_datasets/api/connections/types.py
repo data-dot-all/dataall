@@ -15,6 +15,7 @@ RedshiftConnection = gql.ObjectType(
         gql.Field('database', gql.String),
         gql.Field('redshiftUser', gql.String),
         gql.Field('secretArn', gql.String),
+        gql.Field('encryptionType', gql.String),
     ],
 )
 
