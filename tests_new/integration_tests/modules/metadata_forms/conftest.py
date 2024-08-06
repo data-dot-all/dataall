@@ -1,6 +1,10 @@
 import pytest
-from integration_tests.modules.metadata_forms.mutations import create_metadata_form, delete_metadata_form, \
-    delete_metadata_form_field, create_metadata_form_fields
+from integration_tests.modules.metadata_forms.mutations import (
+    create_metadata_form,
+    delete_metadata_form,
+    delete_metadata_form_field,
+    create_metadata_form_fields,
+)
 from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility, MetadataFormFieldType
 
 
@@ -36,7 +40,7 @@ def metadata_form_field_1(client1, group1, metadata_form_1):
             'name': 'Test Field 1',
             'description': 'test field',
             'type': MetadataFormFieldType.String.value,
-            'required': True
+            'required': True,
         }
         mff = create_metadata_form_fields(client1, metadata_form_1.uri, [input])[0]
         yield mff
