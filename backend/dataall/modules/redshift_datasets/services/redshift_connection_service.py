@@ -57,6 +57,11 @@ class RedshiftConnectionService:
             RedshiftConnectionService._check_redshift_connection(
                 account_id=environment.AwsAccountId, region=environment.region, connection=connection
             )
+            if connection.redshiftType == RedshiftType.Cluster.value:
+                connection.nameSpaceId = redshift_client(
+                    account_id=environment.AwsAccountId,
+                    region=environment.region,
+                ).get_cluster_namespaceId(connection.clusterId)
             connection.encryptionType = RedshiftConnectionService._get_redshift_encryption(
                 account_id=environment.AwsAccountId, region=environment.region, connection=connection
             ).value
@@ -136,7 +141,7 @@ class RedshiftConnectionService:
 
     @staticmethod
     def _check_redshift_connection(account_id: str, region: str, connection: RedshiftConnection):
-        if connection.nameSpaceId:
+        if connection.redshiftType == RedshiftType.Serverless.value:
             if (
                 namespace := redshift_serverless_client(account_id=account_id, region=region).get_namespace_by_id(
                     connection.nameSpaceId
@@ -155,7 +160,7 @@ class RedshiftConnectionService:
                     f'Redshift workgroup {connection.workgroup} does not exist or is not associated to namespace {connection.nameSpaceId}'
                 )
 
-        if connection.clusterId:
+        if connection.redshiftType == RedshiftType.Cluster.value:
             cluster = redshift_client(account_id=account_id, region=region).describe_cluster(connection.clusterId)
             if not cluster:
                 raise Exception(
