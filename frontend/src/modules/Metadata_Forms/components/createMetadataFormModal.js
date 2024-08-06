@@ -18,6 +18,7 @@ import { SET_ERROR, useDispatch } from 'globalErrors';
 import { listValidEnvironments, useClient, useGroups } from 'services';
 import { listOrganizations } from '../../Organizations/services';
 import { createMetadataForm } from '../services';
+import * as Yup from 'yup';
 
 export const CreateMetadataFormModal = (props) => {
   const { visibilityDict, onApply, onClose, open, stopLoader, ...other } =
@@ -153,8 +154,32 @@ export const CreateMetadataFormModal = (props) => {
           initialValues={{
             name: '',
             description: '',
-            visibility: visibilityDict.Global
+            visibility: visibilityDict.Global,
+            owner: '',
+            environment: '',
+            group: '',
+            organization: ''
           }}
+          validationSchema={Yup.object().shape({
+            name: Yup.string()
+              .max(255)
+              .required('*Metadata forms name is required'),
+            description: Yup.string().max(200),
+            owner: Yup.string().required('*Owner is required'),
+            visibility: Yup.string().required('*Visibility is required'),
+            environment: Yup.string().when('visibility', {
+              is: visibilityDict.Environment,
+              then: Yup.string().required('*Environment is required')
+            }),
+            group: Yup.string().when('visibility', {
+              is: visibilityDict.Team,
+              then: Yup.string().required('*Team is required')
+            }),
+            organization: Yup.string().when('visibility', {
+              is: visibilityDict.Organization,
+              then: Yup.string().required('*Organization is required')
+            })
+          })}
           onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
             await submit(values, setStatus, setSubmitting, setErrors);
           }}
@@ -176,6 +201,8 @@ export const CreateMetadataFormModal = (props) => {
                     fullWidth
                     label="Form name"
                     name="name"
+                    error={touched.name && errors.name}
+                    helperText={touched.name && errors.name}
                     value={values.name}
                     onChange={handleChange}
                     variant="outlined"
@@ -195,6 +222,7 @@ export const CreateMetadataFormModal = (props) => {
                     } characters left`}
                     label="Description"
                     name="description"
+                    error={touched.description && errors.description}
                     onChange={handleChange}
                     multiline
                     rows={3}
@@ -214,6 +242,8 @@ export const CreateMetadataFormModal = (props) => {
                       <TextField
                         {...params}
                         fullWidth
+                        error={Boolean(touched.owner && errors.owner)}
+                        helperText={touched.owner && errors.owner}
                         label="Owner"
                         onChange={handleChange}
                         variant="outlined"
@@ -235,6 +265,8 @@ export const CreateMetadataFormModal = (props) => {
                         {...params}
                         fullWidth
                         label="Visibility"
+                        error={Boolean(touched.visibility && errors.visibility)}
+                        helperText={touched.visibility && errors.visibility}
                         onChange={handleChange}
                         variant="outlined"
                       />
@@ -257,6 +289,12 @@ export const CreateMetadataFormModal = (props) => {
                         <TextField
                           {...params}
                           fullWidth
+                          error={Boolean(
+                            touched.organization && errors.organization
+                          )}
+                          helperText={
+                            touched.organization && errors.organization
+                          }
                           label="Organization"
                           onChange={handleChange}
                           variant="outlined"
@@ -278,6 +316,10 @@ export const CreateMetadataFormModal = (props) => {
                         <TextField
                           {...params}
                           fullWidth
+                          error={Boolean(
+                            touched.environment && errors.environment
+                          )}
+                          helperText={touched.environment && errors.environment}
                           label="Environment"
                           onChange={handleChange}
                           variant="outlined"
@@ -299,6 +341,8 @@ export const CreateMetadataFormModal = (props) => {
                         <TextField
                           {...params}
                           fullWidth
+                          error={Boolean(touched.group && errors.group)}
+                          helperText={touched.group && errors.group}
                           label="Team"
                           onChange={handleChange}
                           variant="outlined"
