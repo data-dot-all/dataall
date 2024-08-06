@@ -1,6 +1,4 @@
 from dataall.base.api import gql
-from dataall.base.api.constants import SortDirection
-from dataall.modules.metadata_forms.api.enums import EnvironmentSortField
 
 NewMetadataFormInput = gql.InputType(
     name='NewMetadataFormInput',
@@ -13,20 +11,12 @@ NewMetadataFormInput = gql.InputType(
     ],
 )
 
-MetadataFormSortCriteria = gql.InputType(
-    name='MetadataFormSortCriteria',
-    arguments=[
-        gql.Argument(name='field', type=gql.NonNullableType(EnvironmentSortField.toGraphQLEnum())),
-        gql.Argument(name='direction', type=gql.NonNullableType(SortDirection.toGraphQLEnum())),
-    ],
-)
 
 MetadataFormFilter = gql.InputType(
     name='MetadataFormFilter',
     arguments=[
         gql.Argument('page', gql.Integer),
         gql.Argument('search_input', gql.String),
-        gql.Argument('sort', gql.ArrayType(MetadataFormSortCriteria)),
         gql.Argument('pageSize', gql.Integer),
     ],
 )

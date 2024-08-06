@@ -32,4 +32,5 @@ class MetadataFormRepository:
                     MetadataForm.description.ilike('%' + filter.get('search_input') + '%'),
                 )
             )
-        return query
+
+        return query.order_by(MetadataForm.created.desc())
