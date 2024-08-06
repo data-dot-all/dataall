@@ -1,4 +1,4 @@
-"""describe_changes_shortly
+"""add_data_filters_table
 
 Revision ID: 9efe5f7c69a1
 Revises: 852cdf6cf1e0
