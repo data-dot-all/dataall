@@ -2,7 +2,6 @@ import {
   Article,
   BlockOutlined,
   CheckCircleOutlined,
-  CopyAllOutlined,
   DeleteOutlined,
   RefreshRounded
 } from '@mui/icons-material';
@@ -19,7 +18,6 @@ import {
   Container,
   Divider,
   Grid,
-  IconButton,
   Link,
   List,
   ListItem,
@@ -33,11 +31,9 @@ import {
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
-import { useTheme } from '@mui/styles';
 import { useSnackbar } from 'notistack';
 import * as PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState, useRef } from 'react';
-import { CopyToClipboard } from 'react-copy-to-clipboard/lib/Component';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink, useParams } from 'react-router-dom';
@@ -64,11 +60,11 @@ import {
   revokeItemsShareObject,
   verifyItemsShareObject,
   reApplyItemsShareObject,
-  getS3ConsumptionData,
   getShareItemDataFilters
 } from '../services';
 import {
   AddShareItemModal,
+  S3ConsumptionData,
   ShareItemsSelectorModal,
   ShareRejectModal,
   UpdateRejectReason,
@@ -645,7 +641,6 @@ const ShareView = () => {
   const dispatch = useDispatch();
   const params = useParams();
   const client = useClient();
-  const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [loadingShareItems, setLoadingShareItems] = useState(false);
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
@@ -653,7 +648,6 @@ const ShareView = () => {
   const [isVerifyItemsModalOpen, setIsVerifyItemsModalOpen] = useState(false);
   const [isReApplyShareItemModalOpen, setIsReApplyShareItemModalOpen] =
     useState(false);
-  const [consumptionData, setConsumptionData] = useState({});
 
   const handleAddItemModalClose = () => {
     setIsAddItemModalOpen(false);
@@ -682,15 +676,6 @@ const ShareView = () => {
       await setFilter({ ...filter, isShared: true, page: value });
     }
   };
-  const copyNotification = () => {
-    enqueueSnackbar('Copied to clipboard', {
-      anchorOrigin: {
-        horizontal: 'right',
-        vertical: 'top'
-      },
-      variant: 'success'
-    });
-  };
 
   const fetchItem = useCallback(async () => {
     setLoading(true);
@@ -699,22 +684,6 @@ const ShareView = () => {
     );
     if (!response.errors) {
       setShare(response.data.getShareObject);
-      const response_c = await client.query(
-        getS3ConsumptionData({
-          shareUri: response.data.getShareObject.shareUri
-        })
-      );
-      if (!response_c.errors) {
-        setConsumptionData({
-          s3bucketName: response_c.data.getS3ConsumptionData.s3bucketName,
-          s3AccessPointName:
-            response_c.data.getS3ConsumptionData.s3AccessPointName,
-          sharedGlueDatabase:
-            response_c.data.getS3ConsumptionData.sharedGlueDatabase
-        });
-      } else {
-        dispatch({ type: SET_ERROR, error: response_c.errors[0].message });
-      }
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -1274,120 +1243,9 @@ const ShareView = () => {
                   </Scrollbar>
                 </Card>
               </Box>
-              <Box sx={{ mb: 3 }}>
-                <Card {...share}>
-                  <Box>
-                    <CardHeader title="Data Consumption details" />
-                    <Divider />
-                  </Box>
-                  <CardContent>
-                    <Box>
-                      <Box>
-                        <Typography
-                          display="inline"
-                          color="textSecondary"
-                          variant="subtitle2"
-                        >
-                          S3 Bucket name (Bucket sharing):
-                        </Typography>
-                        <Typography
-                          display="inline"
-                          color="textPrimary"
-                          variant="subtitle2"
-                        >
-                          {` ${consumptionData.s3bucketName || '-'}`}
-                        </Typography>
-                        <Typography color="textPrimary" variant="subtitle2">
-                          <CopyToClipboard
-                            onCopy={() => copyNotification()}
-                            text={`aws s3 ls s3://${consumptionData.s3bucketName}`}
-                          >
-                            <IconButton>
-                              <CopyAllOutlined
-                                sx={{
-                                  color:
-                                    theme.palette.mode === 'dark'
-                                      ? theme.palette.primary.contrastText
-                                      : theme.palette.primary.main
-                                }}
-                              />
-                            </IconButton>
-                          </CopyToClipboard>
-                          {`aws s3 ls s3://${consumptionData.s3bucketName}`}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ mt: 3 }}>
-                        <Typography
-                          display="inline"
-                          color="textSecondary"
-                          variant="subtitle2"
-                        >
-                          S3 Access Point name (Folder sharing):
-                        </Typography>
-                        <Typography
-                          display="inline"
-                          color="textPrimary"
-                          variant="subtitle2"
-                        >
-                          {` ${consumptionData.s3AccessPointName || '-'}`}
-                        </Typography>
-                        <Typography color="textPrimary" variant="subtitle2">
-                          <CopyToClipboard
-                            onCopy={() => copyNotification()}
-                            text={`aws s3 ls arn:aws:s3:${share.dataset.region}:${share.dataset.AwsAccountId}:accesspoint/${consumptionData.s3AccessPointName}/SHARED_FOLDER/`}
-                          >
-                            <IconButton>
-                              <CopyAllOutlined
-                                sx={{
-                                  color:
-                                    theme.palette.mode === 'dark'
-                                      ? theme.palette.primary.contrastText
-                                      : theme.palette.primary.main
-                                }}
-                              />
-                            </IconButton>
-                          </CopyToClipboard>
-                          {`aws s3 ls arn:aws:s3:${share.dataset.region}:${share.dataset.AwsAccountId}:accesspoint/${consumptionData.s3AccessPointName}/SHARED_FOLDER/`}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ mt: 3 }}>
-                        <Typography
-                          display="inline"
-                          color="textSecondary"
-                          variant="subtitle2"
-                        >
-                          Glue database name (Table sharing):
-                        </Typography>
-                        <Typography
-                          display="inline"
-                          color="textPrimary"
-                          variant="subtitle2"
-                        >
-                          {` ${consumptionData.sharedGlueDatabase || '-'}`}
-                        </Typography>
-                        <Typography color="textPrimary" variant="subtitle2">
-                          <CopyToClipboard
-                            onCopy={() => copyNotification()}
-                            text={`SELECT * FROM ${consumptionData.sharedGlueDatabase}.TABLENAME`}
-                          >
-                            <IconButton>
-                              <CopyAllOutlined
-                                sx={{
-                                  color:
-                                    theme.palette.mode === 'dark'
-                                      ? theme.palette.primary.contrastText
-                                      : theme.palette.primary.main
-                                }}
-                              />
-                            </IconButton>
-                          </CopyToClipboard>
-                          {`SELECT * FROM ${consumptionData.sharedGlueDatabase}.TABLENAME`}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Box>
+              {share.dataset.datasetType === 'DatasetTypes.S3' && (
+                <S3ConsumptionData share={share}></S3ConsumptionData>
+              )}
             </Box>
           )}
         </Container>

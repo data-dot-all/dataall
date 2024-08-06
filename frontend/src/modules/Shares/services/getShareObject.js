@@ -57,6 +57,7 @@ export const getShareObject = ({ shareUri, filter }) => ({
           region
           exists
           description
+          datasetType
         }
       }
     }

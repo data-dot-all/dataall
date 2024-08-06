@@ -112,6 +112,7 @@ DatasetLink = gql.ObjectType(
         gql.Field(name='region', type=gql.String),
         gql.Field(name='exists', type=gql.Boolean),
         gql.Field(name='description', type=gql.String),
+        gql.Field(name='datasetType', type=gql.String),
     ],
 )
 
