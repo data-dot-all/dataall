@@ -1,6 +1,7 @@
 import json
 import logging
 from itertools import count
+from typing import List
 
 from dataall.base.aws.iam import IAM
 from dataall.base.aws.sts import SessionHelper
@@ -11,7 +12,13 @@ from dataall.modules.s3_datasets_shares.aws.kms_client import (
     DATAALL_BUCKET_KMS_DECRYPT_SID,
     DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID,
 )
-from dataall.modules.s3_datasets_shares.aws.s3_client import S3ControlClient, S3Client, DATAALL_READ_ONLY_SID
+from dataall.modules.s3_datasets_shares.aws.s3_client import (
+    S3ControlClient,
+    S3Client,
+    DATAALL_READ_ONLY_SID,
+    DATAALL_WRITE_ONLY_SID,
+    DATAALL_MODIFY_ONLY_SID,
+)
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers.share_manager_utils import ShareErrorFormatter
@@ -21,12 +28,24 @@ from dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service
     IAM_S3_BUCKETS_STATEMENT_SID,
     EMPTY_STATEMENT_SID,
 )
-from dataall.modules.shares_base.services.shares_enums import PrincipalType
+from dataall.modules.shares_base.services.shares_enums import PrincipalType, ShareObjectDataPermission
 from dataall.modules.s3_datasets.db.dataset_models import DatasetBucket
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.services.sharing_service import ShareData
 
 logger = logging.getLogger(__name__)
+
+SID_TO_ACTIONS = {
+    DATAALL_READ_ONLY_SID: ['s3:List*', 's3:GetObject'],
+    DATAALL_WRITE_ONLY_SID: ['s3:PutObject*'],
+    DATAALL_MODIFY_ONLY_SID: ['s3:DeleteObject*'],
+}
+
+ENUM_PERM_TO_SID = {
+    ShareObjectDataPermission.Read: DATAALL_READ_ONLY_SID,
+    ShareObjectDataPermission.Write: DATAALL_WRITE_ONLY_SID,
+    ShareObjectDataPermission.Modify: DATAALL_MODIFY_ONLY_SID,
+}
 
 
 class S3BucketShareManager:
@@ -333,18 +352,18 @@ class S3BucketShareManager:
             bucket_policy = self.get_bucket_policy_or_default()
             counter = count()
             statements = {item.get('Sid', next(counter)): item for item in bucket_policy.get('Statement', {})}
-            if DATAALL_READ_ONLY_SID in statements.keys():
-                logger.info(f'Bucket policy contains share statement {DATAALL_READ_ONLY_SID}, updating the current one')
-                statements[DATAALL_READ_ONLY_SID] = self.add_target_arn_to_statement_principal(
-                    statements[DATAALL_READ_ONLY_SID], target_requester_arn
-                )
-            else:
-                logger.info(
-                    f'Bucket policy does not contain share statement {DATAALL_READ_ONLY_SID}, generating a new one'
-                )
-                statements[DATAALL_READ_ONLY_SID] = self.generate_default_bucket_read_policy_statement(
-                    self.bucket_name, target_requester_arn
-                )
+
+            for target_sid in self.get_share_sids():
+                if target_sid in statements:
+                    logger.info(f'Bucket policy contains share statement {target_sid}, updating the current one')
+                    statements[target_sid] = self.add_target_arn_to_statement_principal(
+                        statements[target_sid], target_requester_arn
+                    )
+                else:
+                    logger.info(f'Bucket policy does not contain share statement {target_sid}, generating a new one')
+                    statements[target_sid] = self.generate_default_bucket_policy_statement(
+                        self.bucket_name, target_requester_arn, target_sid
+                    )
 
             bucket_policy['Statement'] = list(statements.values())
             s3_client = S3Client(self.source_account_id, self.source_environment.region)
@@ -352,6 +371,9 @@ class S3BucketShareManager:
         except Exception as e:
             logger.exception(f'Failed during bucket policy management {e}')
             raise e
+
+    def get_share_sids(self) -> List[str]:
+        return [ENUM_PERM_TO_SID[perm] for perm in self.share.permissions]
 
     def add_target_arn_to_statement_principal(self, statement, target_requester_arn):
         principal_list = self.get_principal_list(statement)
@@ -490,16 +512,17 @@ class S3BucketShareManager:
                 target_requester_arn = f'arn:aws:iam::{self.target_account_id}:role/{self.target_requester_IAMRoleName}'
             counter = count()
             statements = {item.get('Sid', next(counter)): item for item in bucket_policy.get('Statement', {})}
-            if DATAALL_READ_ONLY_SID in statements.keys():
-                principal_list = self.get_principal_list(statements[DATAALL_READ_ONLY_SID])
-                if f'{target_requester_arn}' in principal_list:
-                    principal_list.remove(f'{target_requester_arn}')
-                    if len(principal_list) == 0:
-                        statements.pop(DATAALL_READ_ONLY_SID)
-                    else:
-                        statements[DATAALL_READ_ONLY_SID]['Principal']['AWS'] = principal_list
-                    bucket_policy['Statement'] = list(statements.values())
-                    s3_client.create_bucket_policy(self.bucket_name, json.dumps(bucket_policy))
+            for target_sid in self.get_share_sids():
+                if target_sid in statements.keys():
+                    principal_list = self.get_principal_list(statements[target_sid])
+                    if f'{target_requester_arn}' in principal_list:
+                        principal_list.remove(f'{target_requester_arn}')
+                        if len(principal_list) == 0:
+                            statements.pop(target_sid)
+                        else:
+                            statements[target_sid]['Principal']['AWS'] = principal_list
+                        bucket_policy['Statement'] = list(statements.values())
+                        s3_client.create_bucket_policy(self.bucket_name, json.dumps(bucket_policy))
         except Exception as e:
             logger.exception(f'Failed during bucket policy management {e}')
             raise e
@@ -626,12 +649,12 @@ class S3BucketShareManager:
         return True
 
     @staticmethod
-    def generate_default_bucket_read_policy_statement(s3_bucket_name, target_requester_arn):
+    def generate_default_bucket_policy_statement(s3_bucket_name, target_requester_arn, target_sid):
         return {
-            'Sid': f'{DATAALL_READ_ONLY_SID}',
+            'Sid': target_sid,
             'Effect': 'Allow',
             'Principal': {'AWS': [f'{target_requester_arn}']},
-            'Action': ['s3:List*', 's3:GetObject'],
+            'Action': SID_TO_ACTIONS[target_sid],
             'Resource': [f'arn:aws:s3:::{s3_bucket_name}', f'arn:aws:s3:::{s3_bucket_name}/*'],
         }
 

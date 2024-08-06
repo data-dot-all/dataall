@@ -2,7 +2,7 @@ from dataall.base.api import gql
 from dataall.modules.shares_base.services.shares_enums import (
     ShareableType,
     PrincipalType,
-    ShareItemHealthStatus,
+    ShareItemHealthStatus, ShareObjectDataPermission,
 )
 from dataall.modules.shares_base.api.resolvers import (
     resolve_dataset,
@@ -15,7 +15,6 @@ from dataall.modules.shares_base.api.resolvers import (
     resolve_can_view_logs,
 )
 from dataall.core.environment.api.resolvers import resolve_environment
-
 
 ShareItem = gql.ObjectType(
     name='ShareItem',
@@ -46,7 +45,6 @@ NotSharedItem = gql.ObjectType(
     ],
 )
 
-
 NotSharedItemsSearchResult = gql.ObjectType(
     name='NotSharedItemsSearchResult',
     fields=[
@@ -61,7 +59,6 @@ NotSharedItemsSearchResult = gql.ObjectType(
         gql.Field(name='nodes', type=gql.ArrayType(NotSharedItem)),
     ],
 )
-
 
 SharedItemSearchResult = gql.ObjectType(
     name='SharedItemSearchResult',
@@ -150,9 +147,9 @@ ShareObject = gql.ObjectType(
             type=gql.Ref('ShareObjectPermission'),
             resolver=resolve_user_role,
         ),
+        gql.Field('permissions', gql.ArrayType(ShareObjectDataPermission.toGraphQLEnum())),
     ],
 )
-
 
 ShareSearchResult = gql.ObjectType(
     name='ShareSearchResult',
@@ -187,7 +184,6 @@ EnvironmentPublishedItem = gql.ObjectType(
     ],
 )
 
-
 EnvironmentPublishedItemSearchResults = gql.ObjectType(
     name='EnvironmentPublishedItemSearchResults',
     fields=[
@@ -216,7 +212,6 @@ Principal = gql.ObjectType(
         gql.Field(name='organizationUri', type=gql.String),
     ],
 )
-
 
 PrincipalSearchResult = gql.ObjectType(
     name='PrincipalSearchResult',

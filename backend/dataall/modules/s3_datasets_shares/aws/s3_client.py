@@ -9,10 +9,18 @@ from dataall.modules.s3_datasets_shares.aws.share_policy_verifier import SharePo
 log = logging.getLogger(__name__)
 
 DATAALL_READ_ONLY_SID = 'DataAll-Bucket-ReadOnly'
+DATAALL_WRITE_ONLY_SID = 'DataAll-Bucket-WriteOnly'
+DATAALL_MODIFY_ONLY_SID = 'DataAll-Bucket-ModifyOnly'
 DATAALL_ALLOW_OWNER_SID = 'AllowAllToAdmin'
 DATAALL_DELEGATE_TO_ACCESS_POINT = 'DelegateAccessToAccessPoint'
 
-DATAALL_BUCKET_SIDS = [DATAALL_READ_ONLY_SID, DATAALL_ALLOW_OWNER_SID, DATAALL_DELEGATE_TO_ACCESS_POINT]
+DATAALL_BUCKET_SIDS = [
+    DATAALL_READ_ONLY_SID,
+    DATAALL_WRITE_ONLY_SID,
+    DATAALL_MODIFY_ONLY_SID,
+    DATAALL_ALLOW_OWNER_SID,
+    DATAALL_DELEGATE_TO_ACCESS_POINT,
+]
 
 
 class S3ControlClient:
