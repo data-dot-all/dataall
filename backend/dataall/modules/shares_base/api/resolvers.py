@@ -187,6 +187,7 @@ def resolve_dataset(context: Context, source: ShareObject, **kwargs):
                 'region': env.region if env else 'NotFound',
                 'exists': True if ds else False,
                 'description': ds.description,
+                'datasetType': ds.datasetType
             }
 
 
