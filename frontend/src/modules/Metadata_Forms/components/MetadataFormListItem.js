@@ -9,7 +9,6 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import * as FaIcons from 'react-icons/fa';
-//import { useNavigate } from 'react-router';
 import { IconAvatar, useCardStyle } from 'design';
 import { BallotOutlined } from '@mui/icons-material';
 
