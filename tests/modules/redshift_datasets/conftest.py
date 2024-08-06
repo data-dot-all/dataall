@@ -27,6 +27,7 @@ def mock_redshift(mocker):
         'Encrypted': True,
         'KmsKeyId': 'some-key-id',
     }
+    redshiftClient.return_value.get_cluster_namespaceId.return_value = 'namespaceId1'
     yield redshiftClient
 
 
