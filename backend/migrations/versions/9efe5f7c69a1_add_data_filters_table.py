@@ -1,7 +1,7 @@
 """add_data_filters_table
 
 Revision ID: 9efe5f7c69a1
-Revises: 852cdf6cf1e0
+Revises: b2ca24b72ca4
 Create Date: 2024-07-17 11:05:26.077658
 
 """

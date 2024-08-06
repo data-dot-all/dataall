@@ -1,7 +1,6 @@
 from enum import Enum
 import re
 from .slugify import slugify
-from dataall.base.db.exceptions import InvalidInput
 
 
 class NamingConventionPattern(Enum):
@@ -45,14 +44,10 @@ class NamingConventionService:
         regex = NamingConventionPattern[self.service].value['regex']
         max_length = NamingConventionPattern[self.service].value['max_length']
         if not re.search(regex, self.target_label):
-            raise InvalidInput(
-                'label',
-                self.target_label,
-                f'must match the pattern {regex}',
+            raise Exception(
+                f'An error occurred (InvalidInput): label value {self.target_label} must match the pattern {regex}'
             )
         elif len(self.target_label) > max_length:
-            raise InvalidInput(
-                'label',
-                self.target_label,
-                f'must be less than {max_length} characters',
+            raise Exception(
+                f'An error occurred (InvalidInput): label value {self.target_label} must be less than {max_length} characters'
             )

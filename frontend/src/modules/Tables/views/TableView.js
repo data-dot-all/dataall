@@ -46,9 +46,7 @@ const previewDataEnabled = isFeatureEnabled('s3_datasets', 'preview_data');
 const confidentialityOptionsDict =
   config.modules.datasets_base.features.confidentiality_dropdown === true &&
   config.modules.s3_datasets.features.custom_confidentiality_mapping
-    ? Object.keys(
-        config.modules.s3_datasets.features.custom_confidentiality_mapping
-      )
+    ? config.modules.s3_datasets.features.custom_confidentiality_mapping
     : {};
 
 const tabs = [{ label: 'Overview', value: 'overview' }];

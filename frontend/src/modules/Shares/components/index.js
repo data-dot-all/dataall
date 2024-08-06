@@ -1,4 +1,5 @@
 export * from './AddShareItemModal';
+export * from './S3ConsumptionData';
 export * from './ShareBoxList';
 export * from './ShareBoxListItem';
 export * from './ShareRejectModal';

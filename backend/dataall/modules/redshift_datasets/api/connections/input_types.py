@@ -27,5 +27,6 @@ ConnectionFilter = gql.InputType(
         gql.Argument('pageSize', gql.Integer),
         gql.Argument('environmentUri', gql.String),
         gql.Argument('groupUri', gql.String),
+        gql.Argument('connectionType', gql.String),
     ],
 )
