@@ -164,7 +164,7 @@ export const RequestRedshiftAccessModal = (props) => {
   };
 
   const formRequestObject = (values) => {
-    let type = 'Redshift_Role';
+    let type = 'RedshiftRole';
     let principal = `{connectionUri: ${values.connection}, rsRole: ${values.rsRole}`;
 
     let inputObject = {
