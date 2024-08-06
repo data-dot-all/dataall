@@ -10,42 +10,53 @@ import {
   Button,
   Link,
   Tooltip,
-  Typography
+  Typography,
+  Avatar
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
-import * as BsIcons from 'react-icons/bs';
 import * as FaIcons from 'react-icons/fa';
-import * as FiIcons from 'react-icons/fi';
-import { MdShowChart } from 'react-icons/md';
 import * as ReactIf from 'react-if';
 import { Link as RouterLink } from 'react-router-dom';
-import { IconAvatar, useCardStyle } from 'design';
+import { useCardStyle } from 'design';
 import { dayjs } from 'utils';
 import { RequestAccessModal } from './RequestAccessModal';
 import { RequestDashboardAccessModal } from './RequestDashboardAccessModal';
+import { RequestRedshiftAccessModal } from './RequestRedshiftAccessModal';
 
 const HitICon = ({ hit }) => (
   <ReactIf.Switch>
     <ReactIf.Case
       condition={
-        hit.resourceKind === 'dataset' || hit.resourceKind === 'redshiftdataset'
+        hit.resourceKind === 'dataset' ||
+        hit.resourceKind === 'table' ||
+        hit.resourceKind === 'folder'
       }
     >
-      <IconAvatar icon={<FiIcons.FiPackage size={18} />} />
+      <Avatar
+        src={`/static/icons/Arch_Amazon-Simple-Storage-Service_64.svg`}
+        size={25}
+        variant="square"
+      />
     </ReactIf.Case>
     <ReactIf.Case
       condition={
-        hit.resourceKind === 'table' || hit.resourceKind === 'redshifttable'
+        hit.resourceKind === 'redshiftdataset' ||
+        hit.resourceKind === 'redshifttable'
       }
     >
-      <IconAvatar icon={<BsIcons.BsTable size={18} />} />
-    </ReactIf.Case>
-    <ReactIf.Case condition={hit.resourceKind === 'folder'}>
-      <IconAvatar icon={<BsIcons.BsFolder size={18} />} />
+      <Avatar
+        src={`/static/icons/Arch_Amazon-Redshift_64.svg`}
+        size={25}
+        variant="square"
+      />
     </ReactIf.Case>
     <ReactIf.Case condition={hit.resourceKind === 'dashboard'}>
-      <IconAvatar icon={<MdShowChart size={18} />} />
+      <Avatar
+        src={`/static/icons/Arch_Amazon-Quicksight_64.svg`}
+        size={25}
+        variant="square"
+      />
     </ReactIf.Case>
   </ReactIf.Switch>
 );
@@ -61,6 +72,9 @@ export const GlossarySearchResultItem = ({ hit }) => {
   const [isRequestDashboardAccessOpen, setIsRequestDashboardAccessOpen] =
     useState(false);
   const [isOpeningDashboardModal, setIsOpeningDashboardModal] = useState(false);
+  const [isRequestRedshiftAccessOpen, setIsRequestRedshiftAccessOpen] =
+    useState(false);
+  const [isOpeningRedshiftModal, setIsOpeningRedshiftModal] = useState(false);
   const handleRequestAccessModalOpen = () => {
     setIsOpeningModal(true);
     setIsRequestAccessOpen(true);
@@ -78,6 +92,16 @@ export const GlossarySearchResultItem = ({ hit }) => {
   const handleRequestDashboardAccessModalClose = () => {
     setIsOpeningDashboardModal(false);
     setIsRequestDashboardAccessOpen(false);
+  };
+
+  const handleRequestRedshiftAccessModalOpen = () => {
+    setIsOpeningRedshiftModal(true);
+    setIsRequestRedshiftAccessOpen(true);
+  };
+
+  const handleRequestRedshiftAccessModalClose = () => {
+    setIsOpeningRedshiftModal(false);
+    setIsRequestRedshiftAccessOpen(false);
   };
 
   return (
@@ -157,12 +181,46 @@ export const GlossarySearchResultItem = ({ hit }) => {
                 {hit.label}
               </Link>
             )}
-            <Typography color="textSecondary" variant="body2">
-              by{' '}
-              <Link underline="hover" color="textPrimary" variant="subtitle2">
-                {hit.owner}
-              </Link>{' '}
-              | created {dayjs(hit.created).fromNow()}
+            <Typography
+              color="textSecondary"
+              variant="body2"
+              sx={{
+                height: 20,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                WebkitBoxOrient: 'vertical',
+                WebkitLineClamp: 2
+              }}
+            >
+              <Tooltip
+                title={
+                  hit.resourceKind === 'dataset'
+                    ? `Create the request in which to add Glue tables, S3 prefixes and S3 Buckets`
+                    : hit.resourceKind === 'table'
+                    ? `Create the request to a S3/Glue Dataset already adding this table`
+                    : hit.resourceKind === 'folder'
+                    ? `Create the request to a S3/Glue Dataset already adding this folder`
+                    : hit.resourceKind === 'redshiftdataset'
+                    ? `Create the request in which to add Redshift tables`
+                    : hit.resourceKind === 'redshifttable'
+                    ? `Create the request to a Redshift Dataset already adding this table`
+                    : '-'
+                }
+              >
+                <span>
+                  {hit.resourceKind === 'dataset'
+                    ? `S3/Glue Dataset`
+                    : hit.resourceKind === 'table'
+                    ? `Glue Table `
+                    : hit.resourceKind === 'folder'
+                    ? `S3 Prefix`
+                    : hit.resourceKind === 'redshiftdataset'
+                    ? `Redshift Dataset`
+                    : hit.resourceKind === 'redshifttable'
+                    ? `Redshift Table`
+                    : '-'}
+                </span>
+              </Tooltip>
             </Typography>
           </Box>
         </Box>
@@ -173,20 +231,12 @@ export const GlossarySearchResultItem = ({ hit }) => {
           px: 3
         }}
       >
-        <Typography
-          color="textSecondary"
-          variant="body2"
-          sx={{
-            height: 20,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            WebkitBoxOrient: 'vertical',
-            WebkitLineClamp: 2
-          }}
-        >
-          <Tooltip title={hit.description || 'No description provided'}>
-            <span>{hit.description || 'No description provided'}</span>
-          </Tooltip>
+        <Typography color="textSecondary" variant="body2">
+          by{' '}
+          <Link underline="hover" color="textPrimary" variant="subtitle2">
+            {hit.owner}
+          </Link>{' '}
+          | created {dayjs(hit.created).fromNow()}
         </Typography>
       </Box>
       <Box
@@ -309,9 +359,9 @@ export const GlossarySearchResultItem = ({ hit }) => {
         }}
       >
         <Box>
-          {hit.resourceKind === 'redshiftdataset' ||
-          hit.resourceKind === 'redshifttable' ? null : isOpeningModal ||
-            isOpeningDashboardModal ? (
+          {isOpeningModal ||
+          isOpeningDashboardModal ||
+          isOpeningRedshiftModal ? (
             <CircularProgress size={20} />
           ) : (
             <Button
@@ -320,7 +370,14 @@ export const GlossarySearchResultItem = ({ hit }) => {
               onClick={() =>
                 hit.resourceKind === 'dashboard'
                   ? handleRequestDashboardAccessModalOpen()
-                  : handleRequestAccessModalOpen()
+                  : hit.resourceKind === 'dataset' ||
+                    hit.resourceKind === 'table' ||
+                    hit.resourceKind === 'folder'
+                  ? handleRequestAccessModalOpen()
+                  : hit.resourceKind === 'redshiftdataset' ||
+                    hit.resourceKind === 'redshifttable'
+                  ? handleRequestRedshiftAccessModalOpen()
+                  : '-'
               }
               type="button"
             >
@@ -332,6 +389,12 @@ export const GlossarySearchResultItem = ({ hit }) => {
             onApply={handleRequestAccessModalClose}
             open={isRequestAccessOpen}
             stopLoader={() => setIsOpeningModal(false)}
+          />
+          <RequestRedshiftAccessModal
+            hit={hit}
+            onApply={handleRequestRedshiftAccessModalClose}
+            open={isRequestRedshiftAccessOpen}
+            stopLoader={() => setIsOpeningRedshiftModal(false)}
           />
           <RequestDashboardAccessModal
             hit={hit}
