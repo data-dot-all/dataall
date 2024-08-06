@@ -1,7 +1,7 @@
 """add_data_filters_table
 
 Revision ID: 9efe5f7c69a1
-Revises: 852cdf6cf1e0
+Revises: b2ca24b72ca4
 Create Date: 2024-07-17 11:05:26.077658
 
 """
@@ -18,7 +18,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 # revision identifiers, used by Alembic.
 revision = '9efe5f7c69a1'
-down_revision = '852cdf6cf1e0'
+down_revision = 'b2ca24b72ca4'
 branch_labels = None
 depends_on = None
 
