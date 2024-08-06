@@ -3,7 +3,6 @@ import json
 from typing import List
 from dataall.modules.shares_base.services.sharing_service import ShareData
 from dataall.modules.shares_base.services.share_processor_manager import SharesProcessorInterface
-from dataall.modules.redshift_datasets_shares.aws.redshift_data import redshift_share_data_client
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftTable
 from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
 
