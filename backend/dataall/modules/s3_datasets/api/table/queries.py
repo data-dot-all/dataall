@@ -17,7 +17,7 @@ getDatasetTable = gql.QueryField(
 
 listDatasetTables = gql.QueryField(
     name='listDatasetTables',
-    args=[gql.Argument('filter', DatasetTableFilter)],
+    args=[gql.Argument(name='filter', type=DatasetTableFilter)],
     type=DatasetTableSearchResult,
     resolver=lambda *_, **__: None,
 )
@@ -42,7 +42,7 @@ listTableDataFilters = gql.QueryField(
     name='listTableDataFilters',
     args=[
         gql.Argument(name='tableUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument('filter', DatasetTableFilter),
+        gql.Argument(name='filter', type=DatasetTableFilter),
     ],
     type=DatasetTableDataFilterSearchResult,
     resolver=list_table_data_filters,

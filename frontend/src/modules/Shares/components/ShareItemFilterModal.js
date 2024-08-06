@@ -20,7 +20,11 @@ import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import CircularProgress from '@mui/material/CircularProgress';
 import { listTableDataFilters, useClient } from 'services';
-import { removeShareItemFilter, updateShareItemFilters } from '../services';
+import {
+  removeShareItemFilter,
+  updateShareItemFilters,
+  listTableDataFiltersByAttached
+} from '../services';
 
 export const ShareItemFilterModal = (props) => {
   const {
@@ -83,15 +87,29 @@ export const ShareItemFilterModal = (props) => {
   const fetchFilters = useCallback(async () => {
     try {
       setLoading(true);
-
-      const response = await client.query(
-        listTableDataFilters({
-          tableUri: item.itemUri,
-          filter: Defaults.selectListFilter
-        })
-      );
+      let response;
+      if (viewOnly) {
+        response = await client.query(
+          listTableDataFiltersByAttached({
+            attachedDataFilterUri:
+              itemDataFilter?.attachedDataFilterUri || null,
+            filter: Defaults.selectListFilter
+          })
+        );
+      } else {
+        response = await client.query(
+          listTableDataFilters({
+            tableUri: item.itemUri,
+            filter: Defaults.selectListFilter
+          })
+        );
+      }
       if (!response.errors) {
-        setFilters(response.data.listTableDataFilters.nodes);
+        if (viewOnly) {
+          setFilters(response.data.listTableDataFiltersByAttached.nodes);
+        } else {
+          setFilters(response.data.listTableDataFilters.nodes);
+        }
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }

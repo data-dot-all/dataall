@@ -154,7 +154,7 @@ const WorksheetView = () => {
           response.data.listS3DatasetsSharedWithEnvGroup?.map((d) => ({
             value: d.datasetUri,
             label: d.sharedGlueDatabaseName,
-            shareUri: d?.shareUri
+            shareUri: d.shareUri
           }));
       }
       setDatabaseOptions(ownedDatabases.concat(sharedWithDatabases));
@@ -209,14 +209,14 @@ const WorksheetView = () => {
     [client, dispatch]
   );
   const fetchColumns = useCallback(
-    async (table) => {
+    async (table, database) => {
       setLoadingColumns(true);
       let response;
-      if (selectedDatabase?.shareUri) {
+      if (database?.shareUri) {
         response = await client.query(
           listSharedDatasetTableColumns({
             tableUri: table.tableUri,
-            shareUri: selectedDatabase.shareUri,
+            shareUri: database.shareUri,
             filter: Defaults.selectListFilter
           })
         );
@@ -230,13 +230,23 @@ const WorksheetView = () => {
       }
 
       if (!response.errors) {
-        setColumns(
-          response.data.listDatasetTableColumns.nodes.map((c) => ({
-            ...c,
-            value: c.columnUri,
-            label: c.name
-          }))
-        );
+        if (database?.shareUri) {
+          setColumns(
+            response.data.listSharedDatasetTableColumns.nodes.map((c) => ({
+              ...c,
+              value: c.columnUri,
+              label: c.name
+            }))
+          );
+        } else {
+          setColumns(
+            response.data.listDatasetTableColumns.nodes.map((c) => ({
+              ...c,
+              value: c.columnUri,
+              label: c.name
+            }))
+          );
+        }
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -365,7 +375,7 @@ const WorksheetView = () => {
   function handleTableChange(event) {
     setColumns([]);
     setSelectedTable(event.target.value);
-    fetchColumns(event.target.value).catch((e) =>
+    fetchColumns(event.target.value, selectedDatabase).catch((e) =>
       dispatch({ type: SET_ERROR, error: e.message })
     );
     setSqlBody(

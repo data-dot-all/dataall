@@ -14,7 +14,10 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
 )
 from dataall.base.db import exceptions
 from dataall.modules.s3_datasets.aws.lf_data_filter_client import LakeFormationDataFilterClient
-
+from dataall.base.utils.naming_convention import (
+    NamingConventionService,
+    NamingConventionPattern,
+)
 
 log = logging.getLogger(__name__)
 
@@ -52,12 +55,11 @@ class DatasetTableDataFilterRequestValidationService:
         DatasetTableDataFilterRequestValidationService._required_param(uri, 'tableUri')
         DatasetTableDataFilterRequestValidationService._required_param(data, 'data')
         DatasetTableDataFilterRequestValidationService._required_param(data.get('filterName'), 'filterName')
-        if not re.search(r'^[a-z0-9_]*$', data.get('filterName')):
-            raise exceptions.InvalidInput(
-                'filterName',
-                data.get('filterName'),
-                'must match the pattern ^[a-zA-Z0-9_]*$',
-            )
+        NamingConventionService(
+            target_label=data.get('filterName'),
+            pattern=NamingConventionPattern.DATA_FILTERS,
+        ).validate_name()
+
         DatasetTableDataFilterRequestValidationService.validate_data_filter_type(data)
 
 

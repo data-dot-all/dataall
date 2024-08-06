@@ -298,7 +298,7 @@ class LFShareManager:
                         'LF',
                         ['SELECT'],
                         'Glue Table with Filters',
-                        f'{table.GlueDatabaseName}.{table.GlueTableName}',
+                        f'{table.GlueDatabaseName}.{table.GlueTableName}, Filters:{share_item_filter.dataFilterNames}',
                     )
                 )
         else:

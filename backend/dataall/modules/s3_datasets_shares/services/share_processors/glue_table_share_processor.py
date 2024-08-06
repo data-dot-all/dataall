@@ -132,8 +132,11 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                             stacklevel=2,
                         )
                         # Revoke Target Account Permissions To Table
-                        log.info('Check & clean up of delegated LF Permission to Target Account...')
-                        manager._clean_up_lf_permissions_account_delegation_pattern(table)
+                        try:
+                            log.info('Check & clean up of delegated LF Permission to Target Account...')
+                            manager._clean_up_lf_permissions_account_delegation_pattern(table)
+                        except Exception as e:
+                            log.info(f'Clean Up ran into error {e}, continuing re-apply without clean up...')
 
                     share_item_filter = None
                     if share_item.attachedDataFilterUri:

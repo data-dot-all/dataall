@@ -39,14 +39,19 @@ import {
   TableFilters
 } from '../components';
 import { isFeatureEnabled } from 'utils';
+import config from '../../../generated/config.json';
 
 const previewDataEnabled = isFeatureEnabled('s3_datasets', 'preview_data');
 
-const tabs = [{ label: 'Overview', value: 'overview' }];
+const confidentialityOptionsDict =
+  config.modules.datasets_base.features.confidentiality_dropdown === true &&
+  config.modules.s3_datasets.features.custom_confidentiality_mapping
+    ? Object.keys(
+        config.modules.s3_datasets.features.custom_confidentiality_mapping
+      )
+    : {};
 
-if (previewDataEnabled) {
-  tabs.unshift({ label: 'Preview', value: 'preview' });
-}
+const tabs = [{ label: 'Overview', value: 'overview' }];
 
 function TablePageHeader(props) {
   const { table, handleDeleteObjectModalOpen, isAdmin } = props;
@@ -178,19 +183,31 @@ const TableView = () => {
     setIsDeleteObjectModalOpen(false);
   };
 
-  const handleUserRole = (userRole) => {
+  const handleUserRole = useCallback(async (userRole, confidentiality) => {
+    const isUnclassified =
+      confidentiality === 'Unclassified' ||
+      confidentialityOptionsDict[confidentiality] === 'Unclassified';
     const adminValue = ['Creator', 'Admin', 'Owner'].indexOf(userRole) !== -1;
     const stewardValue = ['DataSteward'].indexOf(userRole) !== -1;
     setIsAdmin(adminValue);
-    if (
-      (adminValue || stewardValue) &&
-      !tabs.find((t) => t.value === 'datafilters')
-    ) {
-      tabs.push({ label: 'Columns', value: 'columns' });
-      tabs.push({ label: 'Metrics', value: 'metrics' });
-      tabs.push({ label: 'Data Filters', value: 'datafilters' });
+    if (adminValue || stewardValue || isUnclassified) {
+      if (previewDataEnabled && !tabs.find((t) => t.value === 'preview')) {
+        tabs.unshift({ label: 'Preview', value: 'preview' });
+      }
+      if (!tabs.find((t) => t.value === 'columns')) {
+        tabs.push({ label: 'Columns', value: 'columns' });
+      }
+      if (!tabs.find((t) => t.value === 'metrics')) {
+        tabs.push({ label: 'Metrics', value: 'metrics' });
+      }
+      if (
+        (adminValue || stewardValue) &&
+        !tabs.find((t) => t.value === 'datafilters')
+      ) {
+        tabs.push({ label: 'Data Filters', value: 'datafilters' });
+      }
     }
-  };
+  }, []);
 
   const deleteTable = async () => {
     const response = await client.mutate(
@@ -208,7 +225,10 @@ const TableView = () => {
     const response = await client.query(getDatasetTable(params.uri));
     if (!response.errors && response.data.getDatasetTable !== null) {
       setTable(response.data.getDatasetTable);
-      handleUserRole(response.data.getDatasetTable.dataset.userRoleForDataset);
+      handleUserRole(
+        response.data.getDatasetTable.dataset.userRoleForDataset,
+        response.data.getDatasetTable.dataset.confidentiality
+      );
     } else {
       setTable(null);
       const error = response.errors
@@ -295,7 +315,7 @@ const TableView = () => {
             {currentTab === 'metrics' && (
               <TableMetrics table={table} isAdmin={isAdmin} />
             )}
-            {currentTab === 'datafilters' && (
+            {currentTab === 'datafilters' && isAdmin && (
               <TableFilters table={table} isAdmin={isAdmin} />
             )}
           </Box>

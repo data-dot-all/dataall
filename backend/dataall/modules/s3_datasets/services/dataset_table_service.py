@@ -8,6 +8,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.modules.s3_datasets.aws.athena_table_client import AthenaTableClient
 from dataall.modules.s3_datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
+from dataall.modules.s3_datasets.db.dataset_table_data_filter_repositories import DatasetTableDataFilterRepository
 from dataall.modules.s3_datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.s3_datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.s3_datasets.services.dataset_permissions import (
@@ -73,7 +74,7 @@ class DatasetTableService:
             DatasetService.check_before_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
             DatasetService.execute_on_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
 
-            table_data_filters = DatasetTableRepository.list_data_filters(session, table.tableUri)
+            table_data_filters = DatasetTableDataFilterRepository.list_data_filters(session, table.tableUri)
             dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
             lf_client = LakeFormationDataFilterClient(table=table, dataset=dataset)
             # Delete LF Filters

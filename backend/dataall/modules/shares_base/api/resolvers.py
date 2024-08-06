@@ -2,7 +2,7 @@ import logging
 import re
 
 from dataall.base.api.context import Context
-from dataall.base.db.exceptions import InvalidInput, RequiredParameter
+from dataall.base.db.exceptions import RequiredParameter
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
@@ -13,7 +13,10 @@ from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, 
 from dataall.modules.shares_base.services.share_item_service import ShareItemService
 from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.shares_base.services.share_logs_service import ShareLogsService
-
+from dataall.base.utils.naming_convention import (
+    NamingConventionService,
+    NamingConventionPattern,
+)
 
 log = logging.getLogger(__name__)
 
@@ -58,12 +61,10 @@ class RequestValidator:
             raise RequiredParameter('filterUris')
         if not data.get('filterNames'):
             raise RequiredParameter('filterNames')
-        if not re.search(r'^[a-z0-9_]*$', data.get('label')):
-            raise InvalidInput(
-                'label',
-                data.get('label'),
-                'must match the pattern ^[a-zA-Z0-9_]*$',
-            )
+        NamingConventionService(
+            target_label=data.get('label'),
+            pattern=NamingConventionPattern.DATA_FILTERS,
+        ).validate_name()
 
 
 def create_share_object(

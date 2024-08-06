@@ -1,5 +1,7 @@
 from dataall.modules.s3_datasets.services.dataset_table_service import DatasetTableService
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTableColumn, DatasetTable
+from dataall.modules.s3_datasets.services.dataset_table_data_filter_service import DatasetTableDataFilterService
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTableColumn, DatasetTable, DatasetTableDataFilter
+from dataall.base.db.exceptions import UnauthorizedOperation
 import pytest
 import boto3
 from unittest.mock import MagicMock
@@ -243,18 +245,22 @@ def test_sync_tables_and_columns(client, table, dataset_fixture, db):
         assert deleted_table.LastGlueTableStatus == 'Deleted'
 
 
-def test_delete_table(mock_lf_client, client, table, dataset_fixture, db, group):
-    table_to_delete = table(dataset=dataset_fixture, name=f'table_to_update', username=dataset_fixture.owner)
-    response = client.query(
+def delete_table(client, tableUri, username, groups):
+    return client.query(
         """
         mutation deleteDatasetTable($tableUri:String!){
                 deleteDatasetTable(tableUri:$tableUri)
             }
         """,
-        username='alice',
-        groups=[group.name],
-        tableUri=table_to_delete.tableUri,
+        username=username,
+        groups=groups,
+        tableUri=tableUri,
     )
+
+
+def test_delete_table(mock_lf_client, client, table, dataset_fixture, db, group):
+    table_to_delete = table(dataset=dataset_fixture, name=f'table_to_update', username=dataset_fixture.owner)
+    response = delete_table(client, table_to_delete.tableUri, 'alice', [group.name])
     assert response.data.deleteDatasetTable
 
 
@@ -319,6 +325,34 @@ def delete_data_filters(client, filterUri, username, groups):
         groups=groups,
         username=username,
     )
+
+
+def test_delete_table_with_filters(mock_lf_client, client, table, dataset_fixture, db, user, group):
+    table_to_delete = table(dataset=dataset_fixture, name='table', username=dataset_fixture.owner)
+
+    filterName = 'colfilter'
+    filterType = 'COLUMN'
+    input = {
+        'filterName': filterName,
+        'filterType': filterType,
+        'includedCols': ['id'],
+    }
+    create_data_filter(client, table_to_delete.tableUri, user.username, [group.name], input)
+
+    dfilter_response = list_data_filters(client, table_to_delete.tableUri, user.username, [group.name])
+    assert dfilter_response.data.listTableDataFilters.count == 1
+
+    response = delete_table(client, table_to_delete.tableUri, user.username, [group.name])
+
+    dfilter_response = list_data_filters(client, table_to_delete.tableUri, user.username, [group.name])
+    assert 'UnauthorizedOperation' in dfilter_response.errors[0].message
+    with db.scoped_session() as session:
+        assert (
+            session.query(DatasetTableDataFilter)
+            .filter(DatasetTableDataFilter.tableUri == table_to_delete.tableUri)
+            .count()
+            == 0
+        )
 
 
 def test_create_table_data_filter_column(mock_lf_client, client, table_fixture, db, user, group):
