@@ -24,6 +24,8 @@ def mock_redshift(mocker):
     redshiftClient.return_value.describe_cluster.return_value = {
         'ClusterIdentifier': 'cluster_id_1',
         'ClusterStatus': 'available',
+        'Encrypted': True,
+        'KmsKeyId': 'some-key-id',
     }
     yield redshiftClient
 
@@ -58,6 +60,7 @@ def mock_redshift_serverless(mocker):
     redshiftServerlessClient.return_value.get_namespace_by_id.return_value = {
         'namespaceId': 'XXXXXXXXXXXXXX',
         'namespaceName': 'namespace_name_1',
+        'KmsKeyId': 'AWS_OWNED_KMS_KEY',
     }
     redshiftServerlessClient.return_value.list_workgroups_in_namespace.return_value = [
         {
@@ -69,6 +72,13 @@ def mock_redshift_serverless(mocker):
         'arn:aws:redshift-serverless:eu-west-1:XXXXXXXXXXXXXX:workgroup/workgroup_name_1'
     )
     yield redshiftServerlessClient
+
+
+@pytest.fixture(scope='function')
+def mock_redshift_kms(mocker):
+    kmsClient = mocker.patch('dataall.modules.redshift_datasets.aws.kms_redshift.KmsClient', autospec=True)
+    kmsClient.return_value.describe_kms_key.return_value = {'KeyManager': 'AWS'}
+    yield kmsClient
 
 
 @pytest.fixture(scope='function')
@@ -108,7 +118,9 @@ def connection1_serverless(db, user, group, env_fixture, mock_redshift_serverles
 
 
 @pytest.fixture(scope='function')
-def connection2_cluster(db, user, group, env_fixture, mock_redshift, mock_redshift_data, api_context_1):
+def connection2_cluster(
+    db, user, group, env_fixture, mock_redshift, mock_redshift_data, mock_redshift_kms, api_context_1
+):
     connection = RedshiftConnectionService.create_redshift_connection(
         uri=env_fixture.environmentUri,
         admin_group=group.name,
