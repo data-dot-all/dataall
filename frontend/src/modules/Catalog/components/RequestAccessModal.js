@@ -1,7 +1,7 @@
 import SendIcon from '@mui/icons-material/Send';
 import { LoadingButton } from '@mui/lab';
-import Autocomplete from '@mui/lab/Autocomplete';
 import {
+  Autocomplete,
   Box,
   Button,
   CardContent,
@@ -27,6 +27,7 @@ import {
   listValidEnvironments,
   requestDashboardShare,
   getConsumptionRolePolicies,
+  fetchEnums,
   useClient
 } from 'services';
 import { ShareEditForm } from '../../Shared/Shares/ShareEditForm';
@@ -51,6 +52,20 @@ export const RequestAccessModal = (props) => {
   const [share, setShare] = useState(false);
   const [loading, setLoading] = useState(false);
   const [alreadyExisted, setAlreadyExisted] = useState(false);
+  const [dataPermsEnum, setDataPermsEnum] = useState([]);
+
+  const fetchDataPermsEnum = useCallback(async () => {
+    const backendEnumName = 'ShareObjectDataPermission';
+    const backendEnumData = (await fetchEnums(client, [backendEnumName]))[
+      backendEnumName
+    ];
+    if (backendEnumData) setDataPermsEnum(backendEnumData.map((e) => e.value));
+    else
+      dispatch({
+        type: SET_ERROR,
+        error: `Could not fetch enum: ${backendEnumName}`
+      });
+  }, [client, dispatch]);
 
   const fetchEnvironments = useCallback(async () => {
     setStep(0);
@@ -78,7 +93,7 @@ export const RequestAccessModal = (props) => {
       setLoadingEnvs(false);
       stopLoader();
     }
-  }, [client, dispatch]);
+  }, [client, dispatch, stopLoader]);
 
   const fetchShareObject = async (shareUri) => {
     const response = await client.query(getShareObject({ shareUri: shareUri }));
@@ -177,8 +192,16 @@ export const RequestAccessModal = (props) => {
       fetchEnvironments().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
+      fetchDataPermsEnum();
     }
-  }, [client, open, fetchEnvironments, dispatch]);
+  }, [
+    client,
+    open,
+    stopLoader,
+    fetchEnvironments,
+    fetchDataPermsEnum,
+    dispatch
+  ]);
 
   const formDatasetRequestObject = (inputObject) => {
     return {
@@ -212,7 +235,8 @@ export const RequestAccessModal = (props) => {
       principalId: principal,
       principalType: type,
       requestPurpose: values.comment,
-      attachMissingPolicies: values.attachMissingPolicies
+      attachMissingPolicies: values.attachMissingPolicies,
+      permissions: values.permissions
     };
 
     if (hit.resourceKind === 'dataset') {
@@ -303,7 +327,8 @@ export const RequestAccessModal = (props) => {
               initialValues={{
                 environmentUri: '',
                 comment: '',
-                attachMissingPolicies: false
+                attachMissingPolicies: false,
+                permissions: [dataPermsEnum[0]]
               }}
               validationSchema={Yup.object().shape({
                 environmentUri: Yup.string().required(
@@ -481,6 +506,27 @@ export const RequestAccessModal = (props) => {
                               )}
                             </Box>
                           )}
+                        </CardContent>
+                        <CardContent>
+                          <Autocomplete
+                            multiple
+                            disablePortal
+                            fullWidth
+                            options={dataPermsEnum}
+                            getOptionLabel={(option) => option}
+                            defaultValue={values.permissions}
+                            onChange={(e, value) =>
+                              setFieldValue('permissions', value)
+                            }
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                fullWidth
+                                variant="outlined"
+                                label="Permissions"
+                              />
+                            )}
+                          />
                         </CardContent>
                         <CardContent>
                           {loadingRoles ? (

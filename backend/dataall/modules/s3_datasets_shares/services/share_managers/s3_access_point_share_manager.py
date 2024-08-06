@@ -19,6 +19,13 @@ from dataall.modules.s3_datasets_shares.aws.kms_client import (
 )
 from dataall.base.aws.iam import IAM
 from dataall.modules.s3_datasets_shares.services.s3_share_alarm_service import S3ShareAlarmService
+from dataall.modules.s3_datasets_shares.services.share_managers.s3_utils import (
+    get_principal_list,
+    add_target_arn_to_statement_principal,
+    generate_policy_statement,
+    perms_to_sids,
+    SidType,
+)
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.shares_base.services.share_manager_utils import ShareErrorFormatter
@@ -518,7 +525,7 @@ class S3AccessPointShareManager:
         error = False
         if DATAALL_ACCESS_POINT_KMS_DECRYPT_SID not in statements.keys():
             error = True
-        elif f'{target_requester_arn}' not in self.get_principal_list(statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID]):
+        elif f'{target_requester_arn}' not in get_principal_list(statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID]):
             error = True
 
         if error:
@@ -568,22 +575,17 @@ class S3AccessPointShareManager:
                 self.generate_enable_pivot_role_permissions_policy_statement(pivot_role_name, self.dataset_account_id)
             )
 
-            if DATAALL_ACCESS_POINT_KMS_DECRYPT_SID in statements.keys():
-                logger.info(
-                    f'KMS key policy contains share statement {DATAALL_ACCESS_POINT_KMS_DECRYPT_SID}, '
-                    f'updating the current one'
-                )
-                statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID] = self.add_target_arn_to_statement_principal(
-                    statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID], target_requester_arn
-                )
-            else:
-                logger.info(
-                    f'KMS key does not contain share statement {DATAALL_ACCESS_POINT_KMS_DECRYPT_SID}, '
-                    f'generating a new one'
-                )
-                statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID] = self.generate_default_kms_decrypt_policy_statement(
-                    target_requester_arn
-                )
+            for target_sid in perms_to_sids(self.share.permissions, SidType.KmsAccessPointPolicy):
+                if target_sid in statements.keys():
+                    logger.info(f'KMS key policy contains share statement {target_sid}, ' f'updating the current one')
+                    statements[target_sid] = add_target_arn_to_statement_principal(
+                        statements[target_sid], target_requester_arn
+                    )
+                else:
+                    logger.info(f'KMS key does not contain share statement {target_sid}, ' f'generating a new one')
+                    statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID] = self.generate_default_kms_policy_statement(
+                        target_requester_arn, target_sid
+                    )
             existing_policy['Statement'] = list(statements.values())
 
         else:
@@ -591,10 +593,13 @@ class S3AccessPointShareManager:
             existing_policy = {
                 'Version': '2012-10-17',
                 'Statement': [
-                    self.generate_default_kms_decrypt_policy_statement(target_requester_arn),
                     self.generate_enable_pivot_role_permissions_policy_statement(
                         pivot_role_name, self.dataset_account_id
                     ),
+                ]
+                + [
+                    self.generate_default_kms_policy_statement(target_requester_arn, target_sid)
+                    for target_sid in perms_to_sids(self.share.permissions, SidType.KmsAccessPointPolicy)
                 ],
             }
         kms_client.put_key_policy(kms_key_id, json.dumps(existing_policy))
@@ -723,7 +728,7 @@ class S3AccessPointShareManager:
         counter = count()
         statements = {item.get('Sid', next(counter)): item for item in existing_policy.get('Statement', {})}
         if DATAALL_ACCESS_POINT_KMS_DECRYPT_SID in statements.keys():
-            principal_list = self.get_principal_list(statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID])
+            principal_list = get_principal_list(statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID])
             if f'{target_requester_arn}' in principal_list:
                 principal_list.remove(f'{target_requester_arn}')
                 if len(principal_list) == 0:
@@ -769,46 +774,11 @@ class S3AccessPointShareManager:
         return True
 
     @staticmethod
-    def generate_default_kms_decrypt_policy_statement(target_requester_arn):
-        return {
-            'Sid': f'{DATAALL_ACCESS_POINT_KMS_DECRYPT_SID}',
-            'Effect': 'Allow',
-            'Principal': {'AWS': [f'{target_requester_arn}']},
-            'Action': 'kms:Decrypt',
-            'Resource': '*',
-        }
+    def generate_default_kms_policy_statement(target_requester_arn, target_sid):
+        return generate_policy_statement(target_sid, [target_requester_arn], ['*'])
 
     @staticmethod
     def generate_enable_pivot_role_permissions_policy_statement(pivot_role_name, dataset_account_id):
-        return {
-            'Sid': f'{DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}',
-            'Effect': 'Allow',
-            'Principal': {'AWS': [f'arn:aws:iam::{dataset_account_id}:role/{pivot_role_name}']},
-            'Action': [
-                'kms:Decrypt',
-                'kms:Encrypt',
-                'kms:GenerateDataKey*',
-                'kms:PutKeyPolicy',
-                'kms:GetKeyPolicy',
-                'kms:ReEncrypt*',
-                'kms:TagResource',
-                'kms:UntagResource',
-                'kms:DescribeKey',
-                'kms:List*',
-            ],
-            'Resource': '*',
-        }
-
-    def add_target_arn_to_statement_principal(self, statement, target_requester_arn):
-        principal_list = self.get_principal_list(statement)
-        if f'{target_requester_arn}' not in principal_list:
-            principal_list.append(f'{target_requester_arn}')
-        statement['Principal']['AWS'] = principal_list
-        return statement
-
-    @staticmethod
-    def get_principal_list(statement):
-        principal_list = statement['Principal']['AWS']
-        if isinstance(principal_list, str):
-            principal_list = [principal_list]
-        return principal_list
+        return generate_policy_statement(
+            DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID, [f'arn:aws:iam::{dataset_account_id}:role/{pivot_role_name}'], ['*']
+        )
