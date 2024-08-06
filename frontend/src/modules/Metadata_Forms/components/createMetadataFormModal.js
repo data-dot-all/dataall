@@ -15,7 +15,7 @@ import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { listGroups, listValidEnvironments, useClient } from 'services';
+import { listValidEnvironments, useClient, useGroups } from 'services';
 import { listOrganizations } from '../../Organizations/services';
 import { createMetadataForm } from '../services';
 
@@ -24,36 +24,13 @@ export const CreateMetadataFormModal = (props) => {
     props;
   const dispatch = useDispatch();
   const client = useClient();
+  const groups = useGroups();
   const [loading, setLoading] = useState(false);
-  const [groupOptions, setGroupOptions] = useState([]);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [organizationOptions, setOrganizationOptions] = useState([]);
   const [visibilityOptions, setVisibilityOptions] = useState([]);
 
-  const fetchGroups = async () => {
-    setLoading(true);
-    try {
-      const response = await client.query(listGroups({ filter: {} }));
-      if (!response.errors) {
-        setGroupOptions(
-          response.data.listGroups.map((e) => ({
-            ...e,
-            value: e.groupName,
-            label: e.groupName
-          }))
-        );
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-    } catch (e) {
-      dispatch({ type: SET_ERROR, error: e.message });
-    } finally {
-      setLoading(false);
-      stopLoader();
-    }
-  };
   const fetchOrganizations = async () => {
-    setLoading(true);
     try {
       const response = await client.query(
         listOrganizations({
@@ -73,13 +50,9 @@ export const CreateMetadataFormModal = (props) => {
       }
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
-    } finally {
-      setLoading(false);
-      stopLoader();
     }
   };
   const fetchEnvironments = async () => {
-    setLoading(true);
     try {
       const response = await client.query(
         listValidEnvironments({
@@ -99,9 +72,6 @@ export const CreateMetadataFormModal = (props) => {
       }
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
-    } finally {
-      setLoading(false);
-      stopLoader();
     }
   };
 
@@ -113,15 +83,15 @@ export const CreateMetadataFormModal = (props) => {
     );
 
     if (client && open) {
+      setLoading(true);
       fetchEnvironments().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
       fetchOrganizations().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
-      fetchGroups().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
+      setLoading(false);
+      stopLoader();
     }
   }, [client, open, dispatch]);
 
@@ -236,9 +206,9 @@ export const CreateMetadataFormModal = (props) => {
                   <Autocomplete
                     id="owner"
                     disablePortal
-                    options={groupOptions.map((option) => option)}
+                    options={groups}
                     onChange={(event, value) => {
-                      setFieldValue('owner', value.value);
+                      setFieldValue('owner', value);
                     }}
                     renderInput={(params) => (
                       <TextField
@@ -321,9 +291,9 @@ export const CreateMetadataFormModal = (props) => {
                     <Autocomplete
                       id="group"
                       disablePortal
-                      options={groupOptions.map((option) => option)}
+                      options={groups}
                       onChange={(event, value) => {
-                        setFieldValue('group', value.value);
+                        setFieldValue('group', value);
                       }}
                       renderInput={(params) => (
                         <TextField
