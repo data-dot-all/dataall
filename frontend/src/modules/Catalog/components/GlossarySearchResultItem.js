@@ -16,7 +16,6 @@ import {
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 import * as FaIcons from 'react-icons/fa';
-import * as ReactIf from 'react-if';
 import { Link as RouterLink } from 'react-router-dom';
 import { useCardStyle } from 'design';
 import { dayjs } from 'utils';
@@ -24,45 +23,52 @@ import { RequestAccessModal } from './RequestAccessModal';
 import { RequestDashboardAccessModal } from './RequestDashboardAccessModal';
 import { RequestRedshiftAccessModal } from './RequestRedshiftAccessModal';
 
-const HitICon = ({ hit }) => (
-  <ReactIf.Switch>
-    <ReactIf.Case
-      condition={
-        hit.resourceKind === 'dataset' ||
-        hit.resourceKind === 'table' ||
-        hit.resourceKind === 'folder'
-      }
-    >
-      <Avatar
-        src={`/static/icons/Arch_Amazon-Simple-Storage-Service_64.svg`}
-        size={25}
-        variant="square"
-      />
-    </ReactIf.Case>
-    <ReactIf.Case
-      condition={
-        hit.resourceKind === 'redshiftdataset' ||
-        hit.resourceKind === 'redshifttable'
-      }
-    >
-      <Avatar
-        src={`/static/icons/Arch_Amazon-Redshift_64.svg`}
-        size={25}
-        variant="square"
-      />
-    </ReactIf.Case>
-    <ReactIf.Case condition={hit.resourceKind === 'dashboard'}>
-      <Avatar
-        src={`/static/icons/Arch_Amazon-Quicksight_64.svg`}
-        size={25}
-        variant="square"
-      />
-    </ReactIf.Case>
-  </ReactIf.Switch>
-);
+// Add new types of items by adding them in the following type_dicts
+// DO NOT change the returned frontend view
 
-HitICon.propTypes = {
-  hit: PropTypes.object.isRequired
+const icon_paths_by_type = {
+  dataset: '/static/icons/Arch_Amazon-Simple-Storage-Service_64.svg',
+  table: '/static/icons/Arch_Amazon-Simple-Storage-Service_64.svg',
+  folder: '/static/icons/Arch_Amazon-Simple-Storage-Service_64.svg',
+  dashboard: '/static/icons/Arch_Amazon-Quicksight_64.svg',
+  redshiftdataset: '/static/icons/Arch_Amazon-Redshift_64.svg',
+  redshifttable: '/static/icons/Arch_Amazon-Redshift_64.svg'
+};
+
+const redirect_link_by_type = {
+  dataset: '/console/s3-datasets/',
+  table: '/console/s3-datasets/table/',
+  folder: '/console/s3-datasets/folder/',
+  dashboard: '/console/dashboards/',
+  redshiftdataset: '/console/redshift-datasets/',
+  redshifttable: '/console/redshift-datasets/table/'
+};
+
+const tooltip_message_by_type = {
+  dataset: `Create the request in which to add Glue tables, S3 prefixes and S3 Buckets`,
+  table: `Create the request to a S3/Glue Dataset already adding this table`,
+  folder: `Create the request to a S3/Glue Dataset already adding this folder`,
+  dashboard: `Create the request to a Quicksight Dashboard`,
+  redshiftdataset: `Create the request in which to add Redshift tables`,
+  redshifttable: `Create the request to a Redshift Dataset already adding this table`
+};
+
+const tooltip_span_by_type = {
+  dataset: `S3/Glue Dataset`,
+  table: `Glue Table`,
+  folder: `S3 Prefix`,
+  dashboard: `Quicksight Dashboard`,
+  redshiftdataset: `Redshift Dataset`,
+  redshifttable: `Redshift Table`
+};
+
+const upvotes_enabled_by_type = {
+  dataset: true,
+  table: false,
+  folder: false,
+  dashboard: false,
+  redshiftdataset: true,
+  redshifttable: false
 };
 
 export const GlossarySearchResultItem = ({ hit }) => {
@@ -113,74 +119,22 @@ export const GlossarySearchResultItem = ({ hit }) => {
             display: 'flex'
           }}
         >
-          <HitICon hit={hit} />
+          <Avatar
+            src={icon_paths_by_type[hit.resourceKind]}
+            size={25}
+            variant="square"
+          />
           <Box sx={{ ml: 2 }}>
-            {hit.resourceKind === 'dataset' && (
-              <Link
-                underline="hover"
-                color="textPrimary"
-                component={RouterLink}
-                to={`/console/s3-datasets/${hit._id}/`} /*eslint-disable-line*/
-                variant="h6"
-              >
-                {hit.label}
-              </Link>
-            )}
-            {hit.resourceKind === 'table' && (
-              <Link
-                underline="hover"
-                color="textPrimary"
-                component={RouterLink}
-                to={`/console/s3-datasets/table/${hit._id}/`} /*eslint-disable-line*/
-                variant="h6"
-              >
-                {hit.label}
-              </Link>
-            )}
-            {hit.resourceKind === 'folder' && (
-              <Link
-                underline="hover"
-                color="textPrimary"
-                component={RouterLink}
-                to={`/console/s3-datasets/folder/${hit._id}/`} /*eslint-disable-line*/
-                variant="h6"
-              >
-                {hit.label}
-              </Link>
-            )}
-            {hit.resourceKind === 'dashboard' && (
-              <Link
-                underline="hover"
-                color="textPrimary"
-                component={RouterLink}
-                to={`/console/dashboards/${hit._id}/`} /*eslint-disable-line*/
-                variant="h6"
-              >
-                {hit.label}
-              </Link>
-            )}
-            {hit.resourceKind === 'redshiftdataset' && (
-              <Link
-                underline="hover"
-                color="textPrimary"
-                component={RouterLink}
-                to={`/console/redshift-datasets/${hit._id}/`} /*eslint-disable-line*/
-                variant="h6"
-              >
-                {hit.label}
-              </Link>
-            )}
-            {hit.resourceKind === 'redshifttable' && (
-              <Link
-                underline="hover"
-                color="textPrimary"
-                component={RouterLink}
-                to={`/console/redshift-datasets/${hit.datasetUri}/`} /*eslint-disable-line*/
-                variant="h6"
-              >
-                {hit.label}
-              </Link>
-            )}
+            <Link
+              underline="hover"
+              color="textPrimary"
+              component={RouterLink}
+            to={`${redirect_link_by_type[hit.resourceKind]}${hit._id}/`} /*eslint-disable-line*/
+              variant="h6"
+            >
+              {hit.label}
+            </Link>
+
             <Typography
               color="textSecondary"
               variant="body2"
@@ -192,34 +146,8 @@ export const GlossarySearchResultItem = ({ hit }) => {
                 WebkitLineClamp: 2
               }}
             >
-              <Tooltip
-                title={
-                  hit.resourceKind === 'dataset'
-                    ? `Create the request in which to add Glue tables, S3 prefixes and S3 Buckets`
-                    : hit.resourceKind === 'table'
-                    ? `Create the request to a S3/Glue Dataset already adding this table`
-                    : hit.resourceKind === 'folder'
-                    ? `Create the request to a S3/Glue Dataset already adding this folder`
-                    : hit.resourceKind === 'redshiftdataset'
-                    ? `Create the request in which to add Redshift tables`
-                    : hit.resourceKind === 'redshifttable'
-                    ? `Create the request to a Redshift Dataset already adding this table`
-                    : '-'
-                }
-              >
-                <span>
-                  {hit.resourceKind === 'dataset'
-                    ? `S3/Glue Dataset`
-                    : hit.resourceKind === 'table'
-                    ? `Glue Table `
-                    : hit.resourceKind === 'folder'
-                    ? `S3 Prefix`
-                    : hit.resourceKind === 'redshiftdataset'
-                    ? `Redshift Dataset`
-                    : hit.resourceKind === 'redshifttable'
-                    ? `Redshift Table`
-                    : '-'}
-                </span>
+              <Tooltip title={tooltip_message_by_type[hit.resourceKind]}>
+                <span>{tooltip_span_by_type[hit.resourceKind]}</span>
               </Tooltip>
             </Typography>
           </Box>
@@ -405,9 +333,7 @@ export const GlossarySearchResultItem = ({ hit }) => {
           />
         </Box>
         <Box sx={{ flexGrow: 1 }} />
-        {(hit.resourceKind === 'dashboard' ||
-          hit.resourceKind === 'dataset' ||
-          hit.resourceKind === 'redshiftdataset') &&
+        {upvotes_enabled_by_type[hit.resourceKind] &&
           hit.upvotes !== undefined &&
           hit.upvotes >= 0 && (
             <Tooltip title="UpVotes">
