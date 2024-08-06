@@ -33,4 +33,4 @@ class MetadataFormRepository:
                 )
             )
 
-        return query.order_by(MetadataForm.created.desc())
+        return query.order_by(MetadataForm.name)
