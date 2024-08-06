@@ -19,9 +19,9 @@ NewMetadataFormFieldInput = gql.InputType(
     arguments=[
         gql.Field(name='name', type=gql.String),
         gql.Field(name='type', type=gql.String),
+        gql.Field(name='description', type=gql.String),
         gql.Field(name='required', type=gql.Boolean),
         gql.Field(name='glossaryNodeUri', type=gql.String),
-        gql.Field(name='description', type=gql.String),
         gql.Field(name='possibleValues', type=gql.ArrayType(gql.String)),
     ],
 )

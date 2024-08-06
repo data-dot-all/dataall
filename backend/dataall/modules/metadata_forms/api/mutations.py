@@ -31,7 +31,7 @@ createMetadataFormField = gql.MutationField(
         gql.Argument(name='formUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='input', type=gql.ArrayType(gql.Ref('NewMetadataFormFieldInput'))),
     ],
-    type=gql.Ref('MetadataFormField'),
+    type=gql.ArrayType(gql.Ref('MetadataFormField')),
     resolver=create_metadata_form_fields,
     test_scope='MetadataForm',
 )
