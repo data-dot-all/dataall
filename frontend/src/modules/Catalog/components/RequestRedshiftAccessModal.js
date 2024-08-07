@@ -164,16 +164,13 @@ export const RequestRedshiftAccessModal = (props) => {
   };
 
   const formRequestObject = (values) => {
-    let type = 'RedshiftRole';
-    let principal = `{connectionUri: ${values.connection}, rsRole: ${values.rsRole}`;
-
     let inputObject = {
       environmentUri: values.environmentUri,
       groupUri: values.groupUri,
-      principalId: principal,
-      principalType: type,
-      requestPurpose: values.comment,
-      attachMissingPolicies: values.attachMissingPolicies
+      principalId: values.connection,
+      principalRoleName: values.rsRole,
+      principalType: 'RedshiftRole',
+      requestPurpose: values.comment
     };
 
     if (hit.resourceKind === 'redshiftdataset') {

@@ -64,7 +64,7 @@ export const ShareBoxListItem = ({ share }) => {
               variant="body1"
               style={{ wordWrap: 'break-word' }}
             >
-              {`${share.principal.principalIAMRoleName}`}
+              {`${share.principal.principalRoleName}`}
             </Typography>
           </Box>
         </Grid>

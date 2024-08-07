@@ -52,7 +52,7 @@ export const ShareObjectSelectorModal = (props) => {
       filteredShares.map((share) => ({
         id: share.shareUri,
         requestOwner: share.principal.SamlGroupName,
-        IAMRole: share.principal.principalIAMRoleName,
+        IAMRole: share.principal.principalRoleName,
         status: share.status
       }))
     );

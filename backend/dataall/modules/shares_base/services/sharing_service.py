@@ -86,7 +86,7 @@ class SharingService:
                 if not ShareObjectService.verify_principal_role(session, share_data.share):
                     raise PrincipalRoleNotFound(
                         'process approved shares',
-                        f'Principal role {share_data.share.principalIAMRoleName} is not found.',
+                        f'Principal role {share_data.share.principalRoleName} is not found.',
                     )
 
                 with ResourceLockRepository.acquire_lock_with_retry(
@@ -189,7 +189,7 @@ class SharingService:
                 if not ShareObjectService.verify_principal_role(session, share_data.share):
                     raise PrincipalRoleNotFound(
                         'process revoked shares',
-                        f'Principal role {share_data.share.principalIAMRoleName} is not found.',
+                        f'Principal role {share_data.share.principalRoleName} is not found.',
                     )
 
                 with ResourceLockRepository.acquire_lock_with_retry(
@@ -268,17 +268,17 @@ class SharingService:
         with engine.scoped_session() as session:
             share_data, share_items = cls._get_share_data_and_items(session, share_uri, status, healthStatus)
 
-            log.info(f'Verifying principal IAM Role {share_data.share.principalIAMRoleName}')
+            log.info(f'Verifying principal IAM Role {share_data.share.principalRoleName}')
             if not ShareObjectService.verify_principal_role(session, share_data.share):
                 log.error(
-                    f'Failed to get Principal IAM Role {share_data.share.principalIAMRoleName}, updating health status...'
+                    f'Failed to get Principal IAM Role {share_data.share.principalRoleName}, updating health status...'
                 )
                 ShareStatusRepository.update_share_item_health_status_batch(
                     session,
                     share_uri,
                     old_status=healthStatus,
                     new_status=ShareItemHealthStatus.Unhealthy.value,
-                    message=f'Share principal Role {share_data.share.principalIAMRoleName} not found. Check the team or consumption IAM role used.',
+                    message=f'Share principal Role {share_data.share.principalRoleName} not found. Check the team or consumption IAM role used.',
                 )
                 return True
 
@@ -332,10 +332,10 @@ class SharingService:
             )
 
             try:
-                log.info(f'Verifying principal IAM Role {share_data.share.principalIAMRoleName}')
+                log.info(f'Verifying principal IAM Role {share_data.share.principalRoleName}')
                 reapply_successful = ShareObjectService.verify_principal_role(session, share_data.share)
                 if not reapply_successful:
-                    log.error(f'Failed to get Principal IAM Role {share_data.share.principalIAMRoleName}, exiting...')
+                    log.error(f'Failed to get Principal IAM Role {share_data.share.principalRoleName}, exiting...')
                     return False
                 else:
                     with ResourceLockRepository.acquire_lock_with_retry(

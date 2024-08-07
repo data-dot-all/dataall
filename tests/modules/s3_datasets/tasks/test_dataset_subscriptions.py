@@ -70,6 +70,7 @@ def share(
             environmentUri=otherenv.environmentUri,
             owner='bob',
             principalId='group2',
+            principalRoleName='uri-group2',
             principalType=PrincipalType.Group.value,
             status=ShareObjectStatus.Approved.value,
         )
