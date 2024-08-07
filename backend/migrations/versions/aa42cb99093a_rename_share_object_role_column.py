@@ -18,7 +18,7 @@ depends_on = None
 
 
 def upgrade():
-    op.alter_column('share_object', 'principalIAMRoleName', nullable=False, new_column_name='principalRoleName')
+    op.alter_column('share_object', 'principalIAMRoleName', nullable=True, new_column_name='principalRoleName')
 
 
 def downgrade():
