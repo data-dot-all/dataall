@@ -71,7 +71,7 @@ import {
   UpdateRejectReason,
   UpdateRequestReason
 } from '../components';
-import { generateShareItemLabel } from 'utils';
+import { generateShareItemLabel, isFeatureEnabled } from 'utils';
 import { ShareLogs } from '../components/ShareLogs';
 import { ShareSubmitModal } from '../components/ShareSubmitModal';
 
@@ -1196,40 +1196,43 @@ const ShareView = () => {
                           {`aws s3 ls s3://${consumptionData.s3bucketName}`}
                         </Typography>
                       </Box>
-                      <Box sx={{ mt: 3 }}>
-                        <Typography
-                          display="inline"
-                          color="textSecondary"
-                          variant="subtitle2"
-                        >
-                          S3 Access Point name (Folder sharing):
-                        </Typography>
-                        <Typography
-                          display="inline"
-                          color="textPrimary"
-                          variant="subtitle2"
-                        >
-                          {` ${consumptionData.s3AccessPointName || '-'}`}
-                        </Typography>
-                        <Typography color="textPrimary" variant="subtitle2">
-                          <CopyToClipboard
-                            onCopy={() => copyNotification()}
-                            text={`aws s3 ls arn:aws:s3:${share.dataset.region}:${share.dataset.AwsAccountId}:accesspoint/${consumptionData.s3AccessPointName}/SHARED_FOLDER/`}
+                      {isFeatureEnabled('s3_datasets', 'file_actions') && (
+                        <Box sx={{ mt: 3 }}>
+                          <Typography
+                            display="inline"
+                            color="textSecondary"
+                            variant="subtitle2"
                           >
-                            <IconButton>
-                              <CopyAllOutlined
-                                sx={{
-                                  color:
-                                    theme.palette.mode === 'dark'
-                                      ? theme.palette.primary.contrastText
-                                      : theme.palette.primary.main
-                                }}
-                              />
-                            </IconButton>
-                          </CopyToClipboard>
-                          {`aws s3 ls arn:aws:s3:${share.dataset.region}:${share.dataset.AwsAccountId}:accesspoint/${consumptionData.s3AccessPointName}/SHARED_FOLDER/`}
-                        </Typography>
-                      </Box>
+                            S3 Access Point name (Folder sharing):
+                          </Typography>
+                          <Typography
+                            display="inline"
+                            color="textPrimary"
+                            variant="subtitle2"
+                          >
+                            {` ${consumptionData.s3AccessPointName || '-'}`}
+                          </Typography>
+
+                          <Typography color="textPrimary" variant="subtitle2">
+                            <CopyToClipboard
+                              onCopy={() => copyNotification()}
+                              text={`aws s3 ls arn:aws:s3:${share.dataset.region}:${share.dataset.AwsAccountId}:accesspoint/${consumptionData.s3AccessPointName}/SHARED_FOLDER/`}
+                            >
+                              <IconButton>
+                                <CopyAllOutlined
+                                  sx={{
+                                    color:
+                                      theme.palette.mode === 'dark'
+                                        ? theme.palette.primary.contrastText
+                                        : theme.palette.primary.main
+                                  }}
+                                />
+                              </IconButton>
+                            </CopyToClipboard>
+                            {`aws s3 ls arn:aws:s3:${share.dataset.region}:${share.dataset.AwsAccountId}:accesspoint/${consumptionData.s3AccessPointName}/SHARED_FOLDER/`}
+                          </Typography>
+                        </Box>
+                      )}
                       <Box sx={{ mt: 3 }}>
                         <Typography
                           display="inline"
