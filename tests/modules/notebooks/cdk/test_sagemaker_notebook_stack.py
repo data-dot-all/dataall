@@ -1,5 +1,5 @@
 import json
-
+import os
 import pytest
 from aws_cdk import App
 
@@ -41,3 +41,11 @@ def template(notebook):
 
 def test_resources_created(template):
     assert 'AWS::SageMaker::NotebookInstance' in template
+
+
+@pytest.mark.skipif(
+    os.getenv('CHECKOV_ACTIONS', 'false') != 'true', reason='Pytest used for Checkov Scan CDK Synth Output'
+)
+def test_checkov(template):
+    with open('checkov_notebook_synth.json', 'w') as f:
+        f.write(template)

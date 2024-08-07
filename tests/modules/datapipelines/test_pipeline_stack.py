@@ -1,5 +1,5 @@
 import os
-
+import json
 import pytest
 from aws_cdk import App
 from aws_cdk.assertions import Template
@@ -102,3 +102,14 @@ def test_resources_created(pipeline_db):
     template.resource_count_is('AWS::CodeCommit::Repository', 1)
     template.resource_count_is('AWS::CodePipeline::Pipeline', 1)
     template.resource_count_is('AWS::CodeBuild::Project', 1)
+
+
+@pytest.mark.skipif(
+    os.getenv('CHECKOV_ACTIONS', 'false') != 'true', reason='Pytest used for Checkov Scan CDK Synth Output'
+)
+def test_checkov(pipeline_db):
+    app = App()
+    stack = PipelineStack(app, 'Pipeline', target_uri=pipeline_db.DataPipelineUri)
+    template = json.dumps(app.synth().get_stack_by_name('Pipeline').template)
+    with open('checkov_pipeline_synth.json', 'w') as f:
+        f.write(template)
