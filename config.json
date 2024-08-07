@@ -49,6 +49,9 @@
         "redshift_datasets": {
             "active": true
         },
+        "redshift_datasets_shares": {
+            "active": true
+        },
         "worksheets": {
             "active": true
         },
