@@ -98,9 +98,8 @@ def share_item(share_item_table: Callable, share: ShareObject, table1: DatasetTa
 
 
 @pytest.fixture(scope='module')
-def table_data_filter_fixture(db, table1, table_data_filter, group, user):
-    table_data_filter = table_data_filter(table=table1, name='datafilter1', filterType='COLUMN')
-    yield table_data_filter
+def table_data_filter_fixture(db, table1, table_column_data_filter, group, user):
+    yield table_column_data_filter(table=table1, name='datafilter1', filterType='COLUMN')
 
 
 @pytest.fixture(scope='module')

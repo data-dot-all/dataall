@@ -37,24 +37,18 @@ export const TableFiltersDataGrid = ({
     <DataGrid
       autoHeight
       sx={{
-        wordWrap: 'break-word',
-        boxShadow: 2,
-        borderRadius: 1,
+        wordWrap: 'break-word', //TODO: create a generic styled datagrid to be used across features
+        '& .MuiDataGrid-row': {
+          borderBottom: '1px solid rgba(145, 158, 171, 0.24)'
+        },
+        '& .MuiDataGrid-columnHeaders': {
+          borderBottom: 0.5
+        },
+        '&.MuiDataGrid-root--densityStandard .MuiDataGrid-cell': {
+          py: '15px'
+        },
         '& .MuiDataGrid-cell:hover': {
           color: theme.palette.primary.main
-        },
-        '& .MuiDataGrid-row': {
-          borderRadius: 0,
-          boxShadow: 2
-        },
-        '& .MuiDataGrid-columnHeader, .MuiDataGrid-cell': {
-          borderRight: `1px solid ${theme.palette.grey[400]}`
-        },
-        '& .MuiDataGrid-columnHeader': {
-          borderBottom: `1px solid ${theme.palette.grey[400]}`
-        },
-        '& .MuiDataGrid-columnsContainer, .MuiDataGrid-cell': {
-          borderBottom: `1px solid ${theme.palette.grey[400]}`
         }
       }}
       showCellVerticalBorder

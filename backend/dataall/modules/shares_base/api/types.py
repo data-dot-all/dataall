@@ -40,7 +40,7 @@ ShareObjectItemDataFilter = gql.ObjectType(
     fields=[
         gql.Field(name='attachedDataFilterUri', type=gql.String),
         gql.Field(name='label', type=gql.String),
-        gql.Field('dataFilterUris', type=gql.ArrayType(gql.String)),
+        gql.Field(name='dataFilterUris', type=gql.ArrayType(gql.String)),
         gql.Field(name='dataFilterNames', type=gql.ArrayType(gql.String)),
         gql.Field(name='itemUri', type=gql.String),
     ],

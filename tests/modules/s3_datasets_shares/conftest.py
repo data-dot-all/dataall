@@ -212,7 +212,7 @@ def table(db):
 
 
 @pytest.fixture(scope='module')
-def table_data_filter(db):
+def table_column_data_filter(db):
     def factory(
         table: DatasetTable,
         name,
@@ -270,12 +270,6 @@ def table_fixture(db, dataset_fixture, table, group, user):
             resource_type=DatasetTable.__name__,
         )
     yield table1
-
-
-# @pytest.fixture(scope='module')
-# def table_data_filter_fixture(db, table_fixture, table_data_filter, group, user):
-#     table_data_filter = table_data_filter(table=table_fixture, name='datafilter1', filterType='COLUMN')
-#     yield table_data_filter
 
 
 @pytest.fixture(scope='module')

@@ -1,7 +1,6 @@
 import logging
 import time
 from datetime import datetime
-from warnings import warn
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.s3_datasets_shares.aws.glue_client import GlueClient
 from dataall.modules.s3_datasets_shares.aws.lakeformation_client import LakeFormationClient
@@ -10,7 +9,6 @@ from dataall.base.aws.iam import IAM
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.db import exceptions
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.s3_datasets_shares.db.s3_share_object_repositories import S3ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.services.shares_enums import (
