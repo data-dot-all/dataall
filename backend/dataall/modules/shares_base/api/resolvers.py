@@ -84,9 +84,10 @@ def create_share_object(
         item_type=itemType,
         group_uri=input['groupUri'],
         principal_id=input['principalId'],
+        principal_role_name=input.get('principalRoleName'),
         principal_type=input['principalType'],
         requestPurpose=input.get('requestPurpose'),
-        attachMissingPolicies=input.get('attachMissingPolicies'),
+        attachMissingPolicies=input.get('attachMissingPolicies', False),
     )
 
 
@@ -233,7 +234,7 @@ def resolve_principal(context: Context, source: ShareObject, **kwargs):
                 'principalId': source.principalId,
                 'principalType': source.principalType,
                 'principalName': principalName,
-                'principalIAMRoleName': source.principalIAMRoleName,
+                'principalRoleName': source.principalRoleName,
                 'SamlGroupName': source.groupUri,
                 'environmentUri': environment.environmentUri,
                 'environmentName': environment.label,

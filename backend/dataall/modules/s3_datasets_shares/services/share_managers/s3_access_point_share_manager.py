@@ -61,7 +61,7 @@ class S3AccessPointShareManager:
         self.source_account_id = share_data.dataset.AwsAccountId
         self.target_account_id = share_data.target_environment.AwsAccountId
         self.source_env_admin = share_data.source_env_group.environmentIAMRoleArn
-        self.target_requester_IAMRoleName = share_data.share.principalIAMRoleName
+        self.target_requester_IAMRoleName = share_data.share.principalRoleName
         self.bucket_name = target_folder.S3BucketName
         self.dataset_admin = share_data.dataset.IAMDatasetAdminRoleArn
         self.dataset_account_id = share_data.dataset.AwsAccountId
@@ -175,7 +175,7 @@ class S3AccessPointShareManager:
 
         if not share_policy_service.check_if_policy_attached():
             logger.info(
-                f'IAM Policy {share_resource_policy_name} exists but is not attached to role {self.share.principalIAMRoleName}'
+                f'IAM Policy {share_resource_policy_name} exists but is not attached to role {self.share.principalRoleName}'
             )
             self.folder_errors.append(
                 ShareErrorFormatter.dne_error_msg('IAM Policy attached', share_resource_policy_name)

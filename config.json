@@ -15,6 +15,9 @@
         "metadata_forms": {
             "active": true
         },
+        "metadata_forms": {
+            "active": true
+        },
         "datasets_base": {
             "active": true,
             "features": {
@@ -50,6 +53,9 @@
             "active": true
         },
         "redshift_datasets": {
+            "active": true
+        },
+        "redshift_datasets_shares": {
             "active": true
         },
         "worksheets": {

@@ -478,7 +478,7 @@ def get_share_object(client, user, group, shareUri, filter):
           principalId
           principalType
           principalName
-          principalIAMRoleName
+          principalRoleName
           SamlGroupName
           environmentUri
           environmentName
@@ -1146,7 +1146,7 @@ def test_get_share_object(client, share1_draft, user, group):
     # Then we get the info about the share
     assert get_share_object_response.data.getShareObject.shareUri == share1_draft.shareUri
     assert get_share_object_response.data.getShareObject.get('principal').principalType == PrincipalType.Group.name
-    assert get_share_object_response.data.getShareObject.get('principal').principalIAMRoleName
+    assert get_share_object_response.data.getShareObject.get('principal').principalRoleName
     assert get_share_object_response.data.getShareObject.get('principal').SamlGroupName
     assert get_share_object_response.data.getShareObject.get('principal').region
 

@@ -271,7 +271,7 @@ def test_grant_role_bucket_policy_with_no_policy_present(
     # No Bucket policy. A Default bucket policy should be formed with DataAll-Bucket-ReadOnly & RequiredSecureTransport Sids
     s3_client = mock_s3_client(mocker)
     s3_client().get_bucket_policy.return_value = None
-    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalRoleName)
 
     mocker.patch(
         'dataall.base.aws.sts.SessionHelper.get_delegation_role_arn',
@@ -316,7 +316,7 @@ def test_grant_role_bucket_policy_with_default_complete_policy(
 
     s3_client = mock_s3_client(mocker)
     s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
-    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalRoleName)
 
     share2_manager.grant_role_bucket_policy()
 
@@ -341,7 +341,7 @@ def test_grant_role_bucket_policy_with_policy_and_no_read_only_sid(
 
     s3_client = mock_s3_client(mocker)
     s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
-    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalRoleName)
 
     mocker.patch(
         'dataall.base.aws.sts.SessionHelper.get_delegation_role_arn',
@@ -385,7 +385,7 @@ def test_grant_role_bucket_policy_with_another_read_only_role(
 
     s3_client = mock_s3_client(mocker)
     s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
-    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalRoleName)
 
     mocker.patch(
         'dataall.base.aws.sts.SessionHelper.get_delegation_role_arn',
@@ -682,7 +682,7 @@ def test_grant_dataset_bucket_key_policy_with_complete_policy_present(
     existing_key_policy = base_kms_key_policy()
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
-    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalRoleName)
 
     mocker.patch(
         'dataall.base.aws.sts.SessionHelper.get_delegation_role_name',
@@ -704,7 +704,7 @@ def test_grant_dataset_bucket_key_policy_with_target_requester_id_absent(
     existing_key_policy = base_kms_key_policy('OtherTargetRequestorArn')
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
-    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalRoleName)
 
     mocker.patch(
         'dataall.base.aws.sts.SessionHelper.get_delegation_role_name',
@@ -745,7 +745,7 @@ def test_grant_dataset_bucket_key_policy_and_default_bucket_key_policy(
     kms_client().get_key_id.return_value = 'kms-key'
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
-    mock_iam_client(mocker, target_environment.AwsAccountId, share3.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share3.principalRoleName)
 
     with db.scoped_session() as session:
         # dataset2 should not have importedKey to simulate that while importing the dataset a key was not added
@@ -782,7 +782,7 @@ def test_grant_dataset_bucket_key_policy_with_imported(
     kms_client().get_key_id.return_value = 'kms-key'
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
-    mock_iam_client(mocker, target_environment.AwsAccountId, share3.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share3.principalRoleName)
 
     mocker.patch(
         'dataall.base.aws.sts.SessionHelper.get_delegation_role_name',
@@ -813,7 +813,7 @@ def test_delete_target_role_bucket_policy_with_no_read_only_sid(
 
     s3_client = mock_s3_client(mocker)
     s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
-    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalRoleName)
 
     share2_manager.delete_target_role_bucket_policy()
 
@@ -846,7 +846,7 @@ def test_delete_target_role_bucket_policy_with_multiple_principals_in_policy(
 
     s3_client = mock_s3_client(mocker)
     s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
-    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalRoleName)
 
     share2_manager.delete_target_role_bucket_policy()
 
@@ -895,7 +895,7 @@ def test_delete_target_role_bucket_policy_with_one_principal_in_policy(
 
     s3_client = mock_s3_client(mocker)
     s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
-    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalRoleName)
 
     share2_manager.delete_target_role_bucket_policy()
 
@@ -1181,7 +1181,7 @@ def test_delete_target_role_bucket_key_policy_with_no_target_requester_id(
     kms_client().get_key_id.return_value = 'kms-key'
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
-    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalRoleName)
 
     share2_manager.delete_target_role_bucket_key_policy(target_bucket=bucket2)
 
@@ -1200,7 +1200,7 @@ def test_delete_target_role_bucket_key_policy_with_target_requester_id(
     kms_client().get_key_id.return_value = 'kms-key'
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
-    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalRoleName)
 
     share2_manager.delete_target_role_bucket_key_policy(target_bucket=bucket2)
 
@@ -1225,7 +1225,7 @@ def test_delete_target_role_bucket_key_policy_with_target_requester_id_and_impor
     kms_client().get_key_id.return_value = 'kms-key'
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
-    mock_iam_client(mocker, target_environment.AwsAccountId, share3.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share3.principalRoleName)
 
     share2_manager.delete_target_role_bucket_key_policy(target_bucket=bucket3)
 
@@ -1250,7 +1250,7 @@ def test_delete_target_role_bucket_key_policy_with_target_requester_id_and_impor
     kms_client().get_key_id.return_value = 'kms-key'
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
-    mock_iam_client(mocker, target_environment.AwsAccountId, share3.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share3.principalRoleName)
 
     with db.scoped_session() as session:
         # dataset2 should not have importedKey to simulate that while importing the dataset a key was not added
@@ -1293,7 +1293,7 @@ def test_delete_target_role_bucket_key_policy_with_multiple_principals_in_policy
     kms_client().get_key_id.return_value = 'kms-key'
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
-    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalRoleName)
 
     share2_manager.delete_target_role_bucket_key_policy(target_bucket=bucket2)
 
@@ -1322,9 +1322,7 @@ def test_check_role_bucket_policy(
         {
             'Sid': f'{DATAALL_READ_ONLY_SID}',
             'Effect': 'Allow',
-            'Principal': {
-                'AWS': [f'arn:aws:iam::{target_environment.AwsAccountId}:role/{share2.principalIAMRoleName}']
-            },
+            'Principal': {'AWS': [f'arn:aws:iam::{target_environment.AwsAccountId}:role/{share2.principalRoleName}']},
             'Action': ['s3:List*', 's3:GetObject'],
             'Resource': [f'arn:aws:s3:::someS3Bucket', f'arn:aws:s3:::someS3Bucket/*'],
         }
@@ -1332,7 +1330,7 @@ def test_check_role_bucket_policy(
 
     s3_client = mock_s3_client(mocker)
     s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
-    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalRoleName)
 
     share2_manager.check_role_bucket_policy()
     assert (len(share2_manager.bucket_errors)) == 0
@@ -1357,7 +1355,7 @@ def test_check_role_bucket_policy_missing_role_principal(
 
     s3_client = mock_s3_client(mocker)
     s3_client().get_bucket_policy.return_value = json.dumps(bucket_policy)
-    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalRoleName)
 
     share2_manager.check_role_bucket_policy()
     assert (len(share2_manager.bucket_errors)) == 1
@@ -1370,7 +1368,7 @@ def test_check_role_bucket_policy_no_policy(
     # No Bucket policy
     s3_client = mock_s3_client(mocker)
     s3_client().get_bucket_policy.return_value = None
-    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalRoleName)
 
     # When
     share2_manager.check_role_bucket_policy()
@@ -1617,7 +1615,7 @@ def test_check_dataset_bucket_key_policy(mocker, share2: ShareObject, target_env
     existing_key_policy = base_kms_key_policy()
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
-    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalRoleName)
 
     # When
     share2_manager.check_dataset_bucket_key_policy()
@@ -1633,7 +1631,7 @@ def test_check_dataset_bucket_key_policy_missing(
     kms_client().get_key_id.return_value = 'kms-key'
 
     kms_client().get_key_policy.return_value = None
-    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalRoleName)
 
     # When
     share2_manager.check_dataset_bucket_key_policy()
@@ -1651,7 +1649,7 @@ def test_check_dataset_bucket_key_policy_missing_principal(
     existing_key_policy = base_kms_key_policy('OtherTargetRequestorArn')
 
     kms_client().get_key_policy.return_value = json.dumps(existing_key_policy)
-    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share2.principalRoleName)
 
     share2_manager.check_dataset_bucket_key_policy()
     # Then

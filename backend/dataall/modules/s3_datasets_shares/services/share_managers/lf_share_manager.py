@@ -78,15 +78,15 @@ class LFShareManager:
         principal_iam_role_arn = IAM.get_role_arn_by_name(
             account_id=self.target_environment.AwsAccountId,
             region=self.target_environment.region,
-            role_name=self.share.principalIAMRoleName,
+            role_name=self.share.principalRoleName,
         )
         if principal_iam_role_arn is None:
             logger.info(
-                f'Principal IAM Role {self.share.principalIAMRoleName} not found in {self.target_environment.AwsAccountId}'
+                f'Principal IAM Role {self.share.principalRoleName} not found in {self.target_environment.AwsAccountId}'
             )
             logger.info('Try to build arn')
             principal_iam_role_arn = (
-                f'arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.share.principalIAMRoleName}'
+                f'arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.share.principalRoleName}'
             )
 
         return [principal_iam_role_arn]

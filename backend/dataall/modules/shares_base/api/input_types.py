@@ -8,9 +8,10 @@ NewShareObjectInput = gql.InputType(
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='groupUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='principalId', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='principalRoleName', type=gql.String),
         gql.Argument(name='principalType', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='requestPurpose', type=gql.String),
-        gql.Argument(name='attachMissingPolicies', type=gql.NonNullableType(gql.Boolean)),
+        gql.Argument(name='attachMissingPolicies', type=gql.Boolean),
     ],
 )
 

@@ -215,7 +215,7 @@ class ShareObjectRepository:
                 query = query.filter(ShareObject.groupUri.in_(data.get('share_requesters')))
         if data and data.get('share_iam_roles'):
             if len(data.get('share_iam_roles')) > 0:
-                query = query.filter(ShareObject.principalIAMRoleName.in_(data.get('share_iam_roles')))
+                query = query.filter(ShareObject.principalRoleName.in_(data.get('share_iam_roles')))
         return paginate(query.order_by(ShareObject.shareUri), data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
     @staticmethod
@@ -254,7 +254,7 @@ class ShareObjectRepository:
                 query = query.filter(ShareObject.groupUri.in_(data.get('share_requesters')))
         if data and data.get('share_iam_roles'):
             if len(data.get('share_iam_roles')) > 0:
-                query = query.filter(ShareObject.principalIAMRoleName.in_(data.get('share_iam_roles')))
+                query = query.filter(ShareObject.principalRoleName.in_(data.get('share_iam_roles')))
         return paginate(query.order_by(ShareObject.shareUri), data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
     @staticmethod
@@ -322,6 +322,11 @@ class ShareObjectRepository:
 
     @staticmethod
     def list_shareable_items_of_type(session, share, type, share_type_model, share_type_uri, status=None):
+        """
+        type: ShareableType e.g. ShareableType.StorageLocation
+        share_type_model: ShareProcessorDefinition.shareable_type e.g. DatasetStorageLocation
+        share_type_uri: ShareProcessorDefinition.shareable_uri e.g DatasetStorageLocation.locationUri
+        """
         logger.info(f'Getting all shareable items {status=}, for {share_type_model=}')
         query = (
             session.query(
@@ -399,17 +404,16 @@ class ShareObjectRepository:
         A method used by the scheduled ECS Task to run fetch_submitted_shares_with_notifications() process against ALL shared objects in ALL
         active share objects within dataall
         """
-        with session() as session:
-            pending_shares = (
-                session.query(ShareObject)
-                .join(
-                    Notification,
-                    and_(
-                        ShareObject.shareUri == func.split_part(Notification.target_uri, '|', 1),
-                        ShareObject.datasetUri == func.split_part(Notification.target_uri, '|', 2),
-                    ),
-                )
-                .filter(and_(Notification.type == 'SHARE_OBJECT_SUBMITTED', ShareObject.status == 'Submitted'))
-                .all()
+        pending_shares = (
+            session.query(ShareObject)
+            .join(
+                Notification,
+                and_(
+                    ShareObject.shareUri == func.split_part(Notification.target_uri, '|', 1),
+                    ShareObject.datasetUri == func.split_part(Notification.target_uri, '|', 2),
+                ),
             )
-            return pending_shares
+            .filter(and_(Notification.type == 'SHARE_OBJECT_SUBMITTED', ShareObject.status == 'Submitted'))
+            .all()
+        )
+        return pending_shares
