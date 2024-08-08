@@ -992,21 +992,23 @@ const ShareView = () => {
                             </Typography>
                           </ListItem>
                           <ListItem
-                              disableGutters
-                              divider
-                              sx={{
-                                justifyContent: 'space-between',
-                                padding: 2
-                              }}
+                            disableGutters
+                            divider
+                            sx={{
+                              justifyContent: 'space-between',
+                              padding: 2
+                            }}
                           >
                             <Typography
-                                color="textSecondary"
-                                variant="subtitle2"
+                              color="textSecondary"
+                              variant="subtitle2"
                             >
                               Permissions
                             </Typography>
-                            <Typography color="textPrimary" variant="body2" >
-                              { share.permissions.map((perm) => <Chip label={perm} sx={{marginRight:1}} />)}
+                            <Typography color="textPrimary" variant="body2">
+                              {share.permissions.map((perm) => (
+                                <Chip label={perm} sx={{ marginRight: 1 }} />
+                              ))}
                             </Typography>
                           </ListItem>
                           <ListItem
