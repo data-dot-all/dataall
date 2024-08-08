@@ -67,3 +67,7 @@ class MetadataFormRepository:
         mf.possibleValues = data.get('possibleValues', mf.possibleValues)
         session.commit()
         return mf
+
+    @staticmethod
+    def get_metadata_form_owner(session, uri):
+        return session.query(MetadataForm).get(uri).SamlGroupName

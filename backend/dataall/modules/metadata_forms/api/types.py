@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from dataall.modules.metadata_forms.api.resolvers import get_home_entity_name, get_form_fields
+from dataall.modules.metadata_forms.api.resolvers import get_home_entity_name, get_form_fields, get_user_role
 
 MetadataForm = gql.ObjectType(
     name='MetadataForm',
@@ -11,6 +11,7 @@ MetadataForm = gql.ObjectType(
         gql.Field(name='visibility', type=gql.String),
         gql.Field(name='homeEntity', type=gql.String),
         gql.Field(name='homeEntityName', type=gql.String, resolver=get_home_entity_name),
+        gql.Field(name='userRole', type=gql.String, resolver=get_user_role),
         gql.Field(name='fields', type=gql.ArrayType(gql.Ref('MetadataFormField')), resolver=get_form_fields),
     ],
 )
