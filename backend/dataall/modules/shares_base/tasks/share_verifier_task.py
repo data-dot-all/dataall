@@ -5,6 +5,8 @@ from dataall.modules.shares_base.db.share_object_repositories import ShareObject
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.services.shares_enums import ShareItemStatus
 from dataall.modules.shares_base.services.sharing_service import SharingService
+from dataall.modules.shares_base.tasks.share_reapplier_task import EcsBulkShareRepplyService
+
 from dataall.base.db import get_engine
 
 from dataall.base.loader import load_modules, ImportMode
@@ -42,3 +44,4 @@ if __name__ == '__main__':
     ENVNAME = os.environ.get('envname', 'local')
     ENGINE = get_engine(envname=ENVNAME)
     verify_shares(engine=ENGINE)
+    EcsBulkShareRepplyService.process_reapply_shares(ENGINE)
