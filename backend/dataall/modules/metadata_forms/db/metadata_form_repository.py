@@ -67,5 +67,3 @@ class MetadataFormRepository:
         mf.possibleValues = data.get('possibleValues', mf.possibleValues)
         session.commit()
         return mf
-
-

@@ -4,7 +4,7 @@ from dataall.core.organizations.db.organization_repositories import Organization
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 
 from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility
-from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility, MetadataFormFieldType
+from dataall.modules.metadata_forms.db.enums import MetadataFormFieldType
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
 
 
