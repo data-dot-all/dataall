@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.tasks.service_handlers import Worker
@@ -74,6 +75,7 @@ class ShareObjectService:
         principal_type,
         requestPurpose,
         attachMissingPolicies,
+        permissions: List[str],
     ):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -152,6 +154,7 @@ class ShareObjectService:
                     principalRoleName=principal_role_name,
                     status=ShareObjectStatus.Draft.value,
                     requestPurpose=requestPurpose,
+                    permissions=permissions,
                 )
                 ShareObjectRepository.save_and_commit(session, share)
 

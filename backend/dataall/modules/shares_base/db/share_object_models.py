@@ -1,14 +1,14 @@
 from datetime import datetime, timedelta
-from typing import List
 from uuid import uuid4
 
-from sqlalchemy import Boolean, Column, String, DateTime, ARRAY, Enum as SaEnum
+from sqlalchemy import Boolean, Column, String, DateTime
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import query_expression
 
 from dataall.base.db import Base, utils
 from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectStatus,
-    ShareItemStatus, ShareObjectDataPermission,
+    ShareItemStatus,
 )
 
 
@@ -39,7 +39,7 @@ class ShareObject(Base):
     rejectPurpose = Column(String, nullable=True)
     userRoleForShareObject = query_expression()
     existingSharedItems = query_expression()
-    permissions: List[ShareObjectDataPermission] = Column(ARRAY(SaEnum(ShareObjectDataPermission)), nullable=True)
+    permissions = Column(ARRAY(String), nullable=True)
 
 
 class ShareObjectItem(Base):

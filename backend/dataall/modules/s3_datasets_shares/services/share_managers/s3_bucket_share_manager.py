@@ -42,9 +42,9 @@ SID_TO_ACTIONS = {
 }
 
 ENUM_PERM_TO_SID = {
-    ShareObjectDataPermission.Read: DATAALL_READ_ONLY_SID,
-    ShareObjectDataPermission.Write: DATAALL_WRITE_ONLY_SID,
-    ShareObjectDataPermission.Modify: DATAALL_MODIFY_ONLY_SID,
+    ShareObjectDataPermission.Read.value: DATAALL_READ_ONLY_SID,
+    ShareObjectDataPermission.Write.value: DATAALL_WRITE_ONLY_SID,
+    ShareObjectDataPermission.Modify.value: DATAALL_MODIFY_ONLY_SID,
 }
 
 
@@ -315,23 +315,25 @@ class S3BucketShareManager:
             return
         s3_client = S3Client(self.source_account_id, self.source_environment.region)
         bucket_policy = s3_client.get_bucket_policy(self.bucket_name)
-        error = False
         if not bucket_policy:
-            error = True
+            self.bucket_errors.append(
+                ShareErrorFormatter.missing_permission_error_msg(
+                    target_requester_arn, 'Bucket Policy is missing', '', 'S3 Bucket', self.bucket_name
+                )
+            )
         else:
             bucket_policy = json.loads(bucket_policy)
             counter = count()
             statements = {item.get('Sid', next(counter)): item for item in bucket_policy.get('Statement', {})}
-            if DATAALL_READ_ONLY_SID not in statements.keys():
-                error = True
-            elif f'{target_requester_arn}' not in self.get_principal_list(statements[DATAALL_READ_ONLY_SID]):
-                error = True
-        if error:
-            self.bucket_errors.append(
-                ShareErrorFormatter.missing_permission_error_msg(
-                    target_requester_arn, 'Bucket Policy', DATAALL_READ_ONLY_SID, 'S3 Bucket', f'{self.bucket_name}'
-                )
-            )
+            for target_sid in self.get_share_sids():
+                if target_sid not in statements.keys() or f'{target_requester_arn}' not in self.get_principal_list(
+                    statements[target_sid]
+                ):
+                    self.bucket_errors.append(
+                        ShareErrorFormatter.missing_permission_error_msg(
+                            target_requester_arn, 'Bucket Policy', target_sid, 'S3 Bucket', self.bucket_name
+                        )
+                    )
 
     def grant_role_bucket_policy(self):
         """
@@ -664,7 +666,7 @@ class S3BucketShareManager:
             'Sid': f'{DATAALL_BUCKET_KMS_DECRYPT_SID}',
             'Effect': 'Allow',
             'Principal': {'AWS': [f'{target_requester_arn}']},
-            'Action': 'kms:Decrypt',
+            'Action': ['kms:Decrypt', 'kms:Encrypt', 'kms:GenerateDataKey'],
             'Resource': '*',
         }
 

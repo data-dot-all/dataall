@@ -13,7 +13,6 @@ from dataall.modules.shares_base.services.share_item_service import ShareItemSer
 from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.shares_base.services.share_logs_service import ShareLogsService
 
-
 log = logging.getLogger(__name__)
 
 
@@ -28,6 +27,8 @@ class RequestValidator:
             raise RequiredParameter('principalType')
         if not data.get('groupUri'):
             raise RequiredParameter('groupUri')
+        if len(data.get('permissions', [])) == 0:
+            raise RequiredParameter('permissions')
 
     @staticmethod
     def validate_item_selector_input(data):
@@ -69,6 +70,7 @@ def create_share_object(
         principal_type=input['principalType'],
         requestPurpose=input.get('requestPurpose'),
         attachMissingPolicies=input.get('attachMissingPolicies', False),
+        permissions=input.get('permissions'),
     )
 
 

@@ -141,7 +141,7 @@ def upgrade():
 
     # Grant folder read permissions to share requesters with active shared folders
     print('Getting all Shares and granting folder permissions...')
-    shares: [ShareObject] = session.query(ShareObject).all()
+    shares: [ShareObject] = session.query(ShareObject.datasetUri, ShareObject.groupUri, ShareObject.shareUri).all()
     for share in shares:
         dataset: Dataset = session.query(Dataset).get(share.datasetUri)
 
