@@ -46,6 +46,7 @@ const MetadataFormView = () => {
   const [loading, setLoading] = useState(true);
   const [visibilityDict, setVisibilityDict] = useState({});
   const [fieldTypeOptions, setFieldTypeOptions] = useState([]);
+  const [userRolesMF, setUserRolesMFDict] = useState({});
 
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);
@@ -80,7 +81,8 @@ const MetadataFormView = () => {
     try {
       const enums = await fetchEnums(client, [
         'MetadataFormVisibility',
-        'MetadataFormFieldType'
+        'MetadataFormFieldType',
+        'MetadataFormUserRoles'
       ]);
       if (enums['MetadataFormVisibility'].length > 0) {
         let tmpVisibilityDict = {};
@@ -96,6 +98,16 @@ const MetadataFormView = () => {
         setFieldTypeOptions(enums['MetadataFormFieldType']);
       } else {
         const error = 'Could not fetch field type options';
+        dispatch({ type: SET_ERROR, error });
+      }
+      if (enums['MetadataFormUserRoles'].length > 0) {
+        let tmpUserRolesMFDict = {};
+        enums['MetadataFormUserRoles'].map((x) => {
+          tmpUserRolesMFDict[x.name] = x.value;
+        });
+        setUserRolesMFDict(tmpUserRolesMFDict);
+      } else {
+        const error = 'Could not fetch user roles options';
         dispatch({ type: SET_ERROR, error });
       }
     } catch (e) {
@@ -187,21 +199,23 @@ const MetadataFormView = () => {
                 </Link>
               </Breadcrumbs>
             </Grid>
-
-            <Grid item>
-              <Box sx={{ m: -1 }}>
-                <Button
-                  color="primary"
-                  startIcon={<FaTrash size={15} />}
-                  sx={{ mt: 1 }}
-                  onClick={deleteForm}
-                  type="button"
-                  variant="outlined"
-                >
-                  Delete
-                </Button>
-              </Box>
-            </Grid>
+            {(metadataForm.userRole === userRolesMF.Owner ||
+              metadataForm.userRole === userRolesMF.Admin) && (
+              <Grid item>
+                <Box sx={{ m: -1 }}>
+                  <Button
+                    color="primary"
+                    startIcon={<FaTrash size={15} />}
+                    sx={{ mt: 1 }}
+                    onClick={deleteForm}
+                    type="button"
+                    variant="outlined"
+                  >
+                    Delete
+                  </Button>
+                </Box>
+              </Grid>
+            )}
           </Grid>
           <Box sx={{ mt: 3 }}>
             <Tabs
@@ -235,6 +249,7 @@ const MetadataFormView = () => {
                 metadataForm={metadataForm}
                 visibilityDict={visibilityDict}
                 fieldTypeOptions={fieldTypeOptions}
+                userRolesMF={userRolesMF}
               />
             )}
             {currentTab === 'enforcement' && (

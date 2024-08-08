@@ -141,7 +141,7 @@ class MetadataFormService:
     def create_metadata_form_fields(uri, data_arr):
         fields = []
         for data in data_arr:
-            fields.append(MetadataFormService.create_metadata_form_field(uri, data))
+            fields.append(MetadataFormService.create_metadata_form_field(uri=uri, data=data))
         return fields
 
     @staticmethod
@@ -158,13 +158,13 @@ class MetadataFormService:
             if item.get('metadataFormUri') != uri:
                 raise Exception('property metadataFormUri does not match form uri')
             if 'uri' not in item:
-                MetadataFormService.create_metadata_form_field(uri, item)
+                MetadataFormService.create_metadata_form_field(uri=uri, data=item)
             elif item.get('uri') is not None:
                 if item.get('deleted', False):
-                    MetadataFormService.delete_metadata_form_field(uri, item['uri'])
+                    MetadataFormService.delete_metadata_form_field(uri=uri, fieldUri=item['uri'])
                 else:
-                    MetadataFormService.update_metadata_form_field(uri, item['uri'], item)
-        return MetadataFormService.get_metadata_form_fields(uri)
+                    MetadataFormService.update_metadata_form_field(uri=uri, fieldUri=item['uri'], data=item)
+        return MetadataFormService.get_metadata_form_fields(uri=uri)
 
     @staticmethod
     @MetadataFormAccessService.can_perform('UPDATE FIELD')
