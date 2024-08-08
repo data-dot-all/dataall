@@ -21,7 +21,7 @@ export const getShareRequestsFromMe = ({ filter }) => ({
             principalId
             principalType
             principalName
-            principalIAMRoleName
+            principalRoleName
             SamlGroupName
             environmentUri
             environmentName

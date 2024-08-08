@@ -378,7 +378,7 @@ def share(db):
                 groupUri=env_group.groupUri,
                 principalId=env_group.groupUri,
                 principalType=PrincipalType.Group.value,
-                principalIAMRoleName=env_group.environmentIAMRoleName,
+                principalRoleName=env_group.environmentIAMRoleName,
                 status=status,
             )
             session.add(share)
