@@ -9,17 +9,18 @@ Create Date: 2024-04-11 15:03:35.157904
 from alembic import op
 from sqlalchemy import orm
 from sqlalchemy import and_
-from sqlalchemy import Column, String, Boolean
+from sqlalchemy import Column, String, Boolean, DateTime
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 from dataall.base.db import utils, Resource
+from datetime import datetime
 from dataall.core.permissions.api.enums import PermissionType
 from dataall.core.permissions.services.permission_service import PermissionService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_FOLDER_READ, GET_DATASET_FOLDER
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation
-from dataall.modules.shares_base.db.share_object_models import ShareObject, ShareObjectItem
-from dataall.modules.shares_base.services.shares_enums import ShareItemStatus, ShareableType
+from dataall.modules.shares_base.db.share_object_models import ShareObjectItem
+from dataall.modules.shares_base.services.shares_enums import ShareItemStatus, ShareableType, ShareObjectStatus
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification, Language
 
 # revision identifiers, used by Alembic.
@@ -36,6 +37,23 @@ def get_session():
 
 
 Base = declarative_base()
+
+
+class ShareObject(Base):
+    __tablename__ = 'share_object'
+    shareUri = Column(String, nullable=False, primary_key=True, default=utils.uuid('share'))
+    datasetUri = Column(String, nullable=False)
+    environmentUri = Column(String)
+    groupUri = Column(String)
+    principalIAMRoleName = Column(String, nullable=True)
+    principalId = Column(String, nullable=True)
+    principalType = Column(String, nullable=True, default='Group')
+    status = Column(String, nullable=False, default=ShareObjectStatus.Draft.value)
+    owner = Column(String, nullable=False)
+    created = Column(DateTime, default=datetime.now)
+    updated = Column(DateTime, onupdate=datetime.now)
+    deleted = Column(DateTime)
+    confirmed = Column(Boolean, default=False)
 
 
 class Dataset(Resource, Base):

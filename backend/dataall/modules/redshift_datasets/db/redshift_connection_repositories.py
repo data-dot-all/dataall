@@ -50,6 +50,8 @@ class RedshiftConnectionRepository:
             query = query.filter(RedshiftConnection.environmentUri == filter.get('environmentUri'))
         if filter and filter.get('groupUri'):
             query = query.filter(RedshiftConnection.SamlGroupName == filter.get('groupUri'))
+        if filter and filter.get('connectionType'):
+            query = query.filter(RedshiftConnection.connectionType == filter.get('connectionType'))
         if filter and filter.get('term'):
             query = query.filter(
                 or_(
@@ -60,8 +62,10 @@ class RedshiftConnectionRepository:
         return query.order_by(RedshiftConnection.label)
 
     @staticmethod
-    def list_environment_redshift_connections(session, environment_uri):
+    def list_environment_redshift_connections(session, environment_uri, filter_type=[]):
         query = session.query(RedshiftConnection).filter(RedshiftConnection.environmentUri == environment_uri)
+        if filter_type:
+            query = query.filter(RedshiftConnection.connectionType.in_(filter_type))
         return query.order_by(RedshiftConnection.label).all()
 
     @staticmethod

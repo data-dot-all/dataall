@@ -72,7 +72,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                 if not ShareObjectService.verify_principal_role(self.session, self.share_data.share):
                     raise PrincipalRoleNotFound(
                         'process approved shares',
-                        f'Principal role {self.share_data.share.principalIAMRoleName} is not found. Failed to update LF policy',
+                        f'Principal role {self.share_data.share.principalRoleName} is not found. Failed to update LF policy',
                     )
 
                 if None in [

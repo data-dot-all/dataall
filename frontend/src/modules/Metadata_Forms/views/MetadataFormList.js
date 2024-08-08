@@ -22,8 +22,7 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { fetchEnums, useClient } from 'services';
 import { listMetadataForms } from '../services';
-import { MetadataFormListItem } from '../components';
-import { CreateMetadataFormModal } from '../components/createMetadataFormModal';
+import { MetadataFormListItem, CreateMetadataFormModal } from '../components';
 
 function MetadataFormsListPageHeader(props) {
   const { onCreate, visibilityDict } = props;
@@ -106,11 +105,7 @@ function MetadataFormsListPageHeader(props) {
 const MetadataFormsList = () => {
   const dispatch = useDispatch();
   const [items, setItems] = useState(Defaults.pagedResponse);
-  const [filter, setFilter] = useState({
-    search_input: '',
-    page: 1,
-    pageSize: 10
-  });
+  const [filter, setFilter] = useState(Defaults.filter);
   const { settings } = useSettings();
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);

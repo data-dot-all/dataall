@@ -1,7 +1,6 @@
 from sqlalchemy import or_
 
 from dataall.modules.metadata_forms.db.metadata_form_models import MetadataForm, MetadataFormField
-from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility
 
 
 class MetadataFormRepository:
@@ -32,7 +31,7 @@ class MetadataFormRepository:
                     MetadataForm.description.ilike('%' + filter.get('search_input') + '%'),
                 )
             )
-        return query
+        return query.order_by(MetadataForm.name)
 
     @staticmethod
     def get_metadata_form_fields(session, form_uri):
@@ -68,3 +67,5 @@ class MetadataFormRepository:
         mf.possibleValues = data.get('possibleValues', mf.possibleValues)
         session.commit()
         return mf
+
+

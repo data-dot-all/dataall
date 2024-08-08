@@ -5,6 +5,7 @@ class ShareableType(GraphQLEnumMapper):
     Table = 'DatasetTable'
     StorageLocation = 'DatasetStorageLocation'
     S3Bucket = 'S3Bucket'
+    RedshiftTable = 'RedshiftTable'
 
 
 class ShareObjectPermission(GraphQLEnumMapper):
@@ -67,14 +68,9 @@ class ShareItemActions(GraphQLEnumMapper):
 
 
 class PrincipalType(GraphQLEnumMapper):
-    Any = 'Any'
-    Organization = 'Organization'
-    Environment = 'Environment'
-    User = 'User'
-    Project = 'Project'
-    Public = 'Public'
     Group = 'Group'
     ConsumptionRole = 'ConsumptionRole'
+    RedshiftRole = 'RedshiftRole'
 
 
 class ShareSortField(GraphQLEnumMapper):

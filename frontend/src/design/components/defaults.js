@@ -1,8 +1,7 @@
 export const Defaults = {
   filter: {
     page: 1,
-    pageSize: 10,
-    term: ''
+    pageSize: 10
   },
 
   pagedResponse: {
@@ -16,7 +15,6 @@ export const Defaults = {
 
   selectListFilter: {
     page: 1,
-    pageSize: 10000,
-    term: ''
+    pageSize: 10000
   }
 };

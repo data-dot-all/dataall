@@ -70,7 +70,8 @@ def share(
             environmentUri=otherenv.environmentUri,
             owner='bob',
             principalId='group2',
-            principalType=PrincipalType.Environment.value,
+            principalRoleName='uri-group2',
+            principalType=PrincipalType.Group.value,
             status=ShareObjectStatus.Approved.value,
         )
         session.add(share)

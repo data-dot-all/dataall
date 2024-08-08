@@ -3,6 +3,7 @@ from dataall.base.db import exceptions, paginate
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 
+from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility
 from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility, MetadataFormFieldType
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
 
@@ -12,19 +13,16 @@ class MetadataFormParamValidationService:
     def validate_create_form_params(data):
         visibility = data.get('visibility', MetadataFormVisibility.Team.value)
         if not MetadataFormVisibility.has_value(visibility):
-            data['visibility'] = MetadataFormVisibility.Team.value
+            data['visibility'] = MetadataFormVisibility.Global.value
 
-        if 'SamlGroupName' not in data:
+        if not data.get('SamlGroupName'):
             raise exceptions.RequiredParameter('SamlGroupName')
 
-        if 'homeEntity' not in data and (
-            visibility == MetadataFormVisibility.Organization.value
-            or visibility == MetadataFormVisibility.Environment.value
-        ):
+        if (not data.get('homeEntity')) and (visibility != MetadataFormVisibility.Global.value):
             raise exceptions.RequiredParameter('homeEntity')
 
-        if 'name' not in data:
-            data['name'] = 'New Form'
+        if not data.get('name'):
+            raise exceptions.RequiredParameter('name')
 
     @staticmethod
     def validate_create_field_params(data):
