@@ -5,7 +5,6 @@ from integration_tests.modules.metadata_forms.mutations import (
     delete_metadata_form_field,
     create_metadata_form_fields,
 )
-from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility, MetadataFormFieldType
 
 
 @pytest.fixture(scope='session')
@@ -18,7 +17,7 @@ def metadata_form_1(client1, group1):
         input = {
             'name': 'MF Test 1',
             'description': 'first session test metadata form',
-            'visibility': MetadataFormVisibility.Global.value,
+            'visibility': 'Global',
             'SamlGroupName': group1,
             'homeEntity': None,
         }
@@ -39,7 +38,7 @@ def metadata_form_field_1(client1, group1, metadata_form_1):
         input = {
             'name': 'Test Field 1',
             'description': 'test field',
-            'type': MetadataFormFieldType.String.value,
+            'type': 'String',
             'required': True,
         }
         mff = create_metadata_form_fields(client1, metadata_form_1.uri, [input])[0]
