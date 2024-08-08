@@ -278,9 +278,9 @@ export const ShareEditForm = (props) => {
       onApply();
     }
     const targetPath = `/console/shares/${share.shareUri}`;
-      if (location.pathname !== targetPath) {
-        navigate(targetPath);
-      }
+    if (location.pathname !== targetPath) {
+      navigate(targetPath);
+    }
   };
 
   const draftRequest = async () => {
