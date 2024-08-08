@@ -1,4 +1,9 @@
-import { ChevronLeft, ChevronRight, ShareOutlined } from '@mui/icons-material';
+import {
+  ChevronLeft,
+  ChevronRight,
+  ShareOutlined,
+  BallotOutlined
+} from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -51,6 +56,13 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
       path: '/console/glossaries',
       icon: <BsIcons.BsTag size={15} />,
       active: isModuleEnabled(ModuleNames.GLOSSARIES)
+    };
+
+    const metadataFormSection = {
+      title: 'Metadata Forms',
+      path: '/console/metadata-forms',
+      icon: <BallotOutlined size={15} />,
+      active: isModuleEnabled(ModuleNames.METADATA_FORMS)
     };
 
     const worksheetsSection = {
@@ -117,7 +129,8 @@ export const DefaultSidebar = ({ openDrawer, onOpenDrawerChange }) => {
             catalogSection,
             datasetsSection,
             sharesSection,
-            glossariesSection
+            glossariesSection,
+            metadataFormSection
           ]
         },
         {

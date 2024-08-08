@@ -378,7 +378,7 @@ def test_grant_target_role_access_policy_test_empty_policy(
 
     expected_policy_name = S3SharePolicyService(
         environmentUri=target_environment.environmentUri,
-        role_name=share1.principalIAMRoleName,
+        role_name=share1.principalRoleName,
         account=target_environment.AwsAccountId,
         region=target_environment.region,
         resource_prefix=target_environment.resourcePrefix,
@@ -485,7 +485,7 @@ def test_update_dataset_bucket_key_policy_with_env_admin(
     # Given
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = None
-    mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalRoleName)
 
     existing_key_policy = {
         'Version': '2012-10-17',
@@ -562,7 +562,7 @@ def test_update_dataset_bucket_key_policy_without_env_admin(
     # Given
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = 'kms-key'
-    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalIAMRoleName)
+    iam_client = mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalRoleName)
 
     existing_key_policy = {
         'Version': '2012-10-17',
@@ -933,7 +933,7 @@ def test_delete_target_role_access_policy_no_remaining_statement(
 
     expected_policy_name = S3SharePolicyService(
         environmentUri=target_environment.environmentUri,
-        role_name=share1.principalIAMRoleName,
+        role_name=share1.principalRoleName,
         account=target_environment.AwsAccountId,
         region=target_environment.region,
         resource_prefix=target_environment.resourcePrefix,
@@ -1037,7 +1037,7 @@ def test_delete_target_role_access_policy_with_remaining_statement(
     # Then
     expected_policy_name = S3SharePolicyService(
         environmentUri=target_environment.environmentUri,
-        role_name=share1.principalIAMRoleName,
+        role_name=share1.principalRoleName,
         account=target_environment.AwsAccountId,
         region=target_environment.region,
         resource_prefix=target_environment.resourcePrefix,
@@ -1060,7 +1060,7 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target
     # Given
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = '1'
-    mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalRoleName)
 
     # Includes target env admin to be removed and another, that should remain
     existing_key_policy = {
@@ -1072,7 +1072,7 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_additional_target
                 'Principal': {
                     'AWS': [
                         'SomeTargetResourceArn',
-                        f'arn:aws:iam::{target_environment.AwsAccountId}:role/{share1.principalIAMRoleName}',
+                        f'arn:aws:iam::{target_environment.AwsAccountId}:role/{share1.principalRoleName}',
                     ]
                 },
                 'Action': 'kms:Decrypt',
@@ -1111,7 +1111,7 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_tar
     # Given
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = '1'
-    mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalRoleName)
 
     # Includes target env admin to be removed and another, that should remain
     existing_key_policy = {
@@ -1121,7 +1121,7 @@ def test_delete_dataset_bucket_key_policy_existing_policy_with_no_additional_tar
                 'Sid': f'{DATAALL_ACCESS_POINT_KMS_DECRYPT_SID}',
                 'Effect': 'Allow',
                 'Principal': {
-                    'AWS': [f'arn:aws:iam::{target_environment.AwsAccountId}:role/{share1.principalIAMRoleName}']
+                    'AWS': [f'arn:aws:iam::{target_environment.AwsAccountId}:role/{share1.principalRoleName}']
                 },
                 'Action': 'kms:Decrypt',
                 'Resource': '*',
@@ -1467,7 +1467,7 @@ def test_check_dataset_bucket_key_policy(mocker, share1: ShareObject, target_env
     # Given
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = None
-    mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalRoleName)
 
     existing_key_policy = {
         'Version': '2012-10-17',
@@ -1476,7 +1476,7 @@ def test_check_dataset_bucket_key_policy(mocker, share1: ShareObject, target_env
                 'Sid': f'{DATAALL_ACCESS_POINT_KMS_DECRYPT_SID}',
                 'Effect': 'Allow',
                 'Principal': {
-                    'AWS': [f'arn:aws:iam::{target_environment.AwsAccountId}:role/{share1.principalIAMRoleName}']
+                    'AWS': [f'arn:aws:iam::{target_environment.AwsAccountId}:role/{share1.principalRoleName}']
                 },
                 'Action': 'kms:Decrypt',
                 'Resource': '*',
@@ -1515,7 +1515,7 @@ def test_check_dataset_bucket_key_policy_mising_role(
     # Given
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = 'kms-key'
-    mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalIAMRoleName)
+    mock_iam_client(mocker, target_environment.AwsAccountId, share1.principalRoleName)
 
     existing_key_policy = {
         'Version': '2012-10-17',

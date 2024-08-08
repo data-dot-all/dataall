@@ -198,7 +198,7 @@ export const ShareBoxList = (props) => {
           Array.from(
             new Set(
               response.data.getShareRequestsToMe.nodes.map(
-                (node) => node.principal.principalIAMRoleName
+                (node) => node.principal.principalRoleName
               )
             )
           )

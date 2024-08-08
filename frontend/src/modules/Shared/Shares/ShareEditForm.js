@@ -26,7 +26,7 @@ import {
 import { SET_ERROR } from '../../../globalErrors';
 import { DeleteOutlined } from '@mui/icons-material';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const ItemRow = (props) => {
   const {
@@ -214,6 +214,7 @@ export const ShareEditForm = (props) => {
     showViewShare
   } = props;
   const navigate = useNavigate();
+  const location = useLocation();
   const [sharedItems, setSharedItems] = useState(Defaults.pagedResponse);
   const [shareStatus, setShareStatus] = useState('');
   const [filter, setFilter] = useState(Defaults.filter);
@@ -275,6 +276,10 @@ export const ShareEditForm = (props) => {
 
     if (onApply) {
       onApply();
+    }
+    const targetPath = `/console/shares/${share.shareUri}`;
+    if (location.pathname !== targetPath) {
+      navigate(targetPath);
     }
   };
 

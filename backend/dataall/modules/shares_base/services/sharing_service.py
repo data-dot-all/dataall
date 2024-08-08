@@ -86,7 +86,7 @@ class SharingService:
                 if not ShareObjectService.verify_principal_role(session, share_data.share):
                     raise PrincipalRoleNotFound(
                         'process approved shares',
-                        f'Principal role {share_data.share.principalIAMRoleName} is not found.',
+                        f'Principal role {share_data.share.principalRoleName} is not found.',
                     )
 
                 with ResourceLockRepository.acquire_lock_with_retry(
@@ -105,33 +105,36 @@ class SharingService:
                                 processor.shareable_uri,
                                 status=ShareItemStatus.Share_Approved.value,
                             )
-                            success = processor.Processor(
-                                session, share_data, shareable_items
-                            ).process_approved_shares()
-                            log.info(f'Sharing {type.value} succeeded = {success}')
-                            if not success:
-                                share_successful = False
+                            if shareable_items:
+                                success = processor.Processor(
+                                    session, share_data, shareable_items
+                                ).process_approved_shares()
+                                log.info(f'Sharing {type.value} succeeded = {success}')
+                                if not success:
+                                    share_successful = False
+                            else:
+                                log.info(f'There are no items to share of type{type.value}')
                         except Exception as e:
-                            log.error(f'Error occurred during sharing of {type.value}: {e}')
+                            log.exception(f'Error occurred during sharing of {type.value}')
                             ShareStatusRepository.update_share_item_status_batch(
                                 session,
                                 share_uri,
                                 old_status=ShareItemStatus.Share_Approved.value,
                                 new_status=ShareItemStatus.Share_Failed.value,
-                                share_item_type=processor.type.value,
+                                share_item_type=processor.type,
                             )
                             ShareStatusRepository.update_share_item_status_batch(
                                 session,
                                 share_uri,
                                 old_status=ShareItemStatus.Share_In_Progress.value,
                                 new_status=ShareItemStatus.Share_Failed.value,
-                                share_item_type=processor.type.value,
+                                share_item_type=processor.type,
                             )
                             share_successful = False
                 return share_successful
 
             except Exception as e:
-                log.error(f'Error occurred during share approval: {e}')
+                log.exception('Error occurred during share approval')
                 new_share_item_state = share_item_sm.run_transition(ShareItemActions.Failure.value)
                 share_item_sm.update_state(session, share_data.share.shareUri, new_share_item_state)
                 return False
@@ -186,7 +189,7 @@ class SharingService:
                 if not ShareObjectService.verify_principal_role(session, share_data.share):
                     raise PrincipalRoleNotFound(
                         'process revoked shares',
-                        f'Principal role {share_data.share.principalIAMRoleName} is not found.',
+                        f'Principal role {share_data.share.principalRoleName} is not found.',
                     )
 
                 with ResourceLockRepository.acquire_lock_with_retry(
@@ -265,17 +268,17 @@ class SharingService:
         with engine.scoped_session() as session:
             share_data, share_items = cls._get_share_data_and_items(session, share_uri, status, healthStatus)
 
-            log.info(f'Verifying principal IAM Role {share_data.share.principalIAMRoleName}')
+            log.info(f'Verifying principal IAM Role {share_data.share.principalRoleName}')
             if not ShareObjectService.verify_principal_role(session, share_data.share):
                 log.error(
-                    f'Failed to get Principal IAM Role {share_data.share.principalIAMRoleName}, updating health status...'
+                    f'Failed to get Principal IAM Role {share_data.share.principalRoleName}, updating health status...'
                 )
                 ShareStatusRepository.update_share_item_health_status_batch(
                     session,
                     share_uri,
                     old_status=healthStatus,
                     new_status=ShareItemHealthStatus.Unhealthy.value,
-                    message=f'Share principal Role {share_data.share.principalIAMRoleName} not found. Check the team or consumption IAM role used.',
+                    message=f'Share principal Role {share_data.share.principalRoleName} not found. Check the team or consumption IAM role used.',
                 )
                 return True
 
@@ -329,10 +332,10 @@ class SharingService:
             )
 
             try:
-                log.info(f'Verifying principal IAM Role {share_data.share.principalIAMRoleName}')
+                log.info(f'Verifying principal IAM Role {share_data.share.principalRoleName}')
                 reapply_successful = ShareObjectService.verify_principal_role(session, share_data.share)
                 if not reapply_successful:
-                    log.error(f'Failed to get Principal IAM Role {share_data.share.principalIAMRoleName}, exiting...')
+                    log.error(f'Failed to get Principal IAM Role {share_data.share.principalRoleName}, exiting...')
                     return False
                 else:
                     with ResourceLockRepository.acquire_lock_with_retry(
@@ -373,7 +376,7 @@ class SharingService:
                 )
 
             except Exception as e:
-                log.error(f'Error occurred during share approval: {e}')
+                log.exception('Error occurred during share approval')
                 return False
 
     @staticmethod
