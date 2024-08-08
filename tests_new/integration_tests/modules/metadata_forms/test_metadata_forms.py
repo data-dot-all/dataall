@@ -1,8 +1,6 @@
 from assertpy import assert_that
 
 from integration_tests.modules.metadata_forms.queries import list_metadata_forms, get_metadata_form_full_info
-
-from dataall.modules.metadata_forms.db.enums import MetadataFormFieldType
 from integration_tests.modules.metadata_forms.mutations import update_metadata_form_fields
 
 
@@ -41,21 +39,21 @@ def test_metadata_form_fields_batch(client1, metadata_form_1, metadata_form_fiel
         'name': 'field_1',
         'metadataFormUri': metadata_form_1.uri,
         'description': 'Field 1',
-        'type': MetadataFormFieldType.String.value,
+        'type': 'String',
         'required': True,
     }
     field_data_2 = {
         'name': 'field_2',
         'metadataFormUri': metadata_form_1.uri,
         'description': 'Field 2',
-        'type': MetadataFormFieldType.Integer.value,
+        'type': 'Integer',
         'required': False,
     }
     field_data_3 = {
         'name': 'field_3',
         'metadataFormUri': metadata_form_1.uri,
         'description': 'Field 3',
-        'type': MetadataFormFieldType.Boolean.value,
+        'type': 'Boolean',
         'required': False,
     }
 
