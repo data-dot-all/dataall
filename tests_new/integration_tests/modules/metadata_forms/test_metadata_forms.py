@@ -3,12 +3,25 @@ from assertpy import assert_that
 from integration_tests.modules.metadata_forms.queries import list_metadata_forms, get_metadata_form_full_info
 
 from dataall.modules.metadata_forms.db.enums import MetadataFormFieldType
-from integration_tests.modules.metadata_forms.mutations import update_metadata_form_fields
+from integration_tests.modules.metadata_forms.mutations import (
+    update_metadata_form_fields,
+    delete_metadata_form,
+    delete_metadata_form_field,
+)
 
 
 def test_metadata_form_create(metadata_form_1):
     assert_that(metadata_form_1).is_not_none()
     assert_that(metadata_form_1.uri).is_not_none()
+
+
+def test_delete_unauth(client2, metadata_form_1):
+    err_message_part1 = 'An error occurred (UnauthorizedOperation) when calling DELETE operation:'
+    err_message_part2 = f'is not the owner of the metadata form {metadata_form_1.uri}'
+
+    assert_that(delete_metadata_form).raises(Exception).when_called_with(client2, metadata_form_1.uri).contains(
+        err_message_part1, err_message_part2
+    )
 
 
 def test_list_metadata_forms(client1, metadata_form_1):
@@ -32,6 +45,32 @@ def test_get_metadataform_full_info(client1, metadata_form_1, metadata_form_fiel
 
     all_field_uris = [item.uri for item in fullinfo.fields]
     assert_that(all_field_uris).contains(metadata_form_field_1.uri)
+
+
+def test_delete_metadata_form_field_unauth(client2, metadata_form_1, metadata_form_field_1):
+    err_message_part1 = 'An error occurred (UnauthorizedOperation) when calling DELETE FIELD operation:'
+    err_message_part2 = f'is not the owner of the metadata form {metadata_form_1.uri}'
+
+    assert_that(delete_metadata_form_field).raises(Exception).when_called_with(
+        client2, metadata_form_1.uri, metadata_form_field_1.uri
+    ).contains(err_message_part1, err_message_part2)
+
+
+def test_update_metadata_form_fields_unauth(client2, metadata_form_1, metadata_form_field_1):
+    field_data = {
+        'name': 'field_1',
+        'metadataFormUri': metadata_form_1.uri,
+        'description': 'Field 1',
+        'type': MetadataFormFieldType.String.value,
+        'required': True,
+    }
+
+    err_message_part1 = 'An error occurred (UnauthorizedOperation) when calling UPDATE FIELDS operation:'
+    err_message_part2 = f'is not the owner of the metadata form {metadata_form_1.uri}'
+
+    assert_that(update_metadata_form_fields).raises(Exception).when_called_with(
+        client2, metadata_form_1.uri, [field_data]
+    ).contains(err_message_part1, err_message_part2)
 
 
 def test_metadata_form_fields_batch(client1, metadata_form_1, metadata_form_field_1):
