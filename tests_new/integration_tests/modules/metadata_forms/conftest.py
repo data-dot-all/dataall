@@ -7,6 +7,7 @@ from integration_tests.modules.metadata_forms.mutations import (
 )
 
 
+
 @pytest.fixture(scope='session')
 def metadata_form_1(client1, group1):
     """
