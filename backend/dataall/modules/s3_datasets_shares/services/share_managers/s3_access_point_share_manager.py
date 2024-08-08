@@ -21,7 +21,7 @@ from dataall.base.aws.iam import IAM
 from dataall.modules.s3_datasets_shares.services.s3_share_alarm_service import S3ShareAlarmService
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
-from dataall.modules.s3_datasets_shares.services.share_managers.share_manager_utils import ShareErrorFormatter
+from dataall.modules.shares_base.services.share_manager_utils import ShareErrorFormatter
 from dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service import (
     S3SharePolicyService,
     IAM_S3_ACCESS_POINTS_STATEMENT_SID,

@@ -134,7 +134,7 @@ class RedshiftShareRepository:
         ).count()
 
     @staticmethod
-    def _query_shares_with_namespace(session, dataset_uri: str, rs_role: str, namespace_id: str):
+    def _query_dataset_shares_with_namespace(session, dataset_uri: str, namespace_id: str):
         """Query all SHARED shares of a dataset for a namespace"""
         share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
         query = (
@@ -147,7 +147,6 @@ class RedshiftShareRepository:
                 and_(
                     ShareObjectItem.status.in_(share_item_shared_states),
                     ShareObject.datasetUri == dataset_uri,
-                    ShareObject.principalRoleName == rs_role,
                     ShareObject.principalId == namespace_id,
                 )
             )
@@ -155,7 +154,5 @@ class RedshiftShareRepository:
         return query.order_by(ShareObject.created)
 
     @staticmethod
-    def count_shares_with_namespace(session, dataset_uri: str, rs_role: str, namespace_id: str) -> int:
-        return RedshiftShareRepository._query_shares_with_redshift_role(
-            session, dataset_uri, rs_role, namespace_id
-        ).count()
+    def count_dataset_shares_with_namespace(session, dataset_uri: str, namespace_id: str) -> int:
+        return RedshiftShareRepository._query_dataset_shares_with_namespace(session, dataset_uri, namespace_id).count()

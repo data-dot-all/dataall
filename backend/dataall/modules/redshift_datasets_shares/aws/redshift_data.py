@@ -72,10 +72,13 @@ class RedshiftShareDataClient:
             else:
                 raise e
 
-    def drop_datashare(self, database: str, workgroup: str, datashare: str):
+    def drop_datashare(self, datashare: str):
+        """
+        Drop datashare if not already deleted
+        """
         sql_statement = f'DROP DATASHARE {RedshiftShareDataClient.parsed_name(datashare)};'
         try:
-            self._execute_statement(database, workgroup, sql_statement)
+            self._execute_statement(sql_statement)
         except Exception as e:
             allowed_error_message = f'ERROR: Datashare {datashare} does not exist'
             error_message = e.args[0]
@@ -84,14 +87,14 @@ class RedshiftShareDataClient:
             else:
                 raise e
 
-    # def describe_datashare(self, datashare: str):
-    #     """
-    #     Describe datashare
-    #     """
-    #     log.info(f'Describing {datashare=}...')
-    #     sql_statement = f'DESC DATASHARE {RedshiftShareDataClient.parsed_name(datashare)};'
-    #     # we need to transform the output
-    #     return self._execute_statement(sql=sql_statement)
+    def check_datashare_exists(self, datashare: str):
+        """
+        Check that datashare exists
+        """
+        log.info(f'Checking {datashare=}...')
+        sql_statement = f'DESC DATASHARE {RedshiftShareDataClient.parsed_name(datashare)};'
+        # we need to transform the output
+        return self._execute_statement(sql=sql_statement)  # TODO
 
     def add_schema_to_datashare(self, datashare: str, schema: str):
         """
@@ -109,6 +112,15 @@ class RedshiftShareDataClient:
             else:
                 raise e
 
+    def check_schema_in_datashare(self, datashare: str, schema: str):
+        """
+        Check that schema exists in datashare
+        """
+        log.info(f'Checking {schema=} in {datashare=}...')
+        sql_statement = f'DESC DATASHARE {RedshiftShareDataClient.parsed_name(datashare)} {RedshiftShareDataClient.parsed_name(schema)};'
+        # we need to transform the output
+        return self._execute_statement(sql=sql_statement)  # TODO
+
     def add_table_to_datashare(self, datashare: str, schema: str, table_name: str):
         """
         Add table to datashare if not already added
@@ -125,6 +137,14 @@ class RedshiftShareDataClient:
                 log.info(f'Table {table_name} is already present in the {datashare=}')
             else:
                 raise e
+
+    def check_table_in_datashare(self, datashare: str, table_name: str):
+        """
+        Check that table exists in datashare
+        """
+        log.info(f'Checking {table_name=} in {datashare=}...')
+        # TODO
+        return
 
     def remove_table_from_datashare(self, datashare: str, schema: str, table_name: str):
         """
@@ -149,13 +169,17 @@ class RedshiftShareDataClient:
         """
         log.info(f'Grant usage on {datashare=} to {namespace=}..')
         sql_statement = (
-            f"GRANT USAGE ON DATASHARE {RedshiftShareDataClient.parsed_name(datashare)} TO NAMESPACE'{namespace}';"
+            f"GRANT USAGE ON DATASHARE {RedshiftShareDataClient.parsed_name(datashare)} TO NAMESPACE '{namespace}';"
         )
         self._execute_statement(sql=sql_statement)
 
+    def check_consumer_permissions_to_datashare(self, datashare: str, namespace: str):
+        # TODO
+        return
+
     def create_database_from_datashare(self, database: str, datashare: str, namespace: str):
         log.info(f'Create {database=} from {datashare=} from source {namespace=}')
-        sql_statement = f"CREATE DATABASE {RedshiftShareDataClient.parsed_name(database)} WITH PERMISSIONS FROM DATASHARE {RedshiftShareDataClient.parsed_name(datashare)} OF NAMESPACE'{namespace}';"
+        sql_statement = f"CREATE DATABASE {RedshiftShareDataClient.parsed_name(database)} WITH PERMISSIONS FROM DATASHARE {RedshiftShareDataClient.parsed_name(datashare)} OF NAMESPACE '{namespace}';"
         try:
             self._execute_statement(sql=sql_statement)
         except Exception as e:
@@ -168,7 +192,7 @@ class RedshiftShareDataClient:
 
     def drop_database(self, database: str):
         log.info(f'DROP {database=}')
-        sql_statement = f"DROP DATABASE {RedshiftShareDataClient.parsed_name(database)}';"
+        sql_statement = f'DROP DATABASE {RedshiftShareDataClient.parsed_name(database)};'
         try:
             self._execute_statement(sql=sql_statement)
         except Exception as e:
@@ -180,6 +204,15 @@ class RedshiftShareDataClient:
                 )
             else:
                 raise e
+
+    def check_database_exists(self, database: str):
+        """
+        Check that database exists
+        """
+        log.info(f'Checking {database=}...')
+        sql_statement = f'DESC DATABASE {RedshiftShareDataClient.parsed_name(database)};'
+        # we need to transform the output
+        return self._execute_statement(sql=sql_statement)  # TODO
 
     def grant_database_usage_access_to_redshift_role(self, database: str, rs_role: str):
         """
@@ -194,8 +227,14 @@ class RedshiftShareDataClient:
         Revoke usage on database to a role. If already revoked, it succeeds
         """
         log.info(f'Revoke usage on {database=} to Redshift role {rs_role=}..')
-        sql_statement = f'REVOKE USAGE ON DATABASE {RedshiftShareDataClient.parsed_name(database)} TO ROLE {rs_role} ;'
+        sql_statement = (
+            f'REVOKE USAGE ON DATABASE {RedshiftShareDataClient.parsed_name(database)} FROM ROLE {rs_role} ;'
+        )
         self._execute_statement(sql=sql_statement)
+
+    def check_role_permissions_in_database(self, database: str, rs_role: str):
+        # TODO
+        return
 
     def create_external_schema(self, database: str, schema: str, external_schema: str):
         log.info(f'Create external schema {external_schema=} in {database=}')
@@ -212,12 +251,21 @@ class RedshiftShareDataClient:
             else:
                 raise e
 
+    def check_schema_exists(self, schema: str):
+        """
+        Check that schema exists
+        """
+        log.info(f'Checking {schema=}...')
+        sql_statement = f'DESC SCHEMA {RedshiftShareDataClient.parsed_name(schema)};'
+        # we need to transform the output
+        return self._execute_statement(sql=sql_statement)  # TODO
+
     def grant_schema_usage_access_to_redshift_role(self, schema: str, rs_role: str):
         """
         Grant usage on schema to a role. If already granted, it succeeds
         """
         log.info(f'Grant usage on {schema=} to Redshift role {rs_role=}..')
-        sql_statement = f'GRANT USAGE ON SCHEMA {RedshiftShareDataClient.parsed_name(schema)} TO ROLE {rs_role} ;'
+        sql_statement = f'GRANT USAGE ON SCHEMA {RedshiftShareDataClient.parsed_name(schema)} TO ROLE {rs_role};'
         self._execute_statement(sql=sql_statement)
 
     def revoke_schema_usage_access_to_redshift_role(self, schema: str, rs_role: str):
@@ -225,8 +273,11 @@ class RedshiftShareDataClient:
         Revoke usage on schema to a role. If already granted, it succeeds
         """
         log.info(f'Revoke usage on {schema=} to Redshift role {rs_role=}..')
-        sql_statement = f'REVOKE USAGE ON SCHEMA {RedshiftShareDataClient.parsed_name(schema)} TO ROLE {rs_role} ;'
+        sql_statement = f'REVOKE USAGE ON SCHEMA {RedshiftShareDataClient.parsed_name(schema)} FROM ROLE {rs_role};'
         self._execute_statement(sql=sql_statement)
+
+    def check_role_permissions_in_schema(self, schema: str, rs_role: str):
+        pass  # TODO
 
     def grant_select_table_access_to_redshift_role(self, schema: str, table: str, rs_role: str, database: str = None):
         """
@@ -247,8 +298,11 @@ class RedshiftShareDataClient:
         REVOKE SELECT ON external_schema.table;
         """
         log.info(f'Revoke select on {table=} from {schema=} and {database=} to Redshift role {rs_role=}..')
-        sql_statement = f'REVOKE SELECT ON {RedshiftShareDataClient.parsed_object_names(database, schema, table)} TO ROLE {rs_role};'
+        sql_statement = f'REVOKE SELECT ON {RedshiftShareDataClient.parsed_object_names(database, schema, table)} FROM ROLE {rs_role};'
         self._execute_statement(sql=sql_statement)
+
+    def check_role_permissions_to_table(self, schema: str, table: str, rs_role: str, database: str = None):
+        pass  # TODO
 
 
 def redshift_share_data_client(account_id: str, region: str, connection: RedshiftConnection) -> RedshiftShareDataClient:

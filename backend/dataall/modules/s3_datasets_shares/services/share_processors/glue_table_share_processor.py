@@ -21,7 +21,7 @@ from dataall.modules.shares_base.db.share_object_repositories import ShareObject
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.s3_datasets_shares.db.s3_share_object_repositories import S3ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
-from dataall.modules.s3_datasets_shares.services.share_managers.share_manager_utils import ShareErrorFormatter
+from dataall.modules.shares_base.services.share_manager_utils import ShareErrorFormatter
 
 from dataall.modules.shares_base.services.sharing_service import ShareData
 from dataall.modules.shares_base.services.share_processor_manager import SharesProcessorInterface

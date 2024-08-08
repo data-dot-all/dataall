@@ -13,6 +13,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
     ShareItemActions,
 )
+from dataall.modules.shares_base.services.share_manager_utils import ShareErrorFormatter
 from dataall.modules.redshift_datasets_shares.aws.redshift_data import redshift_share_data_client
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftTable
 from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
@@ -305,7 +306,7 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                             rs_role=self.redshift_role,
                             namespace_id=self.target_connection.nameSpaceId,
                         )
-                        > 0
+                        == 0
                     ):
                         log.info(
                             f'No other tables of this dataset are shared with this redshift role {self.redshift_role}'
@@ -320,12 +321,12 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                     # 6) (in target namespace) If no more tables are shared with any role in this namespace, drop local database
                     # 7) (in source namespace) If no more tables are shared with any role in this namespace, drop datashare
                     if (
-                        RedshiftShareRepository.count_shares_with_namespace(
+                        RedshiftShareRepository.count_dataset_shares_with_namespace(
                             session=self.session,
                             dataset_uri=self.dataset.datasetUri,
                             namespace_id=self.target_connection.nameSpaceId,
                         )
-                        > 1
+                        <= 1
                     ):
                         log.info(
                             f'No other tables of this dataset are shared with this namespace {self.target_connection.nameSpaceId}'
@@ -356,4 +357,134 @@ class ProcessRedshiftShare(SharesProcessorInterface):
             return success
 
     def verify_shares(self) -> bool:
-        pass
+        """
+        1) (in source namespace) Check the datashare exists
+        2) (in source namespace) Check that schema is added to datashare
+        3) (in source namespace) Check the access is granted to the consumer cluster to the datashare
+        4) (in target namespace) Check that local db exists
+        5) (in target namespace) Check that the redshift role has access to the local db
+        6) (in target namespace) Check that external schema exists
+        7) (in target namespace) Check that the redshift role has access to the extenal schema
+        For each table:
+            8) (in source namespace) Check that table is added to datashare
+            9) (in target namespace) Check that the redshift role has select access to the requested table in the local db.
+            10) (in target namespace) Check that the redshift role has select access to the requested table in the external schema.
+        """
+
+        log.info('##### Verifying Redshift tables #######')
+        if not self.tables:
+            log.info('No tables to verify. Skipping...')
+        else:
+            tbl_level_errors = []
+            ds_level_errors = []
+            redshift_client_in_source = redshift_share_data_client(
+                account_id=self.share_data.source_environment.AwsAccountId,
+                region=self.share_data.source_environment.region,
+                connection=self.source_connection,
+            )
+            redshift_client_in_target = redshift_share_data_client(
+                account_id=self.share_data.target_environment.AwsAccountId,
+                region=self.share_data.target_environment.region,
+                connection=self.target_connection,
+            )
+            local_db = self._build_local_db_name()
+            external_schema = self._build_external_schema_name()
+            try:
+                # 1) (in source namespace) Check that datashare exists
+                if not redshift_client_in_source.check_datashare_exists(self.datashare_name):
+                    ds_level_errors.append(ShareErrorFormatter.dne_error_msg('Redshift datashare', self.datashare_name))
+                # 2) (in source namespace) Check that schema is added to datashare
+                if not redshift_client_in_source.check_schema_in_datashare(
+                    datashare=self.datashare_name, schema=self.dataset.schema
+                ):
+                    ds_level_errors.append(ShareErrorFormatter.dne_error_msg('Redshift datashare', self.datashare_name))
+                # 3) (in source namespace) Check the access is granted to the consumer cluster to the datashare
+                if not redshift_client_in_source.check_consumer_permissions_to_datashare(
+                    datashare=self.datashare_name, namespace=self.target_connection.nameSpaceId
+                ):
+                    ds_level_errors.append(
+                        ShareErrorFormatter.missing_permission_error_msg(
+                            self.target_connection.nameSpaceId,
+                            'SHARE',
+                            ['SHARE'],
+                            'Redshift datashare',
+                            self.datashare_name,
+                        )
+                    )
+                # 4) (in target namespace) Check that local db exists
+                if not redshift_client_in_target.check_database_exists(local_db):
+                    ds_level_errors.append(ShareErrorFormatter.dne_error_msg('Redshift database', local_db))
+                # 5) (in target namespace) Check that the redshift role has access to the local db
+                if not redshift_client_in_target.check_role_permissions_in_database(
+                    database=local_db, rs_role=self.redshift_role
+                ):
+                    ds_level_errors.append(
+                        ShareErrorFormatter.missing_permission_error_msg(
+                            self.redshift_role, 'USAGE', ['USAGE'], 'Redshift database', local_db
+                        )
+                    )
+                # 6) (in target namespace) Check that external schema exists
+                if not redshift_client_in_target.check_schema_exists(external_schema):
+                    ds_level_errors.append(ShareErrorFormatter.dne_error_msg('Redshift schema', external_schema))
+                # 7) (in target namespace) Check that the redshift role has access to the external schema
+                if not redshift_client_in_target.check_role_permissions_in_schema(
+                    schema=external_schema, rs_role=self.redshift_role
+                ):
+                    ds_level_errors.append(
+                        ShareErrorFormatter.missing_permission_error_msg(
+                            self.redshift_role, 'USAGE', ['USAGE'], 'Redshift schema', external_schema
+                        )
+                    )
+            except Exception as e:
+                ds_level_errors = [str(e)]
+
+            for table in self.tables:
+                try:
+                    # 8) (in source namespace) Check that table is added to datashare
+                    if not redshift_client_in_source.check_table_in_datashare(
+                        datashare=self.datashare_name, table=table.name
+                    ):
+                        tbl_level_errors.append(
+                            ShareErrorFormatter.dne_error_msg('Redshift datashare', self.datashare_name)
+                        )
+                    # 9) (in target namespace) Check that the redshift role has select access to the requested table in the local db.
+                    if not redshift_client_in_target.check_role_permissions_to_table(
+                        schema=self.dataset.schema, rs_role=self.redshift_role, table=table.name, database=local_db
+                    ):
+                        tbl_level_errors.append(
+                            ShareErrorFormatter.missing_permission_error_msg(
+                                self.redshift_role, 'SELECT', ['SELECT'], 'Redshift table', f'{local_db}.{table.name}'
+                            )
+                        )
+                    # 10) (in target namespace) Check that the redshift role has select access to the requested table in the external schema.
+                    if not redshift_client_in_target.check_role_permissions_to_table(
+                        schema=external_schema, rs_role=self.redshift_role, table=table.name
+                    ):
+                        tbl_level_errors.append(
+                            ShareErrorFormatter.missing_permission_error_msg(
+                                self.redshift_role,
+                                'SELECT',
+                                ['SELECT'],
+                                'Redshift table',
+                                f'{external_schema}.{table.name}',
+                            )
+                        )
+                except Exception as e:
+                    tbl_level_errors.append(str(e))
+
+                share_item = ShareObjectRepository.find_sharable_item(
+                    self.session, self.share.shareUri, table.rsTableUri
+                )
+                if len(ds_level_errors) or len(tbl_level_errors):
+                    ShareStatusRepository.update_share_item_health_status(
+                        self.session,
+                        share_item,
+                        ShareItemHealthStatus.Unhealthy.value,
+                        ' | '.join(ds_level_errors) + ' | ' + ' | '.join(tbl_level_errors),
+                        datetime.now(),
+                    )
+                else:
+                    ShareStatusRepository.update_share_item_health_status(
+                        self.session, share_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
+                    )
+        return True

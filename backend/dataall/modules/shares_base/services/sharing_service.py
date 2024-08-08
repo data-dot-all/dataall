@@ -223,14 +223,14 @@ class SharingService:
                                 share_uri,
                                 old_status=ShareItemStatus.Revoke_Approved.value,
                                 new_status=ShareItemStatus.Revoke_Failed.value,
-                                share_item_type=processor.type.value,
+                                share_item_type=processor.type,
                             )
                             ShareStatusRepository.update_share_item_status_batch(
                                 session,
                                 share_uri,
                                 old_status=ShareItemStatus.Revoke_In_Progress.value,
                                 new_status=ShareItemStatus.Revoke_Failed.value,
-                                share_item_type=processor.type.value,
+                                share_item_type=processor.type,
                             )
                             revoke_successful = False
 
