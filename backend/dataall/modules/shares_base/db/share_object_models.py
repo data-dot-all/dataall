@@ -39,7 +39,7 @@ class ShareObject(Base):
     rejectPurpose = Column(String, nullable=True)
     userRoleForShareObject = query_expression()
     existingSharedItems = query_expression()
-    permissions = Column(ARRAY(String), nullable=True)
+    permissions = Column(ARRAY(String), nullable=False)
 
 
 class ShareObjectItem(Base):
