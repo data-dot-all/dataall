@@ -56,7 +56,7 @@ def upgrade():
         session = orm.Session(bind=bind)
 
         print('Getting all Share Objects...')
-        shares = session.query(ShareObject.datasetUri, ShareObject.environmentUri, ShareObject.groupUri).all()
+        shares: [ShareObject] = session.query(ShareObject).all()
         for share in shares:
             dataset = DatasetRepository.get_dataset_by_uri(session, share.datasetUri)
             environment = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
