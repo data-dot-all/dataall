@@ -220,11 +220,13 @@ class ShareObjectService:
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
 
-            if not ShareObjectService.verify_principal_role(session, share):
-                raise PrincipalRoleNotFound(
-                    action='Submit Share Object',
-                    message=f'The principal role {share.principalRoleName} is not found.',
-                )
+            if share.principalType in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value]:
+                # TODO make it generic to non IAM role principals
+                if not ShareObjectService.verify_principal_role(session, share):
+                    raise PrincipalRoleNotFound(
+                        action='Submit Share Object',
+                        message=f'The principal role {share.principalRoleName} is not found.',
+                    )
 
             valid_states = [ShareItemStatus.PendingApproval.value]
             valid_share_items_states = [x for x in valid_states if x in states]
@@ -260,14 +262,14 @@ class ShareObjectService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
-
-            if not ShareObjectService.verify_principal_role(
-                session, share
-            ):  # TODO make it generic to non IAM role principals
-                raise PrincipalRoleNotFound(
-                    action='Approve Share Object',
-                    message=f'The principal role {share.principalRoleName} is not found.',
-                )
+            if share.principalType in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value]:
+                if not ShareObjectService.verify_principal_role(
+                    session, share
+                ):  # TODO make it generic to non IAM role principals
+                    raise PrincipalRoleNotFound(
+                        action='Approve Share Object',
+                        message=f'The principal role {share.principalRoleName} is not found.',
+                    )
 
             cls._run_transitions(session, share, states, ShareObjectActions.Approve)
 
