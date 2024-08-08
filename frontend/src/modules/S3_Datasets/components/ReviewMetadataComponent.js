@@ -74,7 +74,7 @@ export const ReviewMetadataComponent = (props) => {
       openPopup(response.data.listSampleData);
       setTargetUri(table.targetUri);
       if (!response.errors) {
-        enqueueSnackbar('Successfully regenerated sample data', {
+        enqueueSnackbar('Successfully read sample data', {
           variant: 'success'
         });
       } else {
@@ -120,16 +120,26 @@ export const ReviewMetadataComponent = (props) => {
 
           setTargets(updatedTargets);
 
-          enqueueSnackbar(`Generated metadata`, {
-            anchorOrigin: {
-              horizontal: 'right',
-              vertical: 'top'
-            },
-            variant: 'success'
-          });
+          enqueueSnackbar(
+            `Metadata generation is successful for ${updatedTarget.name}`,
+            {
+              anchorOrigin: {
+                horizontal: 'right',
+                vertical: 'top'
+              },
+              variant: 'success'
+            }
+          );
         }
       } else {
         console.error(`Target with targetUri not found`);
+        enqueueSnackbar(`Metadata generation is unsuccessful`, {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'error'
+        });
       }
 
       closePopup(); // Close the popup after generating the metadata

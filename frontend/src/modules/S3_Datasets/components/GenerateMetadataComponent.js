@@ -133,14 +133,37 @@ export const GenerateMetadataComponent = (props) => {
         target.name = response.data.generateMetadata.name;
         target.tags = response.data.generateMetadata.tags;
         target.topics = response.data.generateMetadata.topics;
-        console.log('target.response', target.response);
-        enqueueSnackbar(`Returned response ${target.response}`, {
-          anchorOrigin: {
-            horizontal: 'right',
-            vertical: 'top'
-          },
-          variant: 'success'
-        });
+        const hasNotEnoughData = [
+          target.description,
+          target.label,
+          target.name,
+          target.tags,
+          target.topics
+        ].some((value) => value === 'NotEnoughData');
+
+        if (hasNotEnoughData) {
+          enqueueSnackbar(
+            `Not enough data to generate metadata for ${target.name}`,
+            {
+              anchorOrigin: {
+                horizontal: 'right',
+                vertical: 'top'
+              },
+              variant: 'warning'
+            }
+          );
+        } else {
+          enqueueSnackbar(
+            `Metadata generation is successful for ${target.name}`,
+            {
+              anchorOrigin: {
+                horizontal: 'right',
+                vertical: 'top'
+              },
+              variant: 'success'
+            }
+          );
+        }
         setVersion(version + 1);
       }
     }

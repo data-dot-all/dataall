@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Box, Typography, Button } from '@mui/material';
+import { Modal, Box, Button } from '@mui/material';
 import SampleDataTableComponent from './SampleDataTableComponent';
 
 const SampleDataPopup = ({
@@ -21,9 +21,6 @@ const SampleDataPopup = ({
           p: 4
         }}
       >
-        <Typography variant="h6" component="h2">
-          Sample Data
-        </Typography>
         <SampleDataTableComponent data={sampleData} />
         <Button variant="contained" color="primary" onClick={handleRegenerate}>
           Accept and Regenerate
