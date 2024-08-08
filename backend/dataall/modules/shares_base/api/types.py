@@ -2,7 +2,8 @@ from dataall.base.api import gql
 from dataall.modules.shares_base.services.shares_enums import (
     ShareableType,
     PrincipalType,
-    ShareItemHealthStatus, ShareObjectDataPermission,
+    ShareItemHealthStatus,
+    ShareObjectDataPermission,
 )
 from dataall.modules.shares_base.api.resolvers import (
     resolve_dataset,
