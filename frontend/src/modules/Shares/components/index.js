@@ -8,3 +8,4 @@ export * from './ShareUpdateRequest';
 export * from './ShareItemsSelectorModal';
 export * from './ShareObjectSelectorModal';
 export * from './NavigateShareViewModal';
+export * from './ShareItemFilterModal';

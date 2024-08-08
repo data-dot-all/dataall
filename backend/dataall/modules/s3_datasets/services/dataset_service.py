@@ -43,7 +43,7 @@ from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRep
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetTable
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
-from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ
+from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_ALL
 from dataall.modules.datasets_base.services.dataset_service_interface import DatasetServiceInterface
 
 log = logging.getLogger(__name__)
@@ -508,7 +508,7 @@ class DatasetService:
             ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=new_stewards,
-                permissions=DATASET_TABLE_READ,
+                permissions=DATASET_TABLE_ALL,
                 resource_uri=tableUri,
                 resource_type=DatasetTable.__name__,
             )

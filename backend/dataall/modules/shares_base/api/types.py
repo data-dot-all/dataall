@@ -31,8 +31,21 @@ ShareItem = gql.ObjectType(
         gql.Field('healthStatus', ShareItemHealthStatus.toGraphQLEnum()),
         gql.Field('healthMessage', gql.String),
         gql.Field('lastVerificationTime', gql.String),
+        gql.Field('attachedDataFilterUri', gql.String),
     ],
 )
+
+ShareObjectItemDataFilter = gql.ObjectType(
+    name='ShareObjectItemDataFilter',
+    fields=[
+        gql.Field(name='attachedDataFilterUri', type=gql.String),
+        gql.Field(name='label', type=gql.String),
+        gql.Field(name='dataFilterUris', type=gql.ArrayType(gql.String)),
+        gql.Field(name='dataFilterNames', type=gql.ArrayType(gql.String)),
+        gql.Field(name='itemUri', type=gql.String),
+    ],
+)
+
 
 NotSharedItem = gql.ObjectType(
     name='NotSharedItem',

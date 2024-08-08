@@ -29,6 +29,9 @@ class DatasetColumnRepository:
             .order_by(DatasetTableColumn.columnType.asc())
         )
 
+        if filter.get('filteredColumns'):
+            q = q.filter(DatasetTableColumn.name.in_(filter['filteredColumns']))
+
         if 'term' in filter:
             term = filter['term']
             q = q.filter(

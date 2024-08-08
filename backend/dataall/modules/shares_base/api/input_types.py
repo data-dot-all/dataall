@@ -91,3 +91,13 @@ PrincipalFilter = gql.InputType(
         gql.Argument(name='term', type=gql.String),
     ],
 )
+
+ModifyFiltersTableShareItemInput = gql.InputType(
+    name='ModifyFiltersTableShareItemInput',
+    arguments=[
+        gql.Argument(name='shareItemUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='label', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='filterUris', type=gql.ArrayType(gql.String)),
+        gql.Argument(name='filterNames', type=gql.ArrayType(gql.String)),
+    ],
+)

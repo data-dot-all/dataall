@@ -75,6 +75,32 @@ DatasetTableSearchResult = gql.ObjectType(
     ],
 )
 
+DatasetTableDataFilter = gql.ObjectType(
+    name='DatasetTableDataFilter',
+    fields=[
+        gql.Field(name='filterUri', type=gql.String),
+        gql.Field(name='tableUri', type=gql.String),
+        gql.Field(name='label', type=gql.String),
+        gql.Field(name='name', type=gql.String),
+        gql.Field(name='description', type=gql.String),
+        gql.Field(name='filterType', type=gql.String),
+        gql.Field(name='includedCols', type=gql.ArrayType(gql.String)),
+        gql.Field(name='rowExpression', type=gql.String),
+    ],
+)
+
+DatasetTableDataFilterSearchResult = gql.ObjectType(
+    name='DatasetTableDataFilterSearchResult',
+    fields=[
+        gql.Field(name='nodes', type=gql.ArrayType(DatasetTableDataFilter)),
+        gql.Field(name='count', type=gql.Integer),
+        gql.Field(name='pages', type=gql.Integer),
+        gql.Field(name='page', type=gql.Integer),
+        gql.Field(name='hasNext', type=gql.Boolean),
+        gql.Field(name='hasPrevious', type=gql.Boolean),
+    ],
+)
+
 DatasetTableRecord = gql.ObjectType(name='DatasetTableRecord', fields=[gql.Field(name='data', type=gql.String)])
 
 DatasetTableMetadataItem = gql.ObjectType(

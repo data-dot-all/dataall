@@ -5,3 +5,4 @@ export * from './listS3DatasetsSharedWithEnvGroup';
 export * from './listWorksheets';
 export * from './runAthenaSqlQuery';
 export * from './updateWorksheet';
+export * from './listSharedDatasetTableColumns';

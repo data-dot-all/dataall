@@ -10,7 +10,7 @@ from dataall.modules.shares_base.services.shares_enums import ShareableType, Pri
 from dataall.modules.shares_base.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.shares_base.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
-from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ
+from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_ALL
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetTable, DatasetStorageLocation
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_ALL
@@ -197,7 +197,7 @@ def table(db):
             ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=dataset.SamlAdminGroupName,
-                permissions=DATASET_TABLE_READ,
+                permissions=DATASET_TABLE_ALL,
                 resource_uri=table.tableUri,
                 resource_type=DatasetTable.__name__,
             )
@@ -237,7 +237,7 @@ def table_fixture(db, dataset_fixture, table, group, user):
         ResourcePolicyService.attach_resource_policy(
             session=session,
             group=group.groupUri,
-            permissions=DATASET_TABLE_READ,
+            permissions=DATASET_TABLE_ALL,
             resource_uri=table1.tableUri,
             resource_type=DatasetTable.__name__,
         )
@@ -252,7 +252,7 @@ def table_confidential_fixture(db, dataset_confidential_fixture, table, group, u
         ResourcePolicyService.attach_resource_policy(
             session=session,
             group=group.groupUri,
-            permissions=DATASET_TABLE_READ,
+            permissions=DATASET_TABLE_ALL,
             resource_uri=table2.tableUri,
             resource_type=DatasetTable.__name__,
         )

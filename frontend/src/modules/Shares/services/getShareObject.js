@@ -45,6 +45,7 @@ export const getShareObject = ({ shareUri, filter }) => ({
             healthStatus
             healthMessage
             lastVerificationTime
+            attachedDataFilterUri
           }
         }
         dataset {

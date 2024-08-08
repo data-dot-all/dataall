@@ -10,7 +10,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
 )
 from dataall.modules.s3_datasets.services.dataset_service import DatasetService
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
-from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ
+from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_ALL
 
 from tests.core.permissions.test_permission import *
 from dataall.core.organizations.services.organization_service import OrganizationService
@@ -18,7 +18,7 @@ from dataall.core.permissions.services.tenant_policy_service import TenantPolicy
 
 
 def test_attach_resource_policy(db, user, group, dataset_fixture):
-    permissions(db, ENVIRONMENT_ALL + ORGANIZATION_ALL + DATASET_READ + DATASET_WRITE + DATASET_TABLE_READ)
+    permissions(db, ENVIRONMENT_ALL + ORGANIZATION_ALL + DATASET_READ + DATASET_WRITE + DATASET_TABLE_ALL)
     with db.scoped_session() as session:
         ResourcePolicyService.attach_resource_policy(
             session=session,

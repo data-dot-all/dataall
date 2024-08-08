@@ -5,6 +5,8 @@ from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.s3_datasets.api.dataset.resolvers import get_dataset
 from dataall.base.api.context import Context
 from dataall.modules.s3_datasets.services.dataset_table_service import DatasetTableService
+from dataall.modules.s3_datasets.services.dataset_table_data_filter_service import DatasetTableDataFilterService
+
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 
 log = logging.getLogger(__name__)
@@ -56,3 +58,17 @@ def resolve_glossary_terms(context: Context, source: DatasetTable, **kwargs):
         return None
     with context.engine.scoped_session() as session:
         return GlossaryRepository.get_glossary_terms_links(session, source.tableUri, 'DatasetTable')
+
+
+def create_table_data_filter(context: Context, source, tableUri: str = None, input: dict = None):
+    return DatasetTableDataFilterService.create_table_data_filter(uri=tableUri, data=input)
+
+
+def delete_table_data_filter(context: Context, source, filterUri: str = None):
+    return DatasetTableDataFilterService.delete_table_data_filter(uri=filterUri)
+
+
+def list_table_data_filters(context: Context, source, tableUri: str = None, filter: dict = None):
+    if not filter:
+        filter = {'page': 1, 'pageSize': 5}
+    return DatasetTableDataFilterService.list_table_data_filters(uri=tableUri, data=filter)

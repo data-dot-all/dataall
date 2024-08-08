@@ -4,7 +4,12 @@ from datetime import datetime
 from sqlalchemy.sql import and_
 
 from dataall.base.db import exceptions
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTableColumn, DatasetTable, S3Dataset
+from dataall.modules.s3_datasets.db.dataset_models import (
+    DatasetTableColumn,
+    DatasetTable,
+    S3Dataset,
+    DatasetTableDataFilter,
+)
 from dataall.base.utils import json_utils
 
 logger = logging.getLogger(__name__)
@@ -38,6 +43,15 @@ class DatasetTableRepository:
     @staticmethod
     def delete(session, table: DatasetTable):
         session.delete(table)
+
+    @staticmethod
+    def delete_all_table_filters(session, table: DatasetTable):
+        session.query(DatasetTableDataFilter).filter(
+            and_(
+                DatasetTableDataFilter.tableUri == table.tableUri,
+            )
+        ).delete()
+        session.commit()
 
     @staticmethod
     def get_dataset_table_by_uri(session, table_uri):

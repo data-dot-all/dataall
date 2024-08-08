@@ -102,7 +102,7 @@ class GlueClient:
         account_id = self._account_id
         shared_database = self._database
         resource_link_input = {
-            'Name': table.GlueTableName,
+            'Name': resource_link_name,
             'TargetTable': {
                 'CatalogId': catalog_id,
                 'DatabaseName': database,

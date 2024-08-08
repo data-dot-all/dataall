@@ -14,6 +14,7 @@ export const getDatasetTable = (tableUri) => ({
           region
           SamlAdminGroupName
           owner
+          confidentiality
           organization {
             label
           }

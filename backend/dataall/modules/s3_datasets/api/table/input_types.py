@@ -32,3 +32,14 @@ DatasetTableFilter = gql.InputType(
         gql.Argument('pageSize', gql.Integer),
     ],
 )
+
+NewTableDataFilterInput = gql.InputType(
+    name='NewTableDataFilterInput',
+    arguments=[
+        gql.Argument('filterName', gql.NonNullableType(gql.String)),
+        gql.Argument('description', gql.String),
+        gql.Argument('filterType', gql.NonNullableType(gql.String)),
+        gql.Argument('rowExpression', gql.String),
+        gql.Argument('includedCols', gql.ArrayType(gql.String)),
+    ],
+)

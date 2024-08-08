@@ -8,6 +8,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.modules.s3_datasets.aws.athena_table_client import AthenaTableClient
 from dataall.modules.s3_datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
+from dataall.modules.s3_datasets.db.dataset_table_data_filter_repositories import DatasetTableDataFilterRepository
 from dataall.modules.s3_datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.s3_datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.s3_datasets.services.dataset_permissions import (
@@ -16,16 +17,18 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     DELETE_DATASET_TABLE,
     SYNC_DATASET,
 )
+from dataall.modules.s3_datasets.aws.lf_data_filter_client import LakeFormationDataFilterClient
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 from dataall.modules.s3_datasets.services.dataset_permissions import (
     PREVIEW_DATASET_TABLE,
-    DATASET_TABLE_READ,
+    DATASET_TABLE_ALL,
     GET_DATASET_TABLE,
 )
 from dataall.modules.s3_datasets.services.dataset_service import DatasetService
 from dataall.base.utils import json_utils
+from dataall.base.db import exceptions
 
 log = logging.getLogger(__name__)
 
@@ -70,6 +73,15 @@ class DatasetTableService:
             table = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
             DatasetService.check_before_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
             DatasetService.execute_on_delete(session, table.tableUri, action=DELETE_DATASET_TABLE)
+
+            table_data_filters = DatasetTableDataFilterRepository.list_data_filters(session, table.tableUri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
+            lf_client = LakeFormationDataFilterClient(table=table, dataset=dataset)
+            # Delete LF Filters
+            for data_filter in table_data_filters:
+                lf_client.delete_table_data_filter(data_filter)
+            DatasetTableRepository.delete_all_table_filters(session, table)
+
             DatasetTableRepository.delete(session, table)
             DatasetTableService._delete_dataset_table_read_permission(session, uri)
 
@@ -88,16 +100,13 @@ class DatasetTableService:
             if (
                 ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality)
                 != ConfidentialityClassification.Unclassified.value
-            ):
-                ResourcePolicyService.check_user_resource_permission(
-                    session=session,
-                    username=context.username,
-                    groups=context.groups,
-                    resource_uri=table.tableUri,
-                    permission_name=PREVIEW_DATASET_TABLE,
+            ) and (dataset.SamlAdminGroupName not in context.groups and dataset.stewards not in context.groups):
+                raise exceptions.UnauthorizedOperation(
+                    action=PREVIEW_DATASET_TABLE,
+                    message='User is not authorized to Preview Table for Confidential datasets',
                 )
             env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
-            return AthenaTableClient(env, table).get_table(dataset_uri=dataset.datasetUri)
+            return AthenaTableClient(env, table).get_table()
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(GET_DATASET_TABLE)
@@ -161,7 +170,7 @@ class DatasetTableService:
             ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=group,
-                permissions=DATASET_TABLE_READ,
+                permissions=DATASET_TABLE_ALL,
                 resource_uri=table_uri,
                 resource_type=DatasetTable.__name__,
             )

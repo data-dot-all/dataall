@@ -8,8 +8,14 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectStatus,
     PrincipalType,
 )
-from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset, DatasetBucket
+from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject, ShareObjectItemDataFilter
+from dataall.modules.s3_datasets.db.dataset_models import (
+    DatasetStorageLocation,
+    DatasetTable,
+    S3Dataset,
+    DatasetBucket,
+    DatasetTableDataFilter,
+)
 
 
 @pytest.fixture(scope='module')
@@ -168,6 +174,7 @@ def share_item_table(db):
         share: ShareObject,
         table: DatasetTable,
         status: str,
+        attachedDataFilterUri: str = None,
     ) -> ShareObjectItem:
         with db.scoped_session() as session:
             share_item = ShareObjectItem(
@@ -177,10 +184,31 @@ def share_item_table(db):
                 itemType=ShareableType.Table.value,
                 itemName=table.name,
                 status=status,
+                attachedDataFilterUri=attachedDataFilterUri,
             )
             session.add(share_item)
             session.commit()
             return share_item
+
+    yield factory
+
+
+@pytest.fixture(scope='module')
+def share_item_table_data_filter(db):
+    def factory(
+        table: DatasetTable,
+        table_data_filter: DatasetTableDataFilter,
+    ) -> ShareObjectItem:
+        with db.scoped_session() as session:
+            share_item_data_filter = ShareObjectItemDataFilter(
+                label='testsharefilter',
+                itemUri=table.tableUri,
+                dataFilterUris=[table_data_filter.filterUri],
+                dataFilterNames=[table_data_filter.label],
+            )
+            session.add(share_item_data_filter)
+            session.commit()
+            return share_item_data_filter
 
     yield factory
 
