@@ -233,7 +233,6 @@ const MetadataFormView = () => {
             {currentTab === 'fields' && (
               <MetadataFormFields
                 metadataForm={metadataForm}
-                visibilityDict={visibilityDict}
                 fieldTypeOptions={fieldTypeOptions}
               />
             )}
