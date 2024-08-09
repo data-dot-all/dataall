@@ -16,7 +16,8 @@ import {
   Divider,
   Button,
   Autocomplete,
-  Tooltip
+  Tooltip,
+  Chip
 } from '@mui/material';
 import {
   Scrollbar,
@@ -24,7 +25,8 @@ import {
   AsteriskIcon,
   PencilAltIcon,
   SaveIcon,
-  PlusIcon
+  PlusIcon,
+  ChipInput
 } from '../../../design';
 import { SET_ERROR } from '../../../globalErrors';
 import Checkbox from '@mui/material/Checkbox';
@@ -66,9 +68,9 @@ const EditTable = (props) => {
         <TableRow>
           <TableCell sx={{ width: '20px' }}>Required</TableCell>
           <TableCell>Name</TableCell>
-          <TableCell>Type</TableCell>
+          <TableCell sx={{ width: '10%' }}>Type</TableCell>
           <TableCell sx={{ width: '30%' }}>Description</TableCell>
-          <TableCell sx={{ width: '15%' }}>
+          <TableCell sx={{ width: '20%' }}>
             Values (any, if not specified)
           </TableCell>
           <TableCell sx={{ width: '20px' }}>
@@ -167,17 +169,15 @@ const EditTable = (props) => {
                 />
               </TableCell>
               <TableCell>
-                <TextField
-                  defaultValue={field.possibleValues.join(', ')}
+                <ChipInput
+                  fullWidth
+                  variant="outlined"
+                  placeholder="Hit enter after typing"
+                  defaultValue={field.possibleValues}
                   disabled={field.deleted}
-                  onKeyUp={(event) => {
-                    updateField(
-                      index,
-                      'possibleValues',
-                      event.target.value.split(',')
-                    );
+                  onChange={(chip) => {
+                    updateField(index, 'possibleValues', [...chip]);
                   }}
-                  sx={{ width: '100%' }}
                 />
               </TableCell>
               <TableCell
@@ -268,7 +268,16 @@ const DisplayTable = (props) => {
               <TableCell>{field.name}</TableCell>
               <TableCell>{field.type}</TableCell>
               <TableCell>{field.description}</TableCell>
-              <TableCell>{field.possibleValues}</TableCell>
+              <TableCell>
+                {field.possibleValues?.map((val) => (
+                  <Chip
+                    sx={{ mr: 0.5, mb: 0.5 }}
+                    key={val}
+                    label={val}
+                    variant="outlined"
+                  />
+                ))}
+              </TableCell>
               <TableCell></TableCell>
             </TableRow>
           ))
@@ -304,7 +313,11 @@ export const MetadataFormFields = (props) => {
   const fetchItems = async () => {
     setLoading(true);
     const response = await client.query(getMetadataForm(metadataForm.uri));
-    if (!response.errors && response.data.getMetadataForm !== null) {
+    if (
+      !response.errors &&
+      response.data &&
+      response.data.getMetadataForm !== null
+    ) {
       setFields(response.data.getMetadataForm.fields);
     } else {
       const error = response.errors
@@ -350,7 +363,11 @@ export const MetadataFormFields = (props) => {
   };
 
   useEffect(() => {
-    fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+    if (client) {
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+    }
   }, [client, dispatch]);
 
   return (
