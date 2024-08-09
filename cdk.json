@@ -13,7 +13,8 @@
         "envname": "sandbox",
         "account": "017820696756",
         "region": "us-east-1",
-        "enable_pivot_role_auto_create": true
+        "enable_pivot_role_auto_create": true,
+        "allowed_origins": "*"
       }
     ]
   }
