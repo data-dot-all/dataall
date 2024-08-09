@@ -62,6 +62,7 @@ def test_update_metadata_form_fields_unauth(client2, metadata_form_1, metadata_f
         'description': 'Field 1',
         'type': 'String',
         'required': True,
+        'displayNumber': 1,
     }
 
     err_message_part1 = 'An error occurred (UnauthorizedOperation) when calling UPDATE FIELDS operation:'
