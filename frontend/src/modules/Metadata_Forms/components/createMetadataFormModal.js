@@ -174,7 +174,7 @@ export const CreateMetadataFormModal = (props) => {
             environment: Yup.string().when('visibility', {
               is: visibilityDict.Environment,
               then: Yup.string()
-                .oneOf(environmentOptions)
+                .oneOf(environmentOptions.map((option) => option.value))
                 .required('*Environment is required')
             }),
             group: Yup.string().when('visibility', {
@@ -186,7 +186,7 @@ export const CreateMetadataFormModal = (props) => {
             organization: Yup.string().when('visibility', {
               is: visibilityDict.Organization,
               then: Yup.string()
-                .oneOf(environmentOptions)
+                .oneOf(organizationOptions.map((option) => option.value))
                 .required('*Organization is required')
             })
           })}

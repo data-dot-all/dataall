@@ -1,6 +1,6 @@
 import { useDispatch } from 'react-redux';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import PropTypes from 'prop-types';
 import {
@@ -16,7 +16,8 @@ import {
   Divider,
   Button,
   Autocomplete,
-  Tooltip
+  Tooltip,
+  Chip
 } from '@mui/material';
 import {
   Scrollbar,
@@ -24,7 +25,8 @@ import {
   AsteriskIcon,
   PencilAltIcon,
   SaveIcon,
-  PlusIcon
+  PlusIcon,
+  ChipInput
 } from '../../../design';
 import { SET_ERROR } from '../../../globalErrors';
 import Checkbox from '@mui/material/Checkbox';
@@ -39,9 +41,11 @@ import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import SettingsBackupRestoreOutlinedIcon from '@mui/icons-material/SettingsBackupRestoreOutlined';
 import { batchMetadataFormFieldUpdates } from '../services/batchMetadataFormFieldUpdates';
 import CircularProgress from '@mui/material/CircularProgress';
+import { listGlossaries } from '../../Glossaries/services';
 
 const EditTable = (props) => {
-  const { fields, fieldTypeOptions, saveChanges, formUri } = props;
+  const { fields, fieldTypeOptions, saveChanges, formUri, glossaryNodes } =
+    props;
   const [localFields, setLocalFields] = useState(fields);
 
   const updateField = (index, propertyName, value) => {
@@ -66,10 +70,10 @@ const EditTable = (props) => {
         <TableRow>
           <TableCell sx={{ width: '20px' }}>Required</TableCell>
           <TableCell>Name</TableCell>
-          <TableCell>Type</TableCell>
+          <TableCell sx={{ width: '10%' }}>Type</TableCell>
           <TableCell sx={{ width: '30%' }}>Description</TableCell>
-          <TableCell sx={{ width: '15%' }}>
-            Values (any, if not specified)
+          <TableCell sx={{ width: '20%' }}>
+            Possible Values or Glossary Term
           </TableCell>
           <TableCell sx={{ width: '20px' }}>
             <Button
@@ -139,7 +143,7 @@ const EditTable = (props) => {
                   disabled={field.deleted}
                   options={fieldTypeOptions.map((option) => option.value)}
                   defaultValue={field.type}
-                  onKeyUp={(event, value) => {
+                  onChange={(event, value) => {
                     updateField(
                       index,
                       'type',
@@ -167,18 +171,39 @@ const EditTable = (props) => {
                 />
               </TableCell>
               <TableCell>
-                <TextField
-                  defaultValue={field.possibleValues.join(', ')}
-                  disabled={field.deleted}
-                  onKeyUp={(event) => {
-                    updateField(
-                      index,
-                      'possibleValues',
-                      event.target.value.split(',')
-                    );
-                  }}
-                  sx={{ width: '100%' }}
-                />
+                {field.type !==
+                fieldTypeOptions.find((o) => o.name === 'GlossaryTerm')
+                  .value ? (
+                  <ChipInput
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Hit enter after typing"
+                    defaultValue={field.possibleValues}
+                    disabled={field.deleted}
+                    onChange={(chip) => {
+                      updateField(index, 'possibleValues', [...chip]);
+                    }}
+                  />
+                ) : (
+                  <Autocomplete
+                    disablePortal
+                    disabled={field.deleted}
+                    options={glossaryNodes.map((node) => {
+                      return { label: node.label, value: node.nodeUri };
+                    })}
+                    defaultValue={glossaryNodes.find(
+                      (node) => field.glossaryNodeUri === node.nodeUri
+                    )}
+                    onChange={(event, node) => {
+                      if (node) {
+                        updateField(index, 'glossaryNodeUri', node.value);
+                      }
+                    }}
+                    renderInput={(params) => (
+                      <TextField {...params} variant="outlined" />
+                    )}
+                  />
+                )}
               </TableCell>
               <TableCell
                 sx={{
@@ -218,7 +243,8 @@ EditTable.propTypes = {
   fields: PropTypes.array.isRequired,
   fieldTypeOptions: PropTypes.array.isRequired,
   saveChanges: PropTypes.func.isRequired,
-  formUri: PropTypes.string.isRequired
+  formUri: PropTypes.string.isRequired,
+  glossaryNodes: PropTypes.array.isRequired
 };
 
 const DisplayTable = (props) => {
@@ -229,10 +255,10 @@ const DisplayTable = (props) => {
         <TableRow>
           <TableCell sx={{ width: '20px' }}>Required</TableCell>
           <TableCell>Name</TableCell>
-          <TableCell>Type</TableCell>
+          <TableCell sx={{ width: '10%' }}>Type</TableCell>
           <TableCell sx={{ width: '30%' }}>Description</TableCell>
-          <TableCell sx={{ width: '15%' }}>
-            Values (any, if not specified)
+          <TableCell sx={{ width: '20%' }}>
+            Possible Values or Glossary Term
           </TableCell>
           <TableCell sx={{ width: '20px', alignContent: 'center' }}>
             {(userRole === userRolesMF.Owner ||
@@ -271,7 +297,17 @@ const DisplayTable = (props) => {
               <TableCell>{field.name}</TableCell>
               <TableCell>{field.type}</TableCell>
               <TableCell>{field.description}</TableCell>
-              <TableCell>{field.possibleValues}</TableCell>
+              <TableCell>
+                {field.possibleValues?.map((val) => (
+                  <Chip
+                    sx={{ mr: 0.5, mb: 0.5 }}
+                    key={val}
+                    label={val}
+                    variant="outlined"
+                  />
+                ))}
+                {field.glossaryNodeUri && field.glossaryNodeName}
+              </TableCell>
               <TableCell></TableCell>
             </TableRow>
           ))
@@ -294,6 +330,7 @@ export const MetadataFormFields = (props) => {
   const [fields, setFields] = useState(metadataForm.fields);
   const [inputValue, setInputValue] = useState('');
   const [filter, setFilter] = useState({});
+  const [glossaryNodes, setGlossaryNodes] = useState([]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -304,10 +341,30 @@ export const MetadataFormFields = (props) => {
     setEditOn(true);
   };
 
+  const fetchGlossaryNodes = async () => {
+    const response = await client.query(listGlossaries({}));
+    if (
+      !response.errors &&
+      response.data &&
+      response.data.listGlossaries !== null
+    ) {
+      setGlossaryNodes(response.data.listGlossaries.nodes);
+    } else {
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Glossary Nodes not found';
+      dispatch({ type: SET_ERROR, error });
+    }
+  };
+
   const fetchItems = async () => {
     setLoading(true);
     const response = await client.query(getMetadataForm(metadataForm.uri));
-    if (!response.errors && response.data.getMetadataForm !== null) {
+    if (
+      !response.errors &&
+      response.data &&
+      response.data.getMetadataForm !== null
+    ) {
       setFields(response.data.getMetadataForm.fields);
     } else {
       const error = response.errors
@@ -319,11 +376,27 @@ export const MetadataFormFields = (props) => {
   };
 
   const saveChanges = async (updatedFields) => {
+    const badfield = updatedFields.find(
+      (field) =>
+        !field.deleted &&
+        field.type ===
+          fieldTypeOptions.find((o) => o.name === 'GlossaryTerm').value &&
+        !field.glossaryNodeUri
+    );
+    if (badfield) {
+      dispatch({
+        type: SET_ERROR,
+        error: 'Glossary Term is required for field ' + badfield.name
+      });
+      return;
+    }
     setLoading(true);
     // remove new fields (not yet saved in DB), that were deleted during editing
     const data = updatedFields.filter((field) => !field.deleted || field.uri);
-    data.forEach((field) => {
+    data.forEach((field, index) => {
       delete field.__typename;
+      delete field.glossaryNodeName;
+      field.displayNumber = index;
     });
     const response = await client.mutate(
       batchMetadataFormFieldUpdates(metadataForm.uri, data)
@@ -351,6 +424,19 @@ export const MetadataFormFields = (props) => {
       );
     }
   };
+
+  useEffect(() => {
+    if (client) {
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+      if (glossaryNodes.length === 0) {
+        fetchGlossaryNodes().catch((e) =>
+          dispatch({ type: SET_ERROR, error: e.message })
+        );
+      }
+    }
+  }, [client, dispatch]);
 
   return (
     <Box>
@@ -408,6 +494,7 @@ export const MetadataFormFields = (props) => {
                   fieldTypeOptions={fieldTypeOptions}
                   saveChanges={saveChanges}
                   formUri={metadataForm.uri}
+                  glossaryNodes={glossaryNodes}
                 />
               ) : (
                 <DisplayTable
@@ -427,6 +514,5 @@ export const MetadataFormFields = (props) => {
 
 MetadataFormFields.propTypes = {
   metadataForm: PropTypes.any.isRequired,
-  visibilityDict: PropTypes.any.isRequired,
   fieldTypeOptions: PropTypes.any.isRequired
 };

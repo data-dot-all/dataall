@@ -19,10 +19,12 @@ export const getMetadataForm = (uri) => ({
           uri
           metadataFormUri
           name
+          displayNumber
           description
           required
           type
           glossaryNodeUri
+          glossaryNodeName
           possibleValues
         }
       }

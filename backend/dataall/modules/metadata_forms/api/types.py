@@ -1,5 +1,9 @@
 from dataall.base.api import gql
-from dataall.modules.metadata_forms.api.resolvers import get_home_entity_name, get_form_fields, get_user_role
+from dataall.modules.metadata_forms.api.resolvers import (
+    get_home_entity_name,
+    get_form_fields,
+    get_fields_glossary_node_name,
+)
 
 MetadataForm = gql.ObjectType(
     name='MetadataForm',
@@ -21,11 +25,13 @@ MetadataFormField = gql.ObjectType(
     fields=[
         gql.Field(name='uri', type=gql.ID),
         gql.Field(name='name', type=gql.String),
+        gql.Field(name='displayNumber', type=gql.Integer),
         gql.Field(name='description', type=gql.String),
         gql.Field(name='type', type=gql.String),
         gql.Field(name='required', type=gql.Boolean),
         gql.Field(name='metadataFormUri', type=gql.String),
         gql.Field(name='glossaryNodeUri', type=gql.String),
+        gql.Field(name='glossaryNodeName', type=gql.String, resolver=get_fields_glossary_node_name),
         gql.Field(name='possibleValues', type=gql.ArrayType(gql.String)),
     ],
 )
