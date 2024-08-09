@@ -17,6 +17,7 @@ export const listMetadataForms = (filter) => ({
           name
           description
           SamlGroupName
+          userRole
           visibility
           homeEntity
           homeEntityName

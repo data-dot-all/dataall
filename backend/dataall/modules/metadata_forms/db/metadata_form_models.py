@@ -28,7 +28,7 @@ class MetadataForm(Base):
 class MetadataFormEnforcementRule(Base):
     __tablename__ = 'metadata_form_enforcement_rule'
     uri = Column(String, primary_key=True, default=utils.uuid('rule'))
-    metadataFormUri = Column(String, ForeignKey('metadata_form.uri'))
+    metadataFormUri = Column(String, ForeignKey('metadata_form.uri'), nullable=False)
     level = Column(String, nullable=False)  # enum MetadataFormEnforcementScope
     entityTypes = Column(ARRAY(String), nullable=False)  # enum MetadataFormEntityTypes
     severity = Column(String, nullable=False)  # enum MetadataFormEnforcementSeverity
@@ -38,6 +38,8 @@ class MetadataFormField(Base):
     __tablename__ = 'metadata_form_field'
     metadataFormUri = Column(String, ForeignKey('metadata_form.uri'))
     uri = Column(String, primary_key=True, default=utils.uuid('field'))
+    displayNumber = Column(Integer, nullable=False)
+    description = Column(String, nullable=True)
     name = Column(String, nullable=False)
     type = Column(String, nullable=False)  # enum MetadataFormFieldType
     required = Column(Boolean, nullable=False)

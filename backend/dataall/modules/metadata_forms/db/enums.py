@@ -45,3 +45,9 @@ class MetadataFormEnforcementScope(GraphQLEnumMapper):
     Environment = 'Environmental Level'
     Organization = 'Organizational Level'
     Global = 'Global'
+
+
+class MetadataFormUserRoles(GraphQLEnumMapper):
+    Owner = 'Owner'
+    Admin = 'Admin'
+    User = 'User'

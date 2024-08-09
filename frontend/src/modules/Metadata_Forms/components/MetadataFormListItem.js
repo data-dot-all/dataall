@@ -9,13 +9,15 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import * as FaIcons from 'react-icons/fa';
-import { IconAvatar, useCardStyle } from 'design';
+import { useNavigate } from 'react-router';
+import { IconAvatar, Label, useCardStyle } from 'design';
 import { BallotOutlined } from '@mui/icons-material';
+import React from 'react';
 
 export const MetadataFormListItem = (props) => {
   const { metadata_form, visibilityDict } = props;
   const classes = useCardStyle();
-  //  const navigate = useNavigate();
+  const navigate = useNavigate();
 
   return (
     <Grid item key={metadata_form.uri} md={3} xs={12} {...props}>
@@ -33,13 +35,8 @@ export const MetadataFormListItem = (props) => {
                 <Box
                   sx={{
                     ml: 2,
-                    width: '99%',
                     whiteSpace: 'nowrap',
-                    alignItems: 'left',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    WebkitBoxOrient: 'vertical',
-                    WebkitLineClamp: 2
+                    alignItems: 'left'
                   }}
                 >
                   <Link
@@ -48,7 +45,12 @@ export const MetadataFormListItem = (props) => {
                     color="textPrimary"
                     variant="h6"
                     onClick={() => {
-                      //navigate(`/console/metadata-forms/${metadata_form.uri}`);
+                      navigate(`/console/metadata-forms/${metadata_form.uri}`);
+                    }}
+                    sx={{
+                      maxWidth: '200px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
                     }}
                   >
                     <Tooltip title={metadata_form.name}>
@@ -80,7 +82,6 @@ export const MetadataFormListItem = (props) => {
             color="textSecondary"
             variant="body2"
             sx={{
-              width: '200px',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -96,6 +97,29 @@ export const MetadataFormListItem = (props) => {
               </span>
             </Tooltip>
           </Typography>
+        </Box>
+        <Box
+          sx={{
+            px: 3,
+            py: 1
+          }}
+        >
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <FaIcons.FaUserShield /> My Role
+              </Typography>
+            </Grid>
+            <Grid item md={8} xs={12}>
+              {metadata_form.userRole === 'Owner' ? (
+                <Label color="primary">{metadata_form.userRole || '-'}</Label>
+              ) : (
+                <Typography color="textSecondary" variant="body2">
+                  {metadata_form.userRole || '-'}
+                </Typography>
+              )}
+            </Grid>
+          </Grid>
         </Box>
         <Box
           sx={{
@@ -165,6 +189,7 @@ export const MetadataFormListItem = (props) => {
                       color="textPrimary"
                       variant="subtitle2"
                       underline="false"
+                      sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
                     >
                       {metadata_form.homeEntityName || '-'}
                     </Link>
