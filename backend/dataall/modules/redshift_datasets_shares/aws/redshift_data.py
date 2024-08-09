@@ -410,21 +410,6 @@ class RedshiftShareDataClient:
             log.error(f'Revoking select to {table=} from {schema=} and {database=} to {rs_role=} failed due to: {e}')
             raise e
 
-    def check_role_permissions_to_table(
-        self, schema: str, table: str, rs_role: str, database: str = None
-    ):  # TODO: this one does not work!
-        try:
-            log.info(
-                f'Check if Redshift role {rs_role=} has select permissions on {table=} from {schema=} and {database=}..'
-            )
-            sql_statement = ';'
-            self._execute_statement_return_records(sql=sql_statement)
-        except Exception as e:
-            log.error(
-                f'Checking of {rs_role=} select permissions on {table=} from {schema=} and {database=} failed due to: {e}'
-            )
-            return False
-
 
 def redshift_share_data_client(account_id: str, region: str, connection: RedshiftConnection) -> RedshiftShareDataClient:
     "Factory of Client"

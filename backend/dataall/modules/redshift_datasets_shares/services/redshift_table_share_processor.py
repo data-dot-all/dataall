@@ -446,27 +446,8 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                             ShareErrorFormatter.dne_error_msg('Redshift datashare', self.datashare_name)
                         )
                     # 9) (in target namespace) Check that the redshift role has select access to the requested table in the local db.
-                    if not redshift_client_in_target.check_role_permissions_to_table(
-                        schema=self.dataset.schema, rs_role=self.redshift_role, table=table.name, database=local_db
-                    ):
-                        tbl_level_errors.append(
-                            ShareErrorFormatter.missing_permission_error_msg(
-                                self.redshift_role, 'SELECT', ['SELECT'], 'Redshift table', f'{local_db}.{table.name}'
-                            )
-                        )
                     # 10) (in target namespace) Check that the redshift role has select access to the requested table in the external schema.
-                    if not redshift_client_in_target.check_role_permissions_to_table(
-                        schema=external_schema, rs_role=self.redshift_role, table=table.name
-                    ):
-                        tbl_level_errors.append(
-                            ShareErrorFormatter.missing_permission_error_msg(
-                                self.redshift_role,
-                                'SELECT',
-                                ['SELECT'],
-                                'Redshift table',
-                                f'{external_schema}.{table.name}',
-                            )
-                        )
+                    # TODO: not possible to query role grants or to check has_table_access on roles
                 except Exception as e:
                     tbl_level_errors.append(str(e))
 
