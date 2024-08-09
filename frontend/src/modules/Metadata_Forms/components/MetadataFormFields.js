@@ -1,6 +1,6 @@
 import { useDispatch } from 'react-redux';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import PropTypes from 'prop-types';
 import {
@@ -348,6 +348,10 @@ export const MetadataFormFields = (props) => {
       );
     }
   };
+
+  useEffect(() => {
+    fetchItems().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+  }, [client, dispatch]);
 
   return (
     <Box>
