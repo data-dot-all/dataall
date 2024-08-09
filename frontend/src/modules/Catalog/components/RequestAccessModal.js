@@ -5,6 +5,9 @@ import {
   Box,
   Button,
   CardContent,
+  CardHeader,
+  Checkbox,
+  FormGroup,
   CircularProgress,
   Dialog,
   FormControlLabel,
@@ -206,13 +209,20 @@ export const RequestAccessModal = (props) => {
       ? values.consumptionRole.value
       : values.groupUri;
 
+    let permissions = [
+      ...(values.read_perm ? ['Read'] : []),
+      ...(values.write_perm ? ['Write'] : []),
+      ...(values.modify_perm ? ['Modify'] : [])
+    ];
+
     let inputObject = {
       environmentUri: values.environmentUri,
       groupUri: values.groupUri,
       principalId: principal,
       principalType: type,
       requestPurpose: values.comment,
-      attachMissingPolicies: values.attachMissingPolicies
+      attachMissingPolicies: values.attachMissingPolicies,
+      permissions: permissions
     };
 
     if (hit.resourceKind === 'dataset') {
@@ -303,7 +313,10 @@ export const RequestAccessModal = (props) => {
               initialValues={{
                 environmentUri: '',
                 comment: '',
-                attachMissingPolicies: false
+                attachMissingPolicies: false,
+                read_perm: true,
+                write_perm: false,
+                modify_perm: false
               }}
               validationSchema={Yup.object().shape({
                 environmentUri: Yup.string().required(
@@ -481,6 +494,41 @@ export const RequestAccessModal = (props) => {
                               )}
                             </Box>
                           )}
+                        </CardContent>
+                        <CardContent>
+                          <CardHeader subheader="Permissions" />
+                          <FormGroup>
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  id="read_perm"
+                                  onChange={handleChange}
+                                  checked={values.read_perm}
+                                />
+                              }
+                              label="Read"
+                            />
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  id="write_perm"
+                                  onChange={handleChange}
+                                  checked={values.write_perm}
+                                />
+                              }
+                              label="Write"
+                            />
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  id="modify_perm"
+                                  onChange={handleChange}
+                                  checked={values.modify_perm}
+                                />
+                              }
+                              label="Modify"
+                            />
+                          </FormGroup>
                         </CardContent>
                         <CardContent>
                           {loadingRoles ? (

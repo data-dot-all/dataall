@@ -4,17 +4,20 @@ from dataall.base.aws.sts import SessionHelper
 from botocore.exceptions import ClientError
 from dataall.modules.s3_datasets_shares.aws.share_policy_verifier import SharePolicyVerifier
 
-
 log = logging.getLogger(__name__)
 
 DATAALL_BUCKET_KMS_DECRYPT_SID = 'DataAll-Bucket-KMS-Decrypt'
+DATAALL_BUCKET_KMS_ENCRYPT_SID = 'DataAll-Bucket-KMS-Encrypt'
 DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID = 'KMSPivotRolePermissions'
 DATAALL_ACCESS_POINT_KMS_DECRYPT_SID = 'DataAll-Access-Point-KMS-Decrypt'
+DATAALL_ACCESS_POINT_KMS_ENCRYPT_SID = 'DataAll-Access-Point-KMS-Encrypt'
 
 DATAALL_KMS_SIDS = [
     DATAALL_BUCKET_KMS_DECRYPT_SID,
+    DATAALL_BUCKET_KMS_ENCRYPT_SID,
     DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID,
     DATAALL_ACCESS_POINT_KMS_DECRYPT_SID,
+    DATAALL_ACCESS_POINT_KMS_ENCRYPT_SID,
 ]
 
 

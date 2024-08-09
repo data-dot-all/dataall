@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 
 from sqlalchemy import Boolean, Column, String, DateTime
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import query_expression
 
 from dataall.base.db import Base, utils
@@ -38,6 +39,7 @@ class ShareObject(Base):
     rejectPurpose = Column(String, nullable=True)
     userRoleForShareObject = query_expression()
     existingSharedItems = query_expression()
+    permissions = Column(ARRAY(String), nullable=False)
 
 
 class ShareObjectItem(Base):

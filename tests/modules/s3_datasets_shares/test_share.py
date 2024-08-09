@@ -7,7 +7,7 @@ import pytest
 
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.modules.shares_base.services.shares_enums import ShareableType, PrincipalType
+from dataall.modules.shares_base.services.shares_enums import ShareableType, PrincipalType, ShareObjectDataPermission
 from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
     ShareItemActions,
@@ -402,6 +402,7 @@ def create_share_object(
     attachMissingPolicies=True,
     principalId=None,
     principalType=PrincipalType.Group.value,
+    permissions=[ShareObjectDataPermission.Read.value],
 ):
     q = """
       mutation CreateShareObject(
@@ -449,6 +450,7 @@ def create_share_object(
             'principalType': principalType,
             'requestPurpose': 'testShare',
             'attachMissingPolicies': attachMissingPolicies,
+            'permissions': permissions,
         },
     )
 
