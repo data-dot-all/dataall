@@ -1,10 +1,14 @@
 import pytest
-from integration_tests.modules.metadata_forms.queries import create_metadata_form, delete_metadata_form
-from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility
+from integration_tests.modules.metadata_forms.mutations import (
+    create_metadata_form,
+    delete_metadata_form,
+    delete_metadata_form_field,
+    create_metadata_form_fields,
+)
 
 
 @pytest.fixture(scope='session')
-def metadata_form_1(client1, group1, session_id):
+def metadata_form_1(client1, group1):
     """
     Session worksheet owned by group1
     """
@@ -13,7 +17,7 @@ def metadata_form_1(client1, group1, session_id):
         input = {
             'name': 'MF Test 1',
             'description': 'first session test metadata form',
-            'visibility': MetadataFormVisibility.Global.value,
+            'visibility': 'Global',
             'SamlGroupName': group1,
             'homeEntity': None,
         }
@@ -22,3 +26,23 @@ def metadata_form_1(client1, group1, session_id):
     finally:
         if mf1:
             delete_metadata_form(client1, mf1.uri)
+
+
+@pytest.fixture(scope='session')
+def metadata_form_field_1(client1, group1, metadata_form_1):
+    """
+    Session worksheet owned by group1
+    """
+    mff = None
+    try:
+        input = {
+            'name': 'Test Field 1',
+            'description': 'test field',
+            'type': 'String',
+            'required': True,
+        }
+        mff = create_metadata_form_fields(client1, metadata_form_1.uri, [input])[0]
+        yield mff
+    finally:
+        if mff:
+            delete_metadata_form_field(client1, metadata_form_1.uri, mff.uri)
