@@ -139,7 +139,7 @@ const EditTable = (props) => {
                   disabled={field.deleted}
                   options={fieldTypeOptions.map((option) => option.value)}
                   defaultValue={field.type}
-                  onKeyUp={(event, value) => {
+                  onChange={(event, value) => {
                     updateField(
                       index,
                       'type',
