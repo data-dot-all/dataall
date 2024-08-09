@@ -41,7 +41,7 @@ const MetadataFormView = () => {
     { label: 'Enforcement', value: 'enforcement' },
     { label: 'Preview', value: 'preview' }
   ];
-  const [metadataForm, setMetadataForms] = useState(null);
+  const [metadataForm, setMetadataForm] = useState(null);
   const [currentTab, setCurrentTab] = useState(null);
   const [loading, setLoading] = useState(true);
   const [visibilityDict, setVisibilityDict] = useState({});
@@ -66,7 +66,7 @@ const MetadataFormView = () => {
     setLoading(true);
     const response = await client.query(getMetadataForm(params.uri));
     if (!response.errors && response.data.getMetadataForm !== null) {
-      setMetadataForms(response.data.getMetadataForm);
+      setMetadataForm(response.data.getMetadataForm);
     } else {
       const error = response.errors
         ? response.errors[0].message
@@ -137,7 +137,7 @@ const MetadataFormView = () => {
       </>
     );
   }
-  if (!metadataForm) {
+  if (!metadataForm && !loading) {
     return null;
   }
 
