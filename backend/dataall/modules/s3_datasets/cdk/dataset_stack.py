@@ -101,16 +101,16 @@ class DatasetStack(Stack):
         env = self.get_env(dataset)
         env_group = self.get_env_group(dataset)
         self.pivot_role_name = SessionHelper.get_delegation_role_name(region=env.region)
-        
+
         dataset_basename = NamingConventionService(
             target_uri=dataset.datasetUri,
             target_label=dataset.label,
             pattern=NamingConventionPattern.GLUE_ETL,
             resource_prefix=env.resourcePrefix,
         ).build_compliant_name()
-        
+
         glue_sec_conf_enc_key_name = f'{dataset_basename}-log-enc-key'
-        glue_sec_conf_name=f'{dataset_basename}-security-config'
+        glue_sec_conf_name = f'{dataset_basename}-security-config'
 
         quicksight_default_group_arn = None
         if self.has_quicksight_enabled(env):
@@ -459,7 +459,7 @@ class DatasetStack(Stack):
                 'DatabaseAdministrators': dataset_admins,
             },
         )
-        
+
         glue_sec_conf_enc_key = kms.Key(
             self,
             f'{glue_sec_conf_enc_key_name}',
@@ -499,7 +499,7 @@ class DatasetStack(Stack):
                     glue.CfnSecurityConfiguration.S3EncryptionProperty(
                         s3_encryption_mode='SSE-KMS', kms_key_arn=glue_sec_conf_enc_key.key_arn
                     )
-                ]
+                ],
             ),
             name=f'{glue_sec_conf_name}',
         )
