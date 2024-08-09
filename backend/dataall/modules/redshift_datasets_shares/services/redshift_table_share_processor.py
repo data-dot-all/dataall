@@ -129,6 +129,10 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                 redshift_client_in_target.grant_schema_usage_access_to_redshift_role(
                     schema=external_schema, rs_role=self.redshift_role
                 )
+                # 7) Grant usage access to the redshift role to the schema of the local_db
+                redshift_client_in_target.grant_schema_usage_access_to_redshift_role(
+                    database=local_db, schema=self.dataset.schema, rs_role=self.redshift_role
+                )
 
                 for table in self.tables:
                     try:

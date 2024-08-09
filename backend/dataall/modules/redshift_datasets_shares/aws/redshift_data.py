@@ -349,13 +349,13 @@ class RedshiftShareDataClient:
             log.error(f'Checking of {schema=} failed due to: {e}')
             return False
 
-    def grant_schema_usage_access_to_redshift_role(self, schema: str, rs_role: str):
+    def grant_schema_usage_access_to_redshift_role(self, schema: str, rs_role: str, database: str = None):
         """
         Grant usage on schema to a role. If already granted, it succeeds
         """
         try:
-            log.info(f'Grant usage on {schema=} to Redshift role {rs_role=}..')
-            sql_statement = f'GRANT USAGE ON SCHEMA {RedshiftShareDataClient.parsed_name(schema)} TO ROLE {rs_role};'
+            log.info(f'Grant usage on {database=} {schema=} to Redshift role {rs_role=}..')
+            sql_statement = f'GRANT USAGE ON SCHEMA {RedshiftShareDataClient.parsed_object_names(database, schema)} TO ROLE {rs_role};'
             self._execute_statement(sql=sql_statement)
         except Exception as e:
             log.error(f'Granting usage to {schema=} to {rs_role=} failed due to: {e}')
