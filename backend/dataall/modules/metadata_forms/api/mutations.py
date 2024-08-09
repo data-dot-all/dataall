@@ -25,7 +25,7 @@ deleteMetadataForm = gql.MutationField(
     test_scope='MetadataForm',
 )
 
-createMetadataFormField = gql.MutationField(
+createMetadataFormFields = gql.MutationField(
     name='createMetadataFormFields',
     args=[
         gql.Argument(name='formUri', type=gql.NonNullableType(gql.String)),
