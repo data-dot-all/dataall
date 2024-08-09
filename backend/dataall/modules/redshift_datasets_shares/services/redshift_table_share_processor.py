@@ -399,9 +399,7 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                 ):
                     ds_level_errors.append(ShareErrorFormatter.dne_error_msg('Redshift datashare', self.datashare_name))
                 # 3) (in source namespace) Check the access is granted to the consumer cluster to the datashare
-                if not redshift_client_in_source.check_consumer_permissions_to_datashare(
-                    datashare=self.datashare_name, namespace=self.target_connection.nameSpaceId
-                ):
+                if not redshift_client_in_source.check_consumer_permissions_to_datashare(datashare=self.datashare_name):
                     ds_level_errors.append(
                         ShareErrorFormatter.missing_permission_error_msg(
                             self.target_connection.nameSpaceId,
@@ -442,7 +440,7 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                 try:
                     # 8) (in source namespace) Check that table is added to datashare
                     if not redshift_client_in_source.check_table_in_datashare(
-                        datashare=self.datashare_name, table=table.name
+                        datashare=self.datashare_name, table_name=table.name
                     ):
                         tbl_level_errors.append(
                             ShareErrorFormatter.dne_error_msg('Redshift datashare', self.datashare_name)

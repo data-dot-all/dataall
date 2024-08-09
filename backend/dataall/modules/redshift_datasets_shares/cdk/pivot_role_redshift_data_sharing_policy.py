@@ -8,5 +8,14 @@ class RedshiftDataSharingPivotRole(PivotRoleStatementSet):
     """
 
     def get_statements(self):
-        statements = []
+        statements = [
+            iam.PolicyStatement(
+                sid='RedshiftReadShareResources',  # These permissions can only be applied to *
+                effect=iam.Effect.ALLOW,
+                actions=['redshift-data:GetStatementResult'],
+                resources=[
+                    '*',
+                ],
+            )
+        ]
         return statements
