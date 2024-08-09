@@ -52,7 +52,7 @@ class ProcessS3BucketShare(SharesProcessorInterface):
         if not ShareObjectService.verify_principal_role(self.session, self.share_data.share):
             raise PrincipalRoleNotFound(
                 'process approved shares',
-                f'Principal role {self.share_data.share.principalIAMRoleName} is not found. Failed to update KMS key policy',
+                f'Principal role {self.share_data.share.principalRoleName} is not found. Failed to update KMS key policy',
             )
         for bucket in self.buckets:
             log.info(f'Sharing bucket {bucket.bucketUri}/{bucket.S3BucketName} ')

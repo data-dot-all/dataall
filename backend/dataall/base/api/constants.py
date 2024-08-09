@@ -21,6 +21,14 @@ class GraphQLEnumMapper(Enum):
                 return c.name
         return None
 
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
+
+    @classmethod
+    def has_key(cls, key):
+        return key in cls._member_map_
+
 
 class SortDirection(GraphQLEnumMapper):
     asc = 'asc'

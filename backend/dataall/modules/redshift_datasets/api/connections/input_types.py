@@ -5,6 +5,7 @@ CreateRedshiftConnectionInput = gql.InputType(
     name='CreateRedshiftConnectionInput',
     arguments=[
         gql.Argument('connectionName', gql.NonNullableType(gql.String)),
+        gql.Argument('connectionType', gql.NonNullableType(gql.String)),
         gql.Argument('environmentUri', gql.NonNullableType(gql.String)),
         gql.Argument('SamlGroupName', gql.NonNullableType(gql.String)),
         gql.Argument('redshiftType', gql.NonNullableType(gql.String)),
@@ -26,5 +27,6 @@ ConnectionFilter = gql.InputType(
         gql.Argument('pageSize', gql.Integer),
         gql.Argument('environmentUri', gql.String),
         gql.Argument('groupUri', gql.String),
+        gql.Argument('connectionType', gql.String),
     ],
 )

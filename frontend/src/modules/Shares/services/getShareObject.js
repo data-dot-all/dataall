@@ -20,7 +20,7 @@ export const getShareObject = ({ shareUri, filter }) => ({
           principalId
           principalType
           principalName
-          principalIAMRoleName
+          principalRoleName
           SamlGroupName
           environmentUri
           environmentName
@@ -56,6 +56,7 @@ export const getShareObject = ({ shareUri, filter }) => ({
           region
           exists
           description
+          datasetType
         }
       }
     }

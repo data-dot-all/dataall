@@ -27,9 +27,9 @@ export const DatasetListItem = (props) => {
       : '-';
   const datasetTypeIcon =
     dataset.datasetType === 'DatasetTypes.S3'
-      ? `/static/icons/amazon-s3.svg`
+      ? `/static/icons/Arch_Amazon-Simple-Storage-Service_64.svg`
       : dataset.datasetType === 'DatasetTypes.Redshift'
-      ? `/static/icons/aws-redshift.svg`
+      ? `/static/icons/Arch_Amazon-Redshift_64.svg`
       : '-';
   const classes = useCardStyle();
   const navigate = useNavigate();
@@ -45,7 +45,7 @@ export const DatasetListItem = (props) => {
                   display: 'flex'
                 }}
               >
-                <Avatar src={datasetTypeIcon} size={18} variant="square" />
+                <Avatar src={datasetTypeIcon} size={25} variant="square" />
                 <Box sx={{ ml: 2 }}>
                   <Link
                     underline="hover"

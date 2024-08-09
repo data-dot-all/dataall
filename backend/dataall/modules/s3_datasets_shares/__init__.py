@@ -34,21 +34,34 @@ class S3DatasetsSharesApiModuleInterface(ModuleInterface):
         )
         from dataall.modules.shares_base.services.shares_enums import ShareableType
         from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, DatasetBucket, DatasetStorageLocation
+        from dataall.modules.s3_datasets_shares.services.share_processors.glue_table_share_processor import (
+            ProcessLakeFormationShare,
+        )
+        from dataall.modules.s3_datasets_shares.services.share_processors.s3_bucket_share_processor import (
+            ProcessS3BucketShare,
+        )
+        from dataall.modules.s3_datasets_shares.services.share_processors.s3_access_point_share_processor import (
+            ProcessS3AccessPointShare,
+        )
 
         EnvironmentResourceManager.register(S3ShareEnvironmentResource())
         DatasetService.register(S3ShareDatasetService())
         DatasetListService.register(S3ShareDatasetService())
 
         ShareProcessorManager.register_processor(
-            ShareProcessorDefinition(ShareableType.Table, None, DatasetTable, DatasetTable.tableUri)
+            ShareProcessorDefinition(
+                ShareableType.Table, ProcessLakeFormationShare, DatasetTable, DatasetTable.tableUri
+            )
         )
         ShareProcessorManager.register_processor(
-            ShareProcessorDefinition(ShareableType.S3Bucket, None, DatasetBucket, DatasetBucket.bucketUri)
+            ShareProcessorDefinition(
+                ShareableType.S3Bucket, ProcessS3BucketShare, DatasetBucket, DatasetBucket.bucketUri
+            )
         )
         ShareProcessorManager.register_processor(
             ShareProcessorDefinition(
                 ShareableType.StorageLocation,
-                None,
+                ProcessS3AccessPointShare,
                 DatasetStorageLocation,
                 DatasetStorageLocation.locationUri,
             )
