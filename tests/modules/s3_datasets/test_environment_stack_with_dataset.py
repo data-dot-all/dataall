@@ -7,6 +7,7 @@ import json
 from dataall.core.environment.cdk.environment_stack import EnvironmentSetup
 from dataall.core.environment.db.environment_models import EnvironmentGroup
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
+from tests.skip_conditions import checkov_scan
 
 
 @pytest.fixture(scope='module')
@@ -151,9 +152,7 @@ def test_resources_created(env_fixture_fixed_naming, org_fixture, mocker):
     template.resource_count_is('AWS::IAM::Policy', 4)
 
 
-@pytest.mark.skipif(
-    os.getenv('CHECKOV_ACTIONS', 'false') != 'true', reason='Pytest used for Checkov Scan CDK Synth Output'
-)
+@checkov_scan
 def test_checkov(env_fixture_fixed_naming, org_fixture, mocker):
     app = App()
     mocker.patch(

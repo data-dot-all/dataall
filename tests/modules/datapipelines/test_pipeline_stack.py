@@ -8,6 +8,7 @@ from dataall.core.environment.db.environment_models import Environment
 from dataall.modules.datapipelines.cdk.datapipelines_pipeline import PipelineStack
 from dataall.modules.datapipelines.db.datapipelines_models import DataPipeline, DataPipelineEnvironment
 from dataall.modules.datapipelines.db.datapipelines_repositories import DatapipelinesRepository
+from tests.skip_conditions import checkov_scan
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -104,9 +105,7 @@ def test_resources_created(pipeline_db):
     template.resource_count_is('AWS::CodeBuild::Project', 1)
 
 
-@pytest.mark.skipif(
-    os.getenv('CHECKOV_ACTIONS', 'false') != 'true', reason='Pytest used for Checkov Scan CDK Synth Output'
-)
+@checkov_scan
 def test_checkov(pipeline_db):
     app = App()
     stack = PipelineStack(app, 'Pipeline', target_uri=pipeline_db.DataPipelineUri)
