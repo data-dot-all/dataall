@@ -30,6 +30,8 @@ class MetadataFormParamValidationService:
             raise exceptions.RequiredParameter('name')
         if 'type' not in data:
             raise exceptions.RequiredParameter('type')
+        if 'displayNumber' not in data:
+            raise exceptions.RequiredParameter('displayNumber')
 
         if data.get('type') == MetadataFormFieldType.GlossaryTerm.value and 'glossaryNodeUri' not in data:
             raise exceptions.RequiredParameter('glossaryNodeUri')
