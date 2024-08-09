@@ -14,6 +14,11 @@ class NamingConventionPattern(Enum):
     DEFAULT = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 63}
     OPENSEARCH = {'regex': '[^a-z0-9-]', 'separator': '-', 'max_length': 27}
     OPENSEARCH_SERVERLESS = {'regex': '[^a-z0-9-]', 'separator': '-', 'max_length': 31}
+    REDSHIFT_DATASHARE = {
+        'regex': '[^a-zA-Z0-9_]',
+        'separator': '_',
+        'max_length': 1000,
+    }  # Maximum length of 2147483647
 
 
 class NamingConventionService:
