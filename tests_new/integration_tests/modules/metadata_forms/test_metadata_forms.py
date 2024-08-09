@@ -81,6 +81,7 @@ def test_metadata_form_fields_batch(client1, metadata_form_1, metadata_form_fiel
         'description': 'Field 1',
         'type': 'String',
         'required': True,
+        'displayNumber': 1,
     }
     field_data_2 = {
         'name': 'field_2',
@@ -88,6 +89,7 @@ def test_metadata_form_fields_batch(client1, metadata_form_1, metadata_form_fiel
         'description': 'Field 2',
         'type': 'Integer',
         'required': False,
+        'displayNumber': 2,
     }
     field_data_3 = {
         'name': 'field_3',
@@ -95,6 +97,7 @@ def test_metadata_form_fields_batch(client1, metadata_form_1, metadata_form_fiel
         'description': 'Field 3',
         'type': 'Boolean',
         'required': False,
+        'displayNumber': 3,
     }
 
     new_fields = [field_data_1, field_data_2, field_data_3]
