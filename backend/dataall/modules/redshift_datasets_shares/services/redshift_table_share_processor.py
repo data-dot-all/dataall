@@ -52,10 +52,10 @@ class ProcessRedshiftShare(SharesProcessorInterface):
         ).build_compliant_name()
 
     def _build_local_db_name(self) -> str:
-        return f'{self.target_connection.name}_{self.source_connection.database}'
+        return f'{self.target_connection.name}_{self.source_connection.database}_{self.dataset.name}'
 
     def _build_external_schema_name(self) -> str:
-        return f'{self.source_connection.database}_{self.dataset.schema}'
+        return f'{self.source_connection.database}_{self.dataset.schema}_{self.dataset.name}'
 
     def process_approved_shares(self) -> bool:
         """
@@ -128,6 +128,10 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                 # 7) Grant usage access to the redshift role to the external schema
                 redshift_client_in_target.grant_schema_usage_access_to_redshift_role(
                     schema=external_schema, rs_role=self.redshift_role
+                )
+                # 7) Grant usage access to the redshift role to the schema of the local_db
+                redshift_client_in_target.grant_schema_usage_access_to_redshift_role(
+                    database=local_db, schema=self.dataset.schema, rs_role=self.redshift_role
                 )
 
                 for table in self.tables:
@@ -203,9 +207,10 @@ class ProcessRedshiftShare(SharesProcessorInterface):
     def process_revoked_shares(self) -> bool:
         """
         For each table
-            1) (in target namespace) Revoke access to the revoked tables to the redshift role in external schema
-            2) (in target namespace) Revoke access to the revoked tables to the redshift role in local_db
-            3) (in source namespace) If that table is not shared in this namespace, remove table from datashare
+            1) (in target namespace) Revoke access to the revoked tables to the redshift role in external schema (if schema exists)
+            2) (in target namespace) Revoke access to the revoked tables to the redshift role in local_db (if database exists)
+            3) (in source namespace) If that table is not shared in this namespace, remove table from datashare (if datashare exists)
+        If the previous is successful, we proceed to clean-up shared resources across datashares:
         4) (in target namespace) If no more tables are shared with the redshift role, revoke usage access to the external schema to the redshift role
         5) (in target namespace) If no more tables are shared with the redshift role, revoke usage access to the local_db to the redshift role
         6) (in target namespace) If no more tables are shared with any role in this namespace, drop local database
@@ -220,91 +225,105 @@ class ProcessRedshiftShare(SharesProcessorInterface):
         if not self.tables:
             log.info('No Redshift tables to revoke. Skipping...')
         else:
-            try:
-                redshift_client_in_source = redshift_share_data_client(
-                    account_id=self.share_data.source_environment.AwsAccountId,
-                    region=self.share_data.source_environment.region,
-                    connection=self.source_connection,
+            redshift_client_in_source = redshift_share_data_client(
+                account_id=self.share_data.source_environment.AwsAccountId,
+                region=self.share_data.source_environment.region,
+                connection=self.source_connection,
+            )
+            redshift_client_in_target = redshift_share_data_client(
+                account_id=self.share_data.target_environment.AwsAccountId,
+                region=self.share_data.target_environment.region,
+                connection=self.target_connection,
+            )
+            local_db = self._build_local_db_name()
+            external_schema = self._build_external_schema_name()
+
+            for table in self.tables:
+                log.info(f'Revoking access to table {table}...')
+                share_item = ShareObjectRepository.find_sharable_item(
+                    self.session, self.share.shareUri, table.rsTableUri
                 )
-                redshift_client_in_target = redshift_share_data_client(
-                    account_id=self.share_data.target_environment.AwsAccountId,
-                    region=self.share_data.target_environment.region,
-                    connection=self.target_connection,
-                )
-                local_db = self._build_local_db_name()
-                external_schema = self._build_external_schema_name()
 
-                for table in self.tables:
-                    log.info(f'Revoking access to table {table}...')
-                    share_item = ShareObjectRepository.find_sharable_item(
-                        self.session, self.share.shareUri, table.rsTableUri
-                    )
+                revoked_item_SM = ShareItemSM(ShareItemStatus.Revoke_Approved.value)
+                new_state = revoked_item_SM.run_transition(ShareObjectActions.Start.value)
+                revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
 
-                    revoked_item_SM = ShareItemSM(ShareItemStatus.Revoke_Approved.value)
-                    new_state = revoked_item_SM.run_transition(ShareObjectActions.Start.value)
-                    revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
-
-                    try:
-                        # 1) (in target namespace) Revoke access to the revoked tables to the redshift role in external schema
+                try:
+                    local_db_exists = redshift_client_in_target.check_database_exists(database=local_db)
+                    # 1) (in target namespace) Revoke access to the revoked tables to the redshift role in external schema (if schema exists)
+                    if local_db_exists and redshift_client_in_target.check_schema_exists(
+                        schema=external_schema, database=self.target_connection.database
+                    ):
                         redshift_client_in_target.revoke_select_table_access_to_redshift_role(
                             schema=external_schema, table=table.name, rs_role=self.redshift_role
                         )
-                        # 2) (in target namespace) Revoke access to the revoked tables to the redshift role in local_db
+                    else:
+                        log.info(
+                            'External schema does not exist or local database does not exist, permissions cannot be revoked'
+                        )
+                    # 2) (in target namespace) Revoke access to the revoked tables to the redshift role in local_db (if database exists)
+                    if local_db_exists:
                         redshift_client_in_target.revoke_select_table_access_to_redshift_role(
                             database=local_db, schema=self.dataset.schema, table=table.name, rs_role=self.redshift_role
                         )
-                        # 3) (in source namespace) If that table is not shared in this namespace, remove table from datashare
-                        if (
-                            RedshiftShareRepository.count_other_shares_redshift_table_with_connection(
-                                session=self.session,
-                                share_uri=self.share.shareUri,
-                                table_uri=table.rsTableUri,
-                                namespace_id=self.target_connection.nameSpaceId,
-                            )
-                            > 0
-                        ):
-                            log.info(
-                                f'No other share items are sharing this table {table.name} with this namespace {self.target_connection.nameSpaceId}'
-                            )
+                    else:
+                        log.info('Database does not exist, no permissions need to be revoked')
+                    # 3) (in source namespace) If that table is not shared in this namespace, remove table from datashare (if datashare exists)
+                    if (
+                        RedshiftShareRepository.count_other_shared_items_redshift_table_with_connection(
+                            session=self.session,
+                            share_uri=self.share.shareUri,
+                            table_uri=table.rsTableUri,
+                            connection_uri=self.share.principalId,
+                        )
+                        == 0
+                    ):
+                        log.info(
+                            f'No other share items are sharing this table {table.name} with this namespace {self.target_connection.nameSpaceId}'
+                        )
+                        if redshift_client_in_source.check_datashare_exists(self.datashare_name):
                             redshift_client_in_source.remove_table_from_datashare(
                                 datashare=self.datashare_name, schema=self.dataset.schema, table_name=table.name
                             )
-                        # 4) Update table status with ShareItemActions.Success
-                        new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
-                        revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
+                    # 4) Update table status with ShareItemActions.Success
+                    new_state = revoked_item_SM.run_transition(ShareItemActions.Success.value)
+                    revoked_item_SM.update_state_single_item(self.session, share_item, new_state)
 
+                    ShareStatusRepository.update_share_item_health_status(
+                        self.session, share_item, None, None, share_item.lastVerificationTime
+                    )
+                except Exception as e:
+                    success = False
+                    log.error(
+                        f'Failed to process revoked redshift dataset {self.dataset.name} '
+                        f'table {table.name} '
+                        f'from source {self.source_connection.name} in namespace {self.source_connection.nameSpaceId}'
+                        f'with target {self.target_connection.name} in namespace {self.target_connection.nameSpaceId}'
+                        f'due to: {e}'
+                    )
+                    share_item = ShareObjectRepository.find_sharable_item(
+                        self.session, self.share.shareUri, table.rsTableUri
+                    )
+                    if not self.reapply:
+                        table_SM = ShareItemSM(new_state)
+                        new_state = table_SM.run_transition(ShareItemActions.Failure.value)
+                        table_SM.update_state_single_item(self.session, share_item, new_state)
+                    else:
                         ShareStatusRepository.update_share_item_health_status(
-                            self.session, share_item, None, None, share_item.lastVerificationTime
+                            self.session, share_item, ShareItemHealthStatus.Unhealthy.value, str(e), datetime.now()
                         )
-                    except Exception as e:
-                        success = False
-                        log.error(
-                            f'Failed to process revoked redshift dataset {self.dataset.name} '
-                            f'table {table.name} '
-                            f'from source {self.source_connection.name} in namespace {self.source_connection.nameSpaceId}'
-                            f'with target {self.target_connection.name} in namespace {self.target_connection.nameSpaceId}'
-                            f'due to: {e}'
-                        )
-                        share_item = ShareObjectRepository.find_sharable_item(
-                            self.session, self.share.shareUri, table.rsTableUri
-                        )
-                        if not self.reapply:
-                            table_SM = ShareItemSM(new_state)
-                            new_state = table_SM.run_transition(ShareItemActions.Failure.value)
-                            table_SM.update_state_single_item(self.session, share_item, new_state)
-                        else:
-                            ShareStatusRepository.update_share_item_health_status(
-                                self.session, share_item, ShareItemHealthStatus.Unhealthy.value, str(e), datetime.now()
-                            )
-
+            self.session.commit()
+            try:
+                if success:
+                    log.info('Cleaning up shared resources in redshift datashares...')
                     # 4) (in target namespace) If no more tables are shared with the redshift role, revoke usage access to the external schema to the redshift role
                     # 5) (in target namespace) If no more tables are shared with the redshift role, revoke usage access to the local_db to the redshift role
                     if (
-                        RedshiftShareRepository.count_shares_with_redshift_role(
+                        RedshiftShareRepository.count_dataset_shared_items_with_redshift_role(
                             session=self.session,
                             dataset_uri=self.dataset.datasetUri,
                             rs_role=self.redshift_role,
-                            namespace_id=self.target_connection.nameSpaceId,
+                            connection_uri=self.share.principalId,
                         )
                         == 0
                     ):
@@ -314,19 +333,22 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                         redshift_client_in_target.revoke_schema_usage_access_to_redshift_role(
                             schema=external_schema, rs_role=self.redshift_role
                         )
-                        redshift_client_in_target.revoke_database_usage_access_to_redshift_role(
-                            database=local_db, rs_role=self.redshift_role
-                        )
+                        if local_db_exists:
+                            redshift_client_in_target.revoke_database_usage_access_to_redshift_role(
+                                database=local_db, rs_role=self.redshift_role
+                            )
+                        else:
+                            log.info('Database does not exist, no permissions need to be revoked')
 
                     # 6) (in target namespace) If no more tables are shared with any role in this namespace, drop local database
                     # 7) (in source namespace) If no more tables are shared with any role in this namespace, drop datashare
                     if (
-                        RedshiftShareRepository.count_dataset_shares_with_namespace(
+                        RedshiftShareRepository.count_dataset_shared_items_with_namespace(
                             session=self.session,
                             dataset_uri=self.dataset.datasetUri,
-                            namespace_id=self.target_connection.nameSpaceId,
+                            connection_uri=self.share.principalId,
                         )
-                        <= 1
+                        == 0
                     ):
                         log.info(
                             f'No other tables of this dataset are shared with this namespace {self.target_connection.nameSpaceId}'
@@ -336,7 +358,7 @@ class ProcessRedshiftShare(SharesProcessorInterface):
 
             except Exception as e:
                 log.error(
-                    f'Failed to process revoked redshift dataset {self.dataset.name} '
+                    f'Failed to clean up shared resources in redshift datashares for redshift dataset {self.dataset.name} '
                     f'tables {[t.name for t in self.tables]} '
                     f'from source {self.source_connection.name} in namespace {self.source_connection.nameSpaceId}'
                     f'with target {self.target_connection.name} in namespace {self.target_connection.nameSpaceId}'
@@ -422,7 +444,9 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                         )
                     )
                 # 6) (in target namespace) Check that external schema exists
-                if not redshift_client_in_target.check_schema_exists(external_schema):
+                if not redshift_client_in_target.check_schema_exists(
+                    schema=external_schema, database=self.target_connection.database
+                ):
                     ds_level_errors.append(ShareErrorFormatter.dne_error_msg('Redshift schema', external_schema))
                 # 7) (in target namespace) Check that the redshift role has access to the external schema
                 if not redshift_client_in_target.check_role_permissions_in_schema(

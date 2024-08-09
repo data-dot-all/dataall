@@ -1,6 +1,5 @@
 import logging
 import time
-from enum import Enum
 from dataall.base.aws.sts import SessionHelper
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnection
 
@@ -275,7 +274,6 @@ class RedshiftShareDataClient:
             log.info(f'Checking {database=}...')
             sql_statement = 'SELECT * FROM PG_DATABASE_INFO'
             records = self._execute_statement_return_records(sql=sql_statement)
-            log.info(f'RECORDS={records}')
             databases_in_namespace = [[d for d in record][0]['stringValue'] for record in records]  # dataname
             log.info(f'Found {databases_in_namespace=}')
             return database in databases_in_namespace
@@ -337,25 +335,28 @@ class RedshiftShareDataClient:
                 log.error(f'Creation of external schema {external_schema=} in {database=} failed due to: {e}')
                 raise e
 
-    def check_schema_exists(self, schema: str):
+    def check_schema_exists(self, schema: str, database: str):
         """
         Check that schema exists
         """
         try:
             log.info(f'Checking {schema=}...')
-            sql_statement = f'DESC SCHEMA {RedshiftShareDataClient.parsed_name(schema)};'
-            return self._execute_statement(sql=sql_statement)
+            sql_statement = f'SHOW SCHEMAS FROM DATABASE {RedshiftShareDataClient.parsed_name(database)};'
+            records = self._execute_statement_return_records(sql=sql_statement)
+            schemas_in_database = [[d for d in record][1]['stringValue'] for record in records]  # schema_name
+            log.info(f'Found {schemas_in_database=}')
+            return schema in schemas_in_database
         except Exception as e:
             log.error(f'Checking of {schema=} failed due to: {e}')
             return False
 
-    def grant_schema_usage_access_to_redshift_role(self, schema: str, rs_role: str):
+    def grant_schema_usage_access_to_redshift_role(self, schema: str, rs_role: str, database: str = None):
         """
         Grant usage on schema to a role. If already granted, it succeeds
         """
         try:
-            log.info(f'Grant usage on {schema=} to Redshift role {rs_role=}..')
-            sql_statement = f'GRANT USAGE ON SCHEMA {RedshiftShareDataClient.parsed_name(schema)} TO ROLE {rs_role};'
+            log.info(f'Grant usage on {database=} {schema=} to Redshift role {rs_role=}..')
+            sql_statement = f'GRANT USAGE ON SCHEMA {RedshiftShareDataClient.parsed_object_names(database, schema)} TO ROLE {rs_role};'
             self._execute_statement(sql=sql_statement)
         except Exception as e:
             log.error(f'Granting usage to {schema=} to {rs_role=} failed due to: {e}')
@@ -389,7 +390,7 @@ class RedshiftShareDataClient:
         GRANT SELECT ON external_schema.table;
         """
         try:
-            log.info(f'Grant select on {table=} from {schema=} and {database=}to Redshift role {rs_role=}..')
+            log.info(f'Grant select on {table=} from {schema=} and {database=} to Redshift role {rs_role=}..')
             sql_statement = f'GRANT SELECT ON {RedshiftShareDataClient.parsed_object_names(database, schema, table)} TO ROLE {rs_role};'
             self._execute_statement(sql=sql_statement)
         except Exception as e:
@@ -398,7 +399,7 @@ class RedshiftShareDataClient:
 
     def revoke_select_table_access_to_redshift_role(self, schema: str, table: str, rs_role: str, database: str = None):
         """
-        Revoke select on table to a role. If already revoked, it succeeds
+        Revoke select on table to a role. If table is deleted, it succeeds
         REVOKE SELECT ON local_db.schema.table;
         REVOKE SELECT ON external_schema.table;
         """
@@ -407,8 +408,15 @@ class RedshiftShareDataClient:
             sql_statement = f'REVOKE SELECT ON {RedshiftShareDataClient.parsed_object_names(database, schema, table)} FROM ROLE {rs_role};'
             self._execute_statement(sql=sql_statement)
         except Exception as e:
-            log.error(f'Revoking select to {table=} from {schema=} and {database=} to {rs_role=} failed due to: {e}')
-            raise e
+            allowed_error_message = f'ERROR: Object {RedshiftShareDataClient.parsed_name(table)} does not exist'
+            error_message = e.args[0]
+            if error_message == allowed_error_message:
+                log.info(f'{table=} does not exists, no permissions can be revoked')
+            else:
+                log.error(
+                    f'Revoking select to {table=} from {schema=} and {database=} to {rs_role=} failed due to: {e}'
+                )
+                raise e
 
 
 def redshift_share_data_client(account_id: str, region: str, connection: RedshiftConnection) -> RedshiftShareDataClient:

@@ -139,7 +139,14 @@ class ShareObjectService:
                     elif not attached:
                         Policy.attach_policy()
 
-            share = ShareObjectRepository.find_share(session, dataset, environment, principal_id, group_uri)
+            share = ShareObjectRepository.find_share(
+                session=session,
+                dataset=dataset,
+                env=environment,
+                principal_id=principal_id,
+                principal_role_name=principal_role_name,
+                group_uri=group_uri,
+            )
             already_existed = share is not None
             if not share:
                 share = ShareObject(

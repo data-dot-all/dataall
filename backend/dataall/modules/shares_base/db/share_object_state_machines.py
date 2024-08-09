@@ -203,6 +203,7 @@ class ShareItemSM:
                     ShareItemStatus.Revoke_Failed.value: [
                         ShareItemStatus.Revoke_In_Progress.value,
                         ShareItemStatus.Revoke_Approved.value,
+                        ShareItemStatus.Revoke_Succeeded.value,
                     ],
                 },
             ),
