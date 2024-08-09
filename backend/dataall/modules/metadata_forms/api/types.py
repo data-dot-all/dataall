@@ -2,7 +2,8 @@ from dataall.base.api import gql
 from dataall.modules.metadata_forms.api.resolvers import (
     get_home_entity_name,
     get_form_fields,
-    get_fields_glossary_node_name, get_user_role,
+    get_fields_glossary_node_name,
+    get_user_role,
 )
 
 MetadataForm = gql.ObjectType(
