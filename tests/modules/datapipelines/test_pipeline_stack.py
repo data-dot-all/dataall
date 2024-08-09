@@ -1,5 +1,5 @@
 import os
-
+import json
 import pytest
 from aws_cdk import App
 from aws_cdk.assertions import Template
@@ -8,6 +8,7 @@ from dataall.core.environment.db.environment_models import Environment
 from dataall.modules.datapipelines.cdk.datapipelines_pipeline import PipelineStack
 from dataall.modules.datapipelines.db.datapipelines_models import DataPipeline, DataPipelineEnvironment
 from dataall.modules.datapipelines.db.datapipelines_repositories import DatapipelinesRepository
+from tests.skip_conditions import checkov_scan
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -102,3 +103,12 @@ def test_resources_created(pipeline_db):
     template.resource_count_is('AWS::CodeCommit::Repository', 1)
     template.resource_count_is('AWS::CodePipeline::Pipeline', 1)
     template.resource_count_is('AWS::CodeBuild::Project', 1)
+
+
+@checkov_scan
+def test_checkov(pipeline_db):
+    app = App()
+    stack = PipelineStack(app, 'Pipeline', target_uri=pipeline_db.DataPipelineUri)
+    template = json.dumps(app.synth().get_stack_by_name('Pipeline').template)
+    with open('checkov_pipeline_synth.json', 'w') as f:
+        f.write(template)
