@@ -229,9 +229,9 @@ const DisplayTable = (props) => {
         <TableRow>
           <TableCell sx={{ width: '20px' }}>Required</TableCell>
           <TableCell>Name</TableCell>
-          <TableCell>Type</TableCell>
+          <TableCell sx={{ width: '10%' }}>Type</TableCell>
           <TableCell sx={{ width: '30%' }}>Description</TableCell>
-          <TableCell sx={{ width: '15%' }}>
+          <TableCell sx={{ width: '20%' }}>
             Values (any, if not specified)
           </TableCell>
           <TableCell sx={{ width: '20px', alignContent: 'center' }}>
