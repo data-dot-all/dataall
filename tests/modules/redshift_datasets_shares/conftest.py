@@ -167,9 +167,11 @@ def dataset_1(db, user, group, env_fixture, source_connection):
 @pytest.fixture(scope='function')
 def table1(db, user, group, dataset_1):
     set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
-    table = RedshiftDatasetService.add_redshift_dataset_tables(uri=dataset_1.datasetUri, tables=['table1'])
+    RedshiftDatasetService.add_redshift_dataset_tables(uri=dataset_1.datasetUri, tables=['table1'])
+    paginated_tables = RedshiftDatasetService.list_redshift_dataset_tables(uri=dataset_1.datasetUri, filter={})
     dispose_context()
-    yield table
+    assert paginated_tables.get('count', 0) == 1
+    yield paginated_tables.get('nodes')[0]
 
 
 @pytest.fixture(scope='function')
@@ -189,21 +191,6 @@ def redshift_share_request_1(db, user2, group2, env_fixture_2, target_connection
     )
     dispose_context()
     yield share
-    set_context(RequestContext(db_engine=db, username=user2.username, groups=[group2.name], user_id=user2.username))
-    ShareObjectService.delete_share_object(uri=share.shareUri)
-    dispose_context()
-
-
-@pytest.fixture(scope='function')
-def share_data(redshift_share_request_1, dataset_1, env_fixture, env_fixture_2, group, group2):
-    yield ShareData(
-        share=redshift_share_request_1,
-        dataset=dataset_1,
-        source_environment=env_fixture,
-        target_environment=env_fixture_2,
-        source_env_group=group,
-        env_group=group2,
-    )
 
 
 @pytest.fixture(scope='function')
@@ -217,11 +204,39 @@ def redshift_requested_table(db, user2, group2, redshift_share_request_1, table1
 
 
 @pytest.fixture(scope='function')
-def shareable_items(db, share_data):
+def approved_share_data(
+    db,
+    user,
+    user2,
+    group,
+    group2,
+    redshift_share_request_1,
+    redshift_requested_table,
+    dataset_1,
+    env_fixture,
+    env_fixture_2,
+):
+    set_context(RequestContext(db_engine=db, username=user2.username, groups=[group2.name], user_id=user2.username))
+    ShareObjectService.submit_share_object(uri=redshift_share_request_1.shareUri)
+    set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
+    ShareObjectService.approve_share_object(uri=redshift_share_request_1.shareUri)
+    dispose_context()
+    yield ShareData(
+        share=redshift_share_request_1,
+        dataset=dataset_1,
+        source_environment=env_fixture,
+        target_environment=env_fixture_2,
+        source_env_group=group,
+        env_group=group2,
+    )
+
+
+@pytest.fixture(scope='function')
+def shareable_items(db, approved_share_data):
     with db.scoped_session() as session:
         yield ShareObjectRepository.get_share_data_items_by_type(
             session,
-            share_data.share,
+            approved_share_data.share,
             RedshiftTable,
             RedshiftTable.rsTableUri,
             status=ShareItemStatus.Share_Approved.value,
@@ -229,7 +244,9 @@ def shareable_items(db, share_data):
 
 
 @pytest.fixture(scope='function')
-def redshift_processor(db, share_data, shareable_items):
+def redshift_processor(db, approved_share_data, shareable_items):
     with db.scoped_session() as session:
-        processor = ProcessRedshiftShare(session=session, share_data=share_data, shareable_items=shareable_items)
+        processor = ProcessRedshiftShare(
+            session=session, share_data=approved_share_data, shareable_items=shareable_items
+        )
     yield processor
