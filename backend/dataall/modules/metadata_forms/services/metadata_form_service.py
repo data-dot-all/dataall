@@ -4,6 +4,7 @@ from dataall.base.context import get_context
 from dataall.base.db import exceptions, paginate
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyValidationService
 from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility, MetadataFormUserRoles, MetadataFormFieldType
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
 
@@ -98,10 +99,21 @@ class MetadataFormService:
     @staticmethod
     def paginated_metadata_form_list(filter=None) -> dict:
         context = get_context()
-        data = filter if filter is not None else {}
+        groups = context.groups
+        is_da_admin = TenantPolicyValidationService.is_tenant_admin(groups)
+        filter = filter if filter is not None else {}
         with context.db_engine.scoped_session() as session:
+            envs = None
+            orgs = None
+            # is user is no dataall admin, query_metadata_forms requires arrays of users envs and orgs uris
+            if not is_da_admin:
+                username = context.username
+                envs = EnvironmentRepository.query_user_environments(session, username, groups, {})
+                envs = [e.environmentUri for e in envs]
+                orgs = OrganizationRepository.query_user_organizations(session, username, groups, {})
+                orgs = [o.organizationUri for o in orgs]
             return paginate(
-                query=MetadataFormRepository.list_metadata_forms(session, filter),
+                query=MetadataFormRepository.query_metadata_forms(session, is_da_admin, groups, envs, orgs, filter),
                 page=filter.get('page', 1),
                 page_size=filter.get('pageSize', 5),
             ).to_dict()
