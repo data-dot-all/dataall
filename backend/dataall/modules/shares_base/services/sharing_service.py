@@ -322,6 +322,7 @@ class SharingService:
         True if re-apply of share item(s) succeeds,
         False if any re-apply of share item(s) failed
         """
+        reapply_successful = True
         with engine.scoped_session() as session:
             share_data, share_items = cls._get_share_data_and_items(
                 session, share_uri, None, ShareItemHealthStatus.PendingReApply.value

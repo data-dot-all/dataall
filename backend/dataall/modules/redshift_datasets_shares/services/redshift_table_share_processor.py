@@ -99,7 +99,7 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                 external_schema = self._build_external_schema_name()
 
                 # 1) Create datashare for this dataset for this target namespace. If it does not exist yet
-                redshift_client_in_source.create_datashare(datashare=self.datashare_name)
+                newly_created = redshift_client_in_source.create_datashare(datashare=self.datashare_name)
 
                 # 2) Add schema to the datashare, if not already added
                 redshift_client_in_source.add_schema_to_datashare(
@@ -111,6 +111,9 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                 )
 
                 # 4) Create local database from datashare, if it does not exist yet
+                if newly_created:
+                    # For reapply/unsuccessful share we need to ensure that the database created has been created for the newly_created database
+                    redshift_client_in_target.drop_database(database=local_db)
                 redshift_client_in_target.create_database_from_datashare(
                     database=local_db,
                     datashare=self.datashare_name,
@@ -158,6 +161,7 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                             table_SM = ShareItemSM(new_state)
                             final_state = table_SM.run_transition(ShareItemActions.Success.value)
                             table_SM.update_state_single_item(self.session, share_item, final_state)
+
                         ShareStatusRepository.update_share_item_health_status(
                             self.session, share_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
                         )
@@ -419,7 +423,12 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                 if not redshift_client_in_source.check_schema_in_datashare(
                     datashare=self.datashare_name, schema=self.dataset.schema
                 ):
-                    ds_level_errors.append(ShareErrorFormatter.dne_error_msg('Redshift datashare', self.datashare_name))
+                    ds_level_errors.append(
+                        ShareErrorFormatter.dne_error_msg(
+                            'Redshift schema added to datashare',
+                            f'datashare_name={self.datashare_name}, schema={self.dataset.schema}',
+                        )
+                    )
                 # 3) (in source namespace) Check the access is granted to the consumer cluster to the datashare
                 if not redshift_client_in_source.check_consumer_permissions_to_datashare(datashare=self.datashare_name):
                     ds_level_errors.append(
@@ -433,28 +442,32 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                     )
                 # 4) (in target namespace) Check that local db exists
                 if not redshift_client_in_target.check_database_exists(local_db):
-                    ds_level_errors.append(ShareErrorFormatter.dne_error_msg('Redshift database', local_db))
+                    ds_level_errors.append(
+                        ShareErrorFormatter.dne_error_msg('Redshift local database in consumer', local_db)
+                    )
                 # 5) (in target namespace) Check that the redshift role has access to the local db
                 if not redshift_client_in_target.check_role_permissions_in_database(
                     database=local_db, rs_role=self.redshift_role
                 ):
                     ds_level_errors.append(
                         ShareErrorFormatter.missing_permission_error_msg(
-                            self.redshift_role, 'USAGE', ['USAGE'], 'Redshift database', local_db
+                            self.redshift_role, 'USAGE', ['USAGE'], 'Redshift local database in consumer', local_db
                         )
                     )
                 # 6) (in target namespace) Check that external schema exists
                 if not redshift_client_in_target.check_schema_exists(
                     schema=external_schema, database=self.target_connection.database
                 ):
-                    ds_level_errors.append(ShareErrorFormatter.dne_error_msg('Redshift schema', external_schema))
+                    ds_level_errors.append(
+                        ShareErrorFormatter.dne_error_msg('Redshift external schema', external_schema)
+                    )
                 # 7) (in target namespace) Check that the redshift role has access to the external schema
                 if not redshift_client_in_target.check_role_permissions_in_schema(
                     schema=external_schema, rs_role=self.redshift_role
                 ):
                     ds_level_errors.append(
                         ShareErrorFormatter.missing_permission_error_msg(
-                            self.redshift_role, 'USAGE', ['USAGE'], 'Redshift schema', external_schema
+                            self.redshift_role, 'USAGE', ['USAGE'], 'Redshift external schema', external_schema
                         )
                     )
             except Exception as e:
@@ -467,11 +480,14 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                         datashare=self.datashare_name, table_name=table.name
                     ):
                         tbl_level_errors.append(
-                            ShareErrorFormatter.dne_error_msg('Redshift datashare', self.datashare_name)
+                            ShareErrorFormatter.dne_error_msg(
+                                'Redshift table added to datashare',
+                                f'datashare_name={self.datashare_name}, table={table.name}',
+                            )
                         )
                     # 9) (in target namespace) Check that the redshift role has select access to the requested table in the local db.
                     # 10) (in target namespace) Check that the redshift role has select access to the requested table in the external schema.
-                    # TODO: not possible to query role grants or to check has_table_access on roles
+                    # Not possible to check role permissions through system functions or tables. Not implemented at the moment
                 except Exception as e:
                     tbl_level_errors.append(str(e))
 
