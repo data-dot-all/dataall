@@ -4,9 +4,7 @@ from dataall.base.context import get_context
 from dataall.base.db import exceptions, paginate
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
-
-from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility, MetadataFormUserRoles
-from dataall.modules.metadata_forms.db.enums import MetadataFormFieldType
+from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility, MetadataFormUserRoles, MetadataFormFieldType
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
 
 

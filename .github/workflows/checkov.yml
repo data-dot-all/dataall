@@ -15,17 +15,55 @@ permissions:
 
 jobs:
   build:
-
+    env:
+      CDK_DEFAULT_REGION: eu-west-1
+      CDK_DEFAULT_ACCOUNT: 111111111111
+      GITHUB_ACTIONS: true
+      CHECKOV_ACTIONS: true
+      DATAALL_REPO_BRANCH: main
+    strategy:
+      matrix:
+        python-version: [3.9]
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_DB: dataall
+          POSTGRES_PASSWORD: docker
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
+      - name: Git clone
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+      - name: Install CDK 
+        run: |
+          npm install -g aws-cdk cdk-nag
+          cdk --version
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: ${{ matrix.python-version }}
+      - name: Upgrade Pip
+        run: python -m pip install --upgrade pip
+      - name: Install Requirements
+        run: python -m pip install -r deploy/requirements.txt
+      - name: CDK Synth
+        run: |
+          npx cdk synth
+      - name: Resources CDK Synth
+        run: make checkov-synth
       - name: Test with Checkov
         id: checkov
-        uses: bridgecrewio/checkov-action@master
+        uses: bridgecrewio/checkov-action@v12.2845.0
         with:
           directory: .
           quiet: true
