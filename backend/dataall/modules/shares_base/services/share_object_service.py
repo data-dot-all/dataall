@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
-from typing import Dict
+import os
+
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
@@ -11,6 +11,7 @@ from dataall.core.tasks.db.task_models import Task
 from dataall.base.db.exceptions import UnauthorizedOperation
 from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
+    ShareableType,
     ShareItemStatus,
     ShareObjectStatus,
     PrincipalType,
@@ -37,30 +38,14 @@ from dataall.modules.shares_base.services.share_permissions import (
 from dataall.modules.shares_base.services.share_processor_manager import ShareProcessorManager
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
-from dataall.modules.datasets_base.services.datasets_enums import DatasetTypes
 from dataall.base.aws.iam import IAM
 
 import logging
 
 log = logging.getLogger(__name__)
 
-class SharesCreationValidatorInterface(ABC):
-    @abstractmethod
-    def validate_share_object_creation(self, *args, **kwargs) -> bool:
-        """Executes checks when a share request gets created"""
-        ...
 
 class ShareObjectService:
-    SHARING_VALIDATORS: Dict[DatasetTypes, SharesCreationValidatorInterface] = {}
-    @classmethod
-    def register_validator(cls, type: DatasetTypes, validator: SharesCreationValidatorInterface) -> None:
-        cls.SHARING_VALIDATORS[type] = validator
-    @classmethod
-    def _get_validator_by_dataset_type(cls, type: DatasetTypes) -> SharesCreationValidatorInterface:
-        for shareable_type, validator in cls.SHARING_VALIDATORS.items():
-            if shareable_type.value == type:
-                return validator
-
     @staticmethod
     def verify_principal_role(session, share: ShareObject) -> bool:
         log.info('Verifying principal IAM role...')
@@ -113,21 +98,46 @@ class ShareObjectService:
 
             cls._validate_group_membership(session, group_uri, environment.environmentUri)
 
-            validator = cls._get_validator_by_dataset_type(dataset.datasetType)
-            validator.validate_share_object_creation(
-                dataset=dataset,
-                environment=environment,
-                group_uri=group_uri,
-                principal_id=principal_id,
-                principal_role_name=principal_role_name,
-                principal_type=principal_type,
-                attachMissingPolicies=attachMissingPolicies
-            )
-
             if principal_type in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value]:
-                ShareObjectService._validate_principal_role_of_type_iam(session, environment, principal_type, principal_id, group_uri, attachMissingPolicies)
-            else:
-                ShareObjectService._validate_principal_role_of_type_redshift_role(session, environment, principal_id, principal_role_name)
+                if principal_type == PrincipalType.ConsumptionRole.value:
+                    consumption_role: ConsumptionRole = EnvironmentService.get_environment_consumption_role(
+                        session, principal_id, environment.environmentUri
+                    )
+                    principal_role_name = consumption_role.IAMRoleName
+                    managed = consumption_role.dataallManaged
+
+                else:
+                    env_group: EnvironmentGroup = EnvironmentService.get_environment_group(
+                        session, group_uri, environment.environmentUri
+                    )
+                    principal_role_name = env_group.environmentIAMRoleName
+                    managed = True
+
+                share_policy_manager = PolicyManager(
+                    role_name=principal_role_name,
+                    environmentUri=environment.environmentUri,
+                    account=environment.AwsAccountId,
+                    region=environment.region,
+                    resource_prefix=environment.resourcePrefix,
+                )
+                for Policy in [
+                    Policy for Policy in share_policy_manager.initializedPolicies if Policy.policy_type == 'SharePolicy'
+                ]:
+                    # Backwards compatibility
+                    # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
+                    # We create the policy from the inline statements
+                    # In this case it could also happen that the role is the Admin of the environment
+                    if not Policy.check_if_policy_exists():
+                        Policy.create_managed_policy_from_inline_and_delete_inline()
+                    # End of backwards compatibility
+
+                    attached = Policy.check_if_policy_attached()
+                    if not attached and not managed and not attachMissingPolicies:
+                        raise Exception(
+                            f'Required customer managed policy {Policy.generate_policy_name()} is not attached to role {principal_role_name}'
+                        )
+                    elif not attached:
+                        Policy.attach_policy()
 
             share = ShareObjectRepository.find_share(session, dataset, environment, principal_id, group_uri)
             already_existed = share is not None
@@ -435,50 +445,3 @@ class ShareObjectService:
                 action=CREATE_SHARE_OBJECT,
                 message=f'Team: {share_object_group} is not a member of the environment {environment_uri}',
             )
-
-
-    @staticmethod
-    def _validate_principal_role_of_type_iam(session, environment, principal_type: str, principal_id: str, group_uri: str, attachMissingPolicies: bool):
-        if principal_type == PrincipalType.ConsumptionRole.value:
-            consumption_role: ConsumptionRole = EnvironmentService.get_environment_consumption_role(
-                session, principal_id, environment.environmentUri
-            )
-            principal_role_name = consumption_role.IAMRoleName
-            managed = consumption_role.dataallManaged
-
-        else:
-            env_group: EnvironmentGroup = EnvironmentService.get_environment_group(
-                session, group_uri, environment.environmentUri
-            )
-            principal_role_name = env_group.environmentIAMRoleName
-            managed = True
-
-        share_policy_manager = PolicyManager(
-            role_name=principal_role_name,
-            environmentUri=environment.environmentUri,
-            account=environment.AwsAccountId,
-            region=environment.region,
-            resource_prefix=environment.resourcePrefix,
-        )
-        for Policy in [
-            Policy for Policy in share_policy_manager.initializedPolicies if Policy.policy_type == 'SharePolicy'
-        ]:
-            # Backwards compatibility
-            # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
-            # We create the policy from the inline statements
-            # In this case it could also happen that the role is the Admin of the environment
-            if not Policy.check_if_policy_exists():
-                Policy.create_managed_policy_from_inline_and_delete_inline()
-            # End of backwards compatibility
-
-            attached = Policy.check_if_policy_attached()
-            if not attached and not managed and not attachMissingPolicies:
-                raise Exception(
-                    f'Required customer managed policy {Policy.generate_policy_name()} is not attached to role {principal_role_name}'
-                )
-            elif not attached:
-                Policy.attach_policy()
-
-    @staticmethod
-    def _validate_principal_role_of_type_redshift(session, environment, principal_id: str, principal_role_name: str):
-        pass
