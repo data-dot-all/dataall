@@ -16,6 +16,7 @@ NewMetadataFormFieldInput = gql.InputType(
     arguments=[
         gql.Field(name='name', type=gql.NonNullableType(gql.String)),
         gql.Field(name='type', type=gql.NonNullableType(gql.String)),
+        gql.Field(name='displayNumber', type=gql.NonNullableType(gql.Integer)),
         gql.Field(name='description', type=gql.String),
         gql.Field(name='required', type=gql.Boolean),
         gql.Field(name='glossaryNodeUri', type=gql.String),
@@ -28,6 +29,7 @@ MetadataFormFieldUpdateInput = gql.InputType(
     arguments=[
         gql.Field(name='uri', type=gql.String),
         gql.Field(name='metadataFormUri', type=gql.String),
+        gql.Field(name='displayNumber', type=gql.NonNullableType(gql.Integer)),
         gql.Field(name='deleted', type=gql.Boolean),
         gql.Field(name='name', type=gql.String),
         gql.Field(name='description', type=gql.String),

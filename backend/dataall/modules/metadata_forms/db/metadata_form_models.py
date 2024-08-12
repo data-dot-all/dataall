@@ -38,6 +38,7 @@ class MetadataFormField(Base):
     __tablename__ = 'metadata_form_field'
     metadataFormUri = Column(String, ForeignKey('metadata_form.uri'))
     uri = Column(String, primary_key=True, default=utils.uuid('field'))
+    displayNumber = Column(Integer, nullable=False)
     description = Column(String, nullable=True)
     name = Column(String, nullable=False)
     type = Column(String, nullable=False)  # enum MetadataFormFieldType

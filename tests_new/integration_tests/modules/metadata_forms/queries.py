@@ -48,6 +48,7 @@ def get_metadata_form_full_info(client, uri):
                                 uri
                                 metadataFormUri
                                 name
+                                displayNumber
                                 description
                                 required
                                 type

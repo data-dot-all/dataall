@@ -13,11 +13,13 @@ export const batchMetadataFormFieldUpdates = (formUri, input) => ({
       batchMetadataFormFieldUpdates(formUri: $formUri, input: $input) {
         uri
         metadataFormUri
+        displayNumber
         name
         description
         required
         type
         glossaryNodeUri
+        glossaryNodeName
         possibleValues
       }
     }

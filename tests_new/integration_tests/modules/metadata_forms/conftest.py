@@ -40,6 +40,7 @@ def metadata_form_field_1(client1, group1, metadata_form_1):
             'description': 'test field',
             'type': 'String',
             'required': True,
+            'displayNumber': 0,
         }
         mff = create_metadata_form_fields(client1, metadata_form_1.uri, [input])[0]
         yield mff

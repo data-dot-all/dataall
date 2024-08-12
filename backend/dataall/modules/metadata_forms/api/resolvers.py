@@ -1,5 +1,6 @@
 from dataall.base.api.context import Context
-from dataall.modules.metadata_forms.db.metadata_form_models import MetadataForm
+from dataall.modules.catalog.services.glossaries_service import GlossariesService
+from dataall.modules.metadata_forms.db.metadata_form_models import MetadataForm, MetadataFormField
 from dataall.modules.metadata_forms.services.metadata_form_service import MetadataFormService
 
 
@@ -37,3 +38,7 @@ def delete_metadata_form_field(context: Context, source, formUri, fieldUri):
 
 def batch_metadata_form_field_update(context: Context, source, formUri, input):
     return MetadataFormService.batch_metadata_form_field_update(formUri, input)
+
+
+def get_fields_glossary_node_name(context: Context, source: MetadataFormField):
+    return GlossariesService.get_node(source.glossaryNodeUri).label if source.glossaryNodeUri else None

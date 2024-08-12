@@ -71,6 +71,7 @@ def update_metadata_form_fields(client, formUri, input):
                         uri
                         metadataFormUri
                         name
+                        displayNumber
                         description
                         required
                         type
