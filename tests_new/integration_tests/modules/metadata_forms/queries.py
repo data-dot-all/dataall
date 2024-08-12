@@ -1,22 +1,6 @@
 # TODO: This file will be replaced by using the SDK directly
 
 
-def create_metadata_form(client, input):
-    query = {
-        'operationName': 'createMetadataForm',
-        'variables': {'input': input},
-        'query': f"""
-                  mutation createMetadataForm($input: NewMetadataFormInput!) {{
-                    createMetadataForm(input: $input) {{
-                        uri
-                    }}
-                  }}
-                """,
-    }
-    response = client.query(query=query)
-    return response.data.createMetadataForm
-
-
 def list_metadata_forms(client, filter):
     query = {
         'operationName': 'listMetadataForms',
@@ -46,15 +30,34 @@ def list_metadata_forms(client, filter):
     return response.data.listMetadataForms
 
 
-def delete_metadata_form(client, uri):
+def get_metadata_form_full_info(client, uri):
     query = {
-        'operationName': 'deleteMetadataForm',
-        'variables': {'formUri': uri},
+        'operationName': 'getMetadataForm',
+        'variables': {'uri': uri},
         'query': f"""
-                  mutation deleteMetadataForm($formUri: String!) {{
-                    deleteMetadataForm(formUri: $formUri)
-                  }}
+                   query getMetadataForm($uri: String!) {{
+                        getMetadataForm(uri: $uri) {{
+                            uri
+                            name
+                            description
+                            SamlGroupName
+                            visibility
+                            homeEntity
+                            homeEntityName
+                            fields {{
+                                uri
+                                metadataFormUri
+                                name
+                                displayNumber
+                                description
+                                required
+                                type
+                                glossaryNodeUri
+                                possibleValues
+                            }}
+                        }}
+                   }}
                 """,
     }
     response = client.query(query=query)
-    return response.data.deleteMetadataForm
+    return response.data.getMetadataForm

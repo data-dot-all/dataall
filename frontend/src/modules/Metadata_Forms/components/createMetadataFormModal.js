@@ -165,19 +165,29 @@ export const CreateMetadataFormModal = (props) => {
               .max(255)
               .required('*Metadata forms name is required'),
             description: Yup.string().max(200),
-            owner: Yup.string().required('*Owner is required'),
-            visibility: Yup.string().required('*Visibility is required'),
+            owner: Yup.string()
+              .oneOf(groups || [])
+              .required('*Owner is required'),
+            visibility: Yup.string()
+              .oneOf(Object.values(visibilityDict))
+              .required('*Visibility is required'),
             environment: Yup.string().when('visibility', {
               is: visibilityDict.Environment,
-              then: Yup.string().required('*Environment is required')
+              then: Yup.string()
+                .oneOf(environmentOptions.map((option) => option.value))
+                .required('*Environment is required')
             }),
             group: Yup.string().when('visibility', {
               is: visibilityDict.Team,
-              then: Yup.string().required('*Team is required')
+              then: Yup.string()
+                .oneOf(groups || [])
+                .required('*Team is required')
             }),
             organization: Yup.string().when('visibility', {
               is: visibilityDict.Organization,
-              then: Yup.string().required('*Organization is required')
+              then: Yup.string()
+                .oneOf(organizationOptions.map((option) => option.value))
+                .required('*Organization is required')
             })
           })}
           onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
@@ -284,7 +294,7 @@ export const CreateMetadataFormModal = (props) => {
                       onChange={(event, value) => {
                         setFieldValue('organization', value.value);
                       }}
-                      options={organizationOptions.map((option) => option)}
+                      options={organizationOptions}
                       renderInput={(params) => (
                         <TextField
                           {...params}
@@ -308,7 +318,7 @@ export const CreateMetadataFormModal = (props) => {
                     <Autocomplete
                       id="environment"
                       disablePortal
-                      options={environmentOptions.map((option) => option)}
+                      options={environmentOptions}
                       onChange={(event, value) => {
                         setFieldValue('environment', value.value);
                       }}
