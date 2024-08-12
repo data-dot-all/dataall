@@ -50,6 +50,7 @@ class ShareItemHealthStatus(GraphQLEnumMapper):
 
 
 class ShareObjectActions(GraphQLEnumMapper):
+    Create = 'Create'
     Submit = 'Submit'
     Approve = 'Approve'
     Reject = 'Reject'
