@@ -32,6 +32,16 @@ def test_list_metadata_forms(client1, metadata_form_1):
     assert_that(all_uris).contains(metadata_form_1.uri)
 
 
+def test_list_metadata_forms_access_control(client2, metadata_form_1, metadata_form_2, metadata_form_3):
+    filter = {'page': 1, 'pageSize': 10}
+    response = list_metadata_forms(client2, filter)
+    all_uris = [item.uri for item in response.nodes]
+    assert_that(all_uris).does_not_contain(metadata_form_2.uri)  # visibility Team Only, team = group1
+    assert_that(all_uris).contains(metadata_form_1.uri)  # visibility: Global
+    assert_that(all_uris).contains(metadata_form_3.uri)  # visibility: Team Only, team = group2
+    # toDo: add tests for Env and Org visibility
+
+
 def test_metadataform_field_create(metadata_form_field_1):
     assert_that(metadata_form_field_1).is_not_none()
     assert_that(metadata_form_field_1.uri).is_not_none()
