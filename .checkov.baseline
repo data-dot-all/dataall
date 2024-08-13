@@ -33,15 +33,638 @@
             ]
         },
         {
-            "file": "/deploy/cdk_exec_policy/cdkExecPolicy.yaml",
+            "file": "/cdk.out/assembly-dataall-main-cicd-stack-dataall-dev-backend-stage/dataallmaincicdstackdataalldevbackendstagebackendstackAurora5C370E8D.nested.template.json",
             "findings": [
                 {
-                    "resource": "AWS::IAM::ManagedPolicy.CDKCustomExecutionPolicy0",
+                    "resource": "AWS::RDS::DBCluster.AuroraDatabasedev25ACBF71",
+                    "check_ids": [
+                        "CKV_AWS_162"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cdk.out/assembly-dataall-main-cicd-stack-dataall-dev-backend-stage/dataallmaincicdstackdataalldevbackendstagebackendstackCognito10115F09.nested.template.json",
+            "findings": [
+                {
+                    "resource": "AWS::Lambda::Function.AWSCDKTriggerCustomResourceProviderCustomResourceProviderHandler97BECD91",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116",
+                        "CKV_AWS_117"
+                    ]
+                },
+                {
+                    "resource": "AWS::Lambda::Function.CognitoParamsSyncHandlerdevCD2D1951",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116"
+                    ]
+                },
+                {
+                    "resource": "AWS::Lambda::Function.CognitoProviderdevframeworkonEvent2C5E785F",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116",
+                        "CKV_AWS_117"
+                    ]
+                },
+                {
+                    "resource": "AWS::Lambda::Function.TriggerFunctionCognitoConfig4D80131A",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cdk.out/assembly-dataall-main-cicd-stack-dataall-dev-backend-stage/dataallmaincicdstackdataalldevbackendstagebackendstackDbMigrations2A0FEBE6.nested.template.json",
+            "findings": [
+                {
+                    "resource": "AWS::Lambda::Function.AWSCDKTriggerCustomResourceProviderCustomResourceProviderHandler97BECD91",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116",
+                        "CKV_AWS_117"
+                    ]
+                },
+                {
+                    "resource": "AWS::Lambda::Function.TriggerFunctiondeploymenttriggersdbmigrationshandlerhandlerC889DF98",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cdk.out/assembly-dataall-main-cicd-stack-dataall-dev-backend-stage/dataallmaincicdstackdataalldevbackendstagebackendstackDbSnapshotsF1AA6385.nested.template.json",
+            "findings": [
+                {
+                    "resource": "AWS::Lambda::Function.AWSCDKTriggerCustomResourceProviderCustomResourceProviderHandler97BECD91",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116",
+                        "CKV_AWS_117"
+                    ]
+                },
+                {
+                    "resource": "AWS::Lambda::Function.TriggerFunctiondeploymenttriggersdbsnapshotshandlerhandler31D769F8",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cdk.out/assembly-dataall-main-cicd-stack-dataall-dev-backend-stage/dataallmaincicdstackdataalldevbackendstagebackendstackECSA27D2427.nested.template.json",
+            "findings": [
+                {
+                    "resource": "AWS::Logs::LogGroup.ECSLogGroupcatalogindexerdev2B9059AB",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
+                },
+                {
+                    "resource": "AWS::Logs::LogGroup.ECSLogGroupcdkproxydev11E8A2C0",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
+                },
+                {
+                    "resource": "AWS::Logs::LogGroup.ECSLogGroupsharemanagerdev49FFAB5E",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
+                },
+                {
+                    "resource": "AWS::Logs::LogGroup.ECSLogGroupsharereapplierdev58405762",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
+                },
+                {
+                    "resource": "AWS::Logs::LogGroup.ECSLogGroupshareverifierdev877E0507",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
+                },
+                {
+                    "resource": "AWS::Logs::LogGroup.ECSLogGroupstacksupdaterdev2CE91D51",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
+                },
+                {
+                    "resource": "AWS::Logs::LogGroup.ECSLogGroupsubscriptionsdev7B40E2D8",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
+                },
+                {
+                    "resource": "AWS::Logs::LogGroup.ECSLogGrouptablessyncerdevAB12C7DE",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cdk.out/assembly-dataall-main-cicd-stack-dataall-dev-backend-stage/dataallmaincicdstackdataalldevbackendstagebackendstackLambdas4B1DE6AF.nested.template.json",
+            "findings": [
+                {
+                    "resource": "AWS::ApiGateway::Stage.dataalldevapiDeploymentStageprodE0313A5B",
+                    "check_ids": [
+                        "CKV_AWS_120"
+                    ]
+                },
+                {
+                    "resource": "AWS::Lambda::Function.AWSWorkerAA1523CA",
+                    "check_ids": [
+                        "CKV_AWS_115"
+                    ]
+                },
+                {
+                    "resource": "AWS::Lambda::Function.ElasticSearchProxyHandlerDBDE7574",
+                    "check_ids": [
+                        "CKV_AWS_115"
+                    ]
+                },
+                {
+                    "resource": "AWS::Lambda::Function.LambdaGraphQL1131F2C3",
+                    "check_ids": [
+                        "CKV_AWS_115"
+                    ]
+                },
+                {
+                    "resource": "AWS::Logs::LogGroup.awsworkerloggroupF395EFD3",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
+                },
+                {
+                    "resource": "AWS::Logs::LogGroup.dataalldevapigateway2625FE76",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
+                },
+                {
+                    "resource": "AWS::Logs::LogGroup.esproxyloggroup53203D0B",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
+                },
+                {
+                    "resource": "AWS::Logs::LogGroup.graphqlloggroupB3FAA5F5",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cdk.out/assembly-dataall-main-cicd-stack-dataall-dev-backend-stage/dataallmaincicdstackdataalldevbackendstagebackendstackOpenSearchA18441EC.nested.template.json",
+            "findings": [
+                {
+                    "resource": "AWS::Lambda::Function.AWS679f53fac002430cb0da5b7982bd22872D164C4C",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116",
+                        "CKV_AWS_117"
+                    ]
+                },
+                {
+                    "resource": "AWS::Logs::LogGroup.EsAppLogGroupD5A3BCEA",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
+                },
+                {
+                    "resource": "AWS::Logs::LogGroup.OpenSearchDomaindevSlowIndexLogs6F7350C9",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
+                },
+                {
+                    "resource": "AWS::Logs::LogGroup.OpenSearchDomaindevSlowSearchLogs1F374004",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
+                },
+                {
+                    "resource": "AWS::OpenSearchService::Domain.OpenSearchDomaindev1A616D02",
+                    "check_ids": [
+                        "CKV_AWS_317"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cdk.out/assembly-dataall-main-cicd-stack-dataall-dev-backend-stage/dataallmaincicdstackdataalldevbackendstagebackendstackParamStoreC907C0F0.nested.template.json",
+            "findings": [
+                {
+                    "resource": "AWS::Lambda::Function.AWS679f53fac002430cb0da5b7982bd22872D164C4C",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116",
+                        "CKV_AWS_117"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cdk.out/assembly-dataall-main-cicd-stack-dataall-dev-backend-stage/dataallmaincicdstackdataalldevbackendstagebackendstackS3Resources1DD771FA.nested.template.json",
+            "findings": [
+                {
+                    "resource": "AWS::Lambda::Function.CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116",
+                        "CKV_AWS_117",
+                        "CKV_AWS_173"
+                    ]
+                },
+                {
+                    "resource": "AWS::Lambda::Function.CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116",
+                        "CKV_AWS_117"
+                    ]
+                },
+                {
+                    "resource": "AWS::S3::Bucket.dataalldevaccesslogsAE3B6354",
+                    "check_ids": [
+                        "CKV_AWS_18"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cdk.out/assembly-dataall-main-cicd-stack-dataall-dev-backend-stage/dataallmaincicdstackdataalldevbackendstagebackendstackSavePermsE1C53B74.nested.template.json",
+            "findings": [
+                {
+                    "resource": "AWS::Lambda::Function.AWSCDKTriggerCustomResourceProviderCustomResourceProviderHandler97BECD91",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116",
+                        "CKV_AWS_117"
+                    ]
+                },
+                {
+                    "resource": "AWS::Lambda::Function.TriggerFunctiondeploymenttriggerssavepermshandlerhandler04AEF392",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cdk.out/assembly-dataall-main-cicd-stack-dataall-dev-backend-stage/dataallmaincicdstackdataalldevbackendstagebackendstackVpc2C1E1115.nested.template.json",
+            "findings": [
+                {
+                    "resource": "AWS::Logs::LogGroup.dataalldevflowlogs44F8EC01",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cdk.out/assembly-dataall-main-cicd-stack-dataall-dev-cloudfront-stage/dataallmaincicdstackdataalldevcloudfrontstagecloudfrontstackCloudFront118EAF32.nested.template.json",
+            "findings": [
+                {
+                    "resource": "AWS::CloudFront::Distribution.CloudFrontDistributionBA64CE3A",
+                    "check_ids": [
+                        "CKV_AWS_174"
+                    ]
+                },
+                {
+                    "resource": "AWS::CloudFront::Distribution.userguideDistribution9C9E7FE0",
+                    "check_ids": [
+                        "CKV_AWS_174"
+                    ]
+                },
+                {
+                    "resource": "AWS::Lambda::Function.dataalldevhttpheadersredirection47B7A62B",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116",
+                        "CKV_AWS_117"
+                    ]
+                },
+                {
+                    "resource": "AWS::S3::Bucket.dataalldevfrontend64065639",
+                    "check_ids": [
+                        "CKV_AWS_18",
+                        "CKV_AWS_21"
+                    ]
+                },
+                {
+                    "resource": "AWS::S3::Bucket.dataalldevlogging0F6723EE",
+                    "check_ids": [
+                        "CKV_AWS_18"
+                    ]
+                },
+                {
+                    "resource": "AWS::S3::Bucket.dataalldevuserguide5964DC13",
+                    "check_ids": [
+                        "CKV_AWS_18",
+                        "CKV_AWS_21"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cdk.out/assembly-dataall-main-cicd-stack-dataall-dev-cloudfront-stage/dataallmaincicdstackdataalldevcloudfrontstagecloudfrontstackFrontendCognitoConfig345B272A.nested.template.json",
+            "findings": [
+                {
+                    "resource": "AWS::Lambda::Function.AWSCDKTriggerCustomResourceProviderCustomResourceProviderHandler97BECD91",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116",
+                        "CKV_AWS_117"
+                    ]
+                },
+                {
+                    "resource": "AWS::Lambda::Function.TriggerFunctionCognitoUrlsConfig9FD27FEB",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116",
+                        "CKV_AWS_117"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cdk.out/asset.3045cb6b4340be1e173df6dcf6248d565aa849ceda3e2cf2c2f221ccee4bc1d6/pivotRole.yaml",
+            "findings": [
+                {
+                    "resource": "AWS::IAM::ManagedPolicy.PivotRolePolicy0",
+                    "check_ids": [
+                        "CKV_AWS_109",
+                        "CKV_AWS_111"
+                    ]
+                },
+                {
+                    "resource": "AWS::IAM::ManagedPolicy.PivotRolePolicy1",
+                    "check_ids": [
+                        "CKV_AWS_109"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cdk.out/cross-region-stack-111111111111:eu-west-1.template.json",
+            "findings": [
+                {
+                    "resource": "AWS::S3::Bucket.CrossRegionCodePipelineReplicationBucketFC3227F2",
+                    "check_ids": [
+                        "CKV_AWS_18",
+                        "CKV_AWS_21"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cdk.out/dataall-main-cicd-stack.template.json",
+            "findings": [
+                {
+                    "resource": "AWS::IAM::Policy.dataallmaincdkpipelineAssetsFileRoleDefaultPolicyFCD7832D",
+                    "check_ids": [
+                        "CKV_AWS_111"
+                    ]
+                },
+                {
+                    "resource": "AWS::IAM::Policy.dataallmaincdkpipelinePipelineRoleDefaultPolicy98FFDB2A",
+                    "check_ids": [
+                        "CKV_AWS_111"
+                    ]
+                },
+                {
+                    "resource": "AWS::Lambda::Function.CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116",
+                        "CKV_AWS_117"
+                    ]
+                },
+                {
+                    "resource": "AWS::S3::Bucket.dataallmaincdkpipelinePipelineArtifactsBucketF1C6C602",
+                    "check_ids": [
+                        "CKV_AWS_18",
+                        "CKV_AWS_21"
+                    ]
+                },
+                {
+                    "resource": "AWS::S3::Bucket.sourcecodebucket464EEFA3",
+                    "check_ids": [
+                        "CKV_AWS_18"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cdk.out/dataallmaincicdstackAuroraB3A9A7CA.nested.template.json",
+            "findings": [
+                {
+                    "resource": "AWS::RDS::DBCluster.AuroraDatabasemainA7A8A785",
+                    "check_ids": [
+                        "CKV_AWS_162"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/cdk.out/dataallmaincicdstackVpcC62303B8.nested.template.json",
+            "findings": [
+                {
+                    "resource": "AWS::Logs::LogGroup.dataallmainflowlogsEBED4B4A",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/checkov_environment_synth.json",
+            "findings": [
+                {
+                    "resource": "AWS::IAM::ManagedPolicy.dataallanothergroup111111servicespolicy19AC37181",
+                    "check_ids": [
+                        "CKV_AWS_111"
+                    ]
+                },
+                {
+                    "resource": "AWS::IAM::ManagedPolicy.dataallanothergroup111111servicespolicy2E85AF510",
+                    "check_ids": [
+                        "CKV_AWS_111"
+                    ]
+                },
+                {
+                    "resource": "AWS::IAM::ManagedPolicy.dataallanothergroup111111servicespolicy306EE0E93",
+                    "check_ids": [
+                        "CKV_AWS_111"
+                    ]
+                },
+                {
+                    "resource": "AWS::IAM::ManagedPolicy.dataallanothergroup111111servicespolicy7BF536CC5",
+                    "check_ids": [
+                        "CKV_AWS_109"
+                    ]
+                },
+                {
+                    "resource": "AWS::IAM::ManagedPolicy.dataallanothergroup111111servicespolicyCC720210",
+                    "check_ids": [
+                        "CKV_AWS_109"
+                    ]
+                },
+                {
+                    "resource": "AWS::IAM::ManagedPolicy.dataalltestadmins111111servicespolicy1A0C96958",
+                    "check_ids": [
+                        "CKV_AWS_111"
+                    ]
+                },
+                {
+                    "resource": "AWS::IAM::ManagedPolicy.dataalltestadmins111111servicespolicy2B12D381A",
+                    "check_ids": [
+                        "CKV_AWS_111"
+                    ]
+                },
+                {
+                    "resource": "AWS::IAM::ManagedPolicy.dataalltestadmins111111servicespolicy391D03768",
+                    "check_ids": [
+                        "CKV_AWS_111"
+                    ]
+                },
+                {
+                    "resource": "AWS::IAM::ManagedPolicy.dataalltestadmins111111servicespolicy3E3CBA9E",
+                    "check_ids": [
+                        "CKV_AWS_109"
+                    ]
+                },
+                {
+                    "resource": "AWS::IAM::ManagedPolicy.dataalltestadmins111111servicespolicy7DCF428B2",
+                    "check_ids": [
+                        "CKV_AWS_109"
+                    ]
+                },
+                {
+                    "resource": "AWS::Lambda::Function.CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116",
+                        "CKV_AWS_117",
+                        "CKV_AWS_173"
+                    ]
+                },
+                {
+                    "resource": "AWS::Lambda::Function.GlueDatabaseLFCustomResourceHandler7FAF0F82",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_117",
+                        "CKV_AWS_173"
+                    ]
+                },
+                {
+                    "resource": "AWS::Lambda::Function.LakeformationDefaultSettingsHandler2CBEDB06",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_117",
+                        "CKV_AWS_173"
+                    ]
+                },
+                {
+                    "resource": "AWS::Lambda::Function.dataallGlueDbCustomResourceProviderframeworkonEventF8347BA7",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116",
+                        "CKV_AWS_117",
+                        "CKV_AWS_173"
+                    ]
+                },
+                {
+                    "resource": "AWS::Lambda::Function.dataallLakeformationDefaultSettingsProviderframeworkonEventBB660E32",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116",
+                        "CKV_AWS_117",
+                        "CKV_AWS_173"
+                    ]
+                },
+                {
+                    "resource": "AWS::S3::Bucket.EnvironmentDefaultBucket78C3A8B0",
+                    "check_ids": [
+                        "CKV_AWS_18"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/checkov_notebook_synth.json",
+            "findings": [
+                {
+                    "resource": "AWS::SageMaker::NotebookInstance.Notebook111111",
+                    "check_ids": [
+                        "CKV2_AWS_68",
+                        "CKV_AWS_371"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/checkov_pipeline_synth.json",
+            "findings": [
+                {
+                    "resource": "AWS::IAM::Role.PipelineRoleDCFDBB91",
                     "check_ids": [
                         "CKV_AWS_107",
-                        "CKV_AWS_109",
-                        "CKV_AWS_110",
+                        "CKV_AWS_108",
                         "CKV_AWS_111"
+                    ]
+                },
+                {
+                    "resource": "AWS::KMS::Key.thistableArtifactsBucketEncryptionKey127159D3",
+                    "check_ids": [
+                        "CKV_AWS_7"
+                    ]
+                },
+                {
+                    "resource": "AWS::S3::Bucket.thistableArtifactsBucket145BFFDF",
+                    "check_ids": [
+                        "CKV_AWS_18",
+                        "CKV_AWS_21"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/checkov_s3_dataset_synth.json",
+            "findings": [
+                {
+                    "resource": "AWS::Glue::Crawler.dhCrawler",
+                    "check_ids": [
+                        "CKV_AWS_195"
+                    ]
+                },
+                {
+                    "resource": "AWS::Glue::Job.DatasetGlueProfilingJob",
+                    "check_ids": [
+                        "CKV_AWS_195"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/checkov_smstudio_extension_synth.json",
+            "findings": [
+                {
+                    "resource": "AWS::Logs::LogGroup.SageMakerStudiodev97911306",
+                    "check_ids": [
+                        "CKV_AWS_158"
                     ]
                 }
             ]

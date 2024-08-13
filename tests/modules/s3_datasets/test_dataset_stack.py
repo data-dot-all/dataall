@@ -1,12 +1,13 @@
 import json
 from unittest.mock import MagicMock
-
+import os
 import pytest
 from aws_cdk import App
 
 from dataall.core.environment.db.environment_models import Environment
 from dataall.modules.s3_datasets.cdk.dataset_stack import DatasetStack
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
+from tests.skip_conditions import checkov_scan
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -82,3 +83,9 @@ def test_resources_created(template):
     assert 'AWS::IAM::Policy' in template
     assert 'AWS::S3::BucketPolicy' in template
     assert 'AWS::Glue::Job' in template
+
+
+@checkov_scan
+def test_checkov(template):
+    with open('checkov_s3_dataset_synth.json', 'w') as f:
+        f.write(template)

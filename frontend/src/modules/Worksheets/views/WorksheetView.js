@@ -40,6 +40,7 @@ import {
   deleteWorksheet,
   getWorksheet,
   listS3DatasetsSharedWithEnvGroup,
+  listSharedDatasetTableColumns,
   runAthenaSqlQuery,
   updateWorksheet
 } from '../services';
@@ -152,7 +153,8 @@ const WorksheetView = () => {
         sharedWithDatabases =
           response.data.listS3DatasetsSharedWithEnvGroup?.map((d) => ({
             value: d.datasetUri,
-            label: d.sharedGlueDatabaseName
+            label: d.sharedGlueDatabaseName,
+            shareUri: d.shareUri
           }));
       }
       setDatabaseOptions(ownedDatabases.concat(sharedWithDatabases));
@@ -207,22 +209,44 @@ const WorksheetView = () => {
     [client, dispatch]
   );
   const fetchColumns = useCallback(
-    async (table) => {
+    async (table, database) => {
       setLoadingColumns(true);
-      const response = await client.query(
-        listDatasetTableColumns({
-          tableUri: table.tableUri,
-          filter: Defaults.selectListFilter
-        })
-      );
-      if (!response.errors) {
-        setColumns(
-          response.data.listDatasetTableColumns.nodes.map((c) => ({
-            ...c,
-            value: c.columnUri,
-            label: c.name
-          }))
+      let response;
+      if (database?.shareUri) {
+        response = await client.query(
+          listSharedDatasetTableColumns({
+            tableUri: table.tableUri,
+            shareUri: database.shareUri,
+            filter: Defaults.selectListFilter
+          })
         );
+      } else {
+        response = await client.query(
+          listDatasetTableColumns({
+            tableUri: table.tableUri,
+            filter: Defaults.selectListFilter
+          })
+        );
+      }
+
+      if (!response.errors) {
+        if (database?.shareUri) {
+          setColumns(
+            response.data.listSharedDatasetTableColumns.nodes.map((c) => ({
+              ...c,
+              value: c.columnUri,
+              label: c.name
+            }))
+          );
+        } else {
+          setColumns(
+            response.data.listDatasetTableColumns.nodes.map((c) => ({
+              ...c,
+              value: c.columnUri,
+              label: c.name
+            }))
+          );
+        }
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -351,7 +375,7 @@ const WorksheetView = () => {
   function handleTableChange(event) {
     setColumns([]);
     setSelectedTable(event.target.value);
-    fetchColumns(event.target.value).catch((e) =>
+    fetchColumns(event.target.value, selectedDatabase).catch((e) =>
       dispatch({ type: SET_ERROR, error: e.message })
     );
     setSqlBody(

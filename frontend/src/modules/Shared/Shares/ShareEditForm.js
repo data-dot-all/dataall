@@ -1,4 +1,5 @@
 import {
+  Alert,
   Box,
   Button,
   CardContent,
@@ -26,7 +27,7 @@ import {
 import { SET_ERROR } from '../../../globalErrors';
 import { DeleteOutlined } from '@mui/icons-material';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const ItemRow = (props) => {
   const {
@@ -214,6 +215,7 @@ export const ShareEditForm = (props) => {
     showViewShare
   } = props;
   const navigate = useNavigate();
+  const location = useLocation();
   const [sharedItems, setSharedItems] = useState(Defaults.pagedResponse);
   const [shareStatus, setShareStatus] = useState('');
   const [filter, setFilter] = useState(Defaults.filter);
@@ -275,6 +277,10 @@ export const ShareEditForm = (props) => {
 
     if (onApply) {
       onApply();
+    }
+    const targetPath = `/console/shares/${share.shareUri}`;
+    if (location.pathname !== targetPath) {
+      navigate(targetPath);
     }
   };
 
@@ -398,6 +404,15 @@ export const ShareEditForm = (props) => {
         {getExplanation(shareStatus)}
       </Typography>
       <Box>
+        <Box sx={{ p: 1 }}>
+          {sharedItems.nodes.find((item) => item.itemType === 'S3Bucket') && (
+            <Alert severity="warning" gutterBottom sx={{ mr: 1 }}>
+              Sharing S3Bucket gives Requestor read access to{' '}
+              <b>the entire S3 Bucket</b> superseding Folder shares and
+              providing potential workarounds for Table access
+            </Alert>
+          )}
+        </Box>
         <Table>
           <TableHead>
             <TableRow>

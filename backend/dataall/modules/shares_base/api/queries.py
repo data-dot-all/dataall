@@ -5,6 +5,7 @@ from dataall.modules.shares_base.api.resolvers import (
     list_shared_with_environment_data_items,
     list_shares_in_my_inbox,
     list_shares_in_my_outbox,
+    get_share_item_data_filters,
 )
 
 getShareObject = gql.QueryField(
@@ -43,4 +44,13 @@ getShareLogs = gql.QueryField(
     args=[gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String))],
     type=gql.ArrayType(gql.Ref('ShareLog')),
     resolver=get_share_logs,
+)
+
+getShareItemDataFilters = gql.QueryField(
+    name='getShareItemDataFilters',
+    args=[
+        gql.Argument(name='attachedDataFilterUri', type=gql.NonNullableType(gql.String)),
+    ],
+    type=gql.Ref('ShareObjectItemDataFilter'),
+    resolver=get_share_item_data_filters,
 )

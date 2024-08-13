@@ -338,38 +338,38 @@ class SharingService:
             )
 
             try:
-                if share_data.share.principalType in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value]:
-                    # TODO make it generic to non IAM role principals
-                    log.info(f'Verifying principal IAM Role {share_data.share.principalRoleName}')
-                    reapply_successful = ShareObjectService.verify_principal_role(session, share_data.share)
-                    if not reapply_successful:
-                        log.error(f'Failed to get Principal IAM Role {share_data.share.principalRoleName}, exiting...')
-                        return False
-                with ResourceLockRepository.acquire_lock_with_retry(
-                    resources=resources,
-                    session=session,
-                    acquired_by_uri=share_data.share.shareUri,
-                    acquired_by_type=share_data.share.__tablename__,
-                ):
-                    for type, processor in ShareProcessorManager.SHARING_PROCESSORS.items():
-                        try:
-                            log.info(f'Reapplying permissions to {type.value}')
-                            shareable_items = ShareObjectRepository.get_share_data_items_by_type(
-                                session,
-                                share_data.share,
-                                processor.shareable_type,
-                                processor.shareable_uri,
-                                None,
-                                ShareItemHealthStatus.PendingReApply.value,
-                            )
-                            success = processor.Processor(
-                                session, share_data, shareable_items
-                            ).process_approved_shares()
-                            log.info(f'Reapplying {type.value} succeeded = {success}')
-                            if not success:
-                                reapply_successful = False
-                        except Exception as e:
-                            log.error(f'Error occurred during share reapplying of {type.value}: {e}')
+                log.info(f'Verifying principal IAM Role {share_data.share.principalRoleName}')
+                # TODO make it generic to non IAM role principals
+                reapply_successful = ShareObjectService.verify_principal_role(session, share_data.share)
+                if not reapply_successful:
+                    log.error(f'Failed to get Principal IAM Role {share_data.share.principalRoleName}, exiting...')
+                    return False
+                else:
+                    with ResourceLockRepository.acquire_lock_with_retry(
+                        resources=resources,
+                        session=session,
+                        acquired_by_uri=share_data.share.shareUri,
+                        acquired_by_type=share_data.share.__tablename__,
+                    ):
+                        for type, processor in ShareProcessorManager.SHARING_PROCESSORS.items():
+                            try:
+                                log.info(f'Reapplying permissions to {type.value}')
+                                shareable_items = ShareObjectRepository.get_share_data_items_by_type(
+                                    session,
+                                    share_data.share,
+                                    processor.shareable_type,
+                                    processor.shareable_uri,
+                                    None,
+                                    ShareItemHealthStatus.PendingReApply.value,
+                                )
+                                success = processor.Processor(
+                                    session, share_data, shareable_items, True
+                                ).process_approved_shares()
+                                log.info(f'Reapplying {type.value} succeeded = {success}')
+                                if not success:
+                                    reapply_successful = False
+                            except Exception as e:
+                                log.error(f'Error occurred during share reapplying of {type.value}: {e}')
 
                 return reapply_successful
 
