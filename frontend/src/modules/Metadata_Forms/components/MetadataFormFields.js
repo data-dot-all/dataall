@@ -216,7 +216,12 @@ const EditTable = (props) => {
                       variant="outlined"
                       placeholder="Hit enter after typing"
                       defaultValue={field.possibleValues}
-                      disabled={field.deleted}
+                      disabled={
+                        field.deleted ||
+                        field.type ===
+                          fieldTypeOptions.find((o) => o.name === 'Boolean')
+                            .value
+                      }
                       onChange={(chip) => {
                         updateField(index, 'possibleValues', [...chip]);
                       }}
