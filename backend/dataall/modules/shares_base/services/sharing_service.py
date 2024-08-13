@@ -219,14 +219,14 @@ class SharingService:
                                 share_uri,
                                 old_status=ShareItemStatus.Revoke_Approved.value,
                                 new_status=ShareItemStatus.Revoke_Failed.value,
-                                share_item_type=processor.type.value,
+                                share_item_type=processor.type,
                             )
                             ShareStatusRepository.update_share_item_status_batch(
                                 session,
                                 share_uri,
                                 old_status=ShareItemStatus.Revoke_In_Progress.value,
                                 new_status=ShareItemStatus.Revoke_Failed.value,
-                                share_item_type=processor.type.value,
+                                share_item_type=processor.type,
                             )
                             revoke_successful = False
 
@@ -356,7 +356,7 @@ class SharingService:
                                     ShareItemHealthStatus.PendingReApply.value,
                                 )
                                 success = processor.Processor(
-                                    session, share_data, shareable_items
+                                    session, share_data, shareable_items, True
                                 ).process_approved_shares()
                                 log.info(f'Reapplying {type.value} succeeded = {success}')
                                 if not success:

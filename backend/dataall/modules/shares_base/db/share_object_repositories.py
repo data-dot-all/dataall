@@ -340,6 +340,7 @@ class ShareObjectRepository:
                 ShareObjectItem.healthStatus.label('healthStatus'),
                 ShareObjectItem.healthMessage.label('healthMessage'),
                 ShareObjectItem.lastVerificationTime.label('lastVerificationTime'),
+                ShareObjectItem.attachedDataFilterUri.label('attachedDataFilterUri'),
                 case(
                     [(ShareObjectItem.shareItemUri.isnot(None), True)],
                     else_=False,
