@@ -32,6 +32,34 @@ def test_get_metadataform_full_info(client1, metadata_form_1, metadata_form_fiel
     assert_that(all_field_uris).contains(metadata_form_field_1.uri)
 
 
+def test_create_update_field_invalid_value(client1, metadata_form_1, metadata_form_field_1):
+    new_field_data = {
+        'name': 'field_1',
+        'metadataFormUri': metadata_form_1.uri,
+        'description': 'Field 1',
+        'type': 'Integer',
+        'required': True,
+        'possibleValues': ['wrong, not int'],
+        'displayNumber': 2,
+    }
+
+    updated_field_data = {
+        'uri': metadata_form_field_1.uri,
+        'metadataFormUri': metadata_form_1.uri,
+        'type': 'Glossary Term',
+        'required': True,
+        'glossaryNodeUri': 'nonexistent',
+        'displayNumber': 1,
+    }
+
+    assert_that(update_metadata_form_fields).raises(Exception).when_called_with(
+        client1, metadata_form_1.uri, [new_field_data]
+    ).contains('InvalidInput', 'must be Integer')
+    assert_that(update_metadata_form_fields).raises(Exception).when_called_with(
+        client1, metadata_form_1.uri, [updated_field_data]
+    ).contains('InvalidInput', 'from glossary list')
+
+
 def test_metadata_form_fields_batch(client1, metadata_form_1, metadata_form_field_1):
     fullinfo_before = get_metadata_form_full_info(client1, metadata_form_1.uri)
 

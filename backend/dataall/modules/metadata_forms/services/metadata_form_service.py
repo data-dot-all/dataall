@@ -95,8 +95,9 @@ class MetadataFormService:
     @staticmethod
     def delete_metadata_form_by_uri(uri):
         mf = MetadataFormService.get_metadata_form_by_uri(uri)
-        with get_context().db_engine.scoped_session() as session:
-            return session.delete(mf)
+        if mf:
+            with get_context().db_engine.scoped_session() as session:
+                return session.delete(mf)
 
     @staticmethod
     def paginated_metadata_form_list(data=None) -> dict:
@@ -148,6 +149,8 @@ class MetadataFormService:
     @staticmethod
     def delete_metadata_form_field(uri, fieldUri):
         mf = MetadataFormService.get_metadata_form_field_by_uri(fieldUri)
+        print('URI = ', fieldUri)
+        print('MF = ', mf)
         with get_context().db_engine.scoped_session() as session:
             return session.delete(mf)
 
@@ -171,15 +174,15 @@ class MetadataFormService:
             else:
                 to_delete.append(item['uri'])
 
-            # process sorted items
-            for item in to_delete:
-                MetadataFormService.delete_metadata_form_field(uri, item)
+        # process sorted items
+        for item in to_delete:
+            MetadataFormService.delete_metadata_form_field(uri, item)
 
-            with get_context().db_engine.scoped_session() as session:
-                for item in to_update:
-                    MetadataFormRepository.update_metadata_form_field(session, item['uri'], item)
-                for item in to_create:
-                    MetadataFormRepository.create_metadata_form_field(session, uri, item)
+        with get_context().db_engine.scoped_session() as session:
+            for item in to_update:
+                MetadataFormRepository.update_metadata_form_field(session, item['uri'], item)
+            for item in to_create:
+                MetadataFormRepository.create_metadata_form_field(session, uri, item)
 
         return MetadataFormService.get_metadata_form_fields(uri)
 
