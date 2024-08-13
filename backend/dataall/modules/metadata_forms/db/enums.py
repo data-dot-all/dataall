@@ -49,5 +49,4 @@ class MetadataFormEnforcementScope(GraphQLEnumMapper):
 
 class MetadataFormUserRoles(GraphQLEnumMapper):
     Owner = 'Owner'
-    Admin = 'Admin'
     User = 'User'

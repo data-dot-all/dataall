@@ -261,8 +261,7 @@ const DisplayTable = (props) => {
             Possible Values or Glossary Term
           </TableCell>
           <TableCell sx={{ width: '20px', alignContent: 'center' }}>
-            {(userRole === userRolesMF.Owner ||
-              userRole === userRolesMF.Admin) && (
+            {userRole === userRolesMF.Owner && (
               <Button
                 color="primary"
                 startIcon={<PencilAltIcon size={15} />}

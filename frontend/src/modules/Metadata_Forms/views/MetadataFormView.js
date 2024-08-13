@@ -199,8 +199,7 @@ const MetadataFormView = () => {
                 </Link>
               </Breadcrumbs>
             </Grid>
-            {(metadataForm.userRole === userRolesMF.Owner ||
-              metadataForm.userRole === userRolesMF.Admin) && (
+            {metadataForm.userRole === userRolesMF.Owner && (
               <Grid item>
                 <Box sx={{ m: -1 }}>
                   <Button
