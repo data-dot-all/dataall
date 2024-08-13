@@ -74,6 +74,7 @@ const EditTable = (props) => {
   };
   const addField = () => {
     localFields.push({
+      id: Date.now(),
       name: 'New Field',
       required: false,
       metadataFormUri: formUri,
@@ -87,6 +88,7 @@ const EditTable = (props) => {
   const row = localFields.map((field, index) => (
     <TableRow
       id={index}
+      key={field.uri ? field.uri : field.id}
       onDragStart={(e) => dragStart(e)}
       onDragEnter={(e) => dragEnter(e)}
       onDragEnd={drop}
@@ -415,6 +417,7 @@ export const MetadataFormFields = (props) => {
     data.forEach((field, index) => {
       delete field.__typename;
       delete field.glossaryNodeName;
+      delete field.id;
       field.displayNumber = index;
     });
     const response = await client.mutate(
