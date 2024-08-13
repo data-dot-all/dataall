@@ -1,6 +1,6 @@
 import { useDispatch } from 'react-redux';
-
-import React, { Children, useEffect, useRef, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import React, { useEffect, useRef, useState } from 'react';
 
 import PropTypes from 'prop-types';
 import {
@@ -30,15 +30,12 @@ import {
 } from '../../../design';
 import { SET_ERROR } from '../../../globalErrors';
 import Checkbox from '@mui/material/Checkbox';
-import {
-  //  createMetadataFormFields,
-  getMetadataForm
-  //  deleteMetadataFormField
-} from '../services';
+import { getMetadataForm } from '../services';
 import { useClient } from '../../../services';
 import { GridActionsCellItem } from '@mui/x-data-grid';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import SettingsBackupRestoreOutlinedIcon from '@mui/icons-material/SettingsBackupRestoreOutlined';
+import DragIndicatorOutlinedIcon from '@mui/icons-material/DragIndicatorOutlined';
 import { batchMetadataFormFieldUpdates } from '../services/batchMetadataFormFieldUpdates';
 import CircularProgress from '@mui/material/CircularProgress';
 import { listGlossaries } from '../../Glossaries/services';
@@ -50,22 +47,32 @@ const EditTable = (props) => {
   const dragItem = useRef();
   const dragOverItem = useRef();
 
+  const swap = (i1, i2) => {
+    const copyListItems = [...localFields];
+    const dragItemContent = copyListItems[i1];
+    copyListItems.splice(i1, 1);
+    copyListItems.splice(i2, 0, dragItemContent);
+    setLocalFields(copyListItems);
+  };
+
   const dragStart = (e) => {
     dragItem.current = e.target.id;
   };
 
   const dragEnter = (e) => {
-    dragOverItem.current = e.currentTarget.id;
+    dragOverItem.current = e.currentTarget;
+    e.currentTarget.style.backgroundColor = 'aliceblue';
   };
 
-  const drop = () => {
-    const copyListItems = [...localFields];
-    const dragItemContent = copyListItems[dragItem.current];
-    copyListItems.splice(dragItem.current, 1);
-    copyListItems.splice(dragOverItem.current, 0, dragItemContent);
+  const dragLeave = (e) => {
+    e.currentTarget.style.backgroundColor = 'white';
+  };
+
+  const drop = (e) => {
+    swap(dragItem.current, dragOverItem.current.id);
+    dragOverItem.current.style.backgroundColor = 'white';
     dragItem.current = null;
     dragOverItem.current = null;
-    setLocalFields(copyListItems);
   };
 
   const updateField = (index, propertyName, value) => {
@@ -74,7 +81,7 @@ const EditTable = (props) => {
   };
   const addField = () => {
     localFields.push({
-      id: Date.now(),
+      id: uuidv4(),
       name: 'New Field',
       required: false,
       metadataFormUri: formUri,
@@ -85,181 +92,195 @@ const EditTable = (props) => {
     setLocalFields([...localFields]);
   };
 
-  const row = localFields.map((field, index) => (
-    <TableRow
-      id={index}
-      key={field.uri ? field.uri : field.id}
-      onDragStart={(e) => dragStart(e)}
-      onDragEnter={(e) => dragEnter(e)}
-      onDragEnd={drop}
-      draggable
-      sx={{
-        backgroundColor: field.deleted ? 'whitesmoke' : 'white'
-      }}
-    >
-      <TableCell>
-        <Checkbox
-          defaultChecked={field.required}
-          disabled={field.deleted}
-          onChange={(event) => {
-            updateField(index, 'required', event.target.value === 'on');
-          }}
-        />
-      </TableCell>
-      <TableCell>
-        <TextField
-          disabled={field.deleted}
-          defaultValue={field.name}
-          onKeyUp={(event) => {
-            updateField(index, 'name', event.target.value);
-          }}
-          sx={{ width: '100%' }}
-        />
-      </TableCell>
-      <TableCell>
-        <Autocomplete
-          disablePortal
-          disabled={field.deleted}
-          options={fieldTypeOptions.map((option) => option.value)}
-          defaultValue={field.type}
-          onChange={(event, value) => {
-            updateField(index, 'type', value || fieldTypeOptions[0].value);
-          }}
-          renderInput={(params) => (
-            <TextField
-              sx={{ minWidth: '150px' }}
-              {...params}
-              label="Type"
-              variant="outlined"
-            />
-          )}
-        />
-      </TableCell>
-      <TableCell>
-        <TextField
-          disabled={field.deleted}
-          defaultValue={field.description}
-          sx={{ width: '100%' }}
-          onKeyUp={(event) => {
-            updateField(index, 'description', event.target.value);
-          }}
-        />
-      </TableCell>
-      <TableCell>
-        {field.type !==
-        fieldTypeOptions.find((o) => o.name === 'GlossaryTerm').value ? (
-          <ChipInput
-            fullWidth
-            variant="outlined"
-            placeholder="Hit enter after typing"
-            defaultValue={field.possibleValues}
-            disabled={field.deleted}
-            onChange={(chip) => {
-              updateField(index, 'possibleValues', [...chip]);
-            }}
-          />
-        ) : (
-          <Autocomplete
-            disablePortal
-            disabled={field.deleted}
-            options={glossaryNodes.map((node) => {
-              return { label: node.label, value: node.nodeUri };
-            })}
-            defaultValue={glossaryNodes.find(
-              (node) => field.glossaryNodeUri === node.nodeUri
-            )}
-            onChange={(event, node) => {
-              if (node) {
-                updateField(index, 'glossaryNodeUri', node.value);
-              }
-            }}
-            renderInput={(params) => (
-              <TextField {...params} variant="outlined" />
-            )}
-          />
-        )}
-      </TableCell>
-      <TableCell
-        sx={{
-          width: '20px',
-          alignContent: 'center',
-          textAlign: 'center'
-        }}
-      >
-        <Tooltip title={field.deleted ? 'Restore' : 'Delete'}>
-          <GridActionsCellItem
-            icon={
-              field.deleted ? (
-                <SettingsBackupRestoreOutlinedIcon />
-              ) : (
-                <DeleteIcon />
-              )
-            }
-            label={field.deleted ? 'Restore' : 'Delete'}
-            sx={{
-              color: 'primary.main'
-            }}
-            onClick={() => {
-              updateField(index, 'deleted', !field.deleted);
-            }}
-          />
-        </Tooltip>
-      </TableCell>
-    </TableRow>
-  ));
-
   return (
-    <Table>
-      <TableHead>
-        <TableRow>
-          <TableCell sx={{ width: '20px' }}>Required</TableCell>
-          <TableCell>Name</TableCell>
-          <TableCell sx={{ width: '10%' }}>Type</TableCell>
-          <TableCell sx={{ width: '30%' }}>Description</TableCell>
-          <TableCell sx={{ width: '20%' }}>
-            Possible Values or Glossary Term
-          </TableCell>
-          <TableCell sx={{ width: '20px' }}>
-            <Button
-              color="primary"
-              startIcon={<SaveIcon size={15} />}
-              sx={{ mt: 1 }}
-              onClick={() => {
-                saveChanges(localFields);
-              }}
-              type="button"
-              variant="outlined"
-            >
-              Save
-            </Button>
-          </TableCell>
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        <TableRow>
-          <TableCell colSpan={6}>
-            <Button
-              color="primary"
-              startIcon={<PlusIcon size={15} />}
-              sx={{ mt: 1 }}
-              onClick={addField}
-              type="button"
-            >
-              Add field
-            </Button>
-          </TableCell>
-        </TableRow>
-        {localFields.length === 0 ? (
+    <>
+      <Button
+        color="primary"
+        startIcon={<PlusIcon size={15} />}
+        sx={{ mt: 1 }}
+        onClick={addField}
+        type="button"
+      >
+        Add field
+      </Button>
+      <Table>
+        <TableHead>
           <TableRow>
-            <TableCell colSpan={6} align="center">
-              No fields found
+            <TableCell sx={{ width: '100px' }}>Required</TableCell>
+            <TableCell>Name</TableCell>
+            <TableCell sx={{ width: '10%' }}>Type</TableCell>
+            <TableCell sx={{ width: '30%' }}>Description</TableCell>
+            <TableCell sx={{ width: '20%' }}>
+              Possible Values or Glossary Term
+            </TableCell>
+            <TableCell sx={{ width: '20px' }}>
+              <Button
+                color="primary"
+                startIcon={<SaveIcon size={15} />}
+                sx={{ mt: 1 }}
+                onClick={() => {
+                  saveChanges(localFields);
+                }}
+                type="button"
+                variant="outlined"
+              >
+                Save
+              </Button>
             </TableCell>
           </TableRow>
-        ) : (
-          Children.toArray(row)
-        )}
-      </TableBody>
-    </Table>
+        </TableHead>
+        <TableBody>
+          {localFields.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={6} align="center">
+                No fields found
+              </TableCell>
+            </TableRow>
+          ) : (
+            localFields.map((field, index) => (
+              <TableRow
+                id={index}
+                key={field.uri ? field.uri : field.id}
+                onDragStart={dragStart}
+                onDragEnter={dragEnter}
+                onDragLeave={dragLeave}
+                onDragEnd={drop}
+                onDragOver={(e) => e.preventDefault()}
+                draggable
+                sx={{
+                  backgroundColor: field.deleted ? 'whitesmoke' : 'white'
+                }}
+              >
+                <TableCell>
+                  <Checkbox
+                    defaultChecked={field.required}
+                    disabled={field.deleted}
+                    onChange={(event) => {
+                      updateField(
+                        index,
+                        'required',
+                        event.target.value === 'on'
+                      );
+                    }}
+                  />
+                </TableCell>
+                <TableCell>
+                  <TextField
+                    disabled={field.deleted}
+                    defaultValue={field.name}
+                    onKeyUp={(event) => {
+                      updateField(index, 'name', event.target.value);
+                    }}
+                    sx={{ width: '100%' }}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Autocomplete
+                    disablePortal
+                    disabled={field.deleted}
+                    options={fieldTypeOptions.map((option) => option.value)}
+                    defaultValue={field.type}
+                    onChange={(event, value) => {
+                      updateField(
+                        index,
+                        'type',
+                        value || fieldTypeOptions[0].value
+                      );
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        sx={{ minWidth: '150px' }}
+                        {...params}
+                        label="Type"
+                        variant="outlined"
+                      />
+                    )}
+                  />
+                </TableCell>
+                <TableCell>
+                  <TextField
+                    disabled={field.deleted}
+                    defaultValue={field.description}
+                    sx={{ width: '100%' }}
+                    onKeyUp={(event) => {
+                      updateField(index, 'description', event.target.value);
+                    }}
+                  />
+                </TableCell>
+                <TableCell>
+                  {field.type !==
+                  fieldTypeOptions.find((o) => o.name === 'GlossaryTerm')
+                    .value ? (
+                    <ChipInput
+                      fullWidth
+                      variant="outlined"
+                      placeholder="Hit enter after typing"
+                      defaultValue={field.possibleValues}
+                      disabled={field.deleted}
+                      onChange={(chip) => {
+                        updateField(index, 'possibleValues', [...chip]);
+                      }}
+                    />
+                  ) : (
+                    <Autocomplete
+                      disablePortal
+                      disabled={field.deleted}
+                      options={glossaryNodes.map((node) => {
+                        return { label: node.label, value: node.nodeUri };
+                      })}
+                      defaultValue={glossaryNodes.find(
+                        (node) => field.glossaryNodeUri === node.nodeUri
+                      )}
+                      onChange={(event, node) => {
+                        if (node) {
+                          updateField(index, 'glossaryNodeUri', node.value);
+                        }
+                      }}
+                      renderInput={(params) => (
+                        <TextField {...params} variant="outlined" />
+                      )}
+                    />
+                  )}
+                </TableCell>
+                <TableCell
+                  sx={{
+                    width: '20px',
+                    alignContent: 'center',
+                    textAlign: 'center'
+                  }}
+                >
+                  <Tooltip title={field.deleted ? 'Restore' : 'Delete'}>
+                    <GridActionsCellItem
+                      icon={
+                        field.deleted ? (
+                          <SettingsBackupRestoreOutlinedIcon />
+                        ) : (
+                          <DeleteIcon />
+                        )
+                      }
+                      label={field.deleted ? 'Restore' : 'Delete'}
+                      sx={{
+                        color: 'primary.main'
+                      }}
+                      onClick={() => {
+                        updateField(index, 'deleted', !field.deleted);
+                      }}
+                    />
+                  </Tooltip>
+                  <GridActionsCellItem
+                    icon={<DragIndicatorOutlinedIcon size={15} />}
+                    label="drag"
+                    sx={{
+                      color: 'primary.main'
+                    }}
+                  />
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </>
   );
 };
 
