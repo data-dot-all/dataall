@@ -462,9 +462,9 @@ class DatasetStack(Stack):
 
         glue_sec_conf_enc_key = kms.Key(
             self,
-            f'{glue_sec_conf_enc_key_name}',
+            glue_sec_conf_enc_key_name,
             removal_policy=RemovalPolicy.DESTROY,
-            alias=f'{glue_sec_conf_enc_key_name}',
+            alias=glue_sec_conf_enc_key_name,
             enable_key_rotation=True,
             admins=[
                 iam.ArnPrincipal(env.CDKRoleArn),
@@ -487,7 +487,7 @@ class DatasetStack(Stack):
 
         glue_crawler_security_config = glue.CfnSecurityConfiguration(
             self,
-            f'{glue_sec_conf_name}',
+            glue_sec_conf_name,
             encryption_configuration=glue.CfnSecurityConfiguration.EncryptionConfigurationProperty(
                 cloud_watch_encryption=glue.CfnSecurityConfiguration.CloudWatchEncryptionProperty(
                     cloud_watch_encryption_mode='SSE-KMS', kms_key_arn=glue_sec_conf_enc_key.key_arn
@@ -501,7 +501,7 @@ class DatasetStack(Stack):
                     )
                 ],
             ),
-            name=f'{glue_sec_conf_name}',
+            name=glue_sec_conf_name,
         )
 
         # Support resources: GlueCrawler for the dataset, Profiling Job and Trigger
