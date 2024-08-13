@@ -481,7 +481,7 @@ export const ShareBoxList = (props) => {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label={'Request IAM role name'}
+                      label={'Request Role name'}
                       fullWidth
                       variant="outlined"
                     />

@@ -218,7 +218,6 @@ def resolve_principal(context: Context, source: ShareObject, **kwargs):
     with context.engine.scoped_session() as session:
         if source.principalType in set(item.value for item in PrincipalType):
             environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)
-            organization = OrganizationRepository.get_organization_by_uri(session, environment.organizationUri)
             if source.principalType == PrincipalType.ConsumptionRole.value:
                 principal = EnvironmentService.get_environment_consumption_role(
                     session, source.principalId, source.environmentUri
@@ -228,20 +227,15 @@ def resolve_principal(context: Context, source: ShareObject, **kwargs):
                 principal = EnvironmentService.get_environment_group(session, source.groupUri, source.environmentUri)
                 principalName = f'{source.groupUri} [{principal.environmentIAMRoleArn}]'
             else:
-                principalName = source.principalId
+                principalName = f'Redshift Role [{source.principalRoleName}]'
 
             return {
+                'principalName': principalName,
                 'principalId': source.principalId,
                 'principalType': source.principalType,
-                'principalName': principalName,
                 'principalRoleName': source.principalRoleName,
                 'SamlGroupName': source.groupUri,
-                'environmentUri': environment.environmentUri,
                 'environmentName': environment.label,
-                'AwsAccountId': environment.AwsAccountId,
-                'region': environment.region,
-                'organizationUri': organization.organizationUri,
-                'organizationName': organization.label,
             }
 
 

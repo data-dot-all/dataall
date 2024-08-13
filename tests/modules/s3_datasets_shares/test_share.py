@@ -474,17 +474,12 @@ def get_share_object(client, user, group, shareUri, filter):
         rejectPurpose
         userRoleForShareObject
         principal {
-          principalId
-          principalType
           principalName
+          principalType
+          principalId
           principalRoleName
           SamlGroupName
-          environmentUri
           environmentName
-          AwsAccountId
-          region
-          organizationUri
-          organizationName
         }
         items(filter: $filter) {
           count
@@ -1147,7 +1142,6 @@ def test_get_share_object(client, share1_draft, user, group):
     assert get_share_object_response.data.getShareObject.get('principal').principalType == PrincipalType.Group.name
     assert get_share_object_response.data.getShareObject.get('principal').principalRoleName
     assert get_share_object_response.data.getShareObject.get('principal').SamlGroupName
-    assert get_share_object_response.data.getShareObject.get('principal').region
 
 
 def test_update_share_request_purpose(client, share1_draft, user2, group2):
