@@ -96,6 +96,13 @@ function ShareViewHeader(props) {
 
   const [isSubmitShareModalOpen, setIsSubmitShareModalOpen] = useState(false);
 
+  const datasetTypeLink =
+    share.dataset.datasetType === 'DatasetTypes.S3'
+      ? `s3-datasets`
+      : share.dataset.datasetType === 'DatasetTypes.Redshift'
+      ? `redshift-datasets`
+      : '-';
+
   const submit = async () => {
     setSubmitting(true);
     const response = await client.mutate(
@@ -255,7 +262,7 @@ function ShareViewHeader(props) {
               color="textSecondary"
               variant="subtitle2"
               component={RouterLink}
-              to={`/console/s3-datasets/${share.dataset?.datasetUri}`}
+              to={`/console/${datasetTypeLink}/${share.dataset?.datasetUri}`}
             >
               {share.dataset?.datasetName}
             </Typography>
