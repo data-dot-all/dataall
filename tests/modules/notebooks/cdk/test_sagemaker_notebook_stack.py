@@ -4,6 +4,7 @@ import pytest
 from aws_cdk import App
 
 from dataall.modules.notebooks.cdk.notebook_stack import NotebookStack
+from tests.skip_conditions import checkov_scan
 
 
 @pytest.fixture(scope='function', autouse=True)
@@ -43,9 +44,7 @@ def test_resources_created(template):
     assert 'AWS::SageMaker::NotebookInstance' in template
 
 
-@pytest.mark.skipif(
-    os.getenv('CHECKOV_ACTIONS', 'false') != 'true', reason='Pytest used for Checkov Scan CDK Synth Output'
-)
+@checkov_scan
 def test_checkov(template):
     with open('checkov_notebook_synth.json', 'w') as f:
         f.write(template)

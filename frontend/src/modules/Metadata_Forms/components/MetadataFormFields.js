@@ -248,7 +248,7 @@ EditTable.propTypes = {
 };
 
 const DisplayTable = (props) => {
-  const { fields, startEdit } = props;
+  const { fields, startEdit, userRole, userRolesMF } = props;
   return (
     <Table>
       <TableHead>
@@ -261,16 +261,19 @@ const DisplayTable = (props) => {
             Possible Values or Glossary Term
           </TableCell>
           <TableCell sx={{ width: '20px', alignContent: 'center' }}>
-            <Button
-              color="primary"
-              startIcon={<PencilAltIcon size={15} />}
-              sx={{ mt: 1 }}
-              onClick={startEdit}
-              type="button"
-              variant="outlined"
-            >
-              Edit
-            </Button>
+            {(userRole === userRolesMF.Owner ||
+              userRole === userRolesMF.Admin) && (
+              <Button
+                color="primary"
+                startIcon={<PencilAltIcon size={15} />}
+                sx={{ mt: 1 }}
+                onClick={startEdit}
+                type="button"
+                variant="outlined"
+              >
+                Edit
+              </Button>
+            )}
           </TableCell>
         </TableRow>
       </TableHead>
@@ -321,7 +324,7 @@ DisplayTable.propTypes = {
 export const MetadataFormFields = (props) => {
   const dispatch = useDispatch();
   const client = useClient();
-  const { metadataForm, fieldTypeOptions } = props;
+  const { metadataForm, fieldTypeOptions, userRolesMF } = props;
   const [loading, setLoading] = useState(false);
   const [editOn, setEditOn] = useState(false);
   const [fields, setFields] = useState(metadataForm.fields);
@@ -494,7 +497,12 @@ export const MetadataFormFields = (props) => {
                   glossaryNodes={glossaryNodes}
                 />
               ) : (
-                <DisplayTable fields={fields} startEdit={startEdit} />
+                <DisplayTable
+                  fields={fields}
+                  startEdit={startEdit}
+                  userRole={metadataForm.userRole}
+                  userRolesMF={userRolesMF}
+                />
               )}
             </Box>
           </Scrollbar>
