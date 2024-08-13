@@ -14,10 +14,13 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemActions,
 )
 from dataall.modules.shares_base.services.share_manager_utils import ShareErrorFormatter
-from dataall.modules.redshift_datasets_shares.aws.redshift_data import redshift_share_data_client
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftTable
 from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
+from dataall.modules.redshift_datasets.services.redshift_enums import RedshiftType
+from dataall.modules.redshift_datasets_shares.aws.redshift_data import redshift_share_data_client
+from dataall.modules.redshift_datasets_shares.aws.redshift import redshift_share_client
 from dataall.modules.redshift_datasets_shares.db.redshift_share_object_repositories import RedshiftShareRepository
+from dataall.modules.redshift_datasets_shares.services.redshift_shares_enums import RedshiftDatashareStatus
 
 log = logging.getLogger(__name__)
 
@@ -39,6 +42,9 @@ class ProcessRedshiftShare(SharesProcessorInterface):
         self.target_connection = RedshiftConnectionRepository.get_redshift_connection(
             session, share_data.share.principalId
         )
+        self.cross_account = (
+            self.share_data.target_environment.AwsAccountId != self.share_data.source_environment.AwsAccountId
+        )
         self.redshift_role = share_data.share.principalRoleName
 
         # There is a unique datashare per dataset per target namespace
@@ -49,6 +55,7 @@ class ProcessRedshiftShare(SharesProcessorInterface):
             target_uri=self.dataset.datasetUri,
             resource_prefix=DATAALL_PREFIX,
         ).build_compliant_name()
+        self.datashare_arn = f'arn:aws:redshift:{self.share_data.source_environment.region}:{self.share_data.source_environment.AwsAccountId}:datashare:{self.source_connection.nameSpaceId}/{self.datashare_name}'
         self.local_db = self._build_local_db_name()
         self.external_schema = self._build_external_schema_name()
 
@@ -59,12 +66,12 @@ class ProcessRedshiftShare(SharesProcessorInterface):
         return f'{self.source_connection.database}_{self.dataset.schema}_{self.dataset.name}'
 
     def _initialize_clients(self):
-        self.redshift_client_in_source = redshift_share_data_client(
+        self.redshift_data_client_in_source = redshift_share_data_client(
             account_id=self.share_data.source_environment.AwsAccountId,
             region=self.share_data.source_environment.region,
             connection=self.source_connection,
         )
-        self.redshift_client_in_target = redshift_share_data_client(
+        self.redshift_data_client_in_target = redshift_share_data_client(
             account_id=self.share_data.target_environment.AwsAccountId,
             region=self.share_data.target_environment.region,
             connection=self.target_connection,
@@ -74,7 +81,12 @@ class ProcessRedshiftShare(SharesProcessorInterface):
         """
         1) (in source namespace) Create datashare for this dataset for this target namespace. If it does not exist yet. One time operation.
         2) (in source namespace) Add schema to the datashare, if not already added. One time operation.
-        3) (in source namespace) Grant access to the consumer cluster to the datashare, if not already granted. One time operation.
+        3) Grant access to the consumer cluster to the datashare
+            3.a) SAME ACCOUNT: (in source namespace) Grant access to the consumer cluster to the datashare, if not already granted. One time operation.
+            3.b) CROSS ACCOUNT:
+               - (in source namespace) Grant access to the consumer ACCOUNT, if not already granted. One time operation.
+               - (in source account) Authorize datashare, if not already authorized. One time operation
+               - (in target account) Associate datashare with target namespace, if not already authorized. One time operation
         4) (in target namespace) Create local database WITH PERMISSIONS from datashare, if it does not exist yet. One time operation.
         5) (in target namespace) Grant usage access to the redshift role to the local database, if not already granted. One time operation.
         6) (in target namespace) Create external schema in local database, if it does not exist yet. One time operation.
@@ -100,59 +112,90 @@ class ProcessRedshiftShare(SharesProcessorInterface):
             try:
                 self._initialize_clients()
                 # 1) Create datashare for this dataset for this target namespace. If it does not exist yet
-                newly_created = self.redshift_client_in_source.create_datashare(datashare=self.datashare_name)
+                newly_created = self.redshift_data_client_in_source.create_datashare(datashare=self.datashare_name)
 
                 # 2) Add schema to the datashare, if not already added
-                self.redshift_client_in_source.add_schema_to_datashare(
+                self.redshift_data_client_in_source.add_schema_to_datashare(
                     datashare=self.datashare_name, schema=self.dataset.schema
                 )
-                # 3) Grant access to the consumer cluster to the datashare, if not already granted
-                self.redshift_client_in_source.grant_usage_to_datashare(
-                    datashare=self.datashare_name, namespace=self.target_connection.nameSpaceId
-                )
+                # 3) Grant access to the consumer namespace to the datashare, if not already granted
+                if self.cross_account:
+                    log.info('Processing cross-account datashare grants')
+                    # (in source namespace) Grant access to the consumer ACCOUNT, if not already granted
+                    self.redshift_data_client_in_source.grant_datashare_usage_to_account(
+                        datashare=self.datashare_name, account=self.share_data.target_environment.AwsAccountId
+                    )
+                    # (in source account) Authorize datashare, if not already authorized
+                    redshift_client_in_source = redshift_share_client(
+                        account_id=self.share_data.source_environment.AwsAccountId,
+                        region=self.share_data.source_environment.region,
+                    )
+                    redshift_client_in_source.authorize_datashare(
+                        datashare_arn=self.datashare_arn, account=self.share_data.target_environment.AwsAccountId
+                    )
+                    # (in target account) Associate datashare with target namespace, if not already authorized
+                    redshift_client_in_target = redshift_share_client(
+                        account_id=self.share_data.target_environment.AwsAccountId,
+                        region=self.share_data.target_environment.region,
+                    )
+                    redshift_type = (
+                        'redshift-serverless'
+                        if self.target_connection.redshiftType == RedshiftType.Serverless.value
+                        else 'redshift'
+                    )
+                    redshift_client_in_target.associate_datashare(
+                        datashare_arn=self.datashare_arn,
+                        consumer_arn=f'arn:aws:{redshift_type}:{self.share_data.target_environment.region}:{self.share_data.target_environment.AwsAccountId}:namespace/{self.target_connection.nameSpaceId}',
+                    )
+                else:
+                    log.info('Processing same-account datashare grants')
+                    self.redshift_data_client_in_source.grant_datashare_usage_to_namespace(
+                        datashare=self.datashare_name, namespace=self.target_connection.nameSpaceId
+                    )
 
                 # 4) Create local database from datashare, if it does not exist yet
                 if newly_created:
                     # For reapply/unsuccessful share we need to ensure that the database created has been created for the newly_created database
-                    self.redshift_client_in_target.drop_database(database=self.local_db)
-                self.redshift_client_in_target.create_database_from_datashare(
+                    self.redshift_data_client_in_target.drop_database(database=self.local_db)
+                self.redshift_data_client_in_target.create_database_from_datashare(
                     database=self.local_db,
                     datashare=self.datashare_name,
                     namespace=self.source_connection.nameSpaceId,
+                    account=self.share_data.source_environment.AwsAccountId if self.cross_account else None,
                 )
                 # 5) Grant usage access to the redshift role to the new local database
-                self.redshift_client_in_target.grant_database_usage_access_to_redshift_role(
+                self.redshift_data_client_in_target.grant_database_usage_access_to_redshift_role(
                     database=self.local_db, rs_role=self.redshift_role
                 )
 
                 # 6) Create external schema in local database, if it does not exist yet
-                self.redshift_client_in_target.create_external_schema(
+                self.redshift_data_client_in_target.create_external_schema(
                     database=self.local_db, schema=self.dataset.schema, external_schema=self.external_schema
                 )
                 # 7) Grant usage access to the redshift role to the external schema
-                self.redshift_client_in_target.grant_schema_usage_access_to_redshift_role(
+                self.redshift_data_client_in_target.grant_schema_usage_access_to_redshift_role(
                     schema=self.external_schema, rs_role=self.redshift_role
                 )
                 # 7) Grant usage access to the redshift role to the schema of the self.local_db
-                self.redshift_client_in_target.grant_schema_usage_access_to_redshift_role(
+                self.redshift_data_client_in_target.grant_schema_usage_access_to_redshift_role(
                     database=self.local_db, schema=self.dataset.schema, rs_role=self.redshift_role
                 )
 
                 for table in self.tables:
                     try:
                         # 8) Add tables to the datashare, if not already added
-                        self.redshift_client_in_source.add_table_to_datashare(
+                        self.redshift_data_client_in_source.add_table_to_datashare(
                             datashare=self.datashare_name, schema=self.dataset.schema, table_name=table.name
                         )
                         # 9) Grant select access to the requested tables to the redshift role to the self.local_db
-                        self.redshift_client_in_target.grant_select_table_access_to_redshift_role(
+                        self.redshift_data_client_in_target.grant_select_table_access_to_redshift_role(
                             database=self.local_db,
                             schema=self.dataset.schema,
                             table=table.name,
                             rs_role=self.redshift_role,
                         )
                         # 10) Grant select access to the requested tables to the redshift role to the external_schema
-                        self.redshift_client_in_target.grant_select_table_access_to_redshift_role(
+                        self.redshift_data_client_in_target.grant_select_table_access_to_redshift_role(
                             schema=self.external_schema,
                             table=table.name,
                             rs_role=self.redshift_role,
@@ -228,7 +271,7 @@ class ProcessRedshiftShare(SharesProcessorInterface):
             5) (in target namespace) If no more tables are shared with the redshift role, revoke usage access to the self.local_db to the redshift role
             6) (in target namespace) If no more tables are shared with any role in this namespace, drop local database
             7) (in source namespace) If no more tables are shared with any role in this namespace, drop datashare
-            # Drop datashare deletes it from source and target, alongside its permissions.
+            # Drop datashare deletes it from source and target, alongside its permissions (for both same and cross account)
             Update NON-FAILED tables with Success Action (Revoke_In_Progress ---> Revoke_Succeeded)
         except:
             Update tables with Failure Action (Revoke_In_Progress ---> Revoke_Failed)
@@ -254,12 +297,12 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                     started_state = revoked_item_SM.run_transition(ShareObjectActions.Start.value)
                     revoked_item_SM.update_state_single_item(self.session, share_item, started_state)
 
-                    local_db_exists = self.redshift_client_in_target.check_database_exists(database=self.local_db)
+                    local_db_exists = self.redshift_data_client_in_target.check_database_exists(database=self.local_db)
                     # 1) (in target namespace) Revoke access to the revoked tables to the redshift role in external schema (if schema exists)
-                    if local_db_exists and self.redshift_client_in_target.check_schema_exists(
+                    if local_db_exists and self.redshift_data_client_in_target.check_schema_exists(
                         schema=self.external_schema, database=self.target_connection.database
                     ):
-                        self.redshift_client_in_target.revoke_select_table_access_to_redshift_role(
+                        self.redshift_data_client_in_target.revoke_select_table_access_to_redshift_role(
                             schema=self.external_schema, table=table.name, rs_role=self.redshift_role
                         )
                     else:
@@ -268,7 +311,7 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                         )
                     # 2) (in target namespace) Revoke access to the revoked tables to the redshift role in local_db (if database exists)
                     if local_db_exists:
-                        self.redshift_client_in_target.revoke_select_table_access_to_redshift_role(
+                        self.redshift_data_client_in_target.revoke_select_table_access_to_redshift_role(
                             database=self.local_db,
                             schema=self.dataset.schema,
                             table=table.name,
@@ -289,8 +332,8 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                         log.info(
                             f'No other share items are sharing this table {table.name} with this namespace {self.target_connection.nameSpaceId}'
                         )
-                        if self.redshift_client_in_source.check_datashare_exists(self.datashare_name):
-                            self.redshift_client_in_source.remove_table_from_datashare(
+                        if self.redshift_data_client_in_source.check_datashare_exists(self.datashare_name):
+                            self.redshift_data_client_in_source.remove_table_from_datashare(
                                 datashare=self.datashare_name, schema=self.dataset.schema, table_name=table.name
                             )
 
@@ -332,11 +375,11 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                         log.info(
                             f'No other tables of this dataset are shared with this redshift role {self.redshift_role}'
                         )
-                        self.redshift_client_in_target.revoke_schema_usage_access_to_redshift_role(
+                        self.redshift_data_client_in_target.revoke_schema_usage_access_to_redshift_role(
                             schema=self.external_schema, rs_role=self.redshift_role
                         )
                         if local_db_exists:
-                            self.redshift_client_in_target.revoke_database_usage_access_to_redshift_role(
+                            self.redshift_data_client_in_target.revoke_database_usage_access_to_redshift_role(
                                 database=self.local_db, rs_role=self.redshift_role
                             )
                         else:
@@ -355,8 +398,8 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                         log.info(
                             f'No other tables of this dataset are shared with this namespace {self.target_connection.nameSpaceId}'
                         )
-                        self.redshift_client_in_target.drop_database(database=self.local_db)
-                        self.redshift_client_in_source.drop_datashare(datashare=self.datashare_name)
+                        self.redshift_data_client_in_target.drop_database(database=self.local_db)
+                        self.redshift_data_client_in_source.drop_datashare(datashare=self.datashare_name)
 
                     # Update NON-FAILED tables with Success Action (Revoke_In_Progress ---> Revoke_Succeeded)
                     non_failed_item_SM = ShareItemSM(started_state)
@@ -396,7 +439,11 @@ class ProcessRedshiftShare(SharesProcessorInterface):
         """
         1) (in source namespace) Check the datashare exists
         2) (in source namespace) Check that schema is added to datashare
-        3) (in source namespace) Check the access is granted to the consumer cluster to the datashare
+        3) (in source namespace) Check the access is granted to the consumer namespace to the datashare
+            3.a) SAME ACCOUNT: (in source namespace) Check describe datashare from namespace
+            3.b) CROSS ACCOUNT:
+               - (in source account) Check status of datashare in source
+               - (in target account) Check status of datashare in target
         4) (in target namespace) Check that local db exists
         5) (in target namespace) Check that the redshift role has access to the local db
         6) (in target namespace) Check that external schema exists
@@ -416,10 +463,10 @@ class ProcessRedshiftShare(SharesProcessorInterface):
             self._initialize_clients()
             try:
                 # 1) (in source namespace) Check that datashare exists
-                if not self.redshift_client_in_source.check_datashare_exists(self.datashare_name):
+                if not self.redshift_data_client_in_source.check_datashare_exists(self.datashare_name):
                     ds_level_errors.append(ShareErrorFormatter.dne_error_msg('Redshift datashare', self.datashare_name))
                 # 2) (in source namespace) Check that schema is added to datashare
-                if not self.redshift_client_in_source.check_schema_in_datashare(
+                if not self.redshift_data_client_in_source.check_schema_in_datashare(
                     datashare=self.datashare_name, schema=self.dataset.schema
                 ):
                     ds_level_errors.append(
@@ -429,7 +476,51 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                         )
                     )
                 # 3) (in target namespace) Check the access is granted to the consumer cluster to the datashare
-                if not self.redshift_client_in_target.check_consumer_permissions_to_datashare(
+                if self.cross_account:
+                    # 3.b) Check that datashare in source is authorized
+                    redshift_client_in_source = redshift_share_client(
+                        account_id=self.share_data.source_environment.AwsAccountId,
+                        region=self.share_data.source_environment.region,
+                    )
+                    if (
+                        status_in_source := redshift_client_in_source.get_datashare_status(
+                            datashare_arn=self.datashare_arn,
+                            consumer_id=self.share_data.target_environment.AwsAccountId,
+                        )
+                    ) not in [RedshiftDatashareStatus.Active.value, RedshiftDatashareStatus.Authorized.value]:
+                        ds_level_errors.append(
+                            ShareErrorFormatter.wrong_status_error_msg(
+                                resource_type='Redshift datashare in source account',
+                                target_resource=self.datashare_name,
+                                status=status_in_source,
+                            )
+                        )
+
+                    # 3.b) Check that datashare in target is available
+                    redshift_client_in_target = redshift_share_client(
+                        account_id=self.share_data.target_environment.AwsAccountId,
+                        region=self.share_data.target_environment.region,
+                    )
+                    redshift_type = (
+                        'redshift-serverless'
+                        if self.target_connection.redshiftType == RedshiftType.Serverless.value
+                        else 'redshift'
+                    )
+                    if (
+                        status_in_target := redshift_client_in_target.get_datashare_status(
+                            datashare_arn=self.datashare_arn,
+                            consumer_id=f'arn:aws:{redshift_type}:{self.share_data.target_environment.region}:{self.share_data.target_environment.AwsAccountId}:namespace/{self.target_connection.nameSpaceId}',
+                        )
+                    ) not in [RedshiftDatashareStatus.Active.value]:
+                        ds_level_errors.append(
+                            ShareErrorFormatter.wrong_status_error_msg(
+                                resource_type='Redshift datashare in target account',
+                                target_resource=self.datashare_name,
+                                status=status_in_target,
+                            )
+                        )
+                # 3.a)b) (in target namespace) Check the access is granted to the consumer cluster to the datashare
+                if not self.redshift_data_client_in_target.check_consumer_permissions_to_datashare(
                     datashare=self.datashare_name
                 ):
                     ds_level_errors.append(
@@ -442,12 +533,12 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                         )
                     )
                 # 4) (in target namespace) Check that local db exists
-                if not self.redshift_client_in_target.check_database_exists(self.local_db):
+                if not self.redshift_data_client_in_target.check_database_exists(self.local_db):
                     ds_level_errors.append(
                         ShareErrorFormatter.dne_error_msg('Redshift local database in consumer', self.local_db)
                     )
                 # 5) (in target namespace) Check that the redshift role has access to the local db
-                if not self.redshift_client_in_target.check_role_permissions_in_database(
+                if not self.redshift_data_client_in_target.check_role_permissions_in_database(
                     database=self.local_db, rs_role=self.redshift_role
                 ):
                     ds_level_errors.append(
@@ -456,14 +547,14 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                         )
                     )
                 # 6) (in target namespace) Check that external schema exists
-                if not self.redshift_client_in_target.check_schema_exists(
+                if not self.redshift_data_client_in_target.check_schema_exists(
                     schema=self.external_schema, database=self.target_connection.database
                 ):
                     ds_level_errors.append(
                         ShareErrorFormatter.dne_error_msg('Redshift external schema', self.external_schema)
                     )
                 # 7) (in target namespace) Check that the redshift role has access to the external schema
-                if not self.redshift_client_in_target.check_role_permissions_in_schema(
+                if not self.redshift_data_client_in_target.check_role_permissions_in_schema(
                     schema=self.external_schema, rs_role=self.redshift_role
                 ):
                     ds_level_errors.append(
@@ -477,7 +568,7 @@ class ProcessRedshiftShare(SharesProcessorInterface):
             for table in self.tables:
                 try:
                     # 8) (in source namespace) Check that table is added to datashare
-                    if not self.redshift_client_in_source.check_table_in_datashare(
+                    if not self.redshift_data_client_in_source.check_table_in_datashare(
                         datashare=self.datashare_name, table_name=table.name
                     ):
                         tbl_level_errors.append(
