@@ -41,7 +41,6 @@ class RedshiftConnectionService:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
             connection = RedshiftConnection(
                 label=data.get('connectionName'),
-                name=data.get('connectionName'),
                 owner=context.username,
                 environmentUri=environment.environmentUri,
                 SamlGroupName=admin_group,

@@ -7,7 +7,6 @@ from dataall.base.utils.iam_policy_utils import split_policy_with_resources_in_s
 from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
 from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
 from dataall.modules.redshift_datasets.aws.redshift_serverless import redshift_serverless_client
-from dataall.modules.redshift_datasets.services.redshift_enums import RedshiftConnectionTypes
 
 
 class RedshiftDatasetsPivotRole(PivotRoleStatementSet):
