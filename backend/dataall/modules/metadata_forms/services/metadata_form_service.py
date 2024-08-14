@@ -149,8 +149,6 @@ class MetadataFormService:
     @staticmethod
     def delete_metadata_form_field(uri, fieldUri):
         mf = MetadataFormService.get_metadata_form_field_by_uri(fieldUri)
-        print('URI = ', fieldUri)
-        print('MF = ', mf)
         with get_context().db_engine.scoped_session() as session:
             return session.delete(mf)
 
