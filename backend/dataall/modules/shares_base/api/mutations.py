@@ -11,8 +11,14 @@ from dataall.modules.shares_base.api.resolvers import (
     submit_share_object,
     update_share_reject_purpose,
     update_share_request_purpose,
-    verify_items_share_object, update_share_extension_purpose, update_share_expiration_period, submit_share_extension,
-    approve_share_extension_object, cancel_share_extension_object,
+    verify_items_share_object,
+    update_filters_table_share_item,
+    remove_filters_table_share_item,
+    update_share_extension_purpose,
+    update_share_expiration_period,
+    submit_share_extension,
+    approve_share_extension_object,
+    cancel_share_extension_object,
 )
 
 createShareObject = gql.MutationField(
@@ -159,4 +165,18 @@ updateShareRequestReason = gql.MutationField(
     ],
     type=gql.Boolean,
     resolver=update_share_request_purpose,
+)
+
+updateShareItemFilters = gql.MutationField(
+    name='updateShareItemFilters',
+    args=[gql.Argument(name='input', type=gql.NonNullableType(gql.Ref('ModifyFiltersTableShareItemInput')))],
+    type=gql.Boolean,
+    resolver=update_filters_table_share_item,
+)
+
+removeShareItemFilter = gql.MutationField(
+    name='removeShareItemFilter',
+    args=[gql.Argument(name='attachedDataFilterUri', type=gql.NonNullableType(gql.String))],
+    type=gql.Boolean,
+    resolver=remove_filters_table_share_item,
 )

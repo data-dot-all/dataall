@@ -72,3 +72,19 @@ def resolve_shared_db_name(context: Context, source, **kwargs):
     return S3ShareService.resolve_shared_db_name(
         source.GlueDatabaseName, source.shareUri, source.targetEnvAwsAccountId, source.targetEnvRegion
     )
+
+
+def list_shared_table_columns(context: Context, source, tableUri: str, shareUri: str, filter: dict):
+    if source:
+        tableUri = source.tableUri
+    if not filter:
+        filter = {}
+    return S3ShareService.paginate_active_columns_for_table_share(uri=tableUri, shareUri=shareUri, filter=filter)
+
+
+def list_table_data_filters_by_attached(
+    context: Context, source, attachedDataFilterUri: str = None, filter: dict = None
+):
+    if not filter:
+        filter = {'page': 1, 'pageSize': 5}
+    return S3ShareService.list_table_data_filters_by_attached(uri=attachedDataFilterUri, data=filter)

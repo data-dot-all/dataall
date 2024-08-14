@@ -54,7 +54,7 @@ class ShareObjectService:
     @staticmethod
     def verify_principal_role(session, share: ShareObject) -> bool:
         log.info('Verifying principal IAM role...')
-        role_name = share.principalIAMRoleName
+        role_name = share.principalRoleName
         env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
         principal_role = IAM.get_role_arn_by_name(account_id=env.AwsAccountId, region=env.region, role_name=role_name)
         return principal_role is not None
@@ -75,6 +75,7 @@ class ShareObjectService:
         item_type: str,
         group_uri,
         principal_id,
+        principal_role_name,
         principal_type,
         requestPurpose,
         attachMissingPolicies,
@@ -91,21 +92,6 @@ class ShareObjectService:
                     message=f'Requester Team {group_uri} works in region {environment.region} '
                     f'and the requested dataset is stored in region {dataset.region}',
                 )
-
-            if principal_type == PrincipalType.ConsumptionRole.value:
-                consumption_role: ConsumptionRole = EnvironmentService.get_environment_consumption_role(
-                    session, principal_id, environment.environmentUri
-                )
-                principal_iam_role_name = consumption_role.IAMRoleName
-                managed = consumption_role.dataallManaged
-
-            else:
-                env_group: EnvironmentGroup = EnvironmentService.get_environment_group(
-                    session, group_uri, environment.environmentUri
-                )
-                principal_iam_role_name = env_group.environmentIAMRoleName
-                managed = True
-
             if (
                 (dataset.stewards == group_uri or dataset.SamlAdminGroupName == group_uri)
                 and environment.environmentUri == dataset.environmentUri
@@ -118,33 +104,55 @@ class ShareObjectService:
 
             cls._validate_group_membership(session, group_uri, environment.environmentUri)
 
-            share_policy_manager = PolicyManager(
-                role_name=principal_iam_role_name,
-                environmentUri=environment.environmentUri,
-                account=environment.AwsAccountId,
-                region=environment.region,
-                resource_prefix=environment.resourcePrefix,
-            )
-            for Policy in [
-                Policy for Policy in share_policy_manager.initializedPolicies if Policy.policy_type == 'SharePolicy'
-            ]:
-                # Backwards compatibility
-                # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
-                # We create the policy from the inline statements
-                # In this case it could also happen that the role is the Admin of the environment
-                if not Policy.check_if_policy_exists():
-                    Policy.create_managed_policy_from_inline_and_delete_inline()
-                # End of backwards compatibility
-
-                attached = Policy.check_if_policy_attached()
-                if not attached and not managed and not attachMissingPolicies:
-                    raise Exception(
-                        f'Required customer managed policy {Policy.generate_policy_name()} is not attached to role {principal_iam_role_name}'
+            if principal_type in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value]:
+                if principal_type == PrincipalType.ConsumptionRole.value:
+                    consumption_role: ConsumptionRole = EnvironmentService.get_environment_consumption_role(
+                        session, principal_id, environment.environmentUri
                     )
-                elif not attached:
-                    Policy.attach_policy()
+                    principal_role_name = consumption_role.IAMRoleName
+                    managed = consumption_role.dataallManaged
 
-            share = ShareObjectRepository.find_share(session, dataset, environment, principal_id, group_uri)
+                else:
+                    env_group: EnvironmentGroup = EnvironmentService.get_environment_group(
+                        session, group_uri, environment.environmentUri
+                    )
+                    principal_role_name = env_group.environmentIAMRoleName
+                    managed = True
+
+                share_policy_manager = PolicyManager(
+                    role_name=principal_role_name,
+                    environmentUri=environment.environmentUri,
+                    account=environment.AwsAccountId,
+                    region=environment.region,
+                    resource_prefix=environment.resourcePrefix,
+                )
+                for Policy in [
+                    Policy for Policy in share_policy_manager.initializedPolicies if Policy.policy_type == 'SharePolicy'
+                ]:
+                    # Backwards compatibility
+                    # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
+                    # We create the policy from the inline statements
+                    # In this case it could also happen that the role is the Admin of the environment
+                    if not Policy.check_if_policy_exists():
+                        Policy.create_managed_policy_from_inline_and_delete_inline()
+                    # End of backwards compatibility
+
+                    attached = Policy.check_if_policy_attached()
+                    if not attached and not managed and not attachMissingPolicies:
+                        raise Exception(
+                            f'Required customer managed policy {Policy.generate_policy_name()} is not attached to role {principal_role_name}'
+                        )
+                    elif not attached:
+                        Policy.attach_policy()
+
+            share = ShareObjectRepository.find_share(
+                session=session,
+                dataset=dataset,
+                env=environment,
+                principal_id=principal_id,
+                principal_role_name=principal_role_name,
+                group_uri=group_uri,
+            )
             already_existed = share is not None
 
             if dataset.enableExpiration and ( shareExpirationPeriod > dataset.expiryMaxDuration or shareExpirationPeriod < dataset.expiryMinDuration ):
@@ -162,7 +170,7 @@ class ShareObjectService:
                     groupUri=group_uri,
                     principalId=principal_id,
                     principalType=principal_type,
-                    principalIAMRoleName=principal_iam_role_name,
+                    principalRoleName=principal_role_name,
                     status=ShareObjectStatus.Draft.value,
                     requestPurpose=requestPurpose,
                     requestedExpiryDate=shareExpiryDate
@@ -233,11 +241,14 @@ class ShareObjectService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
-            if not ShareObjectService.verify_principal_role(session, share):
-                raise PrincipalRoleNotFound(
-                    action='Submit Share Object',
-                    message=f'The principal role {share.principalIAMRoleName} is not found.',
-                )
+
+            if share.principalType in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value]:
+                # TODO make it generic to non IAM role principals
+                if not ShareObjectService.verify_principal_role(session, share):
+                    raise PrincipalRoleNotFound(
+                        action='Submit Share Object',
+                        message=f'The principal role {share.principalRoleName} is not found.',
+                    )
 
             valid_states = [ShareItemStatus.PendingApproval.value]
             valid_share_items_states = [x for x in valid_states if x in states]
@@ -297,12 +308,14 @@ class ShareObjectService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
-
-            if not ShareObjectService.verify_principal_role(session, share):
-                raise PrincipalRoleNotFound(
-                    action='Approve Share Object',
-                    message=f'The principal role {share.principalIAMRoleName} is not found.',
-                )
+            if share.principalType in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value]:
+                if not ShareObjectService.verify_principal_role(
+                    session, share
+                ):  # TODO make it generic to non IAM role principals
+                    raise PrincipalRoleNotFound(
+                        action='Approve Share Object',
+                        message=f'The principal role {share.principalRoleName} is not found.',
+                    )
 
             cls._run_transitions(session, share, states, ShareObjectActions.Approve)
 

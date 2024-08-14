@@ -1,18 +1,22 @@
 import logging
+import re
 
 from dataall.base.api.context import Context
+from dataall.base.db.exceptions import RequiredParameter
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
-from dataall.base.db.exceptions import RequiredParameter
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
-from dataall.modules.shares_base.services.shares_enums import ShareObjectPermission
+from dataall.modules.shares_base.services.shares_enums import ShareObjectPermission, PrincipalType
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.shares_base.services.share_item_service import ShareItemService
 from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.shares_base.services.share_logs_service import ShareLogsService
-
+from dataall.base.utils.naming_convention import (
+    NamingConventionService,
+    NamingConventionPattern,
+)
 
 log = logging.getLogger(__name__)
 
@@ -47,6 +51,21 @@ class RequestValidator:
         if not data.get('shareUris'):
             raise RequiredParameter('shareUris')
 
+    @staticmethod
+    def validate_update_share_item_filters(data):
+        if not data.get('shareItemUri'):
+            RequiredParameter('shareItemUri')
+        if not data:
+            raise RequiredParameter(data)
+        if not data.get('filterUris'):
+            raise RequiredParameter('filterUris')
+        if not data.get('filterNames'):
+            raise RequiredParameter('filterNames')
+        NamingConventionService(
+            target_label=data.get('label'),
+            pattern=NamingConventionPattern.DATA_FILTERS,
+        ).validate_name()
+
 
 def create_share_object(
     context: Context,
@@ -65,9 +84,10 @@ def create_share_object(
         item_type=itemType,
         group_uri=input['groupUri'],
         principal_id=input['principalId'],
+        principal_role_name=input.get('principalRoleName'),
         principal_type=input['principalType'],
         requestPurpose=input.get('requestPurpose'),
-        attachMissingPolicies=input.get('attachMissingPolicies'),
+        attachMissingPolicies=input.get('attachMissingPolicies', False),
         shareExpirationPeriod=input.get('shareExpirationPeriod')
     )
 
@@ -75,14 +95,10 @@ def create_share_object(
 def submit_share_object(context: Context, source, shareUri: str = None):
     return ShareObjectService.submit_share_object(uri=shareUri)
 
-def submit_share_extension(context: Context, source, shareUri: str = None, expiration: int = 0, extensionReason: str = None):
-    return ShareObjectService.submit_share_extension(uri=shareUri, expiration=expiration, extension_reason=extensionReason)
 
 def approve_share_object(context: Context, source, shareUri: str = None):
     return ShareObjectService.approve_share_object(uri=shareUri)
 
-def approve_share_extension_object(context: Context, source, shareUri: str = None):
-    return ShareObjectService.approve_share_extension_object(uri=shareUri)
 
 def reject_share_object(
     context: Context,
@@ -116,9 +132,6 @@ def reapply_items_share_object(context: Context, source, input):
 
 def delete_share_object(context: Context, source, shareUri: str = None):
     return ShareObjectService.delete_share_object(uri=shareUri)
-
-def cancel_share_extension_object(context: Context, source, shareUri: str = None):
-    return ShareObjectService.cancel_share_extension_object(uri=shareUri)
 
 
 def add_shared_item(context, source, shareUri: str = None, input: dict = None):
@@ -195,6 +208,7 @@ def resolve_dataset(context: Context, source: ShareObject, **kwargs):
                 'region': env.region if env else 'NotFound',
                 'exists': True if ds else False,
                 'description': ds.description,
+                'datasetType': ds.datasetType,
                 'enableExpiration': ds.enableExpiration,
                 'expirySetting': ds.expirySetting
             }
@@ -205,30 +219,26 @@ def resolve_principal(context: Context, source: ShareObject, **kwargs):
         return None
 
     with context.engine.scoped_session() as session:
-        if source.principalType in ['Group', 'ConsumptionRole']:
+        if source.principalType in set(item.value for item in PrincipalType):
             environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)
-            organization = OrganizationRepository.get_organization_by_uri(session, environment.organizationUri)
-            if source.principalType in ['ConsumptionRole']:
+            if source.principalType == PrincipalType.ConsumptionRole.value:
                 principal = EnvironmentService.get_environment_consumption_role(
                     session, source.principalId, source.environmentUri
                 )
                 principalName = f'{principal.consumptionRoleName} [{principal.IAMRoleArn}]'
-            else:
+            elif source.principalType == PrincipalType.Group.value:
                 principal = EnvironmentService.get_environment_group(session, source.groupUri, source.environmentUri)
                 principalName = f'{source.groupUri} [{principal.environmentIAMRoleArn}]'
+            else:
+                principalName = f'Redshift Role [{source.principalRoleName}]'
 
             return {
+                'principalName': principalName,
                 'principalId': source.principalId,
                 'principalType': source.principalType,
-                'principalName': principalName,
-                'principalIAMRoleName': source.principalIAMRoleName,
+                'principalRoleName': source.principalRoleName,
                 'SamlGroupName': source.groupUri,
-                'environmentUri': environment.environmentUri,
                 'environmentName': environment.label,
-                'AwsAccountId': environment.AwsAccountId,
-                'region': environment.region,
-                'organizationUri': organization.organizationUri,
-                'organizationName': organization.label,
             }
 
 
@@ -295,6 +305,23 @@ def update_share_reject_purpose(context: Context, source, shareUri: str = None, 
         uri=shareUri,
         reject_purpose=rejectPurpose,
     )
+
+
+def update_filters_table_share_item(context: Context, source, input):
+    RequestValidator.validate_update_share_item_filters(input)
+    return ShareItemService.update_filters_table_share_item(uri=input.get('shareItemUri'), data=input)
+
+
+def remove_filters_table_share_item(context: Context, source, attachedDataFilterUri: str = None):
+    if not attachedDataFilterUri:
+        RequiredParameter('attachedDataFilterUri')
+    return ShareItemService.remove_share_item_data_filters(uri=attachedDataFilterUri)
+
+
+def get_share_item_data_filters(context: Context, source, attachedDataFilterUri: str = None):
+    if not attachedDataFilterUri:
+        RequiredParameter('attachedDataFilterUri')
+    return ShareItemService.get_share_item_data_filters(uri=attachedDataFilterUri)
 
 def update_share_extension_purpose(context: Context, source, shareUri: str = None, extensionPurpose: str = None):
      return ShareObjectService.update_share_extension_purpose(

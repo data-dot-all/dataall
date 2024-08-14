@@ -21,17 +21,12 @@ export const getShareObject = ({ shareUri, filter }) => ({
         submittedForExtension
         extensionReason
         principal {
-          principalId
-          principalType
           principalName
-          principalIAMRoleName
+          principalType
+          principalId
+          principalRoleName
           SamlGroupName
-          environmentUri
           environmentName
-          AwsAccountId
-          region
-          organizationUri
-          organizationName
         }
         items(filter: $filter) {
           count
@@ -49,6 +44,7 @@ export const getShareObject = ({ shareUri, filter }) => ({
             healthStatus
             healthMessage
             lastVerificationTime
+            attachedDataFilterUri
           }
         }
         dataset {
@@ -60,6 +56,7 @@ export const getShareObject = ({ shareUri, filter }) => ({
           region
           exists
           description
+          datasetType
           enableExpiration
           expirySetting
         }

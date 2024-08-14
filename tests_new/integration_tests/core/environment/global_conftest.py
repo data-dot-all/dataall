@@ -135,7 +135,7 @@ def get_or_create_persistent_env(env_name, client, group, testdata):
         if env.stack.status in ['CREATE_COMPLETE', 'UPDATE_COMPLETE']:
             return env
         else:
-            delete_env(client, env['environmentUri'])
+            delete_env(client, env)
             raise RuntimeError(f'failed to create {env_name=} {env=}')
 
 

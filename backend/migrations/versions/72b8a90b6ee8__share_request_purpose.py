@@ -7,14 +7,17 @@ Create Date: 2023-06-05 12:28:56.221364
 """
 
 from alembic import op
-from sqlalchemy import orm, Column, String
+from sqlalchemy import orm, Column, String, Boolean, DateTime
 from sqlalchemy.ext.declarative import declarative_base
+
+from dataall.base.db import utils
+from datetime import datetime
 
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
-from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.services.share_permissions import SHARE_OBJECT_APPROVER, SHARE_OBJECT_REQUESTER
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.shares_base.services.shares_enums import ShareObjectStatus
 
 # revision identifiers, used by Alembic.
 revision = '72b8a90b6ee8'
@@ -23,6 +26,23 @@ branch_labels = None
 depends_on = None
 
 Base = declarative_base()
+
+
+class ShareObject(Base):
+    __tablename__ = 'share_object'
+    shareUri = Column(String, nullable=False, primary_key=True, default=utils.uuid('share'))
+    datasetUri = Column(String, nullable=False)
+    environmentUri = Column(String)
+    groupUri = Column(String)
+    principalIAMRoleName = Column(String, nullable=True)
+    principalId = Column(String, nullable=True)
+    principalType = Column(String, nullable=True, default='Group')
+    status = Column(String, nullable=False, default=ShareObjectStatus.Draft.value)
+    owner = Column(String, nullable=False)
+    created = Column(DateTime, default=datetime.now)
+    updated = Column(DateTime, onupdate=datetime.now)
+    deleted = Column(DateTime)
+    confirmed = Column(Boolean, default=False)
 
 
 def upgrade():

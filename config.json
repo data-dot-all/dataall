@@ -12,6 +12,9 @@
         "omics": {
             "active": false
         },
+        "metadata_forms": {
+            "active": true
+        },
         "datasets_base": {
             "active": true,
             "features": {
@@ -48,6 +51,12 @@
             }
         },
         "s3_datasets_shares": {
+            "active": true
+        },
+        "redshift_datasets": {
+            "active": true
+        },
+        "redshift_datasets_shares": {
             "active": true
         },
         "worksheets": {

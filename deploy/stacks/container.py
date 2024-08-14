@@ -61,6 +61,12 @@ class ContainerStack(pyNestedClass):
         # This is used for sending data.all share weblinks in the email notifications.
         if custom_domain and custom_domain.get('hosted_zone_name'):
             self.env_vars.update({'frontend_domain_url': f'https://{custom_domain["hosted_zone_name"]}'})
+            email_sender = (
+                custom_domain.get('email_notification_sender_email_id', 'noreply')
+                + '@'
+                + custom_domain.get('hosted_zone_name')
+            )
+            self.env_vars.update({'email_sender_id': email_sender})
 
         cluster = ecs.Cluster(
             self,
@@ -333,7 +339,7 @@ class ContainerStack(pyNestedClass):
 
         self.ecs_task_definitions_families.append(share_reapplier_task_definition.family)
 
-    @run_if(['modules.dataset_base.features.share_notifications.email.persistent_reminders'])
+    @run_if(['modules.datasets_base.features.share_notifications.email.persistent_reminders'])
     def add_persistent_email_reminders_task(self):
         persistent_email_reminders_task, persistent_email_reminders_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,

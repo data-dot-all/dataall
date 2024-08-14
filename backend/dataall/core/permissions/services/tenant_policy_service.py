@@ -159,13 +159,15 @@ class TenantPolicyService:
         group_invitation_permissions = []
         with context.db_engine.scoped_session() as session:
             for p in TENANT_ALL:
-                group_invitation_permissions.append(
-                    PermissionRepository.find_permission_by_name(
-                        session=session,
-                        permission_name=p,
-                        permission_type=PermissionType.TENANT.name,
-                    )
+                perm_obj = PermissionRepository.find_permission_by_name(
+                    session=session,
+                    permission_name=p,
+                    permission_type=PermissionType.TENANT.name,
                 )
+                if perm_obj is not None:
+                    group_invitation_permissions.append(perm_obj)
+                else:
+                    log.error(f'Permission {p} not found')
             return group_invitation_permissions
 
     @staticmethod

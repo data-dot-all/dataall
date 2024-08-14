@@ -14,7 +14,7 @@ from dataall.modules.s3_datasets_shares.aws.kms_client import (
 from dataall.modules.s3_datasets_shares.aws.s3_client import S3ControlClient, S3Client, DATAALL_READ_ONLY_SID
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
-from dataall.modules.s3_datasets_shares.services.share_managers.share_manager_utils import ShareErrorFormatter
+from dataall.modules.shares_base.services.share_manager_utils import ShareErrorFormatter
 from dataall.modules.s3_datasets_shares.services.s3_share_alarm_service import S3ShareAlarmService
 from dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service import (
     S3SharePolicyService,
@@ -52,7 +52,7 @@ class S3BucketShareManager:
         self.source_account_id = target_bucket.AwsAccountId
         self.target_account_id = share_data.target_environment.AwsAccountId
         self.source_env_admin = share_data.source_env_group.environmentIAMRoleArn
-        self.target_requester_IAMRoleName = share_data.share.principalIAMRoleName
+        self.target_requester_IAMRoleName = share_data.share.principalRoleName
         self.bucket_name = target_bucket.S3BucketName
         self.dataset_admin = share_data.dataset.IAMDatasetAdminRoleArn
         self.bucket_region = target_bucket.region
@@ -86,7 +86,7 @@ class S3BucketShareManager:
 
         if not share_policy_service.check_if_policy_attached():
             logger.info(
-                f'IAM Policy {share_resource_policy_name} exists but is not attached to role {self.share.principalIAMRoleName}'
+                f'IAM Policy {share_resource_policy_name} exists but is not attached to role {self.share.principalRoleName}'
             )
             self.bucket_errors.append(
                 ShareErrorFormatter.dne_error_msg('IAM Policy attached', share_resource_policy_name)
@@ -513,7 +513,7 @@ class S3BucketShareManager:
         logger.info('Deleting target role IAM statements...')
 
         share_policy_service = S3SharePolicyService(
-            role_name=share.principalIAMRoleName,
+            role_name=share.principalRoleName,
             account=target_environment.AwsAccountId,
             region=self.target_environment.region,
             environmentUri=target_environment.environmentUri,

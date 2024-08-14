@@ -70,6 +70,7 @@ class ResourcePolicyRepository:
         else:
             return policy
 
+    @staticmethod
     def query_all_resource_policies(
         session, group_uri: str, resource_uri: str, resource_type: str = None, permissions: List[str] = None
     ):

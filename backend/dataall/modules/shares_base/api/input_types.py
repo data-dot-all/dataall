@@ -8,9 +8,10 @@ NewShareObjectInput = gql.InputType(
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='groupUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='principalId', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='principalRoleName', type=gql.String),
         gql.Argument(name='principalType', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='requestPurpose', type=gql.String),
-        gql.Argument(name='attachMissingPolicies', type=gql.NonNullableType(gql.Boolean)),
+        gql.Argument(name='attachMissingPolicies', type=gql.Boolean),
         gql.Argument(name='shareExpirationPeriod', type=gql.Integer)
     ],
 )
@@ -89,5 +90,15 @@ PrincipalFilter = gql.InputType(
         gql.Argument(name='pageSize', type=gql.Integer),
         gql.Argument(name='principalType', type=gql.Ref('PrincipalType')),
         gql.Argument(name='term', type=gql.String),
+    ],
+)
+
+ModifyFiltersTableShareItemInput = gql.InputType(
+    name='ModifyFiltersTableShareItemInput',
+    arguments=[
+        gql.Argument(name='shareItemUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='label', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='filterUris', type=gql.ArrayType(gql.String)),
+        gql.Argument(name='filterNames', type=gql.ArrayType(gql.String)),
     ],
 )

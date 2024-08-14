@@ -32,8 +32,8 @@ class PivotRoleStatementSet(object):
         )
 
         for service in services:
-            statements.extend(service.get_statements(self))
             logger.info(f'Adding {service.__name__} statements to policy')
+            statements.extend(service.get_statements(self))
             logger.info(f'statements: {str(service.get_statements(self))}')
 
         statements_chunks = split_policy_statements_in_chunks(statements)
