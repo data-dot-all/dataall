@@ -71,18 +71,22 @@ class ShareObjectService:
         cls.SHARING_VALIDATORS[dataset_type] = validator
 
     @classmethod
-    def _validate_share_object(
+    def validate_share_object(
         cls, share_action: ShareObjectActions, dataset_type: DatasetTypes, session, dataset_uri, *args, **kwargs
     ):
-        log.info(f'Validating share object creation for {dataset_type.value=}')
+        log.info(f'Validating share object {share_action.value} for {dataset_type.value=}')
         for type, validator in cls.SHARING_VALIDATORS.items():
             if type == dataset_type:
                 if share_action == ShareObjectActions.Create:
                     validator.validate_share_object_create(session, dataset_uri, *args, **kwargs)
                 elif share_action == ShareObjectActions.Submit:
                     validator.validate_share_object_submit(session, dataset_uri, *args, **kwargs)
-                else:
+                elif share_action == ShareObjectActions.Approve.value:
                     validator.validate_share_object_approve(session, dataset_uri, *args, **kwargs)
+                elif share_action == ShareObjectActions.Start.value:
+                    validator.validate_share_object_start(session, dataset_uri, *args, **kwargs)
+                else:
+                    raise ValueError(f'Invalid share action {share_action.value}')
 
     @staticmethod
     def verify_principal_role(session, share: ShareObject) -> bool:
@@ -119,12 +123,13 @@ class ShareObjectService:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
 
             cls._validate_group_membership(session, group_uri, environment.environmentUri)
-            cls._validate_share_object(
+            cls.validate_share_object(
                 share_action=ShareObjectActions.Create,
                 dataset_type=dataset.datasetType,
                 session=session,
                 dataset_uri=dataset_uri,
                 environment=environment,
+                group_uri=group_uri,
                 principal_id=principal_id,
                 principal_role_name=principal_role_name,
                 principal_type=principal_type,
@@ -212,7 +217,7 @@ class ShareObjectService:
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
 
-            cls._validate_share_object(
+            cls.validate_share_object(
                 share_action=ShareObjectActions.Submit,
                 dataset_type=dataset.datasetType,
                 session=session,
@@ -255,7 +260,7 @@ class ShareObjectService:
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
 
-            cls._validate_share_object(
+            cls.validate_share_object(
                 share_action=ShareObjectActions.Approve,
                 dataset_type=dataset.datasetType,
                 session=session,
