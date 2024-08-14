@@ -26,7 +26,9 @@ class RedshiftTableValidator(SharesCreationValidatorInterface):
             principal_id=principal_id,
             principal_role_name=kwargs.get('principal_role_name'),
         )
-        RedshiftTableValidator._validate_source_connection(session=session, dataset_connection_uri=dataset_connection_uri)
+        RedshiftTableValidator._validate_source_connection(
+            session=session, dataset_connection_uri=dataset_connection_uri
+        )
         return True
 
     @staticmethod
@@ -36,7 +38,6 @@ class RedshiftTableValidator(SharesCreationValidatorInterface):
     @staticmethod
     def validate_share_object_approve(session, dataset, *args, **kwargs) -> bool:
         pass
-
 
     @staticmethod
     def _validate_redshift_role(session, environment, principal_id: str, principal_role_name: str):
@@ -60,7 +61,7 @@ class RedshiftTableValidator(SharesCreationValidatorInterface):
         if source_connection.nameSpaceId == target_connection.nameSpaceId:
             raise InvalidConfiguration(
                 action=CREATE_SHARE_OBJECT,
-                message='Redshift data.all datashares are only possible between different namespaces'
+                message='Redshift data.all datashares are only possible between different namespaces',
             )
 
     @staticmethod
@@ -69,11 +70,10 @@ class RedshiftTableValidator(SharesCreationValidatorInterface):
         dataset_connection = RedshiftConnectionRepository.list_environment_redshift_connections(
             session, dataset_connection_uri
         )
-        #TODO: add when PR with get_namespace_admin_connection is merged
+        # TODO: add when PR with get_namespace_admin_connection is merged
 
         # if not RedshiftConnectionRepository.get_namespace_admin_connection(session, namespace_id=dataset_connection.nameSpaceId):
         #     raise InvalidConfiguration(
         #         action=CREATE_SHARE_OBJECT,
         #         message='Redshift data.all datashares require an ADMIN connection in both clusters'
         #     )
-

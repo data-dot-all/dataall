@@ -19,7 +19,7 @@ from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
     ShareItemSM,
 )
-from dataall.modules.shares_base.services.share_exceptions import ShareItemsFound, PrincipalRoleNotFound
+from dataall.modules.shares_base.services.share_exceptions import ShareItemsFound
 from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
 from dataall.modules.shares_base.services.share_permissions import (
     REJECT_SHARE_OBJECT,
@@ -35,7 +35,6 @@ from dataall.modules.shares_base.services.share_processor_manager import SharePr
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.services.datasets_enums import DatasetTypes
-from dataall.base.aws.iam import IAM
 
 import logging
 
@@ -43,7 +42,6 @@ log = logging.getLogger(__name__)
 
 
 class SharesCreationValidatorInterface(ABC):
-
     @staticmethod
     @abstractmethod
     def validate_share_object_create(session, dataset, *args, **kwargs) -> bool:
@@ -83,18 +81,8 @@ class ShareObjectService:
                     validator.validate_share_object_submit(session, dataset_uri, *args, **kwargs)
                 elif share_action == ShareObjectActions.Approve.value:
                     validator.validate_share_object_approve(session, dataset_uri, *args, **kwargs)
-                elif share_action == ShareObjectActions.Start.value:
-                    validator.validate_share_object_start(session, dataset_uri, *args, **kwargs)
                 else:
                     raise ValueError(f'Invalid share action {share_action.value}')
-
-    @staticmethod
-    def verify_principal_role(session, share: ShareObject) -> bool:
-        log.info('Verifying principal IAM role...')
-        role_name = share.principalRoleName
-        env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
-        principal_role = IAM.get_role_arn_by_name(account_id=env.AwsAccountId, region=env.region, role_name=role_name)
-        return principal_role is not None
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(GET_SHARE_OBJECT)
@@ -222,7 +210,7 @@ class ShareObjectService:
                 dataset_type=dataset.datasetType,
                 session=session,
                 dataset_uri=dataset.dataset_uri,
-                share=share
+                share=share,
             )
 
             valid_states = [ShareItemStatus.PendingApproval.value]
@@ -265,7 +253,7 @@ class ShareObjectService:
                 dataset_type=dataset.datasetType,
                 session=session,
                 dataset_uri=dataset.dataset_uri,
-                share=share
+                share=share,
             )
 
             cls._run_transitions(session, share, states, ShareObjectActions.Approve)

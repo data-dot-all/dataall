@@ -15,7 +15,6 @@ from dataall.modules.s3_datasets.db.dataset_models import DatasetTable
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers import LFShareManager
 from dataall.modules.s3_datasets_shares.aws.ram_client import RamClient
-from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.s3_datasets_shares.services.s3_share_service import S3ShareService
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
@@ -69,7 +68,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
         else:
             manager = self._initialize_share_manager(self.tables)
             try:
-                if not ShareObjectService.verify_principal_role(self.session, self.share_data.share):
+                if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
                     raise PrincipalRoleNotFound(
                         'process approved shares',
                         f'Principal role {self.share_data.share.principalRoleName} is not found. Failed to update LF policy',
@@ -209,6 +208,11 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
             log.info('No tables to revoke. Skipping...')
         else:
             try:
+                if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
+                    raise PrincipalRoleNotFound(
+                        'process revoked shares',
+                        f'Principal role {self.share_data.share.principalRoleName} is not found. Failed to update LF policy',
+                    )
                 if None in [
                     manager.source_account_id,
                     manager.source_account_region,
@@ -355,6 +359,11 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
         else:
             manager = self._initialize_share_manager(self.tables)
             try:
+                if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
+                    raise PrincipalRoleNotFound(
+                        'process verify shares',
+                        f'Share principal Role {self.share_data.share.principalRoleName} not found. Check the team or consumption IAM role used.',
+                    )
                 if None in [
                     manager.source_account_id,
                     manager.source_account_region,

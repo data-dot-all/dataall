@@ -83,12 +83,6 @@ class SharingService:
 
             share_successful = True
             try:
-                if not ShareObjectService.verify_principal_role(session, share_data.share):
-                    raise PrincipalRoleNotFound(
-                        'process approved shares',
-                        f'Principal role {share_data.share.principalRoleName} is not found.',
-                    )
-
                 with ResourceLockRepository.acquire_lock_with_retry(
                     resources=resources,
                     session=session,
@@ -186,12 +180,6 @@ class SharingService:
 
             revoke_successful = True
             try:
-                if not ShareObjectService.verify_principal_role(session, share_data.share):
-                    raise PrincipalRoleNotFound(
-                        'process revoked shares',
-                        f'Principal role {share_data.share.principalRoleName} is not found.',
-                    )
-
                 with ResourceLockRepository.acquire_lock_with_retry(
                     resources=resources,
                     session=session,
@@ -267,21 +255,6 @@ class SharingService:
         """
         with engine.scoped_session() as session:
             share_data, share_items = cls._get_share_data_and_items(session, share_uri, status, healthStatus)
-
-            log.info(f'Verifying principal IAM Role {share_data.share.principalRoleName}')
-            if not ShareObjectService.verify_principal_role(session, share_data.share):
-                log.error(
-                    f'Failed to get Principal IAM Role {share_data.share.principalRoleName}, updating health status...'
-                )
-                ShareStatusRepository.update_share_item_health_status_batch(
-                    session,
-                    share_uri,
-                    old_status=healthStatus,
-                    new_status=ShareItemHealthStatus.Unhealthy.value,
-                    message=f'Share principal Role {share_data.share.principalRoleName} not found. Check the team or consumption IAM role used.',
-                )
-                return True
-
             for type, processor in ShareProcessorManager.SHARING_PROCESSORS.items():
                 try:
                     shareable_items = ShareObjectRepository.get_share_data_items_by_type(
@@ -332,37 +305,32 @@ class SharingService:
             )
 
             try:
-                log.info(f'Verifying principal IAM Role {share_data.share.principalRoleName}')
-                reapply_successful = ShareObjectService.verify_principal_role(session, share_data.share)
-                if not reapply_successful:
-                    log.error(f'Failed to get Principal IAM Role {share_data.share.principalRoleName}, exiting...')
-                    return False
-                else:
-                    with ResourceLockRepository.acquire_lock_with_retry(
-                        resources=resources,
-                        session=session,
-                        acquired_by_uri=share_data.share.shareUri,
-                        acquired_by_type=share_data.share.__tablename__,
-                    ):
-                        for type, processor in ShareProcessorManager.SHARING_PROCESSORS.items():
-                            try:
-                                log.info(f'Reapplying permissions to {type.value}')
-                                shareable_items = ShareObjectRepository.get_share_data_items_by_type(
-                                    session,
-                                    share_data.share,
-                                    processor.shareable_type,
-                                    processor.shareable_uri,
-                                    None,
-                                    ShareItemHealthStatus.PendingReApply.value,
-                                )
-                                success = processor.Processor(
-                                    session, share_data, shareable_items
-                                ).process_approved_shares()
-                                log.info(f'Reapplying {type.value} succeeded = {success}')
-                                if not success:
-                                    reapply_successful = False
-                            except Exception as e:
-                                log.error(f'Error occurred during share reapplying of {type.value}: {e}')
+                reapply_successful = True
+                with ResourceLockRepository.acquire_lock_with_retry(
+                    resources=resources,
+                    session=session,
+                    acquired_by_uri=share_data.share.shareUri,
+                    acquired_by_type=share_data.share.__tablename__,
+                ):
+                    for type, processor in ShareProcessorManager.SHARING_PROCESSORS.items():
+                        try:
+                            log.info(f'Reapplying permissions to {type.value}')
+                            shareable_items = ShareObjectRepository.get_share_data_items_by_type(
+                                session,
+                                share_data.share,
+                                processor.shareable_type,
+                                processor.shareable_uri,
+                                None,
+                                ShareItemHealthStatus.PendingReApply.value,
+                            )
+                            success = processor.Processor(
+                                session, share_data, shareable_items
+                            ).process_approved_shares()
+                            log.info(f'Reapplying {type.value} succeeded = {success}')
+                            if not success:
+                                reapply_successful = False
+                        except Exception as e:
+                            log.error(f'Error occurred during share reapplying of {type.value}: {e}')
 
                 return reapply_successful
 

@@ -34,9 +34,9 @@ class S3ShareValidator(SharesCreationValidatorInterface):
 
         dataset: DatasetBase = DatasetBaseRepository.get_dataset_by_uri(session, dataset_uri)
         if (
-                (dataset.stewards == group_uri or dataset.SamlAdminGroupName == group_uri)
-                and environment.environmentUri == dataset.environmentUri
-                and principal_type == PrincipalType.Group.value
+            (dataset.stewards == group_uri or dataset.SamlAdminGroupName == group_uri)
+            and environment.environmentUri == dataset.environmentUri
+            and principal_type == PrincipalType.Group.value
         ):
             raise UnauthorizedOperation(
                 action=CREATE_SHARE_OBJECT,
@@ -46,7 +46,7 @@ class S3ShareValidator(SharesCreationValidatorInterface):
             raise UnauthorizedOperation(
                 action=CREATE_SHARE_OBJECT,
                 message=f'Requester Team {group_uri} works in region {environment.region} '
-                        f'and the requested dataset is stored in region {dataset.region}',
+                f'and the requested dataset is stored in region {dataset.region}',
             )
         S3ShareValidator._validate_iam_role_policy(
             session, environment, principal_type, principal_id, group_uri, attachMissingPolicies
@@ -67,22 +67,17 @@ class S3ShareValidator(SharesCreationValidatorInterface):
     @staticmethod
     def validate_share_object_approve(session, dataset, *args, **kwargs) -> bool:
         share = kwargs.get('share')
-        if not S3ShareValidator._validate_iam_role(
-                session, share
-        ):
+        if not S3ShareValidator._validate_iam_role(session, share):
             raise PrincipalRoleNotFound(
                 action=APPROVE_SHARE_OBJECT,
                 message=f'The principal role {share.principalRoleName} is not found.',
             )
         return True
 
-
     @staticmethod
     def validate_share_object_start(session, dataset, *args, **kwargs) -> bool:
         share = kwargs.get('share')
-        if not S3ShareValidator._validate_iam_role(
-                session, share
-        ):
+        if not S3ShareValidator._validate_iam_role(session, share):
             raise PrincipalRoleNotFound(
                 'process approved shares',
                 f'Principal role {share.principalRoleName} is not found.',
