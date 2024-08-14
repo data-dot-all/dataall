@@ -38,7 +38,7 @@
     "apexcharts": "^3.33.2",
     "apollo-boost": "^0.4.9",
     "aws-amplify": "^5.3.14",
-    "axios": "^1.6.5",
+    "axios": "^1.7.4",
     "classnames": "^2.3.1",
     "date-fns": "^2.28.0",
     "dayjs": "^1.11.0",

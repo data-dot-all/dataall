@@ -16,6 +16,7 @@ from aws_cdk import (
 )
 from aws_cdk.aws_glue import CfnCrawler
 
+from dataall.base.utils.naming_convention import NamingConventionPattern, NamingConventionService
 from dataall.base import db
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.aws.sts import SessionHelper
@@ -100,6 +101,16 @@ class DatasetStack(Stack):
         env = self.get_env(dataset)
         env_group = self.get_env_group(dataset)
         self.pivot_role_name = SessionHelper.get_delegation_role_name(region=env.region)
+
+        dataset_basename = NamingConventionService(
+            target_uri=dataset.datasetUri,
+            target_label=dataset.label,
+            pattern=NamingConventionPattern.GLUE_ETL,
+            resource_prefix=env.resourcePrefix,
+        ).build_compliant_name()
+
+        glue_sec_conf_enc_key_name = f'{dataset_basename}-log-enc-key'
+        glue_sec_conf_name = f'{dataset_basename}-security-config'
 
         quicksight_default_group_arn = None
         if self.has_quicksight_enabled(env):
@@ -469,9 +480,9 @@ class DatasetStack(Stack):
 
         glue_sec_conf_enc_key = kms.Key(
             self,
-            f'crwlr_log_enc_key_{dataset.GlueCrawlerName}',
+            glue_sec_conf_enc_key_name,
             removal_policy=RemovalPolicy.DESTROY,
-            alias=f'crwlr_log_enc_key_{dataset.GlueCrawlerName}',
+            alias=glue_sec_conf_enc_key_name,
             enable_key_rotation=True,
             admins=[
                 iam.ArnPrincipal(env.CDKRoleArn),
@@ -494,7 +505,7 @@ class DatasetStack(Stack):
 
         glue_crawler_security_config = glue.CfnSecurityConfiguration(
             self,
-            f'crwlr_sec_config-{dataset.GlueCrawlerName}',
+            glue_sec_conf_name,
             encryption_configuration=glue.CfnSecurityConfiguration.EncryptionConfigurationProperty(
                 cloud_watch_encryption=glue.CfnSecurityConfiguration.CloudWatchEncryptionProperty(
                     cloud_watch_encryption_mode='SSE-KMS', kms_key_arn=glue_sec_conf_enc_key.key_arn
@@ -508,7 +519,7 @@ class DatasetStack(Stack):
                     )
                 ],
             ),
-            name=f'crwlr_sec_config-{dataset.GlueCrawlerName}',
+            name=glue_sec_conf_name,
         )
 
         # Support resources: GlueCrawler for the dataset, Profiling Job and Trigger
