@@ -207,14 +207,14 @@ class SharingService:
                                 share_uri,
                                 old_status=ShareItemStatus.Revoke_Approved.value,
                                 new_status=ShareItemStatus.Revoke_Failed.value,
-                                share_item_type=processor.type.value,
+                                share_item_type=processor.type,
                             )
                             ShareStatusRepository.update_share_item_status_batch(
                                 session,
                                 share_uri,
                                 old_status=ShareItemStatus.Revoke_In_Progress.value,
                                 new_status=ShareItemStatus.Revoke_Failed.value,
-                                share_item_type=processor.type.value,
+                                share_item_type=processor.type,
                             )
                             revoke_successful = False
 
@@ -290,6 +290,7 @@ class SharingService:
         True if re-apply of share item(s) succeeds,
         False if any re-apply of share item(s) failed
         """
+        reapply_successful = True
         with engine.scoped_session() as session:
             share_data, share_items = cls._get_share_data_and_items(
                 session, share_uri, None, ShareItemHealthStatus.PendingReApply.value
@@ -305,7 +306,6 @@ class SharingService:
             )
 
             try:
-                reapply_successful = True
                 with ResourceLockRepository.acquire_lock_with_retry(
                     resources=resources,
                     session=session,

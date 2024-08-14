@@ -136,3 +136,12 @@ class DatasetBucket(Resource, Base):
     @classmethod
     def uri(cls):
         return cls.bucketUri
+
+
+class DatasetTableDataFilter(Resource, Base):
+    __tablename__ = 'data_filter'
+    filterUri = Column(String, primary_key=True, default=utils.uuid('datafilter'))
+    tableUri = Column(String, ForeignKey('dataset_table.tableUri'), nullable=False)
+    filterType = Column(String, nullable=False)
+    includedCols = Column(ARRAY(String), nullable=True)
+    rowExpression = Column(String, nullable=True)

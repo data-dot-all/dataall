@@ -27,13 +27,14 @@ class ShareObjectRepository:
         session.commit()
 
     @staticmethod
-    def find_share(session, dataset: DatasetBase, env, principal_id, group_uri) -> ShareObject:
+    def find_share(session, dataset: DatasetBase, env, principal_id, principal_role_name, group_uri) -> ShareObject:
         return (
             session.query(ShareObject)
             .filter(
                 and_(
                     ShareObject.datasetUri == dataset.datasetUri,
                     ShareObject.principalId == principal_id,
+                    ShareObject.principalRoleName == principal_role_name,
                     ShareObject.environmentUri == env.environmentUri,
                     ShareObject.groupUri == group_uri,
                 )
@@ -340,6 +341,7 @@ class ShareObjectRepository:
                 ShareObjectItem.healthStatus.label('healthStatus'),
                 ShareObjectItem.healthMessage.label('healthMessage'),
                 ShareObjectItem.lastVerificationTime.label('lastVerificationTime'),
+                ShareObjectItem.attachedDataFilterUri.label('attachedDataFilterUri'),
                 case(
                     [(ShareObjectItem.shareItemUri.isnot(None), True)],
                     else_=False,

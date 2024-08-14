@@ -124,7 +124,14 @@ class ShareObjectService:
                 attachMissingPolicies=attachMissingPolicies,
             )
 
-            share = ShareObjectRepository.find_share(session, dataset, environment, principal_id, group_uri)
+            share = ShareObjectRepository.find_share(
+                session=session,
+                dataset=dataset,
+                env=environment,
+                principal_id=principal_id,
+                principal_role_name=principal_role_name,
+                group_uri=group_uri,
+            )
             already_existed = share is not None
             if not share:
                 share = ShareObject(
@@ -247,11 +254,11 @@ class ShareObjectService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
-
-            cls.validate_share_object(
-                share_action=ShareObjectActions.Approve,
+            if share.principalType in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value]:
+                cls.validate_share_object(
+                    share_action=ShareObjectActions.Approve,
                 dataset_type=dataset.datasetType,
-                session=session,
+                    session=session,
                 dataset_uri=dataset.dataset_uri,
                 share=share,
             )

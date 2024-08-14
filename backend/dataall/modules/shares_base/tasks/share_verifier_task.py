@@ -5,6 +5,8 @@ from dataall.modules.shares_base.db.share_object_repositories import ShareObject
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.services.shares_enums import ShareItemStatus
 from dataall.modules.shares_base.services.sharing_service import SharingService
+from dataall.core.stacks.aws.ecs import Ecs
+
 from dataall.base.db import get_engine
 
 from dataall.base.loader import load_modules, ImportMode
@@ -37,8 +39,18 @@ def verify_shares(engine):
         return processed_share_objects
 
 
+def trigger_reapply_task():
+    Ecs.run_ecs_task(
+        task_definition_param='ecs/task_def_arn/share_reapplier',
+        container_name_param='ecs/container/share_reapplier',
+        context=[],
+    )
+
+
 if __name__ == '__main__':
     load_modules(modes={ImportMode.SHARES_TASK})
     ENVNAME = os.environ.get('envname', 'local')
     ENGINE = get_engine(envname=ENVNAME)
-    verify_shares(engine=ENGINE)
+    processed_shares = verify_shares(engine=ENGINE)
+    log.info(f'Finished verifying {len(processed_shares)} shares, triggering reapply...')
+    trigger_reapply_task()

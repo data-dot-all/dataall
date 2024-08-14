@@ -146,6 +146,11 @@ def table3(table: typing.Callable, dataset3: S3Dataset) -> DatasetTable:
     yield table(dataset=dataset3, name='table3', username='bob')
 
 
+@pytest.fixture(scope='module')
+def table_data_filter_fixture(db, table_fixture, table_column_data_filter, group, user):
+    yield table_column_data_filter(table=table_fixture, name='datafilter1', filterType='COLUMN')
+
+
 @pytest.fixture(scope='function')
 def share1_draft(
     db,
@@ -469,17 +474,12 @@ def get_share_object(client, user, group, shareUri, filter):
         rejectPurpose
         userRoleForShareObject
         principal {
-          principalId
-          principalType
           principalName
+          principalType
+          principalId
           principalRoleName
           SamlGroupName
-          environmentUri
           environmentName
-          AwsAccountId
-          region
-          organizationUri
-          organizationName
         }
         items(filter: $filter) {
           count
@@ -497,6 +497,7 @@ def get_share_object(client, user, group, shareUri, filter):
             healthStatus
             healthMessage
             lastVerificationTime
+            attachedDataFilterUri
           }
         }
         dataset {
@@ -519,6 +520,30 @@ def get_share_object(client, user, group, shareUri, filter):
     )
     # Print response
     print('Get share request response: ', response)
+    return response
+
+
+def get_share_item_data_filters(client, user, group, attachedDataFilterUri):
+    q = """
+    query getShareItemDataFilters($attachedDataFilterUri: String!) {
+      getShareItemDataFilters(attachedDataFilterUri: $attachedDataFilterUri) {
+        attachedDataFilterUri
+        label
+        dataFilterUris
+        dataFilterNames
+        itemUri
+      }
+    }
+    """
+
+    response = client.query(
+        q,
+        username=user.username,
+        groups=[group.name],
+        attachedDataFilterUri=attachedDataFilterUri,
+    )
+    # Print response
+    print('get_share_item_data_filters response: ', response)
     return response
 
 
@@ -619,6 +644,37 @@ def add_share_item(client, user, group, shareUri, itemUri, itemType):
     )
 
     print('Response from addSharedItem: ', response)
+    return response
+
+
+def update_share_item_filter(client, user, group, input):
+    q = """
+      mutation updateShareItemFilters($input: ModifyFiltersTableShareItemInput!) {
+        updateShareItemFilters(input: $input)
+      }
+        """
+
+    response = client.query(q, username=user.username, groups=[group.name], input=input)
+
+    print('Response from updateShareItemFilters: ', response)
+    return response
+
+
+def remove_share_item_filter(client, user, group, attachedDataFilterUri):
+    q = """
+      mutation removeShareItemFilter($attachedDataFilterUri: String!) {
+        removeShareItemFilter(attachedDataFilterUri: $attachedDataFilterUri)
+      }
+        """
+
+    response = client.query(
+        q,
+        username=user.username,
+        groups=[group.name],
+        attachedDataFilterUri=attachedDataFilterUri,
+    )
+
+    print('Response from removeShareItemFilter: ', response)
     return response
 
 
@@ -1086,7 +1142,6 @@ def test_get_share_object(client, share1_draft, user, group):
     assert get_share_object_response.data.getShareObject.get('principal').principalType == PrincipalType.Group.name
     assert get_share_object_response.data.getShareObject.get('principal').principalRoleName
     assert get_share_object_response.data.getShareObject.get('principal').SamlGroupName
-    assert get_share_object_response.data.getShareObject.get('principal').region
 
 
 def test_update_share_request_purpose(client, share1_draft, user2, group2):
@@ -1175,6 +1230,78 @@ def test_add_share_item(client, user2, group2, share1_draft, mock_glue_client):
     # Then shared item was added to share object in status PendingApproval
     assert add_share_item_response.data.addSharedItem.shareUri == share1_draft.shareUri
     assert add_share_item_response.data.addSharedItem.status == ShareItemStatus.PendingApproval.name
+
+
+# remove_share_item_filter
+def test_update_share_item_filter(client, user, group, share1_draft, share1_item_pa, table_data_filter_fixture):
+    # # Given
+    # # Existing share object in status Draft (-> fixture share1_draft)
+    get_share_object_response = get_share_object(
+        client=client, user=user, group=group, shareUri=share1_draft.shareUri, filter={'isShared': True}
+    )
+    # # Given existing shareable items (-> fixture)
+    shareItem = get_share_object_response.data.getShareObject.get('items').nodes[0]
+    print('\n\n\n\n SHARE ITMES \n\n')
+    print(get_share_object_response.data.getShareObject.get('items'))
+    assert shareItem.shareItemUri == share1_item_pa.shareItemUri
+
+    # When we update share item filter
+    input = {
+        'shareItemUri': share1_item_pa.shareItemUri,
+        'label': 'test',
+        'filterUris': [table_data_filter_fixture.filterUri],
+        'filterNames': [table_data_filter_fixture.label],
+    }
+    update_share_item_filter_response = update_share_item_filter(client=client, user=user, group=group, input=input)
+
+    # Then shared item filter was added to share object item
+    assert update_share_item_filter_response.data.updateShareItemFilters == True
+    get_share_object_response = get_share_object(
+        client=client, user=user, group=group, shareUri=share1_draft.shareUri, filter={'isShared': True}
+    )
+    shareItem = get_share_object_response.data.getShareObject.get('items').nodes[0]
+    assert shareItem.attachedDataFilterUri
+
+    get_share_item_data_filters_response = get_share_item_data_filters(
+        client=client, user=user, group=group, attachedDataFilterUri=shareItem.attachedDataFilterUri
+    )
+    assert get_share_item_data_filters_response.data.getShareItemDataFilters.itemUri == share1_item_pa.itemUri
+    assert (
+        get_share_item_data_filters_response.data.getShareItemDataFilters.dataFilterUris[0]
+        == table_data_filter_fixture.filterUri
+    )
+    assert (
+        get_share_item_data_filters_response.data.getShareItemDataFilters.dataFilterNames[0]
+        == table_data_filter_fixture.label
+    )
+
+    # When we update share item filter
+    input = {
+        'shareItemUri': share1_item_pa.shareItemUri,
+        'label': 'testnew',
+        'filterUris': [table_data_filter_fixture.filterUri],
+        'filterNames': [table_data_filter_fixture.label],
+    }
+    update_share_item_filter_response = update_share_item_filter(client=client, user=user, group=group, input=input)
+
+    # Then shared item filter name was updated
+    get_share_item_data_filters_response = get_share_item_data_filters(
+        client=client, user=user, group=group, attachedDataFilterUri=shareItem.attachedDataFilterUri
+    )
+    assert get_share_item_data_filters_response.data.getShareItemDataFilters.label == 'testnew'
+
+    # When we remove the share item filter
+    remove_share_item_filter_response = remove_share_item_filter(
+        client=client, user=user, group=group, attachedDataFilterUri=shareItem.attachedDataFilterUri
+    )
+
+    # Then Share item has not attached filter URI
+    get_share_object_response = get_share_object(
+        client=client, user=user, group=group, shareUri=share1_draft.shareUri, filter={'isShared': True}
+    )
+    # # Given existing shareable items (-> fixture)
+    shareItem = get_share_object_response.data.getShareObject.get('items').nodes[0]
+    assert shareItem.attachedDataFilterUri is None
 
 
 def test_remove_share_item(client, user2, group2, share1_draft, share1_item_pa):

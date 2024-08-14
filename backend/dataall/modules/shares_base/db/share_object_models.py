@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 from uuid import uuid4
 
-from sqlalchemy import Boolean, Column, String, DateTime
+from sqlalchemy import Boolean, Column, String, DateTime, ForeignKey, Index
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import query_expression
 
 from dataall.base.db import Base, utils
@@ -57,3 +58,17 @@ class ShareObjectItem(Base):
     healthStatus = Column(String, nullable=True)
     healthMessage = Column(String, nullable=True)
     lastVerificationTime = Column(DateTime, nullable=True)
+    attachedDataFilterUri = Column(
+        String, ForeignKey('share_object_item_data_filter.attachedDataFilterUri'), nullable=True
+    )
+
+
+class ShareObjectItemDataFilter(Base):
+    __tablename__ = 'share_object_item_data_filter'
+    attachedDataFilterUri = Column(String, primary_key=True, default=utils.uuid('shareitemdatafilter'))
+    label = Column(String, nullable=False)
+    dataFilterUris = Column(ARRAY(String), nullable=False)
+    dataFilterNames = Column(ARRAY(String), nullable=False)
+    itemUri = Column(String, nullable=False)
+
+    __table_args__ = (Index('ix_itemUri_label', 'itemUri', 'label', unique=True),)
