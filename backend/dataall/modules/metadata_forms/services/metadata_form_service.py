@@ -4,9 +4,10 @@ from dataall.base.context import get_context
 from dataall.base.db import exceptions, paginate
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
-from dataall.core.permissions.services.tenant_policy_service import TenantPolicyValidationService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyValidationService, TenantPolicyService
 from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility, MetadataFormUserRoles, MetadataFormFieldType
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
+from dataall.modules.metadata_forms.services.metadata_form_permissions import MANAGE_METADATA_FORMS
 
 
 class MetadataFormParamValidationService:
@@ -76,6 +77,7 @@ class MetadataFormAccessService:
 
 class MetadataFormService:
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_METADATA_FORMS)
     def create_metadata_form(data):
         MetadataFormParamValidationService.validate_create_form_params(data)
         with get_context().db_engine.scoped_session() as session:
@@ -90,6 +92,7 @@ class MetadataFormService:
 
     # toDo: deletion logic
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_METADATA_FORMS)
     @MetadataFormAccessService.can_perform('DELETE')
     def delete_metadata_form_by_uri(uri):
         mf = MetadataFormService.get_metadata_form_by_uri(uri)
@@ -142,6 +145,7 @@ class MetadataFormService:
             return MetadataFormRepository.get_metadata_form_field_by_uri(session, uri)
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_METADATA_FORMS)
     @MetadataFormAccessService.can_perform('ADD FIELD')
     def create_metadata_form_field(uri, data):
         MetadataFormParamValidationService.validate_create_field_params(data)
@@ -149,6 +153,7 @@ class MetadataFormService:
             return MetadataFormRepository.create_metadata_form_field(session, uri, data)
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_METADATA_FORMS)
     @MetadataFormAccessService.can_perform('ADD FIELDS')
     def create_metadata_form_fields(uri, data_arr):
         fields = []
@@ -157,6 +162,7 @@ class MetadataFormService:
         return fields
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_METADATA_FORMS)
     @MetadataFormAccessService.can_perform('DELETE FIELD')
     def delete_metadata_form_field(uri, fieldUri):
         mf = MetadataFormService.get_metadata_form_field_by_uri(fieldUri)
@@ -164,6 +170,7 @@ class MetadataFormService:
             return session.delete(mf)
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_METADATA_FORMS)
     @MetadataFormAccessService.can_perform('UPDATE FIELDS')
     def batch_metadata_form_field_update(uri, data):
         for item in data:
@@ -179,6 +186,7 @@ class MetadataFormService:
         return MetadataFormService.get_metadata_form_fields(uri=uri)
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_METADATA_FORMS)
     @MetadataFormAccessService.can_perform('UPDATE FIELD')
     def update_metadata_form_field(uri, fieldUri, data):
         with get_context().db_engine.scoped_session() as session:
