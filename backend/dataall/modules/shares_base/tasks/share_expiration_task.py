@@ -25,20 +25,27 @@ def share_expiration_checker(engine):
         shares = ShareObjectRepository.get_all_active_shares_with_expiration(session)
         log.info(f'Fetched {len(shares)} active shares with expiration')
         for share in shares:
-            if (share.expiryDate.date() < datetime.today().date()):
+            if share.expiryDate.date() < datetime.today().date():
                 log.info(f'Revoking share with uri: {share.shareUri} as it is expired')
                 SharingService.revoke_share(engine=engine, share_uri=share.shareUri)
             else:
-                log.info(f"Share with share uri: {share.shareUri} has not yet expired")
+                log.info(f'Share with share uri: {share.shareUri} has not yet expired')
                 dataset = DatasetBaseRepository.get_dataset_by_uri(session, share.shareUri)
                 if share.submittedForExtension:
-                    log.info(f"Sending notifications to the owners as share extension requested for share with uri: {share.shareUri}")
-                    ShareNotificationService(session=session, dataset=dataset, share=share).notify_share_expiration_to_owners()
+                    log.info(
+                        f'Sending notifications to the owners as share extension requested for share with uri: {share.shareUri}'
+                    )
+                    ShareNotificationService(
+                        session=session, dataset=dataset, share=share
+                    ).notify_share_expiration_to_owners()
                 else:
                     log.info(
-                        f"Sending notifications to the requesters as share extension is not requested for share with uri: {share.shareUri}")
+                        f'Sending notifications to the requesters as share extension is not requested for share with uri: {share.shareUri}'
+                    )
 
-                    ShareNotificationService(session=session, dataset=dataset, share=share).notify_share_expiration_to_requesters()
+                    ShareNotificationService(
+                        session=session, dataset=dataset, share=share
+                    ).notify_share_expiration_to_requesters()
 
 
 if __name__ == '__main__':

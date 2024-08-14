@@ -114,7 +114,7 @@ DatasetLink = gql.ObjectType(
         gql.Field(name='description', type=gql.String),
         gql.Field(name='datasetType', type=gql.String),
         gql.Field(name='enableExpiration', type=gql.Boolean),
-        gql.Field(name='expirySetting', type=gql.String)
+        gql.Field(name='expirySetting', type=gql.String),
     ],
 )
 

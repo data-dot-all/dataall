@@ -421,4 +421,8 @@ class ShareObjectRepository:
 
     @staticmethod
     def get_all_active_shares_with_expiration(session):
-        return session.query(ShareObject).filter(and_(ShareObject.expiryDate.is_not(None), ShareObject.deleted.is_(None))).all()
+        return (
+            session.query(ShareObject)
+            .filter(and_(ShareObject.expiryDate.is_not(None), ShareObject.deleted.is_(None)))
+            .all()
+        )

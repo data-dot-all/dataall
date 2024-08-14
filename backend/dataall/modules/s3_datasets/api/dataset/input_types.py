@@ -21,7 +21,7 @@ NewDatasetInput = gql.InputType(
         gql.Argument(name='enableExpiration', type=gql.Boolean),
         gql.Argument(name='expirySetting', type=gql.String),
         gql.Argument(name='expiryMinDuration', type=gql.Integer),
-        gql.Argument(name='expiryMaxDuration', type=gql.Integer)
+        gql.Argument(name='expiryMaxDuration', type=gql.Integer),
     ],
 )
 
@@ -43,7 +43,7 @@ ModifyDatasetInput = gql.InputType(
         gql.Argument(name='enableExpiration', type=gql.Boolean),
         gql.Argument(name='expirySetting', type=gql.String),
         gql.Argument(name='expiryMinDuration', type=gql.Integer),
-        gql.Argument(name='expiryMaxDuration', type=gql.Integer)
+        gql.Argument(name='expiryMaxDuration', type=gql.Integer),
     ],
 )
 
@@ -82,7 +82,7 @@ ImportDatasetInput = gql.InputType(
         gql.Argument(name='enableExpiration', type=gql.Boolean),
         gql.Argument(name='expirySetting', type=gql.String),
         gql.Argument(name='expiryMinDuration', type=gql.Integer),
-        gql.Argument(name='expiryMaxDuration', type=gql.Integer)
+        gql.Argument(name='expiryMaxDuration', type=gql.Integer),
     ],
 )
 

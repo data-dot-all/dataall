@@ -83,10 +83,15 @@ class ShareNotificationService:
 
         html_tag_translation_table = str.maketrans({'<br>': '', '<b>': '', '</b>': ''})
         notifications = self.register_notifications(
-            notification_type=DataSharingNotificationType.SHARE_OBJECT_SUBMITTED.value, msg=msg_intro.translate(html_tag_translation_table)
+            notification_type=DataSharingNotificationType.SHARE_OBJECT_SUBMITTED.value,
+            msg=msg_intro.translate(html_tag_translation_table),
         )
 
-        self._create_and_send_email_notifications(subject=subject, msg=email_notification_msg, recipient_groups_list=[self.dataset.SamlAdminGroupName, self.dataset.stewards])
+        self._create_and_send_email_notifications(
+            subject=subject,
+            msg=email_notification_msg,
+            recipient_groups_list=[self.dataset.SamlAdminGroupName, self.dataset.stewards],
+        )
         return notifications
 
     def notify_share_object_approval(self, email_id: str):
@@ -192,19 +197,23 @@ class ShareNotificationService:
               <br>The Data.all Team
               """
 
-        subject = f'URGENT REMINDER: Data.all | Action Required on Pending Share Extension Request for {self.dataset.label}'
+        subject = (
+            f'URGENT REMINDER: Data.all | Action Required on Pending Share Extension Request for {self.dataset.label}'
+        )
         email_notification_msg = msg_intro + share_link_text + msg_end
 
         html_tag_translation_table = str.maketrans({'<br>': '', '<b>': '', '</b>': ''})
         notifications = self.register_notifications(
-            notification_type=DataSharingNotificationType.SHARE_OBJECT_EXTENDED.value, msg=msg_intro.translate(html_tag_translation_table)
+            notification_type=DataSharingNotificationType.SHARE_OBJECT_EXTENDED.value,
+            msg=msg_intro.translate(html_tag_translation_table),
         )
 
-        self._create_and_send_email_notifications(subject=subject, msg=email_notification_msg,
-                                                  recipient_groups_list=[self.dataset.SamlAdminGroupName,
-                                                                         self.dataset.stewards])
+        self._create_and_send_email_notifications(
+            subject=subject,
+            msg=email_notification_msg,
+            recipient_groups_list=[self.dataset.SamlAdminGroupName, self.dataset.stewards],
+        )
         return notifications
-
 
     def notify_share_expiration_to_requesters(self):
         share_link_text = ''
@@ -225,16 +234,18 @@ class ShareNotificationService:
                  <br>The Data.all Team
                  """
 
-        subject = f'ACTION REQUIRED: Data.all | Share Expiration Approaching Soon'
+        subject = 'ACTION REQUIRED: Data.all | Share Expiration Approaching Soon'
         email_notification_msg = msg_intro + share_link_text + msg_end
 
         html_tag_translation_table = str.maketrans({'<br>': '', '<b>': '', '</b>': ''})
         notifications = self.register_notifications(
-            notification_type=DataSharingNotificationType.SHARE_OBJECT_EXTENDED.value, msg=msg_intro.translate(html_tag_translation_table)
+            notification_type=DataSharingNotificationType.SHARE_OBJECT_EXTENDED.value,
+            msg=msg_intro.translate(html_tag_translation_table),
         )
 
-        self._create_and_send_email_notifications(subject=subject, msg=email_notification_msg,
-                                                  recipient_groups_list=[self.share.groupUri])
+        self._create_and_send_email_notifications(
+            subject=subject, msg=email_notification_msg, recipient_groups_list=[self.share.groupUri]
+        )
         return notifications
 
     def _get_share_object_targeted_users(self):
@@ -314,9 +325,9 @@ class ShareNotificationService:
 
     def _create_and_send_email_notifications(self, subject, msg, recipient_groups_list=None, recipient_email_ids=None):
         """
-             Method to directly send email notification instead of creating an SQS Task
-             This approach is used while sending email notifications in an ECS task ( e.g. persistent email reminder task, share expiration task, etc )
-             Emails send to groups mentioned in recipient_groups_list and / or emails mentioned in recipient_email_ids
+        Method to directly send email notification instead of creating an SQS Task
+        This approach is used while sending email notifications in an ECS task ( e.g. persistent email reminder task, share expiration task, etc )
+        Emails send to groups mentioned in recipient_groups_list and / or emails mentioned in recipient_email_ids
         """
         if recipient_groups_list is None:
             recipient_groups_list = []
@@ -330,7 +341,6 @@ class ShareNotificationService:
             for share_notification_config_type in share_notification_config.keys():
                 n_config = share_notification_config[share_notification_config_type]
                 if n_config.get('active', False) == True:
-
                     if share_notification_config_type == 'email':
                         SESEmailNotificationService.send_email_task(
                             subject, msg, recipient_groups_list, recipient_email_ids
@@ -339,7 +349,6 @@ class ShareNotificationService:
                     log.info(f'Notification type : {share_notification_config_type} is not active')
         else:
             log.info('Notifications are not active')
-
 
     def _create_persistent_reminder_notification_task(self, subject, msg):
         """

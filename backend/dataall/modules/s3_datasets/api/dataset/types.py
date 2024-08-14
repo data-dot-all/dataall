@@ -112,7 +112,7 @@ Dataset = gql.ObjectType(
         gql.Field(name='enableExpiration', type=gql.Boolean),
         gql.Field(name='expirySetting', type=gql.String),
         gql.Field(name='expiryMinDuration', type=gql.Integer),
-        gql.Field(name='expiryMaxDuration', type=gql.Integer)
+        gql.Field(name='expiryMaxDuration', type=gql.Integer),
     ],
 )
 

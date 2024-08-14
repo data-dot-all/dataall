@@ -74,9 +74,11 @@ submitShareObject = gql.MutationField(
 
 submitShareExtension = gql.MutationField(
     name='submitShareExtension',
-    args=[gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String)),
-          gql.Argument(name='expiration', type=gql.NonNullableType(gql.Integer)),
-          gql.Argument(name='extensionReason', type=gql.String)],
+    args=[
+        gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='expiration', type=gql.NonNullableType(gql.Integer)),
+        gql.Argument(name='extensionReason', type=gql.String),
+    ],
     type=gql.Ref('ShareObject'),
     resolver=submit_share_extension,
 )

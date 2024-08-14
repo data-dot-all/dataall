@@ -88,21 +88,29 @@ def create_share_object(
         principal_type=input['principalType'],
         requestPurpose=input.get('requestPurpose'),
         attachMissingPolicies=input.get('attachMissingPolicies', False),
-        shareExpirationPeriod=input.get('shareExpirationPeriod')
+        shareExpirationPeriod=input.get('shareExpirationPeriod'),
     )
 
 
 def submit_share_object(context: Context, source, shareUri: str = None):
     return ShareObjectService.submit_share_object(uri=shareUri)
 
-def submit_share_extension(context: Context, source, shareUri: str = None, expiration: int = 0, extensionReason: str = None):
-    return ShareObjectService.submit_share_extension(uri=shareUri, expiration=expiration, extension_reason=extensionReason)
+
+def submit_share_extension(
+    context: Context, source, shareUri: str = None, expiration: int = 0, extensionReason: str = None
+):
+    return ShareObjectService.submit_share_extension(
+        uri=shareUri, expiration=expiration, extension_reason=extensionReason
+    )
+
 
 def approve_share_object(context: Context, source, shareUri: str = None):
     return ShareObjectService.approve_share_object(uri=shareUri)
 
+
 def approve_share_extension_object(context: Context, source, shareUri: str = None):
     return ShareObjectService.approve_share_extension_object(uri=shareUri)
+
 
 def reject_share_object(
     context: Context,
@@ -136,6 +144,7 @@ def reapply_items_share_object(context: Context, source, input):
 
 def delete_share_object(context: Context, source, shareUri: str = None):
     return ShareObjectService.delete_share_object(uri=shareUri)
+
 
 def cancel_share_extension_object(context: Context, source, shareUri: str = None):
     return ShareObjectService.cancel_share_extension_object(uri=shareUri)
@@ -217,7 +226,7 @@ def resolve_dataset(context: Context, source: ShareObject, **kwargs):
                 'description': ds.description,
                 'datasetType': ds.datasetType,
                 'enableExpiration': ds.enableExpiration,
-                'expirySetting': ds.expirySetting
+                'expirySetting': ds.expirySetting,
             }
 
 
@@ -330,11 +339,13 @@ def get_share_item_data_filters(context: Context, source, attachedDataFilterUri:
         RequiredParameter('attachedDataFilterUri')
     return ShareItemService.get_share_item_data_filters(uri=attachedDataFilterUri)
 
+
 def update_share_extension_purpose(context: Context, source, shareUri: str = None, extensionPurpose: str = None):
-     return ShareObjectService.update_share_extension_purpose(
-         uri=shareUri,
-         extension_purpose=extensionPurpose,
-     )
+    return ShareObjectService.update_share_extension_purpose(
+        uri=shareUri,
+        extension_purpose=extensionPurpose,
+    )
+
 
 def update_share_expiration_period(context: Context, source, shareUri: str = None, expiration: int = 0):
     return ShareObjectService.update_share_expiration_period(

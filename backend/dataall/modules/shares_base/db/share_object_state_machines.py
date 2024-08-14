@@ -50,7 +50,11 @@ class ShareObjectSM:
             ShareObjectActions.Submit.value: Transition(
                 name=ShareObjectActions.Submit.value,
                 transitions={
-                    ShareObjectStatus.Submitted.value: [ShareObjectStatus.Draft.value, ShareObjectStatus.Rejected.value, ShareObjectStatus.Extension_Rejected.value]
+                    ShareObjectStatus.Submitted.value: [
+                        ShareObjectStatus.Draft.value,
+                        ShareObjectStatus.Rejected.value,
+                        ShareObjectStatus.Extension_Rejected.value,
+                    ]
                 },
             ),
             ShareObjectActions.Approve.value: Transition(
@@ -69,7 +73,7 @@ class ShareObjectSM:
                         ShareObjectStatus.Submitted.value,
                         ShareObjectStatus.Rejected.value,
                         ShareObjectStatus.Processed.value,
-                        ShareObjectStatus.Extension_Rejected.value
+                        ShareObjectStatus.Extension_Rejected.value,
                     ]
                 },
             ),
@@ -105,7 +109,7 @@ class ShareObjectSM:
                         ShareObjectStatus.Draft.value,
                         ShareObjectStatus.Submitted.value,
                         ShareObjectStatus.Processed.value,
-                        ShareObjectStatus.Extension_Rejected.value
+                        ShareObjectStatus.Extension_Rejected.value,
                     ]
                 },
             ),
@@ -116,34 +120,34 @@ class ShareObjectSM:
                         ShareObjectStatus.Submitted.value,
                         ShareObjectStatus.Rejected.value,
                         ShareObjectStatus.Processed.value,
-                        ShareObjectStatus.Extension_Rejected.value
+                        ShareObjectStatus.Extension_Rejected.value,
                     ]
                 },
             ),
             ShareObjectActions.Extension.value: Transition(
                 name=ShareObjectActions.Extension.value,
                 transitions={
-                    ShareObjectStatus.Submitted_For_Extension.value: [ShareObjectStatus.Processed.value,  ShareObjectStatus.Extension_Rejected.value, ShareObjectStatus.Draft.value]
-                }
+                    ShareObjectStatus.Submitted_For_Extension.value: [
+                        ShareObjectStatus.Processed.value,
+                        ShareObjectStatus.Extension_Rejected.value,
+                        ShareObjectStatus.Draft.value,
+                    ]
+                },
             ),
             ShareObjectActions.ExtensionApprove.value: Transition(
                 name=ShareObjectActions.ExtensionApprove.value,
-                transitions={
-                    ShareObjectStatus.Processed.value: [ShareObjectStatus.Submitted_For_Extension.value]
-                }
+                transitions={ShareObjectStatus.Processed.value: [ShareObjectStatus.Submitted_For_Extension.value]},
             ),
             ShareObjectActions.ExtensionReject.value: Transition(
                 name=ShareObjectActions.ExtensionReject.value,
                 transitions={
                     ShareObjectStatus.Extension_Rejected.value: [ShareObjectStatus.Submitted_For_Extension.value]
-                }
+                },
             ),
             ShareObjectActions.CancelExtension.value: Transition(
                 name=ShareObjectActions.CancelExtension.value,
-                transitions={
-                    ShareObjectStatus.Processed.value: [ShareObjectStatus.Submitted_For_Extension.value]
-                }
-            )
+                transitions={ShareObjectStatus.Processed.value: [ShareObjectStatus.Submitted_For_Extension.value]},
+            ),
         }
 
     def run_transition(self, transition):
@@ -267,28 +271,20 @@ class ShareItemSM:
             ),
             ShareObjectActions.Extension.value: Transition(
                 name=ShareObjectActions.Extension.value,
-                transitions={
-                    ShareItemStatus.PendingExtension.value: [ShareItemStatus.Share_Succeeded.value]
-                }
+                transitions={ShareItemStatus.PendingExtension.value: [ShareItemStatus.Share_Succeeded.value]},
             ),
             ShareObjectActions.ExtensionApprove.value: Transition(
                 name=ShareObjectActions.ExtensionApprove.value,
-                transitions={
-                    ShareItemStatus.Share_Succeeded.value: [ShareItemStatus.PendingExtension.value]
-                }
+                transitions={ShareItemStatus.Share_Succeeded.value: [ShareItemStatus.PendingExtension.value]},
             ),
             ShareObjectActions.ExtensionReject.value: Transition(
                 name=ShareObjectActions.ExtensionReject.value,
-                transitions={
-                    ShareItemStatus.Share_Succeeded.value: [ShareItemStatus.PendingExtension.value]
-                }
+                transitions={ShareItemStatus.Share_Succeeded.value: [ShareItemStatus.PendingExtension.value]},
             ),
             ShareObjectActions.CancelExtension.value: Transition(
                 name=ShareObjectActions.CancelExtension.value,
-                transitions={
-                    ShareItemStatus.Share_Succeeded.value: [ShareItemStatus.PendingExtension.value]
-                }
-            )
+                transitions={ShareItemStatus.Share_Succeeded.value: [ShareItemStatus.PendingExtension.value]},
+            ),
         }
 
     def run_transition(self, transition):

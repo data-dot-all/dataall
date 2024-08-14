@@ -23,7 +23,7 @@ class ShareObjectStatus(GraphQLEnumMapper):
     Revoked = 'Revoked'
     Draft = 'Draft'
     Submitted = 'Submitted'
-    Submitted_For_Extension='Submitted_For_Extension'
+    Submitted_For_Extension = 'Submitted_For_Extension'
     Extension_Rejected = 'Extension_Rejected'
     Revoke_In_Progress = 'Revoke_In_Progress'
     Share_In_Progress = 'Share_In_Progress'

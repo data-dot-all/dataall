@@ -452,13 +452,16 @@ class ContainerStack(pyNestedClass):
                 '-m',
                 'dataall.modules.shares_base.tasks.share_expiration_task',
             ],
-            logging=ecs.LogDriver.aws_logs(stream_prefix='task', log_group=self.create_log_group(
-                self._envname, self._resource_prefix, log_group_name='share-expiration-task'
-            )),
+            logging=ecs.LogDriver.aws_logs(
+                stream_prefix='task',
+                log_group=self.create_log_group(
+                    self._envname, self._resource_prefix, log_group_name='share-expiration-task'
+                ),
+            ),
             readonly_root_filesystem=True,
         )
         try:
-            run_schedule = deploy_config.get_property("module.dataset_base.features.share_expiration.run_schedule")
+            run_schedule = deploy_config.get_property('module.dataset_base.features.share_expiration.run_schedule')
         except Exception as e:
             run_schedule = [0]
 
@@ -478,8 +481,6 @@ class ContainerStack(pyNestedClass):
                 rule_name=f'{self._resource_prefix}-{self._envname}-share-expiration-schedule',
                 security_groups=[self.scheduled_tasks_sg],
             )
-
-
 
     def create_ecs_security_groups(self, envname, resource_prefix, vpc, vpce_connection, s3_prefix_list, lambdas):
         scheduled_tasks_sg = ec2.SecurityGroup(

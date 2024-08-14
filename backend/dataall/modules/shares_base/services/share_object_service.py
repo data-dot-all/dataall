@@ -79,7 +79,7 @@ class ShareObjectService:
         principal_type,
         requestPurpose,
         attachMissingPolicies,
-        shareExpirationPeriod
+        shareExpirationPeriod,
     ):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -155,7 +155,9 @@ class ShareObjectService:
             )
             already_existed = share is not None
 
-            if dataset.enableExpiration and ( shareExpirationPeriod > dataset.expiryMaxDuration or shareExpirationPeriod < dataset.expiryMinDuration ):
+            if dataset.enableExpiration and (
+                shareExpirationPeriod > dataset.expiryMaxDuration or shareExpirationPeriod < dataset.expiryMinDuration
+            ):
                 raise Exception('Share expiration period is not within the maximum and the minimum expiration duration')
 
             shareExpiryDate = None
@@ -173,7 +175,7 @@ class ShareObjectService:
                     principalRoleName=principal_role_name,
                     status=ShareObjectStatus.Draft.value,
                     requestPurpose=requestPurpose,
-                    requestedExpiryDate=shareExpiryDate
+                    requestedExpiryDate=shareExpiryDate,
                 )
                 ShareObjectRepository.save_and_commit(session, share)
 
@@ -285,9 +287,12 @@ class ShareObjectService:
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
             if dataset.enableExpiration:
-                if (expiration < dataset.expiryMinDuration or expiration > dataset.expiryMaxDuration):
-                    raise InvalidInput(param_name="Share Expiration", param_value=expiration,
-                                       constraint=f"between {dataset.expiryMinDuration} and {dataset.expiryMaxDuration}")
+                if expiration < dataset.expiryMinDuration or expiration > dataset.expiryMaxDuration:
+                    raise InvalidInput(
+                        param_name='Share Expiration',
+                        param_value=expiration,
+                        constraint=f'between {dataset.expiryMinDuration} and {dataset.expiryMaxDuration}',
+                    )
 
                 expiration_date = ShareObjectService.calculate_expiry_date(expiration, dataset.expirySetting)
                 share.requestedExpiryDate = expiration_date
@@ -299,8 +304,6 @@ class ShareObjectService:
                 return share
             else:
                 raise Exception("Share expiration cannot be extended as the dataset doesn't have expiration enabled")
-
-
 
     @classmethod
     @ResourcePolicyService.has_resource_permission(APPROVE_SHARE_OBJECT)
@@ -320,7 +323,11 @@ class ShareObjectService:
             cls._run_transitions(session, share, states, ShareObjectActions.Approve)
 
             share.rejectPurpose = ''
-            share.expiryDate = share.requestedExpiryDate if (share.submittedForExtension or share.expiryDate is None) else share.expiryDate
+            share.expiryDate = (
+                share.requestedExpiryDate
+                if (share.submittedForExtension or share.expiryDate is None)
+                else share.expiryDate
+            )
             share.requestedExpiryDate = None
             share.submittedForExtension = False
             session.commit()
@@ -360,10 +367,9 @@ class ShareObjectService:
             share.lastExtensionDate = datetime.today()
             session.commit()
 
-
-            ShareNotificationService(session=session, dataset=dataset, share=share).notify_share_object_extension_approval(
-                email_id=context.username
-            )
+            ShareNotificationService(
+                session=session, dataset=dataset, share=share
+            ).notify_share_object_extension_approval(email_id=context.username)
 
         return share
 
@@ -385,9 +391,14 @@ class ShareObjectService:
 
             share = ShareObjectRepository.get_share_by_uri(session, uri)
             dataset = DatasetBaseRepository.get_dataset_by_uri(session, share.datasetUri)
-            if dataset.enableExpiration and ( expiration < dataset.expiryMinDuration or expiration > dataset.expiryMaxDuration):
-                raise InvalidInput(param_name="Share Expiration", param_value=expiration,
-                                   constraint=f"between {dataset.expiryMinDuration} and {dataset.expiryMaxDuration}")
+            if dataset.enableExpiration and (
+                expiration < dataset.expiryMinDuration or expiration > dataset.expiryMaxDuration
+            ):
+                raise InvalidInput(
+                    param_name='Share Expiration',
+                    param_value=expiration,
+                    constraint=f'between {dataset.expiryMinDuration} and {dataset.expiryMaxDuration}',
+                )
 
             if dataset.enableExpiration:
                 expiration_date = ShareObjectService.calculate_expiry_date(expiration, dataset.expirySetting)
@@ -427,9 +438,9 @@ class ShareObjectService:
                 cls._run_transitions(session, share, states, ShareObjectActions.Reject)
 
             if share.submittedForExtension:
-                ShareNotificationService(session=session, dataset=dataset, share=share).notify_share_object_extension_rejection(
-                    email_id=context.username
-                )
+                ShareNotificationService(
+                    session=session, dataset=dataset, share=share
+                ).notify_share_object_extension_rejection(email_id=context.username)
             else:
                 ShareNotificationService(session=session, dataset=dataset, share=share).notify_share_object_rejection(
                     email_id=context.username
@@ -594,4 +605,3 @@ class ShareObjectService:
             shareExpiryDate = None
 
         return shareExpiryDate
-
