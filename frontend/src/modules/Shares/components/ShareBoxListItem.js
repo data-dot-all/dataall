@@ -1,12 +1,27 @@
-import { Box, Button, Card, Grid, Tooltip, Typography } from '@mui/material';
+import {
+  Avatar,
+  Box,
+  Button,
+  Card,
+  Grid,
+  Tooltip,
+  Typography
+} from '@mui/material';
 import PropTypes from 'prop-types';
 import { Link as RouterLink } from 'react-router-dom';
 import { ShareStatus, useCardStyle } from 'design';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
+import React from 'react';
 
 export const ShareBoxListItem = ({ share }) => {
   const classes = useCardStyle();
+  const dataset_icon =
+    share.dataset.datasetType === 'DatasetTypes.S3'
+      ? '/static/icons/Arch_Amazon-Simple-Storage-Service_64.svg'
+      : share.dataset.datasetType === 'DatasetTypes.Redshift'
+      ? '/static/icons/Arch_Amazon-Redshift_64.svg'
+      : '-';
 
   return (
     <Card
@@ -17,6 +32,17 @@ export const ShareBoxListItem = ({ share }) => {
       }}
     >
       <Grid container spacing={0.5} alignItems="center">
+        <Grid item justifyContent="center" md={0.5} lg={0.5} xl={0.5}>
+          <Box
+            sx={{
+              pt: 2,
+              pb: 2,
+              px: 3
+            }}
+          >
+            <Avatar src={`${dataset_icon}`} size={15} variant="square" />
+          </Box>
+        </Grid>
         <Grid item justifyContent="center" md={2.2} lg={1.5} xl={1.2}>
           <Box
             sx={{
@@ -57,7 +83,7 @@ export const ShareBoxListItem = ({ share }) => {
             }}
           >
             <Typography color="textPrimary" variant="body1">
-              IAM role name
+              Role name
             </Typography>
             <Typography
               color="textSecondary"
@@ -108,7 +134,7 @@ export const ShareBoxListItem = ({ share }) => {
             </Typography>
           </Box>
         </Grid>
-        <Grid item justifyContent="flex-end" md={1.3} lg={1.2} xl={1.4}>
+        <Grid item justifyContent="flex-end" md={0.7} lg={0.7} xl={0.7}>
           <Button
             color="primary"
             type="button"
@@ -116,7 +142,7 @@ export const ShareBoxListItem = ({ share }) => {
             to={`/console/shares/${share.shareUri}`}
             variant="contained"
           >
-            Open Share Request
+            Open
           </Button>
         </Grid>
         <Grid item justifyContent="flex-end" md={0.2} lg={0.2} xl={0.4}>

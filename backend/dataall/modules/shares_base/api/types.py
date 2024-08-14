@@ -31,8 +31,21 @@ ShareItem = gql.ObjectType(
         gql.Field('healthStatus', ShareItemHealthStatus.toGraphQLEnum()),
         gql.Field('healthMessage', gql.String),
         gql.Field('lastVerificationTime', gql.String),
+        gql.Field('attachedDataFilterUri', gql.String),
     ],
 )
+
+ShareObjectItemDataFilter = gql.ObjectType(
+    name='ShareObjectItemDataFilter',
+    fields=[
+        gql.Field(name='attachedDataFilterUri', type=gql.String),
+        gql.Field(name='label', type=gql.String),
+        gql.Field(name='dataFilterUris', type=gql.ArrayType(gql.String)),
+        gql.Field(name='dataFilterNames', type=gql.ArrayType(gql.String)),
+        gql.Field(name='itemUri', type=gql.String),
+    ],
+)
+
 
 NotSharedItem = gql.ObjectType(
     name='NotSharedItem',
@@ -203,17 +216,12 @@ EnvironmentPublishedItemSearchResults = gql.ObjectType(
 Principal = gql.ObjectType(
     name='Principal',
     fields=[
-        gql.Field(name='principalId', type=gql.ID),
-        gql.Field(name='principalType', type=PrincipalType.toGraphQLEnum()),
         gql.Field(name='principalName', type=gql.String),
+        gql.Field(name='principalType', type=PrincipalType.toGraphQLEnum()),
+        gql.Field(name='principalId', type=gql.ID),
         gql.Field(name='principalRoleName', type=gql.String),
         gql.Field(name='SamlGroupName', type=gql.String),
         gql.Field(name='environmentName', type=gql.String),
-        gql.Field(name='environmentUri', type=gql.String),
-        gql.Field(name='AwsAccountId', type=gql.String),
-        gql.Field(name='region', type=gql.String),
-        gql.Field(name='organizationName', type=gql.String),
-        gql.Field(name='organizationUri', type=gql.String),
     ],
 )
 

@@ -3,7 +3,6 @@ from typing import List
 from warnings import warn
 from datetime import datetime
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.base.aws.quicksight import QuicksightClient
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
     ShareItemStatus,
@@ -12,16 +11,18 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareableType,
 )
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable
+from dataall.modules.shares_base.db.share_object_models import ShareObjectItemDataFilter
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers import LFShareManager
 from dataall.modules.s3_datasets_shares.aws.ram_client import RamClient
 from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.s3_datasets_shares.services.s3_share_service import S3ShareService
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_object_item_repositories import ShareObjectItemRepository
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.s3_datasets_shares.db.s3_share_object_repositories import S3ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
-from dataall.modules.s3_datasets_shares.services.share_managers.share_manager_utils import ShareErrorFormatter
+from dataall.modules.shares_base.services.share_manager_utils import ShareErrorFormatter
 
 from dataall.modules.shares_base.services.sharing_service import ShareData
 from dataall.modules.shares_base.services.share_processor_manager import SharesProcessorInterface
@@ -39,6 +40,11 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
     def _initialize_share_manager(self, tables):
         return LFShareManager(session=self.session, share_data=self.share_data, tables=tables)
 
+    def _build_resource_link_name(self, table_name: str, share_item_filter: ShareObjectItemDataFilter):
+        if share_item_filter:
+            return f'{table_name}_{share_item_filter.label}'
+        return table_name
+
     def process_approved_shares(self) -> bool:
         """
         0) Check if source account details are properly initialized and initialize the Glue and LF clients
@@ -50,10 +56,10 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
             b) Check if table exists on glue catalog raise error if not and flag share item status to failed
             c) If it is a cross-account share:
                 c.1) Revoke iamallowedgroups permissions from table
-                c.2) Grant target account permissions to original table -> create RAM invitation
-                c.3) Accept pending RAM invitation
-            d) Create resource link for table in target account
-            e) If it is a cross-account share: grant permission to principals to RAM-shared table in target account
+                c.2) Upgrade LF Data Catalog Settings to Version 3 (if not already >=3)
+            d) Grant Permissions  to target principals -> create RAM invitation
+                d.1) (If cross-account) And Accept pending RAM invitation
+            e) Create resource link for table in target account
             f) grant permission to principals to resource link table
             g) update share item status to SHARE_SUCCESSFUL with Action Success
 
@@ -84,10 +90,6 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all'
                     )
                 env = EnvironmentService.get_environment_by_uri(self.session, self.share_data.share.environmentUri)
-                if EnvironmentService.get_boolean_env_param(self.session, env, 'dashboardsEnabled'):
-                    QuicksightClient.check_quicksight_enterprise_subscription(
-                        AwsAccountId=env.AwsAccountId, region=env.region
-                    )
                 manager.initialize_clients()
                 manager.grant_pivot_role_all_database_permissions_to_source_database()
                 manager.check_if_exists_and_create_shared_database_in_target()
@@ -122,26 +124,42 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     shared_item_SM.update_state_single_item(self.session, share_item, new_state)
 
                 try:
+                    if self.reapply:
+                        # CHECK IF SHARING WITH ACCOUNT AND CLEAN UP
+                        warn(
+                            'Clean up of non-direct IAM Principal shares will be deprecated in version >= v2.9.0',
+                            DeprecationWarning,
+                            stacklevel=2,
+                        )
+                        # Revoke Target Account Permissions To Table
+                        try:
+                            log.info('Check & clean up of delegated LF Permission to Target Account...')
+                            manager._clean_up_lf_permissions_account_delegation_pattern(table)
+                        except Exception as e:
+                            log.info(f'Clean Up ran into error {e}, continuing re-apply without clean up...')
+
+                    share_item_filter = None
+                    if share_item.attachedDataFilterUri:
+                        share_item_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(
+                            self.session, share_item.attachedDataFilterUri
+                        )
+
                     manager.check_table_exists_in_source_database(share_item, table)
 
                     if manager.cross_account:
                         log.info(f'Processing cross-account permissions for table {table.GlueTableName}...')
                         manager.revoke_iam_allowed_principals_from_table(table)
-                        manager.grant_target_account_permissions_to_source_table(table)
-                        (
-                            retry_share_table,
-                            failed_invitations,
-                        ) = RamClient.accept_ram_invitation(
-                            source_account_id=manager.source_account_id,
-                            source_region=manager.source_account_region,
-                            source_database=manager.source_database_name,
-                            source_table_name=table.GlueTableName,
-                            target_account_id=self.share_data.target_environment.AwsAccountId,
-                            target_region=self.share_data.target_environment.region,
-                        )
-                        if retry_share_table:
-                            manager.grant_target_account_permissions_to_source_table(table)
-                            RamClient.accept_ram_invitation(
+                        manager.upgrade_lakeformation_settings_in_source()
+
+                    manager.grant_principals_permissions_to_source_table(table, share_item, share_item_filter)
+                    if manager.cross_account:
+                        retries = 0
+                        retry_share_table = False
+                        while retry_share_table and retries < 1:
+                            (
+                                retry_share_table,
+                                failed_invitations,
+                            ) = RamClient.accept_ram_invitation(
                                 source_account_id=manager.source_account_id,
                                 source_region=manager.source_account_region,
                                 source_database=manager.source_database_name,
@@ -149,9 +167,10 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                                 target_account_id=self.share_data.target_environment.AwsAccountId,
                                 target_region=self.share_data.target_environment.region,
                             )
-                    manager.check_if_exists_and_create_resource_link_table_in_shared_database(table)
-                    manager.grant_principals_permissions_to_table_in_target(table)
-                    manager.grant_principals_permissions_to_resource_link_table(table)
+
+                    resource_link_name = self._build_resource_link_name(table.GlueTableName, share_item_filter)
+                    manager.check_if_exists_and_create_resource_link_table_in_shared_database(table, resource_link_name)
+                    manager.grant_principals_permissions_to_resource_link_table(resource_link_name)
 
                     log.info('Attaching TABLE READ permissions...')
                     S3ShareService.attach_dataset_table_read_permission(
@@ -231,6 +250,11 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                 share_item = ShareObjectRepository.find_sharable_item(
                     self.session, self.share_data.share.shareUri, table.tableUri
                 )
+                share_item_filter = None
+                if share_item.attachedDataFilterUri:
+                    share_item_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(
+                        self.session, share_item.attachedDataFilterUri
+                    )
 
                 revoked_item_SM = ShareItemSM(ShareItemStatus.Revoke_Approved.value)
                 new_state = revoked_item_SM.run_transition(ShareObjectActions.Start.value)
@@ -241,35 +265,35 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     manager.check_table_exists_in_source_database(share_item, table)
 
                     log.info('Check resource link table exists')
-                    resource_link_table_exists = manager.check_resource_link_table_exists_in_target_database(table)
-                    other_table_shares_in_env = (
-                        True
-                        if S3ShareObjectRepository.check_other_approved_share_item_table_exists(
-                            self.session,
-                            self.share_data.target_environment.environmentUri,
-                            share_item.itemUri,
-                            share_item.shareItemUri,
-                        )
-                        else False
+                    resource_link_name = self._build_resource_link_name(table.GlueTableName, share_item_filter)
+
+                    resource_link_table_exists = manager.check_resource_link_table_exists_in_target_database(
+                        resource_link_name
                     )
 
                     if resource_link_table_exists:
                         log.info('Revoking principal permissions from resource link table')
-                        manager.revoke_principals_permissions_to_resource_link_table(table)
-                        log.info('Revoking principal permissions from table in target')
-                        manager.revoke_principals_permissions_to_table_in_target(table, other_table_shares_in_env)
-
-                        if (manager.is_new_share and not other_table_shares_in_env) or not manager.is_new_share:
-                            warn(
-                                'share_manager.is_new_share will be deprecated in v2.6.0',
-                                DeprecationWarning,
-                                stacklevel=2,
+                        manager.revoke_principals_permissions_to_resource_link_table(resource_link_name)
+                        log.info('Revoking principal permissions from table in source')
+                        manager.revoke_principals_permissions_to_table_in_source(table, share_item, share_item_filter)
+                        if share_item_filter:
+                            can_delete_resource_link = True
+                        else:
+                            can_delete_resource_link = (
+                                False
+                                if S3ShareObjectRepository.check_other_approved_share_item_table_exists(
+                                    self.session,
+                                    self.share_data.target_environment.environmentUri,
+                                    share_item.itemUri,
+                                    share_item.shareItemUri,
+                                    share_item_filter.dataFilterUris if share_item_filter else None,
+                                )
+                                else True
                             )
-                            manager.grant_pivot_role_drop_permissions_to_resource_link_table(table)
-                            manager.delete_resource_link_table_in_shared_database(table)
 
-                    if not other_table_shares_in_env:
-                        manager.revoke_external_account_access_on_source_account(table)
+                        if can_delete_resource_link:
+                            manager.grant_pivot_role_drop_permissions_to_resource_link_table(resource_link_name)
+                            manager.delete_resource_link_table_in_shared_database(resource_link_name)
 
                     if (
                         self.share_data.share.groupUri != self.share_data.dataset.SamlAdminGroupName
@@ -305,40 +329,16 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         log.info('Revoking permissions to target shared database...')
                         manager.revoke_principals_database_permissions_to_shared_database()
 
-                        if not manager.is_new_share:
-                            log.info('Deleting OLD target shared database...')
-                            warn(
-                                'share_manager.is_new_share will be deprecated in v2.6.0',
-                                DeprecationWarning,
-                                stacklevel=2,
-                            )
-                            manager.delete_shared_database_in_target()
-
                     existing_shares_with_shared_tables_in_environment = (
-                        S3ShareObjectRepository.list_shares_with_existing_shared_items_in_environment(
+                        S3ShareObjectRepository.list_s3_dataset_shares_with_existing_shared_items(
                             session=self.session,
                             dataset_uri=self.share_data.dataset.datasetUri,
                             environment_uri=self.share_data.target_environment.environmentUri,
                             item_type=ShareableType.Table.value,
                         )
                     )
-                    warn(
-                        'S3ShareObjectRepository.list_shares_with_existing_shared_items_in_environment will be deprecated in v2.6.0',
-                        DeprecationWarning,
-                        stacklevel=2,
-                    )
-                    existing_old_shares_bool = [
-                        manager.glue_client_in_target.database_exists(item['databaseName'])
-                        for item in existing_shares_with_shared_tables_in_environment
-                    ]
-                    log.info(
-                        f'Remaining tables shared from this dataset to this environment = {existing_shares_with_shared_tables_in_environment}, {existing_old_shares_bool}'
-                    )
-                    if manager.is_new_share and False not in existing_old_shares_bool:
+                    if not len(existing_shares_with_shared_tables_in_environment):
                         log.info('Deleting target shared database...')
-                        warn(
-                            'share_manager.is_new_share will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2
-                        )
                         manager.delete_shared_database_in_target()
             except Exception as e:
                 log.error(
@@ -374,16 +374,21 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                 manager.db_level_errors = [str(e)]
 
             for table in self.tables:
+                manager.tbl_level_errors = []
                 log.info(f'Verifying access to table {table.tableUri}/{table.GlueTableName}...')
                 try:
                     share_item = ShareObjectRepository.find_sharable_item(
                         self.session, self.share_data.share.shareUri, table.tableUri
                     )
+                    share_item_filter = None
+                    if share_item.attachedDataFilterUri:
+                        share_item_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(
+                            self.session, share_item.attachedDataFilterUri
+                        )
                     manager.verify_table_exists_in_source_database(share_item, table)
+                    manager.check_target_principals_permissions_to_source_table(table, share_item, share_item_filter)
 
                     if manager.cross_account:
-                        manager.check_target_account_permissions_to_source_table(table)
-
                         if not RamClient.check_ram_invitation_status(
                             source_account_id=manager.source_account_id,
                             source_region=manager.source_account_region,
@@ -400,10 +405,9 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                                     f'{manager.source_database_name}.{table.GlueTableName}',
                                 )
                             )
-
-                    manager.verify_resource_link_table_exists_in_target_database(table)
-                    manager.check_principals_permissions_to_table_in_target(table)
-                    manager.check_principals_permissions_to_resource_link_table(table)
+                    resource_link_name = self._build_resource_link_name(table.GlueTableName, share_item_filter)
+                    manager.verify_resource_link_table_exists_in_target_database(resource_link_name)
+                    manager.check_principals_permissions_to_resource_link_table(resource_link_name)
 
                 except Exception as e:
                     manager.tbl_level_errors = [str(e)]
