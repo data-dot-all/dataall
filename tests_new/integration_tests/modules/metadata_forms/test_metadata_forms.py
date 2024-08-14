@@ -1,12 +1,26 @@
 from assertpy import assert_that
 
 from integration_tests.modules.metadata_forms.queries import list_metadata_forms, get_metadata_form_full_info
-from integration_tests.modules.metadata_forms.mutations import update_metadata_form_fields
+
+from integration_tests.modules.metadata_forms.mutations import (
+    update_metadata_form_fields,
+    delete_metadata_form,
+    delete_metadata_form_field,
+)
 
 
 def test_metadata_form_create(metadata_form_1):
     assert_that(metadata_form_1).is_not_none()
     assert_that(metadata_form_1.uri).is_not_none()
+
+
+def test_delete_unauth(client2, metadata_form_1):
+    err_message_part1 = 'An error occurred (UnauthorizedOperation) when calling DELETE operation:'
+    err_message_part2 = f'is not the owner of the metadata form {metadata_form_1.uri}'
+
+    assert_that(delete_metadata_form).raises(Exception).when_called_with(client2, metadata_form_1.uri).contains(
+        err_message_part1, err_message_part2
+    )
 
 
 def test_list_metadata_forms(client1, metadata_form_1):
@@ -16,6 +30,16 @@ def test_list_metadata_forms(client1, metadata_form_1):
 
     all_uris = [item.uri for item in response.nodes]
     assert_that(all_uris).contains(metadata_form_1.uri)
+
+
+def test_list_metadata_forms_access_control(client2, metadata_form_1, metadata_form_2, metadata_form_3):
+    filter = {'page': 1, 'pageSize': 10}
+    response = list_metadata_forms(client2, filter)
+    all_uris = [item.uri for item in response.nodes]
+    assert_that(all_uris).does_not_contain(metadata_form_2.uri)  # visibility Team Only, team = group1
+    assert_that(all_uris).contains(metadata_form_1.uri)  # visibility: Global
+    assert_that(all_uris).contains(metadata_form_3.uri)  # visibility: Team Only, team = group2
+    # toDo: add tests for Env and Org visibility
 
 
 def test_metadataform_field_create(metadata_form_field_1):
@@ -58,6 +82,33 @@ def test_create_update_field_invalid_value(client1, metadata_form_1, metadata_fo
     assert_that(update_metadata_form_fields).raises(Exception).when_called_with(
         client1, metadata_form_1.uri, [updated_field_data]
     ).contains('InvalidInput', 'from glossary list')
+
+
+def test_delete_metadata_form_field_unauth(client2, metadata_form_1, metadata_form_field_1):
+    err_message_part1 = 'An error occurred (UnauthorizedOperation) when calling DELETE FIELD operation:'
+    err_message_part2 = f'is not the owner of the metadata form {metadata_form_1.uri}'
+
+    assert_that(delete_metadata_form_field).raises(Exception).when_called_with(
+        client2, metadata_form_1.uri, metadata_form_field_1.uri
+    ).contains(err_message_part1, err_message_part2)
+
+
+def test_update_metadata_form_fields_unauth(client2, metadata_form_1, metadata_form_field_1):
+    field_data = {
+        'name': 'field_1',
+        'metadataFormUri': metadata_form_1.uri,
+        'description': 'Field 1',
+        'type': 'String',
+        'required': True,
+        'displayNumber': 1,
+    }
+
+    err_message_part1 = 'An error occurred (UnauthorizedOperation) when calling UPDATE FIELDS operation:'
+    err_message_part2 = f'is not the owner of the metadata form {metadata_form_1.uri}'
+
+    assert_that(update_metadata_form_fields).raises(Exception).when_called_with(
+        client2, metadata_form_1.uri, [field_data]
+    ).contains(err_message_part1, err_message_part2)
 
 
 def test_metadata_form_fields_batch(client1, metadata_form_1, metadata_form_field_1):
