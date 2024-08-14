@@ -208,6 +208,9 @@ def test_revoke_redshift_cross_account_share_all_mocked(
         database=redshift_processor_cross_account._build_local_db_name(),
         rs_role=redshift_processor_cross_account.redshift_role,
     )
+    mock_redshift_data_shares.return_value.drop_schema.assert_called_with(
+        schema=redshift_processor_cross_account._build_external_schema_name()
+    )
     mock_redshift_data_shares.return_value.drop_database.assert_called_with(
         database=redshift_processor_cross_account._build_local_db_name()
     )
