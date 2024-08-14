@@ -7,6 +7,7 @@ import json
 from dataall.core.environment.cdk.environment_stack import EnvironmentSetup
 from dataall.core.environment.db.environment_models import EnvironmentGroup
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
+from tests.skip_conditions import checkov_scan
 
 
 @pytest.fixture(scope='module')
