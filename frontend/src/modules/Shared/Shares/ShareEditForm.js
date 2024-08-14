@@ -408,7 +408,8 @@ export const ShareEditForm = (props) => {
           {sharedItems.nodes.find((item) => item.itemType === 'S3Bucket') && (
             <Alert severity="warning" gutterBottom sx={{ mr: 1 }}>
               Sharing S3Bucket gives Requestor read access to{' '}
-              <b>the entire S3 Bucket</b> superseding Table + Folder shares
+              <b>the entire S3 Bucket</b> superseding Folder shares and
+              providing potential workarounds for Table access
             </Alert>
           )}
         </Box>

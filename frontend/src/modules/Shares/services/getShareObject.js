@@ -17,17 +17,12 @@ export const getShareObject = ({ shareUri, filter }) => ({
         userRoleForShareObject
         canViewLogs
         principal {
-          principalId
-          principalType
           principalName
+          principalType
+          principalId
           principalRoleName
           SamlGroupName
-          environmentUri
           environmentName
-          AwsAccountId
-          region
-          organizationUri
-          organizationName
         }
         items(filter: $filter) {
           count

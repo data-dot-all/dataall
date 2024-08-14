@@ -212,7 +212,7 @@ def table(db):
 
 
 @pytest.fixture(scope='module')
-def table_data_filter(db):
+def table_column_data_filter(db):
     def factory(
         table: DatasetTable,
         name,

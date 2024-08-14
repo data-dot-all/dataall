@@ -32,12 +32,10 @@ class RedshiftShareDataClient:
         execute_dict['Sql'] = sql
         execute_statement_response = self.client.execute_statement(**execute_dict)
 
-        execution_finished = False
-        describe_statement_response = None
-        while not execution_finished:
-            describe_statement_response = self.client.describe_statement(Id=execute_statement_response['Id'])
+        while (describe_statement_response := self.client.describe_statement(Id=execute_statement_response['Id']))[
+            'Status'
+        ] in ['PICKED', 'STARTED', 'SUBMITTED']:
             time.sleep(1)
-            execution_finished = describe_statement_response['Status'] not in ['PICKED', 'STARTED', 'SUBMITTED']
 
         if describe_statement_response['Status'] == 'FAILED':
             raise Exception(describe_statement_response['Error'])
@@ -65,13 +63,17 @@ class RedshiftShareDataClient:
             raise e
 
     @staticmethod
-    def parsed_name(name: str) -> str:
+    def double_quoted_name(name: str) -> str:
         return f'"{name}"'
 
     @staticmethod
-    def parsed_object_names(*names) -> str:
-        parsed_names = [RedshiftShareDataClient.parsed_name(name) for name in names if name]
-        return '.'.join(parsed_names)
+    def single_quoted_name(name: str) -> str:
+        return f"'{name}'"
+
+    @staticmethod
+    def quoted_object_names(*names) -> str:
+        quoted_names = [RedshiftShareDataClient.double_quoted_name(name) for name in names if name]
+        return '.'.join(quoted_names)
 
     def create_datashare(self, datashare: str) -> bool:
         """Create datashare if not already created.
@@ -79,7 +81,7 @@ class RedshiftShareDataClient:
         """
         try:
             log.info(f'Creating {datashare=}...')
-            sql_statement = f'CREATE DATASHARE {RedshiftShareDataClient.parsed_name(datashare)};'
+            sql_statement = f'CREATE DATASHARE {RedshiftShareDataClient.double_quoted_name(datashare)};'
             self._execute_statement(sql=sql_statement)
             return True
         except Exception as e:
@@ -98,7 +100,7 @@ class RedshiftShareDataClient:
         """
         try:
             log.info(f'Dropping {datashare=}...')
-            sql_statement = f'DROP DATASHARE {RedshiftShareDataClient.parsed_name(datashare)};'
+            sql_statement = f'DROP DATASHARE {RedshiftShareDataClient.double_quoted_name(datashare)};'
             self._execute_statement(sql_statement)
         except Exception as e:
             allowed_error_message = f'ERROR: Datashare {datashare} does not exist'
@@ -113,7 +115,7 @@ class RedshiftShareDataClient:
         """Check that datashare exists by describing datashare"""
         try:
             log.info(f'Checking {datashare=}...')
-            sql_statement = f'DESC DATASHARE {RedshiftShareDataClient.parsed_name(datashare)};'
+            sql_statement = f'DESC DATASHARE {RedshiftShareDataClient.double_quoted_name(datashare)};'
             return self._execute_statement(sql=sql_statement)
         except Exception as e:
             log.error(f'Checking of {datashare=} failed due to: {e}')
@@ -123,7 +125,7 @@ class RedshiftShareDataClient:
         """Add schema to datashare if not already added"""
         try:
             log.info(f'Adding schema {schema=} to {datashare=}...')
-            sql_statement = f'ALTER DATASHARE {RedshiftShareDataClient.parsed_name(datashare)} ADD SCHEMA {RedshiftShareDataClient.parsed_name(schema)};'
+            sql_statement = f'ALTER DATASHARE {RedshiftShareDataClient.double_quoted_name(datashare)} ADD SCHEMA {RedshiftShareDataClient.double_quoted_name(schema)};'
             self._execute_statement(sql_statement)
         except Exception as e:
             allowed_error_message = f'ERROR: Schema {schema} is already added to the datashare {datashare}'
@@ -138,7 +140,7 @@ class RedshiftShareDataClient:
         """Check that schema exists in datashare by describing datashare"""
         try:
             log.info(f'Checking {schema=} in {datashare=}...')
-            sql_statement = f'DESC DATASHARE {RedshiftShareDataClient.parsed_name(datashare)};'
+            sql_statement = f'DESC DATASHARE {RedshiftShareDataClient.double_quoted_name(datashare)};'
             records = self._execute_statement_return_records(sql=sql_statement)
             schemas_in_datashare = [
                 [d for d in record][5]['stringValue']
@@ -155,8 +157,10 @@ class RedshiftShareDataClient:
         """Add table to datashare if not already added"""
         try:
             log.info(f'Adding table {table_name=} to {datashare=}...')
-            table = RedshiftShareDataClient.parsed_object_names(self.database, schema, table_name)
-            sql_statement = f'ALTER DATASHARE {RedshiftShareDataClient.parsed_name(datashare)} ADD TABLE {table};'
+            table = RedshiftShareDataClient.quoted_object_names(self.database, schema, table_name)
+            sql_statement = (
+                f'ALTER DATASHARE {RedshiftShareDataClient.double_quoted_name(datashare)} ADD TABLE {table};'
+            )
             self._execute_statement(sql_statement)
         except Exception as e:
             allowed_error_message = f'ERROR: Relation {table_name} is already added to the datashare {datashare}'
@@ -171,7 +175,7 @@ class RedshiftShareDataClient:
         """Check that table exists in datashare by describing datashare"""
         try:
             log.info(f'Checking {table_name=} in {datashare=}...')
-            sql_statement = f'DESC DATASHARE {RedshiftShareDataClient.parsed_name(datashare)};'
+            sql_statement = f'DESC DATASHARE {RedshiftShareDataClient.double_quoted_name(datashare)};'
             records = self._execute_statement_return_records(sql=sql_statement)
             tables_in_datashare = [
                 [d for d in record][5]['stringValue'].split('.')[-1]  # "schemaname.tablename"
@@ -188,8 +192,10 @@ class RedshiftShareDataClient:
         """Remove table from datashare if not already removed"""
         try:
             log.info(f'Removing table {table_name=} from {datashare=}...')
-            table = RedshiftShareDataClient.parsed_object_names(self.database, schema, table_name)
-            sql_statement = f'ALTER DATASHARE {RedshiftShareDataClient.parsed_name(datashare)} REMOVE TABLE {table};'
+            table = RedshiftShareDataClient.quoted_object_names(self.database, schema, table_name)
+            sql_statement = (
+                f'ALTER DATASHARE {RedshiftShareDataClient.double_quoted_name(datashare)} REMOVE TABLE {table};'
+            )
             self._execute_statement(sql_statement)
         except Exception as e:
             allowed_error_message = f'ERROR: Datashare {datashare} does not contain the Relation {table_name}'
@@ -200,13 +206,21 @@ class RedshiftShareDataClient:
                 log.error(f'Removing {table_name=} from {datashare=} failed due to: {e}')
                 raise e
 
-    def grant_usage_to_datashare(self, datashare: str, namespace: str):
+    def grant_datashare_usage_to_namespace(self, datashare: str, namespace: str):
         """Grant usage on datashare to cluster. If already granted, it succeeds"""
         try:
             log.info(f'Grant usage on {datashare=} to {namespace=}..')
-            sql_statement = (
-                f"GRANT USAGE ON DATASHARE {RedshiftShareDataClient.parsed_name(datashare)} TO NAMESPACE '{namespace}';"
-            )
+            sql_statement = f'GRANT USAGE ON DATASHARE {RedshiftShareDataClient.double_quoted_name(datashare)} TO NAMESPACE {RedshiftShareDataClient.single_quoted_name(namespace)};'
+            self._execute_statement(sql=sql_statement)
+        except Exception as e:
+            log.error(f'Granting usage to datashare failed due to: {e}')
+            raise e
+
+    def grant_datashare_usage_to_account(self, datashare: str, account: str):
+        """Grant usage on datashare to AWS account. If already granted, it succeeds"""
+        try:
+            log.info(f'Grant usage on {datashare=} to {account=}..')
+            sql_statement = f'GRANT USAGE ON DATASHARE {RedshiftShareDataClient.double_quoted_name(datashare)} TO ACCOUNT {RedshiftShareDataClient.single_quoted_name(account)};'
             self._execute_statement(sql=sql_statement)
         except Exception as e:
             log.error(f'Granting usage to datashare failed due to: {e}')
@@ -225,17 +239,22 @@ class RedshiftShareDataClient:
             log.error(f'Checking of {datashare=} in consumer namespace failed due to: {e}')
             return False
 
-    def create_database_from_datashare(self, database: str, datashare: str, namespace: str):
+    def create_database_from_datashare(self, database: str, datashare: str, namespace: str, account: str = None):
         """Create database from datashare. If it already exists, it succeeds"""
         try:
             log.info(f'Create {database=} from {datashare=} from source {namespace=}')
-            sql_statement = f"CREATE DATABASE {RedshiftShareDataClient.parsed_name(database)} WITH PERMISSIONS FROM DATASHARE {RedshiftShareDataClient.parsed_name(datashare)} OF NAMESPACE '{namespace}';"
+            if account:
+                sql_statement = f'CREATE DATABASE {RedshiftShareDataClient.double_quoted_name(database)} WITH PERMISSIONS FROM DATASHARE {RedshiftShareDataClient.double_quoted_name(datashare)} OF ACCOUNT {RedshiftShareDataClient.single_quoted_name(account)} NAMESPACE {RedshiftShareDataClient.single_quoted_name(namespace)};'
+            else:
+                sql_statement = f'CREATE DATABASE {RedshiftShareDataClient.double_quoted_name(database)} WITH PERMISSIONS FROM DATASHARE {RedshiftShareDataClient.double_quoted_name(datashare)} OF NAMESPACE {RedshiftShareDataClient.single_quoted_name(namespace)};'
             self._execute_statement(sql=sql_statement)
         except Exception as e:
-            allowed_error_message = f'ERROR: database {RedshiftShareDataClient.parsed_name(database)} already exists'
+            allowed_error_message = (
+                f'ERROR: database {RedshiftShareDataClient.double_quoted_name(database)} already exists'
+            )
             error_message = e.args[0]
             if error_message == allowed_error_message:
-                log.info(f'Database {RedshiftShareDataClient.parsed_name(database)} already exists')
+                log.info(f'Database {RedshiftShareDataClient.double_quoted_name(database)} already exists')
             else:
                 log.error(f'Creation of {database=} failed due to: {e}')
                 raise e
@@ -244,14 +263,16 @@ class RedshiftShareDataClient:
         """Delete database, if not deleted already"""
         try:
             log.info(f'Dropping {database=}...')
-            sql_statement = f'DROP DATABASE {RedshiftShareDataClient.parsed_name(database)};'
+            sql_statement = f'DROP DATABASE {RedshiftShareDataClient.double_quoted_name(database)};'
             self._execute_statement(sql=sql_statement)
         except Exception as e:
-            allowed_error_message = f'ERROR: database {RedshiftShareDataClient.parsed_name(database)} does not exist'
+            allowed_error_message = (
+                f'ERROR: database {RedshiftShareDataClient.double_quoted_name(database)} does not exist'
+            )
             error_message = e.args[0]
             if error_message == allowed_error_message:
                 log.info(
-                    f'Database {RedshiftShareDataClient.parsed_name(database)} does not exist. No need to drop it any more.'
+                    f'Database {RedshiftShareDataClient.double_quoted_name(database)} does not exist. No need to drop it any more.'
                 )
             else:
                 log.error(f'Dropping {database=} failed due to: {e}')
@@ -274,9 +295,7 @@ class RedshiftShareDataClient:
         """Grant usage on database to a role. If already granted, it succeeds"""
         try:
             log.info(f'Grant usage on {database=} to Redshift role {rs_role=}..')
-            sql_statement = (
-                f'GRANT USAGE ON DATABASE {RedshiftShareDataClient.parsed_name(database)} TO ROLE {rs_role} ;'
-            )
+            sql_statement = f'GRANT USAGE ON DATABASE {RedshiftShareDataClient.double_quoted_name(database)} TO ROLE {RedshiftShareDataClient.double_quoted_name(rs_role)} ;'
             self._execute_statement(sql=sql_statement)
         except Exception as e:
             log.error(f'Granting usage to {database=} to {rs_role=} failed due to: {e}')
@@ -286,9 +305,7 @@ class RedshiftShareDataClient:
         """Revoke usage on database to a role. If already revoked, it succeeds"""
         try:
             log.info(f'Revoke usage on {database=} to Redshift role {rs_role=}..')
-            sql_statement = (
-                f'REVOKE USAGE ON DATABASE {RedshiftShareDataClient.parsed_name(database)} FROM ROLE {rs_role} ;'
-            )
+            sql_statement = f'REVOKE USAGE ON DATABASE {RedshiftShareDataClient.double_quoted_name(database)} FROM ROLE {RedshiftShareDataClient.double_quoted_name(rs_role)} ;'
             self._execute_statement(sql=sql_statement)
         except Exception as e:
             log.error(f'Revoking usage to {database=} to {rs_role=} failed due to: {e}')
@@ -298,7 +315,7 @@ class RedshiftShareDataClient:
         """Check role permissions in database by querying SVV_DATABASE_PRIVILEGES"""
         try:
             log.info(f'Check if Redshift role {rs_role=} has usage permissions on {database=}..')
-            sql_statement = f"SELECT database_name, privilege_type, identity_name, identity_type from SVV_DATABASE_PRIVILEGES where database_name='{database}' and identity_name='{rs_role}' and identity_type='role' and privilege_type='USAGE';"
+            sql_statement = f"SELECT database_name, privilege_type, identity_name, identity_type from SVV_DATABASE_PRIVILEGES where database_name={RedshiftShareDataClient.single_quoted_name(database)} and identity_name={RedshiftShareDataClient.single_quoted_name(rs_role)} and identity_type='role' and privilege_type='USAGE';"
             records = self._execute_statement_return_records(sql=sql_statement)
             return len(records) > 0
         except Exception as e:
@@ -309,11 +326,11 @@ class RedshiftShareDataClient:
         """Create external schema. If already exists, it succeeds"""
         try:
             log.info(f'Create external schema {external_schema=} in {database=}')
-            sql_statement = f'CREATE EXTERNAL SCHEMA {RedshiftShareDataClient.parsed_name(external_schema)} FROM REDSHIFT DATABASE {RedshiftShareDataClient.parsed_name(database)} SCHEMA {RedshiftShareDataClient.parsed_name(schema)};'
+            sql_statement = f'CREATE EXTERNAL SCHEMA {RedshiftShareDataClient.double_quoted_name(external_schema)} FROM REDSHIFT DATABASE {RedshiftShareDataClient.double_quoted_name(database)} SCHEMA {RedshiftShareDataClient.double_quoted_name(schema)};'
             self._execute_statement(sql=sql_statement)
         except Exception as e:
             allowed_error_message = (
-                f'ERROR: Schema {RedshiftShareDataClient.parsed_name(external_schema)} already exists'
+                f'ERROR: Schema {RedshiftShareDataClient.double_quoted_name(external_schema)} already exists'
             )
             error_message = e.args[0]
             if error_message == allowed_error_message:
@@ -328,7 +345,7 @@ class RedshiftShareDataClient:
         """
         try:
             log.info(f'Checking {schema=} exists...')
-            sql_statement = f'SHOW SCHEMAS FROM DATABASE {RedshiftShareDataClient.parsed_name(database)};'
+            sql_statement = f'SHOW SCHEMAS FROM DATABASE {RedshiftShareDataClient.double_quoted_name(database)};'
             records = self._execute_statement_return_records(sql=sql_statement)
             schemas_in_database = [[d for d in record][1]['stringValue'] for record in records]  # schema_name
             log.info(f'Found {schemas_in_database=}')
@@ -341,7 +358,7 @@ class RedshiftShareDataClient:
         """Grant usage on schema to a role. If already granted, it succeeds"""
         try:
             log.info(f'Grant usage on {database=} {schema=} to Redshift role {rs_role=}..')
-            sql_statement = f'GRANT USAGE ON SCHEMA {RedshiftShareDataClient.parsed_object_names(database, schema)} TO ROLE {rs_role};'
+            sql_statement = f'GRANT USAGE ON SCHEMA {RedshiftShareDataClient.quoted_object_names(database, schema)} TO ROLE {RedshiftShareDataClient.double_quoted_name(rs_role)};'
             self._execute_statement(sql=sql_statement)
         except Exception as e:
             log.error(f'Granting usage to {schema=} to {rs_role=} failed due to: {e}')
@@ -351,7 +368,7 @@ class RedshiftShareDataClient:
         """Revoke usage on schema to a role. If already granted, it succeeds"""
         try:
             log.info(f'Revoke usage on {schema=} to Redshift role {rs_role=}..')
-            sql_statement = f'REVOKE USAGE ON SCHEMA {RedshiftShareDataClient.parsed_name(schema)} FROM ROLE {rs_role};'
+            sql_statement = f'REVOKE USAGE ON SCHEMA {RedshiftShareDataClient.double_quoted_name(schema)} FROM ROLE {RedshiftShareDataClient.double_quoted_name(rs_role)};'
             self._execute_statement(sql=sql_statement)
         except Exception as e:
             log.error(f'Revoking usage to {schema=} to {rs_role=} failed due to: {e}')
@@ -360,7 +377,7 @@ class RedshiftShareDataClient:
     def check_role_permissions_in_schema(self, schema: str, rs_role: str):
         """Check role permissions in schema. List permissions by querying SVV_SCHEMA_PRIVILEGES"""
         try:
-            sql_statement = f"SELECT namespace_name, privilege_type, identity_name, identity_type from SVV_SCHEMA_PRIVILEGES where namespace_name='{schema}' and identity_name='{rs_role}' and identity_type='role' and privilege_type='USAGE';"
+            sql_statement = f"SELECT namespace_name, privilege_type, identity_name, identity_type from SVV_SCHEMA_PRIVILEGES where namespace_name={RedshiftShareDataClient.single_quoted_name(schema)} and identity_name={RedshiftShareDataClient.single_quoted_name(rs_role)} and identity_type='role' and privilege_type='USAGE';"
             records = self._execute_statement_return_records(sql=sql_statement)
             return len(records) > 0
         except Exception as e:
@@ -375,7 +392,7 @@ class RedshiftShareDataClient:
         """
         try:
             log.info(f'Grant select on {table=} from {schema=} and {database=} to Redshift role {rs_role=}..')
-            sql_statement = f'GRANT SELECT ON {RedshiftShareDataClient.parsed_object_names(database, schema, table)} TO ROLE {rs_role};'
+            sql_statement = f'GRANT SELECT ON {RedshiftShareDataClient.quoted_object_names(database, schema, table)} TO ROLE {RedshiftShareDataClient.double_quoted_name(rs_role)};'
             self._execute_statement(sql=sql_statement)
         except Exception as e:
             log.error(f'Granting select to {table=} from {schema=} and {database=} to {rs_role=} failed due to: {e}')
@@ -389,10 +406,10 @@ class RedshiftShareDataClient:
         """
         try:
             log.info(f'Revoke select on {table=} from {schema=} and {database=} to Redshift role {rs_role=}..')
-            sql_statement = f'REVOKE SELECT ON {RedshiftShareDataClient.parsed_object_names(database, schema, table)} FROM ROLE {rs_role};'
+            sql_statement = f'REVOKE SELECT ON {RedshiftShareDataClient.quoted_object_names(database, schema, table)} FROM ROLE {RedshiftShareDataClient.double_quoted_name(rs_role)};'
             self._execute_statement(sql=sql_statement)
         except Exception as e:
-            allowed_error_message = f'ERROR: Object {RedshiftShareDataClient.parsed_name(table)} does not exist'
+            allowed_error_message = f'ERROR: Object {RedshiftShareDataClient.double_quoted_name(table)} does not exist'
             error_message = e.args[0]
             if error_message == allowed_error_message:
                 log.info(f'{table=} does not exists, no permissions can be revoked')

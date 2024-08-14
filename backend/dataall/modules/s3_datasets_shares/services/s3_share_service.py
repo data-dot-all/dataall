@@ -1,5 +1,4 @@
 import logging
-from warnings import warn
 
 from dataall.base.db import utils
 from dataall.base.context import get_context
@@ -9,9 +8,9 @@ from dataall.core.permissions.services.tenant_policy_service import TenantPolicy
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.tasks.service_handlers import Worker
-from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_object_item_repositories import ShareObjectItemRepository
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.services.share_item_service import ShareItemService
 from dataall.modules.shares_base.services.share_permissions import GET_SHARE_OBJECT
@@ -19,7 +18,6 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareableType,
     ShareItemStatus,
 )
-from dataall.modules.s3_datasets.services.dataset_permissions import GET_DATASET_TABLE
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem
 from dataall.modules.s3_datasets.services.dataset_table_data_filter_enums import DataFilterType
 
@@ -33,9 +31,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     CREDENTIALS_DATASET,
     DATASET_TABLE_READ,
     DATASET_FOLDER_READ,
-)
-from dataall.modules.shares_base.services.share_permissions import (
-    APPROVE_SHARE_OBJECT,
+    GET_DATASET_TABLE,
 )
 from dataall.modules.s3_datasets_shares.db.s3_share_object_repositories import S3ShareObjectRepository
 from dataall.modules.s3_datasets_shares.aws.glue_client import GlueClient
@@ -184,7 +180,11 @@ class S3ShareService:
                 )
             )
             return [
-                {'tableUri': res[0], 'GlueTableName': res[1] + (f'_{res[2]}' if res[2] else '')}
+                {
+                    'tableUri': res.tableUri,
+                    'GlueTableName': res.GlueTableName
+                    + (f'_{res.resourceLinkSuffix}' if res.resourceLinkSuffix else ''),
+                }
                 for res in S3ShareObjectRepository.query_dataset_tables_shared_with_env(
                     session, env_uri, dataset_uri, context.username, context.groups
                 )
@@ -271,7 +271,7 @@ class S3ShareService:
             share_item: ShareObjectItem = ShareObjectRepository.find_sharable_item(session, shareUri, uri)
             filtered_columns = []
             if share_item.attachedDataFilterUri:
-                item_data_filter = S3ShareObjectRepository.get_share_item_data_filter_by_uri(
+                item_data_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(
                     session, share_item.attachedDataFilterUri
                 )
                 for filter_uri in item_data_filter.dataFilterUris:
@@ -293,7 +293,7 @@ class S3ShareService:
     )
     def list_table_data_filters_by_attached(uri: str, data: dict):
         with get_context().db_engine.scoped_session() as session:
-            item_data_filter = S3ShareObjectRepository.get_share_item_data_filter_by_uri(session, uri)
+            item_data_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(session, uri)
             data['filterUris'] = item_data_filter.dataFilterUris
             return DatasetTableDataFilterRepository.paginated_data_filters(
                 session, table_uri=item_data_filter.itemUri, data=data

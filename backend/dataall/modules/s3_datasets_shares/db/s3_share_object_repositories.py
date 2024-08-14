@@ -1,5 +1,4 @@
 import logging
-from warnings import warn
 from typing import List
 
 from sqlalchemy import and_, or_
@@ -16,8 +15,7 @@ from dataall.base.db import exceptions
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject, ShareObjectItemDataFilter
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset, DatasetTableDataFilter
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 
 logger = logging.getLogger(__name__)
@@ -217,9 +215,9 @@ class S3ShareObjectRepository:
         share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
         env_tables_shared_query = (
             session.query(
-                DatasetTable.tableUri,
-                DatasetTable.GlueTableName,
-                ShareObjectItemDataFilter.label,
+                DatasetTable.tableUri.label('tableUri'),
+                DatasetTable.GlueTableName.label('GlueTableName'),
+                ShareObjectItemDataFilter.label.label('resourceLinkSuffix'),
             )
             .join(
                 ShareObjectItem,
@@ -247,13 +245,6 @@ class S3ShareObjectRepository:
             )
         )
         return env_tables_shared_query.all()
-
-    @staticmethod
-    def get_share_item_data_filter_by_uri(session, attached_filter_uri):
-        item_data_filter: ShareObjectItemDataFilter = session.query(ShareObjectItemDataFilter).get(attached_filter_uri)
-        if not item_data_filter:
-            raise exceptions.ObjectNotFound('ShareObjectItemDataFilter', attached_filter_uri)
-        return item_data_filter
 
     @staticmethod
     def query_shared_glue_databases(session, groups, env_uri, group_uri):

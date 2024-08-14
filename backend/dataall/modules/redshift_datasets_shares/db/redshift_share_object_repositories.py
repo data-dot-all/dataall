@@ -3,6 +3,7 @@ import logging
 from sqlalchemy import and_
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.modules.shares_base.services.shares_enums import (
+    ShareItemStatus,
     ShareableType,
     PrincipalType,
 )
@@ -81,8 +82,9 @@ class RedshiftShareRepository:
     def _query_other_shared_items_redshift_table_with_connection(
         session, share_uri: str, table_uri: str, connection_uri: str
     ):
-        """Query all SHARED shares for a table with a namespace as target besides the one passed"""
+        """Query all SHARED shares - Revoke_In_Progress for a table with a namespace as target besides the one passed"""
         share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
+        share_item_shared_states.remove(ShareItemStatus.Revoke_In_Progress.value)
         query = (
             session.query(ShareObjectItem)
             .outerjoin(
@@ -110,8 +112,9 @@ class RedshiftShareRepository:
 
     @staticmethod
     def _query_dataset_shared_items_with_redshift_role(session, dataset_uri: str, rs_role: str, connection_uri: str):
-        """Query all SHARED items of a dataset for a redshift role"""
+        """Query all SHARED items - Revoke_In_Progress of a dataset for a redshift role"""
         share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
+        share_item_shared_states.remove(ShareItemStatus.Revoke_In_Progress.value)
         query = (
             session.query(ShareObjectItem)
             .outerjoin(ShareObject, ShareObject.shareUri == ShareObjectItem.shareUri)
@@ -136,8 +139,9 @@ class RedshiftShareRepository:
 
     @staticmethod
     def _query_dataset_shared_items_with_namespace(session, dataset_uri: str, connection_uri: str):
-        """Query all SHARED shares of a dataset for a namespace"""
+        """Query all SHARED shares - Revoke_In_Progress of a dataset for a namespace"""
         share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
+        share_item_shared_states.remove(ShareItemStatus.Revoke_In_Progress.value)
         query = (
             session.query(ShareObjectItem)
             .outerjoin(ShareObject, ShareObject.shareUri == ShareObjectItem.shareUri)

@@ -2,7 +2,6 @@ import { LoadingButton } from '@mui/lab';
 import {
   Box,
   CardContent,
-  CardHeader,
   Dialog,
   FormHelperText,
   Typography,
@@ -243,7 +242,7 @@ export const ShareItemFilterModal = (props) => {
           gutterBottom
           variant="h4"
         >
-          Assign data filters to a table share item {item.itemName}
+          Assign data filters to {item.itemName}
         </Typography>
         <Typography align="center" color="textSecondary" variant="subtitle2">
           Data filters allow data.all share approvers to restrict data access by
@@ -294,8 +293,6 @@ export const ShareItemFilterModal = (props) => {
                         variant="outlined"
                       />
                     </CardContent>
-                    <CardHeader fullWidth title="Select Data Filters" />
-
                     <Link
                       underline="hover"
                       component={RouterLink}
@@ -307,6 +304,22 @@ export const ShareItemFilterModal = (props) => {
                     </Link>
                     <Box fullWidth>
                       <DataGrid
+                        sx={{
+                          wordWrap: 'break-word', //TODO: create a generic styled datagrid to be used across features
+                          '& .MuiDataGrid-row': {
+                            borderBottom: '1px solid rgba(145, 158, 171, 0.24)'
+                          },
+                          '& .MuiDataGrid-columnHeaders': {
+                            borderBottom: 0.5
+                          },
+                          '&.MuiDataGrid-root--densityStandard .MuiDataGrid-cell':
+                            {
+                              py: '15px'
+                            }
+                          // '& .MuiDataGrid-cell:hover': {
+                          //   color: theme.palette.primary.main
+                          // },
+                        }}
                         fullWidth
                         autoHeight
                         scrollbarSize={50}

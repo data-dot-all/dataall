@@ -661,7 +661,12 @@ export const TableDataFilterAddForm = (props) => {
                       fullWidth
                       startIcon={<GroupAddOutlined fontSize="small" />}
                       color="primary"
-                      disabled={isSubmitting || loadingColumns}
+                      disabled={
+                        isSubmitting ||
+                        loadingColumns ||
+                        (!rowExpressionRows.length &&
+                          !values.includedCols.length)
+                      }
                       type="submit"
                       variant="contained"
                     >

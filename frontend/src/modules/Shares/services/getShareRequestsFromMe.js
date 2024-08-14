@@ -18,17 +18,12 @@ export const getShareRequestsFromMe = ({ filter }) => ({
           status
           userRoleForShareObject
           principal {
-            principalId
-            principalType
             principalName
+            principalType
+            principalId
             principalRoleName
             SamlGroupName
-            environmentUri
             environmentName
-            AwsAccountId
-            region
-            organizationUri
-            organizationName
           }
           statistics {
             sharedItems
@@ -39,6 +34,7 @@ export const getShareRequestsFromMe = ({ filter }) => ({
           dataset {
             datasetUri
             datasetName
+            datasetType
             SamlAdminGroupName
             environmentName
             exists

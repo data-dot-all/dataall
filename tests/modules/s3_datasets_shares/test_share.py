@@ -147,9 +147,8 @@ def table3(table: typing.Callable, dataset3: S3Dataset) -> DatasetTable:
 
 
 @pytest.fixture(scope='module')
-def table_data_filter_fixture(db, table_fixture, table_data_filter, group, user):
-    table_data_filter = table_data_filter(table=table_fixture, name='datafilter1', filterType='COLUMN')
-    yield table_data_filter
+def table_data_filter_fixture(db, table_fixture, table_column_data_filter, group, user):
+    yield table_column_data_filter(table=table_fixture, name='datafilter1', filterType='COLUMN')
 
 
 @pytest.fixture(scope='function')
@@ -475,17 +474,12 @@ def get_share_object(client, user, group, shareUri, filter):
         rejectPurpose
         userRoleForShareObject
         principal {
-          principalId
-          principalType
           principalName
+          principalType
+          principalId
           principalRoleName
           SamlGroupName
-          environmentUri
           environmentName
-          AwsAccountId
-          region
-          organizationUri
-          organizationName
         }
         items(filter: $filter) {
           count
@@ -1148,7 +1142,6 @@ def test_get_share_object(client, share1_draft, user, group):
     assert get_share_object_response.data.getShareObject.get('principal').principalType == PrincipalType.Group.name
     assert get_share_object_response.data.getShareObject.get('principal').principalRoleName
     assert get_share_object_response.data.getShareObject.get('principal').SamlGroupName
-    assert get_share_object_response.data.getShareObject.get('principal').region
 
 
 def test_update_share_request_purpose(client, share1_draft, user2, group2):

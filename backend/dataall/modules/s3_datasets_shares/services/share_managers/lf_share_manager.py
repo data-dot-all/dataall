@@ -1,7 +1,6 @@
 import logging
 import time
 from datetime import datetime
-from warnings import warn
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.s3_datasets_shares.aws.glue_client import GlueClient
 from dataall.modules.s3_datasets_shares.aws.lakeformation_client import LakeFormationClient

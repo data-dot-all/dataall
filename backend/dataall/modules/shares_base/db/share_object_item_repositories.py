@@ -1,22 +1,8 @@
 import logging
-from sqlalchemy import and_, or_, func, case
-from sqlalchemy.orm import Query
-from typing import List
 
-from dataall.base.db import exceptions, paginate
-from dataall.base.db.paginator import Page
-from dataall.core.organizations.db.organization_models import Organization
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
-from dataall.modules.datasets_base.db.dataset_models import DatasetBase
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
-from dataall.modules.notifications.db.notification_models import Notification
-from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject, ShareObjectItemDataFilter
+from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObjectItemDataFilter
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
-
-from dataall.modules.shares_base.services.shares_enums import (
-    ShareItemHealthStatus,
-    PrincipalType,
-)
+from dataall.base.db import exceptions
 
 logger = logging.getLogger(__name__)
 
@@ -24,11 +10,10 @@ logger = logging.getLogger(__name__)
 class ShareObjectItemRepository:
     @staticmethod
     def get_share_item_filter_by_uri(session, attached_filter_uri):
-        return (
-            session.query(ShareObjectItemDataFilter)
-            .filter(ShareObjectItemDataFilter.attachedDataFilterUri == attached_filter_uri)
-            .first()
-        )
+        item_data_filter: ShareObjectItemDataFilter = session.query(ShareObjectItemDataFilter).get(attached_filter_uri)
+        if not item_data_filter:
+            raise exceptions.ObjectNotFound('ShareObjectItemDataFilter', attached_filter_uri)
+        return item_data_filter
 
     @staticmethod
     def count_all_share_item_filters_with_data_filter_uri(session, filter_uri):
@@ -45,15 +30,15 @@ class ShareObjectItemRepository:
         return session.query(ShareObjectItem).filter(ShareObjectItem.attachedDataFilterUri == uri).first()
 
     @staticmethod
-    def delete_share_item_filter(session, share_item_filter) -> bool:
+    def delete_share_item_filter(session, share_item_filter) -> None:
         session.delete(share_item_filter)
 
     @staticmethod
-    def update_share_item_filters(
+    def update_share_item_filter(
         session,
         share_item_filter: ShareObjectItemDataFilter,
         data: dict,
-    ) -> bool:
+    ) -> ShareObjectItemDataFilter:
         share_item_filter.label = data.get('label')
         share_item_filter.dataFilterUris = data.get('filterUris')
         share_item_filter.dataFilterNames = data.get('filterNames')
@@ -61,11 +46,11 @@ class ShareObjectItemRepository:
         return share_item_filter
 
     @staticmethod
-    def create_share_item_filters(
+    def create_share_item_filter(
         session,
-        share_item: str,
+        share_item: ShareObjectItem,
         data: dict,
-    ) -> bool:
+    ) -> ShareObjectItemDataFilter:
         share_item_data_filter = ShareObjectItemDataFilter(
             label=data.get('label'),
             itemUri=share_item.itemUri,
