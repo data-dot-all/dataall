@@ -74,12 +74,12 @@ class ShareObjectService:
     ):
         log.info(f'Validating share object {share_action.value} for {dataset_type.value=}')
         for type, validator in cls.SHARING_VALIDATORS.items():
-            if type == dataset_type:
-                if share_action == ShareObjectActions.Create:
+            if type.value == dataset_type.value:
+                if share_action.value == ShareObjectActions.Create.value:
                     validator.validate_share_object_create(session, dataset_uri, *args, **kwargs)
-                elif share_action == ShareObjectActions.Submit:
+                elif share_action.value == ShareObjectActions.Submit.value:
                     validator.validate_share_object_submit(session, dataset_uri, *args, **kwargs)
-                elif share_action == ShareObjectActions.Approve.value:
+                elif share_action.value == ShareObjectActions.Approve.value:
                     validator.validate_share_object_approve(session, dataset_uri, *args, **kwargs)
                 else:
                     raise ValueError(f'Invalid share action {share_action.value}')
@@ -254,11 +254,10 @@ class ShareObjectService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
-            if share.principalType in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value]:
-                cls.validate_share_object(
-                    share_action=ShareObjectActions.Approve,
+            cls.validate_share_object(
+                share_action=ShareObjectActions.Approve,
                 dataset_type=dataset.datasetType,
-                    session=session,
+                session=session,
                 dataset_uri=dataset.dataset_uri,
                 share=share,
             )

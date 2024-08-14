@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 
 class S3ShareValidator(SharesCreationValidatorInterface):
     @staticmethod
-    def validate_share_object_creation(session, dataset_uri, *args, **kwargs) -> bool:
+    def validate_share_object_create(session, dataset_uri, *args, **kwargs) -> bool:
         log.info('Verifying S3 share request input')
         principal_id = kwargs.get('principal_id')
         principal_type = kwargs.get('principal_type')

@@ -89,7 +89,6 @@ class RedshiftShareDataClient:
             log.error(f'Checking of {role=} failed due to: {e}')
             return False
 
-
     def create_datashare(self, datashare: str) -> bool:
         """Create datashare if not already created.
         Returns: bool: True if created, False if already exists
