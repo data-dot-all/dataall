@@ -2,7 +2,6 @@ import os
 import json
 import logging
 from typing import List
-from dataall.core.resource_lock.db.resource_lock_repositories import ResourceLockRepository
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db import exceptions
 from dataall.base.utils.naming_convention import NamingConventionPattern
@@ -284,6 +283,9 @@ class DatasetService:
                 if data.get('terms'):
                     GlossaryRepository.set_glossary_terms_links(session, username, uri, 'Dataset', data.get('terms'))
                 DatasetBaseRepository.update_dataset_activity(session, dataset, username)
+
+                if dataset.enableExpiration:
+                    DatasetRepository.update_dataset_shares_expiration(session=session, dataset=dataset)
 
             DatasetIndexer.upsert(session, dataset_uri=uri)
 

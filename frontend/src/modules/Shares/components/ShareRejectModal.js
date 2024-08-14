@@ -25,7 +25,7 @@ export const ShareRejectModal = (props) => {
           gutterBottom
           variant="h4"
         >
-          Reject Share {share.submittedForExtension ? "Extension" : ""}
+          Reject Share {share.submittedForExtension ? 'Extension' : ''}
         </Typography>
         <Box sx={{ mt: 2 }}>
           <Typography align="center" variant="subtitle2" color="textSecondary">
@@ -94,7 +94,8 @@ export const ShareRejectModal = (props) => {
                     type="submit"
                     variant="contained"
                   >
-                    Reject Share {share.submittedForExtension ? "Extension" : ""}
+                    Reject Share{' '}
+                    {share.submittedForExtension ? 'Extension' : ''}
                   </LoadingButton>
                 </CardContent>
               </form>

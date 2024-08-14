@@ -19,6 +19,8 @@ class DataSharingNotificationType(enum.Enum):
     SHARE_OBJECT_SUBMITTED = 'SHARE_OBJECT_SUBMITTED'
     SHARE_ITEM_REQUEST = 'SHARE_ITEM_REQUEST'
     SHARE_OBJECT_APPROVED = 'SHARE_OBJECT_APPROVED'
+    SHARE_OBJECT_EXTENDED = 'SHARE_OBJECT_EXTENDED'
+    SHARE_OBJECT_EXTENSION_REJECTED = 'SHARE_OBJECT_EXTENSION_REJECTED'
     SHARE_OBJECT_REJECTED = 'SHARE_OBJECT_REJECTED'
     SHARE_OBJECT_PENDING_APPROVAL = 'SHARE_OBJECT_PENDING_APPROVAL'
     DATASET_VERSION = 'DATASET_VERSION'
@@ -71,19 +73,20 @@ class ShareNotificationService:
         on behalf of principal "{self.share.principalId}" is still pending and has not been addressed.
         """
 
-        msg_end = """Your prompt attention to this matter is greatly appreciated.
-        Best regards,
-        The Data.all Team
+        msg_end = """Your prompt attention in this matter is greatly appreciated.
+        <br><br>Best regards,
+        <br>The Data.all Team
         """
 
         subject = f'URGENT REMINDER: Data.all | Action Required on Pending Share Request for {self.dataset.label}'
         email_notification_msg = msg_intro + share_link_text + msg_end
 
+        html_tag_translation_table = str.maketrans({'<br>': '', '<b>': '', '</b>': ''})
         notifications = self.register_notifications(
-            notification_type=DataSharingNotificationType.SHARE_OBJECT_SUBMITTED.value, msg=msg_intro
+            notification_type=DataSharingNotificationType.SHARE_OBJECT_SUBMITTED.value, msg=msg_intro.translate(html_tag_translation_table)
         )
 
-        self._create_persistent_reminder_notification_task(subject=subject, msg=email_notification_msg)
+        self._create_and_send_email_notifications(subject=subject, msg=email_notification_msg, recipient_groups_list=[self.dataset.SamlAdminGroupName, self.dataset.stewards])
         return notifications
 
     def notify_share_object_approval(self, email_id: str):
@@ -103,6 +106,28 @@ class ShareNotificationService:
 
         notifications = self.register_notifications(
             notification_type=DataSharingNotificationType.SHARE_OBJECT_APPROVED.value, msg=msg
+        )
+
+        self._create_notification_task(subject=subject, msg=email_notification_msg)
+        return notifications
+
+    def notify_share_object_extension_approval(self, email_id: str):
+        share_link_text = ''
+        if os.environ.get('frontend_domain_url'):
+            share_link_text = (
+                f'<br><br> Please visit data.all <a href="{os.environ.get("frontend_domain_url")}'
+                f'/console/shares/{self.share.shareUri}">share link </a> '
+                f'to take action or view more details'
+            )
+        msg = (
+            f'User {email_id} APPROVED share extension request for dataset {self.dataset.label} '
+            f'for principal {self.share.principalId}'
+        )
+        subject = f'Data.all | Share Extension Request Approved for {self.dataset.label}'
+        email_notification_msg = msg + share_link_text
+
+        notifications = self.register_notifications(
+            notification_type=DataSharingNotificationType.SHARE_OBJECT_EXTENDED.value, msg=msg
         )
 
         self._create_notification_task(subject=subject, msg=email_notification_msg)
@@ -142,10 +167,74 @@ class ShareNotificationService:
         email_notification_msg = msg + share_link_text
 
         notifications = self.register_notifications(
-            notification_type=DataSharingNotificationType.SHARE_OBJECT_REJECTED.value, msg=msg
+            notification_type=DataSharingNotificationType.SHARE_OBJECT_EXTENSION_REJECTED.value, msg=msg
         )
 
         self._create_notification_task(subject=subject, msg=email_notification_msg)
+        return notifications
+
+    def notify_share_expiration_to_owners(self):
+        share_link_text = ''
+        if os.environ.get('frontend_domain_url'):
+            share_link_text = (
+                f'<br><br>Please visit data.all <a href="{os.environ.get("frontend_domain_url")}'
+                f'/console/shares/{self.share.shareUri}">share link</a> '
+                f'to review and take actions on the share extension request'
+            )
+
+        msg_intro = f"""Dear User, <br>
+                This is a reminder that there is a <b>pending share extension</b> request on dataset "{self.dataset.label}".
+                <br><br><b>Note: If you fail to take action on the share request and if it expires, the share item will be revoked which will result in loss of access for the requesters.</b>
+                """
+
+        msg_end = """Your prompt attention in this matter is greatly appreciated.
+              <br><br>Best regards,
+              <br>The Data.all Team
+              """
+
+        subject = f'URGENT REMINDER: Data.all | Action Required on Pending Share Extension Request for {self.dataset.label}'
+        email_notification_msg = msg_intro + share_link_text + msg_end
+
+        html_tag_translation_table = str.maketrans({'<br>': '', '<b>': '', '</b>': ''})
+        notifications = self.register_notifications(
+            notification_type=DataSharingNotificationType.SHARE_OBJECT_EXTENDED.value, msg=msg_intro.translate(html_tag_translation_table)
+        )
+
+        self._create_and_send_email_notifications(subject=subject, msg=email_notification_msg,
+                                                  recipient_groups_list=[self.dataset.SamlAdminGroupName,
+                                                                         self.dataset.stewards])
+        return notifications
+
+
+    def notify_share_expiration_to_requesters(self):
+        share_link_text = ''
+        if os.environ.get('frontend_domain_url'):
+            share_link_text = (
+                f'<br><br>Please visit data.all <a href="{os.environ.get("frontend_domain_url")}'
+                f'/console/shares/{self.share.shareUri}">share link</a> '
+                f'to review and create a share extension request'
+            )
+
+        msg_intro = f"""Dear User, <br>
+                   This is a reminder that your share request for the dataset "{self.dataset.label}" will get expired on {self.share.expiryDate.date().strftime("%B %d, %Y")}. Please request a share extension request before it to have continued access to the dataset.
+                   <br><br><b>Note: If you fail request for an extension and if it expires, the share item will be revoked which will result in loss of access to the dataset.</b>
+                   """
+
+        msg_end = """Your prompt attention in this matter is greatly appreciated.
+                 <br><br>Best regards,
+                 <br>The Data.all Team
+                 """
+
+        subject = f'ACTION REQUIRED: Data.all | Share Expiration Approaching Soon'
+        email_notification_msg = msg_intro + share_link_text + msg_end
+
+        html_tag_translation_table = str.maketrans({'<br>': '', '<b>': '', '</b>': ''})
+        notifications = self.register_notifications(
+            notification_type=DataSharingNotificationType.SHARE_OBJECT_EXTENDED.value, msg=msg_intro.translate(html_tag_translation_table)
+        )
+
+        self._create_and_send_email_notifications(subject=subject, msg=email_notification_msg,
+                                                  recipient_groups_list=[self.share.groupUri])
         return notifications
 
     def _get_share_object_targeted_users(self):
@@ -222,6 +311,35 @@ class ShareNotificationService:
                     log.info(f'Notification type : {share_notification_config_type} is not active')
         else:
             log.info('Notifications are not active')
+
+    def _create_and_send_email_notifications(self, subject, msg, recipient_groups_list=None, recipient_email_ids=None):
+        """
+             Method to directly send email notification instead of creating an SQS Task
+             This approach is used while sending email notifications in an ECS task ( e.g. persistent email reminder task, share expiration task, etc )
+             Emails send to groups mentioned in recipient_groups_list and / or emails mentioned in recipient_email_ids
+        """
+        if recipient_groups_list is None:
+            recipient_groups_list = []
+        if recipient_email_ids is None:
+            recipient_email_ids = []
+
+        share_notification_config = config.get_property(
+            'modules.datasets_base.features.share_notifications', default=None
+        )
+        if share_notification_config:
+            for share_notification_config_type in share_notification_config.keys():
+                n_config = share_notification_config[share_notification_config_type]
+                if n_config.get('active', False) == True:
+
+                    if share_notification_config_type == 'email':
+                        SESEmailNotificationService.send_email_task(
+                            subject, msg, recipient_groups_list, recipient_email_ids
+                        )
+                else:
+                    log.info(f'Notification type : {share_notification_config_type} is not active')
+        else:
+            log.info('Notifications are not active')
+
 
     def _create_persistent_reminder_notification_task(self, subject, msg):
         """

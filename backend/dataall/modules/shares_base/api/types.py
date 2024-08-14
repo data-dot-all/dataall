@@ -99,7 +99,8 @@ DatasetLink = gql.ObjectType(
         gql.Field(name='region', type=gql.String),
         gql.Field(name='exists', type=gql.Boolean),
         gql.Field(name='description', type=gql.String),
-        gql.Field(name='enableExpiration', type=gql.Boolean)
+        gql.Field(name='enableExpiration', type=gql.Boolean),
+        gql.Field(name='expirySetting', type=gql.String)
     ],
 )
 
@@ -116,6 +117,7 @@ ShareObject = gql.ObjectType(
         gql.Field(name='requestPurpose', type=gql.String),
         gql.Field(name='rejectPurpose', type=gql.String),
         gql.Field(name='expiryDate', type=gql.String),
+        gql.Field(name='requestedExpiryDate', type=gql.String),
         gql.Field(name='submittedForExtension', type=gql.Boolean),
         gql.Field(name='extensionReason', type=gql.String),
         gql.Field(name='dataset', type=DatasetLink, resolver=resolve_dataset),

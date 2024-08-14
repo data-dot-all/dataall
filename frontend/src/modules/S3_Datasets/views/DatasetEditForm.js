@@ -8,12 +8,14 @@ import {
   CardContent,
   CardHeader,
   Chip,
-  CircularProgress, Collapse,
+  CircularProgress,
+  Collapse,
   Container,
   FormHelperText,
   Grid,
   Link,
-  MenuItem, Switch,
+  MenuItem,
+  Switch,
   TextField,
   Typography
 } from '@mui/material';
@@ -38,10 +40,14 @@ import {
   useClient
 } from 'services';
 import { updateDataset } from '../services';
-import {ConfidentialityList, ExpirationSettings, Topics} from '../../constants';
+import {
+  ConfidentialityList,
+  ExpirationSettings,
+  Topics
+} from '../../constants';
 import config from '../../../generated/config.json';
 import { isFeatureEnabled } from 'utils';
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 const DatasetEditForm = (props) => {
   const dispatch = useDispatch();
@@ -99,7 +105,7 @@ const DatasetEditForm = (props) => {
     const response = await client.query(getDataset(params.uri));
     if (!response.errors && response.data.getDataset !== null) {
       setDataset(response.data.getDataset);
-      setEnableShareExpiration(response.data.getDataset.enableExpiration)
+      setEnableShareExpiration(response.data.getDataset.enableExpiration);
       fetchGroups(response.data.getDataset.environment.environmentUri).catch(
         (e) => dispatch({ type: SET_ERROR, error: e.message })
       );
@@ -167,8 +173,12 @@ const DatasetEditForm = (props) => {
             KmsAlias: values.KmsAlias,
             autoApprovalEnabled: values.autoApprovalEnabled,
             enableExpiration: enableShareExpiration,
-            expirySetting: enableShareExpiration ? values.expirationSetting : null,
-            expiryMinDuration: enableShareExpiration ? values.minValidity : null,
+            expirySetting: enableShareExpiration
+              ? values.expirationSetting
+              : null,
+            expiryMinDuration: enableShareExpiration
+              ? values.minValidity
+              : null,
             expiryMaxDuration: enableShareExpiration ? values.maxValidity : null
           }
         })
@@ -304,9 +314,17 @@ const DatasetEditForm = (props) => {
                 autoApprovalEnabled: Yup.boolean().required(
                   '*AutoApproval property is required'
                 ),
-                expirationSetting: Yup.string(),
-                minValidity: enableShareExpiration ? Yup.number().required("*Minimum allowed expiration is required") :  Yup.number(),
-                maxValidity: enableShareExpiration ? Yup.number().required("*Maximum allowed expiration is required") :  Yup.number()
+                expirationSetting: Yup.string().nullable(),
+                minValidity: enableShareExpiration
+                  ? Yup.number().required(
+                      '*Minimum allowed expiration is required'
+                    )
+                  : Yup.number().nullable(),
+                maxValidity: enableShareExpiration
+                  ? Yup.number().required(
+                      '*Maximum allowed expiration is required'
+                    )
+                  : Yup.number().nullable()
               })}
               onSubmit={async (
                 values,
@@ -530,22 +548,32 @@ const DatasetEditForm = (props) => {
                           <Box sx={{ flexGrow: 1 }}>
                             <CardHeader title="Advanced Controls" />
                           </Box>
-                          <ExpandMoreIcon sx={{ m: 1 }}
+                          <ExpandMoreIcon
+                            sx={{ m: 1 }}
                             variant="outlined"
-                            onClick={() => {setShowAdvancedControl(!showAdvancedControls)}}
+                            onClick={() => {
+                              setShowAdvancedControl(!showAdvancedControls);
+                            }}
                           />
                         </Box>
                         <Collapse in={showAdvancedControls}>
                           <CardContent>
                             <Box display="flex" alignItems="center">
                               <Typography>Enable Share Expiration</Typography>
-                              <Switch checked={enableShareExpiration} onChange={() => {setEnableShareExpiration(!enableShareExpiration);}}/>
+                              <Switch
+                                checked={enableShareExpiration}
+                                onChange={() => {
+                                  setEnableShareExpiration(
+                                    !enableShareExpiration
+                                  );
+                                }}
+                              />
                             </Box>
                           </CardContent>
                           <Collapse in={enableShareExpiration}>
-                              <CardContent>
-                                <TextField
-                                 fullWidth
+                            <CardContent>
+                              <TextField
+                                fullWidth
                                 error={Boolean(
                                   touched.expirationSetting &&
                                     errors.expirationSetting
@@ -560,45 +588,53 @@ const DatasetEditForm = (props) => {
                                 select
                                 value={values.expirationSetting}
                                 variant="outlined"
-                                >
-                                  {expirationMenu.map((c) => (
-                                <MenuItem key={c} value={c}>
-                                  {c}
-                                </MenuItem>
-                              ))}
-                                </TextField>
-
-                              </CardContent>
-                                <CardContent>
-                                  <TextField
-                                  error={Boolean(touched.minValidity && errors.minValidity)}
-                                  fullWidth
-                                  helperText={touched.minValidity && errors.minValidity}
-                                  label="Minimum access period in months / quarters"
-                                  name="minValidity"
-                                  onBlur={handleBlur}
-                                  onChange={handleChange}
-                                  variant="outlined"
-                                  inputProps={{ type: 'number'}}
-                                  value={values.minValidity}
-                                /></CardContent>
-                                <CardContent>
-                                  <TextField
-                                  error={Boolean(touched.maxValidity && errors.maxValidity)}
-                                  fullWidth
-                                  helperText={touched.maxValidity && errors.maxValidity}
-                                  label="Maximum access period in months / quarters"
-                                  name="maxValidity"
-                                  onBlur={handleBlur}
-                                  onChange={handleChange}
-                                  variant="outlined"
-                                  inputProps={{ type: 'number'}}
-                                  value={values.maxValidity}
-                                /></CardContent>
-                            </Collapse>
+                              >
+                                {expirationMenu.map((c) => (
+                                  <MenuItem key={c} value={c}>
+                                    {c}
+                                  </MenuItem>
+                                ))}
+                              </TextField>
+                            </CardContent>
+                            <CardContent>
+                              <TextField
+                                error={Boolean(
+                                  touched.minValidity && errors.minValidity
+                                )}
+                                fullWidth
+                                helperText={
+                                  touched.minValidity && errors.minValidity
+                                }
+                                label="Minimum access period in months / quarters"
+                                name="minValidity"
+                                onBlur={handleBlur}
+                                onChange={handleChange}
+                                variant="outlined"
+                                inputProps={{ type: 'number' }}
+                                value={values.minValidity}
+                              />
+                            </CardContent>
+                            <CardContent>
+                              <TextField
+                                error={Boolean(
+                                  touched.maxValidity && errors.maxValidity
+                                )}
+                                fullWidth
+                                helperText={
+                                  touched.maxValidity && errors.maxValidity
+                                }
+                                label="Maximum access period in months / quarters"
+                                name="maxValidity"
+                                onBlur={handleBlur}
+                                onChange={handleChange}
+                                variant="outlined"
+                                inputProps={{ type: 'number' }}
+                                value={values.maxValidity}
+                              />
+                            </CardContent>
+                          </Collapse>
                         </Collapse>
                       </Card>
-
                     </Grid>
                     <Grid item lg={5} md={5} xs={12}>
                       <Card sx={{ mb: 3 }}>

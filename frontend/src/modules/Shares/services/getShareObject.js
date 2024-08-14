@@ -17,6 +17,7 @@ export const getShareObject = ({ shareUri, filter }) => ({
         userRoleForShareObject
         canViewLogs
         expiryDate
+        requestedExpiryDate
         submittedForExtension
         extensionReason
         principal {
@@ -60,6 +61,7 @@ export const getShareObject = ({ shareUri, filter }) => ({
           exists
           description
           enableExpiration
+          expirySetting
         }
       }
     }

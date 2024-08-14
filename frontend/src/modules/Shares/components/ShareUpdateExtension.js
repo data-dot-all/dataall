@@ -14,12 +14,13 @@ import { SET_ERROR } from 'globalErrors';
 import SendIcon from '@mui/icons-material/Send';
 import React, { useState } from 'react';
 import { PencilAltIcon } from '../../../design';
-import {updateShareExtensionReason} from "../services/updateShareExtensionReason";
+import { updateShareExtensionReason } from '../services/updateShareExtensionReason';
 
 export const UpdateExtensionReason = (props) => {
   const { share, client, dispatch, enqueueSnackbar, fetchItem, ...other } =
     props;
-  const [isUpdateExtensionModalOpen, setIsUpdateExtensionModalOpen] = useState(false);
+  const [isUpdateExtensionModalOpen, setIsUpdateExtensionModalOpen] =
+    useState(false);
   const [updating, setUpdating] = useState(false);
 
   const handleUpdateExtensionModalOpen = () => {
@@ -30,7 +31,7 @@ export const UpdateExtensionReason = (props) => {
   };
   const update = async (comment) => {
     setUpdating(true);
-    console.log(comment)
+    console.log(comment);
     const response = await client.mutate(
       updateShareExtensionReason({
         shareUri: share.shareUri,

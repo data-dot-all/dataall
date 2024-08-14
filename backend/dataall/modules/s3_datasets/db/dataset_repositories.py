@@ -14,6 +14,8 @@ from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
+from dataall.modules.shares_base.db.share_object_models import ShareObject
+from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 
 logger = logging.getLogger(__name__)
 
@@ -186,6 +188,19 @@ class DatasetRepository(EnvironmentResource):
     def get_dataset_tables(session, dataset_uri):
         """return the dataset tables"""
         return session.query(DatasetTable).filter(DatasetTable.datasetUri == dataset_uri).all()
+
+    @staticmethod
+    def update_dataset_shares_expiration(session, dataset):
+        """
+        When share expiration is enabled on the dataset while editing a dataset
+        update all the shares on that dataset and set minimum expiration on them
+        """
+        shares = session.query(ShareObject).filter(and_(ShareObject.datasetUri == dataset.datasetUri, ShareObject.status == 'Processed')).all()
+        for share in shares:
+            share.expiryDate = ShareObjectService.calculate_expiry_date(expirySetting=dataset.expirySetting,
+                                                                        expirationPeriod=dataset.expiryMinDuration)
+        session.commit()
+        return True
 
     @staticmethod
     def delete_dataset(session, dataset) -> bool:

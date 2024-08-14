@@ -39,6 +39,7 @@ class ShareObject(Base):
     userRoleForShareObject = query_expression()
     existingSharedItems = query_expression()
     expiryDate = Column(DateTime, nullable=True)
+    requestedExpiryDate = Column(DateTime, nullable=True)
     lastExtensionDate = Column(DateTime, nullable=True)
     extensionReason = Column(String, nullable=True)
     submittedForExtension = Column(Boolean, nullable=True)

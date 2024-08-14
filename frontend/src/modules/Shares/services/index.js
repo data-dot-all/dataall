@@ -14,3 +14,7 @@ export * from './updateShareRequestReason';
 export * from './verifyItemsShareObject';
 export * from './reApplyItemsShareObject';
 export * from './verifyDatasetShareObjects';
+export * from './updateShareExpiration';
+export * from './submitExtension';
+export * from './approveShareExtensionObject'
+export * from './cancelShareExtensionObject'

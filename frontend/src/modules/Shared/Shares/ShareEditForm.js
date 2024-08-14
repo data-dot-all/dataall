@@ -10,9 +10,16 @@ import {
   TableRow,
   Tooltip,
   TextField,
-  Typography, Collapse
+  Typography,
+  Collapse
 } from '@mui/material';
-import { Defaults, Pager, ShareHealthStatus, ShareStatus } from 'design';
+import {
+  ArrowRightIcon,
+  Defaults,
+  Pager,
+  ShareHealthStatus,
+  ShareStatus
+} from 'design';
 import SendIcon from '@mui/icons-material/Send';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -21,13 +28,15 @@ import {
   removeSharedItem,
   revokeItemsShareObject,
   submitApproval,
-  updateShareRequestReason
+  updateShareRequestReason,
+  updateShareExpirationPeriod,
+  submitExtension
 } from '../../Shares/services';
 import { SET_ERROR } from '../../../globalErrors';
-import {DeleteOutlined, RefreshRounded} from '@mui/icons-material';
+import { DeleteOutlined, RefreshRounded } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import EditIcon from "@mui/icons-material/Edit";
+import EditIcon from '@mui/icons-material/Edit';
 
 const ItemRow = (props) => {
   const {
@@ -39,7 +48,8 @@ const ItemRow = (props) => {
     onLoadingEnd,
     enqueueSnackbar,
     dispatch,
-    client
+    client,
+      setEditShareExpiration
   } = props;
 
   const whatToDo = () => {
@@ -154,7 +164,8 @@ const ItemRow = (props) => {
         shareStatus === 'Processed' ||
         shareStatus === 'Rejected' ||
         shareStatus === 'Revoked' ||
-        shareStatus === 'Submitted') && (
+        shareStatus === 'Submitted'||
+        shareStatus === 'Extension_Rejected') && (
         <TableCell>
           {possibleAction === 'Delete' && (
             <Button
@@ -222,6 +233,9 @@ export const ShareEditForm = (props) => {
   const [requestPurpose, setRequestPurpose] = useState('');
   const [smthChanged, setSmthChanged] = useState(false);
   const [editShareExpiration, setEditShareExpiration] = useState(false);
+  const [shareExpiration, setShareExpiration] = useState('');
+  const [shareExtensionReason, setShareExtensionReason] = useState('');
+  const [openCloseExpirationComment, setOpenCloseExpirationComment] = useState(false)
 
   const canUpdateRequestPurpose = () => {
     return (
@@ -244,7 +258,15 @@ export const ShareEditForm = (props) => {
     if (requestPurpose !== share.requestPurpose) {
       await updateRequestPurpose();
     }
-    if (smthChanged || requestPurpose !== share.requestPurpose) {
+
+    if (shareExpiration !== '') {
+      await updateShareExpiration();
+    }
+    if (
+      smthChanged ||
+      requestPurpose !== share.requestPurpose ||
+      shareExpiration !== ''
+    ) {
       onApply();
     } else {
       onCancel();
@@ -255,6 +277,11 @@ export const ShareEditForm = (props) => {
     if (requestPurpose !== share.requestPurpose) {
       await updateRequestPurpose();
     }
+
+    if (shareExpiration !== '') {
+      await updateShareExpiration();
+    }
+
     setLoading(true);
     const response = await client.mutate(
       submitApproval({
@@ -280,9 +307,40 @@ export const ShareEditForm = (props) => {
     }
   };
 
+  const sendShareExtensionRequest = async () => {
+    setLoading(true);
+    const response = await client.mutate(
+      submitExtension({
+        shareUri: share.shareUri,
+        expiration: share.dataset.enableExpiration ? shareExpiration : null,
+        extensionReason: shareExtensionReason
+      })
+    );
+
+    if (!response.errors) {
+      enqueueSnackbar('Share extension request submitted', {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'success'
+      });
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+    setLoading(false);
+
+    if (onApply) {
+      onApply();
+    }
+  };
+
   const draftRequest = async () => {
     if (requestPurpose !== share.requestPurpose) {
       await updateRequestPurpose();
+    }
+    if (shareExpiration !== '') {
+      await updateShareExpiration();
     }
     if (onApply) {
       onApply();
@@ -344,6 +402,26 @@ export const ShareEditForm = (props) => {
     }
   };
 
+  const updateShareExpiration = async () => {
+    const response = await client.mutate(
+      updateShareExpirationPeriod({
+        shareUri: share.shareUri,
+        expiration: shareExpiration
+      })
+    );
+    if (!response.errors) {
+      enqueueSnackbar('Share Expiration updated', {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'success'
+      });
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+  };
+
   const fetchShareItems = useCallback(async () => {
     setLoading(true);
 
@@ -359,6 +437,9 @@ export const ShareEditForm = (props) => {
     if (!response.errors) {
       setSharedItems({ ...response.data.getShareObject.items });
       setShareStatus(response.data.getShareObject.status);
+      if (response.data.getShareObject.items.nodes.filter(node => node.status === 'PendingApproval').length > 0){
+        setEditShareExpiration(false)
+      }
       setSmthChanged(true);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
@@ -379,8 +460,9 @@ export const ShareEditForm = (props) => {
   }, [client, fetchShareItems, dispatch, share]);
 
   const handleOpenEditCollapsableWindow = async () => {
-    setEditShareExpiration(!editShareExpiration)
-  }
+    setEditShareExpiration(!editShareExpiration);
+    setOpenCloseExpirationComment(!editShareExpiration)
+  };
 
   if (loading) {
     return (
@@ -414,7 +496,8 @@ export const ShareEditForm = (props) => {
               {(shareStatus === 'Draft' ||
                 shareStatus === 'Processed' ||
                 shareStatus === 'Rejected' ||
-                shareStatus === 'Submitted') && <TableCell>Action</TableCell>}
+                shareStatus === 'Submitted' ||
+                  shareStatus === 'Extension_Rejected') && <TableCell>Action</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -475,35 +558,108 @@ export const ShareEditForm = (props) => {
             />
           </CardContent>
           {share.dataset.enableExpiration && (
-              <CardContent>
-                <Box display="flex" alignItems="center">
-            <Typography sx={{ flexGrow: 1 }} color='red' variant="subtitle2">
-              Share Expiration Date : {share.expiryDate}
-            </Typography>
-                <Button
-              color="primary"
-              startIcon={<EditIcon fontSize="small" />}
-              variant="outlined"
-              onClick={handleOpenEditCollapsableWindow}
-            >
-              Edit Share Expiration
-            </Button>
-                </Box>
-                <Collapse in={editShareExpiration}>
+            <CardContent>
+              <Box display="flex" alignItems="center">
+                <Typography
+                  sx={{ flexGrow: 1 }}
+                  color="red"
+                  variant="subtitle2"
+                >
+                  Current Share Expiration Date :{' '}
+                  {share.expiryDate != null
+                    ? new Date(share.expiryDate).toDateString()
+                    : 'Share expiration date not available. Please request the data owners to approve this share request once you submit'}
+                </Typography>
+                {(share.status === 'Submitted' || share.status === 'Draft' || share.status === 'Submitted_For_Extension' ) &&
+                    ( sharedItems.nodes.filter(
+                    (node) => node.status === 'PendingApproval'
+                  ).length === sharedItems.nodes.length || sharedItems.nodes.filter(
+                    (node) => node.status === 'PendingExtension'
+                  ).length === sharedItems.nodes.length)  && (
+                    <Button
+                      color="primary"
+                      startIcon={<EditIcon fontSize="small" />}
+                      variant="outlined"
+                      onClick={handleOpenEditCollapsableWindow}
+                    >
+                      Edit Share Expiration
+                    </Button>
+                  )}
+                {(share.status === 'Draft' || share.status === 'Processed' || share.status === 'Extension_Rejected' || share.status === 'Rejected') &&
+                  sharedItems.nodes.filter(
+                    (node) => node.status === 'PendingApproval'
+                  ).length === 0 &&
+                  sharedItems.nodes.filter(
+                    (node) => node.status === 'Share_Succeeded'
+                  ).length > 0 && (
+                    <Button
+                      color="primary"
+                      startIcon={<ArrowRightIcon fontSize="small" />}
+                      variant="outlined"
+                      onClick={handleOpenEditCollapsableWindow}
+                    >
+                      Extend Share Request
+                    </Button>
+                  )}
+              </Box>
+              <Collapse in={editShareExpiration}>
+                <Box sx={{ mt: 2 }}>
                   <TextField
-                     fullWidth
-                     label="Share Expiration Period - Request access for dataset in months / quarters"
-                     variant="outlined"
-                     inputProps={{ type: 'number'}}
+                    fullWidth
+                    label={`Share Expiration Period - Request access for dataset in ${
+                      share.dataset.expirySetting === 'Monthly'
+                        ? 'month(s)'
+                        : 'quarter(s)'
+                    }`}
+                    variant="outlined"
+                    inputProps={{ type: 'number' }}
+                    onChange={(event) => {
+                      setShareExpiration(parseInt(event.target.value));
+                    }}
                   />
-                </Collapse>
-          </CardContent>
+                </Box>
+                {(openCloseExpirationComment) && (
+                  <Box sx={{ mt: 2 }}>
+                    <TextField
+                      FormHelperTextProps={{
+                        sx: {
+                          textAlign: 'right',
+                          mr: 0
+                        }
+                      }}
+                      fullWidth
+                      helperText={`${
+                        200 - shareExtensionReason.length
+                      } characters left`}
+                      label="Extension reason"
+                      name="extensionReason"
+                      multiline
+                      rows={3}
+                      value={shareExtensionReason}
+                      variant="outlined"
+                      onChange={(event) => {
+                        setShareExtensionReason(event.target.value);
+                      }}
+                    />
+                    <Button
+                      onClick={sendShareExtensionRequest}
+                      fullWidth
+                      startIcon={<SendIcon fontSize="small" />}
+                      color="primary"
+                      variant="contained"
+                    >
+                      Submit Extension Request
+                    </Button>
+                  </Box>
+                )}
+              </Collapse>
+            </CardContent>
           )}
         </Box>
       </Box>
       {shareStatus.toUpperCase() === 'DRAFT' &&
         (share.userRoleForShareObject === 'Requesters' ||
-          share.userRoleForShareObject === 'ApproversAndRequesters') && (
+          share.userRoleForShareObject === 'ApproversAndRequesters') && !editShareExpiration && (
           <CardContent>
             <Tooltip
               title={
