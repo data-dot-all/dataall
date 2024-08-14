@@ -326,6 +326,24 @@ class DatasetStack(Stack):
                     ],
                 ),
                 iam.PolicyStatement(
+                    sid='LFDataFilters',
+                    actions=[
+                        'lakeformation:ListDataCellsFilter',
+                        'lakeformation:GetDataCellsFilter',
+                        'lakeformation:CreateDataCellsFilter',
+                        'lakeformation:DeleteDataCellsFilter',
+                        'lakeformation:UpdateDataCellsFilter',
+                    ],
+                    effect=iam.Effect.ALLOW,
+                    resources=['*'],  # NOTE: LF Accepts Only '*' Wildcard Resources
+                    conditions={
+                        'ForAllValues:StringEquals': {
+                            'aws:ResourceAccount': dataset.AwsAccountId,
+                            'aws:RequestedRegion': dataset.region,
+                        }
+                    },
+                ),
+                iam.PolicyStatement(
                     actions=['s3:ListBucket'],
                     resources=[f'arn:aws:s3:::{env.EnvironmentDefaultBucketName}'],
                     effect=iam.Effect.ALLOW,

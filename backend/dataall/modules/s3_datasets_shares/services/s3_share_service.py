@@ -1,5 +1,4 @@
 import logging
-from warnings import warn
 
 from dataall.base.db import utils
 from dataall.base.context import get_context
@@ -9,9 +8,9 @@ from dataall.core.permissions.services.tenant_policy_service import TenantPolicy
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.tasks.service_handlers import Worker
-from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_object_item_repositories import ShareObjectItemRepository
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.services.share_item_service import ShareItemService
 from dataall.modules.shares_base.services.share_permissions import GET_SHARE_OBJECT
@@ -19,14 +18,20 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareableType,
     ShareItemStatus,
 )
+from dataall.modules.shares_base.db.share_object_models import ShareObjectItem
+from dataall.modules.s3_datasets.services.dataset_table_data_filter_enums import DataFilterType
+
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, DatasetStorageLocation
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.s3_datasets.db.dataset_table_data_filter_repositories import DatasetTableDataFilterRepository
+from dataall.modules.s3_datasets.db.dataset_column_repositories import DatasetColumnRepository
 from dataall.modules.s3_datasets.services.dataset_permissions import (
     MANAGE_DATASETS,
     UPDATE_DATASET,
     CREDENTIALS_DATASET,
     DATASET_TABLE_READ,
     DATASET_FOLDER_READ,
+    GET_DATASET_TABLE,
 )
 from dataall.modules.s3_datasets_shares.db.s3_share_object_repositories import S3ShareObjectRepository
 from dataall.modules.s3_datasets_shares.aws.glue_client import GlueClient
@@ -169,9 +174,18 @@ class S3ShareService:
     def list_shared_tables_by_env_dataset(dataset_uri: str, env_uri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
+            log.info(
+                S3ShareObjectRepository.query_dataset_tables_shared_with_env(
+                    session, env_uri, dataset_uri, context.username, context.groups
+                )
+            )
             return [
-                {'tableUri': t.tableUri, 'GlueTableName': t.GlueTableName}
-                for t in S3ShareObjectRepository.query_dataset_tables_shared_with_env(
+                {
+                    'tableUri': res.tableUri,
+                    'GlueTableName': res.GlueTableName
+                    + (f'_{res.resourceLinkSuffix}' if res.resourceLinkSuffix else ''),
+                }
+                for res in S3ShareObjectRepository.query_dataset_tables_shared_with_env(
                     session, env_uri, dataset_uri, context.username, context.groups
                 )
             ]
@@ -230,15 +244,9 @@ class S3ShareService:
                     account_id=dataset.AwsAccountId, region=dataset.region, database=dataset.GlueDatabaseName
                 ).get_glue_database_from_catalog()
 
-                old_shared_db_name = f'{datasetGlueDatabase}_shared_{uri}'[:254]
-                database = GlueClient(
-                    account_id=environment.AwsAccountId, region=environment.region, database=old_shared_db_name
-                ).get_glue_database()
-                warn('old_shared_db_name will be deprecated in v2.6.0', DeprecationWarning, stacklevel=2)
-                sharedGlueDatabase = old_shared_db_name if database else f'{datasetGlueDatabase}_shared'
                 return {
                     's3AccessPointName': S3AccessPointName,
-                    'sharedGlueDatabase': sharedGlueDatabase,
+                    'sharedGlueDatabase': f'{datasetGlueDatabase}_shared',
                     's3bucketName': dataset.S3BucketName,
                 }
             return {
@@ -256,6 +264,42 @@ class S3ShareService:
             )
 
     @staticmethod
+    @ResourcePolicyService.has_resource_permission(GET_DATASET_TABLE)
+    def paginate_active_columns_for_table_share(uri: str, shareUri: str, filter=None):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            share_item: ShareObjectItem = ShareObjectRepository.find_sharable_item(session, shareUri, uri)
+            filtered_columns = []
+            if share_item.attachedDataFilterUri:
+                item_data_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(
+                    session, share_item.attachedDataFilterUri
+                )
+                for filter_uri in item_data_filter.dataFilterUris:
+                    data_filter = DatasetTableDataFilterRepository.get_data_filter_by_uri(
+                        session, filter_uri=filter_uri
+                    )
+                    if data_filter.filterType == DataFilterType.ROW.value:
+                        filtered_columns = None
+                        break
+                    elif data_filter.filterType == DataFilterType.COLUMN.value:
+                        filtered_columns.extend(data_filter.includedCols)
+            if filtered_columns:
+                filter['filteredColumns'] = list(set(filtered_columns))
+            return DatasetColumnRepository.paginate_active_columns_for_table(session, uri, filter)
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(
+        GET_SHARE_OBJECT, parent_resource=ShareItemService._get_share_uri_from_item_filter_uri
+    )
+    def list_table_data_filters_by_attached(uri: str, data: dict):
+        with get_context().db_engine.scoped_session() as session:
+            item_data_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(session, uri)
+            data['filterUris'] = item_data_filter.dataFilterUris
+            return DatasetTableDataFilterRepository.paginated_data_filters(
+                session, table_uri=item_data_filter.itemUri, data=data
+            )
+
+    @staticmethod
     def resolve_shared_db_name(GlueDatabaseName: str, shareUri: str, targetEnvAwsAccountId: str, targetEnvRegion: str):
         with get_context().db_engine.scoped_session() as session:
             share = ShareObjectRepository.get_share_by_uri(session, shareUri)
@@ -267,8 +311,4 @@ class S3ShareService:
             except Exception as e:
                 log.info(f'Error while calling the get_glue_database_from_catalog when resolving db name due to: {e}')
                 datasetGlueDatabase = GlueDatabaseName
-            old_shared_db_name = (datasetGlueDatabase + '_shared_' + shareUri)[:254]
-            database = GlueClient(
-                account_id=targetEnvAwsAccountId, database=old_shared_db_name, region=targetEnvRegion
-            ).get_glue_database()
-            return old_shared_db_name if database else datasetGlueDatabase + '_shared'
+            return datasetGlueDatabase + '_shared'

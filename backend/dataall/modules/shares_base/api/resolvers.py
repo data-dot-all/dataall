@@ -1,10 +1,11 @@
 import logging
+import re
 
 from dataall.base.api.context import Context
+from dataall.base.db.exceptions import RequiredParameter
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
-from dataall.base.db.exceptions import RequiredParameter
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.shares_base.services.shares_enums import ShareObjectPermission, PrincipalType
@@ -12,7 +13,10 @@ from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, 
 from dataall.modules.shares_base.services.share_item_service import ShareItemService
 from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.shares_base.services.share_logs_service import ShareLogsService
-
+from dataall.base.utils.naming_convention import (
+    NamingConventionService,
+    NamingConventionPattern,
+)
 
 log = logging.getLogger(__name__)
 
@@ -46,6 +50,21 @@ class RequestValidator:
             raise RequiredParameter('datasetUri')
         if not data.get('shareUris'):
             raise RequiredParameter('shareUris')
+
+    @staticmethod
+    def validate_update_share_item_filters(data):
+        if not data.get('shareItemUri'):
+            RequiredParameter('shareItemUri')
+        if not data:
+            raise RequiredParameter(data)
+        if not data.get('filterUris'):
+            raise RequiredParameter('filterUris')
+        if not data.get('filterNames'):
+            raise RequiredParameter('filterNames')
+        NamingConventionService(
+            target_label=data.get('label'),
+            pattern=NamingConventionPattern.DATA_FILTERS,
+        ).validate_name()
 
 
 def create_share_object(
@@ -199,7 +218,6 @@ def resolve_principal(context: Context, source: ShareObject, **kwargs):
     with context.engine.scoped_session() as session:
         if source.principalType in set(item.value for item in PrincipalType):
             environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)
-            organization = OrganizationRepository.get_organization_by_uri(session, environment.organizationUri)
             if source.principalType == PrincipalType.ConsumptionRole.value:
                 principal = EnvironmentService.get_environment_consumption_role(
                     session, source.principalId, source.environmentUri
@@ -209,20 +227,15 @@ def resolve_principal(context: Context, source: ShareObject, **kwargs):
                 principal = EnvironmentService.get_environment_group(session, source.groupUri, source.environmentUri)
                 principalName = f'{source.groupUri} [{principal.environmentIAMRoleArn}]'
             else:
-                principalName = source.principalId
+                principalName = f'Redshift Role [{source.principalRoleName}]'
 
             return {
+                'principalName': principalName,
                 'principalId': source.principalId,
                 'principalType': source.principalType,
-                'principalName': principalName,
                 'principalRoleName': source.principalRoleName,
                 'SamlGroupName': source.groupUri,
-                'environmentUri': environment.environmentUri,
                 'environmentName': environment.label,
-                'AwsAccountId': environment.AwsAccountId,
-                'region': environment.region,
-                'organizationUri': organization.organizationUri,
-                'organizationName': organization.label,
             }
 
 
@@ -290,3 +303,20 @@ def update_share_reject_purpose(context: Context, source, shareUri: str = None, 
             uri=shareUri,
             reject_purpose=rejectPurpose,
         )
+
+
+def update_filters_table_share_item(context: Context, source, input):
+    RequestValidator.validate_update_share_item_filters(input)
+    return ShareItemService.update_filters_table_share_item(uri=input.get('shareItemUri'), data=input)
+
+
+def remove_filters_table_share_item(context: Context, source, attachedDataFilterUri: str = None):
+    if not attachedDataFilterUri:
+        RequiredParameter('attachedDataFilterUri')
+    return ShareItemService.remove_share_item_data_filters(uri=attachedDataFilterUri)
+
+
+def get_share_item_data_filters(context: Context, source, attachedDataFilterUri: str = None):
+    if not attachedDataFilterUri:
+        RequiredParameter('attachedDataFilterUri')
+    return ShareItemService.get_share_item_data_filters(uri=attachedDataFilterUri)

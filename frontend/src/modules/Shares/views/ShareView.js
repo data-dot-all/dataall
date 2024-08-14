@@ -5,6 +5,7 @@ import {
   DeleteOutlined,
   RefreshRounded
 } from '@mui/icons-material';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import SecurityIcon from '@mui/icons-material/Security';
 import { LoadingButton } from '@mui/lab';
 import {
@@ -29,9 +30,10 @@ import {
   Typography
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { useSnackbar } from 'notistack';
 import * as PropTypes from 'prop-types';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink, useParams } from 'react-router-dom';
@@ -57,7 +59,8 @@ import {
   submitApproval,
   revokeItemsShareObject,
   verifyItemsShareObject,
-  reApplyItemsShareObject
+  reApplyItemsShareObject,
+  getShareItemDataFilters
 } from '../services';
 import {
   AddShareItemModal,
@@ -65,7 +68,8 @@ import {
   ShareItemsSelectorModal,
   ShareRejectModal,
   UpdateRejectReason,
-  UpdateRequestReason
+  UpdateRequestReason,
+  ShareItemFilterModal
 } from '../components';
 import { generateShareItemLabel } from 'utils';
 import { ShareLogs } from '../components/ShareLogs';
@@ -88,8 +92,16 @@ function ShareViewHeader(props) {
   const [submitting, setSubmitting] = useState(false);
   const [isRejectShareModalOpen, setIsRejectShareModalOpen] = useState(false);
   const [openLogsModal, setOpenLogsModal] = useState(null);
+  const anchorRef = useRef(null);
 
   const [isSubmitShareModalOpen, setIsSubmitShareModalOpen] = useState(false);
+
+  const datasetTypeLink =
+    share.dataset.datasetType === 'DatasetTypes.S3'
+      ? `s3-datasets`
+      : share.dataset.datasetType === 'DatasetTypes.Redshift'
+      ? `redshift-datasets`
+      : '-';
 
   const submit = async () => {
     setSubmitting(true);
@@ -250,7 +262,7 @@ function ShareViewHeader(props) {
               color="textSecondary"
               variant="subtitle2"
               component={RouterLink}
-              to={`/console/s3-datasets/${share.dataset?.datasetUri}`}
+              to={`/console/${datasetTypeLink}/${share.dataset?.datasetUri}`}
             >
               {share.dataset?.datasetName}
             </Typography>
@@ -293,6 +305,7 @@ function ShareViewHeader(props) {
                         startIcon={<CheckCircleOutlined />}
                         sx={{ m: 1 }}
                         onClick={accept}
+                        ref={anchorRef}
                         type="button"
                         variant="outlined"
                       >
@@ -415,6 +428,7 @@ ShareViewHeader.propTypes = {
 export function SharedItem(props) {
   const {
     item,
+    share,
     client,
     dispatch,
     enqueueSnackbar,
@@ -422,6 +436,54 @@ export function SharedItem(props) {
     fetchItem
   } = props;
   const [isRemovingItem, setIsRemovingItem] = useState(false);
+  const [isFilterModalOpenUri, setIsFilterModalOpenUri] = useState(0);
+  const [isLoadingFilters, setIsLoadingFilters] = useState(false);
+  const [itemDataFilter, setItemDataFilter] = useState(null);
+  const [isAssignedFilterModalOpen, setIsAssignedFilterModalOpen] =
+    useState('');
+
+  const getItemDataFilters = async (attachedDataFilterUri) => {
+    setIsLoadingFilters(true);
+    try {
+      const response = await client.query(
+        getShareItemDataFilters({
+          attachedDataFilterUri: attachedDataFilterUri
+        })
+      );
+      if (!response.errors) {
+        if (response.data && response.data.getShareItemDataFilters) {
+          setItemDataFilter(response.data.getShareItemDataFilters);
+        }
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    } finally {
+      setIsLoadingFilters(false);
+    }
+  };
+
+  useEffect(() => {
+    if (client && item.itemType === 'Table' && item.attachedDataFilterUri) {
+      getItemDataFilters(item.attachedDataFilterUri);
+    }
+  }, [client, item, dispatch]);
+
+  const handleFilterModalClose = () => {
+    setIsFilterModalOpenUri(0);
+  };
+
+  const handleFilterModalOpen = (uri) => {
+    setIsFilterModalOpenUri(uri);
+  };
+
+  const handleAssignedFilterModalOpen = (label) => {
+    setIsAssignedFilterModalOpen(label);
+  };
+  const handleAssignedFilterModalClose = () => {
+    setIsAssignedFilterModalOpen('');
+  };
 
   const removeItemFromShareObject = async () => {
     setIsRemovingItem(true);
@@ -452,6 +514,40 @@ export function SharedItem(props) {
         <ShareStatus status={item.status} />
       </TableCell>
       <TableCell>
+        {isLoadingFilters ? (
+          <CircularProgress size={15} />
+        ) : (
+          <>
+            {itemDataFilter &&
+              itemDataFilter?.dataFilterNames &&
+              itemDataFilter?.dataFilterNames.length > 0 && (
+                <Button
+                  color="primary"
+                  startIcon={<OpenInNewIcon fontSize="small" />}
+                  sx={{ mr: 1 }}
+                  variant="outlined"
+                  onClick={() => {
+                    handleAssignedFilterModalOpen(itemDataFilter.label);
+                  }}
+                >
+                  {itemDataFilter?.label}
+                </Button>
+              )}
+            {isAssignedFilterModalOpen === itemDataFilter?.label && (
+              <ShareItemFilterModal
+                item={item}
+                shareUri={share.shareUri}
+                itemDataFilter={itemDataFilter}
+                onApply={() => handleAssignedFilterModalClose()}
+                onClose={() => handleAssignedFilterModalClose()}
+                open={isAssignedFilterModalOpen === itemDataFilter?.label}
+                viewOnly={true}
+              />
+            )}
+          </>
+        )}
+      </TableCell>
+      <TableCell>
         {isRemovingItem ? (
           <CircularProgress size={15} />
         ) : (
@@ -478,6 +574,34 @@ export function SharedItem(props) {
               >
                 Delete
               </Button>
+            )}
+            {/* If item status is PENDINGAPPROVAL and is of type table then have a button the is 'Assign Filters' */}
+            {item.status === 'PendingApproval' &&
+              item.itemType === 'Table' &&
+              (share.userRoleForShareObject === 'Approvers' ||
+                share.userRoleForShareObject === 'ApproversAndRequesters') && (
+                <Button
+                  color="primary"
+                  startIcon={<FilterAltIcon fontSize="small" />}
+                  sx={{ m: 1 }}
+                  variant="outlined"
+                  onClick={() => {
+                    handleFilterModalOpen(item.shareItemUri);
+                  }}
+                >
+                  Edit Filters
+                </Button>
+              )}
+            {isFilterModalOpenUri === item.shareItemUri && (
+              <ShareItemFilterModal
+                item={item}
+                shareUri={share.shareUri}
+                itemDataFilter={itemDataFilter}
+                onApply={() => handleFilterModalClose()}
+                onClose={() => handleFilterModalClose()}
+                reloadItems={fetchShareItems}
+                open={isFilterModalOpenUri === item.shareItemUri}
+              />
             )}
           </>
         )}
@@ -506,6 +630,7 @@ export function SharedItem(props) {
 
 SharedItem.propTypes = {
   item: PropTypes.any,
+  share: PropTypes.any,
   client: PropTypes.any,
   dispatch: PropTypes.any,
   enqueueSnackbar: PropTypes.any,
@@ -1082,6 +1207,7 @@ const ShareView = () => {
                             <TableCell>Type</TableCell>
                             <TableCell>Name</TableCell>
                             <TableCell>Status</TableCell>
+                            <TableCell>Data Filters</TableCell>
                             <TableCell>Action</TableCell>
                             <TableCell>Health Status</TableCell>
                             <TableCell>Health Message</TableCell>
@@ -1096,6 +1222,7 @@ const ShareView = () => {
                                 <SharedItem
                                   key={sharedItem.itemUri}
                                   item={sharedItem}
+                                  share={share}
                                   client={client}
                                   dispatch={dispatch}
                                   enqueueSnackbar={enqueueSnackbar}

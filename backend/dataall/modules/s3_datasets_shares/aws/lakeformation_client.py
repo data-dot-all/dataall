@@ -14,6 +14,34 @@ class LakeFormationClient:
         self._session = SessionHelper.remote_session(accountid=account_id, region=region)
         self._client = self._session.client('lakeformation', region_name=region)
 
+    def upgrade_lakeformation_data_catalog_settings(self, version_num=3):
+        """
+        Upgrades the AWS Lake Formation data catalog settings version.
+
+        Returns:
+        None
+        """
+        try:
+            # Get the current Lake Formation settings
+            settings = self._client.get_data_lake_settings()['DataLakeSettings']
+            # Check if the current version is already 3
+            if int(settings['Parameters']['CROSS_ACCOUNT_VERSION']) >= version_num:
+                log.info(f'Lake Formation settings are already at Version {str(version_num)}.')
+                return
+
+            settings['Parameters']['CROSS_ACCOUNT_VERSION'] = str(version_num)
+            # Update the settings to Version 3
+            self._client.put_data_lake_settings(
+                DataLakeSettings={
+                    **settings,
+                }
+            )
+
+            log.info(f'Lake Formation settings have been upgraded to Version {str(version_num)}.')
+
+        except Exception as e:
+            print(f'Error upgrading Lake Formation settings to Version {str(version_num)}: {e}')
+
     def grant_permissions_to_database(
         self,
         principals,
@@ -81,6 +109,27 @@ class LakeFormationClient:
             permissions_with_grant_options=permissions_with_grant_options,
             check_resource=check_resource,
         )
+        return True
+
+    def grant_permissions_to_table_with_filters(
+        self, principals, database_name, table_name, catalog_id, permissions, data_filters=[]
+    ) -> True:
+        for f_name in data_filters:
+            data_filter_resource = {
+                'DataCellsFilter': {
+                    'TableCatalogId': catalog_id,
+                    'DatabaseName': database_name,
+                    'TableName': table_name,
+                    'Name': f_name,
+                },
+            }
+            self._grant_permissions_to_resource(
+                principals=principals,
+                resource=data_filter_resource,
+                permissions=permissions,
+                permissions_with_grant_options=None,
+                check_resource=data_filter_resource,
+            )
         return True
 
     def _grant_permissions_to_resource(
@@ -180,6 +229,25 @@ class LakeFormationClient:
             permissions=permissions,
             permissions_with_grant_options=permissions_with_grant_options,
         )
+        return True
+
+    def revoke_permissions_to_table_with_filters(
+        self, principals, database_name, table_name, catalog_id, permissions, data_filters
+    ) -> True:
+        for f_name in data_filters:
+            data_filter_resource = {
+                'DataCellsFilter': {
+                    'TableCatalogId': catalog_id,
+                    'DatabaseName': database_name,
+                    'TableName': table_name,
+                    'Name': f_name,
+                },
+            }
+            self._revoke_permissions_from_resource(
+                principals=principals,
+                resource=data_filter_resource,
+                permissions=permissions,
+            )
         return True
 
     def _revoke_permissions_from_resource(
@@ -318,6 +386,31 @@ class LakeFormationClient:
             )
         return all(check)
 
+    def check_permissions_to_table_with_filters(
+        self, principals, database_name, table_name, catalog_id, permissions, data_filters=[]
+    ) -> True:
+        check = []
+        for principal in principals:
+            for f_name in data_filters:
+                data_filter_resource = {
+                    'DataCellsFilter': {
+                        'TableCatalogId': catalog_id,
+                        'DatabaseName': database_name,
+                        'TableName': table_name,
+                        'Name': f_name,
+                    },
+                }
+                check.append(
+                    self._check_permissions_to_resource(
+                        principal=principal,
+                        resource=data_filter_resource,
+                        permissions=permissions,
+                        permissions_with_grant_options=None,
+                        check_resource=data_filter_resource,
+                    )
+                )
+        return all(check)
+
     def _check_permissions_to_resource(
         self,
         principal: str,
@@ -332,12 +425,18 @@ class LakeFormationClient:
                 Principal={'DataLakePrincipalIdentifier': principal},
                 Resource=check_resource if check_resource else resource,
             )
+
+            # Cannot Specify Filter by Principal for Data Filter List Permissions
+            if 'DataCellsFilter' in check_dict['Resource']:
+                del check_dict['Principal']
+
             existing = self._client.list_permissions(**check_dict)
             current = []
             current_grant = []
             for permission in existing['PrincipalResourcePermissions']:
-                current.extend(permission['Permissions'])
-                current_grant.extend(permission['PermissionsWithGrantOption'])
+                if permission['Principal']['DataLakePrincipalIdentifier'] == principal:
+                    current.extend(permission['Permissions'])
+                    current_grant.extend(permission['PermissionsWithGrantOption'])
 
             missing_permissions = list(set(permissions) - set(current))
             missing_grant_permissions = (

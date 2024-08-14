@@ -2,11 +2,13 @@ from dataall.core.permissions.services.resource_policy_service import ResourcePo
 from dataall.base.db import exceptions
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.s3_datasets_shares.db.s3_share_object_repositories import S3ShareObjectRepository
+from dataall.modules.shares_base.db.share_object_item_repositories import ShareObjectItemRepository
 from dataall.modules.shares_base.services.share_permissions import SHARE_OBJECT_APPROVER
 from dataall.modules.s3_datasets.services.dataset_permissions import (
     DELETE_DATASET,
     DELETE_DATASET_TABLE,
     DELETE_DATASET_FOLDER,
+    DELETE_TABLE_DATA_FILTER,
 )
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole, DatasetTypes
 from dataall.modules.datasets_base.services.dataset_service_interface import DatasetServiceInterface
@@ -50,6 +52,15 @@ class S3ShareDatasetService(DatasetServiceInterface):
                     action=DELETE_DATASET,
                     message='Revoke all dataset shares before deletion.',
                 )
+        elif action in [DELETE_TABLE_DATA_FILTER]:
+            existing_share_item_w_filters = ShareObjectItemRepository.count_all_share_item_filters_with_data_filter_uri(
+                session, uri
+            )
+            if existing_share_item_w_filters:
+                raise exceptions.ResourceShared(
+                    action=action,
+                    message='Remove all share items using this filter before deletion',
+                )
         else:
             raise exceptions.RequiredParameter('Delete action')
         return True
@@ -60,8 +71,11 @@ class S3ShareDatasetService(DatasetServiceInterface):
         action = kwargs.get('action')
         if action in [DELETE_DATASET_FOLDER, DELETE_DATASET_TABLE]:
             S3ShareObjectRepository.delete_s3_share_item(session, uri)
+            ShareObjectItemRepository.delete_all_share_item_filters(session, uri)
         elif action in [DELETE_DATASET]:
             S3ShareObjectRepository.delete_s3_shares_with_no_shared_items(session, uri)
+        elif action in [DELETE_TABLE_DATA_FILTER]:
+            ShareObjectItemRepository.delete_share_item_filters_with_data_filter_uri(session, uri)
         else:
             raise exceptions.RequiredParameter('Delete action')
         return True

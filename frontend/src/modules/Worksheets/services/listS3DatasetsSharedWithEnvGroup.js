@@ -18,6 +18,7 @@ export const listS3DatasetsSharedWithEnvGroup = ({
       ) {
         datasetUri
         sharedGlueDatabaseName
+        shareUri
       }
     }
   `
