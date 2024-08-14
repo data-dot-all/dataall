@@ -36,9 +36,16 @@ class ProcessRedshiftShare(SharesProcessorInterface):
         self.tables: List[RedshiftTable] = shareable_items
         self.reapply: bool = reapply
 
-        self.source_connection = RedshiftConnectionRepository.get_redshift_connection(
+        dataset_connection = RedshiftConnectionRepository.get_redshift_connection(
             self.session, self.dataset.connectionUri
         )
+
+        self.source_connection = RedshiftConnectionRepository.get_namespace_admin_connection(
+            session,
+            environment_uri=self.share_data.source_environment.environmentUri,
+            namespace_id=dataset_connection.nameSpaceId,
+        )
+
         self.target_connection = RedshiftConnectionRepository.get_redshift_connection(
             session, share_data.share.principalId
         )
@@ -138,14 +145,14 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                         account_id=self.share_data.target_environment.AwsAccountId,
                         region=self.share_data.target_environment.region,
                     )
-                    redshift_type = (
-                        'redshift-serverless'
+                    consumer_arn = (
+                        f'arn:aws:redshift-serverless:{self.share_data.target_environment.region}:{self.share_data.target_environment.AwsAccountId}:namespace/{self.target_connection.nameSpaceId}'
                         if self.target_connection.redshiftType == RedshiftType.Serverless.value
-                        else 'redshift'
+                        else f'arn:aws:redshift:{self.share_data.target_environment.region}:{self.share_data.target_environment.AwsAccountId}:namespace:{self.target_connection.nameSpaceId}'
                     )
                     redshift_client_in_target.associate_datashare(
                         datashare_arn=self.datashare_arn,
-                        consumer_arn=f'arn:aws:{redshift_type}:{self.share_data.target_environment.region}:{self.share_data.target_environment.AwsAccountId}:namespace/{self.target_connection.nameSpaceId}',
+                        consumer_arn=consumer_arn,
                     )
                 else:
                     log.info('Processing same-account datashare grants')
@@ -349,14 +356,12 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                     share_item = ShareObjectRepository.find_sharable_item(
                         self.session, self.share.shareUri, table.rsTableUri
                     )
-                    if not self.reapply:
-                        failed_table_SM = ShareItemSM(started_state)
-                        failed_state = failed_table_SM.run_transition(ShareItemActions.Failure.value)
-                        failed_table_SM.update_state_single_item(self.session, share_item, failed_state)
-                    else:
-                        ShareStatusRepository.update_share_item_health_status(
-                            self.session, share_item, ShareItemHealthStatus.Unhealthy.value, str(e), datetime.now()
-                        )
+                    failed_table_SM = ShareItemSM(started_state)
+                    failed_state = failed_table_SM.run_transition(ShareItemActions.Failure.value)
+                    failed_table_SM.update_state_single_item(self.session, share_item, failed_state)
+                    ShareStatusRepository.update_share_item_health_status(
+                        self.session, share_item, ShareItemHealthStatus.Unhealthy.value, str(e), datetime.now()
+                    )
             self.session.commit()
             try:
                 if success:
@@ -421,17 +426,15 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                     f'with target {self.target_connection.name} in namespace {self.target_connection.nameSpaceId} '
                     f'due to: {e}'
                 )
-                if not self.reapply:
-                    all_failed_state = revoked_item_SM.run_transition(ShareItemActions.Failure.value)
-                    revoked_item_SM.update_state(self.session, self.share.shareUri, all_failed_state)
-                else:
-                    for table in self.tables:
-                        share_item = ShareObjectRepository.find_sharable_item(
-                            self.session, self.share.shareUri, table.rsTableUri
-                        )
-                        ShareStatusRepository.update_share_item_health_status(
-                            self.session, share_item, ShareItemHealthStatus.Unhealthy.value, str(e), datetime.now()
-                        )
+                all_failed_state = revoked_item_SM.run_transition(ShareItemActions.Failure.value)
+                revoked_item_SM.update_state(self.session, self.share.shareUri, all_failed_state)
+                for table in self.tables:
+                    share_item = ShareObjectRepository.find_sharable_item(
+                        self.session, self.share.shareUri, table.rsTableUri
+                    )
+                    ShareStatusRepository.update_share_item_health_status(
+                        self.session, share_item, ShareItemHealthStatus.Unhealthy.value, str(e), datetime.now()
+                    )
                 return False
             return success
 
