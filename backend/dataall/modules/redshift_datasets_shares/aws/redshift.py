@@ -31,7 +31,7 @@ class RedshiftShareClient:
         try:
             log.info(f'Associating datashare {datashare_arn=} to {consumer_arn=}...')
             self.client.associate_data_share_consumer(
-                DataShareArn=datashare_arn, ConsumerArn=consumer_arn, AllowWrites=False
+                DataShareArn=datashare_arn, ConsumerArn=consumer_arn, AllowWrites=False, AssociateEntireAccount=False
             )
         except ClientError as e:
             log.error(e)

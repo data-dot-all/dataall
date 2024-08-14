@@ -6,6 +6,7 @@ from dataall.base.db import exceptions
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.base.db import paginate
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnection
+from dataall.modules.redshift_datasets.services.redshift_enums import RedshiftConnectionTypes
 
 logger = logging.getLogger(__name__)
 
@@ -62,11 +63,18 @@ class RedshiftConnectionRepository:
         return query.order_by(RedshiftConnection.label)
 
     @staticmethod
-    def list_environment_redshift_connections(session, environment_uri, filter_type=[]):
+    def list_environment_redshift_connections(session, environment_uri):
         query = session.query(RedshiftConnection).filter(RedshiftConnection.environmentUri == environment_uri)
-        if filter_type:
-            query = query.filter(RedshiftConnection.connectionType.in_(filter_type))
         return query.order_by(RedshiftConnection.label).all()
+
+    @staticmethod
+    def get_namespace_admin_connection(session, environment_uri, namespace_id):
+        query = session.query(RedshiftConnection).filter(
+            RedshiftConnection.environmentUri == environment_uri,
+            RedshiftConnection.nameSpaceId == namespace_id,
+            RedshiftConnection.connectionType == RedshiftConnectionTypes.ADMIN.value,
+        )
+        return query.first()
 
     @staticmethod
     def paginated_user_redshift_connections(session, username, groups, filter={}) -> dict:

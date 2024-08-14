@@ -125,7 +125,7 @@ def source_connection(db, user, group, env_fixture, mock_redshift_serverless, mo
             'database': 'database_1',
             'redshiftUser': None,
             'secretArn': 'arn:aws:secretsmanager:*:111111111111:secret:secret-1',
-            'connectionType': 'DATA_USER',
+            'connectionType': 'ADMIN',
         },
     )
     dispose_context()
