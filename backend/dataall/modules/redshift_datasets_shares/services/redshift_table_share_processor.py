@@ -276,8 +276,9 @@ class ProcessRedshiftShare(SharesProcessorInterface):
         try:
             4) (in target namespace) If no more tables are shared with the redshift role, revoke usage access to the external schema to the redshift role
             5) (in target namespace) If no more tables are shared with the redshift role, revoke usage access to the self.local_db to the redshift role
-            6) (in target namespace) If no more tables are shared with any role in this namespace, drop local database
-            7) (in source namespace) If no more tables are shared with any role in this namespace, drop datashare
+            6) (in target namespace) If no more tables are shared with any role in this namespace, drop external schema
+            7) (in target namespace) If no more tables are shared with any role in this namespace, drop local database
+            8) (in source namespace) If no more tables are shared with any role in this namespace, drop datashare
             # Drop datashare deletes it from source and target, alongside its permissions (for both same and cross account)
             Update NON-FAILED tables with Success Action (Revoke_In_Progress ---> Revoke_Succeeded)
         except:
@@ -389,9 +390,9 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                             )
                         else:
                             log.info('Database does not exist, no permissions need to be revoked')
-
-                    # 6) (in target namespace) If no more tables are shared with any role in this namespace, drop local database
-                    # 7) (in source namespace) If no more tables are shared with any role in this namespace, drop datashare
+                    # 6) (in target namespace) If no more tables are shared with any role in this namespace, drop external schema
+                    # 7) (in target namespace) If no more tables are shared with any role in this namespace, drop local database
+                    # 8) (in source namespace) If no more tables are shared with any role in this namespace, drop datashare
                     if (
                         RedshiftShareRepository.count_dataset_shared_items_with_namespace(
                             session=self.session,
@@ -403,6 +404,7 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                         log.info(
                             f'No other tables of this dataset are shared with this namespace {self.target_connection.nameSpaceId}'
                         )
+                        self.redshift_data_client_in_target.drop_schema(schema=self.external_schema)
                         self.redshift_data_client_in_target.drop_database(database=self.local_db)
                         self.redshift_data_client_in_source.drop_datashare(datashare=self.datashare_name)
 
@@ -504,15 +506,14 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                         account_id=self.share_data.target_environment.AwsAccountId,
                         region=self.share_data.target_environment.region,
                     )
-                    redshift_type = (
-                        'redshift-serverless'
+                    consumer_arn = (
+                        f'arn:aws:redshift-serverless:{self.share_data.target_environment.region}:{self.share_data.target_environment.AwsAccountId}:namespace/{self.target_connection.nameSpaceId}'
                         if self.target_connection.redshiftType == RedshiftType.Serverless.value
-                        else 'redshift'
+                        else f'arn:aws:redshift:{self.share_data.target_environment.region}:{self.share_data.target_environment.AwsAccountId}:namespace:{self.target_connection.nameSpaceId}'
                     )
                     if (
                         status_in_target := redshift_client_in_target.get_datashare_status(
-                            datashare_arn=self.datashare_arn,
-                            consumer_id=f'arn:aws:{redshift_type}:{self.share_data.target_environment.region}:{self.share_data.target_environment.AwsAccountId}:namespace/{self.target_connection.nameSpaceId}',
+                            datashare_arn=self.datashare_arn, consumer_id=consumer_arn
                         )
                     ) not in [RedshiftDatashareStatus.Active.value]:
                         ds_level_errors.append(

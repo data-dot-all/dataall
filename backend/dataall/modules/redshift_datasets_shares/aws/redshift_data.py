@@ -339,6 +339,23 @@ class RedshiftShareDataClient:
                 log.error(f'Creation of external schema {external_schema=} in {database=} failed due to: {e}')
                 raise e
 
+    def drop_schema(self, schema: str):
+        """Delete schema, if not deleted already"""
+        try:
+            log.info(f'Dropping {schema=}...')
+            sql_statement = f'DROP SCHEMA {RedshiftShareDataClient.double_quoted_name(schema)};'
+            self._execute_statement(sql=sql_statement)
+        except Exception as e:
+            allowed_error_message = f'ERROR: Schema {RedshiftShareDataClient.double_quoted_name(schema)} does not exist'
+            error_message = e.args[0]
+            if error_message == allowed_error_message:
+                log.info(
+                    f'Schema {RedshiftShareDataClient.double_quoted_name(schema)} does not exist. No need to drop it any more.'
+                )
+            else:
+                log.error(f'Dropping {schema=} failed due to: {e}')
+                raise e
+
     def check_schema_exists(self, schema: str, database: str) -> bool:
         """
         Check that schema exists. List schemas with SHOW SCHEMAS FROM DATABASE
