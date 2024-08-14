@@ -13,7 +13,7 @@
         "account": "033050164246",
         "region": "us-east-1",
         "prod_sizing": false,
-        "vpc_restricted_nacl": true,
+        "vpc_restricted_nacl": false,
         "enable_pivot_role_auto_create": true,
         "with_approval_tests": true
       }

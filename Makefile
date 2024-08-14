@@ -61,7 +61,7 @@ test:
 
 integration-tests: upgrade-pip install-integration-tests
 	export PYTHONPATH=./backend:/./tests_new && \
-	python -m pytest -v -ra tests_new/integration_tests/modules/notebooks/ \
+	python -m pytest -v -ra tests_new/integration_tests/core/organizations/ \
 		--junitxml=reports/integration_tests.xml
 
 coverage: upgrade-pip install-backend install-cdkproxy install-tests
