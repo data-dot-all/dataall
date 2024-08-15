@@ -1,8 +1,15 @@
 from sqlalchemy import or_, and_
 from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility, MetadataFormFieldType
-from dataall.modules.metadata_forms.db.metadata_form_models import MetadataForm, MetadataFormField, \
-    AttachedMetadataForm, AttachedMetadataFormField, StringAttachedMetadataFormField, BooleanAttachedMetadataFormField, \
-    IntegerAttachedMetadataFormField, GlossaryTermAttachedMetadataFormField
+from dataall.modules.metadata_forms.db.metadata_form_models import (
+    MetadataForm,
+    MetadataFormField,
+    AttachedMetadataForm,
+    AttachedMetadataFormField,
+    StringAttachedMetadataFormField,
+    BooleanAttachedMetadataFormField,
+    IntegerAttachedMetadataFormField,
+    GlossaryTermAttachedMetadataFormField,
+)
 
 
 class MetadataFormRepository:
@@ -22,9 +29,7 @@ class MetadataFormRepository:
     @staticmethod
     def create_attached_metadata_form(session, uri, data=None):
         amf: AttachedMetadataForm = AttachedMetadataForm(
-            metadataFormUri=uri,
-            entityUri=data.get('entityUri'),
-            entityType=data.get('entityType')
+            metadataFormUri=uri, entityUri=data.get('entityUri'), entityType=data.get('entityType')
         )
         session.add(amf)
         session.commit()
@@ -129,36 +134,24 @@ class MetadataFormRepository:
         return session.query(MetadataForm).get(uri).SamlGroupName
 
     @staticmethod
-    def create_attached_metadata_form_field(session,attachedFormUri, field: MetadataFormField, value):
+    def create_attached_metadata_form_field(session, attachedFormUri, field: MetadataFormField, value):
         amff = None
         if field.type == MetadataFormFieldType.String:
             amff = StringAttachedMetadataFormField(
-                attachedFormUri=attachedFormUri,
-                fieldUri=field.fieldUri,
-                type=field.type,
-                value=value
+                attachedFormUri=attachedFormUri, fieldUri=field.fieldUri, type=field.type, value=value
             )
         elif field.type == MetadataFormFieldType.Boolean:
             amff = BooleanAttachedMetadataFormField(
-                attachedFormUri=attachedFormUri,
-                fieldUri=field.fieldUri,
-                type=field.type,
-                value=value
+                attachedFormUri=attachedFormUri, fieldUri=field.fieldUri, type=field.type, value=value
             )
 
         elif field.type == MetadataFormFieldType.Integer:
             amff = IntegerAttachedMetadataFormField(
-                attachedFormUri=attachedFormUri,
-                fieldUri=field.fieldUri,
-                type=field.type,
-                value=value
+                attachedFormUri=attachedFormUri, fieldUri=field.fieldUri, type=field.type, value=value
             )
         elif field.type == MetadataFormFieldType.GlossaryTerm:
             amff = GlossaryTermAttachedMetadataFormField(
-                attachedFormUri=attachedFormUri,
-                fieldUri=field.fieldUri,
-                type=field.type,
-                value=value
+                attachedFormUri=attachedFormUri, fieldUri=field.fieldUri, type=field.type, value=value
             )
         else:
             raise Exception('Unsupported field type')
@@ -167,7 +160,6 @@ class MetadataFormRepository:
             session.add(amff)
             session.commit()
 
-
     @staticmethod
     def get_attached_metadata_form_field(session, field_uri):
         return session.query(AttachedMetadataFormField).get(field_uri)
@@ -175,3 +167,14 @@ class MetadataFormRepository:
     @staticmethod
     def get_all_attached_metadata_form_fields(session, uri):
         return session.query(AttachedMetadataFormField).filter(AttachedMetadataFormField.attachedFormUri == uri).all()
+
+    @staticmethod
+    def query_attached_metadata_forms(session, filter):
+        query = session.query(AttachedMetadataForm)
+        if filter and filter.get('entityType'):
+            query = query.filter(AttachedMetadataForm.entityType == filter.get('entityType'))
+        if filter and filter.get('entityUri'):
+            query = query.filter(AttachedMetadataForm.entityUri == filter.get('entityUri'))
+        if filter and filter.get('metadataFormUri'):
+            query = query.filter(AttachedMetadataForm.metadataFormUri == filter.get('metadataFormUri'))
+        return query

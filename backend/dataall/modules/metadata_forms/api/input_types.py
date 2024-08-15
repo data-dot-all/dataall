@@ -49,3 +49,26 @@ MetadataFormFilter = gql.InputType(
         gql.Argument('pageSize', gql.Integer),
     ],
 )
+
+
+AttachedMetadataFormFilter = gql.InputType(
+    name='MetadataFormFilter',
+    arguments=[
+        gql.Argument('page', gql.Integer),
+        gql.Argument('search_input', gql.String),
+        gql.Argument('pageSize', gql.Integer),
+        gql.Argument('entityType', gql.String),
+        gql.Argument('entityUri', gql.String),
+        gql.Argument('metadataFormUri', gql.String),
+    ],
+)
+
+
+NewAttachedMetadataFormInput = gql.InputType(
+    name='NewAttachedMetadataFormInput',
+    arguments=[
+        gql.Field(name='entityType', type=gql.NonNullableType(gql.String)),
+        gql.Field(name='entityUri', type=gql.NonNullableType(gql.String)),
+        gql.Field(name='fields', type=gql.ArrayType(gql.Ref('NewAttachedMetadataFormFieldInput'))),
+    ],
+)
