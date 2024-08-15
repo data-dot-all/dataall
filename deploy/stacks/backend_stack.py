@@ -59,6 +59,7 @@ class BackendStack(Stack):
         custom_auth=None,
         custom_waf_rules=None,
         with_approval_tests=False,
+        allowed_origins='*',
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -97,6 +98,7 @@ class BackendStack(Stack):
             reauth_apis=reauth_config.get('reauth_apis', None) if reauth_config else None,
             prod_sizing=prod_sizing,
             tooling_account_id=tooling_account_id,
+            allowed_origins=allowed_origins,
             **kwargs,
         )
         if enable_cw_canaries:
@@ -199,6 +201,7 @@ class BackendStack(Stack):
             custom_domain=custom_domain,
             custom_auth=custom_auth,
             custom_waf_rules=custom_waf_rules,
+            allowed_origins=allowed_origins,
             **kwargs,
         )
 
