@@ -16,7 +16,7 @@ from aws_cdk import (
 )
 from aws_cdk.aws_glue import CfnCrawler
 
-from backend.dataall.base.utils.naming_convention import NamingConventionPattern, NamingConventionService
+from dataall.base.utils.naming_convention import NamingConventionPattern, NamingConventionService
 from dataall.base import db
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.aws.sts import SessionHelper
