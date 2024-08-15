@@ -12,6 +12,8 @@ from sqlalchemy import Column, String, DateTime, Enum, ForeignKey, orm
 from sqlalchemy.dialects import postgresql
 from dataall.base.db import Resource, utils
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.permission_service import PermissionService
+from dataall.core.permissions.api.enums import PermissionType
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_DATA_FILTERS, DATASET_TABLE_READ
 from dataall.modules.datasets_base.services.datasets_enums import DatasetTypes
 from sqlalchemy.ext.declarative import declarative_base
@@ -94,6 +96,13 @@ def upgrade():
     bind = op.get_bind()
     session = orm.Session(bind=bind)
     print('Adding DATASET_TABLE_DATA_FILTERS permissions for all s3 dataset tables...')
+    for perm in DATASET_TABLE_DATA_FILTERS:
+        PermissionService.save_permission(
+            session,
+            name=perm,
+            description=perm,
+            permission_type=PermissionType.RESOURCE.name,
+        )
     s3_datasets: [S3Dataset] = session.query(S3Dataset).all()
     for dataset in s3_datasets:
         dataset_tables = session.query(DatasetTable).filter(DatasetTable.datasetUri == dataset.datasetUri).all()
