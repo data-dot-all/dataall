@@ -4,3 +4,4 @@ export * from './MetadataFormInfo';
 export * from './MetadataFormPreview';
 export * from './MetadataFormEnforcement';
 export * from './MetadataFormFields';
+export * from './fields';
