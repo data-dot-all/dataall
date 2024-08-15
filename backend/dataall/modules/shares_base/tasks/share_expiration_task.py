@@ -30,19 +30,18 @@ def share_expiration_checker(engine):
                 SharingService.revoke_share(engine=engine, share_uri=share.shareUri)
             else:
                 log.info(f'Share with share uri: {share.shareUri} has not yet expired')
-                dataset = DatasetBaseRepository.get_dataset_by_uri(session, share.shareUri)
+                dataset = DatasetBaseRepository.get_dataset_by_uri(session, share.datasetUri)
                 if share.submittedForExtension:
                     log.info(
-                        f'Sending notifications to the owners as share extension requested for share with uri: {share.shareUri}'
+                        f'Sending notifications to the owners: {dataset.SamlAdminGroupName}, {dataset.stewards} as share extension requested for share with uri: {share.shareUri}'
                     )
                     ShareNotificationService(
                         session=session, dataset=dataset, share=share
                     ).notify_share_expiration_to_owners()
                 else:
                     log.info(
-                        f'Sending notifications to the requesters as share extension is not requested for share with uri: {share.shareUri}'
+                        f'Sending notifications to the requesters with group: {share.groupUri} as share extension is not requested for share with uri: {share.shareUri}'
                     )
-
                     ShareNotificationService(
                         session=session, dataset=dataset, share=share
                     ).notify_share_expiration_to_requesters()
@@ -50,6 +49,6 @@ def share_expiration_checker(engine):
 
 if __name__ == '__main__':
     load_modules(modes={ImportMode.SHARES_TASK})
-    ENVNAME = os.environ.get('envname', 'local')
+    ENVNAME = os.environ.get('envname', 'dkrcompose')
     ENGINE = get_engine(envname=ENVNAME)
     share_expiration_checker(engine=ENGINE)

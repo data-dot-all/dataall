@@ -8,7 +8,8 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db.exceptions import RequiredParameter, InvalidInput
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
-from dataall.modules.datasets_base.services.datasets_enums import DatasetRole, ConfidentialityClassification
+from dataall.modules.datasets_base.services.datasets_enums import DatasetRole, ConfidentialityClassification, \
+    DatasetExpiration
 from dataall.modules.s3_datasets.services.dataset_service import DatasetService
 
 log = logging.getLogger(__name__)
@@ -102,12 +103,7 @@ def get_dataset_stewards_group(context, source: S3Dataset, **kwargs):
 
 def update_dataset(context, source, datasetUri: str = None, input: dict = None):
     if input.get('enableExpiration', False):
-        if input.get('expiryMinDuration') > input.get('expiryMaxDuration'):
-            raise InvalidInput(
-                'Minimum expiration duration ',
-                input.get('expiryMinDuration'),
-                f'cannot be greater than max expiration {input.get("expiryMaxDuration")}',
-            )
+       RequestValidator.validate_share_expiration_request(input)
     return DatasetService.update_dataset(uri=datasetUri, data=input)
 
 
@@ -175,12 +171,27 @@ class RequestValidator:
         if len(data['label']) > 52:
             raise InvalidInput('Dataset name', data['label'], 'less than 52 characters')
         if data.get('enableExpiration', False):
-            if data.get('expiryMinDuration') > data.get('expiryMaxDuration'):
-                raise InvalidInput(
-                    'Minimum expiration duration ',
-                    data.get('expiryMinDuration'),
-                    f'cannot be greater than max expiration {data.get("expiryMaxDuration")}',
-                )
+            RequestValidator.validate_share_expiration_request(data)
+    @staticmethod
+    def validate_share_expiration_request(data):
+        if data.get('expiryMinDuration') < 0 or data.get('expiryMaxDuration') < 0:
+            raise InvalidInput(
+                'expiration duration ',
+                '',
+                f'must be greater than zero',
+            )
+        if data.get('expiryMinDuration') > data.get('expiryMaxDuration'):
+            raise InvalidInput(
+                'Minimum expiration duration ',
+                data.get('expiryMinDuration'),
+                f'cannot be greater than max expiration {data.get("expiryMaxDuration")}',
+            )
+        if data.get('expirySetting') not in [item.value for item in list(DatasetExpiration)]:
+            raise InvalidInput(
+                'Expiration Setting',
+                data.get('expirySetting'),
+                f'is of invalid type',
+            )
 
     @staticmethod
     def validate_import_request(data):

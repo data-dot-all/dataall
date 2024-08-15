@@ -81,10 +81,9 @@ class ShareNotificationService:
         subject = f'URGENT REMINDER: Data.all | Action Required on Pending Share Request for {self.dataset.label}'
         email_notification_msg = msg_intro + share_link_text + msg_end
 
-        html_tag_translation_table = str.maketrans({'<br>': '', '<b>': '', '</b>': ''})
         notifications = self.register_notifications(
             notification_type=DataSharingNotificationType.SHARE_OBJECT_SUBMITTED.value,
-            msg=msg_intro.translate(html_tag_translation_table),
+            msg=msg_intro.replace('<br>', '').replace('<b>', '').replace('</b>', ''),
         )
 
         self._create_and_send_email_notifications(
@@ -202,10 +201,9 @@ class ShareNotificationService:
         )
         email_notification_msg = msg_intro + share_link_text + msg_end
 
-        html_tag_translation_table = str.maketrans({'<br>': '', '<b>': '', '</b>': ''})
         notifications = self.register_notifications(
             notification_type=DataSharingNotificationType.SHARE_OBJECT_EXTENDED.value,
-            msg=msg_intro.translate(html_tag_translation_table),
+            msg=msg_intro.replace('<br>', '').replace('<b>', '').replace('</b>', ''),
         )
 
         self._create_and_send_email_notifications(
@@ -237,10 +235,9 @@ class ShareNotificationService:
         subject = 'ACTION REQUIRED: Data.all | Share Expiration Approaching Soon'
         email_notification_msg = msg_intro + share_link_text + msg_end
 
-        html_tag_translation_table = str.maketrans({'<br>': '', '<b>': '', '</b>': ''})
         notifications = self.register_notifications(
             notification_type=DataSharingNotificationType.SHARE_OBJECT_EXTENDED.value,
-            msg=msg_intro.translate(html_tag_translation_table),
+            msg=msg_intro.replace('<br>', '').replace('<b>', '').replace('</b>', ''),
         )
 
         self._create_and_send_email_notifications(

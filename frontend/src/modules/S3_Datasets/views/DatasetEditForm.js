@@ -316,12 +316,12 @@ const DatasetEditForm = (props) => {
                 ),
                 expirationSetting: Yup.string().nullable(),
                 minValidity: enableShareExpiration
-                  ? Yup.number().required(
+                  ? Yup.number().positive().required(
                       '*Minimum allowed expiration is required'
                     )
                   : Yup.number().nullable(),
                 maxValidity: enableShareExpiration
-                  ? Yup.number().required(
+                  ? Yup.number().positive().required(
                       '*Maximum allowed expiration is required'
                     )
                   : Yup.number().nullable()
