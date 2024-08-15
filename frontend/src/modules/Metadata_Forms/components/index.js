@@ -6,3 +6,4 @@ export * from './MetadataFormEnforcement';
 export * from './MetadataFormFields';
 export * from './fields';
 export * from './renderedMetadataForm';
+export * from './metadataAttachement';
