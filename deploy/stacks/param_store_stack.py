@@ -25,6 +25,7 @@ class ParamStoreStack(pyNestedClass):
         reauth_apis=None,
         prod_sizing=False,
         tooling_account_id='',
+        allowed_origins='*',
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -91,6 +92,13 @@ class ParamStoreStack(pyNestedClass):
             f'dataallCreationPivotRole{envname}',
             parameter_name=f'/dataall/{envname}/pivotRole/enablePivotRoleAutoCreate',
             string_value=str(enable_pivot_role_auto_create),
+        )
+        
+        aws_ssm.StringParameter(
+            self,
+            f'dataallAllowedOrigins{envname}',
+            parameter_name=f'/dataall/{envname}/allowedOrigins',
+            string_value=str(allowed_origins),
         )
 
         aws_ssm.StringParameter(
