@@ -4,7 +4,7 @@ import sys
 from datetime import datetime
 from dataall.base.loader import load_modules, ImportMode
 from dataall.base.db import get_engine
-from backend.dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.shares_base.services.sharing_service import SharingService

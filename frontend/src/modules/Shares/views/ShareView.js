@@ -62,7 +62,7 @@ import {
   reApplyItemsShareObject,
   getShareItemDataFilters,
   approveShareExtensionObject,
-    cancelShareExtensionObject
+  cancelShareExtensionObject
 } from '../services';
 import {
   AddShareItemModal,
@@ -77,7 +77,7 @@ import { generateShareItemLabel } from 'utils';
 import { ShareLogs } from '../components/ShareLogs';
 import { ShareSubmitModal } from '../components/ShareSubmitModal';
 import { UpdateExtensionReason } from '../components/ShareUpdateExtension';
-import CancelIcon from "@mui/icons-material/Close";
+import CancelIcon from '@mui/icons-material/Close';
 
 function ShareViewHeader(props) {
   const {
@@ -228,7 +228,7 @@ function ShareViewHeader(props) {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setCancellingExtension(false);
-  }
+  };
 
   const handleApproveShare = async () => {
     setAccepting(true);
@@ -351,58 +351,58 @@ function ShareViewHeader(props) {
                 share.userRoleForShareObject === 'ApproversAndRequesters') && (
                 <>
                   {share.status === 'Submitted' && (
-                      <>
-                        <LoadingButton
-                          loading={accepting}
-                          color="success"
-                          startIcon={<CheckCircleOutlined />}
-                          sx={{ m: 1 }}
-                          onClick={handleApproveShare}
-                          ref={anchorRef}
-                          type="button"
-                          variant="outlined"
-                        >
-                          Approve
-                        </LoadingButton>
-                        <LoadingButton
-                          loading={rejecting}
-                          color="error"
-                          sx={{ m: 1 }}
-                          startIcon={<BlockOutlined />}
-                          onClick={handleRejectShareModalOpen}
-                          type="button"
-                          variant="outlined"
-                        >
-                          Reject
-                        </LoadingButton>
-                      </>
-                    )}
+                    <>
+                      <LoadingButton
+                        loading={accepting}
+                        color="success"
+                        startIcon={<CheckCircleOutlined />}
+                        sx={{ m: 1 }}
+                        onClick={handleApproveShare}
+                        ref={anchorRef}
+                        type="button"
+                        variant="outlined"
+                      >
+                        Approve
+                      </LoadingButton>
+                      <LoadingButton
+                        loading={rejecting}
+                        color="error"
+                        sx={{ m: 1 }}
+                        startIcon={<BlockOutlined />}
+                        onClick={handleRejectShareModalOpen}
+                        type="button"
+                        variant="outlined"
+                      >
+                        Reject
+                      </LoadingButton>
+                    </>
+                  )}
                   {share.status === 'Submitted_For_Extension' && (
-                      <>
-                        <LoadingButton
-                          loading={accepting}
-                          color="success"
-                          startIcon={<CheckCircleOutlined />}
-                          sx={{ m: 1 }}
-                          onClick={handleApproveExtensionShare}
-                          type="button"
-                          variant="outlined"
-                        >
-                          Approve Extension
-                        </LoadingButton>
-                        <LoadingButton
-                          loading={rejecting}
-                          color="error"
-                          sx={{ m: 1 }}
-                          startIcon={<BlockOutlined />}
-                          onClick={handleRejectShareModalOpen}
-                          type="button"
-                          variant="outlined"
-                        >
-                          Reject Extension
-                        </LoadingButton>
-                      </>
-                    )}
+                    <>
+                      <LoadingButton
+                        loading={accepting}
+                        color="success"
+                        startIcon={<CheckCircleOutlined />}
+                        sx={{ m: 1 }}
+                        onClick={handleApproveExtensionShare}
+                        type="button"
+                        variant="outlined"
+                      >
+                        Approve Extension
+                      </LoadingButton>
+                      <LoadingButton
+                        loading={rejecting}
+                        color="error"
+                        sx={{ m: 1 }}
+                        startIcon={<BlockOutlined />}
+                        onClick={handleRejectShareModalOpen}
+                        type="button"
+                        variant="outlined"
+                      >
+                        Reject Extension
+                      </LoadingButton>
+                    </>
+                  )}
                 </>
               )}
               <LoadingButton
@@ -416,28 +416,24 @@ function ShareViewHeader(props) {
               >
                 Edit
               </LoadingButton>
-              {
-                (share.userRoleForShareObject === 'Requesters' ||
+              {(share.userRoleForShareObject === 'Requesters' ||
                 share.userRoleForShareObject === 'ApproversAndRequesters') && (
-                    <>
-                      {
-                        (share.status === 'Submitted_For_Extension') && (
-                            <LoadingButton
-                            loading={cancellingExtension}
-                            color="primary"
-                            startIcon={<CancelIcon />}
-                            sx={{ m: 1 }}
-                            onClick={handleCancelShareExtensionRequest}
-                            type="button"
-                            variant="outlined"
-                          >
-                            Cancel Extension
-                          </LoadingButton>
-                          )
-                      }
-                    </>
-                  )
-              }
+                <>
+                  {share.status === 'Submitted_For_Extension' && (
+                    <LoadingButton
+                      loading={cancellingExtension}
+                      color="primary"
+                      startIcon={<CancelIcon />}
+                      sx={{ m: 1 }}
+                      onClick={handleCancelShareExtensionRequest}
+                      type="button"
+                      variant="outlined"
+                    >
+                      Cancel Extension
+                    </LoadingButton>
+                  )}
+                </>
+              )}
               {(share.userRoleForShareObject === 'Requesters' ||
                 share.userRoleForShareObject === 'ApproversAndRequesters') && (
                 <>
@@ -1036,38 +1032,44 @@ const ShareView = () => {
                                   color="textPrimary"
                                   variant="subtitle2"
                                 >
-                                  { share.expiryDate != null
+                                  {share.expiryDate != null
                                     ? new Date(share.expiryDate).toDateString()
                                     : 'Share expiration date not set'}
                                 </Typography>
                               </Box>
                             </Box>
                           )}
-                          { share.dataset.enableExpiration && (share.status === 'Submitted_For_Extension' || share.status === 'Draft' || share.status === 'Submitted') && (
+                          {share.dataset.enableExpiration &&
+                            (share.status === 'Submitted_For_Extension' ||
+                              share.status === 'Draft' ||
+                              share.status === 'Submitted') && (
                               <Box sx={{ mt: 3 }}>
-                              <Tooltip
-                                title={
-                                  'Please submit an extension share request before this date to avoid losing access data. For submitting a share request, click on edit'
-                                }
-                              >
-                                <Typography
-                                  color="textSecondary"
-                                  variant="subtitle2"
+                                <Tooltip
+                                  title={
+                                    'Please submit an extension share request before this date to avoid losing access data. For submitting a share request, click on edit'
+                                  }
                                 >
-                                  Requested Share Expiration Date
-                                </Typography>
-                              </Tooltip>
-                              <Box sx={{ mt: 1 }}>
-                                <Typography
-                                  color="textPrimary"
-                                  variant="subtitle2"
-                                >
-                                  { share.requestedExpiryDate != null
-                                    ? new Date(share.requestedExpiryDate).toDateString()
-                                    : 'Requested share expiration date not set'}
-                                </Typography>
+                                  <Typography
+                                    color="textSecondary"
+                                    variant="subtitle2"
+                                  >
+                                    Requested Share Expiration Date
+                                  </Typography>
+                                </Tooltip>
+                                <Box sx={{ mt: 1 }}>
+                                  <Typography
+                                    color="textPrimary"
+                                    variant="subtitle2"
+                                  >
+                                    {share.requestedExpiryDate != null
+                                      ? new Date(
+                                          share.requestedExpiryDate
+                                        ).toDateString()
+                                      : 'Requested share expiration date not set'}
+                                  </Typography>
+                                </Box>
                               </Box>
-                            </Box>)}
+                            )}
                         </Box>
                       </CardContent>
                     </Card>

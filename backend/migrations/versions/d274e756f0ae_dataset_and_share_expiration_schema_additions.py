@@ -1,4 +1,4 @@
-"""describe_changes_shortly
+"""schema_for_share_expiration
 
 Revision ID: d274e756f0ae
 Revises: 797dd1012be1

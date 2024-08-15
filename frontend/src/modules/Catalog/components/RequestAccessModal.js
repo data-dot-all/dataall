@@ -52,8 +52,6 @@ export const RequestAccessModal = (props) => {
   const [share, setShare] = useState(false);
   const [loading, setLoading] = useState(false);
   const [alreadyExisted, setAlreadyExisted] = useState(false);
-  const [datasetExpirationEnabled, setDatasetExpirationEnabled] =
-    useState(true);
   const [datasetExpirationDetails, setDatasetExpirationDetails] = useState({
     enableExpiration: false
   });
@@ -179,7 +177,6 @@ export const RequestAccessModal = (props) => {
   };
 
   const fetchDatasetExpirationDetails = async (datasetUri) => {
-    console.log(datasetUri);
     try {
       const response = await client.query(
         getDatasetExpirationDetails({

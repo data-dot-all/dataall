@@ -31,7 +31,6 @@ export const UpdateExtensionReason = (props) => {
   };
   const update = async (comment) => {
     setUpdating(true);
-    console.log(comment);
     const response = await client.mutate(
       updateShareExtensionReason({
         shareUri: share.shareUri,

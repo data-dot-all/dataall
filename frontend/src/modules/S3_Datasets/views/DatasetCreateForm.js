@@ -15,7 +15,6 @@ import {
   Grid,
   Link,
   MenuItem,
-  Stack,
   Switch,
   TextField,
   Typography

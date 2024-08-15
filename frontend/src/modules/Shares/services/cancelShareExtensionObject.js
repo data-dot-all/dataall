@@ -6,7 +6,7 @@ export const cancelShareExtensionObject = ({ shareUri }) => ({
   },
   mutation: gql`
     mutation cancelShareExtensionObject($shareUri: String!) {
-      cancelShareExtensionObject(shareUri: $shareUri) 
+      cancelShareExtensionObject(shareUri: $shareUri)
     }
   `
 });
