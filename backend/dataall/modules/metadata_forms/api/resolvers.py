@@ -1,7 +1,9 @@
 from dataall.base.api.context import Context
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.catalog.services.glossaries_service import GlossariesService
 from dataall.modules.metadata_forms.db.metadata_form_models import MetadataForm, MetadataFormField, AttachedMetadataForm
 from dataall.modules.metadata_forms.services.metadata_form_filled_service import AttachedMetadataFormService
+from dataall.modules.metadata_forms.services.metadata_form_permissions import MANAGE_METADATA_FORMS
 from dataall.modules.metadata_forms.services.metadata_form_service import MetadataFormService, MetadataFormAccessService
 
 
@@ -63,3 +65,11 @@ def get_attached_form_fields(context: Context, source: AttachedMetadataForm):
 
 def get_attached_metadata_form(context: Context, source, uri):
     return AttachedMetadataFormService.get_attached_metadata_form(uri=uri)
+
+
+def has_tenant_permissions_for_metadata_forms(context: Context, source: MetadataForm):
+    return TenantPolicyService.has_user_tenant_permission(
+        groups=context.groups,
+        tenant_name=TenantPolicyService.TENANT_NAME,
+        permission_name=MANAGE_METADATA_FORMS,
+    )

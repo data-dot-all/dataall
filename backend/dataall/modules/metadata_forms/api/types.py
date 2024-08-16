@@ -5,6 +5,8 @@ from dataall.modules.metadata_forms.api.resolvers import (
     get_fields_glossary_node_name,
     get_user_role,
     get_attached_form_fields,
+    get_user_role,
+    has_tenant_permissions_for_metadata_forms,
 )
 
 MetadataForm = gql.ObjectType(
@@ -50,6 +52,7 @@ MetadataFormSearchResult = gql.ObjectType(
         gql.Field(name='previousPage', type=gql.Integer),
         gql.Field(name='hasNext', type=gql.Boolean),
         gql.Field(name='hasPrevious', type=gql.Boolean),
+        gql.Field(name='hasTenantPermissions', type=gql.Boolean, resolver=has_tenant_permissions_for_metadata_forms),
     ],
 )
 

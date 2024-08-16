@@ -155,12 +155,8 @@ const EditTable = (props) => {
                   <Checkbox
                     defaultChecked={field.required}
                     disabled={field.deleted}
-                    onChange={(event) => {
-                      updateField(
-                        index,
-                        'required',
-                        event.target.value === 'on'
-                      );
+                    onChange={(event, value) => {
+                      updateField(index, 'required', value);
                     }}
                   />
                 </TableCell>
