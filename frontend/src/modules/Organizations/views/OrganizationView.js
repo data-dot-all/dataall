@@ -218,7 +218,10 @@ const OrganizationView = () => {
                 <OrganizationEnvironments organization={org} />
               )}
               {currentTab === 'metadata' && (
-                <MetadataAttachement entityType="organization" entity={org} />
+                <MetadataAttachement
+                  entityType="Organization"
+                  entityUri={org.organizationUri}
+                />
               )}
             </Box>
           </Container>

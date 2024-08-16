@@ -2,7 +2,7 @@ from dataall.base.api import gql
 from dataall.modules.metadata_forms.api.resolvers import (
     list_metadata_forms,
     get_metadata_form,
-    get_attached_metadata_form,
+    get_attached_metadata_form, list_attached_forms,
 )
 
 listMetadataForms = gql.QueryField(
@@ -25,7 +25,7 @@ listAttachedMetadataForms = gql.QueryField(
     name='listAttachedMetadataForms',
     args=[gql.Argument('filter', gql.Ref('AttachedMetadataFormFilter'))],
     type=gql.Ref('AttachedMetadataFormSearchResult'),
-    resolver=list_metadata_forms,
+    resolver=list_attached_forms,
     test_scope='MetadataForm',
 )
 

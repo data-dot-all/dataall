@@ -10,13 +10,16 @@ import { getGlossaryTree } from '../../Glossaries/services';
 import { SET_ERROR } from '../../../globalErrors';
 
 export const FreeInputField = (props) => {
-  const { field } = props;
+  const { field, onChange, errors } = props;
   return (
     <TextField
       sx={{ width: '100%' }}
       label={field.name}
+      error={errors[field.name]}
       name={field.name}
-      required={field.required}
+      onKeyUp={(event) => {
+        onChange(event.target.value);
+      }}
     ></TextField>
   );
 };
@@ -25,11 +28,16 @@ FreeInputField.propTypes = {
 };
 
 export const BooleanField = (props) => {
-  const { field } = props;
+  const { field, onChange } = props;
   return (
     <FormControlLabel
       sx={{ pl: 1 }}
-      control={<Checkbox id={field.name} />}
+      control={
+        <Checkbox
+          id={field.name}
+          onChange={(event, checked) => onChange(checked)}
+        />
+      }
       label={field.name}
     />
   );
@@ -40,7 +48,7 @@ BooleanField.propTypes = {
 };
 
 export const GlossaryTermField = (props) => {
-  const { field, client, dispatch } = props;
+  const { field, client, dispatch, onChange, errors } = props;
 
   const [glossaryOptions, setGlossaryOptions] = useState([]);
 
@@ -76,9 +84,11 @@ export const GlossaryTermField = (props) => {
   return (
     <Autocomplete
       options={glossaryOptions}
+      onChange={(event, value) => onChange(value.nodeUri)}
       renderInput={(params) => (
         <TextField
           sx={{ width: '100%' }}
+          error={Boolean(errors) && Boolean(errors[field.name])}
           {...params}
           label={field.name}
           variant="outlined"
@@ -95,15 +105,17 @@ GlossaryTermField.propTypes = {
 };
 
 export const DropDownField = (props) => {
-  const { field } = props;
+  const { field, onChange, errors } = props;
   return (
     <Autocomplete
       disablePortal
       options={field.possibleValues}
+      onChange={(event, value) => onChange(value)}
       renderInput={(params) => (
         <TextField
           sx={{ width: '100%' }}
           {...params}
+          error={Boolean(errors) && Boolean(errors[field.name])}
           label={field.name}
           variant="outlined"
         />

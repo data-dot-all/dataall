@@ -7,3 +7,4 @@ export * from './MetadataFormFields';
 export * from './fields';
 export * from './renderedMetadataForm';
 export * from './metadataAttachement';
+export * from './AttachedFormCard';

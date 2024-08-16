@@ -58,7 +58,13 @@ export const MetadataFormPreview = (props) => {
     );
   }
 
-  return <RenderedMetadataForm fields={fields} />;
+  return (
+    <RenderedMetadataForm
+      fields={fields}
+      metadataForm={metadataForm}
+      preview="true"
+    />
+  );
 };
 
 MetadataFormPreview.propTypes = {

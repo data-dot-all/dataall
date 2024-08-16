@@ -31,7 +31,7 @@ class AttachedMetadataFormService:
 
             amf = MetadataFormRepository.create_attached_metadata_form(session, uri, data)
             for f in data.get('fields'):
-                base_field = next((field for field in mf_fields if field.uri == f.get('uri')), None)
+                base_field = next((field for field in mf_fields if field.uri == f.get('fieldUri')), None)
                 MetadataFormRepository.create_attached_metadata_form_field(session, amf.uri, base_field, f.get('value'))
             return amf
 

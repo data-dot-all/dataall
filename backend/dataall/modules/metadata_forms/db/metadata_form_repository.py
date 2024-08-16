@@ -136,22 +136,22 @@ class MetadataFormRepository:
     @staticmethod
     def create_attached_metadata_form_field(session, attachedFormUri, field: MetadataFormField, value):
         amff = None
-        if field.type == MetadataFormFieldType.String:
+        if field.type == MetadataFormFieldType.String.value:
             amff = StringAttachedMetadataFormField(
-                attachedFormUri=attachedFormUri, fieldUri=field.fieldUri, type=field.type, value=value
+                attachedFormUri=attachedFormUri, fieldUri=field.uri, value=value
             )
-        elif field.type == MetadataFormFieldType.Boolean:
+        elif field.type == MetadataFormFieldType.Boolean.value:
             amff = BooleanAttachedMetadataFormField(
-                attachedFormUri=attachedFormUri, fieldUri=field.fieldUri, type=field.type, value=value
+                attachedFormUri=attachedFormUri, fieldUri=field.uri,value=value
             )
 
-        elif field.type == MetadataFormFieldType.Integer:
+        elif field.type == MetadataFormFieldType.Integer.value:
             amff = IntegerAttachedMetadataFormField(
-                attachedFormUri=attachedFormUri, fieldUri=field.fieldUri, type=field.type, value=value
+                attachedFormUri=attachedFormUri, fieldUri=field.uri, value=value
             )
-        elif field.type == MetadataFormFieldType.GlossaryTerm:
+        elif field.type == MetadataFormFieldType.GlossaryTerm.value:
             amff = GlossaryTermAttachedMetadataFormField(
-                attachedFormUri=attachedFormUri, fieldUri=field.fieldUri, type=field.type, value=value
+                attachedFormUri=attachedFormUri, fieldUri=field.uri,  value=value
             )
         else:
             raise Exception('Unsupported field type')

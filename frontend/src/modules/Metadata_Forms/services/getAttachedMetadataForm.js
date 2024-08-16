@@ -6,7 +6,7 @@ export const getAttachedMetadataForm = (uri) => ({
   },
   query: gql`
     query getAttachedMetadataForm($uri: String!) {
-      getMetadataForm(uri: $uri) {
+      getAttachedMetadataForm(uri: $uri) {
         uri
         metadataForm {
           uri
@@ -31,6 +31,7 @@ export const getAttachedMetadataForm = (uri) => ({
             glossaryNodeUri
             glossaryNodeName
             possibleValues
+            displayNumber
           }
           value
         }

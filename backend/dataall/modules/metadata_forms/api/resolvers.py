@@ -30,6 +30,8 @@ def get_home_entity_name(context: Context, source: MetadataForm):
 def get_metadata_form(context: Context, source, uri):
     return MetadataFormService.get_metadata_form_by_uri(uri=uri)
 
+def resolve_metadata_form(context: Context, source: AttachedMetadataForm):
+    return MetadataFormService.get_metadata_form_by_uri(source.metadataFormUri)
 
 def get_form_fields(context: Context, source: MetadataForm):
     return MetadataFormService.get_metadata_form_fields(uri=source.uri)

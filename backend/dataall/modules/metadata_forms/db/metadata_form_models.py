@@ -71,7 +71,7 @@ class AttachedMetadataFormField(Base):
 
     @validates('type')
     def update_type(self, key, new_type):
-        if new_type != self.field.type:
+        if self.field is not None and new_type != self.field.type:
             raise ValueError("Value type doesn't match field type")
 
 
@@ -80,7 +80,7 @@ class StringAttachedMetadataFormField(AttachedMetadataFormField):
     attachedFormUri = Column(String, primary_key=True)
     fieldUri = Column(String, primary_key=True)
     value = Column(String, nullable=False)
-    __mapper_args__ = {'polymorphic_identity': MetadataFormFieldType.String}
+    __mapper_args__ = {'polymorphic_identity': MetadataFormFieldType.String.value}
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -95,7 +95,7 @@ class BooleanAttachedMetadataFormField(AttachedMetadataFormField):
     attachedFormUri = Column(String, primary_key=True)
     fieldUri = Column(String, primary_key=True)
     value = Column(Boolean, nullable=False)
-    __mapper_args__ = {'polymorphic_identity': MetadataFormFieldType.Boolean}
+    __mapper_args__ = {'polymorphic_identity': MetadataFormFieldType.Boolean.value}
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -110,7 +110,7 @@ class IntegerAttachedMetadataFormField(AttachedMetadataFormField):
     attachedFormUri = Column(String, primary_key=True)
     fieldUri = Column(String, primary_key=True)
     value = Column(Integer, nullable=False)
-    __mapper_args__ = {'polymorphic_identity': MetadataFormFieldType.Integer}
+    __mapper_args__ = {'polymorphic_identity': MetadataFormFieldType.Integer.value}
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -125,7 +125,7 @@ class GlossaryTermAttachedMetadataFormField(AttachedMetadataFormField):
     attachedFormUri = Column(String, primary_key=True)
     fieldUri = Column(String, primary_key=True)
     value = Column(String, nullable=False)
-    __mapper_args__ = {'polymorphic_identity': MetadataFormFieldType.GlossaryTerm}
+    __mapper_args__ = {'polymorphic_identity': MetadataFormFieldType.GlossaryTerm.value}
 
     __table_args__ = (
         ForeignKeyConstraint(
