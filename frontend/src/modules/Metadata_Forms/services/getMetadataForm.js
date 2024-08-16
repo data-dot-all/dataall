@@ -14,6 +14,7 @@ export const getMetadataForm = (uri) => ({
         visibility
         homeEntity
         homeEntityName
+        userRole
         fields {
           uri
           metadataFormUri
