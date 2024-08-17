@@ -301,6 +301,16 @@ class ShareObjectService:
 
                 cls._run_transitions(session, share, states, ShareObjectActions.Extension)
 
+                if dataset.autoApprovalEnabled:
+                    ResourcePolicyService.attach_resource_policy(
+                        session=session,
+                        group=share.groupUri,
+                        permissions=SHARE_OBJECT_APPROVER,
+                        resource_uri=share.shareUri,
+                        resource_type=ShareObject.__name__,
+                    )
+                    share = cls.approve_share_extension_object(uri=share.shareUri)
+
                 return share
             else:
                 raise Exception("Share expiration cannot be extended as the dataset doesn't have expiration enabled")
@@ -418,7 +428,7 @@ class ShareObjectService:
             return True
 
     @staticmethod
-    @ResourcePolicyService.has_resource_permission(REJECT_SHARE_OBJECT)
+    @ResourcePolicyService.has_resource_permission(SUBMIT_SHARE_OBJECT)
     def update_share_extension_purpose(uri: str, extension_purpose) -> bool:
         with get_context().db_engine.scoped_session() as session:
             share = ShareObjectRepository.get_share_by_uri(session, uri)

@@ -84,6 +84,10 @@ def dataset(client, patch_es, patch_dataset_methods):
                     businessOwnerDelegationEmails
                     SamlAdminGroupName
                     GlueCrawlerName
+                    enableExpiration
+                    expirySetting
+                    expiryMinDuration
+                    expiryMaxDuration
                     tables{
                      nodes{
                       tableUri

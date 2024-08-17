@@ -120,47 +120,45 @@ export const DatasetGovernance = (props) => {
             </Box>
           </CardContent>
           {dataset.enableExpiration === true && (
-              <>
-                <CardContent>
-            <Typography color="textSecondary" variant="subtitle2">
-                 Expiration Setting for Shares
-            </Typography>
-            <Box sx={{ mt: 1 }}>
-              <Label color="primary">
-                 {dataset.expirySetting}
-              </Label>
-            </Box>
-          </CardContent><CardContent>
-            <Typography color="textSecondary" variant="subtitle2">
-                 Expiration duration ( Minimum ) in{' '}
-                 {/*Check how can this hard coding be changed*/}
+            <>
+              <CardContent>
+                <Typography color="textSecondary" variant="subtitle2">
+                  Expiration Setting for Shares
+                </Typography>
+                <Box sx={{ mt: 1 }}>
+                  <Label color="primary">{dataset.expirySetting}</Label>
+                </Box>
+              </CardContent>
+              <CardContent>
+                <Typography color="textSecondary" variant="subtitle2">
+                  Expiration duration ( Minimum ) in{' '}
+                  {/*Check how can this hard coding be changed*/}
                   {dataset.expirySetting === 'Quarterly'
                     ? 'Quarters'
                     : 'Months'}
-            </Typography>
-            <Box sx={{ mt: 1 }}>
-               <Typography color="textPrimary" variant="body2">
-              {dataset.expiryMinDuration}
-            </Typography>
-            </Box>
-          </CardContent>
-          <CardContent>
-            <Typography color="textSecondary" variant="subtitle2">
-               Expiration duration ( Maximum ) in{' '}
-                 {/*Check how can this hard coding be changes*/}
+                </Typography>
+                <Box sx={{ mt: 1 }}>
+                  <Typography color="textPrimary" variant="body2">
+                    {dataset.expiryMinDuration}
+                  </Typography>
+                </Box>
+              </CardContent>
+              <CardContent>
+                <Typography color="textSecondary" variant="subtitle2">
+                  Expiration duration ( Maximum ) in{' '}
+                  {/*Check how can this hard coding be changes*/}
                   {dataset.expirySetting === 'Quarterly'
                     ? 'Quarters'
                     : 'Months'}
-            </Typography>
-            <Box sx={{ mt: 1 }}>
-               <Typography color="textPrimary" variant="body2">
-              {dataset.expiryMaxDuration}
-            </Typography>
-            </Box>
-          </CardContent>
-              </>
-             )
-          }
+                </Typography>
+                <Box sx={{ mt: 1 }}>
+                  <Typography color="textPrimary" variant="body2">
+                    {dataset.expiryMaxDuration}
+                  </Typography>
+                </Box>
+              </CardContent>
+            </>
+          )}
         </Card>
       </Grid>
     </Grid>

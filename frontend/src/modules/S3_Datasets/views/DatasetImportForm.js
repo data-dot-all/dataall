@@ -280,16 +280,18 @@ const DatasetImportForm = (props) => {
                 autoApprovalEnabled: Yup.boolean().required(
                   '*AutoApproval property is required'
                 ),
-                expirationSetting:enableShareExpiration ? Yup.string().required('Expiration Setting required') : Yup.string().nullable(),
+                expirationSetting: enableShareExpiration
+                  ? Yup.string().required('Expiration Setting required')
+                  : Yup.string().nullable(),
                 minValidity: enableShareExpiration
-                  ? Yup.number().positive().required(
-                      '*Minimum allowed expiration is required'
-                    )
+                  ? Yup.number()
+                      .positive()
+                      .required('*Minimum allowed expiration is required')
                   : Yup.number().nullable(),
                 maxValidity: enableShareExpiration
-                  ? Yup.number().positive().required(
-                      '*Maximum allowed expiration is required'
-                    )
+                  ? Yup.number()
+                      .positive()
+                      .required('*Maximum allowed expiration is required')
                   : Yup.number().nullable()
               })}
               onSubmit={async (

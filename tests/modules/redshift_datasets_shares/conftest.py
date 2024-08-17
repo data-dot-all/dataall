@@ -232,6 +232,7 @@ def redshift_share_request_cross_account(db, user2, group2, env_fixture_2, targe
         principal_type='Redshift_Role',
         requestPurpose=None,
         attachMissingPolicies=False,
+        shareExpirationPeriod=None,
     )
     dispose_context()
     yield share
@@ -253,6 +254,7 @@ def redshift_share_request_2_same_account(
         principal_type='Redshift_Role',
         requestPurpose=None,
         attachMissingPolicies=False,
+        shareExpirationPeriod=None,
     )
     dispose_context()
     yield share
