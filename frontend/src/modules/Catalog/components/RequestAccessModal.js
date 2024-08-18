@@ -177,7 +177,6 @@ export const RequestAccessModal = (props) => {
   };
 
   const fetchDatasetExpirationDetails = async (datasetUri) => {
-    try {
       const response = await client.query(
         getDatasetExpirationDetails({
           datasetUri
@@ -193,9 +192,6 @@ export const RequestAccessModal = (props) => {
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
-    } catch (e) {
-      dispatch({ type: SET_ERROR, error: e.message });
-    }
   };
 
   useEffect(() => {

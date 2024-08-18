@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import {
   ArrowRightIcon,
-  Defaults,
+  Defaults, Label,
   Pager,
   ShareHealthStatus,
   ShareStatus
@@ -586,10 +586,10 @@ export const ShareEditForm = (props) => {
                   color="red"
                   variant="subtitle2"
                 >
-                  Current Share Expiration Date :{' '}
+                  Current Share Expiration Date :<Label color={'red'}>{' '}
                   {share.expiryDate != null
                     ? new Date(share.expiryDate).toDateString()
-                    : 'Share expiration date not available. Please request the data owners to approve this share request once you submit'}
+                      : 'Share expiration date not available. Please request the data owners to approve this share request once you submit'}</Label>
                 </Typography>
                 {(share.status === 'Submitted' ||
                   share.status === 'Draft' ||

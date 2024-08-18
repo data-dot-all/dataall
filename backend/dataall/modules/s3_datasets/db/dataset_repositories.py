@@ -197,7 +197,7 @@ class DatasetRepository(EnvironmentResource):
         """
         shares = (
             session.query(ShareObject)
-            .filter(and_(ShareObject.datasetUri == dataset.datasetUri, ShareObject.status == 'Processed'))
+            .filter(ShareObject.datasetUri == dataset.datasetUri)
             .all()
         )
         for share in shares:

@@ -91,28 +91,28 @@ def upgrade():
         ['attachedDataFilterUri'],
     )
 
-    # bind = op.get_bind()
-    # session = orm.Session(bind=bind)
-    # print('Adding DATASET_TABLE_DATA_FILTERS permissions for all s3 dataset tables...')
-    # s3_datasets: [S3Dataset] = session.query(S3Dataset).all()
-    # for dataset in s3_datasets:
-    #     dataset_tables = session.query(DatasetTable).filter(DatasetTable.datasetUri == dataset.datasetUri).all()
-    #     for table in dataset_tables:
-    #         ResourcePolicyService.attach_resource_policy(
-    #             session=session,
-    #             group=dataset.SamlAdminGroupName,
-    #             resource_uri=table.tableUri,
-    #             permissions=DATASET_TABLE_DATA_FILTERS,
-    #             resource_type=DatasetTable.__name__,
-    #         )
-    #         if dataset.stewards is not None and dataset.stewards != dataset.SamlAdminGroupName:
-    #             ResourcePolicyService.attach_resource_policy(
-    #                 session=session,
-    #                 group=dataset.stewards,
-    #                 resource_uri=table.tableUri,
-    #                 permissions=DATASET_TABLE_DATA_FILTERS,
-    #                 resource_type=DatasetTable.__name__,
-    #             )
+    bind = op.get_bind()
+    session = orm.Session(bind=bind)
+    print('Adding DATASET_TABLE_DATA_FILTERS permissions for all s3 dataset tables...')
+    s3_datasets: [S3Dataset] = session.query(S3Dataset).all()
+    for dataset in s3_datasets:
+        dataset_tables = session.query(DatasetTable).filter(DatasetTable.datasetUri == dataset.datasetUri).all()
+        for table in dataset_tables:
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                group=dataset.SamlAdminGroupName,
+                resource_uri=table.tableUri,
+                permissions=DATASET_TABLE_DATA_FILTERS,
+                resource_type=DatasetTable.__name__,
+            )
+            if dataset.stewards is not None and dataset.stewards != dataset.SamlAdminGroupName:
+                ResourcePolicyService.attach_resource_policy(
+                    session=session,
+                    group=dataset.stewards,
+                    resource_uri=table.tableUri,
+                    permissions=DATASET_TABLE_DATA_FILTERS,
+                    resource_type=DatasetTable.__name__,
+                )
     # ### end Alembic commands ###
 
 
