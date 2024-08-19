@@ -195,11 +195,7 @@ class DatasetRepository(EnvironmentResource):
         When share expiration is enabled on the dataset while editing a dataset
         update all the shares on that dataset and set minimum expiration on them
         """
-        shares = (
-            session.query(ShareObject)
-            .filter(ShareObject.datasetUri == dataset.datasetUri)
-            .all()
-        )
+        shares = session.query(ShareObject).filter(ShareObject.datasetUri == dataset.datasetUri).all()
         for share in shares:
             share.expiryDate = ShareObjectService.calculate_expiry_date(
                 expirySetting=dataset.expirySetting, expirationPeriod=dataset.expiryMinDuration

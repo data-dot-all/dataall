@@ -177,21 +177,21 @@ export const RequestAccessModal = (props) => {
   };
 
   const fetchDatasetExpirationDetails = async (datasetUri) => {
-      const response = await client.query(
-        getDatasetExpirationDetails({
-          datasetUri
-        })
-      );
-      if (!response.errors) {
-        setDatasetExpirationDetails({
-          enableExpiration: response.data.getDataset.enableExpiration,
-          expirySetting: response.data.getDataset.expirySetting,
-          expiryMinDuration: response.data.getDataset.expiryMinDuration,
-          expiryMaxDuration: response.data.getDataset.expiryMaxDuration
-        });
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
+    const response = await client.query(
+      getDatasetExpirationDetails({
+        datasetUri
+      })
+    );
+    if (!response.errors) {
+      setDatasetExpirationDetails({
+        enableExpiration: response.data.getDataset.enableExpiration,
+        expirySetting: response.data.getDataset.expirySetting,
+        expiryMinDuration: response.data.getDataset.expiryMinDuration,
+        expiryMaxDuration: response.data.getDataset.expiryMaxDuration
+      });
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
   };
 
   useEffect(() => {
