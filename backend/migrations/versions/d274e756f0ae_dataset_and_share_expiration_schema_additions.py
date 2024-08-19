@@ -17,12 +17,12 @@ down_revision = '9efe5f7c69a1'
 branch_labels = None
 depends_on = None
 
-envname = os.getenv('envname', 'local')
-print('ENVNAME', envname)
-engine = get_engine(envname=envname).engine
-
 
 def upgrade():
+    envname = os.getenv('envname', 'local')
+    print('ENVNAME', envname)
+    engine = get_engine(envname=envname).engine
+
     # Add Columns to the dataset base table
     op.add_column(
         'dataset',
@@ -60,6 +60,10 @@ def upgrade():
 
 
 def downgrade():
+    envname = os.getenv('envname', 'local')
+    print('ENVNAME', envname)
+    engine = get_engine(envname=envname).engine
+
     op.drop_column('dataset', 'enableExpiration') if has_column(
         schema=envname, table='dataset', column='enableExpiration', engine=engine
     ) else print('Column enableExpiration does not exists in dataset table')
