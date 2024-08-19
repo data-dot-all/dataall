@@ -19,6 +19,7 @@ import { listValidEnvironments, useClient, useGroups } from 'services';
 import { listOrganizations } from '../../Organizations/services';
 import { createMetadataForm } from '../services';
 import * as Yup from 'yup';
+import { useSnackbar } from 'notistack';
 
 export const CreateMetadataFormModal = (props) => {
   const { visibilityDict, onApply, onClose, open, stopLoader, ...other } =
@@ -26,6 +27,7 @@ export const CreateMetadataFormModal = (props) => {
   const dispatch = useDispatch();
   const client = useClient();
   const groups = useGroups();
+  const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [organizationOptions, setOrganizationOptions] = useState([]);
@@ -124,6 +126,13 @@ export const CreateMetadataFormModal = (props) => {
       } else {
         setStatus({ success: false });
         setErrors({ submit: response.errors[0].message });
+        enqueueSnackbar(response.errors[0].message, {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'error'
+        });
         setSubmitting(false);
       }
     } catch (err) {
@@ -131,6 +140,13 @@ export const CreateMetadataFormModal = (props) => {
       setStatus({ success: false });
       setErrors({ submit: err.message });
       setSubmitting(false);
+      enqueueSnackbar(err.message, {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'error'
+      });
       dispatch({ type: SET_ERROR, error: err.message });
     }
   }
