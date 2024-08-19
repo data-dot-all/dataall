@@ -155,6 +155,7 @@ class ShareObjectService:
             )
             already_existed = share is not None
 
+            ## Add Change here to skip if the share has enabled non expiration
             if dataset.enableExpiration and (
                 shareExpirationPeriod > dataset.expiryMaxDuration or shareExpirationPeriod < dataset.expiryMinDuration
             ):

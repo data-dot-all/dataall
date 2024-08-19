@@ -56,7 +56,7 @@ import {
   getShareObject,
   rejectShareObject,
   removeSharedItem,
-  submitApproval,
+  submitShareObject,
   revokeItemsShareObject,
   verifyItemsShareObject,
   reApplyItemsShareObject,
@@ -111,7 +111,7 @@ function ShareViewHeader(props) {
   const submit = async () => {
     setSubmitting(true);
     const response = await client.mutate(
-      submitApproval({
+      submitShareObject({
         shareUri: share.shareUri
       })
     );

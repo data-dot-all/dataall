@@ -29,7 +29,7 @@ import {
   getShareObject,
   removeSharedItem,
   revokeItemsShareObject,
-  submitApproval,
+  submitShareObject,
   updateShareRequestReason,
   updateShareExpirationPeriod,
   submitExtension
@@ -237,8 +237,6 @@ export const ShareEditForm = (props) => {
   const [editShareExpiration, setEditShareExpiration] = useState(false);
   const [shareExpiration, setShareExpiration] = useState('');
   const [shareExtensionReason, setShareExtensionReason] = useState('');
-  const [openCloseExpirationComment, setOpenCloseExpirationComment] =
-    useState(false);
 
   const canUpdateRequestPurpose = () => {
     return (
@@ -287,7 +285,7 @@ export const ShareEditForm = (props) => {
 
     setLoading(true);
     const response = await client.mutate(
-      submitApproval({
+      submitShareObject({
         shareUri: share.shareUri
       })
     );
@@ -472,7 +470,6 @@ export const ShareEditForm = (props) => {
 
   const handleOpenEditCollapsableWindow = async () => {
     setEditShareExpiration(!editShareExpiration);
-    setOpenCloseExpirationComment(!editShareExpiration);
   };
 
   if (loading) {
@@ -649,40 +646,49 @@ export const ShareEditForm = (props) => {
                     }}
                   />
                 </Box>
-                {openCloseExpirationComment && (
-                  <Box sx={{ mt: 2 }}>
-                    <TextField
-                      FormHelperTextProps={{
-                        sx: {
-                          textAlign: 'right',
-                          mr: 0
-                        }
-                      }}
-                      fullWidth
-                      helperText={`${
-                        200 - shareExtensionReason.length
-                      } characters left`}
-                      label="Extension reason"
-                      name="extensionReason"
-                      multiline
-                      rows={3}
-                      value={shareExtensionReason}
-                      variant="outlined"
-                      onChange={(event) => {
-                        setShareExtensionReason(event.target.value);
-                      }}
-                    />
-                    <Button
-                      onClick={sendShareExtensionRequest}
-                      fullWidth
-                      startIcon={<SendIcon fontSize="small" />}
-                      color="primary"
-                      variant="contained"
-                    >
-                      Submit Extension Request
-                    </Button>
-                  </Box>
-                )}
+                {(share.status === 'Draft' ||
+                  share.status === 'Processed' ||
+                  share.status === 'Extension_Rejected' ||
+                  share.status === 'Rejected') &&
+                  sharedItems.nodes.filter(
+                    (node) => node.status === 'PendingApproval'
+                  ).length === 0 &&
+                  sharedItems.nodes.filter(
+                    (node) => node.status === 'Share_Succeeded'
+                  ).length > 0 && (
+                    <Box sx={{ mt: 2 }}>
+                      <TextField
+                        FormHelperTextProps={{
+                          sx: {
+                            textAlign: 'right',
+                            mr: 0
+                          }
+                        }}
+                        fullWidth
+                        helperText={`${
+                          200 - shareExtensionReason.length
+                        } characters left`}
+                        label="Extension reason"
+                        name="extensionReason"
+                        multiline
+                        rows={3}
+                        value={shareExtensionReason}
+                        variant="outlined"
+                        onChange={(event) => {
+                          setShareExtensionReason(event.target.value);
+                        }}
+                      />
+                      <Button
+                        onClick={sendShareExtensionRequest}
+                        fullWidth
+                        startIcon={<SendIcon fontSize="small" />}
+                        color="primary"
+                        variant="contained"
+                      >
+                        Submit Extension Request
+                      </Button>
+                    </Box>
+                  )}
               </Collapse>
             </CardContent>
           )}

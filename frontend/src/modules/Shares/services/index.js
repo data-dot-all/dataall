@@ -8,7 +8,7 @@ export * from './listOwnedDatasets';
 export * from './rejectShareObject';
 export * from './removeSharedItem';
 export * from './revokeItemsShareObject';
-export * from './submitApproval';
+export * from './submitShareObject';
 export * from './updateShareRejectReason';
 export * from './updateShareRequestReason';
 export * from './verifyItemsShareObject';
