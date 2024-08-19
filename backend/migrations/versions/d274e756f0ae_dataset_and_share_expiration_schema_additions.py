@@ -21,9 +21,9 @@ envname = os.getenv('envname', 'local')
 print('ENVNAME', envname)
 engine = get_engine(envname=envname).engine
 
-def upgrade():
 
-    print("Adding columns for share expiration")
+def upgrade():
+    print('Adding columns for share expiration')
     # Add Columns to the dataset base table
     op.add_column(
         'dataset',
@@ -39,10 +39,11 @@ def upgrade():
     op.add_column('share_object', sa.Column('lastExtensionDate', sa.DateTime(), nullable=True))
     op.add_column('share_object', sa.Column('extensionReason', sa.String(), nullable=True))
     op.add_column('share_object', sa.Column('submittedForExtension', sa.Boolean(), nullable=True))
-    print("Successfully added columns for share expiration")
+    print('Successfully added columns for share expiration')
+
 
 def downgrade():
-    print("Removing columns for share expiration")
+    print('Removing columns for share expiration')
     op.drop_column('dataset', 'enableExpiration')
     op.drop_column('dataset', 'expiryMinDuration')
     op.drop_column('dataset', 'expiryMaxDuration')
@@ -52,4 +53,4 @@ def downgrade():
     op.drop_column('share_object', 'lastExtensionDate')
     op.drop_column('share_object', 'extensionReason')
     op.drop_column('share_object', 'submittedForExtension')
-    print("Successfully removed columns related to share expiration")
+    print('Successfully removed columns related to share expiration')
