@@ -20,6 +20,9 @@ def delete_metadata_form(context: Context, source, formUri):
     return MetadataFormService.delete_metadata_form_by_uri(uri=formUri)
 
 
+def delete_attached_metadata_form(context: Context, source, formUri):
+    return AttachedMetadataFormService.delete_attached_metadata_form(uri=formUri)
+
 def list_metadata_forms(context: Context, source, filter=None):
     return MetadataFormService.paginated_metadata_form_list(filter=filter)
 

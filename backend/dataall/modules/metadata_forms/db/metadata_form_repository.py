@@ -1,7 +1,6 @@
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import with_polymorphic
 
-
 from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility, MetadataFormFieldType
 from dataall.modules.metadata_forms.db.metadata_form_models import (
     MetadataForm,
@@ -14,6 +13,7 @@ from dataall.modules.metadata_forms.db.metadata_form_models import (
     GlossaryTermAttachedMetadataFormField,
 )
 
+import json
 
 all_fields = with_polymorphic(
     AttachedMetadataFormField,
@@ -24,6 +24,7 @@ all_fields = with_polymorphic(
         GlossaryTermAttachedMetadataFormField,
     ],
 )
+
 
 class MetadataFormRepository:
     @staticmethod
@@ -149,22 +150,23 @@ class MetadataFormRepository:
     @staticmethod
     def create_attached_metadata_form_field(session, attachedFormUri, field: MetadataFormField, value):
         amff = None
+        value = json.loads(value)
         if field.type == MetadataFormFieldType.String.value:
             amff = StringAttachedMetadataFormField(
                 attachedFormUri=attachedFormUri, fieldUri=field.uri, value=value
             )
         elif field.type == MetadataFormFieldType.Boolean.value:
             amff = BooleanAttachedMetadataFormField(
-                attachedFormUri=attachedFormUri, fieldUri=field.uri,value=value
+                attachedFormUri=attachedFormUri, fieldUri=field.uri, value=value
             )
 
         elif field.type == MetadataFormFieldType.Integer.value:
             amff = IntegerAttachedMetadataFormField(
-                attachedFormUri=attachedFormUri, fieldUri=field.uri, value=value
+                attachedFormUri=attachedFormUri, fieldUri=field.uri, value=int(value)
             )
         elif field.type == MetadataFormFieldType.GlossaryTerm.value:
             amff = GlossaryTermAttachedMetadataFormField(
-                attachedFormUri=attachedFormUri, fieldUri=field.uri,  value=value
+                attachedFormUri=attachedFormUri, fieldUri=field.uri, value=value
             )
         else:
             raise Exception('Unsupported field type')

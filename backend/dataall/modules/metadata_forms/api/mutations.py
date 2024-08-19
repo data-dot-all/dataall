@@ -6,6 +6,7 @@ from dataall.modules.metadata_forms.api.resolvers import (
     delete_metadata_form_field,
     batch_metadata_form_field_update,
     create_attached_metadata_form,
+    delete_attached_metadata_form
 )
 
 createMetadataForm = gql.MutationField(
@@ -36,6 +37,17 @@ deleteMetadataForm = gql.MutationField(
     resolver=delete_metadata_form,
     test_scope='MetadataForm',
 )
+
+deleteAttachedMetadataForm= gql.MutationField(
+    name='deleteAttachedMetadataForm',
+    args=[
+        gql.Argument(name='formUri', type=gql.NonNullableType(gql.String)),
+    ],
+    type=gql.Boolean,
+    resolver=delete_attached_metadata_form,
+    test_scope='MetadataForm',
+)
+
 
 createMetadataFormFields = gql.MutationField(
     name='createMetadataFormFields',

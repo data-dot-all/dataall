@@ -14,6 +14,7 @@ import {
   Typography
 } from '@mui/material';
 import {
+  deleteAttachedMetadataForm,
   getAttachedMetadataForm,
   getMetadataForm,
   listAttachedMetadataForms,
@@ -26,6 +27,7 @@ import { RenderedMetadataForm } from './renderedMetadataForm';
 import { SET_ERROR } from '../../../globalErrors';
 import { AttachedFormCard } from './AttachedFormCard';
 import DoNotDisturbAltOutlinedIcon from '@mui/icons-material/DoNotDisturbAltOutlined';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 
 export const MetadataAttachement = (props) => {
   const { entityType, entityUri } = props;
@@ -103,6 +105,18 @@ export const MetadataAttachement = (props) => {
       dispatch({ type: SET_ERROR, error });
     }
     setLoadingFields(false);
+  };
+
+  const deleteAttachedForm = async (uri) => {
+    const response = await client.mutate(deleteAttachedMetadataForm(uri));
+    if (!response.errors) {
+      fetchList().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+    } else {
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Fail to delete attached form';
+      dispatch({ type: SET_ERROR, error });
+    }
   };
 
   useEffect(() => {
@@ -183,7 +197,27 @@ export const MetadataAttachement = (props) => {
                   await fetchAttachedFields(attachedForm.uri);
                 }}
               >
-                {attachedForm.metadataForm.name}
+                <Grid container spacing={2}>
+                  <Grid item lg={10} xl={10}>
+                    <Typography
+                      color="textPrimary"
+                      variant="subtitle2"
+                      sx={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        maxLines: 1
+                      }}
+                    >
+                      {attachedForm.metadataForm.name}
+                    </Typography>
+                  </Grid>
+                  <Grid item lg={2} xl={2}>
+                    <DeleteIcon
+                      onClick={() => deleteAttachedForm(attachedForm.uri)}
+                    />
+                  </Grid>
+                </Grid>
               </CardContent>
             ))
           ) : (

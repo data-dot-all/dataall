@@ -6,3 +6,4 @@ export * from './deleteMetadataFormField';
 export * from './attachMetadataForm';
 export * from './getAttachedMetadataForm';
 export * from './listAttachedMetadataForms';
+export * from './deleteAttachedMetadataForm';
