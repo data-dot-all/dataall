@@ -6,6 +6,7 @@ from sqlalchemy import (
     Boolean,
     ForeignKeyConstraint,
     PrimaryKeyConstraint,
+    Enum
 )
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship, validates
@@ -59,11 +60,10 @@ class AttachedMetadataFormField(Base):
     __tablename__ = 'attached_metadata_form_field'
     attachedFormUri = Column(String, ForeignKey('attached_metadata_form.uri'), primary_key=True)
     fieldUri = Column(String, ForeignKey('metadata_form_field.uri'), primary_key=True)
-    type = Column(String, nullable=False)
-    field = relationship('MetadataFormField', backref='attached_fields')
+    type = Column(Enum(MetadataFormFieldType), nullable=False, default=MetadataFormFieldType.String)
 
     __table_args__ = (PrimaryKeyConstraint('attachedFormUri', 'fieldUri'),)
-    __mapper_args__ = {'polymorphic_identity': 'attached_metadata_form_field', 'polymorphic_on': type}
+    __mapper_args__ = {'polymorphic_identity': 'attached_metadata_form_field', 'polymorphic_on':  'type'}
 
     @property
     def value(self):
@@ -80,7 +80,7 @@ class StringAttachedMetadataFormField(AttachedMetadataFormField):
     attachedFormUri = Column(String, primary_key=True)
     fieldUri = Column(String, primary_key=True)
     value = Column(String, nullable=False)
-    __mapper_args__ = {'polymorphic_identity': MetadataFormFieldType.String.value}
+    __mapper_args__ = {'polymorphic_identity': MetadataFormFieldType.String}
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -95,7 +95,7 @@ class BooleanAttachedMetadataFormField(AttachedMetadataFormField):
     attachedFormUri = Column(String, primary_key=True)
     fieldUri = Column(String, primary_key=True)
     value = Column(Boolean, nullable=False)
-    __mapper_args__ = {'polymorphic_identity': MetadataFormFieldType.Boolean.value}
+    __mapper_args__ = {'polymorphic_identity': MetadataFormFieldType.Boolean}
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -110,7 +110,7 @@ class IntegerAttachedMetadataFormField(AttachedMetadataFormField):
     attachedFormUri = Column(String, primary_key=True)
     fieldUri = Column(String, primary_key=True)
     value = Column(Integer, nullable=False)
-    __mapper_args__ = {'polymorphic_identity': MetadataFormFieldType.Integer.value}
+    __mapper_args__ = {'polymorphic_identity': MetadataFormFieldType.Integer}
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -125,7 +125,7 @@ class GlossaryTermAttachedMetadataFormField(AttachedMetadataFormField):
     attachedFormUri = Column(String, primary_key=True)
     fieldUri = Column(String, primary_key=True)
     value = Column(String, nullable=False)
-    __mapper_args__ = {'polymorphic_identity': MetadataFormFieldType.GlossaryTerm.value}
+    __mapper_args__ = {'polymorphic_identity': MetadataFormFieldType.GlossaryTerm}
 
     __table_args__ = (
         ForeignKeyConstraint(

@@ -1,7 +1,8 @@
 from dataall.base.api.context import Context
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.catalog.services.glossaries_service import GlossariesService
-from dataall.modules.metadata_forms.db.metadata_form_models import MetadataForm, MetadataFormField, AttachedMetadataForm
+from dataall.modules.metadata_forms.db.metadata_form_models import MetadataForm, MetadataFormField, \
+    AttachedMetadataForm, AttachedMetadataFormField
 from dataall.modules.metadata_forms.services.metadata_form_filled_service import AttachedMetadataFormService
 from dataall.modules.metadata_forms.services.metadata_form_permissions import MANAGE_METADATA_FORMS
 from dataall.modules.metadata_forms.services.metadata_form_service import MetadataFormService, MetadataFormAccessService
@@ -30,8 +31,10 @@ def get_home_entity_name(context: Context, source: MetadataForm):
 def get_metadata_form(context: Context, source, uri):
     return MetadataFormService.get_metadata_form_by_uri(uri=uri)
 
+
 def resolve_metadata_form(context: Context, source: AttachedMetadataForm):
     return MetadataFormService.get_metadata_form_by_uri(source.metadataFormUri)
+
 
 def get_form_fields(context: Context, source: MetadataForm):
     return MetadataFormService.get_metadata_form_fields(uri=source.uri)
@@ -75,3 +78,7 @@ def has_tenant_permissions_for_metadata_forms(context: Context, source: Metadata
         tenant_name=TenantPolicyService.TENANT_NAME,
         permission_name=MANAGE_METADATA_FORMS,
     )
+
+
+def resolve_metadata_form_field(context: Context, source: AttachedMetadataFormField):
+    return MetadataFormService.get_metadata_form_field_by_uri(uri=source.fieldUri)

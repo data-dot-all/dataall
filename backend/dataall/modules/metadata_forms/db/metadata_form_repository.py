@@ -1,4 +1,7 @@
 from sqlalchemy import or_, and_
+from sqlalchemy.orm import with_polymorphic
+
+
 from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility, MetadataFormFieldType
 from dataall.modules.metadata_forms.db.metadata_form_models import (
     MetadataForm,
@@ -11,6 +14,16 @@ from dataall.modules.metadata_forms.db.metadata_form_models import (
     GlossaryTermAttachedMetadataFormField,
 )
 
+
+all_fields = with_polymorphic(
+    AttachedMetadataFormField,
+    [
+        StringAttachedMetadataFormField,
+        BooleanAttachedMetadataFormField,
+        IntegerAttachedMetadataFormField,
+        GlossaryTermAttachedMetadataFormField,
+    ],
+)
 
 class MetadataFormRepository:
     @staticmethod
@@ -162,11 +175,11 @@ class MetadataFormRepository:
 
     @staticmethod
     def get_attached_metadata_form_field(session, field_uri):
-        return session.query(AttachedMetadataFormField).get(field_uri)
+        return session.query(all_fields).get(field_uri)
 
     @staticmethod
     def get_all_attached_metadata_form_fields(session, uri):
-        return session.query(AttachedMetadataFormField).filter(AttachedMetadataFormField.attachedFormUri == uri).all()
+        return session.query(all_fields).filter(AttachedMetadataFormField.attachedFormUri == uri).all()
 
     @staticmethod
     def query_attached_metadata_forms(session, filter):
