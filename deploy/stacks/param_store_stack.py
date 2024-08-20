@@ -93,7 +93,7 @@ class ParamStoreStack(pyNestedClass):
             parameter_name=f'/dataall/{envname}/pivotRole/enablePivotRoleAutoCreate',
             string_value=str(enable_pivot_role_auto_create),
         )
-        
+
         aws_ssm.StringParameter(
             self,
             f'dataallAllowedOrigins{envname}',
