@@ -22,7 +22,7 @@ from dataall.modules.shares_base.db.share_object_item_repositories import ShareO
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.s3_datasets_shares.db.s3_share_object_repositories import S3ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
-from dataall.modules.shares_base.services.share_manager_utils import ShareErrorFormatter
+from dataall.modules.s3_datasets_shares.services.share_managers.share_manager_utils import ShareErrorFormatter
 
 from dataall.modules.shares_base.services.sharing_service import ShareData
 from dataall.modules.shares_base.services.share_processor_manager import SharesProcessorInterface
@@ -286,7 +286,6 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                                     self.share_data.target_environment.environmentUri,
                                     share_item.itemUri,
                                     share_item.shareItemUri,
-                                    share_item_filter.dataFilterUris if share_item_filter else None,
                                 )
                                 else True
                             )
