@@ -60,8 +60,5 @@ class AttachedMetadataFormService:
     @staticmethod
     def delete_attached_metadata_form(uri):
         mf = AttachedMetadataFormService.get_attached_metadata_form(uri)
-        fields = AttachedMetadataFormService.get_attached_metadata_form_fields(uri)
         with get_context().db_engine.scoped_session() as session:
-            for f in fields:
-                session.delete(f)
             return session.delete(mf)

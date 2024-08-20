@@ -111,6 +111,7 @@ export const MetadataAttachement = (props) => {
     const response = await client.mutate(deleteAttachedMetadataForm(uri));
     if (!response.errors) {
       fetchList().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      setSelectedForm(null);
     } else {
       const error = response.errors
         ? response.errors[0].message
@@ -214,6 +215,13 @@ export const MetadataAttachement = (props) => {
                   </Grid>
                   <Grid item lg={2} xl={2}>
                     <DeleteIcon
+                      sx={{ color: 'primary.main', opacity: 0.5 }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.opacity = 1;
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.opacity = 0.5;
+                      }}
                       onClick={() => deleteAttachedForm(attachedForm.uri)}
                     />
                   </Grid>
@@ -256,9 +264,12 @@ export const MetadataAttachement = (props) => {
             }}
             entityUri={entityUri}
             entityType={entityType}
-            onSubmit={(attachedForm) => {
+            onSubmit={async (attachedForm) => {
               setSelectedForm(attachedForm);
               setFields(attachedForm.fields);
+              fetchList().catch((e) =>
+                dispatch({ type: SET_ERROR, error: e.message })
+              );
               setAddNewForm(false);
             }}
           />
