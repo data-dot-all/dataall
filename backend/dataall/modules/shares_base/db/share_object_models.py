@@ -44,6 +44,7 @@ class ShareObject(Base):
     lastExtensionDate = Column(DateTime, nullable=True)
     extensionReason = Column(String, nullable=True)
     submittedForExtension = Column(Boolean, nullable=True)
+    nonExpirable = Column(Boolean, default=False, nullable=False)
 
 
 class ShareObjectItem(Base):

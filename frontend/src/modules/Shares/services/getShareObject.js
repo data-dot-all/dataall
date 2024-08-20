@@ -19,6 +19,7 @@ export const getShareObject = ({ shareUri, filter }) => ({
         expiryDate
         requestedExpiryDate
         submittedForExtension
+        nonExpirable
         extensionReason
         principal {
           principalName

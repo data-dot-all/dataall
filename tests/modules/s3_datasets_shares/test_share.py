@@ -1945,9 +1945,7 @@ def test_submit_share_extension_request_with_auto_approval(
     # share should be auto approved for share extension as well
     assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
     date_format = '%Y-%m-%d %H:%M:%S'
-    share_expiration_date = datetime.strptime(
-        get_share_object_response.data.getShareObject.requestedExpiryDate, date_format
-    )
+    share_expiration_date = datetime.strptime(get_share_object_response.data.getShareObject.expiryDate, date_format)
     assert (
         share_expiration_date.date()
         == ShareObjectService.calculate_expiry_date(1, dataset_with_expiration_with_autoapproval.expirySetting).date()

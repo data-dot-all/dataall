@@ -46,7 +46,8 @@ import {
   ShareStatus,
   ShareHealthStatus,
   TextAvatar,
-  useSettings
+  useSettings,
+  Label
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
@@ -1032,9 +1033,21 @@ const ShareView = () => {
                                   color="textPrimary"
                                   variant="subtitle2"
                                 >
-                                  {share.expiryDate != null
-                                    ? new Date(share.expiryDate).toDateString()
-                                    : 'Share expiration date not set'}
+                                  {' '}
+                                  {share.nonExpirable &&
+                                  share.status === 'Processed' ? (
+                                    <Label color={'warning'}>
+                                      Non-expiring share
+                                    </Label>
+                                  ) : share.expiryDate != null ? (
+                                    <Label color={'primary'}>
+                                      {new Date(
+                                        share.expiryDate
+                                      ).toDateString()}
+                                    </Label>
+                                  ) : (
+                                    'Share expiration date not set'
+                                  )}
                                 </Typography>
                               </Box>
                             </Box>
@@ -1061,11 +1074,19 @@ const ShareView = () => {
                                     color="textPrimary"
                                     variant="subtitle2"
                                   >
-                                    {share.requestedExpiryDate != null
-                                      ? new Date(
+                                    {share.requestedExpiryDate != null ? (
+                                      <Label color={'primary'}>
+                                        {new Date(
                                           share.requestedExpiryDate
-                                        ).toDateString()
-                                      : 'Requested share expiration date not set'}
+                                        ).toDateString()}
+                                      </Label>
+                                    ) : !share.nonExpirable ? (
+                                      'Requested expiration date not available'
+                                    ) : (
+                                      <Label color={'warning'}>
+                                        Non-expiring share
+                                      </Label>
+                                    )}
                                   </Typography>
                                 </Box>
                               </Box>

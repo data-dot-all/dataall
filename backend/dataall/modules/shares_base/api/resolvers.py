@@ -89,6 +89,7 @@ def create_share_object(
         requestPurpose=input.get('requestPurpose'),
         attachMissingPolicies=input.get('attachMissingPolicies', False),
         shareExpirationPeriod=input.get('shareExpirationPeriod'),
+        nonExpirable=input.get('nonExpirable', False),
     )
 
 
@@ -97,10 +98,15 @@ def submit_share_object(context: Context, source, shareUri: str = None):
 
 
 def submit_share_extension(
-    context: Context, source, shareUri: str = None, expiration: int = 0, extensionReason: str = None
+    context: Context,
+    source,
+    shareUri: str = None,
+    expiration: int = 0,
+    extensionReason: str = None,
+    nonExpirable: bool = False,
 ):
     return ShareObjectService.submit_share_extension(
-        uri=shareUri, expiration=expiration, extension_reason=extensionReason
+        uri=shareUri, expiration=expiration, extension_reason=extensionReason, nonExpirable=nonExpirable
     )
 
 
@@ -323,6 +329,13 @@ def update_share_reject_purpose(context: Context, source, shareUri: str = None, 
     )
 
 
+def update_share_extension_purpose(context: Context, source, shareUri: str = None, extensionPurpose: str = None):
+    return ShareObjectService.update_share_extension_purpose(
+        uri=shareUri,
+        extension_purpose=extensionPurpose,
+    )
+
+
 def update_filters_table_share_item(context: Context, source, input):
     RequestValidator.validate_update_share_item_filters(input)
     return ShareItemService.update_filters_table_share_item(uri=input.get('shareItemUri'), data=input)
@@ -340,15 +353,9 @@ def get_share_item_data_filters(context: Context, source, attachedDataFilterUri:
     return ShareItemService.get_share_item_data_filters(uri=attachedDataFilterUri)
 
 
-def update_share_extension_purpose(context: Context, source, shareUri: str = None, extensionPurpose: str = None):
-    return ShareObjectService.update_share_extension_purpose(
-        uri=shareUri,
-        extension_purpose=extensionPurpose,
-    )
-
-
-def update_share_expiration_period(context: Context, source, shareUri: str = None, expiration: int = 0):
+def update_share_expiration_period(
+    context: Context, source, shareUri: str = None, expiration: int = 0, nonExpirable: bool = False
+):
     return ShareObjectService.update_share_expiration_period(
-        uri=shareUri,
-        expiration=expiration,
+        uri=shareUri, expiration=expiration, nonExpirable=nonExpirable
     )
