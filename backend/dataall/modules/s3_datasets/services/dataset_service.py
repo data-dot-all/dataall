@@ -261,6 +261,8 @@ class DatasetService:
                     if k not in ['stewards', 'KmsAlias']:
                         setattr(dataset, k, data.get(k))
 
+                DatasetRepository.update_dataset_shares_expiration(session=session, dataset=dataset)
+
                 if data.get('KmsAlias') not in ['Undefined'] and data.get('KmsAlias') != dataset.KmsAlias:
                     dataset.KmsAlias = 'SSE-S3' if data.get('KmsAlias') == '' else data.get('KmsAlias')
                     dataset.importedKmsKey = False if data.get('KmsAlias') == '' else True
@@ -283,9 +285,6 @@ class DatasetService:
                 if data.get('terms'):
                     GlossaryRepository.set_glossary_terms_links(session, username, uri, 'Dataset', data.get('terms'))
                 DatasetBaseRepository.update_dataset_activity(session, dataset, username)
-
-                if dataset.enableExpiration:
-                    DatasetRepository.update_dataset_shares_expiration(session=session, dataset=dataset)
 
             DatasetIndexer.upsert(session, dataset_uri=uri)
 
