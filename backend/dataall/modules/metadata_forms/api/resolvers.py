@@ -3,7 +3,7 @@ from dataall.core.permissions.services.tenant_policy_service import TenantPolicy
 from dataall.modules.catalog.services.glossaries_service import GlossariesService
 from dataall.modules.metadata_forms.db.metadata_form_models import MetadataForm, MetadataFormField, \
     AttachedMetadataForm, AttachedMetadataFormField
-from dataall.modules.metadata_forms.services.metadata_form_filled_service import AttachedMetadataFormService
+from dataall.modules.metadata_forms.services.attached_metadata_form_service import AttachedMetadataFormService
 from dataall.modules.metadata_forms.services.metadata_form_permissions import MANAGE_METADATA_FORMS
 from dataall.modules.metadata_forms.services.metadata_form_service import MetadataFormService, MetadataFormAccessService
 

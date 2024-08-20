@@ -161,8 +161,9 @@ class MetadataFormRepository:
             )
 
         elif field.type == MetadataFormFieldType.Integer.value:
+            value = int(value) if value else None
             amff = IntegerAttachedMetadataFormField(
-                attachedFormUri=attachedFormUri, fieldUri=field.uri, value=int(value)
+                attachedFormUri=attachedFormUri, fieldUri=field.uri, value=value
             )
         elif field.type == MetadataFormFieldType.GlossaryTerm.value:
             amff = GlossaryTermAttachedMetadataFormField(

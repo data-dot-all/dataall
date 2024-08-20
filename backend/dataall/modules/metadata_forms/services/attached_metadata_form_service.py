@@ -12,10 +12,19 @@ class AttachedMetadataFormValidationService:
             raise exceptions.RequiredParameter('entityType')
 
     @staticmethod
-    def validate_fields_params(mf_fields, data):
+    def validate_enrich_fields_params(mf_fields, data):
         fields = data.get('fields')
         if not fields:
             raise exceptions.RequiredParameter('fields')
+        for f in fields:
+            if not f.get('fieldUri'):
+                raise exceptions.RequiredParameter('fieldUri')
+            mf_field = next((field for field in mf_fields if field.uri == f.get('fieldUri')), None)
+            if not mf_field:
+                raise exceptions.ObjectNotFound('MetadataFormField', f.get('fieldUri'))
+            if not f.get('value') and mf_field.required:
+                raise exceptions.RequiredParameter('value')
+            f['field'] = mf_field
 
 
 class AttachedMetadataFormService:
@@ -27,12 +36,11 @@ class AttachedMetadataFormService:
             if not mf:
                 raise exceptions.ObjectNotFound('MetadataForm', uri)
             mf_fields = MetadataFormRepository.get_metadata_form_fields(session, uri)
-            AttachedMetadataFormValidationService.validate_fields_params(mf_fields, data)
+            AttachedMetadataFormValidationService.validate_enrich_fields_params(mf_fields, data)
 
             amf = MetadataFormRepository.create_attached_metadata_form(session, uri, data)
             for f in data.get('fields'):
-                base_field = next((field for field in mf_fields if field.uri == f.get('fieldUri')), None)
-                MetadataFormRepository.create_attached_metadata_form_field(session, amf.uri, base_field, f.get('value'))
+                MetadataFormRepository.create_attached_metadata_form_field(session, amf.uri, f.get('field'), f.get('value'))
             return amf
 
     @staticmethod
