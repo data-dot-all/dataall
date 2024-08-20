@@ -66,6 +66,15 @@ export const MetadataAttachement = (props) => {
     const response = await client.query(listAttachedMetadataForms(filter));
     if (!response.errors) {
       setFormsList(response.data.listAttachedMetadataForms.nodes);
+      if (
+        response.data.listAttachedMetadataForms.nodes.length > 0 &&
+        !selectedForm
+      ) {
+        setSelectedForm(response.data.listAttachedMetadataForms.nodes[0]);
+        await fetchAttachedFields(
+          response.data.listAttachedMetadataForms.nodes[0].uri
+        );
+      }
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -101,7 +110,7 @@ export const MetadataAttachement = (props) => {
     } else {
       const error = response.errors
         ? response.errors[0].message
-        : 'Metadata Forms not found';
+        : 'Attached Metadata Form not found';
       dispatch({ type: SET_ERROR, error });
     }
     setLoadingFields(false);
@@ -191,15 +200,21 @@ export const MetadataAttachement = (props) => {
               <CardContent
                 sx={{
                   backgroundColor:
-                    selectedForm === attachedForm ? '#e6e6e6' : 'white'
-                }}
-                onClick={async () => {
-                  setSelectedForm(attachedForm);
-                  await fetchAttachedFields(attachedForm.uri);
+                    selectedForm && selectedForm.uri === attachedForm.uri
+                      ? '#e6e6e6'
+                      : 'white'
                 }}
               >
                 <Grid container spacing={2}>
-                  <Grid item lg={10} xl={10}>
+                  <Grid
+                    item
+                    lg={10}
+                    xl={10}
+                    onClick={async () => {
+                      setSelectedForm(attachedForm);
+                      await fetchAttachedFields(attachedForm.uri);
+                    }}
+                  >
                     <Typography
                       color="textPrimary"
                       variant="subtitle2"

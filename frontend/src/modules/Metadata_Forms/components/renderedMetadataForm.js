@@ -118,7 +118,7 @@ export const RenderedMetadataForm = (props) => {
       entityType: entityType,
       fields: localFields.map((field) => ({
         fieldUri: field.uri,
-        value: JSON.stringify(field.value) || ''
+        value: JSON.stringify(field.value) || 'null'
       }))
     };
     const response = await client.mutate(
