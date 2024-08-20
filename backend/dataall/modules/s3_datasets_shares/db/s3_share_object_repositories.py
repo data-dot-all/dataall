@@ -180,6 +180,7 @@ class S3ShareObjectRepository:
                     ShareObjectItem.itemType == ShareableType.Table.value,
                     ShareObjectItem.shareItemUri != share_item_uri,
                     ShareObjectItem.status.in_(share_item_shared_states),
+                    ShareObjectItem.attachedDataFilterUri.is_(None),
                 )
             )
         )
