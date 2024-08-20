@@ -108,7 +108,7 @@ class StringAttachedMetadataFormField(AttachedMetadataFormField):
     __tablename__ = 'string_attached_metadata_form_field'
     attachedFormUri = Column(String, primary_key=True)
     fieldUri = Column(String, primary_key=True)
-    value = Column(String, nullable=False)
+    value = Column(String, nullable=True)
     __mapper_args__ = {'polymorphic_identity': MetadataFormFieldType.String}
 
     __table_args__ = (
@@ -125,7 +125,7 @@ class BooleanAttachedMetadataFormField(AttachedMetadataFormField):
     __tablename__ = 'boolean_attached_metadata_form_field'
     attachedFormUri = Column(String, primary_key=True)
     fieldUri = Column(String, primary_key=True)
-    value = Column(Boolean, nullable=False)
+    value = Column(Boolean, nullable=True)
     __mapper_args__ = {'polymorphic_identity': MetadataFormFieldType.Boolean}
 
     __table_args__ = (
@@ -142,7 +142,7 @@ class IntegerAttachedMetadataFormField(AttachedMetadataFormField):
     __tablename__ = 'integer_attached_metadata_form_field'
     attachedFormUri = Column(String, primary_key=True)
     fieldUri = Column(String, primary_key=True)
-    value = Column(Integer, nullable=False)
+    value = Column(Integer, nullable=True)
     __mapper_args__ = {'polymorphic_identity': MetadataFormFieldType.Integer}
 
     __table_args__ = (
@@ -159,7 +159,7 @@ class GlossaryTermAttachedMetadataFormField(AttachedMetadataFormField):
     __tablename__ = 'glossary_term_attached_metadata_form_field'
     attachedFormUri = Column(String, primary_key=True)
     fieldUri = Column(String, primary_key=True)
-    value = Column(String, nullable=False)
+    value = Column(String, nullable=True)
     __mapper_args__ = {'polymorphic_identity': MetadataFormFieldType.GlossaryTerm}
 
     __table_args__ = (
