@@ -152,6 +152,9 @@ def list_datasets_owned_by_env_group(
         filter = {}
     return DatasetService.list_datasets_owned_by_env_group(environmentUri, groupUri, filter)
 
+def list_object_keys(context, source, environmentUri: str = None, worksheetUri: str = None, datasetUri: str = None):
+    with context.engine.scoped_session() as session:
+        return DatasetService.list_object_keys(session=session, datasetUri=datasetUri, uri=environmentUri, worksheetUri=worksheetUri)
 
 class RequestValidator:
     @staticmethod
@@ -174,8 +177,5 @@ class RequestValidator:
         if not data.get('bucketName'):
             raise RequiredParameter('bucketName')
         
-    
-    def list_object_keys(context, source, environmentUri: str = None, worksheetUri: str = None, datasetUri: str = None):
-        with context.engine.scoped_session() as session:
-            return DatasetService.list_object_keys(session=session, datasetUri=datasetUri, uri=environmentUri, worksheetUri=worksheetUri)
+
 

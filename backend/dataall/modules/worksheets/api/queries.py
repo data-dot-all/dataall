@@ -49,7 +49,7 @@ unstructuredQuery = gql.QueryField(
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='worksheetUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='prompt', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='datasetS3Bucket', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='key', type=gql.NonNullableType(gql.String)),
     ],
     resolver=unstruct_query,

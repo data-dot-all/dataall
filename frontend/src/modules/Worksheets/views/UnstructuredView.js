@@ -158,7 +158,7 @@ const DocumentSummarizer = () => {
       setLoadingKeys(true);
       const response = await client.query(
         listObjectKeys({
-          datasetUri: dataset.datasetUri,
+          datasetUri: dataset.value,
           environmentUri: environment.environmentUri,
           worksheetUri: worksheet.worksheetUri
         })
@@ -205,7 +205,7 @@ const DocumentSummarizer = () => {
       key: selectedKey,
       environmentUri: currentEnv.environmentUri,
       worksheetUri: worksheet.worksheetUri,
-      datasetS3Bucket: selectedDatabase.S3BucketName
+      datasetUri: selectedDatabase.value
     });
     const response = await client.query(queryObject);
     setTextBody(response.data.unstructuredQuery.response);

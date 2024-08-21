@@ -4,14 +4,14 @@ export const unstructuredQuery = ({
   prompt,
   environmentUri,
   worksheetUri,
-  datasetS3Bucket,
+  datasetUri,
   key
 }) => ({
   variables: {
     prompt,
     environmentUri,
     worksheetUri,
-    datasetS3Bucket: datasetS3Bucket,
+    datasetUri: datasetUri,
     key: key
   },
   query: gql`
@@ -19,14 +19,14 @@ export const unstructuredQuery = ({
       $prompt: String!
       $environmentUri: String!
       $worksheetUri: String!
-      $datasetS3Bucket: String!
+      $datasetUri: String!
       $key: String
     ) {
       unstructuredQuery(
         prompt: $prompt
         environmentUri: $environmentUri
         worksheetUri: $worksheetUri
-        datasetS3Bucket: $datasetS3Bucket
+        datasetUri: $datasetUri
         key: $key
       ) {
         response

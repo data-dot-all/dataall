@@ -103,14 +103,14 @@ def unstruct_query(
     environmentUri: str = None,
     worksheetUri: str = None,
     prompt: str = None,
-    datasetS3Bucket: str = None,
+    datasetUri: str = None,
     key: str = None,
 ):
     with context.engine.scoped_session() as session:
         return WorksheetService.unstruct_query(
             username=context.username,
             session=session,
-            bucket=datasetS3Bucket,
+            datasetUri=datasetUri,
             uri=environmentUri,
             worksheetUri=worksheetUri,
             prompt=prompt,

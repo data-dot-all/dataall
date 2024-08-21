@@ -34,7 +34,7 @@ class S3DatasetClient:
 
     def get_file_upload_presigned_url(self, data):
         dataset = self._dataset
-        client = self._get_dataset_role_client()g
+        client = self._get_dataset_role_client()
         try:
             client.get_bucket_acl(Bucket=dataset.S3BucketName, ExpectedBucketOwner=dataset.AwsAccountId)
             response = client.generate_presigned_post(

@@ -1,5 +1,6 @@
 import logging
 
+from dataall.core.resource_threshold.db.resource_threshold_repositories import ResourceThresholdRepository
 from dataall.modules.worksheets.aws.glue_client import GlueClient
 from dataall.modules.worksheets.aws.s3_client import S3Client
 from dataall.modules.worksheets.aws.unstruct_bedrock_client import UnstructuredBedrockClient
@@ -130,7 +131,7 @@ class WorksheetService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
-    # @ResourceThresholdRepository.invocation_handler('nlq')
+    @ResourceThresholdRepository.invocation_handler('nlq')
     def run_nlq(session, uri, worksheetUri, prompt, datasetUri, table_names):
         environment = EnvironmentService.get_environment_by_uri(session, uri)
         dataset = DatasetRepository.get_dataset_by_uri(session, datasetUri)
@@ -153,15 +154,14 @@ class WorksheetService:
         return {'error': None, 'response': response}
 
     @staticmethod
-    # @ResourceThresholdRepository.invocation_handler('nlq')
-    def unstruct_query(session, uri, worksheetUri, prompt, bucket, key):
+    @ResourceThresholdRepository.invocation_handler('nlq')
+    def unstruct_query(session, uri, worksheetUri, prompt, datasetUri, key):
         environment = EnvironmentService.get_environment_by_uri(session, uri)
 
         worksheet = WorksheetService.get_worksheet_by_uri(session, worksheetUri)
 
-        env_group = EnvironmentService.get_environment_group(
-            session, worksheet.SamlAdminGroupName, environment.environmentUri
-        )
+        dataset = DatasetRepository.get_dataset_by_uri(session, datasetUri)
+
 
         env_group = EnvironmentService.get_environment_group(
             session, worksheet.SamlAdminGroupName, environment.environmentUri
@@ -173,7 +173,7 @@ class WorksheetService:
             aws_account_id=environment.AwsAccountId,
         )
 
-        content = s3_client.get_content(bucket, key)
+        content = s3_client.get_content(dataset.S3BucketName, key)
         bedrock_client = UnstructuredBedrockClient(account_id=environment.AwsAccountId, region='us-east-1')
         response = bedrock_client.invoke_model(prompt, content)
         return {'error': None, 'response': response}
