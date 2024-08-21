@@ -27,7 +27,7 @@ class MetadataFormEnforcementRule(Base):
 
     __table_args__ = (
         ForeignKeyConstraint(
-            ('metadataFormUri',), ('metadata_form.uri',), name='enforcement_metadata_form_pkey', ondelete='CASCADE'
+            ('metadataFormUri',), ('metadata_form.uri',), name='f_key_enforcement_metadata', ondelete='CASCADE'
         ),
     )
 
@@ -46,7 +46,7 @@ class MetadataFormField(Base):
 
     __table_args__ = (
         ForeignKeyConstraint(
-            ('metadataFormUri',), ('metadata_form.uri',), name='field_metadata_form_pkey', ondelete='CASCADE'
+            ('metadataFormUri',), ('metadata_form.uri',), name='fk_mf_filed_form_uri', ondelete='CASCADE'
         ),
     )
 
@@ -60,7 +60,7 @@ class AttachedMetadataForm(Base):
 
     __table_args__ = (
         ForeignKeyConstraint(
-            ('metadataFormUri',), ('metadata_form.uri',), name='metadata_form_pkey', ondelete='CASCADE'
+            ('metadataFormUri',), ('metadata_form.uri',), name='fk_attached_mf_uri', ondelete='CASCADE'
         ),
     )
 
@@ -76,11 +76,11 @@ class AttachedMetadataFormField(Base):
         ForeignKeyConstraint(
             ('attachedFormUri',),
             ('attached_metadata_form.uri',),
-            name='attached_field_metadata_form_pkey',
+            name='fk_attached_field_mf_uri',
             ondelete='CASCADE',
         ),
         ForeignKeyConstraint(
-            ('fieldUri',), ('metadata_form_field.uri',), name='attached_field_metadata_field_pkey', ondelete='CASCADE'
+            ('fieldUri',), ('metadata_form_field.uri',), name='fk_attached_field_uri', ondelete='CASCADE'
         ),
     )
     __mapper_args__ = {'polymorphic_identity': 'attached_metadata_form_field', 'polymorphic_on': 'type'}
@@ -101,7 +101,7 @@ class StringAttachedMetadataFormField(AttachedMetadataFormField):
         ForeignKeyConstraint(
             ['attachedFormUri', 'fieldUri'],
             ['attached_metadata_form_field.attachedFormUri', 'attached_metadata_form_field.fieldUri'],
-            name='string_attached_metadata_form_field_pkey',
+            name='fk_s_field',
             ondelete='CASCADE',
         ),
     )
@@ -118,7 +118,7 @@ class BooleanAttachedMetadataFormField(AttachedMetadataFormField):
         ForeignKeyConstraint(
             ['attachedFormUri', 'fieldUri'],
             ['attached_metadata_form_field.attachedFormUri', 'attached_metadata_form_field.fieldUri'],
-            name='boolean_attached_metadata_form_field_pkey',
+            name='fk_b_field',
             ondelete='CASCADE',
         ),
     )
@@ -135,7 +135,7 @@ class IntegerAttachedMetadataFormField(AttachedMetadataFormField):
         ForeignKeyConstraint(
             ['attachedFormUri', 'fieldUri'],
             ['attached_metadata_form_field.attachedFormUri', 'attached_metadata_form_field.fieldUri'],
-            name='integer_attached_metadata_form_field_pkey',
+            name='fk_i_field',
             ondelete='CASCADE',
         ),
     )
@@ -152,7 +152,7 @@ class GlossaryTermAttachedMetadataFormField(AttachedMetadataFormField):
         ForeignKeyConstraint(
             ['attachedFormUri', 'fieldUri'],
             ['attached_metadata_form_field.attachedFormUri', 'attached_metadata_form_field.fieldUri'],
-            name='glossary_attached_metadata_form_field_pkey',
+            name='fk_gt_field',
             ondelete='CASCADE',
         ),
     )
