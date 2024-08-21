@@ -7,7 +7,7 @@ from dataall.modules.metadata_forms.api.resolvers import (
     get_attached_form_fields,
     has_tenant_permissions_for_metadata_forms,
     resolve_metadata_form,
-    resolve_metadata_form_field
+    resolve_metadata_form_field,
 )
 
 MetadataForm = gql.ObjectType(

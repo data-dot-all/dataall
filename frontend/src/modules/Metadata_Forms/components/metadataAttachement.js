@@ -30,7 +30,7 @@ import DoNotDisturbAltOutlinedIcon from '@mui/icons-material/DoNotDisturbAltOutl
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 
 export const MetadataAttachement = (props) => {
-  const { entityType, entityUri } = props;
+  const { entityType, entityUri, canEdit } = props;
   const client = useClient();
   const dispatch = useDispatch();
   const [selectedForm, setSelectedForm] = useState(null);
@@ -158,21 +158,25 @@ export const MetadataAttachement = (props) => {
     <Grid container spacing={2} sx={{ height: 'calc(100vh - 320px)', mb: -5 }}>
       <Grid item lg={3} xl={3} xs={6}>
         <Card sx={{ height: '100%' }}>
-          <CardContent>
-            <Button
-              color="primary"
-              startIcon={<PlusIcon size={15} />}
-              sx={{ mt: 1 }}
-              type="button"
-              onClick={() => {
-                setSelectedForm(null);
-                setAddNewForm(true);
-              }}
-            >
-              Attach form
-            </Button>
-          </CardContent>
-          <Divider />
+          {canEdit && (
+            <>
+              <CardContent>
+                <Button
+                  color="primary"
+                  startIcon={<PlusIcon size={15} />}
+                  sx={{ mt: 1 }}
+                  type="button"
+                  onClick={() => {
+                    setSelectedForm(null);
+                    setAddNewForm(true);
+                  }}
+                >
+                  Attach form
+                </Button>
+              </CardContent>
+              <Divider />
+            </>
+          )}
           {addNewForm && (
             <CardContent>
               <Autocomplete

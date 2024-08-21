@@ -152,19 +152,13 @@ class MetadataFormRepository:
         amff = None
         value = json.loads(value)
         if field.type == MetadataFormFieldType.String.value:
-            amff = StringAttachedMetadataFormField(
-                attachedFormUri=attachedFormUri, fieldUri=field.uri, value=value
-            )
+            amff = StringAttachedMetadataFormField(attachedFormUri=attachedFormUri, fieldUri=field.uri, value=value)
         elif field.type == MetadataFormFieldType.Boolean.value:
-            amff = BooleanAttachedMetadataFormField(
-                attachedFormUri=attachedFormUri, fieldUri=field.uri, value=value
-            )
+            amff = BooleanAttachedMetadataFormField(attachedFormUri=attachedFormUri, fieldUri=field.uri, value=value)
 
         elif field.type == MetadataFormFieldType.Integer.value:
             value = int(value) if value else None
-            amff = IntegerAttachedMetadataFormField(
-                attachedFormUri=attachedFormUri, fieldUri=field.uri, value=value
-            )
+            amff = IntegerAttachedMetadataFormField(attachedFormUri=attachedFormUri, fieldUri=field.uri, value=value)
         elif field.type == MetadataFormFieldType.GlossaryTerm.value:
             amff = GlossaryTermAttachedMetadataFormField(
                 attachedFormUri=attachedFormUri, fieldUri=field.uri, value=value

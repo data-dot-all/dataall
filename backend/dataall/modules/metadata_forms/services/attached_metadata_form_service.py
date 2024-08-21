@@ -40,7 +40,9 @@ class AttachedMetadataFormService:
 
             amf = MetadataFormRepository.create_attached_metadata_form(session, uri, data)
             for f in data.get('fields'):
-                MetadataFormRepository.create_attached_metadata_form_field(session, amf.uri, f.get('field'), f.get('value'))
+                MetadataFormRepository.create_attached_metadata_form_field(
+                    session, amf.uri, f.get('field'), f.get('value')
+                )
             return amf
 
     @staticmethod

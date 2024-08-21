@@ -232,7 +232,7 @@ class MetadataFormService:
 
         # process sorted items
         for item in to_delete:
-            MetadataFormService.delete_metadata_form_field(uri, item)
+            MetadataFormService.delete_metadata_form_field(uri=uri, fieldUri=item)
 
         with get_context().db_engine.scoped_session() as session:
             for item in to_update:

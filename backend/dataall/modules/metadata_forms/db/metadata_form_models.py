@@ -1,13 +1,4 @@
-from sqlalchemy import (
-    Column,
-    String,
-    Integer,
-    ForeignKey,
-    Boolean,
-    ForeignKeyConstraint,
-    PrimaryKeyConstraint,
-    Enum
-)
+from sqlalchemy import Column, String, Integer, ForeignKey, Boolean, ForeignKeyConstraint, PrimaryKeyConstraint, Enum
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship, validates
 
@@ -36,11 +27,9 @@ class MetadataFormEnforcementRule(Base):
 
     __table_args__ = (
         ForeignKeyConstraint(
-            ('metadataFormUri',),
-            ('metadata_form.uri',),
-            name='enforcement_metadata_form_pkey',
-            ondelete="CASCADE"
-        ),)
+            ('metadataFormUri',), ('metadata_form.uri',), name='enforcement_metadata_form_pkey', ondelete='CASCADE'
+        ),
+    )
 
 
 class MetadataFormField(Base):
@@ -57,11 +46,10 @@ class MetadataFormField(Base):
 
     __table_args__ = (
         ForeignKeyConstraint(
-            ('metadataFormUri',),
-            ('metadata_form.uri',),
-            name='field_metadata_form_pkey',
-            ondelete="CASCADE"
-        ),)
+            ('metadataFormUri',), ('metadata_form.uri',), name='field_metadata_form_pkey', ondelete='CASCADE'
+        ),
+    )
+
 
 class AttachedMetadataForm(Base):
     __tablename__ = 'attached_metadata_form'
@@ -71,12 +59,11 @@ class AttachedMetadataForm(Base):
     entityType = Column(String, nullable=False)
 
     __table_args__ = (
-                      ForeignKeyConstraint(
-                          ('metadataFormUri',),
-                          ('metadata_form.uri',),
-                          name='metadata_form_pkey',
-                          ondelete="CASCADE"
-                      ),)
+        ForeignKeyConstraint(
+            ('metadataFormUri',), ('metadata_form.uri',), name='metadata_form_pkey', ondelete='CASCADE'
+        ),
+    )
+
 
 class AttachedMetadataFormField(Base):
     __tablename__ = 'attached_metadata_form_field'
@@ -84,19 +71,18 @@ class AttachedMetadataFormField(Base):
     fieldUri = Column(String, primary_key=True)
     type = Column(Enum(MetadataFormFieldType), nullable=False, default=MetadataFormFieldType.String)
 
-    __table_args__ = (PrimaryKeyConstraint('attachedFormUri', 'fieldUri'),
-                      ForeignKeyConstraint(
-                          ('attachedFormUri',),
-                          ('attached_metadata_form.uri',),
-                          name='attached_field_metadata_form_pkey',
-                          ondelete="CASCADE"
-                      ),
-                      ForeignKeyConstraint(
-                          ('fieldUri',),
-                          ('metadata_form_field.uri',),
-                          name='attached_field_metadata_field_pkey',
-                          ondelete="CASCADE"
-                      ),)
+    __table_args__ = (
+        PrimaryKeyConstraint('attachedFormUri', 'fieldUri'),
+        ForeignKeyConstraint(
+            ('attachedFormUri',),
+            ('attached_metadata_form.uri',),
+            name='attached_field_metadata_form_pkey',
+            ondelete='CASCADE',
+        ),
+        ForeignKeyConstraint(
+            ('fieldUri',), ('metadata_form_field.uri',), name='attached_field_metadata_field_pkey', ondelete='CASCADE'
+        ),
+    )
     __mapper_args__ = {'polymorphic_identity': 'attached_metadata_form_field', 'polymorphic_on': 'type'}
 
     @property
@@ -116,7 +102,7 @@ class StringAttachedMetadataFormField(AttachedMetadataFormField):
             ['attachedFormUri', 'fieldUri'],
             ['attached_metadata_form_field.attachedFormUri', 'attached_metadata_form_field.fieldUri'],
             name='string_attached_metadata_form_field_pkey',
-            ondelete="CASCADE"
+            ondelete='CASCADE',
         ),
     )
 
@@ -133,7 +119,7 @@ class BooleanAttachedMetadataFormField(AttachedMetadataFormField):
             ['attachedFormUri', 'fieldUri'],
             ['attached_metadata_form_field.attachedFormUri', 'attached_metadata_form_field.fieldUri'],
             name='boolean_attached_metadata_form_field_pkey',
-            ondelete="CASCADE"
+            ondelete='CASCADE',
         ),
     )
 
@@ -150,7 +136,7 @@ class IntegerAttachedMetadataFormField(AttachedMetadataFormField):
             ['attachedFormUri', 'fieldUri'],
             ['attached_metadata_form_field.attachedFormUri', 'attached_metadata_form_field.fieldUri'],
             name='integer_attached_metadata_form_field_pkey',
-            ondelete="CASCADE"
+            ondelete='CASCADE',
         ),
     )
 
@@ -167,6 +153,6 @@ class GlossaryTermAttachedMetadataFormField(AttachedMetadataFormField):
             ['attachedFormUri', 'fieldUri'],
             ['attached_metadata_form_field.attachedFormUri', 'attached_metadata_form_field.fieldUri'],
             name='glossary_attached_metadata_form_field_pkey',
-            ondelete="CASCADE"
+            ondelete='CASCADE',
         ),
     )

@@ -221,6 +221,7 @@ const OrganizationView = () => {
                 <MetadataAttachement
                   entityType="Organization"
                   entityUri={org.organizationUri}
+                  canEdit={true}
                 />
               )}
             </Box>
