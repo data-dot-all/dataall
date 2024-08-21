@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
 
 import {
-  Autocomplete,
   Box,
   Button,
   Card,
   CardContent,
   CardHeader,
-  CircularProgress,
   Grid,
-  TextField,
   Typography
 } from '@mui/material';
 import {
