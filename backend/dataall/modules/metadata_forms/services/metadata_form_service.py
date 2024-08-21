@@ -7,7 +7,6 @@ from dataall.core.environment.db.environment_repositories import EnvironmentRepo
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyValidationService, TenantPolicyService
 from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility, MetadataFormUserRoles, MetadataFormFieldType
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
-
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
 from dataall.modules.metadata_forms.services.metadata_form_permissions import MANAGE_METADATA_FORMS
 
@@ -70,8 +69,14 @@ class MetadataFormParamValidationService:
 
     @staticmethod
     def validate_field_possible_values_params(data):
+        def _raise(x):
+            raise x
+
         validator_func = {
             MetadataFormFieldType.Integer.value: lambda x: x[1:].isdigit() if x[0] in ['+', '-'] else x.isdigit(),
+            MetadataFormFieldType.Boolean.value: lambda x: _raise(
+                Exception('possible values are not supported for boolean fields')
+            ),
         }
         if data.get('possibleValues'):
             for value in data.get('possibleValues'):
@@ -135,8 +140,7 @@ class MetadataFormService:
     @TenantPolicyService.has_tenant_permission(MANAGE_METADATA_FORMS)
     @MetadataFormAccessService.can_perform('DELETE')
     def delete_metadata_form_by_uri(uri):
-        mf = MetadataFormService.get_metadata_form_by_uri(uri)
-        if mf:
+        if mf := MetadataFormService.get_metadata_form_by_uri(uri):
             with get_context().db_engine.scoped_session() as session:
                 return session.delete(mf)
 
