@@ -165,7 +165,7 @@ const WorksheetList = Loadable(
   lazy(() => import('./modules/Worksheets/views/WorksheetList'))
 );
 const WorksheetView = Loadable(
-  lazy(() => import('./modules/Worksheets/views/WorksheetView'))
+  lazy(() => import('./modules/Worksheets/views/WorkSheetHub'))
 );
 const WorksheetCreateForm = Loadable(
   lazy(() => import('./modules/Worksheets/views/WorksheetCreateForm'))

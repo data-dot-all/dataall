@@ -127,6 +127,15 @@ DatasetSearchResult = gql.ObjectType(
     ],
 )
 
+ObjectKeys = gql.ObjectType(
+    name='ObjectKeys',
+    fields=[
+        gql.Field(name='error', type=gql.String),
+        gql.Field(name='objectKeys', type=gql.String),
+    ],
+)
+
+
 GlueCrawler = gql.ObjectType(
     name='GlueCrawler',
     fields=[

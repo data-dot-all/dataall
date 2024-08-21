@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 class S3DatasetClient:
     def __init__(self, dataset: S3Dataset):
         """
-        It first starts a session assuming the pivot role,
+        It first starts a session assumin the pivot role,
         then we define another session assuming the dataset role from the pivot role
         """
         self._pivot_role_session = SessionHelper.remote_session(accountid=dataset.AwsAccountId, region=dataset.region)
@@ -66,3 +66,19 @@ class S3DatasetClient:
                     f'Data.all Environment Pivot Role does not have s3:GetEncryptionConfiguration Permission for {dataset.S3BucketName} bucket: {e}'
                 )
             raise Exception(f'Cannot fetch the bucket encryption configuration for {dataset.S3BucketName}: {e}')
+        
+    def list_object_keys(self, dataset):
+        try:
+            response = self._client.list_objects_v2(
+                Bucket=dataset,
+            )
+            def txt_or_pdf(s):
+                suffix = s.split(".")[-1]
+                if suffix == "pdf" or suffix == "txt":
+                    return True
+                else:
+                    return False
+            return " ".join([ob['Key'] for ob in response.get('Contents', []) if txt_or_pdf(ob['Key'])])
+        except ClientError as e:
+            logging.error(f'Failed to list objects in {dataset} : {e}')
+            raise e
