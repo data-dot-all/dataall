@@ -3,6 +3,7 @@ from dataall.modules.worksheets.api.enums import WorksheetRole
 from dataall.modules.worksheets.db.worksheet_models import Worksheet
 from dataall.modules.worksheets.db.worksheet_repositories import WorksheetRepository
 from dataall.modules.worksheets.services.worksheet_service import WorksheetService
+from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.base.api.context import Context
 
 
@@ -69,3 +70,49 @@ def run_sql_query(context: Context, source, environmentUri: str = None, workshee
 def delete_worksheet(context, source, worksheetUri: str = None):
     with context.engine.scoped_session() as session:
         return WorksheetService.delete_worksheet(session=session, uri=worksheetUri)
+
+
+@is_feature_enabled('modules.worksheets.features.nlq')
+def text_to_sql(
+    context: Context,
+    source,
+    environmentUri: str = None,
+    worksheetUri: str = None,
+    prompt: str = None,
+    datasetUri: str = None,
+    tableNames: list = None,
+):
+    with context.engine.scoped_session() as session:
+        response = WorksheetService.run_nlq(
+            #Add back username later
+            # username=context.username,
+            session=session,
+            uri=environmentUri,
+            worksheetUri=worksheetUri,
+            prompt=prompt,
+            datasetUri=datasetUri,
+            table_names=tableNames,
+        )
+
+        return response
+
+@is_feature_enabled('modules.worksheets.features.nlq')
+def unstruct_query(
+    context,
+    source,
+    environmentUri: str = None,
+    worksheetUri: str = None,
+    prompt: str = None,
+    datasetS3Bucket: str = None,
+    key: str = None,
+):
+    with context.engine.scoped_session() as session:
+        return WorksheetService.unstruct_query(
+            username=context.username,
+            session=session,
+            bucket=datasetS3Bucket,
+            uri=environmentUri,
+            worksheetUri=worksheetUri,
+            prompt=prompt,
+            key=key,
+        )

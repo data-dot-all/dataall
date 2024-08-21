@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from dataall.modules.worksheets.api.resolvers import get_worksheet, list_worksheets, run_sql_query
+from dataall.modules.worksheets.api.resolvers import get_worksheet, list_worksheets, run_sql_query, text_to_sql, unstruct_query
 
 
 getWorksheet = gql.QueryField(
@@ -28,3 +28,31 @@ runAthenaSqlQuery = gql.QueryField(
     ],
     resolver=run_sql_query,
 )
+
+TextToSQL = gql.QueryField(
+    name='textToSQL',
+    type=gql.Ref('TextToSQLResult'),
+    args=[
+        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='worksheetUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='prompt', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='tableNames', type=gql.String),
+    ],
+    resolver=text_to_sql,
+)
+
+unstructuredQuery = gql.QueryField(
+    name='unstructuredQuery',
+    type=gql.Ref('UnstructuredQueryResult'),
+    args=[
+        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='worksheetUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='prompt', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='datasetS3Bucket', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='key', type=gql.NonNullableType(gql.String)),
+    ],
+    resolver=unstruct_query,
+)
+
+

@@ -30,6 +30,7 @@ from aws_cdk.aws_ec2 import (
 from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling
 from .waf_rules import get_waf_rules
+from .run_if import run_if
 
 
 class LambdaApiStack(pyNestedClass):
@@ -325,21 +326,30 @@ class LambdaApiStack(pyNestedClass):
             disable_inline_rules=True,
         )
         return lambda_sg
+    
+    @run_if(['modules.worksheets.features.nlq'])
+    def add_bedrock_policy(self, role):
+        stmt = iam.PolicyStatement(actions=[
+				"bedrock:InvokeModel",
+                "bedrock:GetPrompt",
+                "bedrock:CreateFoundationModelAgreement",
+                "bedrock:InvokeFlow",
+                ],
+                resources=['*']) 
+        role.add_to_policy(stmt)
+
+    
 
     def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name, vpc):
         role_name = f'{resource_prefix}-{envname}-{fn_name}-role'
-
-        role_inline_policy = iam.Policy(
-            self,
-            f'{resource_prefix}-{envname}-{fn_name}-policy',
-            policy_name=f'{resource_prefix}-{envname}-{fn_name}-policy',
-            statements=[
+        statements = [
                 iam.PolicyStatement(
                     actions=[
                         'secretsmanager:GetSecretValue',
                         'kms:Decrypt',
                         'secretsmanager:DescribeSecret',
                         'ecs:RunTask',
+                        # 'bedrock:InvokeModel',
                         'kms:Encrypt',
                         'sqs:ReceiveMessage',
                         'kms:GenerateDataKey',
@@ -454,8 +464,14 @@ class LambdaApiStack(pyNestedClass):
                     actions=['events:EnableRule', 'events:DisableRule'],
                     resources=[f'arn:aws:events:{self.region}:{self.account}:rule/dataall*'],
                 ),
-            ],
-        )
+            ]
+       
+        role_inline_policy = iam.Policy(
+            self,
+            f'{resource_prefix}-{envname}-{fn_name}-policy',
+            policy_name=f'{resource_prefix}-{envname}-{fn_name}-policy',
+            statements=statements
+            )
         role = iam.Role(
             self,
             role_name,
@@ -463,6 +479,7 @@ class LambdaApiStack(pyNestedClass):
             inline_policies={f'{resource_prefix}-{envname}-{fn_name}-inline': role_inline_policy.document},
             assumed_by=iam.ServicePrincipal('lambda.amazonaws.com'),
         )
+        self.add_bedrock_policy(role)
         return role
 
     def create_api_gateway(

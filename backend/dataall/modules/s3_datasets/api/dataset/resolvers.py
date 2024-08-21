@@ -173,3 +173,9 @@ class RequestValidator:
         RequestValidator.validate_creation_request(data)
         if not data.get('bucketName'):
             raise RequiredParameter('bucketName')
+        
+    
+    def list_object_keys(context, source, environmentUri: str = None, worksheetUri: str = None, datasetUri: str = None):
+        with context.engine.scoped_session() as session:
+            return DatasetService.list_object_keys(session=session, datasetUri=datasetUri, uri=environmentUri, worksheetUri=worksheetUri)
+
