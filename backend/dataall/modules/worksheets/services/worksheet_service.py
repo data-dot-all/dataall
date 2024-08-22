@@ -154,6 +154,7 @@ class WorksheetService:
         return {'error': None, 'response': response}
 
     @staticmethod
+    
     @ResourceThresholdRepository.invocation_handler('nlq')
     def unstruct_query(session, uri, worksheetUri, prompt, datasetUri, key):
         environment = EnvironmentService.get_environment_by_uri(session, uri)

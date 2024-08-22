@@ -84,8 +84,7 @@ def text_to_sql(
 ):
     with context.engine.scoped_session() as session:
         response = WorksheetService.run_nlq(
-            #Add back username later
-            # username=context.username,
+            username=context.username,
             session=session,
             uri=environmentUri,
             worksheetUri=worksheetUri,
