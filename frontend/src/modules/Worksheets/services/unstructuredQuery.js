@@ -20,7 +20,7 @@ export const unstructuredQuery = ({
       $environmentUri: String!
       $worksheetUri: String!
       $datasetUri: String!
-      $key: String
+      $key: String!
     ) {
       unstructuredQuery(
         prompt: $prompt
