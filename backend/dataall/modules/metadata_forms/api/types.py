@@ -91,5 +91,6 @@ AttachedMetadataFormField = gql.ObjectType(
         gql.Field(name='uri', type=gql.ID),
         gql.Field(name='field', type=gql.Ref('MetadataFormField'), resolver=resolve_metadata_form_field),
         gql.Field(name='value', type=gql.String),
+        gql.Field(name='hasTenantPermissions', type=gql.Boolean, resolver=has_tenant_permissions_for_metadata_forms),
     ],
 )
