@@ -233,16 +233,18 @@ export const MetadataAttachement = (props) => {
                     </Typography>
                   </Grid>
                   <Grid item lg={2} xl={2}>
-                    <DeleteIcon
-                      sx={{ color: 'primary.main', opacity: 0.5 }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.opacity = 1;
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.opacity = 0.5;
-                      }}
-                      onClick={() => deleteAttachedForm(attachedForm.uri)}
-                    />
+                    {canEdit && (
+                      <DeleteIcon
+                        sx={{ color: 'primary.main', opacity: 0.5 }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.opacity = 1;
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.opacity = 0.5;
+                        }}
+                        onClick={() => deleteAttachedForm(attachedForm.uri)}
+                      />
+                    )}
                   </Grid>
                 </Grid>
               </CardContent>
