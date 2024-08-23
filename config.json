@@ -51,7 +51,7 @@
         ,
         "features": {
                 "nlq":true,
-                "max_count_per_day": 413
+                "max_count_per_day": 25
             }
         },
         "dashboards": {
