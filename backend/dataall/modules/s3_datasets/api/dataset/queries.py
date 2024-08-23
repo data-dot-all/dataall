@@ -53,8 +53,7 @@ listObjectKeys = gql.QueryField(
     args=[
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='worksheetUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String))
-
+        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
     ],
-    resolver=list_object_keys
+    resolver=list_object_keys,
 )

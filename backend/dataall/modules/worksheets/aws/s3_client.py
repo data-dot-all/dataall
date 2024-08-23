@@ -7,6 +7,7 @@ from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
 
+
 class S3Client:
     def __init__(self, account_id, region, env_group, aws_account_id):
         base_session = SessionHelper.remote_session(accountid=aws_account_id, region=region)
@@ -16,7 +17,6 @@ class S3Client:
         self._account_id = account_id
 
     def list_object_keys(self, bucket_name):
-        
         try:
             response = self._client.list_objects_v2(
                 Bucket=bucket_name,

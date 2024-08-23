@@ -524,13 +524,10 @@ class DatasetService:
             GlossaryRepository.delete_glossary_terms_links(session, table_uri, 'DatasetTable')
         GlossaryRepository.delete_glossary_terms_links(session, dataset_uri, 'Dataset')
 
-    
     @staticmethod
     def list_object_keys(session, uri, worksheetUri, datasetUri: str = None):
         dataset = DatasetRepository.get_dataset_by_uri(session, datasetUri)
 
-
         s3_client = S3DatasetClient(dataset)
 
-        return {
-            "objectKeys" : s3_client.list_object_keys(dataset.S3BucketName)}
+        return {'objectKeys': s3_client.list_object_keys(dataset.S3BucketName)}
