@@ -58,7 +58,8 @@ const tabs = [
   },
   {
     label: 'Metadata',
-    value: 'metadata'
+    value: 'metadata',
+    active: isModuleEnabled(ModuleNames.METADATA_FORMS)
   },
   {
     label: 'Datasets',

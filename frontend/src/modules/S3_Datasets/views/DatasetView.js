@@ -44,7 +44,7 @@ import {
   DatasetOverview,
   DatasetUpload
 } from '../components';
-import { isFeatureEnabled } from 'utils';
+import { isFeatureEnabled, isModuleEnabled, ModuleNames } from 'utils';
 import { RequestAccessModal } from 'modules/Catalog/components';
 import { MetadataAttachement } from '../../Metadata_Forms/components';
 
@@ -74,7 +74,8 @@ const DatasetView = () => {
       {
         label: 'Metadata',
         value: 'metadata',
-        icon: <ForumOutlined fontSize="small" />
+        icon: <ForumOutlined fontSize="small" />,
+        active: isModuleEnabled(ModuleNames.METADATA_FORMS)
       }
     ];
     if (isAdmin) {
@@ -103,7 +104,7 @@ const DatasetView = () => {
         });
       }
     }
-    return tabs;
+    return tabs.filter((tab) => tab.active !== false);
   };
 
   const handleDeleteObjectModalOpen = () => {
