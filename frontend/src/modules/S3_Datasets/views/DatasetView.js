@@ -46,7 +46,7 @@ import {
 } from '../components';
 import { isFeatureEnabled, isModuleEnabled, ModuleNames } from 'utils';
 import { RequestAccessModal } from 'modules/Catalog/components';
-import { MetadataAttachement } from '../../Metadata_Forms/components';
+import { MetadataAttachment } from '../../Metadata_Forms/components';
 
 const DatasetView = () => {
   const dispatch = useDispatch();
@@ -362,7 +362,7 @@ const DatasetView = () => {
               <DatasetData dataset={dataset} isAdmin={isAdmin} />
             )}
             {currentTab === 'metadata' && (
-              <MetadataAttachement
+              <MetadataAttachment
                 entityType="Dataset"
                 entityUri={params.uri}
                 canEdit={isAdmin}

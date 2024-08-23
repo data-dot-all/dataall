@@ -29,7 +29,7 @@ import { AttachedFormCard } from './AttachedFormCard';
 import DoNotDisturbAltOutlinedIcon from '@mui/icons-material/DoNotDisturbAltOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 
-export const MetadataAttachement = (props) => {
+export const MetadataAttachment = (props) => {
   const { entityType, entityUri, canEdit } = props;
   const client = useClient();
   const dispatch = useDispatch();

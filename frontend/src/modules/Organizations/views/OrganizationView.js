@@ -38,7 +38,7 @@ import {
   OrganizationOverview,
   OrganizationTeams
 } from '../components';
-import { MetadataAttachement } from '../../Metadata_Forms/components';
+import { MetadataAttachment } from '../../Metadata_Forms/components';
 import { isModuleEnabled, ModuleNames } from '../../../utils';
 
 const tabs = [
@@ -226,7 +226,7 @@ const OrganizationView = () => {
                 <OrganizationEnvironments organization={org} />
               )}
               {currentTab === 'metadata' && (
-                <MetadataAttachement
+                <MetadataAttachment
                   entityType="Organization"
                   entityUri={org.organizationUri}
                   canEdit={true}
