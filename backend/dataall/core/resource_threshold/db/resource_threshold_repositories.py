@@ -5,6 +5,8 @@ from dataall.base.config import config
 
 
 class ResourceThresholdRepository(EnvironmentResource):
+    resource_paths = {'nlq':'modules.worksheets.features.max_count_per_day'}
+
     @staticmethod
     def get_count_today(session, username, action_type):
         amount = (
@@ -57,7 +59,7 @@ class ResourceThresholdRepository(EnvironmentResource):
                 count = ResourceThresholdRepository.get_count_today(
                     session=session, username=username, action_type=action_type
                 )
-                max_count = config.get_property('modules.worksheets.features.max_count_per_day', 10)
+                max_count = config.get_property(ResourceThresholdRepository.resource_paths[action_type], 10)
                 if count < max_count:
                     response = func(session, *args, **kwargs)
                     if count == 0:
