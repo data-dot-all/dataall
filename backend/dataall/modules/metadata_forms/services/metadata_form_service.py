@@ -120,42 +120,6 @@ class MetadataFormAccessService:
             return MetadataFormUserRoles.User.value
 
 
-class MetadataFormAccessService:
-    @staticmethod
-    def is_owner(uri):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            return MetadataFormRepository.get_metadata_form_owner(session, uri) in context.groups
-
-    @staticmethod
-    def can_perform(action: str):
-        def decorator(f):
-            @wraps(f)
-            def check_permission(*args, **kwds):
-                uri = kwds.get('uri')
-                if not uri:
-                    raise KeyError(f"{f.__name__} doesn't have parameter uri.")
-
-                if MetadataFormAccessService.is_owner(uri):
-                    return f(*args, **kwds)
-                else:
-                    raise exceptions.UnauthorizedOperation(
-                        action=action,
-                        message=f'User {get_context().username} is not the owner of the metadata form {uri}',
-                    )
-
-            return check_permission
-
-        return decorator
-
-    @staticmethod
-    def get_user_role(uri):
-        if MetadataFormAccessService.is_owner(uri):
-            return MetadataFormUserRoles.Owner.value
-        else:
-            return MetadataFormUserRoles.User.value
-
-
 class MetadataFormService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_METADATA_FORMS)
@@ -261,8 +225,6 @@ class MetadataFormService:
         # validate all inputs first
         # if even one input is invalid -- decline whole batch
         for item in data:
-            if item.get('metadataFormUri') != uri:
-                raise Exception('property metadataFormUri does not match form uri')
             if item.get('uri') is None:
                 MetadataFormParamValidationService.validate_create_field_params(item)
                 to_create.append(item)

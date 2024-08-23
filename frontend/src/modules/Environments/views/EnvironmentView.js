@@ -47,6 +47,7 @@ import {
   EnvironmentNetworks
 } from '../components';
 import { ModuleNames, isModuleEnabled } from 'utils';
+import { MetadataAttachement } from '../../Metadata_Forms/components';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
@@ -54,6 +55,10 @@ const tabs = [
     label: 'Teams',
     value: 'teams',
     icon: <SupervisedUserCircleRounded fontSize="small" />
+  },
+  {
+    label: 'Metadata',
+    value: 'metadata'
   },
   {
     label: 'Datasets',
@@ -262,6 +267,13 @@ const EnvironmentView = () => {
           <Box sx={{ mt: 3 }}>
             {currentTab === 'overview' && (
               <EnvironmentOverview environment={env} />
+            )}
+            {currentTab === 'metadata' && (
+              <MetadataAttachement
+                entityType="Environment"
+                entityUri={env.environmentUri}
+                canEdit={true}
+              />
             )}
             {currentTab === 'teams' && <EnvironmentTeams environment={env} />}
             {currentTab === 'datasets' && (

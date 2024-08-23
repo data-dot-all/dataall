@@ -38,10 +38,12 @@ import {
   OrganizationOverview,
   OrganizationTeams
 } from '../components';
+import { MetadataAttachement } from '../../Metadata_Forms/components';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
   { label: 'Environments', value: 'environments', icon: <FaAws size={20} /> },
+  { label: 'Metadata', value: 'metadata', icon: <FaAws size={20} /> },
   {
     label: 'Teams',
     value: 'teams',
@@ -214,6 +216,13 @@ const OrganizationView = () => {
               )}
               {currentTab === 'environments' && (
                 <OrganizationEnvironments organization={org} />
+              )}
+              {currentTab === 'metadata' && (
+                <MetadataAttachement
+                  entityType="Organization"
+                  entityUri={org.organizationUri}
+                  canEdit={true}
+                />
               )}
             </Box>
           </Container>

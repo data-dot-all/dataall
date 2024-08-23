@@ -4,3 +4,7 @@ export * from './MetadataFormInfo';
 export * from './MetadataFormPreview';
 export * from './MetadataFormEnforcement';
 export * from './MetadataFormFields';
+export * from './fields';
+export * from './renderedMetadataForm';
+export * from './metadataAttachement';
+export * from './AttachedFormCard';

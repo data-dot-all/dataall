@@ -56,33 +56,6 @@ def test_get_metadataform_full_info(client1, metadata_form_1, metadata_form_fiel
     assert_that(all_field_uris).contains(metadata_form_field_1.uri)
 
 
-def test_delete_metadata_form_field_unauth(client2, metadata_form_1, metadata_form_field_1):
-    err_message_part1 = 'An error occurred (UnauthorizedOperation) when calling DELETE FIELD operation:'
-    err_message_part2 = f'is not the owner of the metadata form {metadata_form_1.uri}'
-
-    assert_that(delete_metadata_form_field).raises(Exception).when_called_with(
-        client2, metadata_form_1.uri, metadata_form_field_1.uri
-    ).contains(err_message_part1, err_message_part2)
-
-
-def test_update_metadata_form_fields_unauth(client2, metadata_form_1, metadata_form_field_1):
-    field_data = {
-        'name': 'field_1',
-        'metadataFormUri': metadata_form_1.uri,
-        'description': 'Field 1',
-        'type': 'String',
-        'required': True,
-        'displayNumber': 1,
-    }
-
-    err_message_part1 = 'An error occurred (UnauthorizedOperation) when calling UPDATE FIELDS operation:'
-    err_message_part2 = f'is not the owner of the metadata form {metadata_form_1.uri}'
-
-    assert_that(update_metadata_form_fields).raises(Exception).when_called_with(
-        client2, metadata_form_1.uri, [field_data]
-    ).contains(err_message_part1, err_message_part2)
-
-
 def test_create_update_field_invalid_value(client1, metadata_form_1, metadata_form_field_1):
     new_field_data = {
         'name': 'field_1',
@@ -109,6 +82,33 @@ def test_create_update_field_invalid_value(client1, metadata_form_1, metadata_fo
     assert_that(update_metadata_form_fields).raises(Exception).when_called_with(
         client1, metadata_form_1.uri, [updated_field_data]
     ).contains('InvalidInput', 'from glossary list')
+
+
+def test_delete_metadata_form_field_unauth(client2, metadata_form_1, metadata_form_field_1):
+    err_message_part1 = 'An error occurred (UnauthorizedOperation) when calling DELETE FIELD operation:'
+    err_message_part2 = f'is not the owner of the metadata form {metadata_form_1.uri}'
+
+    assert_that(delete_metadata_form_field).raises(Exception).when_called_with(
+        client2, metadata_form_1.uri, metadata_form_field_1.uri
+    ).contains(err_message_part1, err_message_part2)
+
+
+def test_update_metadata_form_fields_unauth(client2, metadata_form_1, metadata_form_field_1):
+    field_data = {
+        'name': 'field_1',
+        'metadataFormUri': metadata_form_1.uri,
+        'description': 'Field 1',
+        'type': 'String',
+        'required': True,
+        'displayNumber': 1,
+    }
+
+    err_message_part1 = 'An error occurred (UnauthorizedOperation) when calling UPDATE FIELDS operation:'
+    err_message_part2 = f'is not the owner of the metadata form {metadata_form_1.uri}'
+
+    assert_that(update_metadata_form_fields).raises(Exception).when_called_with(
+        client2, metadata_form_1.uri, [field_data]
+    ).contains(err_message_part1, err_message_part2)
 
 
 def test_metadata_form_fields_batch(client1, metadata_form_1, metadata_form_field_1):

@@ -46,6 +46,7 @@ import {
 } from '../components';
 import { isFeatureEnabled } from 'utils';
 import { RequestAccessModal } from 'modules/Catalog/components';
+import { MetadataAttachement } from '../../Metadata_Forms/components';
 
 const DatasetView = () => {
   const dispatch = useDispatch();
@@ -69,7 +70,12 @@ const DatasetView = () => {
         value: 'data',
         icon: <ViewArrayOutlined fontSize="small" />
       },
-      { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> }
+      { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
+      {
+        label: 'Metadata',
+        value: 'metadata',
+        icon: <ForumOutlined fontSize="small" />
+      }
     ];
     if (isAdmin) {
       tabs.push({
@@ -353,6 +359,13 @@ const DatasetView = () => {
           <Box sx={{ mt: 3 }}>
             {currentTab === 'data' && (
               <DatasetData dataset={dataset} isAdmin={isAdmin} />
+            )}
+            {currentTab === 'metadata' && (
+              <MetadataAttachement
+                entityType="Dataset"
+                entityUri={params.uri}
+                canEdit={isAdmin}
+              />
             )}
             {currentTab === 'overview' && (
               <DatasetOverview dataset={dataset} isAdmin={isAdmin} />
