@@ -17,8 +17,8 @@ from dataall.modules.shares_base.api.resolvers import (
     update_share_extension_purpose,
     update_share_expiration_period,
     submit_share_extension,
-    approve_share_extension_object,
-    cancel_share_extension_object,
+    approve_share_object_extension,
+    cancel_share_object_extension,
 )
 
 createShareObject = gql.MutationField(
@@ -40,10 +40,10 @@ deleteShareObject = gql.MutationField(
     type=gql.Boolean,
 )
 
-cancelShareExtensionObject = gql.MutationField(
-    name='cancelShareExtensionObject',
+cancelShareExtension = gql.MutationField(
+    name='cancelShareExtension',
     args=[gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String))],
-    resolver=cancel_share_extension_object,
+    resolver=cancel_share_object_extension,
     type=gql.Boolean,
 )
 
@@ -76,7 +76,7 @@ submitShareExtension = gql.MutationField(
     name='submitShareExtension',
     args=[
         gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='expiration', type=gql.NonNullableType(gql.Integer)),
+        gql.Argument(name='expiration', type=gql.Integer),
         gql.Argument(name='extensionReason', type=gql.String),
         gql.Argument(name='nonExpirable', type=gql.Boolean),
     ],
@@ -91,11 +91,11 @@ approveShareObject = gql.MutationField(
     resolver=approve_share_object,
 )
 
-approveShareExtensionObject = gql.MutationField(
-    name='approveShareExtensionObject',
+approveShareExtension = gql.MutationField(
+    name='approveShareExtension',
     args=[gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String))],
     type=gql.Ref('ShareObject'),
-    resolver=approve_share_extension_object,
+    resolver=approve_share_object_extension,
 )
 
 

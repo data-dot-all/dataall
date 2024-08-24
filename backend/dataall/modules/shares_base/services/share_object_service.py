@@ -169,6 +169,7 @@ class ShareObjectService:
             shareExpiryDate = None
             if nonExpirable:
                 shareExpiryDate = None
+                shareExpirationPeriod = None
             elif dataset.enableExpiration:
                 shareExpiryDate = ShareObjectService.calculate_expiry_date(shareExpirationPeriod, dataset.expirySetting)
 
@@ -185,6 +186,7 @@ class ShareObjectService:
                     requestPurpose=requestPurpose,
                     requestedExpiryDate=shareExpiryDate,
                     nonExpirable=nonExpirable,
+                    shareExpirationPeriod=shareExpirationPeriod,
                 )
                 ShareObjectRepository.save_and_commit(session, share)
 
@@ -295,32 +297,36 @@ class ShareObjectService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
-            if share.nonExpirable:
-                raise RuntimeError(
-                    'Cannot submit share extension request on this share as it is non expiring',
-                )
             if dataset.enableExpiration:
-                if (
-                    not nonExpirable
-                    and expiration < dataset.expiryMinDuration
-                    or expiration > dataset.expiryMaxDuration
+                if nonExpirable is False and expiration is None:
+                    raise InvalidInput(
+                        param_name='Share Expiration',
+                        param_value='',
+                        constraint='period not provided. Either make your share non-expiring or provide a expiration period',
+                    )
+
+                if not nonExpirable and (
+                    expiration < dataset.expiryMinDuration or expiration > dataset.expiryMaxDuration
                 ):
                     raise InvalidInput(
                         param_name='Share Expiration',
                         param_value=expiration,
                         constraint=f'between {dataset.expiryMinDuration} and {dataset.expiryMaxDuration}',
                     )
+
+                cls._run_transitions(session, share, states, ShareObjectActions.Extension)
+
                 if nonExpirable:
                     share.nonExpirable = True
                     share.requestedExpiryDate = None
+                    share.shareExpirationPeriod = None
                 else:
                     expiration_date = ShareObjectService.calculate_expiry_date(expiration, dataset.expirySetting)
                     share.requestedExpiryDate = expiration_date
+                    share.shareExpirationPeriod = expiration
 
                 share.extensionReason = extension_reason
                 share.submittedForExtension = True
-
-                cls._run_transitions(session, share, states, ShareObjectActions.Extension)
 
                 if dataset.autoApprovalEnabled:
                     ResourcePolicyService.attach_resource_policy(
@@ -330,7 +336,7 @@ class ShareObjectService:
                         resource_uri=share.shareUri,
                         resource_type=ShareObject.__name__,
                     )
-                    share = cls.approve_share_extension_object(uri=share.shareUri)
+                    share = cls.approve_share_object_extension(uri=share.shareUri)
 
                 activity = Activity(
                     action='SHARE_OBJECT:EXTENSION_REQUEST',
@@ -361,6 +367,8 @@ class ShareObjectService:
                         action='Approve Share Object',
                         message=f'The principal role {share.principalRoleName} is not found.',
                     )
+            if dataset.enableExpiration and share.requestedExpiryDate and share.requestedExpiryDate < datetime.today():
+                raise Exception("Cannot approve share since its it past the requested expiration date. Please reject this share and submit a new share request")
 
             cls._run_transitions(session, share, states, ShareObjectActions.Approve)
 
@@ -391,7 +399,7 @@ class ShareObjectService:
 
     @classmethod
     @ResourcePolicyService.has_resource_permission(APPROVE_SHARE_OBJECT)
-    def approve_share_extension_object(cls, uri: str):
+    def approve_share_object_extension(cls, uri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
@@ -402,10 +410,15 @@ class ShareObjectService:
                     message=f'The principal role {share.principalRoleName} is not found.',
                 )
 
+            if dataset.enableExpiration and share.requestedExpiryDate and share.requestedExpiryDate < datetime.today():
+                raise Exception(
+                    "Cannot approve share extension since its it past the requested expiration date. Please reject this share and submit a new share request")
+
             cls._run_transitions(session, share, states, ShareObjectActions.ExtensionApprove)
 
             share.rejectPurpose = ''
-            share.expiryDate = share.requestedExpiryDate if not share.nonExpirable else None
+            share.expiryDate = share.requestedExpiryDate
+            share.nonExpirable = False if share.requestedExpiryDate else share.nonExpirable
             share.requestedExpiryDate = None
             share.submittedForExtension = False
             share.lastExtensionDate = datetime.today()
@@ -436,11 +449,11 @@ class ShareObjectService:
             session.commit()
             return True
 
-    @staticmethod
+    @classmethod
     @ResourcePolicyService.has_resource_permission(SUBMIT_SHARE_OBJECT)
-    def update_share_expiration_period(uri: str, expiration, nonExpirable) -> bool:
+    def update_share_expiration_period(cls, uri: str, expiration, nonExpirable) -> bool:
         with get_context().db_engine.scoped_session() as session:
-            share = ShareObjectRepository.get_share_by_uri(session, uri)
+            share, dataset, states = cls._get_share_data(session, uri)
             if share.status not in [
                 ShareObjectStatus.Submitted.value,
                 ShareObjectStatus.Submitted_For_Extension.value,
@@ -450,16 +463,30 @@ class ShareObjectService:
                     f"Cannot update share object's expiration as it is not in {', '.join([ShareObjectStatus.Submitted.value, ShareObjectStatus.Submitted_For_Extension.value, ShareObjectStatus.Draft.value])}"
                 )
 
+            invalid_states = [
+                ShareItemStatus.Share_Succeeded.value,
+                ShareItemStatus.Revoke_In_Progress.value,
+                ShareItemStatus.Share_In_Progress.value,
+                ShareItemStatus.Share_Approved.value,
+                ShareItemStatus.Revoke_Approved.value,
+            ]
+            share_item_invalid_state = [state for state in states if states in invalid_states]
+
+            if share_item_invalid_state:
+                raise Exception(
+                    f"Cannot update share object's expiration as it share items are in incorrect state { ', '.join(invalid_states)}"
+                )
+
             if nonExpirable:
                 share.nonExpirable = nonExpirable
                 share.expiryDate = None
                 share.requestedExpiryDate = None
+                share.shareExpirationPeriod = None
                 session.commit()
                 return True
             else:
                 share.nonExpirable = False
 
-            dataset = DatasetBaseRepository.get_dataset_by_uri(session, share.datasetUri)
             if dataset.enableExpiration and (
                 expiration < dataset.expiryMinDuration or expiration > dataset.expiryMaxDuration
             ):
@@ -474,6 +501,7 @@ class ShareObjectService:
             else:
                 raise Exception("Couldn't update share expiration as dataset doesn't have share expiration enabled")
             share.requestedExpiryDate = expiration_date
+            share.shareExpirationPeriod = expiration
             activity = Activity(
                 action='SHARE_OBJECT:UPDATE_EXTENSION_PERIOD',
                 label='SHARE_OBJECT:UPDATE_EXTENSION_PERIOD',
@@ -544,7 +572,7 @@ class ShareObjectService:
 
     @classmethod
     @ResourcePolicyService.has_resource_permission(SUBMIT_SHARE_OBJECT)
-    def cancel_share_extension_object(cls, uri: str) -> bool:
+    def cancel_share_object_extension(cls, uri: str) -> bool:
         with get_context().db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
 
@@ -553,6 +581,7 @@ class ShareObjectService:
             share.submittedForExtension = False
             share.requestedExpiryDate = None
             share.nonExpirable = True if share.nonExpirable and share.expiryDate is None else False
+            share.shareExpirationPeriod = None
 
             activity = Activity(
                 action='SHARE_OBJECT:CANCEL_EXTENSION',

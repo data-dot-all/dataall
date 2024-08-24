@@ -462,6 +462,8 @@ class ContainerStack(pyNestedClass):
         )
         try:
             run_schedule = deploy_config.get_property('module.dataset_base.features.share_expiration.run_schedule')
+            if 0 not in run_schedule:
+                run_schedule.append(0)
         except Exception as e:
             run_schedule = [0]
 

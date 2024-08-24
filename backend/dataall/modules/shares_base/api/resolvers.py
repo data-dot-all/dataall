@@ -114,8 +114,8 @@ def approve_share_object(context: Context, source, shareUri: str = None):
     return ShareObjectService.approve_share_object(uri=shareUri)
 
 
-def approve_share_extension_object(context: Context, source, shareUri: str = None):
-    return ShareObjectService.approve_share_extension_object(uri=shareUri)
+def approve_share_object_extension(context: Context, source, shareUri: str = None):
+    return ShareObjectService.approve_share_object_extension(uri=shareUri)
 
 
 def reject_share_object(
@@ -152,8 +152,8 @@ def delete_share_object(context: Context, source, shareUri: str = None):
     return ShareObjectService.delete_share_object(uri=shareUri)
 
 
-def cancel_share_extension_object(context: Context, source, shareUri: str = None):
-    return ShareObjectService.cancel_share_extension_object(uri=shareUri)
+def cancel_share_object_extension(context: Context, source, shareUri: str = None):
+    return ShareObjectService.cancel_share_object_extension(uri=shareUri)
 
 
 def add_shared_item(context, source, shareUri: str = None, input: dict = None):

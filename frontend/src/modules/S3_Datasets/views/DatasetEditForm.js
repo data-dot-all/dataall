@@ -11,6 +11,8 @@ import {
   CircularProgress,
   Collapse,
   Container,
+  Dialog,
+  Divider,
   FormHelperText,
   Grid,
   Link,
@@ -48,6 +50,7 @@ import {
 import config from '../../../generated/config.json';
 import { isFeatureEnabled } from 'utils';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Article } from '@mui/icons-material';
 
 const DatasetEditForm = (props) => {
   const dispatch = useDispatch();
@@ -73,6 +76,8 @@ const DatasetEditForm = (props) => {
   const [expirationMenu] = useState(ExpirationSettings);
   const [enableShareExpiration, setEnableShareExpiration] = useState(false);
   const topicsData = Topics.map((t) => ({ label: t, value: t }));
+  const [datasetEditFormModalOpen, setDatasetEditFormModalOpenClose] =
+    useState(false);
 
   const fetchGroups = useCallback(
     async (environmentUri) => {
@@ -155,7 +160,28 @@ const DatasetEditForm = (props) => {
     }
   }, [client, dispatch, fetchItem]);
 
+  const handleModalPopUpWithMessage = () => {
+    setDatasetEditFormModalOpenClose(true);
+  };
+
   async function submit(values, setStatus, setSubmitting, setErrors) {
+    if (
+      enableShareExpiration !== dataset.enableExpiration ||
+      values.minValidity !== dataset.expiryMinDuration ||
+      values.maxValidity !== dataset.expiryMaxDuration
+    ) {
+      handleModalPopUpWithMessage();
+    } else {
+      await submitUpdateDataset(values, setStatus, setSubmitting, setErrors);
+    }
+  }
+
+  async function submitUpdateDataset(
+    values,
+    setStatus,
+    setSubmitting,
+    setErrors
+  ) {
     try {
       const response = await client.mutate(
         updateDataset({
@@ -341,7 +367,10 @@ const DatasetEditForm = (props) => {
                 isSubmitting,
                 setFieldValue,
                 touched,
-                values
+                values,
+                setSubmitting,
+                setStatus,
+                setErrors
               }) => (
                 <form onSubmit={handleSubmit} {...props}>
                   <Grid container spacing={3}>
@@ -749,6 +778,15 @@ const DatasetEditForm = (props) => {
                       </Box>
                     </Grid>
                   </Grid>
+                  <DatasetEditFormModal
+                    values={values}
+                    setSubmitting={setSubmitting}
+                    setStatus={setStatus}
+                    setErrors={setErrors}
+                    isModalOpenClose={datasetEditFormModalOpen}
+                    setModalOpenClose={setDatasetEditFormModalOpenClose}
+                    submitUpdateDataset={submitUpdateDataset}
+                  />
                 </form>
               )}
             </Formik>
@@ -756,6 +794,81 @@ const DatasetEditForm = (props) => {
         </Container>
       </Box>
     </>
+  );
+};
+
+export const DatasetEditFormModal = (props) => {
+  const {
+    values,
+    setSubmitting,
+    setStatus,
+    setErrors,
+    isModalOpenClose,
+    setModalOpenClose,
+    submitUpdateDataset
+  } = props;
+
+  const handleModalOpenClose = (triggerUpdate) => {
+    setModalOpenClose(false);
+    if (triggerUpdate) {
+      submitUpdateDataset(values, setStatus, setSubmitting, setErrors);
+    }
+  };
+
+  return (
+    <Dialog maxWidth="md" fullWidth open={isModalOpenClose}>
+      <Box sx={{ p: 2 }}>
+        <Card>
+          <CardHeader
+            title={
+              <Box>
+                There are changes to the dataset expiration settings. If there
+                are any shares on this dataset they might get updated: <br />
+                <b>
+                  If you are enabling expiration for the first time, all the
+                  shares will automatically updated to have minimum expiration
+                  period{' '}
+                </b>
+                <br />
+                <b>
+                  If you are editing an existing dataset expiration setting, all
+                  shares who don't have expiration will have minimum expiration
+                  period. All your existing shares with expiration won't change
+                </b>
+                <br />
+                <br />
+                Are you sure you want to update the dataset ?
+              </Box>
+            }
+          />
+          <Divider />
+          <Box display="flex" sx={{ p: 1 }}>
+            <Button
+              color="primary"
+              startIcon={<Article fontSize="small" />}
+              sx={{ m: 1 }}
+              variant="outlined"
+              onClick={() => {
+                handleModalOpenClose(true);
+              }}
+            >
+              Yes
+            </Button>
+            <Button
+              color="primary"
+              startIcon={<Article fontSize="small" />}
+              sx={{ m: 1 }}
+              variant="outlined"
+              onClick={() => {
+                handleModalOpenClose(false);
+              }}
+            >
+              No
+            </Button>
+          </Box>
+        </Card>
+      </Box>
+    </Dialog>
   );
 };
 

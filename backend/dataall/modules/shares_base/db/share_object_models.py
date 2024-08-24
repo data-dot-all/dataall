@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from uuid import uuid4
 
-from sqlalchemy import Boolean, Column, String, DateTime, ForeignKey, Index
+from sqlalchemy import Boolean, Column, String, DateTime, ForeignKey, Index, Integer
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import query_expression
 
@@ -45,6 +45,7 @@ class ShareObject(Base):
     extensionReason = Column(String, nullable=True)
     submittedForExtension = Column(Boolean, nullable=True)
     nonExpirable = Column(Boolean, default=False, nullable=False)
+    shareExpirationPeriod = Column(Integer, nullable=True)
 
 
 class ShareObjectItem(Base):

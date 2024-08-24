@@ -198,11 +198,16 @@ class DatasetRepository(EnvironmentResource):
         if dataset.enableExpiration:
             shares = session.query(ShareObject).filter(ShareObject.datasetUri == dataset.datasetUri).all()
             for share in shares:
-                share.expiryDate = ShareObjectService.calculate_expiry_date(
-                    expirySetting=dataset.expirySetting, expirationPeriod=dataset.expiryMinDuration
-                )
+                if share.expiryDate is None:
+                    share.expiryDate = ShareObjectService.calculate_expiry_date(
+                        expirySetting=dataset.expirySetting, expirationPeriod=dataset.expiryMinDuration
+                    )
         else:
-            shares = session.query(ShareObject).filter(and_(ShareObject.datasetUri == dataset.datasetUri, ShareObject.expiryDate.isnot(None))).all()
+            shares = (
+                session.query(ShareObject)
+                .filter(and_(ShareObject.datasetUri == dataset.datasetUri, ShareObject.expiryDate.isnot(None)))
+                .all()
+            )
             for share in shares:
                 share.expiryDate = None
         session.commit()

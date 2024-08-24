@@ -20,5 +20,5 @@ export * from './removeShareItemFilter';
 export * from './listTableDataFiltersByAttached';
 export * from './updateShareExpiration';
 export * from './submitExtension';
-export * from './approveShareExtensionObject';
-export * from './cancelShareExtensionObject';
+export * from './approveShareExtension';
+export * from './cancelShareExtension';

@@ -119,16 +119,18 @@ export const DatasetGovernance = (props) => {
               </Label>
             </Box>
           </CardContent>
+          <CardContent>
+            <Typography color="textSecondary" variant="subtitle2">
+              Expiration Setting for Shares
+            </Typography>
+            <Box sx={{ mt: 1 }}>
+              <Label color="primary">
+                {dataset.expirySetting ? dataset.expirySetting : 'Disabled'}
+              </Label>
+            </Box>
+          </CardContent>
           {dataset.enableExpiration === true && (
             <>
-              <CardContent>
-                <Typography color="textSecondary" variant="subtitle2">
-                  Expiration Setting for Shares
-                </Typography>
-                <Box sx={{ mt: 1 }}>
-                  <Label color="primary">{dataset.expirySetting}</Label>
-                </Box>
-              </CardContent>
               <CardContent>
                 <Typography color="textSecondary" variant="subtitle2">
                   Expiration duration ( Minimum ) in{' '}

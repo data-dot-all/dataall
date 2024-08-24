@@ -85,6 +85,17 @@ def dataset_with_expiration(dataset_model: typing.Callable, org1: Organization, 
         expiryMinDuration=1,
         expiryMaxDuration=3,
     )
+@pytest.fixture(scope='module')
+def dataset_with_expiration_3(dataset_model: typing.Callable, org1: Organization, env1: Environment) -> S3Dataset:
+    yield dataset_model(
+        organization=org1,
+        environment=env1,
+        label='datasettoshare',
+        enableExpiration=True,
+        expirySetting='Monthly',
+        expiryMinDuration=1,
+        expiryMaxDuration=3,
+    )
 
 
 @pytest.fixture(scope='module')
@@ -620,6 +631,7 @@ def create_share_object(
     principalId=None,
     principalType=PrincipalType.Group.value,
     shareExpirationPeriod=None,
+    nonExpiring=False,
 ):
     q = """
       mutation CreateShareObject(
@@ -642,6 +654,7 @@ def create_share_object(
           rejectPurpose
           expiryDate
           requestedExpiryDate
+          nonExpirable
           lastExtensionDate
           extensionReason
           submittedForExtension
@@ -673,6 +686,7 @@ def create_share_object(
             'requestPurpose': 'testShare',
             'attachMissingPolicies': attachMissingPolicies,
             'shareExpirationPeriod': shareExpirationPeriod,
+            'nonExpirable': nonExpiring,
         },
     )
 
@@ -695,6 +709,8 @@ def get_share_object(client, user, group, shareUri, filter):
         extensionReason
         expiryDate
         requestedExpiryDate
+        nonExpirable
+        shareExpirationPeriod
         principal {
           principalName
           principalType
@@ -1118,17 +1134,19 @@ def list_datasets_published_in_environment(client, user, group, environmentUri):
     return response
 
 
-def submit_share_extension(client, user, group, shareUri, expiration):
+def submit_share_extension(client, user, group, shareUri, expiration, nonExpirable=False):
     q = """
          mutation submitShareExtension(
           $shareUri: String!
-          $expiration: Int!
+          $expiration: Int
           $extensionReason: String
+          $nonExpirable: Boolean
         ) {
           submitShareExtension(
             shareUri: $shareUri
             expiration: $expiration
             extensionReason: $extensionReason
+            nonExpirable: $nonExpirable
           ) {
             shareUri
             status
@@ -1137,15 +1155,29 @@ def submit_share_extension(client, user, group, shareUri, expiration):
         """
 
     response = client.query(
-        q, username=user.username, groups=[group.name], shareUri=shareUri, expiration=expiration, extensionReason=''
+        q,
+        username=user.username,
+        groups=[group.name],
+        shareUri=shareUri,
+        expiration=expiration,
+        extensionReason='',
+        nonExpirable=nonExpirable,
     )
     return response
 
 
-def update_share_extension_period(client, user, group, shareUri, expiration):
+def update_share_extension_period(client, user, group, shareUri, expiration, nonExpirable=False):
     q = """
-    mutation updateShareExpirationPeriod($shareUri: String!, $expiration: Int) {
-      updateShareExpirationPeriod(shareUri: $shareUri, expiration: $expiration)
+    mutation updateShareExpirationPeriod(
+      $shareUri: String!
+      $expiration: Int
+      $nonExpirable: Boolean
+    ) {
+      updateShareExpirationPeriod(
+        shareUri: $shareUri
+        expiration: $expiration
+        nonExpirable: $nonExpirable
+      )
     }
            """
 
@@ -1155,6 +1187,7 @@ def update_share_extension_period(client, user, group, shareUri, expiration):
         groups=[group.name],
         shareUri=shareUri,
         expiration=expiration,
+        nonExpirable=nonExpirable,
     )
     return response
 
@@ -1184,8 +1217,8 @@ def update_share_extension_reason(client, user, group, shareUri, expirationPurpo
 
 def cancel_share_extension(client, user, group, shareUri):
     q = """
-    mutation cancelShareExtensionObject($shareUri: String!) {
-      cancelShareExtensionObject(shareUri: $shareUri)
+    mutation cancelShareExtension($shareUri: String!) {
+      cancelShareExtension(shareUri: $shareUri)
     }
            """
 
@@ -1195,8 +1228,8 @@ def cancel_share_extension(client, user, group, shareUri):
 
 def approve_share_extension(client, user, group, shareUri):
     q = """
-       mutation approveShareExtensionObject($shareUri: String!) {
-          approveShareExtensionObject(shareUri: $shareUri) {
+       mutation approveShareExtension($shareUri: String!) {
+          approveShareExtension(shareUri: $shareUri) {
             shareUri
             status
           }
@@ -1466,6 +1499,7 @@ def test_create_share_object_with_share_expiration_added(
     # Then share object created with status Draft and user is 'Requester'
     assert create_share_object_response.data.createShareObject.shareUri
     assert create_share_object_response.data.createShareObject.status == ShareObjectStatus.Draft.value
+    assert create_share_object_response.data.createShareObject.nonExpirable == False
     date_format = '%Y-%m-%d %H:%M:%S'
     requested_share_expiration_date = datetime.strptime(
         create_share_object_response.data.createShareObject.requestedExpiryDate, date_format
@@ -1474,6 +1508,36 @@ def test_create_share_object_with_share_expiration_added(
         requested_share_expiration_date.date()
         == ShareObjectService.calculate_expiry_date(2, dataset_with_expiration.expirySetting).date()
     )
+
+
+def test_create_share_object_with_non_expiring_share(
+    mocker, client, user2, group2, env2group, env2, dataset_with_expiration_3
+):
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
+        return_value=True,
+    )
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
+        return_value=True,
+    )
+    create_share_object_response = create_share_object(
+        mocker=mocker,
+        client=client,
+        username=user2.username,
+        group=group2,
+        groupUri=env2group.groupUri,
+        environmentUri=env2.environmentUri,
+        datasetUri=dataset_with_expiration_3.datasetUri,
+        shareExpirationPeriod=None,
+        nonExpiring=True,
+    )
+
+    # Then share object created with status Draft and user is 'Requester'
+    assert create_share_object_response.data.createShareObject.shareUri
+    assert create_share_object_response.data.createShareObject.status == ShareObjectStatus.Draft.value
+    assert create_share_object_response.data.createShareObject.requestedExpiryDate == None
+    assert create_share_object_response.data.createShareObject.nonExpirable == True
 
 
 def test_create_share_object_with_share_expiration_incorrect_share_expiration(
@@ -1576,7 +1640,7 @@ def test_list_shares_to_me_approver(client, user, group, share1_draft):
     # When a user from the Approvers group lists the share objects sent to him
     get_share_requests_to_me_response = get_share_requests_to_me(client=client, user=user, group=group)
     # Then he sees the 2 shares
-    assert get_share_requests_to_me_response.data.getShareRequestsToMe.count == 3
+    assert get_share_requests_to_me_response.data.getShareRequestsToMe.count == 4
 
 
 def test_list_shares_to_me_requester(client, user2, group2, share1_draft):
@@ -1603,7 +1667,7 @@ def test_list_shares_from_me_requester(client, user2, group2, share1_draft):
     # When a user from the Requesters group lists the share objects sent from him
     get_share_requests_from_me_response = get_share_requests_from_me(client=client, user=user2, group=group2)
     # Then he sees the 2 shares
-    assert get_share_requests_from_me_response.data.getShareRequestsFromMe.count == 3
+    assert get_share_requests_from_me_response.data.getShareRequestsFromMe.count == 4
 
 
 def test_add_share_item(client, user2, group2, share1_draft, mock_glue_client):
@@ -1809,9 +1873,7 @@ def test_submit_share_extension_request(
     assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
 
     # Submit a share extension request
-    share_submission_response = submit_share_extension(
-        client, user2, group2, share3_with_expiration_processed.shareUri, 1
-    )
+    submit_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri, 1)
 
     get_share_object_response = get_share_object(
         client=client,
@@ -1830,6 +1892,46 @@ def test_submit_share_extension_request(
         share_expiration_date.date()
         == ShareObjectService.calculate_expiry_date(1, dataset_with_expiration_2.expirySetting).date()
     )
+
+    cancel_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri)
+
+
+def test_submit_share_extension_request_non_expiring_share(
+    client,
+    user2,
+    group2,
+    share3_item_expiration_share,
+    share3_with_expiration_processed,
+    mocker,
+    dataset_with_expiration_2,
+):
+    # Given
+    # Existing share object in status Processed (-> fixture share3_item_expiration_share)
+    # with existing share item in status Share_Succeeded (-> fixture share3_with_expiration_processed)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+
+    # Submit a share extension request
+    submit_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri, None, True)
+
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Submitted_For_Extension.value
+    assert get_share_object_response.data.getShareObject.requestedExpiryDate == None
+    assert get_share_object_response.data.getShareObject.nonExpirable == True
 
     cancel_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri)
 
@@ -2114,6 +2216,7 @@ def test_approve_share_extension(
         share_expiration_date.date()
         == ShareObjectService.calculate_expiry_date(1, dataset_with_expiration_2.expirySetting).date()
     )
+    requested_expiration_date_raw = get_share_object_response.data.getShareObject.requestedExpiryDate
 
     # Approve Share Extension
     approve_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri)
@@ -2128,6 +2231,86 @@ def test_approve_share_extension(
 
     assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
     share_item = get_share_object_response.data.getShareObject.get('items').nodes[0]
+    assert share_item.shareItemUri == share3_item_expiration_share.shareItemUri
+    assert share_item.status == ShareItemStatus.Share_Succeeded.value
+    assert get_share_object_response.data.getShareObject.get('items').count == 1
+    assert get_share_object_response.data.getShareObject.expiryDate == requested_expiration_date_raw
+
+
+def test_approve_share_extension_non_expiring(
+    client,
+    user,
+    group,
+    user2,
+    group2,
+    share3_item_expiration_share,
+    share3_with_expiration_processed,
+    mocker,
+    dataset_with_expiration_2,
+):
+    # Given
+    # Existing share object in status Processed (-> fixture share3_item_expiration_share)
+    # with existing share item in status Share_Succeeded (-> fixture share3_with_expiration_processed)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.remote_session',
+        return_value=boto3.Session(),
+    )
+
+    # Mock glue and sts calls to create a LF processor
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.get_account',
+        return_value='1111',
+    )
+    # Mock glue and sts calls to create a LF processor
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.get_delegation_role_arn',
+        return_value='arn',
+    )
+
+    mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='fake_role_arn',
+    )
+
+    # Submit a share extension request
+    submit_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri, None, True)
+
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Submitted_For_Extension.value
+    assert get_share_object_response.data.getShareObject.requestedExpiryDate == None
+    assert get_share_object_response.data.getShareObject.nonExpirable == True
+
+    # Approve Share Extension
+    approve_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri)
+
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+    share_item = get_share_object_response.data.getShareObject.get('items').nodes[0]
+    assert get_share_object_response.data.getShareObject.expiryDate == None
     assert share_item.shareItemUri == share3_item_expiration_share.shareItemUri
     assert share_item.status == ShareItemStatus.Share_Succeeded.value
     assert get_share_object_response.data.getShareObject.get('items').count == 1
@@ -2485,6 +2668,172 @@ def test_cancel_share_extension_request(
     assert share_item.shareItemUri == share3_item_expiration_share.shareItemUri
     assert share_item.status == ShareItemStatus.Share_Succeeded.value
     assert get_share_object_response.data.getShareObject.get('items').count == 1
+
+
+def test_cancel_share_extension_request_with_non_expiring_share_extension_requested(
+    client,
+    user2,
+    group2,
+    share3_item_expiration_share,
+    share3_with_expiration_processed,
+    mocker,
+    dataset_with_expiration_2,
+):
+    # Given
+    # Existing share object in status Processed (-> fixture share3_item_expiration_share)
+    # with existing share item in status Share_Succeeded (-> fixture share3_with_expiration_processed)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+
+    current_expiration_date = get_share_object_response.data.getShareObject.expiryDate
+
+    # Submit a share extension request
+    submit_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri, None, True)
+
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Submitted_For_Extension.value
+    assert get_share_object_response.data.getShareObject.requestedExpiryDate == None
+    assert get_share_object_response.data.getShareObject.nonExpirable == True
+
+    cancel_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri)
+
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+    share_item = get_share_object_response.data.getShareObject.get('items').nodes[0]
+    assert share_item.shareItemUri == share3_item_expiration_share.shareItemUri
+    assert get_share_object_response.data.getShareObject.expiryDate == current_expiration_date
+    assert get_share_object_response.data.getShareObject.nonExpirable == False
+    assert share_item.status == ShareItemStatus.Share_Succeeded.value
+    assert get_share_object_response.data.getShareObject.get('items').count == 1
+
+
+def test_update_share_extension_period(
+    client,
+    user2,
+    group2,
+    share3_item_expiration_share,
+    share3_with_expiration_processed,
+    mocker,
+    dataset_with_expiration_2,
+):
+    # Given
+    # Existing share object in status Processed (-> fixture share3_item_expiration_share)
+    # with existing share item in status Share_Succeeded (-> fixture share3_with_expiration_processed)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+
+    current_expiration_date = get_share_object_response.data.getShareObject.expiryDate
+    shareExpirationPeriod = get_share_object_response.data.getShareObject.shareExpirationPerioud
+
+    # Submit a share extension request
+    submit_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri, 3)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.shareExpirationPeriod == 3
+
+    update_share_extension_period(client, user2, group2, share3_with_expiration_processed.shareUri, 2)
+
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Submitted_For_Extension.value
+    assert get_share_object_response.data.getShareObject.nonExpirable == False
+    assert get_share_object_response.data.getShareObject.shareExpirationPeriod == 2
+
+    cancel_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri)
+
+
+def test_update_share_extension_period_to_make_non_expiring(
+    client,
+    user2,
+    group2,
+    share3_item_expiration_share,
+    share3_with_expiration_processed,
+    mocker,
+    dataset_with_expiration_2,
+):
+    # Given
+    # Existing share object in status Processed (-> fixture share3_item_expiration_share)
+    # with existing share item in status Share_Succeeded (-> fixture share3_with_expiration_processed)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+
+    current_expiration_date = get_share_object_response.data.getShareObject.expiryDate
+    shareExpirationPeriod = get_share_object_response.data.getShareObject.shareExpirationPerioud
+
+    # Submit a share extension request
+    submit_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri, 3)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.shareExpirationPeriod == 3
+
+    update_share_extension_period(client, user2, group2, share3_with_expiration_processed.shareUri, None, True)
+
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Submitted_For_Extension.value
+    assert get_share_object_response.data.getShareObject.nonExpirable == True
+    assert get_share_object_response.data.getShareObject.shareExpirationPeriod == None
+
+    cancel_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri)
 
 
 def _successfull_processing_for_share_object(db, share):

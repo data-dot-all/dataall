@@ -178,6 +178,12 @@ class RequestValidator:
 
     @staticmethod
     def validate_share_expiration_request(data):
+        if not isinstance(data.get('expiryMinDuration'), int) or not isinstance(data.get('expiryMaxDuration'), int):
+            raise InvalidInput(
+                'Expiration durations (Minimum and Maximum)',
+                '',
+                'must be valid integers',
+            )
         if data.get('expiryMinDuration') < 0 or data.get('expiryMaxDuration') < 0:
             raise InvalidInput(
                 'expiration duration ',

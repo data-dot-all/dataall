@@ -21,6 +21,7 @@ export const getShareObject = ({ shareUri, filter }) => ({
         submittedForExtension
         nonExpirable
         extensionReason
+        shareExpirationPeriod
         principal {
           principalName
           principalType

@@ -39,6 +39,7 @@ def upgrade():
     op.add_column('share_object', sa.Column('lastExtensionDate', sa.DateTime(), nullable=True))
     op.add_column('share_object', sa.Column('extensionReason', sa.String(), nullable=True))
     op.add_column('share_object', sa.Column('submittedForExtension', sa.Boolean(), nullable=True))
+    op.add_column('share_object', sa.Column('shareExpirationPeriod', sa.Integer(), nullable=True))
     op.add_column(
         'share_object',
         sa.Column(
@@ -60,4 +61,5 @@ def downgrade():
     op.drop_column('share_object', 'extensionReason')
     op.drop_column('share_object', 'submittedForExtension')
     op.drop_column('share_object', 'nonExpirable')
+    op.drop_column('share_object', 'shareExpirationPeriod')
     print('Successfully removed columns related to share expiration')

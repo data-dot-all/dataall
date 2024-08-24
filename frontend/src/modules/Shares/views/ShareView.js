@@ -62,8 +62,8 @@ import {
   verifyItemsShareObject,
   reApplyItemsShareObject,
   getShareItemDataFilters,
-  approveShareExtensionObject,
-  cancelShareExtensionObject
+  approveShareExtension,
+  cancelShareExtension
 } from '../services';
 import {
   AddShareItemModal,
@@ -186,7 +186,7 @@ function ShareViewHeader(props) {
   const handleApproveExtensionShare = async () => {
     setAccepting(true);
     const response = await client.mutate(
-      approveShareExtensionObject({
+      approveShareExtension({
         shareUri: share.shareUri
       })
     );
@@ -210,7 +210,7 @@ function ShareViewHeader(props) {
   const handleCancelShareExtensionRequest = async () => {
     setCancellingExtension(true);
     const response = await client.mutate(
-      cancelShareExtensionObject({
+      cancelShareExtension({
         shareUri: share.shareUri
       })
     );
@@ -1035,7 +1035,13 @@ const ShareView = () => {
                                 >
                                   {' '}
                                   {share.nonExpirable &&
-                                  share.status === 'Processed' ? (
+                                  [
+                                    'Processed',
+                                    'Extension_Failed',
+                                    'Extension_Rejected'
+                                  ].some((item) =>
+                                    share.status.includes(item)
+                                  ) ? (
                                     <Label color={'warning'}>
                                       Non-expiring share
                                     </Label>

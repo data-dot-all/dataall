@@ -15,7 +15,7 @@ export const submitExtension = ({
   mutation: gql`
     mutation submitShareExtension(
       $shareUri: String!
-      $expiration: Int!
+      $expiration: Int
       $extensionReason: String
       $nonExpirable: Boolean
     ) {
