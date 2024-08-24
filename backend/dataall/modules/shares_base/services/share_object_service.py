@@ -368,7 +368,9 @@ class ShareObjectService:
                         message=f'The principal role {share.principalRoleName} is not found.',
                     )
             if dataset.enableExpiration and share.requestedExpiryDate and share.requestedExpiryDate < datetime.today():
-                raise Exception("Cannot approve share since its it past the requested expiration date. Please reject this share and submit a new share request")
+                raise Exception(
+                    'Cannot approve share since its it past the requested expiration date. Please reject this share and submit a new share request'
+                )
 
             cls._run_transitions(session, share, states, ShareObjectActions.Approve)
 
@@ -412,7 +414,8 @@ class ShareObjectService:
 
             if dataset.enableExpiration and share.requestedExpiryDate and share.requestedExpiryDate < datetime.today():
                 raise Exception(
-                    "Cannot approve share extension since its it past the requested expiration date. Please reject this share and submit a new share request")
+                    'Cannot approve share extension since its it past the requested expiration date. Please reject this share and submit a new share request'
+                )
 
             cls._run_transitions(session, share, states, ShareObjectActions.ExtensionApprove)
 
