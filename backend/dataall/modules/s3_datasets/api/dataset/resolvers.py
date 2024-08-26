@@ -155,6 +155,11 @@ def list_datasets_owned_by_env_group(
         filter = {}
     return DatasetService.list_datasets_owned_by_env_group(environmentUri, groupUri, filter)
 @is_feature_enabled('modules.s3_datasets.features.generate_metadata_ai')
+# @ResourceThresholdRepository.invocation_handler('generate_metadata_ai')
+# To make this treshold work treshold limits should be added on resource_treshold_repository into the resource paths dictionary.
+# as an example; 'nlq' : 'modules.worksheets.features.max_count_per_day' here max_count_per_day shall be defined for metadata generation
+# or it could be used as it is by using different key or even the same key after merge.
+
 def generate_metadata(context : Context, source: S3Dataset, resourceUri, targetType, version, metadataTypes, sampleData): #TODO add type hints
     RequestValidator.validate_generation_request(data=resourceUri)
     if targetType == MetadataGenerationTargets.S3_Dataset.value:
