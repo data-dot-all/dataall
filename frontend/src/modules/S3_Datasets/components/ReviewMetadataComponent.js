@@ -60,20 +60,20 @@ export const ReviewMetadataComponent = (props) => {
   const [showPopup, setShowPopup] = React.useState(false);
   const [subitemDescriptions, setSubitemDescriptions] = React.useState([]);
 
-  const handleShowPopup = (subitemDescriptions) => {
+  const showSubItemsPopup = (subitemDescriptions) => {
     setSubitemDescriptions(subitemDescriptions);
     setShowPopup(true);
   };
 
-  const handleClosePopup = () => {
+  const closeSubItemsPopup = () => {
     setShowPopup(false);
   };
-  const openPopup = (data) => {
+  const openSampleDataPopup = (data) => {
     setSampleData(data);
     setPopupOpen(true);
   };
 
-  const closePopup = () => {
+  const closeSampleDataPopup = () => {
     setPopupOpen(false);
     setSampleData(null);
   };
@@ -94,7 +94,7 @@ export const ReviewMetadataComponent = (props) => {
         enqueueSnackbar('Successfully updated subitem descriptions', {
           variant: 'success'
         });
-        handleClosePopup();
+        closeSubItemsPopup();
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -111,7 +111,7 @@ export const ReviewMetadataComponent = (props) => {
         })
       );
       console.log(response);
-      openPopup(response.data.listSampleData);
+      openSampleDataPopup(response.data.listSampleData);
       setTargetUri(table.targetUri);
       if (!response.errors) {
         enqueueSnackbar('Successfully read sample data', {
@@ -183,7 +183,7 @@ export const ReviewMetadataComponent = (props) => {
         });
       }
 
-      closePopup(); // Close the popup after generating the metadata
+      closeSampleDataPopup(); // Close the popup after generating the metadata
     } catch (err) {
       dispatch({ type: SET_ERROR, error: err.message });
     }
@@ -399,7 +399,7 @@ export const ReviewMetadataComponent = (props) => {
                           type="button"
                           variant="outlined"
                           onClick={() =>
-                            handleShowPopup(params.row.subitem_descriptions)
+                            showSubItemsPopup(params.row.subitem_descriptions)
                           }
                         >
                           See Generated Subitem Values
@@ -481,7 +481,7 @@ export const ReviewMetadataComponent = (props) => {
       {showPopup && (
         <SubitemDescriptionsGrid
           subitemDescriptions={subitemDescriptions}
-          onClose={handleClosePopup}
+          onClose={closeSubItemsPopup}
           onSave={handleSaveSubitemDescriptions}
         />
       )}
@@ -499,7 +499,7 @@ export const ReviewMetadataComponent = (props) => {
       <SampleDataPopup
         open={popupOpen}
         sampleData={sampleData}
-        handleClose={closePopup}
+        handleClose={closeSampleDataPopup}
         handleRegenerate={handleAcceptAndRegenerate}
       />
     </>

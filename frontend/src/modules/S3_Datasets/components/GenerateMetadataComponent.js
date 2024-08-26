@@ -372,7 +372,7 @@ export const GenerateMetadataComponent = (props) => {
                     disabled={targetType === 'Dataset'}
                   />
                 }
-                label="Subitem Description"
+                label="Subitem Descriptions"
               />
               <FormControlLabel
                 control={

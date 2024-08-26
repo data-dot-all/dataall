@@ -83,15 +83,3 @@ generateMetadata = gql.MutationField(
     type=gql.Ref('GeneratedMetadata'),
     resolver=generate_metadata,
 )
-
-
-
-test = gql.MutationField(
-    name='test',
-    args=[gql.Argument(name='resourceUri', type=gql.NonNullableType(gql.String)),
-          gql.Argument(name='targetType', type=MetadataGenerationTargets.toGraphQLEnum()),
-          gql.Argument(name='version', type=gql.Integer), #add sample data, helper data, additional context
-          gql.Argument(name='metadataTypes', type=gql.ArrayType(gql.String))],
-    type=gql.Ref('GeneratedMetadata'),
-    resolver=test_read,
-)
