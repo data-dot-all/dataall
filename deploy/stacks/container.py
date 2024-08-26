@@ -480,7 +480,7 @@ class ContainerStack(pyNestedClass):
                 subnet_selection=ec2.SubnetSelection(
                     subnets=self._vpc.select_subnets(subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT).subnets
                 ),
-                rule_name=f'{self._resource_prefix}-{self._envname}-share-expiration-schedule',
+                rule_name=f'{self._resource_prefix}-{self._envname}-share-expiration-schedule-{value}',
                 security_groups=[self.scheduled_tasks_sg],
             )
 
