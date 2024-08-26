@@ -33,6 +33,7 @@ import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 import { updateDataset, generateMetadataBedrock } from '../services';
 import { updateDatasetTable } from 'modules/Tables/services';
+import { BatchUpdateDatasetTableColumn } from '../services/batchUpdateTableColumnDescriptions';
 import { listSampleData } from '../services/listSampleData';
 import { updateDatasetStorageLocation } from 'modules/Folders/services';
 import SampleDataPopup from './SampleDataPopup';
@@ -78,7 +79,30 @@ export const ReviewMetadataComponent = (props) => {
   };
   async function handleSaveSubitemDescriptions() {
     console.log('Saving subitem descriptions:', subitemDescriptions);
+    try {
+      const columns_ = subitemDescriptions.map((item) => ({
+        description: item.description,
+        label: item.label,
+        subitem_id: item.subitem_id
+      }));
+      console.log(columns_);
+      const response = await client.mutate(
+        BatchUpdateDatasetTableColumn(columns_)
+      );
+      console.log(response);
+      if (!response.errors) {
+        enqueueSnackbar('Successfully updated subitem descriptions', {
+          variant: 'success'
+        });
+        handleClosePopup();
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (err) {
+      dispatch({ type: SET_ERROR, error: err.message });
+    }
   }
+
   async function handleRegenerate(table) {
     try {
       const response = await client.query(
