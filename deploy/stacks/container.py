@@ -464,13 +464,13 @@ class ContainerStack(pyNestedClass):
             run_schedule = deploy_config.get_property('module.dataset_base.features.share_expiration.run_schedule')
             if 0 not in run_schedule:
                 run_schedule.append(0)
-        except Exception as e:
+        except Exception:
             run_schedule = [0]
 
         for value in run_schedule:
-            ecs_patterns.ScheduledFargateTask(
+            scheduled_task = ecs_patterns.ScheduledFargateTask(
                 self,
-                f'{self._resource_prefix}-{self._envname}-share-expiration-schedule',
+                f'{self._resource_prefix}-{self._envname}-share-expiration-schedule-{value}',
                 cluster=self.ecs_cluster,
                 schedule=Schedule.expression(f'cron(0 9 L-{value} * ? *)'),
                 scheduled_fargate_task_definition_options=ecs_patterns.ScheduledFargateTaskDefinitionOptions(
@@ -482,6 +482,14 @@ class ContainerStack(pyNestedClass):
                 ),
                 rule_name=f'{self._resource_prefix}-{self._envname}-share-expiration-schedule',
                 security_groups=[self.scheduled_tasks_sg],
+            )
+
+            # Add the rule of the scheduled task to parameter store
+            ssm.StringParameter(
+                self,
+                f'ECSTaskRule-{self._resource_prefix}-{self._envname}-share-expiration-schedule-{value}',
+                parameter_name=f'/dataall/{self._envname}/ecs/ecs_scheduled_tasks/rule/{self._resource_prefix}-{self._envname}-share-expiration-schedule-{value}',
+                string_value=scheduled_task.event_rule.rule_name,
             )
 
     def create_ecs_security_groups(self, envname, resource_prefix, vpc, vpce_connection, s3_prefix_list, lambdas):
