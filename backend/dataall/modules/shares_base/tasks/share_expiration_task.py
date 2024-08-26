@@ -32,7 +32,7 @@ def share_expiration_checker(engine):
                 if share.expiryDate.date() < datetime.today().date():
                     log.info(f'Revoking share with uri: {share.shareUri} as it is expired')
                     # Put all share items in revoke state and then revoke
-                    share_items_to_revoke = ShareObjectRepository.get_all_share_items_in_share(session, share.shareUri, 'Share_Succeeded')
+                    share_items_to_revoke = ShareObjectRepository.get_all_share_items_in_share(session, share.shareUri, ['Share_Succeeded'])
                     item_uris = [share_item.shareItemUri for share_item in share_items_to_revoke]
                     revoked_items_states = ShareStatusRepository.get_share_items_states(session, share.shareUri, item_uris)
 
