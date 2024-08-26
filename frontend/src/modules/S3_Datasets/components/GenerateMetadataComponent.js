@@ -112,8 +112,6 @@ export const GenerateMetadataComponent = (props) => {
 
   const generateMetadata = async () => {
     setCurrentView('REVIEW_METADATA');
-    console.log('generateMetadata');
-    console.log('selectedMetadata', selectedMetadataTypes);
     for (let target of targets) {
       let response = await client.mutate(
         generateMetadataBedrock({
@@ -126,19 +124,25 @@ export const GenerateMetadataComponent = (props) => {
           sampleData: {}
         })
       );
-      console.log('target.uri', target.targetUri);
       if (!response.errors) {
         target.description = response.data.generateMetadata.description;
         target.label = response.data.generateMetadata.label;
         target.name = response.data.generateMetadata.name;
         target.tags = response.data.generateMetadata.tags;
         target.topics = response.data.generateMetadata.topics;
+        target.subitem_descriptions =
+          response.data.generateMetadata.subitem_descriptions.map((item) => ({
+            description: item.description,
+            label: item.label,
+            subitem_id: item.subitem_id
+          }));
         const hasNotEnoughData = [
           target.description,
           target.label,
           target.name,
           target.tags,
-          target.topics
+          target.topics,
+          target.subitem_descriptions
         ].some((value) => value === 'NotEnoughData');
 
         if (hasNotEnoughData) {
@@ -358,6 +362,17 @@ export const GenerateMetadataComponent = (props) => {
                   />
                 }
                 label="Tags"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    name="subitem_descriptions"
+                    checked={selectedMetadataTypes.subitem_descriptions}
+                    onChange={handleMetadataChange}
+                    disabled={targetType === 'Dataset'}
+                  />
+                }
+                label="Subitem Description"
               />
               <FormControlLabel
                 control={

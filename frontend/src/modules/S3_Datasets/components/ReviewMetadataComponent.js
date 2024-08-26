@@ -37,6 +37,8 @@ import { listSampleData } from '../services/listSampleData';
 import { updateDatasetStorageLocation } from 'modules/Folders/services';
 import SampleDataPopup from './SampleDataPopup';
 import React, { useState } from 'react';
+import SubitemDescriptionsGrid from './SubitemDescriptionsGrid';
+
 /* eslint-disable no-console */
 export const ReviewMetadataComponent = (props) => {
   const {
@@ -54,6 +56,17 @@ export const ReviewMetadataComponent = (props) => {
   const [popupOpen, setPopupOpen] = useState(false);
   const [sampleData, setSampleData] = useState(null);
   const [targetUri, setTargetUri] = useState(null);
+  const [showPopup, setShowPopup] = React.useState(false);
+  const [subitemDescriptions, setSubitemDescriptions] = React.useState([]);
+
+  const handleShowPopup = (subitemDescriptions) => {
+    setSubitemDescriptions(subitemDescriptions);
+    setShowPopup(true);
+  };
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+  };
   const openPopup = (data) => {
     setSampleData(data);
     setPopupOpen(true);
@@ -63,6 +76,9 @@ export const ReviewMetadataComponent = (props) => {
     setPopupOpen(false);
     setSampleData(null);
   };
+  async function handleSaveSubitemDescriptions() {
+    console.log('Saving subitem descriptions:', subitemDescriptions);
+  }
   async function handleRegenerate(table) {
     try {
       const response = await client.query(
@@ -112,7 +128,8 @@ export const ReviewMetadataComponent = (props) => {
             label: response.data.generateMetadata.label,
             name: response.data.generateMetadata.name,
             tags: response.data.generateMetadata.tags,
-            topics: response.data.generateMetadata.topics
+            topics: response.data.generateMetadata.topics,
+            item_descriptions: response.data.generateMetadata.item_descriptions
           };
 
           const updatedTargets = [...targets];
@@ -305,6 +322,14 @@ export const ReviewMetadataComponent = (props) => {
                     headerName: 'Tags',
                     flex: 2,
                     editable: true,
+                    valueSetter: (params) => {
+                      const { id, row, newValue } = params;
+                      const tags =
+                        typeof newValue === 'string'
+                          ? newValue.split(',')
+                          : newValue;
+                      return { ...row, targetUri: id, tags };
+                    },
                     renderCell: (params) =>
                       params.value === undefined ? (
                         <CircularProgress color="primary" />
@@ -312,7 +337,9 @@ export const ReviewMetadataComponent = (props) => {
                         <Chip label={params.value} color="error" />
                       ) : (
                         <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
-                          {params?.value ? params.value.join() : ''}
+                          {Array.isArray(params.value)
+                            ? params.value.join(', ')
+                            : params.value}
                         </div>
                       )
                   },
@@ -330,6 +357,29 @@ export const ReviewMetadataComponent = (props) => {
                         <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
                           {params.value}
                         </div>
+                      )
+                  },
+                  {
+                    field: 'subitem_descriptions',
+                    headerName: 'Subitem Descriptions',
+                    flex: 3,
+                    editable: false,
+                    renderCell: (params) =>
+                      params.value === undefined ? (
+                        <CircularProgress color="primary" />
+                      ) : params.value[0] === 'NotEnoughData' ? (
+                        <Chip label={params.value} color="error" />
+                      ) : (
+                        <Button
+                          color="primary"
+                          type="button"
+                          variant="outlined"
+                          onClick={() =>
+                            handleShowPopup(params.row.subitem_descriptions)
+                          }
+                        >
+                          See Generated Subitem Values
+                        </Button>
                       )
                   },
                   {
@@ -403,6 +453,13 @@ export const ReviewMetadataComponent = (props) => {
         </Box>
       ) : (
         <Typography variant="body1">No metadata available</Typography>
+      )}
+      {showPopup && (
+        <SubitemDescriptionsGrid
+          subitemDescriptions={subitemDescriptions}
+          onClose={handleClosePopup}
+          onSave={handleSaveSubitemDescriptions}
+        />
       )}
       <Button
         color="primary"

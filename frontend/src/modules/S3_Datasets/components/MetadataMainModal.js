@@ -16,7 +16,8 @@ export const MetadataMainModal = (props) => {
     label: false,
     description: false,
     tags: false,
-    topics: false
+    topics: false,
+    subitem_descriptions: false
   });
 
   useEffect(() => {

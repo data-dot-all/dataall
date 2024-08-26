@@ -35,6 +35,11 @@ export const generateMetadataBedrock = ({
         tags
         topics
         name
+        subitem_descriptions {
+          description
+          label
+          subitem_id
+        }
       }
     }
   `

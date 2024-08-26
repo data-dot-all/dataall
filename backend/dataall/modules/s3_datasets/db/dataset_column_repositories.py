@@ -46,7 +46,8 @@ class DatasetColumnRepository:
                 DatasetTableColumn.GlueTableName,
                 DatasetTableColumn.AWSAccountId,
                 func.array_agg(DatasetTableColumn.description).label('description'),
-                func.array_agg(DatasetTableColumn.label).label('label')
+                func.array_agg(DatasetTableColumn.label).label('label'),
+                func.array_agg(DatasetTableColumn.columnUri).label('columnUri')
             ) \
             .filter(
                 and_(
@@ -57,8 +58,7 @@ class DatasetColumnRepository:
                 DatasetTableColumn.GlueTableName,
                 DatasetTableColumn.AWSAccountId
             )\
-            .first() #single thing
-      
+            .first()
         return result
     @staticmethod
     def query_active_columns_for_table(session, table_uri: str):
@@ -70,11 +70,3 @@ class DatasetColumnRepository:
             )
             .order_by(DatasetTableColumn.columnType.asc())
         )
-    @staticmethod
-    #how to use
-    def paginate_active_columns_for_table_metadata(session, table_uri: str, filter: dict):
-        return paginate(
-            query=DatasetColumnRepository.query_active_columns_for_table(session, table_uri),
-            page=filter.get('page', 1),
-            page_size=filter.get('pageSize', 10),
-        ).to_dict()

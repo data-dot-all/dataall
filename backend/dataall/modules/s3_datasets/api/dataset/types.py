@@ -136,7 +136,14 @@ GlueCrawler = gql.ObjectType(
         gql.Field(name='status', type=gql.String),
     ],
 )
-
+SubitemDescription = gql.ObjectType(
+    name='SubitemDescription',
+    fields=[
+        gql.Field(name='label', type=gql.String),
+        gql.Field(name='description', type=gql.String),
+        gql.Field(name='subitem_id', type=gql.String)
+    ],
+)
 GeneratedMetadata = gql.ObjectType(
     name='GeneratedMetadata',
     fields=[
@@ -146,6 +153,7 @@ GeneratedMetadata = gql.ObjectType(
         gql.Field(name='tags', type=gql.ArrayType(gql.String)),
         gql.Field(name='description', type=gql.String),
         gql.Field(name='name', type=gql.String),
+        gql.Field(name='subitem_descriptions', type=gql.ArrayType(gql.Ref('SubitemDescription')))
     ],
 )
 

@@ -40,7 +40,8 @@
                 "file_actions": true,
                 "aws_actions": true,
                 "preview_data": true,
-                "glue_crawler": true
+                "glue_crawler": true,
+                "generate_metadata_ai": true
             }
         },
         "s3_datasets_shares": {

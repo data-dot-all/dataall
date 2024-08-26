@@ -182,16 +182,15 @@ class DatasetTableService:
     @staticmethod
     def generate_metadata_for_table(resourceUri, version, metadataTypes, sampleData):
         context = get_context()
-        # metadataTypes = metadataTypes.join(',')
         with context.db_engine.scoped_session() as session:
             table = DatasetTableRepository.get_dataset_table_by_uri(session, resourceUri)
             table_column = DatasetColumnRepository.get_table_info_metadata_generation(session, resourceUri)
-            log.info(sampleData)
             return BedrockClient(table_column.AWSAccountId, 'us-east-1').generate_metadata(
                 prompt_type=MetadataGenerationTargets.Table.value,
                 label=table.label,
                 columns={','.join(table_column.label)},
-                column_descriptions={','.join(table_column.description)},
+                subitem_descriptions = {','.join(table_column.description)},
+                subitem_ids = {','.join(table_column.columnUri)},
                 description=table.description,
                 tags=table.tags,
                 metadata_type=metadataTypes,
