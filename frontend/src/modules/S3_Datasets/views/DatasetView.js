@@ -271,22 +271,28 @@ const DatasetView = () => {
 
             <Grid item>
               <Box sx={{ m: -1 }}>
-                <Button
-                  color="primary"
-                  startIcon={<AutoModeIcon size={15} />}
-                  sx={{ mt: 1, mr: 1 }}
-                  onClick={handleMetadataModalOpen}
-                  type="button"
-                  variant="outlined"
-                >
-                  Generate Metadata with AI
-                </Button>
-                <MetadataMainModal
-                  onApply={handleMetadataModalClose}
-                  onClose={handleMetadataModalClose}
-                  open={isMetadataModalOpen}
-                  dataset={dataset}
-                />
+                {isFeatureEnabled('s3_datasets', 'generate_metadata_ai') && (
+                  <Button
+                    color="primary"
+                    startIcon={<AutoModeIcon size={15} />}
+                    sx={{ mt: 1, mr: 1 }}
+                    onClick={handleMetadataModalOpen}
+                    type="button"
+                    variant="outlined"
+                  >
+                    Generate Metadata with AI
+                  </Button>
+                )}
+
+                {isFeatureEnabled('s3_datasets', 'generate_metadata_ai') && (
+                  <MetadataMainModal
+                    onApply={handleMetadataModalClose}
+                    onClose={handleMetadataModalClose}
+                    open={isMetadataModalOpen}
+                    dataset={dataset}
+                  />
+                )}
+
                 {isAdmin && (
                   <span>
                     <UpVoteButton

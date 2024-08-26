@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Defaults } from 'design';
 import { GenerateMetadataComponent } from './GenerateMetadataComponent';
 import { ReviewMetadataComponent } from './ReviewMetadataComponent';
+//import { isFeatureEnabled } from 'utils';
 
 export const MetadataMainModal = (props) => {
   const { dataset, onApply, onClose, open, ...other } = props;

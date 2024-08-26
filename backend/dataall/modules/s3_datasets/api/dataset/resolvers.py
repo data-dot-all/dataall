@@ -154,7 +154,7 @@ def list_datasets_owned_by_env_group(
     if not filter:
         filter = {}
     return DatasetService.list_datasets_owned_by_env_group(environmentUri, groupUri, filter)
-#@is_feature_enabled()
+@is_feature_enabled('modules.s3_datasets.features.generate_metadata_ai')
 def generate_metadata(context : Context, source: S3Dataset, resourceUri, targetType, version, metadataTypes, sampleData): #TODO add type hints
     RequestValidator.validate_generation_request(data=resourceUri)
     if targetType == MetadataGenerationTargets.S3_Dataset.value:
