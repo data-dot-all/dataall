@@ -32,9 +32,13 @@ def share_expiration_checker(engine):
                 if share.expiryDate.date() < datetime.today().date():
                     log.info(f'Revoking share with uri: {share.shareUri} as it is expired')
                     # Put all share items in revoke state and then revoke
-                    share_items_to_revoke = ShareObjectRepository.get_all_share_items_in_share(session, share.shareUri, ['Share_Succeeded'])
+                    share_items_to_revoke = ShareObjectRepository.get_all_share_items_in_share(
+                        session, share.shareUri, ['Share_Succeeded']
+                    )
                     item_uris = [share_item.shareItemUri for share_item in share_items_to_revoke]
-                    revoked_items_states = ShareStatusRepository.get_share_items_states(session, share.shareUri, item_uris)
+                    revoked_items_states = ShareStatusRepository.get_share_items_states(
+                        session, share.shareUri, item_uris
+                    )
 
                     share_sm = ShareObjectSM(share.status)
                     new_share_state = share_sm.run_transition(ShareObjectActions.RevokeItems.value)
@@ -66,7 +70,10 @@ def share_expiration_checker(engine):
                             session=session, dataset=dataset, share=share
                         ).notify_share_expiration_to_requesters()
             except Exception as e:
-                log.error(f'Error occured while processing share expiration processing for share with URI: {share.shareUri} due to: {e}')
+                log.error(
+                    f'Error occured while processing share expiration processing for share with URI: {share.shareUri} due to: {e}'
+                )
+
 
 if __name__ == '__main__':
     load_modules(modes={ImportMode.SHARES_TASK})
