@@ -106,6 +106,12 @@ class DatasetService:
 
     @staticmethod
     def check_imported_resources(dataset: S3Dataset):
+        with get_context().db_engine.scoped_session() as session:
+            if DatasetBucketRepository.get_dataset_bucket_by_name(session, dataset.S3BucketName):
+                raise exceptions.ResourceAlreadyExists(
+                    action=IMPORT_DATASET,
+                    message=f'Dataset with bucket {dataset.S3BucketName} already exists',
+                )
         if dataset.importedGlueDatabase:
             if len(dataset.GlueDatabaseName) > NamingConventionPattern.GLUE.value.get('max_length'):
                 raise exceptions.InvalidInput(
