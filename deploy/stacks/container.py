@@ -431,7 +431,7 @@ class ContainerStack(pyNestedClass):
         )
         self.ecs_task_definitions_families.append(fetch_omics_workflows_task.task_definition.family)
 
-    @run_if(['module.dataset_base.features.share_expiration.active'])
+    @run_if(['modules.datasets_base.features.share_expiration.active'])
     def add_share_expiration_task(self):
         task = ecs.FargateTaskDefinition(
             self,
@@ -461,7 +461,7 @@ class ContainerStack(pyNestedClass):
             readonly_root_filesystem=True,
         )
         try:
-            run_schedule = deploy_config.get_property('module.dataset_base.features.share_expiration.run_schedule')
+            run_schedule = deploy_config.get_property('modules.datasets_base.features.share_expiration.run_schedule')
             if 0 not in run_schedule:
                 run_schedule.append(0)
         except Exception:
@@ -491,6 +491,7 @@ class ContainerStack(pyNestedClass):
                 parameter_name=f'/dataall/{self._envname}/ecs/ecs_scheduled_tasks/rule/{self._resource_prefix}-{self._envname}-share-expiration-schedule-{value}',
                 string_value=scheduled_task.event_rule.rule_name,
             )
+            self.ecs_task_definitions_families.append(scheduled_task.task_definition.family)
 
     def create_ecs_security_groups(self, envname, resource_prefix, vpc, vpce_connection, s3_prefix_list, lambdas):
         scheduled_tasks_sg = ec2.SecurityGroup(
