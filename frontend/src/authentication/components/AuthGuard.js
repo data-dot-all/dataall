@@ -1,20 +1,18 @@
 import PropTypes from 'prop-types';
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { Login } from '../views/Login';
 import { useAuth } from '../hooks';
 import {
   RegexToValidateWindowPathName,
   WindowPathLengthThreshold
 } from 'utils';
-import { useNavigate } from 'react-router';
 
 export const AuthGuard = (props) => {
   const { children } = props;
   const auth = useAuth();
   const location = useLocation();
   const [requestedLocation, setRequestedLocation] = useState(null);
-  const navigate = useNavigate();
 
   if (!auth.isAuthenticated) {
     if (location.pathname !== requestedLocation) {
@@ -35,7 +33,7 @@ export const AuthGuard = (props) => {
 
   if (requestedLocation && location.pathname !== requestedLocation) {
     setRequestedLocation(null);
-    navigate(requestedLocation);
+    return <Navigate to={requestedLocation} />;
   }
 
   // When session storage contained path is not same as the current location.pathname ( usually after authentication )
@@ -46,15 +44,13 @@ export const AuthGuard = (props) => {
   ) {
     const windowPathLocation = sessionStorage.getItem('window-location');
     sessionStorage.removeItem('window-location');
-
     // Check if the window-location only contains alphanumeric and / in it and its not tampered
     if (!RegexToValidateWindowPathName.test(windowPathLocation))
       return <>{children}</>;
     // A guardrail to limit the string of the pathname to a certain characters
     if (windowPathLocation.length > WindowPathLengthThreshold)
       return <>{children}</>;
-
-    navigate(windowPathLocation, { replace: true });
+    return <Navigate to={windowPathLocation} replace={true} />;
   } else {
     sessionStorage.removeItem('window-location');
   }
