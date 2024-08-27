@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 
 class BedrockClient:
     def __init__(self, account_id: str, region: str):
-        session = SessionHelper.remote_session(accountid=account_id, region=region,role='arn:aws:iam::637423548259:role/pelin-demo-role')
+        session = SessionHelper.remote_session(accountid=account_id, region=region)
         self._client = session.client('bedrock-runtime', region_name=region)
         self._account_id = account_id
         self.region = region
