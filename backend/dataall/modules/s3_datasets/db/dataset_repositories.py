@@ -190,7 +190,7 @@ class DatasetRepository(EnvironmentResource):
         return session.query(DatasetTable).filter(DatasetTable.datasetUri == dataset_uri).all()
 
     @staticmethod
-    def update_dataset_shares_expiration(session, enabledExpiration , datasetUri, expirationDate):
+    def update_dataset_shares_expiration(session, enabledExpiration, datasetUri, expirationDate):
         """
         When share expiration is enabled on the dataset while editing a dataset
         update all the shares on that dataset and set minimum expiration on them

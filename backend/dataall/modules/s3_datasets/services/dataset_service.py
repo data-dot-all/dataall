@@ -262,7 +262,14 @@ class DatasetService:
                     if k not in ['stewards', 'KmsAlias']:
                         setattr(dataset, k, data.get(k))
 
-                DatasetRepository.update_dataset_shares_expiration(session=session, enabledExpiration=dataset.enableExpiration, datasetUri=dataset.datasetUri, expirationDate=ShareObjectService.calculate_expiry_date(expirationPeriod=dataset.expiryMinDuration, expirySetting=dataset.expirySetting))
+                DatasetRepository.update_dataset_shares_expiration(
+                    session=session,
+                    enabledExpiration=dataset.enableExpiration,
+                    datasetUri=dataset.datasetUri,
+                    expirationDate=ShareObjectService.calculate_expiry_date(
+                        expirationPeriod=dataset.expiryMinDuration, expirySetting=dataset.expirySetting
+                    ),
+                )
 
                 if data.get('KmsAlias') not in ['Undefined'] and data.get('KmsAlias') != dataset.KmsAlias:
                     dataset.KmsAlias = 'SSE-S3' if data.get('KmsAlias') == '' else data.get('KmsAlias')
