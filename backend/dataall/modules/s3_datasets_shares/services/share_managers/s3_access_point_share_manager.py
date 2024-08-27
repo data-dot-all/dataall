@@ -14,7 +14,6 @@ from dataall.modules.s3_datasets_shares.aws.s3_client import (
 )
 from dataall.modules.s3_datasets_shares.aws.kms_client import (
     KmsClient,
-    DATAALL_ACCESS_POINT_KMS_DECRYPT_SID,
     DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID,
 )
 from dataall.base.aws.iam import IAM
@@ -25,6 +24,7 @@ from dataall.modules.s3_datasets_shares.services.share_managers.s3_utils import 
     generate_policy_statement,
     perms_to_sids,
     SidType,
+    perms_to_actions,
 )
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
@@ -485,6 +485,7 @@ class S3AccessPointShareManager:
                     target_requester_id,
                     access_point_arn,
                     self.s3_prefix,
+                    perms_to_actions(self.share.permissions, SidType.BucketPolicy),
                 )
                 existing_policy['Statement'].extend(additional_policy['Statement'])
             access_point_policy = existing_policy
@@ -495,6 +496,7 @@ class S3AccessPointShareManager:
                 target_requester_id,
                 access_point_arn,
                 self.s3_prefix,
+                perms_to_actions(self.share.permissions, SidType.BucketPolicy),
             )
         s3_client.attach_access_point_policy(
             access_point_name=self.access_point_name, policy=json.dumps(access_point_policy)
@@ -522,22 +524,17 @@ class S3AccessPointShareManager:
         counter = count()
         statements = {item.get('Sid', next(counter)): item for item in existing_policy.get('Statement', {})}
 
-        error = False
-        if DATAALL_ACCESS_POINT_KMS_DECRYPT_SID not in statements.keys():
-            error = True
-        elif f'{target_requester_arn}' not in get_principal_list(statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID]):
-            error = True
-
-        if error:
-            self.folder_errors.append(
-                ShareErrorFormatter.missing_permission_error_msg(
-                    self.target_requester_IAMRoleName,
-                    'KMS Key Policy',
-                    DATAALL_ACCESS_POINT_KMS_DECRYPT_SID,
-                    'KMS Key',
-                    f'{kms_key_id}',
+        for target_sid in perms_to_sids(self.share.permissions, SidType.KmsAccessPointPolicy):
+            if target_sid not in statements.keys() or target_requester_arn not in get_principal_list(statements):
+                self.folder_errors.append(
+                    ShareErrorFormatter.missing_permission_error_msg(
+                        self.target_requester_IAMRoleName,
+                        'KMS Key Policy',
+                        target_sid,
+                        'KMS Key',
+                        f'{kms_key_id}',
+                    )
                 )
-            )
 
     def update_dataset_bucket_key_policy(self):
         logger.info('Updating dataset Bucket KMS key policy...')
@@ -583,7 +580,7 @@ class S3AccessPointShareManager:
                     )
                 else:
                     logger.info(f'KMS key does not contain share statement {target_sid}, ' f'generating a new one')
-                    statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID] = self.generate_default_kms_policy_statement(
+                    statements[target_sid] = self.generate_default_kms_policy_statement(
                         target_requester_arn, target_sid
                     )
             existing_policy['Statement'] = list(statements.values())
@@ -727,16 +724,18 @@ class S3AccessPointShareManager:
         )
         counter = count()
         statements = {item.get('Sid', next(counter)): item for item in existing_policy.get('Statement', {})}
-        if DATAALL_ACCESS_POINT_KMS_DECRYPT_SID in statements.keys():
-            principal_list = get_principal_list(statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID])
-            if f'{target_requester_arn}' in principal_list:
-                principal_list.remove(f'{target_requester_arn}')
-                if len(principal_list) == 0:
-                    statements.pop(DATAALL_ACCESS_POINT_KMS_DECRYPT_SID)
-                else:
-                    statements[DATAALL_ACCESS_POINT_KMS_DECRYPT_SID]['Principal']['AWS'] = principal_list
-                existing_policy['Statement'] = list(statements.values())
-                kms_client.put_key_policy(kms_key_id, json.dumps(existing_policy))
+
+        for target_sid in perms_to_sids(self.share.permissions, SidType.KmsAccessPointPolicy):
+            if target_sid in statements.keys():
+                principal_list = get_principal_list(statements[target_sid])
+                if f'{target_requester_arn}' in principal_list:
+                    principal_list.remove(f'{target_requester_arn}')
+                    if len(principal_list) == 0:
+                        statements.pop(target_sid)
+                    else:
+                        statements[target_sid]['Principal']['AWS'] = principal_list
+                    existing_policy['Statement'] = list(statements.values())
+                    kms_client.put_key_policy(kms_key_id, json.dumps(existing_policy))
 
     def handle_share_failure(self, error: Exception) -> None:
         """
