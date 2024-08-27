@@ -78,18 +78,15 @@ export const ReviewMetadataComponent = (props) => {
     setSampleData(null);
   };
   async function handleSaveSubitemDescriptions() {
-    console.log('Saving subitem descriptions:', subitemDescriptions);
     try {
       const columns_ = subitemDescriptions.map((item) => ({
         description: item.description,
         label: item.label,
         subitem_id: item.subitem_id
       }));
-      console.log(columns_);
       const response = await client.mutate(
         BatchUpdateDatasetTableColumn(columns_)
       );
-      console.log(response);
       if (!response.errors) {
         enqueueSnackbar('Successfully updated subitem descriptions', {
           variant: 'success'
@@ -110,7 +107,6 @@ export const ReviewMetadataComponent = (props) => {
           tableUri: table.targetUri
         })
       );
-      console.log(response);
       openSampleDataPopup(response.data.listSampleData);
       setTargetUri(table.targetUri);
       if (!response.errors) {
@@ -126,11 +122,8 @@ export const ReviewMetadataComponent = (props) => {
   }
   const handleAcceptAndRegenerate = async () => {
     // Perform any necessary actions for accepting and regenerating the data
-    console.log('Accept and Regenerate clicked');
     try {
       const targetIndex = targets.findIndex((t) => t.targetUri === targetUri);
-
-      console.log(sampleData);
       if (targetIndex !== -1) {
         const { __typename, ...sampleDataWithoutTypename } = sampleData;
         const response = await client.mutate(

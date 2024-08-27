@@ -65,7 +65,6 @@ export const GenerateMetadataComponent = (props) => {
   const handleChange = useCallback(
     async (event) => {
       setTargetType(event.target.value);
-      console.log('event.target.value', event.target.value);
       if (event.target.value === 'Dataset') {
         setTargets([
           {
@@ -112,7 +111,6 @@ export const GenerateMetadataComponent = (props) => {
 
   const generateMetadata = async () => {
     setCurrentView('REVIEW_METADATA');
-    console.log({ selectedMetadataTypes });
     for (let target of targets) {
       let response = await client.mutate(
         generateMetadataBedrock({
@@ -305,13 +303,11 @@ export const GenerateMetadataComponent = (props) => {
                   getRowHeight={() => 'auto'}
                   disableSelectionOnClick
                   onSelectionModelChange={(newSelectionModel) => {
-                    console.log('selectionModel2', newSelectionModel);
                     const selectedTargets = newSelectionModel.map((id) =>
                       targetOptions.nodes.find(
                         (option) => option.targetUri === id
                       )
                     );
-                    console.log('selectedTargets', selectedTargets);
                     setTargets(selectedTargets);
                     if (newSelectionModel.length === 0) {
                       setSelectedMetadataTypes({});

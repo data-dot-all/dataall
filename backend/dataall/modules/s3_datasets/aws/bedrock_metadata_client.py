@@ -118,7 +118,6 @@ class BedrockClient:
         modelId = "anthropic.claude-3-sonnet-20240229-v1:0"
         response = self._client.invoke_model(body=body, modelId=modelId)
         response_body = json.loads(response.get('body').read())
-        #log.info("Prompt response: \n %s", response_body)
         return response_body.get("content", [])
     
     def _parse_response(self, response_content, targetName, subitem_ids ):
@@ -141,11 +140,9 @@ class BedrockClient:
                     "subitem_id": subitem_ids[index]
                 })
             output_dict["subitem_descriptions"] = subitem_descriptions
-        log.info("Prompt response: \n %s", output_dict)
         return output_dict
   
     def generate_metadata(self, **kwargs):
         prompt = self._generate_prompt(**kwargs)
-        log.info("Prompt: \n %s", prompt)
         response_content = self._invoke_model(prompt)
         return self._parse_response(response_content, kwargs.get('label', ' '), kwargs.get('subitem_ids', ' '))
