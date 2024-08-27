@@ -107,14 +107,15 @@ class DatasetService:
     @staticmethod
     def check_imported_resources(dataset: S3Dataset):
         # check that resource names are valid
-        NamingConventionService(
-            target_uri=dataset.datasetUri,
-            target_label=dataset.S3BucketName,
-            pattern=NamingConventionPattern.S3,
-            resource_prefix='',
-        ).validate_imported_name()
+        if dataset.S3BucketName:
+            NamingConventionService(
+                target_uri=dataset.datasetUri,
+                target_label=dataset.S3BucketName,
+                pattern=NamingConventionPattern.S3,
+                resource_prefix='',
+            ).validate_imported_name()
 
-        if dataset.importedGlueDatabase:
+        if dataset.importedGlueDatabase and dataset.GlueDatabaseName:
             NamingConventionService(
                 target_uri=dataset.datasetUri,
                 target_label=dataset.GlueDatabaseName,
