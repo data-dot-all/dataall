@@ -47,7 +47,14 @@ export const MetadataAttachment = (props) => {
   const [availableForms, setAvailableForms] = useState([]);
 
   const fetchAvailableForms = async () => {
-    const response = await client.query(listMetadataForms({}));
+    const response = await client.query(
+      listMetadataForms({
+        ...Defaults.filter,
+        entityType: entityType,
+        entityUri: entityUri,
+        hideAttached: true
+      })
+    );
     if (!response.errors) {
       setAvailableForms(
         response.data.listMetadataForms.nodes.map((form) => ({
@@ -120,6 +127,9 @@ export const MetadataAttachment = (props) => {
     const response = await client.mutate(deleteAttachedMetadataForm(uri));
     if (!response.errors) {
       fetchList().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchAvailableForms().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
       setSelectedForm(null);
     } else {
       const error = response.errors
@@ -289,6 +299,9 @@ export const MetadataAttachment = (props) => {
               setSelectedForm(attachedForm);
               setFields(attachedForm.fields);
               fetchList().catch((e) =>
+                dispatch({ type: SET_ERROR, error: e.message })
+              );
+              fetchAvailableForms().catch((e) =>
                 dispatch({ type: SET_ERROR, error: e.message })
               );
               setAddNewForm(false);
