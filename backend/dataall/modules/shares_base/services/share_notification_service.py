@@ -18,6 +18,7 @@ log = logging.getLogger(__name__)
 class DataSharingNotificationType(enum.Enum):
     SHARE_OBJECT_SUBMITTED = 'SHARE_OBJECT_SUBMITTED'
     SHARE_ITEM_REQUEST = 'SHARE_ITEM_REQUEST'
+    SHARE_OBJECT_EXTENSION_SUBMITTED = 'SHARE_OBJECT_EXTENSION_SUBMITTED'
     SHARE_OBJECT_APPROVED = 'SHARE_OBJECT_APPROVED'
     SHARE_OBJECT_EXTENDED = 'SHARE_OBJECT_EXTENDED'
     SHARE_OBJECT_EXTENSION_REJECTED = 'SHARE_OBJECT_EXTENSION_REJECTED'
@@ -54,6 +55,21 @@ class ShareNotificationService:
 
         notifications = self.register_notifications(
             notification_type=DataSharingNotificationType.SHARE_OBJECT_SUBMITTED.value, msg=msg
+        )
+
+        self._create_notification_task(subject=subject, msg=email_notification_msg)
+        return notifications
+
+    def notify_share_object_extension_submission(self, email_id: str):
+        share_link_text = ''
+        if os.environ.get('frontend_domain_url'):
+            share_link_text = f'<br><br> Please visit data.all <a href="{os.environ.get("frontend_domain_url")}/console/shares/{self.share.shareUri}">share link </a> to take action or view more details'
+        msg = f'User {email_id} SUBMITTED share extension request for dataset {self.dataset.label} for principal {self.share.principalId}'
+        subject = f'Data.all | Share Extension Request Submitted for {self.dataset.label}'
+        email_notification_msg = msg + share_link_text
+
+        notifications = self.register_notifications(
+            notification_type=DataSharingNotificationType.SHARE_OBJECT_EXTENSION_SUBMITTED.value, msg=msg
         )
 
         self._create_notification_task(subject=subject, msg=email_notification_msg)

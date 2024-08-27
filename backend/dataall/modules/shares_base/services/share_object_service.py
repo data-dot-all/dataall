@@ -328,6 +328,10 @@ class ShareObjectService:
                 share.extensionReason = extension_reason
                 share.submittedForExtension = True
 
+                ShareNotificationService(
+                    session=session, dataset=dataset, share=share
+                ).notify_share_object_extension_submission(email_id=context.username)
+
                 if dataset.autoApprovalEnabled:
                     ResourcePolicyService.attach_resource_policy(
                         session=session,
