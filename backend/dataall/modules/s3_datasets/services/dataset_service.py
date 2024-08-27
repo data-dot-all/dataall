@@ -20,6 +20,7 @@ from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.s3_datasets.db.dataset_bucket_repositories import DatasetBucketRepository
+from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.modules.s3_datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.s3_datasets.aws.s3_dataset_client import S3DatasetClient
@@ -261,7 +262,7 @@ class DatasetService:
                     if k not in ['stewards', 'KmsAlias']:
                         setattr(dataset, k, data.get(k))
 
-                DatasetRepository.update_dataset_shares_expiration(session=session, dataset=dataset)
+                DatasetRepository.update_dataset_shares_expiration(session=session, enabledExpiration=dataset.enableExpiration, datasetUri=dataset.datasetUri, expirationDate=ShareObjectService.calculate_expiry_date(expirationPeriod=dataset.expiryMinDuration, expirySetting=dataset.expirySetting))
 
                 if data.get('KmsAlias') not in ['Undefined'] and data.get('KmsAlias') != dataset.KmsAlias:
                     dataset.KmsAlias = 'SSE-S3' if data.get('KmsAlias') == '' else data.get('KmsAlias')
