@@ -153,7 +153,8 @@ export const ReviewMetadataComponent = (props) => {
             name: response.data.generateMetadata.name,
             tags: response.data.generateMetadata.tags,
             topics: response.data.generateMetadata.topics,
-            item_descriptions: response.data.generateMetadata.item_descriptions
+            subitem_descriptions:
+              response.data.generateMetadata.subitem_descriptions
           };
 
           const updatedTargets = [...targets];
@@ -442,6 +443,11 @@ export const ReviewMetadataComponent = (props) => {
                     : false,
                   topics: selectedMetadataTypes['topics']
                     ? selectedMetadataTypes['topics']
+                    : false,
+                  subitem_descriptions: selectedMetadataTypes[
+                    'subitem_descriptions'
+                  ]
+                    ? selectedMetadataTypes['subitem_descriptions']
                     : false
                 }}
                 pageSize={10}

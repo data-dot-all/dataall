@@ -46,17 +46,15 @@ class BedrockClient:
                 - Only focus on generating the following metadata types as specified by the user: {common_data['metadata_types']}. Do not include any other metadata types.
                 - Sample data is only input for you to understand the table better, do not generate sample data.
                 Your response must strictly contain all the requested metadata types, do not include any of the metadata types if it is not specified by the user. Don't use ' ' in your response, use " ".
-                Subitem Descriptions corresponds to column descriptions.
-                For example, if the requested metadata types are "Tags", "Topics" and "Subitem Descriptions", the response should be:
+                Subitem Descriptions corresponds to column descriptions. If the user specifically didn't ask for subitem descriptions, do not include it in the response.     
+                subitem_descriptions is another dictionary within the existing dictionary, rest of them are strings, never change order of columns when you generate description for them.
+                For example, if the requested metadata types are "Tags" and "Subitem Descriptions", the response should be:
                 tags: <tags>
-                topics: <topics>
                 subitem_descriptions: 
                     <column1 label>:<column1_description>
                     <column2 label>:<column2_description>
                     ,...,
-                    <columnN>:<columnN_description>:<subitemUri>
-                subitem_descriptions is another dictionary within the existing dictionary, rest of them are strings, never change order of columns when you generate description for them.
-                Column descriptions: ({common_data['subitem_descriptions'] if common_data['subitem_descriptions'] else 'No description provided'})
+                    <columnN>:<columnN_description>
                 Evaluate if the given parameters are sufficient for generating the requested metadata, if not, respond with "NotEnoughData" for all values of dictionary keys.
                 Return the result as a Python dictionary where the keys are the requested metadata types, all the keys must be lowercase and the values are the corresponding generated metadata. 
                 For tags and topics, ensure the output is a string list.  Label is singular so you should return only one label as string.
@@ -130,17 +128,17 @@ class BedrockClient:
         output_dict = json.loads(output_str)
         if not output_dict.get("name"):
             output_dict["name"] = targetName
-        subitem_ids = str(subitem_ids)
-        subitem_ids = subitem_ids.split(',')
-        subitem_ids = subitem_ids[:len(output_dict["subitem_descriptions"])]
-        strip_ids = [subitem_id.strip("{'}") for subitem_id in subitem_ids]
+        
         if output_dict.get('subitem_descriptions'):
+            subitem_ids = subitem_ids.pop()
+            subitem_ids = subitem_ids.split(',')
+            subitem_ids = subitem_ids[:len(output_dict["subitem_descriptions"])]
             subitem_descriptions = []
             for index, (key, value) in enumerate(output_dict["subitem_descriptions"].items()):
                 subitem_descriptions.append({
                     "label": key,
                     "description": value,
-                    "subitem_id": strip_ids[index]
+                    "subitem_id": subitem_ids[index]
                 })
             output_dict["subitem_descriptions"] = subitem_descriptions
         log.info("Prompt response: \n %s", output_dict)
@@ -148,5 +146,6 @@ class BedrockClient:
   
     def generate_metadata(self, **kwargs):
         prompt = self._generate_prompt(**kwargs)
+        log.info("Prompt: \n %s", prompt)
         response_content = self._invoke_model(prompt)
         return self._parse_response(response_content, kwargs.get('label', ' '), kwargs.get('subitem_ids', ' '))

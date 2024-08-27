@@ -112,6 +112,7 @@ export const GenerateMetadataComponent = (props) => {
 
   const generateMetadata = async () => {
     setCurrentView('REVIEW_METADATA');
+    console.log({ selectedMetadataTypes });
     for (let target of targets) {
       let response = await client.mutate(
         generateMetadataBedrock({
@@ -130,12 +131,13 @@ export const GenerateMetadataComponent = (props) => {
         target.name = response.data.generateMetadata.name;
         target.tags = response.data.generateMetadata.tags;
         target.topics = response.data.generateMetadata.topics;
-        target.subitem_descriptions =
-          response.data.generateMetadata.subitem_descriptions.map((item) => ({
-            description: item.description,
-            label: item.label,
-            subitem_id: item.subitem_id
-          }));
+        target.subitem_descriptions = (
+          response.data.generateMetadata.subitem_descriptions || []
+        ).map((item) => ({
+          description: item.description,
+          label: item.label,
+          subitem_id: item.subitem_id
+        }));
         const hasNotEnoughData = [
           target.description,
           target.label,
