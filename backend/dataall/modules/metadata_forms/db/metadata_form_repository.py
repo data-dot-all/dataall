@@ -72,6 +72,27 @@ class MetadataFormRepository:
 
         query = session.query(MetadataForm)
 
+        if org_uris:
+            query = query.filter(
+                or_(
+                    MetadataForm.visibility != MetadataFormVisibility.Organization.value,
+                    and_(
+                        MetadataForm.visibility == MetadataFormVisibility.Organization.value,
+                        MetadataForm.homeEntity.in_(org_uris),
+                    ),
+                )
+            )
+        if env_uris:
+            query = query.filter(
+                or_(
+                    MetadataForm.visibility != MetadataFormVisibility.Environment.value,
+                    and_(
+                        MetadataForm.visibility == MetadataFormVisibility.Environment.value,
+                        MetadataForm.homeEntity.in_(env_uris),
+                    ),
+                )
+            )
+
         if not is_da_admin:
             query = query.filter(
                 or_(
@@ -80,14 +101,6 @@ class MetadataFormRepository:
                     and_(
                         MetadataForm.visibility == MetadataFormVisibility.Team.value,
                         MetadataForm.homeEntity.in_(groups),
-                    ),
-                    and_(
-                        MetadataForm.visibility == MetadataFormVisibility.Organization.value,
-                        MetadataForm.homeEntity.in_(org_uris),
-                    ),
-                    and_(
-                        MetadataForm.visibility == MetadataFormVisibility.Environment.value,
-                        MetadataForm.homeEntity.in_(env_uris),
                     ),
                 )
             )
