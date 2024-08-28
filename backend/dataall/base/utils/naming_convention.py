@@ -10,7 +10,7 @@ class NamingConventionPattern(Enum):
         'max_length': 63,
         'valid_external_regex': '(?!(^xn--|.+-s3alias$))^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$',
     }
-    KMS = {'regex': '[a-zA-Z0-9_-]+$', 'separator': '-', 'max_length': 63}
+    KMS = {'regex': '[a-zA-Z0-9_-]+$', 'separator': '-', 'max_length': 63, 'valid_external_regex': '[a-zA-Z0-9_-]+$'}
     IAM = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 63}  # Role names up to 64 chars
     IAM_POLICY = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 128}  # Policy names up to 128 chars
     GLUE = {
@@ -71,7 +71,6 @@ class NamingConventionService:
             )
 
     def validate_imported_name(self):
-        regex = NamingConventionPattern[self.service].value['regex']
         max_length = NamingConventionPattern[self.service].value['max_length']
         valid_external_regex = NamingConventionPattern[self.service].value.get('valid_external_regex', '.*')
         if 'arn:aws:' in self.target_label:
