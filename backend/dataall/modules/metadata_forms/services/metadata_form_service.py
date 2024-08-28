@@ -5,7 +5,13 @@ from dataall.base.db import exceptions, paginate
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyValidationService, TenantPolicyService
-from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility, MetadataFormUserRoles, MetadataFormFieldType
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
+from dataall.modules.metadata_forms.db.enums import (
+    MetadataFormVisibility,
+    MetadataFormUserRoles,
+    MetadataFormFieldType,
+    MetadataFormEntityTypes,
+)
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
 from dataall.modules.metadata_forms.services.metadata_form_permissions import MANAGE_METADATA_FORMS
@@ -122,6 +128,67 @@ class MetadataFormAccessService:
 
 class MetadataFormService:
     @staticmethod
+    def _target_org_uri_getter(entityType, entityUri):
+        if not entityType or not entityUri:
+            return None
+        if entityType == MetadataFormEntityTypes.Organizations.value:
+            return entityUri
+        elif entityType == MetadataFormEntityTypes.Environments.value:
+            with get_context().db_engine.scoped_session() as session:
+                return EnvironmentRepository.get_environment_by_uri(session, entityUri).organizationUri
+        elif entityType == MetadataFormEntityTypes.Datasets.value:
+            with get_context().db_engine.scoped_session() as session:
+                return DatasetBaseRepository.get_dataset_by_uri(session, entityUri).organizationUri
+        else:
+            # toDo add other entities
+            return None
+
+    @staticmethod
+    def _target_env_uri_getter(entityType, entityUri):
+        if not entityType or not entityUri:
+            return None
+        if entityType == MetadataFormEntityTypes.Organizations.value:
+            return None
+        elif entityType == MetadataFormEntityTypes.Environments.value:
+            return entityUri
+        elif entityType == MetadataFormEntityTypes.Datasets.value:
+            with get_context().db_engine.scoped_session() as session:
+                return DatasetBaseRepository.get_dataset_by_uri(session, entityUri).environmentUri
+        else:
+            # toDo add other entities
+            return None
+
+    @staticmethod
+    def _get_target_orgs_and_envs(username, groups, is_da_admin=False, filter={}):
+        envs = None
+        orgs = None
+        target_org_uri = MetadataFormService._target_org_uri_getter(filter.get('entityType'), filter.get('entityUri'))
+        target_env_uri = MetadataFormService._target_env_uri_getter(filter.get('entityType'), filter.get('entityUri'))
+        # is user is no dataall admin, query_metadata_forms requires arrays of users envs and orgs uris
+        if not is_da_admin:
+            with get_context().db_engine.scoped_session() as session:
+                envs = EnvironmentRepository.query_user_environments(session, username, groups, {})
+                envs = [e.environmentUri for e in envs]
+                orgs = OrganizationRepository.query_user_organizations(session, username, groups, {})
+                orgs = [o.organizationUri for o in orgs]
+        if target_org_uri:
+            if orgs and target_org_uri not in orgs:
+                raise exceptions.UnauthorizedOperation(
+                    action='GET METADATA FORM LIST',
+                    message=f'User {username} can not view organization {target_org_uri}',
+                )
+            orgs = [target_org_uri]
+
+        if target_env_uri:
+            if envs and target_env_uri not in envs:
+                raise exceptions.UnauthorizedOperation(
+                    action='GET METADATA FORM LIST',
+                    message=f'User {username} can not view environment {target_env_uri}',
+                )
+            envs = [target_env_uri]
+        return orgs, envs
+
+    @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_METADATA_FORMS)
     def create_metadata_form(data):
         MetadataFormParamValidationService.validate_create_form_params(data)
@@ -150,16 +217,10 @@ class MetadataFormService:
         groups = context.groups
         is_da_admin = TenantPolicyValidationService.is_tenant_admin(groups)
         filter = filter if filter is not None else {}
+        orgs, envs = MetadataFormService._get_target_orgs_and_envs(
+            context.username, context.groups, is_da_admin, filter
+        )
         with context.db_engine.scoped_session() as session:
-            envs = None
-            orgs = None
-            # is user is no dataall admin, query_metadata_forms requires arrays of users envs and orgs uris
-            if not is_da_admin:
-                username = context.username
-                envs = EnvironmentRepository.query_user_environments(session, username, groups, {})
-                envs = [e.environmentUri for e in envs]
-                orgs = OrganizationRepository.query_user_organizations(session, username, groups, {})
-                orgs = [o.organizationUri for o in orgs]
             return paginate(
                 query=MetadataFormRepository.query_metadata_forms(session, is_da_admin, groups, envs, orgs, filter),
                 page=filter.get('page', 1),

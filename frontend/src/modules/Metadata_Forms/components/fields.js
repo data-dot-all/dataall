@@ -36,6 +36,7 @@ export const BooleanField = (props) => {
       control={
         <Checkbox
           id={field.name}
+          defaultChecked={field.value}
           onChange={(event, checked) => onChange(checked)}
         />
       }
@@ -57,7 +58,7 @@ export const GlossaryTermField = (props) => {
     const response = await client.query(
       getGlossaryTree({
         nodeUri: field.glossaryNodeUri,
-        filter: { ...Defaults.filter, nodeType: 'T' }
+        filter: { ...Defaults.selectListFilter, nodeType: 'T' }
       })
     );
     if (!response.errors && response.data.getGlossary !== null) {
