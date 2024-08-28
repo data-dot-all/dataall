@@ -105,22 +105,20 @@ class DatasetService:
         return True
 
     @staticmethod
-    def check_imported_resources(dataset: S3Dataset):
+    def check_imported_resources(dataset: S3Dataset, data: dict):
         # check that resource names are valid
         if dataset.S3BucketName:
             NamingConventionService(
                 target_uri=dataset.datasetUri,
                 target_label=dataset.S3BucketName,
                 pattern=NamingConventionPattern.S3,
-                resource_prefix='',
             ).validate_imported_name()
 
         if dataset.importedGlueDatabase and dataset.GlueDatabaseName:
             NamingConventionService(
                 target_uri=dataset.datasetUri,
-                target_label=dataset.GlueDatabaseName,
+                target_label=data.get('glueDatabaseName', 'undefined'),
                 pattern=NamingConventionPattern.GLUE,
-                resource_prefix='',
             ).validate_imported_name()
 
         with get_context().db_engine.scoped_session() as session:
@@ -188,7 +186,7 @@ class DatasetService:
             dataset = DatasetRepository.build_dataset(username=context.username, env=environment, data=data)
 
             if dataset.imported:
-                DatasetService.check_imported_resources(dataset)
+                DatasetService.check_imported_resources(dataset, data)
 
             dataset = DatasetRepository.create_dataset(session=session, env=environment, dataset=dataset, data=data)
             DatasetBucketRepository.create_dataset_bucket(session, dataset, data)
@@ -282,7 +280,7 @@ class DatasetService:
             dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             if data and isinstance(data, dict):
                 if data.get('imported', False):
-                    DatasetService.check_imported_resources(dataset)
+                    DatasetService.check_imported_resources(dataset, data)
 
                 for k in data.keys():
                     if k not in ['stewards', 'KmsAlias']:
