@@ -5,7 +5,7 @@ from typing import List
 from dataall.core.resource_lock.db.resource_lock_repositories import ResourceLockRepository
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db import exceptions
-from dataall.base.utils.naming_convention import NamingConventionPattern
+from dataall.base.utils.naming_convention import NamingConventionPattern, NamingConventionService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.stacks.services.stack_service import StackService
@@ -106,19 +106,30 @@ class DatasetService:
 
     @staticmethod
     def check_imported_resources(dataset: S3Dataset):
+        # check that resource names are valid
+        if dataset.S3BucketName:
+            NamingConventionService(
+                target_uri=dataset.datasetUri,
+                target_label=dataset.S3BucketName,
+                pattern=NamingConventionPattern.S3,
+                resource_prefix='',
+            ).validate_imported_name()
+
+        if dataset.importedGlueDatabase and dataset.GlueDatabaseName:
+            NamingConventionService(
+                target_uri=dataset.datasetUri,
+                target_label=dataset.GlueDatabaseName,
+                pattern=NamingConventionPattern.GLUE,
+                resource_prefix='',
+            ).validate_imported_name()
+
         with get_context().db_engine.scoped_session() as session:
             if DatasetBucketRepository.get_dataset_bucket_by_name(session, dataset.S3BucketName):
                 raise exceptions.ResourceAlreadyExists(
                     action=IMPORT_DATASET,
                     message=f'Dataset with bucket {dataset.S3BucketName} already exists',
                 )
-        if dataset.importedGlueDatabase:
-            if len(dataset.GlueDatabaseName) > NamingConventionPattern.GLUE.value.get('max_length'):
-                raise exceptions.InvalidInput(
-                    param_name='GlueDatabaseName',
-                    param_value=dataset.GlueDatabaseName,
-                    constraint=f"less than {NamingConventionPattern.GLUE.value.get('max_length')} characters",
-                )
+
         kms_alias = dataset.KmsAlias
 
         s3_encryption, kms_id_type, kms_id = S3DatasetClient(dataset).get_bucket_encryption()
@@ -129,6 +140,12 @@ class DatasetService:
                     param_value=dataset.KmsAlias,
                     constraint=f'empty, Bucket {dataset.S3BucketName} is encrypted with AWS managed key (SSE-S3). KmsAlias {kms_alias} should NOT be provided as input parameter.',
                 )
+            NamingConventionService(
+                target_uri=dataset.datasetUri,
+                target_label=kms_alias,
+                pattern=NamingConventionPattern.KMS,
+                resource_prefix='',
+            ).validate_imported_name()
 
             key_exists = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).check_key_exists(
                 key_alias=f'alias/{kms_alias}'
