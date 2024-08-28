@@ -8,6 +8,7 @@ import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import { getGlossaryTree } from '../../Glossaries/services';
 import { SET_ERROR } from '../../../globalErrors';
+import { Defaults } from '../../../design';
 
 export const FreeInputField = (props) => {
   const { field, onChange, errors } = props;
@@ -56,15 +57,11 @@ export const GlossaryTermField = (props) => {
     const response = await client.query(
       getGlossaryTree({
         nodeUri: field.glossaryNodeUri,
-        filter: { pageSize: 500 }
+        filter: { ...Defaults.filter, nodeType: 'T' }
       })
     );
     if (!response.errors && response.data.getGlossary !== null) {
-      setGlossaryOptions(
-        response.data.getGlossary.tree.nodes.filter(
-          (node) => node.__typename === 'Term'
-        )
-      );
+      setGlossaryOptions(response.data.getGlossary.tree.nodes);
     } else {
       const error = response.errors
         ? response.errors[0].message

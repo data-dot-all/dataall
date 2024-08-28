@@ -62,7 +62,7 @@ export const MetadataFormPreview = (props) => {
     <RenderedMetadataForm
       fields={fields}
       metadataForm={metadataForm}
-      preview="true"
+      preview={true}
     />
   );
 };

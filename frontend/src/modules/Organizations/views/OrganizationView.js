@@ -38,18 +38,26 @@ import {
   OrganizationOverview,
   OrganizationTeams
 } from '../components';
-import { MetadataAttachement } from '../../Metadata_Forms/components';
+import { MetadataAttachment } from '../../Metadata_Forms/components';
+import { isModuleEnabled, ModuleNames } from '../../../utils';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
   { label: 'Environments', value: 'environments', icon: <FaAws size={20} /> },
-  { label: 'Metadata', value: 'metadata', icon: <FaAws size={20} /> },
+  {
+    label: 'Metadata',
+    value: 'metadata',
+    icon: <FaAws size={20} />,
+    active: isModuleEnabled(ModuleNames.METADATA_FORMS)
+  },
   {
     label: 'Teams',
     value: 'teams',
     icon: <SupervisedUserCircleRounded fontSize="small" />
   }
 ];
+
+const activeTabs = tabs.filter((tab) => tab.active !== false);
 
 const OrganizationView = () => {
   const { settings } = useSettings();
@@ -195,7 +203,7 @@ const OrganizationView = () => {
                 value={currentTab}
                 variant="fullWidth"
               >
-                {tabs.map((tab) => (
+                {activeTabs.map((tab) => (
                   <Tab
                     key={tab.value}
                     label={tab.label}
@@ -218,7 +226,7 @@ const OrganizationView = () => {
                 <OrganizationEnvironments organization={org} />
               )}
               {currentTab === 'metadata' && (
-                <MetadataAttachement
+                <MetadataAttachment
                   entityType="Organization"
                   entityUri={org.organizationUri}
                   canEdit={true}

@@ -47,7 +47,7 @@ import {
   EnvironmentNetworks
 } from '../components';
 import { ModuleNames, isModuleEnabled } from 'utils';
-import { MetadataAttachement } from '../../Metadata_Forms/components';
+import { MetadataAttachment } from '../../Metadata_Forms/components';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
@@ -58,7 +58,8 @@ const tabs = [
   },
   {
     label: 'Metadata',
-    value: 'metadata'
+    value: 'metadata',
+    active: isModuleEnabled(ModuleNames.METADATA_FORMS)
   },
   {
     label: 'Datasets',
@@ -269,7 +270,7 @@ const EnvironmentView = () => {
               <EnvironmentOverview environment={env} />
             )}
             {currentTab === 'metadata' && (
-              <MetadataAttachement
+              <MetadataAttachment
                 entityType="Environment"
                 entityUri={env.environmentUri}
                 canEdit={true}

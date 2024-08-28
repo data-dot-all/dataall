@@ -41,7 +41,7 @@ deleteMetadataForm = gql.MutationField(
 deleteAttachedMetadataForm = gql.MutationField(
     name='deleteAttachedMetadataForm',
     args=[
-        gql.Argument(name='formUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='attachedFormUri', type=gql.NonNullableType(gql.String)),
     ],
     type=gql.Boolean,
     resolver=delete_attached_metadata_form,

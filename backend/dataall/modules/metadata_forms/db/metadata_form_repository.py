@@ -92,6 +92,18 @@ class MetadataFormRepository:
                 )
             )
 
+        if filter and filter.get('hideAttached') and filter.get('entityType') and filter.get('entityUri'):
+            query = query.filter(
+                ~MetadataForm.uri.in_(
+                    session.query(AttachedMetadataForm.metadataFormUri)
+                    .filter(
+                        AttachedMetadataForm.entityUri == filter.get('entityUri'),
+                        AttachedMetadataForm.entityType == filter.get('entityType'),
+                    )
+                    .subquery()
+                )
+            )
+
         if filter and filter.get('search_input'):
             query = query.filter(
                 or_(
@@ -99,6 +111,7 @@ class MetadataFormRepository:
                     MetadataForm.description.ilike('%' + filter.get('search_input') + '%'),
                 )
             )
+
         return query.order_by(MetadataForm.name)
 
     @staticmethod

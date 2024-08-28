@@ -47,9 +47,11 @@ MetadataFormFilter = gql.InputType(
         gql.Argument('page', gql.Integer),
         gql.Argument('search_input', gql.String),
         gql.Argument('pageSize', gql.Integer),
+        gql.Argument('entityType', gql.String),
+        gql.Argument('entityUri', gql.String),
+        gql.Argument('hideAttached', gql.Boolean),
     ],
 )
-
 
 AttachedMetadataFormFilter = gql.InputType(
     name='AttachedMetadataFormFilter',
