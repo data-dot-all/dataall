@@ -36,6 +36,7 @@ export const BooleanField = (props) => {
       control={
         <Checkbox
           id={field.name}
+          defaultChecked={field.value}
           onChange={(event, checked) => onChange(checked)}
         />
       }
