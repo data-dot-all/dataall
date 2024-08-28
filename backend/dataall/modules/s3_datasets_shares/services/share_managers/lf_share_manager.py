@@ -467,13 +467,13 @@ class LFShareManager:
             database_name=self.shared_db_name,
             table_name=resource_link_name,
             catalog_id=self.target_environment.AwsAccountId,
-            permissions=perms_to_lfperms(self.share.permissions, LfPermType.Database),
+            permissions=perms_to_lfperms(self.share.permissions, LfPermType.ResourceLink),
         ):
             self.tbl_level_errors.append(
                 ShareErrorFormatter.missing_permission_error_msg(
                     self.principals,
                     'LF',
-                    perms_to_lfperms(self.share.permissions, LfPermType.Database),
+                    perms_to_lfperms(self.share.permissions, LfPermType.ResourceLink),
                     'Glue Table',
                     f'{self.shared_db_name}.{resource_link_name}',
                 )
@@ -491,7 +491,7 @@ class LFShareManager:
             database_name=self.shared_db_name,
             table_name=resource_link_name,
             catalog_id=self.target_environment.AwsAccountId,
-            permissions=perms_to_lfperms(self.share.permissions, LfPermType.Database),
+            permissions=perms_to_lfperms(self.share.permissions, LfPermType.ResourceLink),
         )
         return True
 
