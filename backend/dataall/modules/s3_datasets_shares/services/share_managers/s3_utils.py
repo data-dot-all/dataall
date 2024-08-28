@@ -18,7 +18,7 @@ from dataall.modules.shares_base.services.shares_enums import ShareObjectDataPer
 SID_TO_ACTIONS = {
     DATAALL_READ_ONLY_SID: ['s3:List*', 's3:GetObject'],
     DATAALL_WRITE_ONLY_SID: ['s3:PutObject'],
-    DATAALL_MODIFY_ONLY_SID: ['s3:DeleteObject', 's3:DeleteObjects'],
+    DATAALL_MODIFY_ONLY_SID: ['s3:DeleteObject'],
     DATAALL_BUCKET_KMS_DECRYPT_SID: ['kms:Decrypt'],
     DATAALL_BUCKET_KMS_ENCRYPT_SID: ['kms:Encrypt', 'kms:ReEncrypt*', 'kms:GenerateDataKey*'],
     DATAALL_ACCESS_POINT_KMS_DECRYPT_SID: ['kms:Decrypt'],
