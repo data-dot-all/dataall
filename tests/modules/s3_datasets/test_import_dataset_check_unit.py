@@ -13,7 +13,7 @@ def test_s3_managed_bucket_import(mock_aws_client, api_context_1):
 
     mock_encryption_bucket(mock_aws_client, 'AES256', None)
 
-    assert DatasetService.check_imported_resources(dataset, {})
+    assert DatasetService.check_imported_resources(dataset)
 
 
 def test_s3_managed_bucket_but_bucket_encrypted_with_kms(mock_aws_client, api_context_1):

@@ -105,7 +105,7 @@ class DatasetService:
         return True
 
     @staticmethod
-    def check_imported_resources(dataset: S3Dataset, data: dict):
+    def check_imported_resources(dataset: S3Dataset, data: dict = {}):
         # check that resource names are valid
         if dataset.S3BucketName:
             NamingConventionService(
