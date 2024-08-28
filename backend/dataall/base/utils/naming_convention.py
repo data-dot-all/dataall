@@ -8,10 +8,9 @@ class NamingConventionPattern(Enum):
         'regex': '[^a-zA-Z0-9-]',
         'separator': '-',
         'max_length': 63,
-        'valid_external_regex': '^[a-z0-9][a-z0-9.-]{1,61}[' 'a-z0-9]$',
-        'max_imported_length': 63,
+        'valid_external_regex': '(?!(^xn--|.+-s3alias$))^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$',
     }
-    KMS = {'regex': '[a-zA-Z0-9/_-]+$', 'separator': '-', 'max_length': 63}
+    KMS = {'regex': '[a-zA-Z0-9_-]+$', 'separator': '-', 'max_length': 63, 'valid_external_regex': '[a-zA-Z0-9_-]+$'}
     IAM = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 63}  # Role names up to 64 chars
     IAM_POLICY = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 128}  # Policy names up to 128 chars
     GLUE = {
@@ -72,17 +71,15 @@ class NamingConventionService:
             )
 
     def validate_imported_name(self):
-        regex = NamingConventionPattern[self.service].value['regex']
         max_length = NamingConventionPattern[self.service].value['max_length']
-        valid_external_regex = NamingConventionPattern[self.service].value.get('valid_external_regex', regex)
-        max_imported_length = NamingConventionPattern[self.service].value.get('max_length', max_length)
+        valid_external_regex = NamingConventionPattern[self.service].value.get('valid_external_regex', '.*')
         if 'arn:aws:' in self.target_label:
             raise Exception('An error occurred (InvalidInput): name expected, arn-like string received')
         if not re.search(valid_external_regex, self.target_label):
             raise Exception(
                 f'An error occurred (InvalidInput): label value {self.target_label} must match the pattern {valid_external_regex}'
             )
-        elif len(self.target_label) > max_imported_length:
+        elif len(self.target_label) > max_length:
             raise Exception(
-                f'An error occurred (InvalidInput): label value {self.target_label} must be less than {max_imported_length} characters'
+                f'An error occurred (InvalidInput): label value {self.target_label} must be less than {max_length} characters'
             )
