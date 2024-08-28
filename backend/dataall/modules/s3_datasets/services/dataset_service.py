@@ -142,7 +142,6 @@ class DatasetService:
                 target_uri=dataset.datasetUri,
                 target_label=kms_alias,
                 pattern=NamingConventionPattern.KMS,
-                resource_prefix='',
             ).validate_imported_name()
 
             key_exists = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).check_key_exists(
