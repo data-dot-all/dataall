@@ -68,7 +68,7 @@ def get_stack_logs(context: Context, source, targetUri: str = None, targetType: 
     query = StackService.get_stack_logs(target_uri=targetUri, target_type=targetType)
     envname = os.getenv('envname', 'local')
     log_group_name = f"/{Parameter().get_parameter(env=envname, path='resourcePrefix')}/{envname}/ecs/cdkproxy"
-    log_query_period_days = config.config.get_property('core.log_query_period_days', 1)
+    log_query_period_days = config.get_property('core.log_query_period_days', 1)
 
     results = CloudWatch.run_query(
         query=query,
