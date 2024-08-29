@@ -101,16 +101,6 @@ class DatasetStack(Stack):
         env = self.get_env(dataset)
         env_group = self.get_env_group(dataset)
         self.pivot_role_name = SessionHelper.get_delegation_role_name(region=env.region)
-        
-        dataset_basename = NamingConventionService(
-            target_uri=dataset.datasetUri,
-            target_label=dataset.label,
-            pattern=NamingConventionPattern.GLUE_ETL,
-            resource_prefix=env.resourcePrefix,
-        ).build_compliant_name()
-        
-        glue_sec_conf_enc_key_name = f'{dataset_basename}-log-enc-key'
-        glue_sec_conf_name=f'{dataset_basename}-security-config'
 
         dataset_basename = NamingConventionService(
             target_uri=dataset.datasetUri,
@@ -486,50 +476,6 @@ class DatasetStack(Stack):
                 },
                 'DatabaseAdministrators': dataset_admins,
             },
-        )
-        
-        glue_sec_conf_enc_key = kms.Key(
-            self,
-            f'{glue_sec_conf_enc_key_name}',
-            removal_policy=RemovalPolicy.DESTROY,
-            alias=f'{glue_sec_conf_enc_key_name}',
-            enable_key_rotation=True,
-            admins=[
-                iam.ArnPrincipal(env.CDKRoleArn),
-            ],
-        )
-
-        glue_sec_conf_enc_key.add_to_resource_policy(
-            iam.PolicyStatement(
-                sid='EnableCrawlerIAMRoleKeyUsage',
-                resources=['*'],
-                effect=iam.Effect.ALLOW,
-                principals=[dataset_admin_role],
-                actions=['kms:Encrypt', 'kms:Decrypt', 'kms:ReEncrypt*', 'kms:GenerateDataKey*', 'kms:DescribeKey'],
-            )
-        )
-
-        glue_sec_conf_enc_key.grant_encrypt_decrypt(iam.ServicePrincipal('logs.amazonaws.com'))
-        glue_sec_conf_enc_key.grant_encrypt_decrypt(iam.ServicePrincipal('glue.amazonaws.com'))
-        glue_sec_conf_enc_key.grant_encrypt_decrypt(iam.ServicePrincipal('s3.amazonaws.com'))
-
-        glue_crawler_security_config = glue.CfnSecurityConfiguration(
-            self,
-            f'{glue_sec_conf_name}',
-            encryption_configuration=glue.CfnSecurityConfiguration.EncryptionConfigurationProperty(
-                cloud_watch_encryption=glue.CfnSecurityConfiguration.CloudWatchEncryptionProperty(
-                    cloud_watch_encryption_mode='SSE-KMS', kms_key_arn=glue_sec_conf_enc_key.key_arn
-                ),
-                job_bookmarks_encryption=glue.CfnSecurityConfiguration.JobBookmarksEncryptionProperty(
-                    job_bookmarks_encryption_mode='CSE-KMS', kms_key_arn=glue_sec_conf_enc_key.key_arn
-                ),
-                s3_encryptions=[
-                    glue.CfnSecurityConfiguration.S3EncryptionProperty(
-                        s3_encryption_mode='SSE-KMS', kms_key_arn=glue_sec_conf_enc_key.key_arn
-                    )
-                ]
-            ),
-            name=f'{glue_sec_conf_name}',
         )
 
         glue_sec_conf_enc_key = kms.Key(
