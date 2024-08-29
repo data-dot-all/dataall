@@ -114,7 +114,7 @@ class DatasetService:
                 pattern=NamingConventionPattern.S3,
             ).validate_imported_name()
 
-        if dataset.importedGlueDatabase and dataset.GlueDatabaseName:
+        if dataset.importedGlueDatabase:
             NamingConventionService(
                 target_uri=dataset.datasetUri,
                 target_label=data.get('glueDatabaseName', 'undefined'),
