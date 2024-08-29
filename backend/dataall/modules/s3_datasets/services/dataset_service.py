@@ -20,6 +20,7 @@ from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.s3_datasets.db.dataset_bucket_repositories import DatasetBucketRepository
+from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.modules.s3_datasets.aws.glue_dataset_client import DatasetCrawler
@@ -262,7 +263,7 @@ class DatasetService:
                     if k not in ['stewards', 'KmsAlias']:
                         setattr(dataset, k, data.get(k))
 
-                DatasetRepository.update_dataset_shares_expiration(
+                ShareObjectRepository.update_dataset_shares_expiration(
                     session=session,
                     enabledExpiration=dataset.enableExpiration,
                     datasetUri=dataset.datasetUri,
