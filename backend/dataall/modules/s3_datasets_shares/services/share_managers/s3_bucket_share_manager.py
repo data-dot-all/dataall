@@ -6,24 +6,30 @@ from dataall.base.aws.iam import IAM
 from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.modules.s3_datasets.db.dataset_models import DatasetBucket
 from dataall.modules.s3_datasets_shares.aws.kms_client import (
     KmsClient,
-    DATAALL_BUCKET_KMS_DECRYPT_SID,
     DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID,
 )
-from dataall.modules.s3_datasets_shares.aws.s3_client import S3ControlClient, S3Client, DATAALL_READ_ONLY_SID
-from dataall.modules.shares_base.db.share_object_models import ShareObject
-from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
-from dataall.modules.shares_base.services.share_manager_utils import ShareErrorFormatter
+from dataall.modules.s3_datasets_shares.aws.s3_client import S3ControlClient, S3Client
 from dataall.modules.s3_datasets_shares.services.s3_share_alarm_service import S3ShareAlarmService
 from dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service import (
     S3SharePolicyService,
     IAM_S3_BUCKETS_STATEMENT_SID,
     EMPTY_STATEMENT_SID,
 )
-from dataall.modules.shares_base.services.shares_enums import PrincipalType
-from dataall.modules.s3_datasets.db.dataset_models import DatasetBucket
+from dataall.modules.s3_datasets_shares.services.share_managers.s3_utils import (
+    generate_policy_statement,
+    perms_to_sids,
+    get_principal_list,
+    add_target_arn_to_statement_principal,
+    SidType,
+)
+from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
+from dataall.modules.shares_base.services.share_manager_utils import ShareErrorFormatter
+from dataall.modules.shares_base.services.shares_enums import PrincipalType
 from dataall.modules.shares_base.services.sharing_service import ShareData
 
 logger = logging.getLogger(__name__)
@@ -296,23 +302,25 @@ class S3BucketShareManager:
             return
         s3_client = S3Client(self.source_account_id, self.source_environment.region)
         bucket_policy = s3_client.get_bucket_policy(self.bucket_name)
-        error = False
         if not bucket_policy:
-            error = True
+            self.bucket_errors.append(
+                ShareErrorFormatter.missing_permission_error_msg(
+                    target_requester_arn, 'Bucket Policy is missing', '', 'S3 Bucket', self.bucket_name
+                )
+            )
         else:
             bucket_policy = json.loads(bucket_policy)
             counter = count()
             statements = {item.get('Sid', next(counter)): item for item in bucket_policy.get('Statement', {})}
-            if DATAALL_READ_ONLY_SID not in statements.keys():
-                error = True
-            elif f'{target_requester_arn}' not in self.get_principal_list(statements[DATAALL_READ_ONLY_SID]):
-                error = True
-        if error:
-            self.bucket_errors.append(
-                ShareErrorFormatter.missing_permission_error_msg(
-                    target_requester_arn, 'Bucket Policy', DATAALL_READ_ONLY_SID, 'S3 Bucket', f'{self.bucket_name}'
-                )
-            )
+            for target_sid in perms_to_sids(self.share.permissions, SidType.BucketPolicy):
+                if target_sid not in statements.keys() or f'{target_requester_arn}' not in get_principal_list(
+                    statements[target_sid]
+                ):
+                    self.bucket_errors.append(
+                        ShareErrorFormatter.missing_permission_error_msg(
+                            target_requester_arn, 'Bucket Policy', target_sid, 'S3 Bucket', self.bucket_name
+                        )
+                    )
 
     def grant_role_bucket_policy(self):
         """
@@ -333,18 +341,18 @@ class S3BucketShareManager:
             bucket_policy = self.get_bucket_policy_or_default()
             counter = count()
             statements = {item.get('Sid', next(counter)): item for item in bucket_policy.get('Statement', {})}
-            if DATAALL_READ_ONLY_SID in statements.keys():
-                logger.info(f'Bucket policy contains share statement {DATAALL_READ_ONLY_SID}, updating the current one')
-                statements[DATAALL_READ_ONLY_SID] = self.add_target_arn_to_statement_principal(
-                    statements[DATAALL_READ_ONLY_SID], target_requester_arn
-                )
-            else:
-                logger.info(
-                    f'Bucket policy does not contain share statement {DATAALL_READ_ONLY_SID}, generating a new one'
-                )
-                statements[DATAALL_READ_ONLY_SID] = self.generate_default_bucket_read_policy_statement(
-                    self.bucket_name, target_requester_arn
-                )
+
+            for target_sid in perms_to_sids(self.share.permissions, SidType.BucketPolicy):
+                if target_sid in statements:
+                    logger.info(f'Bucket policy contains share statement {target_sid}, updating the current one')
+                    statements[target_sid] = add_target_arn_to_statement_principal(
+                        statements[target_sid], target_requester_arn
+                    )
+                else:
+                    logger.info(f'Bucket policy does not contain share statement {target_sid}, generating a new one')
+                    statements[target_sid] = self.generate_default_bucket_policy_statement(
+                        self.bucket_name, target_requester_arn, target_sid
+                    )
 
             bucket_policy['Statement'] = list(statements.values())
             s3_client = S3Client(self.source_account_id, self.source_environment.region)
@@ -352,20 +360,6 @@ class S3BucketShareManager:
         except Exception as e:
             logger.exception(f'Failed during bucket policy management {e}')
             raise e
-
-    def add_target_arn_to_statement_principal(self, statement, target_requester_arn):
-        principal_list = self.get_principal_list(statement)
-        if f'{target_requester_arn}' not in principal_list:
-            principal_list.append(f'{target_requester_arn}')
-        statement['Principal']['AWS'] = principal_list
-        return statement
-
-    @staticmethod
-    def get_principal_list(statement):
-        principal_list = statement['Principal']['AWS']
-        if isinstance(principal_list, str):
-            principal_list = [principal_list]
-        return principal_list
 
     def check_dataset_bucket_key_policy(self) -> None:
         """
@@ -393,21 +387,19 @@ class S3BucketShareManager:
         counter = count()
         statements = {item.get('Sid', next(counter)): item for item in existing_policy.get('Statement', {})}
 
-        error = False
-        if DATAALL_BUCKET_KMS_DECRYPT_SID not in statements.keys():
-            error = True
-        elif f'{target_requester_arn}' not in self.get_principal_list(statements[DATAALL_BUCKET_KMS_DECRYPT_SID]):
-            error = True
-        if error:
-            self.bucket_errors.append(
-                ShareErrorFormatter.missing_permission_error_msg(
-                    self.target_requester_IAMRoleName,
-                    'KMS Key Policy',
-                    DATAALL_BUCKET_KMS_DECRYPT_SID,
-                    'KMS Key',
-                    f'{kms_key_id}',
+        for target_sid in perms_to_sids(self.share.permissions, SidType.KmsBucketPolicy):
+            if target_sid not in statements.keys() or f'{target_requester_arn}' not in get_principal_list(
+                statements[target_sid]
+            ):
+                self.bucket_errors.append(
+                    ShareErrorFormatter.missing_permission_error_msg(
+                        self.target_requester_IAMRoleName,
+                        'KMS Key Policy',
+                        target_sid,
+                        'KMS Key',
+                        f'{kms_key_id}',
+                    )
                 )
-            )
         return
 
     def grant_dataset_bucket_key_policy(self):
@@ -447,21 +439,17 @@ class S3BucketShareManager:
                         pivot_role_name, self.source_account_id
                     )
                 )
-
-                if DATAALL_BUCKET_KMS_DECRYPT_SID in statements.keys():
-                    logger.info(
-                        f'KMS key policy contains share statement {DATAALL_BUCKET_KMS_DECRYPT_SID}, updating the current one'
-                    )
-                    statements[DATAALL_BUCKET_KMS_DECRYPT_SID] = self.add_target_arn_to_statement_principal(
-                        statements[DATAALL_BUCKET_KMS_DECRYPT_SID], target_requester_arn
-                    )
-                else:
-                    logger.info(
-                        f'KMS key does not contain share statement {DATAALL_BUCKET_KMS_DECRYPT_SID}, generating a new one'
-                    )
-                    statements[DATAALL_BUCKET_KMS_DECRYPT_SID] = self.generate_default_kms_decrypt_policy_statement(
-                        target_requester_arn
-                    )
+                for target_sid in perms_to_sids(self.share.permissions, SidType.KmsBucketPolicy):
+                    if target_sid in statements.keys():
+                        logger.info(f'KMS key policy contains share statement {target_sid}, updating the current one')
+                        statements[target_sid] = add_target_arn_to_statement_principal(
+                            statements[target_sid], target_requester_arn
+                        )
+                    else:
+                        logger.info(f'KMS key does not contain share statement {target_sid}, generating a new one')
+                        statements[target_sid] = self.generate_default_kms_policy_statement(
+                            target_requester_arn, target_sid
+                        )
                 existing_policy['Statement'] = list(statements.values())
 
             else:
@@ -469,10 +457,13 @@ class S3BucketShareManager:
                 existing_policy = {
                     'Version': '2012-10-17',
                     'Statement': [
-                        self.generate_default_kms_decrypt_policy_statement(target_requester_arn),
                         self.generate_enable_pivot_role_permissions_policy_statement(
                             pivot_role_name, self.source_account_id
                         ),
+                    ]
+                    + [
+                        self.generate_default_kms_policy_statement(target_requester_arn, target_sid)
+                        for target_sid in perms_to_sids(self.share.permissions, SidType.KmsBucketPolicy)
                     ],
                 }
             kms_client.put_key_policy(kms_key_id, json.dumps(existing_policy))
@@ -490,16 +481,17 @@ class S3BucketShareManager:
                 target_requester_arn = f'arn:aws:iam::{self.target_account_id}:role/{self.target_requester_IAMRoleName}'
             counter = count()
             statements = {item.get('Sid', next(counter)): item for item in bucket_policy.get('Statement', {})}
-            if DATAALL_READ_ONLY_SID in statements.keys():
-                principal_list = self.get_principal_list(statements[DATAALL_READ_ONLY_SID])
-                if f'{target_requester_arn}' in principal_list:
-                    principal_list.remove(f'{target_requester_arn}')
-                    if len(principal_list) == 0:
-                        statements.pop(DATAALL_READ_ONLY_SID)
-                    else:
-                        statements[DATAALL_READ_ONLY_SID]['Principal']['AWS'] = principal_list
-                    bucket_policy['Statement'] = list(statements.values())
-                    s3_client.create_bucket_policy(self.bucket_name, json.dumps(bucket_policy))
+            for target_sid in perms_to_sids(self.share.permissions, SidType.BucketPolicy):
+                if target_sid in statements.keys():
+                    principal_list = get_principal_list(statements[target_sid])
+                    if f'{target_requester_arn}' in principal_list:
+                        principal_list.remove(f'{target_requester_arn}')
+                        if len(principal_list) == 0:
+                            statements.pop(target_sid)
+                        else:
+                            statements[target_sid]['Principal']['AWS'] = principal_list
+                        bucket_policy['Statement'] = list(statements.values())
+                        s3_client.create_bucket_policy(self.bucket_name, json.dumps(bucket_policy))
         except Exception as e:
             logger.exception(f'Failed during bucket policy management {e}')
             raise e
@@ -578,16 +570,17 @@ class S3BucketShareManager:
                 target_requester_arn = f'arn:aws:iam::{self.target_account_id}:role/{self.target_requester_IAMRoleName}'
             counter = count()
             statements = {item.get('Sid', next(counter)): item for item in existing_policy.get('Statement', {})}
-            if DATAALL_BUCKET_KMS_DECRYPT_SID in statements.keys():
-                principal_list = self.get_principal_list(statements[DATAALL_BUCKET_KMS_DECRYPT_SID])
-                if f'{target_requester_arn}' in principal_list:
-                    principal_list.remove(f'{target_requester_arn}')
-                    if len(principal_list) == 0:
-                        statements.pop(DATAALL_BUCKET_KMS_DECRYPT_SID)
-                    else:
-                        statements[DATAALL_BUCKET_KMS_DECRYPT_SID]['Principal']['AWS'] = principal_list
-                    existing_policy['Statement'] = list(statements.values())
-                    kms_client.put_key_policy(kms_key_id, json.dumps(existing_policy))
+            for target_sid in perms_to_sids(self.share.permissions, SidType.KmsBucketPolicy):
+                if target_sid in statements.keys():
+                    principal_list = get_principal_list(statements[target_sid])
+                    if f'{target_requester_arn}' in principal_list:
+                        principal_list.remove(f'{target_requester_arn}')
+                        if len(principal_list) == 0:
+                            statements.pop(target_sid)
+                        else:
+                            statements[target_sid]['Principal']['AWS'] = principal_list
+                        existing_policy['Statement'] = list(statements.values())
+                        kms_client.put_key_policy(kms_key_id, json.dumps(existing_policy))
 
     def handle_share_failure(self, error: Exception) -> bool:
         """
@@ -626,42 +619,17 @@ class S3BucketShareManager:
         return True
 
     @staticmethod
-    def generate_default_bucket_read_policy_statement(s3_bucket_name, target_requester_arn):
-        return {
-            'Sid': f'{DATAALL_READ_ONLY_SID}',
-            'Effect': 'Allow',
-            'Principal': {'AWS': [f'{target_requester_arn}']},
-            'Action': ['s3:List*', 's3:GetObject'],
-            'Resource': [f'arn:aws:s3:::{s3_bucket_name}', f'arn:aws:s3:::{s3_bucket_name}/*'],
-        }
+    def generate_default_bucket_policy_statement(s3_bucket_name, target_requester_arn, target_sid):
+        return generate_policy_statement(
+            target_sid, [target_requester_arn], [f'arn:aws:s3:::{s3_bucket_name}', f'arn:aws:s3:::{s3_bucket_name}/*']
+        )
 
     @staticmethod
-    def generate_default_kms_decrypt_policy_statement(target_requester_arn):
-        return {
-            'Sid': f'{DATAALL_BUCKET_KMS_DECRYPT_SID}',
-            'Effect': 'Allow',
-            'Principal': {'AWS': [f'{target_requester_arn}']},
-            'Action': 'kms:Decrypt',
-            'Resource': '*',
-        }
+    def generate_default_kms_policy_statement(target_requester_arn, target_sid):
+        return generate_policy_statement(target_sid, [target_requester_arn], ['*'])
 
     @staticmethod
     def generate_enable_pivot_role_permissions_policy_statement(pivot_role_name, source_account_id):
-        return {
-            'Sid': f'{DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID}',
-            'Effect': 'Allow',
-            'Principal': {'AWS': [f'arn:aws:iam::{source_account_id}:role/{pivot_role_name}']},
-            'Action': [
-                'kms:Decrypt',
-                'kms:Encrypt',
-                'kms:GenerateDataKey*',
-                'kms:PutKeyPolicy',
-                'kms:GetKeyPolicy',
-                'kms:ReEncrypt*',
-                'kms:TagResource',
-                'kms:UntagResource',
-                'kms:DescribeKey',
-                'kms:List*',
-            ],
-            'Resource': '*',
-        }
+        return generate_policy_statement(
+            DATAALL_KMS_PIVOT_ROLE_PERMISSIONS_SID, [f'arn:aws:iam::{source_account_id}:role/{pivot_role_name}'], ['*']
+        )

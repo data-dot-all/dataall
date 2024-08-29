@@ -6,7 +6,7 @@ import pytest
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
-from dataall.modules.shares_base.services.shares_enums import ShareableType, PrincipalType
+from dataall.modules.shares_base.services.shares_enums import ShareableType, PrincipalType, ShareObjectDataPermission
 from dataall.modules.shares_base.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.shares_base.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
@@ -402,7 +402,12 @@ def share_item(db):
 @pytest.fixture(scope='module')
 def share(db):
     def factory(
-        dataset: S3Dataset, environment: Environment, env_group: EnvironmentGroup, owner: str, status: str
+        dataset: S3Dataset,
+        environment: Environment,
+        env_group: EnvironmentGroup,
+        owner: str,
+        status: str,
+        permissions=[ShareObjectDataPermission.Read.value],
     ) -> ShareObject:
         with db.scoped_session() as session:
             share = ShareObject(
@@ -414,6 +419,7 @@ def share(db):
                 principalType=PrincipalType.Group.value,
                 principalRoleName=env_group.environmentIAMRoleName,
                 status=status,
+                permissions=[permissions],
             )
             session.add(share)
             session.commit()

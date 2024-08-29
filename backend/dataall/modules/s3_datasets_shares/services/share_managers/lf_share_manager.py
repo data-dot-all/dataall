@@ -1,30 +1,70 @@
 import logging
 import time
 from datetime import datetime
-from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.modules.s3_datasets_shares.aws.glue_client import GlueClient
-from dataall.modules.s3_datasets_shares.aws.lakeformation_client import LakeFormationClient
-from dataall.base.aws.quicksight import QuicksightClient
+from enum import Enum, auto
+from typing import List
+
 from dataall.base.aws.iam import IAM
+from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.db import exceptions
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.modules.s3_datasets.db.dataset_models import DatasetTable
+from dataall.modules.s3_datasets_shares.aws.glue_client import GlueClient
+from dataall.modules.s3_datasets_shares.aws.lakeformation_client import LakeFormationClient
+from dataall.modules.s3_datasets_shares.services.s3_share_alarm_service import S3ShareAlarmService
+from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObjectItemDataFilter
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.s3_datasets_shares.db.s3_share_object_repositories import S3ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
+from dataall.modules.shares_base.services.share_manager_utils import ShareErrorFormatter
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemStatus,
     ShareObjectActions,
     ShareItemActions,
     ShareItemHealthStatus,
+    ShareObjectDataPermission,
 )
-from dataall.modules.s3_datasets.db.dataset_models import DatasetTable
-from dataall.modules.s3_datasets_shares.services.s3_share_alarm_service import S3ShareAlarmService
-from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObjectItemDataFilter
-from dataall.modules.shares_base.services.share_manager_utils import ShareErrorFormatter
 from dataall.modules.shares_base.services.sharing_service import ShareData
 
 logger = logging.getLogger(__name__)
+
+
+class LfPermType(Enum):
+    Table = auto()
+    Database = auto()
+    ResourceLink = auto()
+    Filters = auto()
+
+
+PERM_TO_LF_PERMS = {
+    ShareObjectDataPermission.Read.value: {
+        LfPermType.Table: ['DESCRIBE', 'SELECT'],
+        LfPermType.Database: ['DESCRIBE'],
+        LfPermType.ResourceLink: ['DESCRIBE'],
+        LfPermType.Filters: ['SELECT'],
+    },
+    ShareObjectDataPermission.Write.value: {
+        LfPermType.Table: ['INSERT'],
+        LfPermType.Database: ['CREATE_TABLE'],
+        LfPermType.ResourceLink: ['DESCRIBE'],
+        LfPermType.Filters: ['SELECT'],
+    },
+    ShareObjectDataPermission.Modify.value: {
+        LfPermType.Table: ['ALTER', 'DROP', 'DELETE'],
+        LfPermType.Database: ['ALTER', 'DROP'],
+        LfPermType.ResourceLink: ['DESCRIBE'],
+        LfPermType.Filters: ['SELECT'],
+    },
+}
+
+
+def perms_to_lfperms(permissions: List[str], lf_perm_type: LfPermType) -> List[str]:
+    lfperms = list()
+    for p in permissions:
+        lfperms.extend(PERM_TO_LF_PERMS[p][lf_perm_type])
+    return list(dict.fromkeys(lfperms))
 
 
 class LFShareManager:
@@ -258,18 +298,22 @@ class LFShareManager:
 
     def check_principals_permissions_to_shared_database(self) -> None:
         """
-        Checks 'DESCRIBE' Lake Formation permissions to data.all PivotRole to the shared database in target account
+        Checks Lake Formation permissions to data.all PivotRole to the shared database in target account
         and add to db level errors if check fails
         :return: None
         """
         if not self.lf_client_in_target.check_permissions_to_database(
             principals=self.principals,
             database_name=self.shared_db_name,
-            permissions=['DESCRIBE'],
+            permissions=perms_to_lfperms(self.share.permissions, LfPermType.Database),
         ):
             self.db_level_errors.append(
                 ShareErrorFormatter.missing_permission_error_msg(
-                    self.principals, 'LF', ['DESCRIBE'], 'Glue DB', self.shared_db_name
+                    self.principals,
+                    'LF',
+                    perms_to_lfperms(self.share.permissions, LfPermType.Database),
+                    'Glue DB',
+                    self.shared_db_name,
                 )
             )
 
@@ -277,7 +321,7 @@ class LFShareManager:
         self, table: DatasetTable, share_item: ShareObjectItem, share_item_filter: ShareObjectItemDataFilter = None
     ) -> None:
         """
-        Checks 'DESCRIBE' 'SELECT' Lake Formation permissions to target principals to the original table in source account
+        Checks Lake Formation permissions to target principals to the original table in source account
         and add to tbl level errors if check fails
         :param table: DatasetTable
         :return: None
@@ -288,14 +332,14 @@ class LFShareManager:
                 database_name=self.source_database_name,
                 table_name=table.GlueTableName,
                 catalog_id=self.source_account_id,
-                permissions=['SELECT'],
+                permissions=perms_to_lfperms(self.share.permissions, LfPermType.Filters),
                 data_filters=share_item_filter.dataFilterNames,
             ):
                 self.tbl_level_errors.append(
                     ShareErrorFormatter.missing_permission_error_msg(
                         self.principals,
                         'LF',
-                        ['SELECT'],
+                        perms_to_lfperms(self.share.permissions, LfPermType.Filters),
                         'Glue Table with Filters',
                         f'{table.GlueDatabaseName}.{table.GlueTableName}, Filters:{share_item_filter.dataFilterNames}',
                     )
@@ -306,13 +350,13 @@ class LFShareManager:
                 database_name=self.source_database_name,
                 table_name=table.GlueTableName,
                 catalog_id=self.source_account_id,
-                permissions=['DESCRIBE', 'SELECT'],
+                permissions=perms_to_lfperms(self.share.permissions, LfPermType.Table),
             ):
                 self.tbl_level_errors.append(
                     ShareErrorFormatter.missing_permission_error_msg(
                         self.principals,
                         'LF',
-                        ['DESCRIBE', 'SELECT'],
+                        perms_to_lfperms(self.share.permissions, LfPermType.Table),
                         'Glue Table',
                         f'{table.GlueDatabaseName}.{table.GlueTableName}',
                     )
@@ -340,13 +384,13 @@ class LFShareManager:
 
     def grant_principals_database_permissions_to_shared_database(self) -> True:
         """
-        Grants 'DESCRIBE' Lake Formation permissions to share principals to the shared database in target account
+        Grants Lake Formation permissions to share principals to the shared database in target account
         :return: True if it is successful
         """
         self.lf_client_in_target.grant_permissions_to_database(
             principals=self.principals,
             database_name=self.shared_db_name,
-            permissions=['DESCRIBE'],
+            permissions=perms_to_lfperms(self.share.permissions, LfPermType.Database),
         )
         return True
 
@@ -354,7 +398,7 @@ class LFShareManager:
         self, table: DatasetTable, share_item: ShareObjectItem, share_item_filter: ShareObjectItemDataFilter = None
     ) -> True:
         """
-        Grants 'DESCRIBE' 'SELECT' Lake Formation permissions to target principals to the original table in source account
+        Grants Lake Formation permissions to target principals to the original table in source account
         :param table: DatasetTable
         :return: True if it is successful
         """
@@ -364,7 +408,7 @@ class LFShareManager:
                 database_name=self.source_database_name,
                 table_name=table.GlueTableName,
                 catalog_id=self.source_account_id,
-                permissions=['SELECT'],
+                permissions=perms_to_lfperms(self.share.permissions, LfPermType.Filters),
                 data_filters=share_item_filter.dataFilterNames,
             )
         else:
@@ -373,9 +417,9 @@ class LFShareManager:
                 database_name=self.source_database_name,
                 table_name=table.GlueTableName,
                 catalog_id=self.source_account_id,
-                permissions=['DESCRIBE', 'SELECT'],
+                permissions=perms_to_lfperms(self.share.permissions, LfPermType.Table),
             )
-        time.sleep(2)
+            time.sleep(2)
         return True
 
     def check_if_exists_and_create_resource_link_table_in_shared_database(
@@ -398,7 +442,7 @@ class LFShareManager:
 
     def grant_principals_permissions_to_resource_link_table(self, resource_link_name: str) -> True:
         """
-        Grants 'DESCRIBE' Lake Formation permissions to share principals to the resource link table in target account
+        Grants Lake Formation permissions to share principals to the resource link table in target account
         :param table: DatasetTable
         :return: True if it is successful
         """
@@ -407,13 +451,13 @@ class LFShareManager:
             database_name=self.shared_db_name,
             table_name=resource_link_name,
             catalog_id=self.target_environment.AwsAccountId,
-            permissions=['DESCRIBE'],
+            permissions=perms_to_lfperms(self.share.permissions, LfPermType.ResourceLink),
         )
         return True
 
     def check_principals_permissions_to_resource_link_table(self, resource_link_name: str) -> None:
         """
-        Checks 'DESCRIBE' Lake Formation permissions to share principals to the resource link table in target account
+        Checks Lake Formation permissions to share principals to the resource link table in target account
         and add to tbl level errors if check fails
         :param table: DatasetTable
         :return: None
@@ -424,17 +468,21 @@ class LFShareManager:
             database_name=self.shared_db_name,
             table_name=resource_link_name,
             catalog_id=self.target_environment.AwsAccountId,
-            permissions=['DESCRIBE'],
+            permissions=perms_to_lfperms(self.share.permissions, LfPermType.ResourceLink),
         ):
             self.tbl_level_errors.append(
                 ShareErrorFormatter.missing_permission_error_msg(
-                    self.principals, 'LF', ['DESCRIBE'], 'Glue Table', f'{self.shared_db_name}.{resource_link_name}'
+                    self.principals,
+                    'LF',
+                    perms_to_lfperms(self.share.permissions, LfPermType.ResourceLink),
+                    'Glue Table',
+                    f'{self.shared_db_name}.{resource_link_name}',
                 )
             )
 
     def revoke_principals_permissions_to_resource_link_table(self, resource_link_name) -> True:
         """
-        Revokes 'DESCRIBE' Lake Formation permissions to share principals to the resource link table in target account
+        Revokes Lake Formation permissions to share principals to the resource link table in target account
         :param table: DatasetTable
         :return: True if it is successful
         """
@@ -444,7 +492,7 @@ class LFShareManager:
             database_name=self.shared_db_name,
             table_name=resource_link_name,
             catalog_id=self.target_environment.AwsAccountId,
-            permissions=['DESCRIBE'],
+            permissions=perms_to_lfperms(self.share.permissions, LfPermType.ResourceLink),
         )
         return True
 
@@ -504,13 +552,13 @@ class LFShareManager:
 
     def revoke_principals_database_permissions_to_shared_database(self) -> True:
         """
-        Revokes 'DESCRIBE' Lake Formation permissions to share principals to the shared database in target account
+        Revokes Lake Formation permissions to share principals to the shared database in target account
         :return: True if it is successful
         """
         self.lf_client_in_target.revoke_permissions_to_database(
             principals=self.principals,
             database_name=self.shared_db_name,
-            permissions=['DESCRIBE'],
+            permissions=perms_to_lfperms(self.share.permissions, LfPermType.Database),
         )
         return True
 
@@ -542,7 +590,7 @@ class LFShareManager:
         self, table: DatasetTable, share_item: ShareObjectItem, share_item_filter: ShareObjectItemDataFilter = None
     ) -> True:
         """
-        Revokes 'SELECT' Lake Formation permissions to target principals to the original table in source account
+        Revokes Lake Formation permissions to target principals to the original table in source account
         If the table is not shared with any other team in the environment,
         it deletes resource_shares on RAM associated to revoked table
         :param table: DatasetTable
@@ -555,7 +603,7 @@ class LFShareManager:
                 database_name=self.source_database_name,
                 table_name=table.GlueTableName,
                 catalog_id=self.source_account_id,
-                permissions=['SELECT'],
+                permissions=perms_to_lfperms(self.share.permissions, LfPermType.Filters),
                 data_filters=share_item_filter.dataFilterNames,
             )
         else:
@@ -564,7 +612,7 @@ class LFShareManager:
                 database_name=self.source_database_name,
                 table_name=table.GlueTableName,
                 catalog_id=self.source_account_id,
-                permissions=['DESCRIBE', 'SELECT'],
+                permissions=perms_to_lfperms(self.share.permissions, LfPermType.Table),
             )
         return True
 
