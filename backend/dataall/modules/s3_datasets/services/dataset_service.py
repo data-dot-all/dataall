@@ -6,7 +6,6 @@ from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db import exceptions
 from dataall.base.utils.naming_convention import NamingConventionPattern, NamingConventionService
 from dataall.base.utils.common_module_utils import ShareCommonUtils
-from dataall.base.utils.naming_convention import NamingConventionPattern
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.stacks.services.stack_service import StackService

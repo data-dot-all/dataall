@@ -471,8 +471,8 @@ export const ShareEditForm = (props) => {
       ) {
         setEditShareExpiration(false);
       }
-      if (response.data.getShareObject.extensionReason){
-        setShareExtensionReason(response.data.getShareObject.extensionReason)
+      if (response.data.getShareObject.extensionReason) {
+        setShareExtensionReason(response.data.getShareObject.extensionReason);
       }
       setSmthChanged(true);
     } else {
