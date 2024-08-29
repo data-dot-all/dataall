@@ -38,13 +38,10 @@ import { createDataset } from '../services';
 import {
   useClient,
   listEnvironmentGroups,
-  listValidEnvironments
+  listValidEnvironments,
+  fetchEnums
 } from 'services';
-import {
-  Topics,
-  ConfidentialityList,
-  ExpirationSettings
-} from '../../constants';
+import { Topics, ConfidentialityList } from '../../constants';
 import config from '../../../generated/config.json';
 import { isFeatureEnabled } from 'utils';
 
@@ -66,7 +63,7 @@ const DatasetCreateForm = (props) => {
       : ConfidentialityList
   );
   const [showAdvancedControls, setShowAdvancedControl] = useState(false);
-  const [expirationMenu] = useState(ExpirationSettings);
+  const [expirationMenu, setExpirationMenu] = useState([]);
   const [enableShareExpiration, setEnableShareExpiration] = useState(false);
   const topicsData = Topics.map((t) => ({ label: t, value: t }));
 
@@ -112,9 +109,31 @@ const DatasetCreateForm = (props) => {
     }
   };
 
+  const fetchExpirationOptions = async () => {
+    try {
+      const enumExpirationsOptions = await fetchEnums(client, ['Expiration']);
+      if (enumExpirationsOptions['Expiration'].length > 0) {
+        let datasetExpirationOptions = [];
+        enumExpirationsOptions['Expiration'].map((x) => {
+          let expirationType = { key: x.name, value: x.value };
+          datasetExpirationOptions.push(expirationType);
+        });
+        setExpirationMenu(datasetExpirationOptions);
+      } else {
+        const error = 'Could not fetch expiration options';
+        dispatch({ type: SET_ERROR, error });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    }
+  };
+
   useEffect(() => {
     if (client) {
       fetchEnvironments().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+      fetchExpirationOptions().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
@@ -501,9 +520,9 @@ const DatasetCreateForm = (props) => {
                                 value={values.expirationSetting}
                                 variant="outlined"
                               >
-                                {expirationMenu.map((c) => (
-                                  <MenuItem key={c} value={c}>
-                                    {c}
+                                {expirationMenu.map((item) => (
+                                  <MenuItem key={item.key} value={item.value}>
+                                    {item.key}
                                   </MenuItem>
                                 ))}
                               </TextField>

@@ -4,6 +4,7 @@ from datetime import date, datetime
 
 from dateutil.relativedelta import relativedelta
 
+from dataall.base.utils.common_module_utils import ShareCommonUtils
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
@@ -13,7 +14,6 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.environment.services.managed_iam_policies import PolicyManager
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db.exceptions import UnauthorizedOperation, InvalidInput
-from dataall.modules.datasets_base.services.datasets_enums import DatasetExpiration
 from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
     ShareableType,
@@ -171,7 +171,7 @@ class ShareObjectService:
                 shareExpiryDate = None
                 shareExpirationPeriod = None
             elif dataset.enableExpiration:
-                shareExpiryDate = ShareObjectService.calculate_expiry_date(shareExpirationPeriod, dataset.expirySetting)
+                shareExpiryDate = ShareCommonUtils.calculate_expiry_date(shareExpirationPeriod, dataset.expirySetting)
 
             if not share:
                 share = ShareObject(
@@ -321,7 +321,7 @@ class ShareObjectService:
                     share.requestedExpiryDate = None
                     share.shareExpirationPeriod = None
                 else:
-                    expiration_date = ShareObjectService.calculate_expiry_date(expiration, dataset.expirySetting)
+                    expiration_date = ShareCommonUtils.calculate_expiry_date(expiration, dataset.expirySetting)
                     share.requestedExpiryDate = expiration_date
                     share.shareExpirationPeriod = expiration
 
@@ -504,7 +504,7 @@ class ShareObjectService:
                 )
 
             if dataset.enableExpiration:
-                expiration_date = ShareObjectService.calculate_expiry_date(expiration, dataset.expirySetting)
+                expiration_date = ShareCommonUtils.calculate_expiry_date(expiration, dataset.expirySetting)
             else:
                 raise Exception("Couldn't update share expiration as dataset doesn't have share expiration enabled")
             share.requestedExpiryDate = expiration_date
@@ -724,19 +724,3 @@ class ShareObjectService:
                 action=CREATE_SHARE_OBJECT,
                 message=f'Team: {share_object_group} is not a member of the environment {environment_uri}',
             )
-
-    @staticmethod
-    def calculate_expiry_date(expirationPeriod, expirySetting):
-        currentDate = date.today()
-        if expirySetting == DatasetExpiration.Quartely.value:
-            quarterlyCalculatedDate = currentDate + relativedelta(months=expirationPeriod * 3 - 1)
-            day = calendar.monthrange(quarterlyCalculatedDate.year, quarterlyCalculatedDate.month)[1]
-            shareExpiryDate = datetime(quarterlyCalculatedDate.year, quarterlyCalculatedDate.month, day)
-        elif expirySetting == DatasetExpiration.Monthly.value:
-            monthlyCalculatedDate = currentDate + relativedelta(months=expirationPeriod - 1)
-            monthEndDay = calendar.monthrange(monthlyCalculatedDate.year, monthlyCalculatedDate.month)[1]
-            shareExpiryDate = datetime(monthlyCalculatedDate.year, monthlyCalculatedDate.month, monthEndDay)
-        else:
-            shareExpiryDate = None
-
-        return shareExpiryDate

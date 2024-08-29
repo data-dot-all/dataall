@@ -2,17 +2,14 @@ import logging
 
 from dataall.base.api.context import Context
 from dataall.base.feature_toggle_checker import is_feature_enabled
+from dataall.base.utils.enums import Expiration
 from dataall.core.stacks.services.stack_service import StackService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.base.db.exceptions import RequiredParameter, InvalidInput
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
-from dataall.modules.datasets_base.services.datasets_enums import (
-    DatasetRole,
-    ConfidentialityClassification,
-    DatasetExpiration,
-)
+from dataall.modules.datasets_base.services.datasets_enums import DatasetRole, ConfidentialityClassification
 from dataall.modules.s3_datasets.services.dataset_service import DatasetService
 
 log = logging.getLogger(__name__)
@@ -196,7 +193,7 @@ class RequestValidator:
                 data.get('expiryMinDuration'),
                 f'cannot be greater than max expiration {data.get("expiryMaxDuration")}',
             )
-        if data.get('expirySetting') not in [item.value for item in list(DatasetExpiration)]:
+        if data.get('expirySetting') not in [item.value for item in list(Expiration)]:
             raise InvalidInput(
                 'Expiration Setting',
                 data.get('expirySetting'),

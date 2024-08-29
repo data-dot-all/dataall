@@ -71,8 +71,3 @@ class Topic(GraphQLEnumMapper):
     Energy = 'Energy'
     Customers = 'Customers'
     Misc = 'Misc'
-
-
-class DatasetExpiration(GraphQLEnumMapper):
-    Monthly = 'Monthly'
-    Quartely = 'Quarterly'

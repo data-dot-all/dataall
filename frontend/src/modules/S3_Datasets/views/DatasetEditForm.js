@@ -36,17 +36,14 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
+  fetchEnums,
   getDataset,
   listEnvironmentGroups,
   searchGlossary,
   useClient
 } from 'services';
 import { updateDataset } from '../services';
-import {
-  ConfidentialityList,
-  ExpirationSettings,
-  Topics
-} from '../../constants';
+import { ConfidentialityList, Topics } from '../../constants';
 import config from '../../../generated/config.json';
 import { isFeatureEnabled } from 'utils';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -73,7 +70,7 @@ const DatasetEditForm = (props) => {
       : ConfidentialityList
   );
   const [showAdvancedControls, setShowAdvancedControl] = useState(false);
-  const [expirationMenu] = useState(ExpirationSettings);
+  const [expirationMenu, setExpirationMenu] = useState([]);
   const [enableShareExpiration, setEnableShareExpiration] = useState(false);
   const topicsData = Topics.map((t) => ({ label: t, value: t }));
   const [datasetEditFormModalOpen, setDatasetEditFormModalOpenClose] =
@@ -154,9 +151,31 @@ const DatasetEditForm = (props) => {
     setLoading(false);
   }, [client, dispatch, params.uri, fetchGroups]);
 
+  const fetchExpirationOptions = async () => {
+    try {
+      const enumExpirationsOptions = await fetchEnums(client, ['Expiration']);
+      if (enumExpirationsOptions['Expiration'].length > 0) {
+        let datasetExpirationOptions = [];
+        enumExpirationsOptions['Expiration'].map((x) => {
+          let expirationType = { key: x.name, value: x.value };
+          datasetExpirationOptions.push(expirationType);
+        });
+        setExpirationMenu(datasetExpirationOptions);
+      } else {
+        const error = 'Could not fetch expiration options';
+        dispatch({ type: SET_ERROR, error });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    }
+  };
+
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchExpirationOptions().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client, dispatch, fetchItem]);
 
@@ -167,6 +186,7 @@ const DatasetEditForm = (props) => {
   async function submit(values, setStatus, setSubmitting, setErrors) {
     if (
       enableShareExpiration !== dataset.enableExpiration ||
+      values.expirationSetting !== dataset.expirationSetting ||
       values.minValidity !== dataset.expiryMinDuration ||
       values.maxValidity !== dataset.expiryMaxDuration
     ) {
@@ -618,9 +638,9 @@ const DatasetEditForm = (props) => {
                                 value={values.expirationSetting}
                                 variant="outlined"
                               >
-                                {expirationMenu.map((c) => (
-                                  <MenuItem key={c} value={c}>
-                                    {c}
+                                {expirationMenu.map((item) => (
+                                  <MenuItem key={item.key} value={item.value}>
+                                    {item.key}
                                   </MenuItem>
                                 ))}
                               </TextField>
