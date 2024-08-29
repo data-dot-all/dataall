@@ -10,8 +10,9 @@ import {
 import PropTypes from 'prop-types';
 import * as FaIcons from 'react-icons/fa';
 import { useNavigate } from 'react-router';
-import { IconAvatar, useCardStyle } from 'design';
+import { IconAvatar, Label, useCardStyle } from 'design';
 import { BallotOutlined } from '@mui/icons-material';
+import React from 'react';
 
 export const MetadataFormListItem = (props) => {
   const { metadata_form, visibilityDict } = props;
@@ -96,6 +97,29 @@ export const MetadataFormListItem = (props) => {
               </span>
             </Tooltip>
           </Typography>
+        </Box>
+        <Box
+          sx={{
+            px: 3,
+            py: 1
+          }}
+        >
+          <Grid container>
+            <Grid item md={4} xs={12}>
+              <Typography color="textSecondary" variant="body2">
+                <FaIcons.FaUserShield /> My Role
+              </Typography>
+            </Grid>
+            <Grid item md={8} xs={12}>
+              {metadata_form.userRole === 'Owner' ? (
+                <Label color="primary">{metadata_form.userRole || '-'}</Label>
+              ) : (
+                <Typography color="textSecondary" variant="body2">
+                  {metadata_form.userRole || '-'}
+                </Typography>
+              )}
+            </Grid>
+          </Grid>
         </Box>
         <Box
           sx={{

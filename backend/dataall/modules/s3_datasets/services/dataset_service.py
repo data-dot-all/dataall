@@ -106,6 +106,12 @@ class DatasetService:
 
     @staticmethod
     def check_imported_resources(dataset: S3Dataset):
+        with get_context().db_engine.scoped_session() as session:
+            if DatasetBucketRepository.get_dataset_bucket_by_name(session, dataset.S3BucketName):
+                raise exceptions.ResourceAlreadyExists(
+                    action=IMPORT_DATASET,
+                    message=f'Dataset with bucket {dataset.S3BucketName} already exists',
+                )
         if dataset.importedGlueDatabase:
             if len(dataset.GlueDatabaseName) > NamingConventionPattern.GLUE.value.get('max_length'):
                 raise exceptions.InvalidInput(
@@ -115,7 +121,7 @@ class DatasetService:
                 )
         kms_alias = dataset.KmsAlias
 
-        s3_encryption, kms_id = S3DatasetClient(dataset).get_bucket_encryption()
+        s3_encryption, kms_id_type, kms_id = S3DatasetClient(dataset).get_bucket_encryption()
         if kms_alias not in [None, 'Undefined', '', 'SSE-S3']:  # user-defined KMS encryption
             if s3_encryption == 'AES256':
                 raise exceptions.InvalidInput(
@@ -133,11 +139,14 @@ class DatasetService:
                     message=f'KMS key with alias={kms_alias} cannot be found - Please check if KMS Key Alias exists in account {dataset.AwsAccountId}',
                 )
 
-            key_id = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).get_key_id(
-                key_alias=f'alias/{kms_alias}'
-            )
+            key_matches = kms_id == kms_alias
+            if kms_id_type == 'key':
+                key_id = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).get_key_id(
+                    key_alias=f'alias/{kms_alias}'
+                )
+                key_matches = key_id == kms_id
 
-            if key_id != kms_id:
+            if not key_matches:
                 raise exceptions.InvalidInput(
                     param_name='KmsAlias',
                     param_value=dataset.KmsAlias,

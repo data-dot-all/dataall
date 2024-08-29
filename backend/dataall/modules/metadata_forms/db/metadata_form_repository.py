@@ -1,5 +1,5 @@
-from sqlalchemy import or_
-
+from sqlalchemy import or_, and_
+from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility
 from dataall.modules.metadata_forms.db.metadata_form_models import MetadataForm, MetadataFormField
 
 
@@ -22,8 +22,40 @@ class MetadataFormRepository:
         return session.query(MetadataForm).get(uri)
 
     @staticmethod
-    def list_metadata_forms(session, filter=None):
+    def query_metadata_forms(session, is_da_admin, groups, env_uris, org_uris, filter):
+        """
+        Returns a list of metadata forms based on the user's permissions and any provided filters.
+        DataAll admins can see allll forms, while non-admins can only see forms they have access to based on their group memberships.
+        :param session:
+        :param is_da_admin: is user dataall admin
+        :param groups: user's group memberships
+        :param env_uris: user's environment URIs
+        :param org_uris: user's organization URIs
+        :param filter:
+        """
+
         query = session.query(MetadataForm)
+
+        if not is_da_admin:
+            query = query.filter(
+                or_(
+                    MetadataForm.SamlGroupName.in_(groups),
+                    MetadataForm.visibility == MetadataFormVisibility.Global.value,
+                    and_(
+                        MetadataForm.visibility == MetadataFormVisibility.Team.value,
+                        MetadataForm.homeEntity.in_(groups),
+                    ),
+                    and_(
+                        MetadataForm.visibility == MetadataFormVisibility.Organization.value,
+                        MetadataForm.homeEntity.in_(org_uris),
+                    ),
+                    and_(
+                        MetadataForm.visibility == MetadataFormVisibility.Environment.value,
+                        MetadataForm.homeEntity.in_(env_uris),
+                    ),
+                )
+            )
+
         if filter and filter.get('search_input'):
             query = query.filter(
                 or_(
@@ -74,3 +106,7 @@ class MetadataFormRepository:
         mf.displayNumber = data.get('displayNumber', mf.displayNumber)
         session.commit()
         return mf
+
+    @staticmethod
+    def get_metadata_form_owner(session, uri):
+        return session.query(MetadataForm).get(uri).SamlGroupName
