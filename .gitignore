@@ -72,5 +72,3 @@ yarn-error.log*
 .idea
 /.ruff_cache/
 /testdata.json
-cdk.context.json
-cdk.json
