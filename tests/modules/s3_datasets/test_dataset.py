@@ -705,7 +705,7 @@ def test_update_dataset_with_expiration_with_incorrect_input(dataset2, client, g
     assert 'expiration duration  value  must be must be greater than zero' in response.errors[0].message
 
 
-def test_import_dataset_with_expiration_setting(client, env_fixture, org_fixture, db, group2, group, user, patch_es):
+def test_import_dataset_with_expiration_setting(org_fixture, env_fixture, dataset1, client, group):
     response = client.query(
         """
         mutation importDataset($input:ImportDatasetInput){
@@ -717,17 +717,17 @@ def test_import_dataset_with_expiration_setting(client, env_fixture, org_fixture
             }
         }
         """,
-        username=user.username,
+        username=dataset1.owner,
         groups=[group.name],
         input={
             'organizationUri': org_fixture.organizationUri,
             'environmentUri': env_fixture.environmentUri,
-            'label': 'datasetImported-2',
-            'bucketName': 'dhimportedbucket-2',
-            'glueDatabaseName': 'dhimportedGlueDB-2',
-            'adminRoleName': 'dhimportedRole-2',
-            'KmsKeyAlias': '1234-YYEY-2',
-            'owner': user.username,
+            'label': 'datasetImportedin',
+            'bucketName': 'dhimportedbucketin',
+            'glueDatabaseName': 'dhimportedGlueDBin',
+            'adminRoleName': 'dhimportedRolein',
+            'KmsKeyAlias': '1234-YYEY-888',
+            'owner': dataset1.owner,
             'SamlAdminGroupName': group.name,
             'enableExpiration': True,
             'expirySetting': 'Monthly',
@@ -735,7 +735,6 @@ def test_import_dataset_with_expiration_setting(client, env_fixture, org_fixture
             'expiryMaxDuration': 3,
         },
     )
-
     assert response.data.importDataset.enableExpiration == True
     assert response.data.importDataset.expirySetting == 'Monthly'
     assert response.data.importDataset.expiryMinDuration == 1
