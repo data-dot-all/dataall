@@ -40,7 +40,6 @@ ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', '*')
 Worker.queue = SqsQueue.send
 
 
-
 def resolver_adapter(resolver):
     def adapted(obj, info, **kwargs):
         return resolver(
