@@ -525,7 +525,9 @@ class S3AccessPointShareManager:
         statements = {item.get('Sid', next(counter)): item for item in existing_policy.get('Statement', {})}
 
         for target_sid in perms_to_sids(self.share.permissions, SidType.KmsAccessPointPolicy):
-            if target_sid not in statements.keys() or target_requester_arn not in get_principal_list(statements):
+            if target_sid not in statements.keys() or target_requester_arn not in get_principal_list(
+                statements[target_sid]
+            ):
                 self.folder_errors.append(
                     ShareErrorFormatter.missing_permission_error_msg(
                         self.target_requester_IAMRoleName,

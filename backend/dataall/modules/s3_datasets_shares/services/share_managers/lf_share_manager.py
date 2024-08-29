@@ -60,10 +60,10 @@ PERM_TO_LF_PERMS = {
 
 
 def perms_to_lfperms(permissions: List[str], lf_perm_type: LfPermType) -> List[str]:
-    lfperms = set()
+    lfperms = list()
     for p in permissions:
-        lfperms.update(PERM_TO_LF_PERMS[p][lf_perm_type])
-    return list(lfperms)
+        lfperms.extend(PERM_TO_LF_PERMS[p][lf_perm_type])
+    return list(dict.fromkeys(lfperms))
 
 
 class LFShareManager:

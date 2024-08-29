@@ -92,11 +92,11 @@ def perms_to_sids(permissions: List[str], sid_type: SidType) -> List[str]:
     """
     :return: unique SIDs
     """
-    return list(set([PERM_TO_SID[perm][sid_type] for perm in permissions]))
+    return list(dict.fromkeys([PERM_TO_SID[perm][sid_type] for perm in permissions]))
 
 
 def perms_to_actions(permissions: List[str], sid_type: SidType) -> List[str]:
-    actions = set()
+    actions = list()
     for sid in perms_to_sids(permissions, sid_type):
-        actions.update(SID_TO_ACTIONS[sid])
-    return list(actions)
+        actions.extend(SID_TO_ACTIONS[sid])
+    return list(dict.fromkeys(actions))
