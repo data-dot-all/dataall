@@ -186,6 +186,10 @@ class MetadataFormService:
                     message=f'User {username} can not view environment {target_env_uri}',
                 )
             envs = [target_env_uri]
+
+        if filter.get('entityType') == MetadataFormEntityTypes.Organizations.value:
+            envs = []
+
         return orgs, envs
 
     @staticmethod

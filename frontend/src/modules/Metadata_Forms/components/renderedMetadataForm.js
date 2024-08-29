@@ -38,7 +38,7 @@ export const RenderedMetadataForm = (props) => {
 
   const [localFields, setLocalFields] = useState([...fields]);
   localFields.forEach((field, index) => {
-    if(field.type === 'Boolean' && field.value === undefined){
+    if (field.type === 'Boolean' && field.value === undefined) {
       field.value = false;
     }
   });

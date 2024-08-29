@@ -72,7 +72,7 @@ class MetadataFormRepository:
 
         query = session.query(MetadataForm)
 
-        if org_uris:
+        if org_uris is not None:
             query = query.filter(
                 or_(
                     MetadataForm.visibility != MetadataFormVisibility.Organization.value,
@@ -82,7 +82,7 @@ class MetadataFormRepository:
                     ),
                 )
             )
-        if env_uris:
+        if env_uris is not None:
             query = query.filter(
                 or_(
                     MetadataForm.visibility != MetadataFormVisibility.Environment.value,
