@@ -25,7 +25,7 @@ import { listMetadataForms } from '../services';
 import { MetadataFormListItem, CreateMetadataFormModal } from '../components';
 
 function MetadataFormsListPageHeader(props) {
-  const { onCreate, visibilityDict } = props;
+  const { onCreate, visibilityDict, hasManagePermissions } = props;
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isOpeningModal, setIsOpeningModal] = useState(false);
 
@@ -80,23 +80,25 @@ function MetadataFormsListPageHeader(props) {
         </Breadcrumbs>
       </Grid>
       <Grid item>
-        <Box sx={{ m: -1 }}>
-          <Button
-            color="primary"
-            startIcon={
-              isOpeningModal ? (
-                <CircularProgress size={20} />
-              ) : (
-                <PlusIcon fontSize="small" />
-              )
-            }
-            sx={{ m: 1 }}
-            variant="contained"
-            onClick={handleOpenModal}
-          >
-            New Metadata Form
-          </Button>
-        </Box>
+        {hasManagePermissions && (
+          <Box sx={{ m: -1 }}>
+            <Button
+              color="primary"
+              startIcon={
+                isOpeningModal ? (
+                  <CircularProgress size={20} />
+                ) : (
+                  <PlusIcon fontSize="small" />
+                )
+              }
+              sx={{ m: 1 }}
+              variant="contained"
+              onClick={handleOpenModal}
+            >
+              New Metadata Form
+            </Button>
+          </Box>
+        )}
       </Grid>
     </Grid>
   );
@@ -110,6 +112,7 @@ const MetadataFormsList = () => {
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);
   const [visibilityDict, setVisibilityDict] = useState({});
+  const [hasManagePermissions, setHasManagePermissions] = useState(false);
 
   const client = useClient();
 
@@ -118,6 +121,9 @@ const MetadataFormsList = () => {
     const response = await client.query(listMetadataForms(filter));
     if (!response.errors) {
       setItems(response.data.listMetadataForms);
+      setHasManagePermissions(
+        response.data.listMetadataForms.hasTenantPermissions
+      );
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
@@ -191,6 +197,7 @@ const MetadataFormsList = () => {
           <MetadataFormsListPageHeader
             onCreate={fetchItems}
             visibilityDict={visibilityDict}
+            hasManagePermissions={hasManagePermissions}
           />
           <Box sx={{ mt: 3 }}>
             <SearchInput

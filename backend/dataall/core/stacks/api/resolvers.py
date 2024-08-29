@@ -2,6 +2,7 @@ import json
 import logging
 import os
 
+from dataall.base.config import config
 from dataall.base.api.context import Context
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.services.keyvaluetag_service import KeyValueTagService
@@ -67,10 +68,12 @@ def get_stack_logs(context: Context, source, targetUri: str = None, targetType: 
     query = StackService.get_stack_logs(target_uri=targetUri, target_type=targetType)
     envname = os.getenv('envname', 'local')
     log_group_name = f"/{Parameter().get_parameter(env=envname, path='resourcePrefix')}/{envname}/ecs/cdkproxy"
+    log_query_period_days = config.get_property('core.log_query_period_days', 1)
+
     results = CloudWatch.run_query(
         query=query,
         log_group_name=log_group_name,
-        days=1,
+        days=log_query_period_days,
     )
     log.info(f'Running Logs query {query} for log_group_name={log_group_name}')
     return results

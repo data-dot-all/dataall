@@ -286,7 +286,6 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                                     self.share_data.target_environment.environmentUri,
                                     share_item.itemUri,
                                     share_item.shareItemUri,
-                                    share_item_filter.dataFilterUris if share_item_filter else None,
                                 )
                                 else True
                             )

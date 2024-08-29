@@ -1,6 +1,8 @@
 from dataall.base.api.context import Context
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.catalog.services.glossaries_service import GlossariesService
 from dataall.modules.metadata_forms.db.metadata_form_models import MetadataForm, MetadataFormField
+from dataall.modules.metadata_forms.services.metadata_form_permissions import MANAGE_METADATA_FORMS
 from dataall.modules.metadata_forms.services.metadata_form_service import MetadataFormService, MetadataFormAccessService
 
 
@@ -46,3 +48,11 @@ def get_user_role(context: Context, source: MetadataForm):
 
 def get_fields_glossary_node_name(context: Context, source: MetadataFormField):
     return GlossariesService.get_node(source.glossaryNodeUri).label if source.glossaryNodeUri else None
+
+
+def has_tenant_permissions_for_metadata_forms(context: Context, source: MetadataForm):
+    return TenantPolicyService.has_user_tenant_permission(
+        groups=context.groups,
+        tenant_name=TenantPolicyService.TENANT_NAME,
+        permission_name=MANAGE_METADATA_FORMS,
+    )

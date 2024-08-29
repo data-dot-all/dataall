@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from dataall.base.context import set_context, RequestContext, dispose_context
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
@@ -441,3 +442,9 @@ def random_tag():
 
 def random_tags():
     return [random_tag() for i in range(1, random.choice([2, 3, 4, 5]))]
+
+
+@pytest.fixture(scope='function')
+def api_context_1(db, user, group):
+    yield set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
+    dispose_context()
