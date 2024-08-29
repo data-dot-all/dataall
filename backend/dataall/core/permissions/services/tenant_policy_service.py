@@ -159,13 +159,15 @@ class TenantPolicyService:
         group_invitation_permissions = []
         with context.db_engine.scoped_session() as session:
             for p in TENANT_ALL:
-                group_invitation_permissions.append(
-                    PermissionRepository.find_permission_by_name(
-                        session=session,
-                        permission_name=p,
-                        permission_type=PermissionType.TENANT.name,
-                    )
+                perm_obj = PermissionRepository.find_permission_by_name(
+                    session=session,
+                    permission_name=p,
+                    permission_type=PermissionType.TENANT.name,
                 )
+                if perm_obj is not None:
+                    group_invitation_permissions.append(perm_obj)
+                else:
+                    log.error(f'Permission {p} not found')
             return group_invitation_permissions
 
     @staticmethod
@@ -179,6 +181,20 @@ class TenantPolicyService:
         TenantPolicyValidationService.validate_admin_access(username, groups, 'LIST_TENANT_TEAMS')
         with context.db_engine.scoped_session() as session:
             return TenantPolicyRepository.list_tenant_groups(session, data)
+
+    @staticmethod
+    def has_user_tenant_permission(groups, permission_name, tenant_name):
+        if TenantPolicyValidationService.is_tenant_admin(groups):
+            return True
+
+        with get_context().db_engine.scoped_session() as session:
+            tenant_policy = TenantPolicyRepository.has_user_tenant_permission(
+                session=session,
+                groups=groups,
+                permission_name=permission_name,
+                tenant_name=tenant_name,
+            )
+            return tenant_policy is not None
 
     @staticmethod
     def check_user_tenant_permission(session, username: str, groups: [str], tenant_name: str, permission_name: str):

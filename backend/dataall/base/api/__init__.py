@@ -12,6 +12,7 @@ from ariadne import (
 
 from dataall.base.api import gql
 from dataall.base.api.constants import GraphQLEnumMapper
+from dataall.base.api.queries import enumsQuery
 
 
 def bootstrap():

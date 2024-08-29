@@ -77,7 +77,7 @@ COPY --chown=${CONTAINER_USER}:root config.json /config.json
 
 # Glue profiling jobs jars
 RUN mkdir -p dataall/modules/datasets/cdk/assets/glueprofilingjob/jars/
-ADD --chown=${CONTAINER_USER}:root https://repo1.maven.org/maven2/com/amazon/deequ/deequ/$DEEQU_VERSION/deequ-$DEEQU_VERSION.jar /dataall/modules/datasets/cdk/assets/glueprofilingjob/jars/
+ADD --chown=${CONTAINER_USER}:root https://repo1.maven.org/maven2/com/amazon/deequ/deequ/$DEEQU_VERSION/deequ-$DEEQU_VERSION.jar /dataall/modules/s3_datasets/cdk/assets/glueprofilingjob/jars/
 
 WORKDIR /
 

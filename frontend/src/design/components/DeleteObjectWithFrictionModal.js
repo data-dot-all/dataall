@@ -95,6 +95,7 @@ export const DeleteObjectWithFrictionModal = (props) => {
               variant="contained"
               onClick={() => {
                 deleteFunction(deleteFromAWS);
+                setConfirmValue(null);
               }}
             >
               Delete

@@ -1,9 +1,12 @@
 import pytest
 from aws_cdk.assertions import Template
 from aws_cdk import App, Stack, aws_iam
+import json
+import os
 
 from dataall.modules.mlstudio.cdk.mlstudio_stack import SagemakerStudioUserProfile
 from dataall.modules.mlstudio.cdk.mlstudio_extension import SageMakerDomainExtension
+from tests.skip_conditions import checkov_scan
 
 
 class MockEnvironmentSageMakerExtension(Stack):
@@ -112,3 +115,28 @@ def test_resources_sgmstudio_extension_stack_created(db, env_fixture):
     # Assert that we have created a SageMaker domain
     # TODO: Add more assertions
     template.resource_count_is('AWS::SageMaker::Domain', 1)
+
+
+@checkov_scan
+def test_checkov_smstudio_extension(db, env_fixture):
+    app = App()
+    stack = MockEnvironmentSageMakerExtension(
+        app,
+        'SagemakerExtension',
+        env=env_fixture,
+        db=db,
+    )
+
+    template = json.dumps(app.synth().get_stack_by_name('SagemakerExtension').template)
+    with open('checkov_smstudio_extension_synth.json', 'w') as f:
+        f.write(template)
+
+
+@checkov_scan
+def test_checkov_smstudio_user(sgm_studio):
+    app = App()
+    # Create the Stack
+    stack = SagemakerStudioUserProfile(app, 'StudioUser', target_uri=sgm_studio.sagemakerStudioUserUri)
+    template = json.dumps(app.synth().get_stack_by_name('StudioUser').template)
+    with open('checkov_smstudio_user_synth.json', 'w') as f:
+        f.write(template)

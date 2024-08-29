@@ -138,16 +138,24 @@ export const GlossaryAssociations = ({ glossary }) => {
                         <TableCell>
                           {/* eslint-disable-next-line no-underscore-dangle */}
                           {item.targetType === 'Dataset' && (
-                            <span>Dataset</span>
+                            <span>S3/Glue Dataset</span>
                           )}
                           {/* eslint-disable-next-line no-underscore-dangle */}
                           {item.targetType === 'DatasetTable' && (
-                            <span>Table</span>
+                            <span>Glue Table</span>
                           )}
                           {/* eslint-disable-next-line no-underscore-dangle */}
                           {item.targetType === 'Folder' && <span>Folder</span>}
                           {item.targetType === 'Dashboard' && (
                             <span>Dashboard</span>
+                          )}
+                          {/* eslint-disable-next-line no-underscore-dangle */}
+                          {item.targetType === 'RedshiftDataset' && (
+                            <span>Redshift Dataset</span>
+                          )}
+                          {/* eslint-disable-next-line no-underscore-dangle */}
+                          {item.targetType === 'RedshiftDatasetTable' && (
+                            <span>Redshift Table</span>
                           )}
                         </TableCell>
                         <TableCell>
@@ -194,6 +202,30 @@ export const GlossaryAssociations = ({ glossary }) => {
                               color="textPrimary"
                               component={RouterLink}
                               to={`/console/dashboards/${item.targetUri}`}
+                              variant="subtitle2"
+                            >
+                              {item.target.label}
+                            </Link>
+                          )}
+                          {/* eslint-disable-next-line no-underscore-dangle */}
+                          {item.targetType === 'RedshiftDataset' && (
+                            <Link
+                              underline="hover"
+                              color="textPrimary"
+                              component={RouterLink}
+                              to={`/console/redshift-datasets/${item.targetUri}`}
+                              variant="subtitle2"
+                            >
+                              {item.target.label}
+                            </Link>
+                          )}
+                          {/* eslint-disable-next-line no-underscore-dangle */}
+                          {item.targetType === 'RedshiftDatasetTable' && (
+                            <Link
+                              underline="hover"
+                              color="textPrimary"
+                              component={RouterLink}
+                              to={`/console/redshift-datasets/table/${item.targetUri}`}
                               variant="subtitle2"
                             >
                               {item.target.label}

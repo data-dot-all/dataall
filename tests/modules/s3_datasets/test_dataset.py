@@ -23,7 +23,7 @@ def mock_s3_client(module_mocker):
     s3_client = MagicMock()
     module_mocker.patch('dataall.modules.s3_datasets.services.dataset_service.S3DatasetClient', s3_client)
 
-    s3_client().get_bucket_encryption.return_value = ('aws:kms', mocked_key_id)
+    s3_client().get_bucket_encryption.return_value = ('aws:kms', 'key', mocked_key_id)
     yield s3_client
 
 

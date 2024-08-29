@@ -1,4 +1,5 @@
 import {
+  Alert,
   Box,
   Button,
   CardContent,
@@ -26,7 +27,7 @@ import {
 import { SET_ERROR } from '../../../globalErrors';
 import { DeleteOutlined } from '@mui/icons-material';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const ItemRow = (props) => {
   const {
@@ -42,7 +43,7 @@ const ItemRow = (props) => {
   } = props;
 
   const whatToDo = () => {
-    if (!item.status) return 'Request';
+    if (!item.status && shareStatus !== 'Revoked') return 'Request';
     if (
       item.status === 'Revoke_Succeeded' ||
       item.status === 'PendingApproval' ||
@@ -152,6 +153,7 @@ const ItemRow = (props) => {
       {(shareStatus === 'Draft' ||
         shareStatus === 'Processed' ||
         shareStatus === 'Rejected' ||
+        shareStatus === 'Revoked' ||
         shareStatus === 'Submitted') && (
         <TableCell>
           {possibleAction === 'Delete' && (
@@ -213,12 +215,24 @@ export const ShareEditForm = (props) => {
     showViewShare
   } = props;
   const navigate = useNavigate();
+  const location = useLocation();
   const [sharedItems, setSharedItems] = useState(Defaults.pagedResponse);
   const [shareStatus, setShareStatus] = useState('');
   const [filter, setFilter] = useState(Defaults.filter);
   const [loading, setLoading] = useState(false);
   const [requestPurpose, setRequestPurpose] = useState('');
   const [smthChanged, setSmthChanged] = useState(false);
+
+  const canUpdateRequestPurpose = () => {
+    return (
+      (share.userRoleForShareObject === 'Requesters' ||
+        share.userRoleForShareObject === 'ApproversAndRequesters') &&
+      (share.status === 'Draft' ||
+        share.status === 'Processed' ||
+        share.status === 'Rejected' ||
+        share.status === 'Submitted')
+    );
+  };
 
   const handlePageChange = async (event, value) => {
     if (value <= sharedItems.pages && value !== sharedItems.page) {
@@ -227,8 +241,10 @@ export const ShareEditForm = (props) => {
   };
 
   const beforeClose = async () => {
-    if (smthChanged || requestPurpose !== share.requestPurpose) {
+    if (requestPurpose !== share.requestPurpose) {
       await updateRequestPurpose();
+    }
+    if (smthChanged || requestPurpose !== share.requestPurpose) {
       onApply();
     } else {
       onCancel();
@@ -261,6 +277,10 @@ export const ShareEditForm = (props) => {
 
     if (onApply) {
       onApply();
+    }
+    const targetPath = `/console/shares/${share.shareUri}`;
+    if (location.pathname !== targetPath) {
+      navigate(targetPath);
     }
   };
 
@@ -384,6 +404,15 @@ export const ShareEditForm = (props) => {
         {getExplanation(shareStatus)}
       </Typography>
       <Box>
+        <Box sx={{ p: 1 }}>
+          {sharedItems.nodes.find((item) => item.itemType === 'S3Bucket') && (
+            <Alert severity="warning" gutterBottom sx={{ mr: 1 }}>
+              Sharing S3Bucket gives Requestor read access to{' '}
+              <b>the entire S3 Bucket</b> superseding Folder shares and
+              providing potential workarounds for Table access
+            </Alert>
+          )}
+        </Box>
         <Table>
           <TableHead>
             <TableRow>
@@ -446,12 +475,7 @@ export const ShareEditForm = (props) => {
               name="requestPurpose"
               multiline
               rows={3}
-              disabled={
-                shareStatus !== 'Draft' &&
-                shareStatus !== 'Processed' &&
-                shareStatus !== 'Rejected' &&
-                shareStatus !== 'Submitted'
-              }
+              disabled={!canUpdateRequestPurpose()}
               value={requestPurpose}
               variant="outlined"
               onChange={(event) => {
@@ -461,32 +485,34 @@ export const ShareEditForm = (props) => {
           </CardContent>
         </Box>
       </Box>
-      {shareStatus.toUpperCase() === 'DRAFT' && (
-        <CardContent>
-          <Tooltip
-            title={
-              sharedItems.nodes.filter((item) => item.status).length === 0
-                ? 'There is no items added into the request.'
-                : ''
-            }
-          >
-            <span>
-              <Button
-                onClick={sendRequest}
-                fullWidth
-                startIcon={<SendIcon fontSize="small" />}
-                color="primary"
-                variant="contained"
-                disabled={
-                  sharedItems.nodes.filter((item) => item.status).length === 0
-                }
-              >
-                Submit request
-              </Button>
-            </span>
-          </Tooltip>
-        </CardContent>
-      )}
+      {shareStatus.toUpperCase() === 'DRAFT' &&
+        (share.userRoleForShareObject === 'Requesters' ||
+          share.userRoleForShareObject === 'ApproversAndRequesters') && (
+          <CardContent>
+            <Tooltip
+              title={
+                sharedItems.nodes.filter((item) => item.status).length === 0
+                  ? 'There is no items added into the request.'
+                  : ''
+              }
+            >
+              <span>
+                <Button
+                  onClick={sendRequest}
+                  fullWidth
+                  startIcon={<SendIcon fontSize="small" />}
+                  color="primary"
+                  variant="contained"
+                  disabled={
+                    sharedItems.nodes.filter((item) => item.status).length === 0
+                  }
+                >
+                  Submit request
+                </Button>
+              </span>
+            </Tooltip>
+          </CardContent>
+        )}
       {shareStatus.toUpperCase() === 'DRAFT' && (
         <CardContent>
           <Button

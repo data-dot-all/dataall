@@ -1,6 +1,6 @@
 import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
 import ArrowRight from '@mui/icons-material/ArrowRight';
-import { TreeItem, TreeView } from '@mui/lab';
+import { TreeItem, TreeView } from '@mui/x-tree-view';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import PropTypes from 'prop-types';

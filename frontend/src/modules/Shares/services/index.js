@@ -14,3 +14,7 @@ export * from './updateShareRequestReason';
 export * from './verifyItemsShareObject';
 export * from './reApplyItemsShareObject';
 export * from './verifyDatasetShareObjects';
+export * from './updateShareItemFilters';
+export * from './getShareItemDataFilters';
+export * from './removeShareItemFilter';
+export * from './listTableDataFiltersByAttached';

@@ -26,3 +26,4 @@ export * from './SearchIcon';
 export * from './SunIcon';
 export * from './UserIcon';
 export * from './XIcon';
+export * from './AsteriskIcon';

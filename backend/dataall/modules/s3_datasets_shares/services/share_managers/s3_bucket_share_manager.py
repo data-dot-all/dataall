@@ -14,7 +14,7 @@ from dataall.modules.s3_datasets_shares.aws.kms_client import (
 from dataall.modules.s3_datasets_shares.aws.s3_client import S3ControlClient, S3Client, DATAALL_READ_ONLY_SID
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
-from dataall.modules.s3_datasets_shares.services.share_managers.share_manager_utils import ShareErrorFormatter
+from dataall.modules.shares_base.services.share_manager_utils import ShareErrorFormatter
 from dataall.modules.s3_datasets_shares.services.s3_share_alarm_service import S3ShareAlarmService
 from dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service import (
     S3SharePolicyService,
@@ -52,7 +52,7 @@ class S3BucketShareManager:
         self.source_account_id = target_bucket.AwsAccountId
         self.target_account_id = share_data.target_environment.AwsAccountId
         self.source_env_admin = share_data.source_env_group.environmentIAMRoleArn
-        self.target_requester_IAMRoleName = share_data.share.principalIAMRoleName
+        self.target_requester_IAMRoleName = share_data.share.principalRoleName
         self.bucket_name = target_bucket.S3BucketName
         self.dataset_admin = share_data.dataset.IAMDatasetAdminRoleArn
         self.bucket_region = target_bucket.region
@@ -86,7 +86,7 @@ class S3BucketShareManager:
 
         if not share_policy_service.check_if_policy_attached():
             logger.info(
-                f'IAM Policy {share_resource_policy_name} exists but is not attached to role {self.share.principalIAMRoleName}'
+                f'IAM Policy {share_resource_policy_name} exists but is not attached to role {self.share.principalRoleName}'
             )
             self.bucket_errors.append(
                 ShareErrorFormatter.dne_error_msg('IAM Policy attached', share_resource_policy_name)
@@ -118,7 +118,7 @@ class S3BucketShareManager:
             existing_policy_statement=policy_document['Statement'][s3_statement_index],
         ):
             logger.info(
-                f'IAM Policy Statement {IAM_S3_BUCKETS_STATEMENT_SID}KMS does not contain resources {s3_target_resources}'
+                f'IAM Policy Statement {IAM_S3_BUCKETS_STATEMENT_SID}S3 does not contain resources {s3_target_resources}'
             )
             self.bucket_errors.append(
                 ShareErrorFormatter.missing_permission_error_msg(
@@ -129,6 +129,34 @@ class S3BucketShareManager:
                     f'{self.bucket_name}',
                 )
             )
+        else:
+            policy_check, missing_permissions, extra_permissions = (
+                share_policy_service.check_s3_actions_in_policy_statement(
+                    existing_policy_statement=policy_document['Statement'][s3_statement_index]
+                )
+            )
+            if not policy_check:
+                logger.info(f'IAM Policy Statement {IAM_S3_BUCKETS_STATEMENT_SID}S3 has invalid actions')
+                if missing_permissions:
+                    self.bucket_errors.append(
+                        ShareErrorFormatter.missing_permission_error_msg(
+                            self.target_requester_IAMRoleName,
+                            'IAM Policy Action',
+                            missing_permissions,
+                            'S3 Bucket',
+                            f'{self.bucket_name}',
+                        )
+                    )
+                if extra_permissions:
+                    self.bucket_errors.append(
+                        ShareErrorFormatter.not_allowed_permission_error_msg(
+                            self.target_requester_IAMRoleName,
+                            'IAM Policy Action',
+                            extra_permissions,
+                            'S3 Bucket',
+                            f'{self.bucket_name}',
+                        )
+                    )
 
         if kms_key_id:
             kms_statement_index = S3SharePolicyService._get_statement_by_sid(
@@ -136,7 +164,7 @@ class S3BucketShareManager:
             )
             kms_target_resources = [f'arn:aws:kms:{self.bucket_region}:{self.source_account_id}:key/{kms_key_id}']
             if kms_statement_index is None:
-                logger.info(f'IAM Policy Statement {IAM_S3_BUCKETS_STATEMENT_SID}S3 does not exist')
+                logger.info(f'IAM Policy Statement {IAM_S3_BUCKETS_STATEMENT_SID}KMS does not exist')
                 self.bucket_errors.append(
                     ShareErrorFormatter.missing_permission_error_msg(
                         self.target_requester_IAMRoleName,
@@ -485,7 +513,7 @@ class S3BucketShareManager:
         logger.info('Deleting target role IAM statements...')
 
         share_policy_service = S3SharePolicyService(
-            role_name=share.principalIAMRoleName,
+            role_name=share.principalRoleName,
             account=target_environment.AwsAccountId,
             region=self.target_environment.region,
             environmentUri=target_environment.environmentUri,

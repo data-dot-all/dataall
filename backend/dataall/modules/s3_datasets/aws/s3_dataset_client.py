@@ -47,7 +47,7 @@ class S3DatasetClient:
         except ClientError as e:
             raise e
 
-    def get_bucket_encryption(self) -> (str, str):
+    def get_bucket_encryption(self) -> (str, str, str):
         dataset = self._dataset
         try:
             response = self._client.get_bucket_encryption(
@@ -56,9 +56,13 @@ class S3DatasetClient:
             rule = response['ServerSideEncryptionConfiguration']['Rules'][0]
             encryption = rule['ApplyServerSideEncryptionByDefault']
             s3_encryption = encryption['SSEAlgorithm']
-            kms_id = encryption.get('KMSMasterKeyID').split('/')[-1] if encryption.get('KMSMasterKeyID') else None
+            # Format (using key id): arn:aws:kms:<region>:<account-ID>:key/<key-id>
+            # (using alias): arn:aws:kms:<region>:<account-ID>:alias/<alias-name>
+            kms_key = encryption.get('KMSMasterKeyID')
+            kms_id = kms_key.split('/')[-1] if kms_key else None
+            kms_id_type = 'alias' if 'alias' in kms_key else 'key'
 
-            return s3_encryption, kms_id
+            return s3_encryption, kms_id_type, kms_id
 
         except ClientError as e:
             if e.response['Error']['Code'] == 'AccessDenied':
