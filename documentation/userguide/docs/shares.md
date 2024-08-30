@@ -100,6 +100,29 @@ Approvers can see the request in their received share requests, alongside the cu
 
 ![submit_share_2](pictures/shares/shares_outbox.png#zoom#shadow)
 
+## (Optional Pre-Approval Work) Adding Filters to Table Share Items (approver)
+
+As an approver, you will also see the option to **Edit Filters** for Glue Table share items:
+
+![share_table_filter](pictures/shares/share_table_filter.png#zoom#shadow)
+
+Here an approver can attach one or more filters that were created on the table previously to the table:
+
+![share_table_filter_edit](pictures/shares/share_table_filter_edit.png#zoom#shadow)
+
+Once assigned, the filter will appear in the share object view and can be clicked on to view the underlying associated data filters assigned
+
+![share_table_filter_attached](pictures/shares/share_table_filter_attached.png#zoom#shadow)
+
+![share_table_filter_view](pictures/shares/share_table_filter_view.png#zoom#shadow)
+
+Before sharing as the table - approvers can also edit the assigned filter and remove underlying data filters or attach new ones as needed. Once the share is approved there is no longer the ability to edit filters and the table item must be revoked and re-shared to assign new filters.
+
+**NOTE:** If more than 1 filter is assigned to a table share item, the resulting data access is evaluated as the union (logical 'OR') of the filters assigned. 
+
+**NOTE:** If assigning filter(s) to a table share item, the **Item Filter Name** specified will be used in naming the table resource link for the consumer, meaning the consumer will be reading for table named - `tablename_filtername`
+
+
 ## **Approve/Reject a share request (approver)**
 
 As an approver, click on **Learn more** in the `SUBMITTED` request and in the share view you can check the tables and folders added in the request.
