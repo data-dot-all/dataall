@@ -504,7 +504,8 @@ the different configuration options.
             "env_aws_actions": true,
             "cdk_pivot_role_multiple_environments_same_account": false,
             "enable_quicksight_monitoring": false
-        }
+        },
+        "log_query_period_days": 1
     }
 }
 ```
@@ -599,17 +600,19 @@ a particular feature in the core is to add it to the core section of the `config
             "env_aws_actions": true,
             "cdk_pivot_role_multiple_environments_same_account": false,
             "enable_quicksight_monitoring": false
-        }
+        },
+        "log_query_period_days": 1
     }
 ```
 This is the list of core features that can currently be customized. Take it as an example if you need to 
 disable or modify the bahavior any other core feature.
 
-| **Feature**           | **Module**     | **Description**                                                                                                                                                                                                                                     |   
-|-----------------------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| env_aws_actions       | environments   | If set to True, users can get AWS Credentials and assume Environment Group IAM roles from data.all's UI                                                                                                                                             |
-| cdk_pivot_role_multiple_environments_same_account       | environments   | If set to True, the CDK-created pivot role as part of the environment stack will be region specific (`dataallPivotRole-cdk-<region>`). This feature allows users to create multiple data.all environments in the same account but multiple regions. |
-| enable_quicksight_monitoring       | environments   |  If set to **true**, RDS security groups and VPC NACL rules are modified to allow connection of the RDS metadata database with Quicksight in the infrastructure account (default: false)        |
+| **Feature**           | **Module**   | **Description**                                                                                                                                                                                                                                    |   
+|-----------------------|--------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| env_aws_actions       | environments | If set to True, users can get AWS Credentials and assume Environment Group IAM roles from data.all's UI                                                                                                                                            |
+| cdk_pivot_role_multiple_environments_same_account       | environments | If set to True, the CDK-created pivot role as part of the environment stack will be region specific (`dataallPivotRole-cdk-<region>`). This feature allows users to create multiple data.all environments in the same account but multiple regions. |
+| enable_quicksight_monitoring       | environments | If set to **true**, RDS security groups and VPC NACL rules are modified to allow connection of the RDS metadata database with Quicksight in the infrastructure account (default: false)                                                            |
+| log_query_period_days       | global       | Specify the time frame for querying the log history. This log history is used for Stacks view and shared log views.                                                                                                                             |
 
 
 ## 8. Run CDK synth and check cdk.context.json <a name="context"></a>
