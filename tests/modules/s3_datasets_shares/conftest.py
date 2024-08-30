@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from dataall.base.utils.common_module_utils import ShareCommonUtils
+from dataall.base.utils.expiration_util import ExpirationUtils
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
@@ -418,7 +418,7 @@ def share(db):
     ) -> ShareObject:
         expirationDate = None
         if shareExpirationPeriod is not None:
-            expirationDate = ShareCommonUtils.calculate_expiry_date(shareExpirationPeriod, dataset.expirySetting)
+            expirationDate = ExpirationUtils.calculate_expiry_date(shareExpirationPeriod, dataset.expirySetting)
         with db.scoped_session() as session:
             share = ShareObject(
                 datasetUri=dataset.datasetUri,

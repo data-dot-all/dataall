@@ -1,10 +1,10 @@
 import calendar
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
-from dataall.base.utils.enums import Expiration
+from dataall.base.api import GraphQLEnumMapper
 
 
-class ShareCommonUtils:
+class ExpirationUtils:
     @staticmethod
     def calculate_expiry_date(expirationPeriod, expirySetting):
         currentDate = date.today()
@@ -20,3 +20,11 @@ class ShareCommonUtils:
             shareExpiryDate = None
 
         return shareExpiryDate
+
+
+# Enums used for dataset expiration.
+# Could be repurposed for environment, worksheet, etc if need be
+# This is defined here instead of the dataset_enums file because this is used in expiration_util.py
+class Expiration(GraphQLEnumMapper):
+    Monthly = 'Monthly'
+    Quartely = 'Quarterly'

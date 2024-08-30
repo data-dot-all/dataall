@@ -2,7 +2,7 @@ import logging
 
 from dataall.base.api.context import Context
 from dataall.base.feature_toggle_checker import is_feature_enabled
-from dataall.base.utils.enums import Expiration
+from dataall.base.utils.expiration_util import Expiration
 from dataall.core.stacks.services.stack_service import StackService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.environment.services.environment_service import EnvironmentService

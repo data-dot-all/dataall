@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import boto3
 import pytest
 
-from dataall.base.utils.common_module_utils import ShareCommonUtils
+from dataall.base.utils.expiration_util import ExpirationUtils
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.shares_base.services.share_object_service import ShareObjectService
@@ -1509,7 +1509,7 @@ def test_create_share_object_with_share_expiration_added(
     )
     assert (
         requested_share_expiration_date.date()
-        == ShareCommonUtils.calculate_expiry_date(2, dataset_with_expiration.expirySetting).date()
+        == ExpirationUtils.calculate_expiry_date(2, dataset_with_expiration.expirySetting).date()
     )
 
 
@@ -1893,7 +1893,7 @@ def test_submit_share_extension_request(
     )
     assert (
         share_expiration_date.date()
-        == ShareCommonUtils.calculate_expiry_date(1, dataset_with_expiration_2.expirySetting).date()
+        == ExpirationUtils.calculate_expiry_date(1, dataset_with_expiration_2.expirySetting).date()
     )
 
     cancel_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri)
@@ -2053,7 +2053,7 @@ def test_submit_share_extension_request_with_auto_approval(
     share_expiration_date = datetime.strptime(get_share_object_response.data.getShareObject.expiryDate, date_format)
     assert (
         share_expiration_date.date()
-        == ShareCommonUtils.calculate_expiry_date(1, dataset_with_expiration_with_autoapproval.expirySetting).date()
+        == ExpirationUtils.calculate_expiry_date(1, dataset_with_expiration_with_autoapproval.expirySetting).date()
     )
 
 
@@ -2217,7 +2217,7 @@ def test_approve_share_extension(
     )
     assert (
         share_expiration_date.date()
-        == ShareCommonUtils.calculate_expiry_date(1, dataset_with_expiration_2.expirySetting).date()
+        == ExpirationUtils.calculate_expiry_date(1, dataset_with_expiration_2.expirySetting).date()
     )
     requested_expiration_date_raw = get_share_object_response.data.getShareObject.requestedExpiryDate
 
@@ -2653,7 +2653,7 @@ def test_cancel_share_extension_request(
     )
     assert (
         share_expiration_date.date()
-        == ShareCommonUtils.calculate_expiry_date(1, dataset_with_expiration_2.expirySetting).date()
+        == ExpirationUtils.calculate_expiry_date(1, dataset_with_expiration_2.expirySetting).date()
     )
 
     cancel_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri)

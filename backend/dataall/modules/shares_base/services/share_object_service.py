@@ -4,7 +4,7 @@ from datetime import date, datetime
 
 from dateutil.relativedelta import relativedelta
 
-from dataall.base.utils.common_module_utils import ShareCommonUtils
+from dataall.base.utils.expiration_util import ExpirationUtils
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
@@ -171,7 +171,7 @@ class ShareObjectService:
                 shareExpiryDate = None
                 shareExpirationPeriod = None
             elif dataset.enableExpiration:
-                shareExpiryDate = ShareCommonUtils.calculate_expiry_date(shareExpirationPeriod, dataset.expirySetting)
+                shareExpiryDate = ExpirationUtils.calculate_expiry_date(shareExpirationPeriod, dataset.expirySetting)
 
             if not share:
                 share = ShareObject(
@@ -321,7 +321,7 @@ class ShareObjectService:
                     share.requestedExpiryDate = None
                     share.shareExpirationPeriod = None
                 else:
-                    expiration_date = ShareCommonUtils.calculate_expiry_date(expiration, dataset.expirySetting)
+                    expiration_date = ExpirationUtils.calculate_expiry_date(expiration, dataset.expirySetting)
                     share.requestedExpiryDate = expiration_date
                     share.shareExpirationPeriod = expiration
 
@@ -504,7 +504,7 @@ class ShareObjectService:
                 )
 
             if dataset.enableExpiration:
-                expiration_date = ShareCommonUtils.calculate_expiry_date(expiration, dataset.expirySetting)
+                expiration_date = ExpirationUtils.calculate_expiry_date(expiration, dataset.expirySetting)
             else:
                 raise Exception("Couldn't update share expiration as dataset doesn't have share expiration enabled")
             share.requestedExpiryDate = expiration_date
