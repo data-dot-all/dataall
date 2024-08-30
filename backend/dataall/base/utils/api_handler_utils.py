@@ -23,6 +23,7 @@ MAINTENANCE_ALLOWED_OPERATIONS_WHEN_NO_ACCESS = [
     item.casefold() for item in ['getGroupsForUser', 'getMaintenanceWindowStatus']
 ]
 ENGINE = get_engine(envname=ENVNAME)
+ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', '*')
 
 
 def get_cognito_groups(claims):
@@ -64,7 +65,7 @@ def send_unauthorized_response(operation='', message='', extension=None):
         'statusCode': 401,
         'headers': {
             'content-type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': ALLOWED_ORIGINS,
             'Access-Control-Allow-Headers': '*',
             'Access-Control-Allow-Methods': '*',
         },

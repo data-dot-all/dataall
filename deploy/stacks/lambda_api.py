@@ -167,7 +167,6 @@ class LambdaApiStack(pyNestedClass):
             'envname': envname,
             'LOG_LEVEL': 'INFO',
             'email_sender_id': email_notification_sender_email_id,
-            'ALLOWED_ORIGINS': allowed_origins,
         }
         self.aws_handler = _lambda.DockerImageFunction(
             self,
@@ -232,7 +231,6 @@ class LambdaApiStack(pyNestedClass):
                 'custom_auth_url': custom_auth.get('url'),
                 'custom_auth_client': custom_auth.get('client_id'),
                 'custom_auth_jwks_url': custom_auth.get('jwks_url'),
-                'ALLOWED_ORIGINS': allowed_origins,
             }
 
             for claims_map in custom_auth.get('claims_mapping', {}):
