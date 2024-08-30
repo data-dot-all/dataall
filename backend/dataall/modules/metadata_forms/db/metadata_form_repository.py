@@ -1,5 +1,5 @@
 from sqlalchemy import or_, and_
-from sqlalchemy.orm import with_polymorphic
+from sqlalchemy.orm import with_polymorphic, load_only
 
 from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility, MetadataFormFieldType
 from dataall.modules.metadata_forms.db.metadata_form_models import (
@@ -205,8 +205,13 @@ class MetadataFormRepository:
         return session.query(all_fields).filter(AttachedMetadataFormField.attachedFormUri == uri).all()
 
     @staticmethod
-    def query_attached_metadata_forms(session, filter):
-        query = session.query(AttachedMetadataForm)
+    def query_attached_metadata_forms(session, is_da_admin, groups, envs, orgs, filter):
+        all_mfs = MetadataFormRepository.query_metadata_forms(
+            session, is_da_admin, groups, envs, orgs, filter
+        ).subquery()
+        # The c confuses a lot of people, SQLAlchemy uses this unfortunately odd name
+        # as a container for columns in table objects.
+        query = session.query(AttachedMetadataForm).join(all_mfs, AttachedMetadataForm.metadataFormUri == all_mfs.c.uri)
         if filter and filter.get('entityType'):
             query = query.filter(AttachedMetadataForm.entityType == filter.get('entityType'))
         if filter and filter.get('entityUri'):

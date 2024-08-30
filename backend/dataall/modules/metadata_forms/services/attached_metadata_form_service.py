@@ -1,6 +1,8 @@
 from dataall.base.context import get_context
 from dataall.base.db import exceptions, paginate
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyValidationService
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
+from dataall.modules.metadata_forms.services.metadata_form_access_service import MetadataFormAccessService
 
 
 class AttachedMetadataFormValidationService:
@@ -60,9 +62,18 @@ class AttachedMetadataFormService:
         if not filter:
             filter = {}
 
+        context = get_context()
+        groups = context.groups
+        is_da_admin = TenantPolicyValidationService.is_tenant_admin(groups)
+        filter = filter if filter is not None else {}
+        orgs, envs = MetadataFormAccessService.get_target_orgs_and_envs(
+            context.username, context.groups, is_da_admin, filter
+        )
         with get_context().db_engine.scoped_session() as session:
             return paginate(
-                query=MetadataFormRepository.query_attached_metadata_forms(session, filter),
+                query=MetadataFormRepository.query_attached_metadata_forms(
+                    session, is_da_admin, groups, envs, orgs, filter
+                ),
                 page=filter.get('page', 1),
                 page_size=filter.get('pageSize', 10),
             ).to_dict()
