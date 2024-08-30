@@ -220,30 +220,31 @@ const EnvironmentView = () => {
               </Breadcrumbs>
             </Grid>
             <Grid item>
-              {(env.userRoleInEnvironment === 'Admin' || env.userRoleInEnvironment === 'Owner') &&
-              <Box sx={{ m: -1 }}>
-                <Button
-                  color="primary"
-                  component={RouterLink}
-                  startIcon={<PencilAltIcon fontSize="small" />}
-                  sx={{ m: 1 }}
-                  variant="outlined"
-                  to={`/console/environments/${env.environmentUri}/edit`}
-                >
-                  Edit
-                </Button>
-                <Button
-                  color="primary"
-                  startIcon={<FaTrash size={15} />}
-                  sx={{ m: 1 }}
-                  onClick={handleArchiveObjectModalOpen}
-                  type="button"
-                  variant="outlined"
-                >
-                  Delete
-                </Button>
-              </Box>
-              }
+              {(env.userRoleInEnvironment === 'Admin' ||
+                env.userRoleInEnvironment === 'Owner') && (
+                <Box sx={{ m: -1 }}>
+                  <Button
+                    color="primary"
+                    component={RouterLink}
+                    startIcon={<PencilAltIcon fontSize="small" />}
+                    sx={{ m: 1 }}
+                    variant="outlined"
+                    to={`/console/environments/${env.environmentUri}/edit`}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    color="primary"
+                    startIcon={<FaTrash size={15} />}
+                    sx={{ m: 1 }}
+                    onClick={handleArchiveObjectModalOpen}
+                    type="button"
+                    variant="outlined"
+                  >
+                    Delete
+                  </Button>
+                </Box>
+              )}
             </Grid>
           </Grid>
           <Box sx={{ mt: 3 }}>
@@ -275,7 +276,10 @@ const EnvironmentView = () => {
               <MetadataAttachment
                 entityType="Environment"
                 entityUri={env.environmentUri}
-                canEdit={env.userRoleInEnvironment === 'Admin' || env.userRoleInEnvironment === 'Owner'}
+                canEdit={
+                  env.userRoleInEnvironment === 'Admin' ||
+                  env.userRoleInEnvironment === 'Owner'
+                }
               />
             )}
             {currentTab === 'teams' && <EnvironmentTeams environment={env} />}

@@ -171,29 +171,30 @@ const OrganizationView = () => {
                 </Breadcrumbs>
               </Grid>
               <Grid item>
-                { (org.userRoleInOrganization === 'Admin' || org.userRoleInOrganization === 'Owner') &&
-                <Box sx={{ m: -1 }}>
-                  <Button
-                    color="primary"
-                    component={RouterLink}
-                    startIcon={<PencilAltIcon fontSize="small" />}
-                    sx={{ m: 1 }}
-                    variant="outlined"
-                    to={`/console/organizations/${org.organizationUri}/edit`}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    color="primary"
-                    startIcon={<ArchiveOutlined />}
-                    sx={{ m: 1 }}
-                    variant="outlined"
-                    onClick={handleArchiveObjectModalOpen}
-                  >
-                    Archive
-                  </Button>
-                </Box>
-                }
+                {(org.userRoleInOrganization === 'Admin' ||
+                  org.userRoleInOrganization === 'Owner') && (
+                  <Box sx={{ m: -1 }}>
+                    <Button
+                      color="primary"
+                      component={RouterLink}
+                      startIcon={<PencilAltIcon fontSize="small" />}
+                      sx={{ m: 1 }}
+                      variant="outlined"
+                      to={`/console/organizations/${org.organizationUri}/edit`}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      color="primary"
+                      startIcon={<ArchiveOutlined />}
+                      sx={{ m: 1 }}
+                      variant="outlined"
+                      onClick={handleArchiveObjectModalOpen}
+                    >
+                      Archive
+                    </Button>
+                  </Box>
+                )}
               </Grid>
             </Grid>
             <Box sx={{ mt: 3 }}>
@@ -231,7 +232,10 @@ const OrganizationView = () => {
                 <MetadataAttachment
                   entityType="Organization"
                   entityUri={org.organizationUri}
-                  canEdit={org.userRoleInOrganization === 'Admin' || org.userRoleInOrganization === 'Owner'}
+                  canEdit={
+                    org.userRoleInOrganization === 'Admin' ||
+                    org.userRoleInOrganization === 'Owner'
+                  }
                 />
               )}
             </Box>
