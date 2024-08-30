@@ -84,6 +84,11 @@ def user4(userdata):
     # Existing user with name and password
     yield userdata['testUser4']
 
+@pytest.fixture(scope='session', autouse=True)
+def user5(userdata):
+    # Existing user with name and password
+    yield userdata['testUser5']
+
 
 @pytest.fixture(scope='session', autouse=True)
 def group1():
@@ -113,6 +118,13 @@ def group4():
     yield 'testGroup4'
 
 
+@pytest.fixture(scope='session', autouse=True)
+def group5():
+    # Existing Cognito group with name testGroup5
+    # Add user5
+    yield 'testGroup5'
+
+
 @pytest.fixture(scope='session')
 def client1(user1) -> Client:
     yield Client(user1.username, user1.password)
@@ -132,6 +144,9 @@ def client3(user3) -> Client:
 def client4(user4) -> Client:
     yield Client(user4.username, user4.password)
 
+@pytest.fixture(scope='session')
+def client5(user5) -> Client:
+    yield Client(user5.username, user5.password)
 
 @pytest.fixture(scope='session')
 def clientTenant(userTenant) -> Client:

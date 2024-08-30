@@ -18,116 +18,116 @@ from tests_new.integration_tests.modules.share_base.queries import (
 from tests_new.integration_tests.modules.share_base.utils import check_share_ready
 
 
-def test_create_and_delete_share_object(client2, persistent_env1, group2):
+def test_create_and_delete_share_object(client5, persistent_env1, persistent_s3_dataset1, group5):
     share = create_share_object(
-        client=client2,
-        dataset_or_item_params={'datasetUri': 'b56r7soc'},
+        client=client5,
+        dataset_or_item_params={'datasetUri': persistent_s3_dataset1.datasetUri},
         environmentUri=persistent_env1.environmentUri,
-        groupUri=group2,
-        principalId=group2,
+        groupUri=group5,
+        principalId=group5,
         principalType=PrincipalType.Group.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
     )
     assert_that(share.status).is_equal_to(ShareObjectStatus.Draft.value)
-    delete_share_object(client2, share.shareUri)
+    delete_share_object(client5, share.shareUri)
 
 
-def test_submit_empty_object(client2, persistent_env1, group2):
+def test_submit_empty_object(client5, persistent_env1,persistent_s3_dataset1, group5):
     # here Exception is not recognized as GqlError, so we use base class
     # toDo: back to GqlError
     share = create_share_object(
-        client=client2,
-        dataset_or_item_params={'datasetUri': 'b56r7soc'},
+        client=client5,
+        dataset_or_item_params={'datasetUri':  persistent_s3_dataset1.datasetUri},
         environmentUri=persistent_env1.environmentUri,
-        groupUri=group2,
-        principalId=group2,
+        groupUri=group5,
+        principalId=group5,
         principalType=PrincipalType.Group.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
     )
-    assert_that(submit_share_object).raises(Exception).when_called_with(client2, share.shareUri).contains(
+    assert_that(submit_share_object).raises(Exception).when_called_with(client5, share.shareUri).contains(
         'ShareItemsFound', 'The request is empty'
     )
-    clean_up_share(client2, share.shareUri)
+    clean_up_share(client5, share.shareUri)
 
 
-def test_add_share_items(client2, persistent_env1, group2):
+def test_add_share_items(client5, persistent_env1,persistent_s3_dataset1, group5):
     share = create_share_object(
-        client=client2,
-        dataset_or_item_params={'datasetUri': 'b56r7soc'},
+        client=client5,
+        dataset_or_item_params={'datasetUri':  persistent_s3_dataset1.datasetUri},
         environmentUri=persistent_env1.environmentUri,
-        groupUri=group2,
-        principalId=group2,
+        groupUri=group5,
+        principalId=group5,
         principalType=PrincipalType.Group.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
     )
-    share = get_share_object(client2, share.shareUri)
+    share = get_share_object(client5, share.shareUri)
 
     items = share['items'].nodes
     assert_that(items[0].status).is_none()
     assert_that(items).is_length(4)
 
     item_to_add = items[0]
-    share_item_uri = add_share_item(client2, share.shareUri, item_to_add.itemUri, item_to_add.itemType)
+    share_item_uri = add_share_item(client5, share.shareUri, item_to_add.itemUri, item_to_add.itemType)
     assert_that(share_item_uri).is_not_none()
 
-    updated_share = get_share_object(client2, share.shareUri, {'isShared': True})
+    updated_share = get_share_object(client5, share.shareUri, {'isShared': True})
     items = updated_share['items'].nodes
     assert_that(items).is_length(1)
     assert_that(items[0].shareItemUri).is_equal_to(share_item_uri)
     assert_that(items[0].status).is_equal_to(ShareItemStatus.PendingApproval.value)
 
-    clean_up_share(client2, share.shareUri)
+    clean_up_share(client5, share.shareUri)
 
 
-def test_reject_share(client1, client2, persistent_env1, group2):
+def test_reject_share(client1, client5, persistent_env1, persistent_s3_dataset1, group5):
     share = create_share_object(
-        client=client2,
-        dataset_or_item_params={'datasetUri': 'b56r7soc'},
+        client=client5,
+        dataset_or_item_params={'datasetUri': persistent_s3_dataset1.datasetUri},
         environmentUri=persistent_env1.environmentUri,
-        groupUri=group2,
-        principalId=group2,
+        groupUri=group5,
+        principalId=group5,
         principalType=PrincipalType.Group.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
     )
-    share = get_share_object(client2, share.shareUri)
+    share = get_share_object(client5, share.shareUri)
 
     items = share['items'].nodes
     assert_that(items[0].status).is_none()
     assert_that(items).is_length(4)
 
     item_to_add = items[0]
-    add_share_item(client2, share.shareUri, item_to_add.itemUri, item_to_add.itemType)
-    submit_share_object(client2, share.shareUri)
+    add_share_item(client5, share.shareUri, item_to_add.itemUri, item_to_add.itemType)
+    submit_share_object(client5, share.shareUri)
 
     reject_share_object(client1, share.shareUri)
     updated_share = get_share_object(client1, share.shareUri)
     assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Rejected.value)
 
-    clean_up_share(client2, share.shareUri)
+    clean_up_share(client5, share.shareUri)
 
 
 @pytest.mark.dependency()
-def test_submit_object_no_auto_approval(client2, session_share_1):
+def test_submit_object_no_auto_approval(client5, session_share_1):
     items = session_share_1['items'].nodes
     for item in items:
-        add_share_item(client2, session_share_1.shareUri, item.itemUri, item.itemType)
+        add_share_item(client5, session_share_1.shareUri, item.itemUri, item.itemType)
 
-    submit_share_object(client2, session_share_1.shareUri)
-    updated_share = get_share_object(client2, session_share_1.shareUri)
+    submit_share_object(client5, session_share_1.shareUri)
+    updated_share = get_share_object(client5, session_share_1.shareUri)
     assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Submitted.value)
 
 
-def test_submit_object_with_auto_approval(client2, session_share_2):
+def test_submit_object_with_auto_approval(client5, session_share_2):
     items = session_share_2['items'].nodes
     item_to_add = items[0]
-    add_share_item(client2, session_share_2.shareUri, item_to_add.itemUri, item_to_add.itemType)
+    add_share_item(client5, session_share_2.shareUri, item_to_add.itemUri, item_to_add.itemType)
 
-    submit_share_object(client2, session_share_2.shareUri)
-    updated_share = get_share_object(client2, session_share_2.shareUri)
+    submit_share_object(client5, session_share_2.shareUri)
+    updated_share = get_share_object(client5, session_share_2.shareUri)
     assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Approved.value)
 
 
