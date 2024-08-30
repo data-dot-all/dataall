@@ -177,13 +177,10 @@ class ShareNotificationService:
 
     def notify_share_object_extension_rejection(self, email_id: str):
         share_link_text = ''
-        msg = 'Data.all | Email Notifications'
-        subject = ''
         if os.environ.get('frontend_domain_url'):
             share_link_text = f'<br><br> Please visit data.all <a href="{os.environ.get("frontend_domain_url")}/console/shares/{self.share.shareUri}">share link </a> to take action or view more details'
-        if self.share.status == ShareObjectStatus.Rejected.value:
-            msg = f'User {email_id} REJECTED share extension request for dataset {self.dataset.label} for principal {self.share.principalId}'
-            subject = f'Data.all | Share Extension Request Rejected for {self.dataset.label}'
+        msg = f'User {email_id} REJECTED share extension request for dataset {self.dataset.label} on principal {self.share.principalId}'
+        subject = f'Data.all | Share Extension Request Rejected for {self.dataset.label}'
         email_notification_msg = msg + share_link_text
 
         notifications = self.register_notifications(
