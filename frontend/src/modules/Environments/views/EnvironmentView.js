@@ -220,6 +220,7 @@ const EnvironmentView = () => {
               </Breadcrumbs>
             </Grid>
             <Grid item>
+              {(env.userRoleInEnvironment === 'Admin' || env.userRoleInEnvironment === 'Owner') &&
               <Box sx={{ m: -1 }}>
                 <Button
                   color="primary"
@@ -242,6 +243,7 @@ const EnvironmentView = () => {
                   Delete
                 </Button>
               </Box>
+              }
             </Grid>
           </Grid>
           <Box sx={{ mt: 3 }}>

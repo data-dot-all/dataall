@@ -171,6 +171,7 @@ const OrganizationView = () => {
                 </Breadcrumbs>
               </Grid>
               <Grid item>
+                { (org.userRoleInOrganization === 'Admin' || org.userRoleInOrganization === 'Owner') &&
                 <Box sx={{ m: -1 }}>
                   <Button
                     color="primary"
@@ -192,6 +193,7 @@ const OrganizationView = () => {
                     Archive
                   </Button>
                 </Box>
+                }
               </Grid>
             </Grid>
             <Box sx={{ mt: 3 }}>
