@@ -7,6 +7,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemStatus,
     ShareObjectStatus,
     PrincipalType,
+    ShareObjectDataPermission,
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject, ShareObjectItemDataFilter
 from dataall.modules.s3_datasets.db.dataset_models import (
@@ -138,6 +139,7 @@ def share(db):
                 principalRoleName=env_group.environmentIAMRoleName,
                 status=ShareObjectStatus.Approved.value,
                 groupUri=env_group.groupUri,
+                permissions=[ShareObjectDataPermission.Read.value],
             )
             session.add(share)
             session.commit()
