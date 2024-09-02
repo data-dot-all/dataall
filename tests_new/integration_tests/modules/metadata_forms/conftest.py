@@ -29,6 +29,48 @@ def metadata_form_1(client1, group1):
 
 
 @pytest.fixture(scope='session')
+def metadata_form_2(client1, group1):
+    """
+    Session worksheet owned by group1
+    """
+    mf2 = None
+    try:
+        input = {
+            'name': 'MF Test 2',
+            'description': 'second session test metadata form',
+            'visibility': 'Team Only',
+            'SamlGroupName': group1,
+            'homeEntity': group1,
+        }
+        mf2 = create_metadata_form(client1, input)
+        yield mf2
+    finally:
+        if mf2:
+            delete_metadata_form(client1, mf2.uri)
+
+
+@pytest.fixture(scope='session')
+def metadata_form_3(client2, group2):
+    """
+    Session worksheet owned by group1
+    """
+    mf3 = None
+    try:
+        input = {
+            'name': 'MF Test 2',
+            'description': 'second session test metadata form',
+            'visibility': 'Team Only',
+            'SamlGroupName': group2,
+            'homeEntity': group2,
+        }
+        mf3 = create_metadata_form(client2, input)
+        yield mf3
+    finally:
+        if mf3:
+            delete_metadata_form(client2, mf3.uri)
+
+
+@pytest.fixture(scope='session')
 def metadata_form_field_1(client1, group1, metadata_form_1):
     """
     Session worksheet owned by group1

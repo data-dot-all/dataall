@@ -7,6 +7,7 @@ export const listMetadataForms = (filter) => ({
   query: gql`
     query listMetadataForms($filter: MetadataFormFilter) {
       listMetadataForms(filter: $filter) {
+        hasTenantPermissions
         count
         page
         pages
@@ -17,6 +18,7 @@ export const listMetadataForms = (filter) => ({
           name
           description
           SamlGroupName
+          userRole
           visibility
           homeEntity
           homeEntityName

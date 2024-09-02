@@ -183,6 +183,20 @@ class TenantPolicyService:
             return TenantPolicyRepository.list_tenant_groups(session, data)
 
     @staticmethod
+    def has_user_tenant_permission(groups, permission_name, tenant_name):
+        if TenantPolicyValidationService.is_tenant_admin(groups):
+            return True
+
+        with get_context().db_engine.scoped_session() as session:
+            tenant_policy = TenantPolicyRepository.has_user_tenant_permission(
+                session=session,
+                groups=groups,
+                permission_name=permission_name,
+                tenant_name=tenant_name,
+            )
+            return tenant_policy is not None
+
+    @staticmethod
     def check_user_tenant_permission(session, username: str, groups: [str], tenant_name: str, permission_name: str):
         if TenantPolicyValidationService.is_tenant_admin(groups):
             return True
