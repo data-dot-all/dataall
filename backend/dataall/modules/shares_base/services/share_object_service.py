@@ -4,6 +4,7 @@ from dataall.core.permissions.services.resource_policy_service import ResourcePo
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
+from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.tasks.db.task_models import Task
 from dataall.base.db.exceptions import UnauthorizedOperation
@@ -11,6 +12,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
     ShareItemStatus,
     ShareObjectStatus,
+    PrincipalType,
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
@@ -41,28 +43,37 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class SharesCreationValidatorInterface(ABC):
+class SharesValidatorInterface(ABC):
     @staticmethod
     @abstractmethod
-    def validate_share_object_create(session, dataset, *args, **kwargs) -> bool:
-        """Executes checks when a share request gets created"""
+    def validate_share_object_create(
+        session,
+        dataset,
+        group_uri,
+        environment,
+        principal_type,
+        principal_id,
+        principal_role_name,
+        attachMissingPolicies,
+    ) -> bool:
+        """Executes checks when a share request is created"""
         ...
 
     @staticmethod
     @abstractmethod
-    def validate_share_object_submit(session, dataset, *args, **kwargs) -> bool:
-        """Executes checks when a share item gets submitted"""
+    def validate_share_object_submit(session, dataset, share) -> bool:
+        """Executes checks when a share item is submitted"""
         ...
 
     @staticmethod
     @abstractmethod
-    def validate_share_object_approve(session, dataset, *args, **kwargs) -> bool:
-        """Executes checks when a share item gets approved"""
+    def validate_share_object_approve(session, dataset, share) -> bool:
+        """Executes checks when a share item is approved"""
         ...
 
 
 class ShareObjectService:
-    SHARING_VALIDATORS: Dict[DatasetTypes, SharesCreationValidatorInterface] = {}
+    SHARING_VALIDATORS: Dict[DatasetTypes, SharesValidatorInterface] = {}
 
     @classmethod
     def register_validator(cls, dataset_type: DatasetTypes, validator) -> None:
@@ -70,17 +81,17 @@ class ShareObjectService:
 
     @classmethod
     def validate_share_object(
-        cls, share_action: ShareObjectActions, dataset_type: DatasetTypes, session, dataset_uri, *args, **kwargs
+        cls, share_action: ShareObjectActions, dataset_type: DatasetTypes, session, dataset, *args, **kwargs
     ):
         log.info(f'Validating share object {share_action.value} for {dataset_type.value=}')
-        for type, validator in cls.SHARING_VALIDATORS.items():
-            if type.value == dataset_type.value:
+        for ds_type, validator in cls.SHARING_VALIDATORS.items():
+            if ds_type.value == dataset_type.value:
                 if share_action.value == ShareObjectActions.Create.value:
-                    validator.validate_share_object_create(session, dataset_uri, *args, **kwargs)
+                    validator.validate_share_object_create(session, dataset, *args, **kwargs)
                 elif share_action.value == ShareObjectActions.Submit.value:
-                    validator.validate_share_object_submit(session, dataset_uri, *args, **kwargs)
+                    validator.validate_share_object_submit(session, dataset, *args, **kwargs)
                 elif share_action.value == ShareObjectActions.Approve.value:
-                    validator.validate_share_object_approve(session, dataset_uri, *args, **kwargs)
+                    validator.validate_share_object_approve(session, dataset, *args, **kwargs)
                 else:
                     raise ValueError(f'Invalid share action {share_action.value}')
 
@@ -111,11 +122,16 @@ class ShareObjectService:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
 
             cls._validate_group_membership(session, group_uri, environment.environmentUri)
+
+            principal_role_name = cls._resolve_principal_role_name(
+                session, group_uri, environment.environmentUri, principal_id, principal_role_name, principal_type
+            )
+
             cls.validate_share_object(
                 share_action=ShareObjectActions.Create,
                 dataset_type=dataset.datasetType,
                 session=session,
-                dataset_uri=dataset_uri,
+                dataset=dataset,
                 environment=environment,
                 group_uri=group_uri,
                 principal_id=principal_id,
@@ -216,7 +232,7 @@ class ShareObjectService:
                 share_action=ShareObjectActions.Submit,
                 dataset_type=dataset.datasetType,
                 session=session,
-                dataset_uri=dataset.dataset_uri,
+                dataset=dataset,
                 share=share,
             )
 
@@ -258,7 +274,7 @@ class ShareObjectService:
                 share_action=ShareObjectActions.Approve,
                 dataset_type=dataset.datasetType,
                 session=session,
-                dataset_uri=dataset.dataset_uri,
+                dataset=dataset,
                 share=share,
             )
 
@@ -438,3 +454,18 @@ class ShareObjectService:
                 action=CREATE_SHARE_OBJECT,
                 message=f'Team: {share_object_group} is not a member of the environment {environment_uri}',
             )
+
+    @staticmethod
+    def _resolve_principal_role_name(
+        session, group_uri, environment_uri, principal_id, principal_role_name, principal_type
+    ):
+        if principal_type == PrincipalType.ConsumptionRole.value:
+            consumption_role: ConsumptionRole = EnvironmentService.get_environment_consumption_role(
+                session, principal_id, environment_uri
+            )
+            return consumption_role.IAMRoleName
+        elif principal_type == PrincipalType.Group.value:
+            env_group: EnvironmentGroup = EnvironmentService.get_environment_group(session, group_uri, environment_uri)
+            return env_group.environmentIAMRoleName
+        else:
+            return principal_role_name

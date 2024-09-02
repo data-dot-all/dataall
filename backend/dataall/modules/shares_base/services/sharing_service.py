@@ -20,10 +20,6 @@ from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.services.share_processor_manager import ShareProcessorManager
-from dataall.modules.shares_base.services.share_object_service import (
-    ShareObjectService,
-)
-from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.base.db.exceptions import ResourceLockTimeout
 
 log = logging.getLogger(__name__)
