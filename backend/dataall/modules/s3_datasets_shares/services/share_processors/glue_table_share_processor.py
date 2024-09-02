@@ -327,11 +327,12 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     if not existing_shared_tables_in_share:
                         log.info('Revoking permissions to target shared database...')
                         manager.revoke_principals_database_permissions_to_shared_database()
-
+                    share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
                     existing_shares_with_shared_tables_in_environment = (
-                        S3ShareObjectRepository.list_s3_dataset_shares_with_existing_shared_items(
+                        ShareObjectRepository.list_dataset_shares_with_existing_shared_items(
                             session=self.session,
                             dataset_uri=self.share_data.dataset.datasetUri,
+                            share_item_shared_states=share_item_shared_states,
                             environment_uri=self.share_data.target_environment.environmentUri,
                             item_type=ShareableType.Table.value,
                         )

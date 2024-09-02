@@ -267,6 +267,8 @@ def redshift_requested_table(db, user2, group2, redshift_share_request_cross_acc
     )
     dispose_context()
     yield item
+    with db.scoped_session() as session:
+        session.delete(item)
 
 
 @pytest.fixture(scope='function')
@@ -278,6 +280,8 @@ def redshift_requested_table_2(db, user2, group2, redshift_share_request_2_same_
     )
     dispose_context()
     yield item
+    with db.scoped_session() as session:
+        session.delete(item)
 
 
 @pytest.fixture(scope='function')
