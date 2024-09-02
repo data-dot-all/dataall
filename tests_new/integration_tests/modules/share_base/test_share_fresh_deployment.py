@@ -33,12 +33,12 @@ def test_create_and_delete_share_object(client5, persistent_env1, persistent_s3_
     delete_share_object(client5, share.shareUri)
 
 
-def test_submit_empty_object(client5, persistent_env1,persistent_s3_dataset1, group5):
+def test_submit_empty_object(client5, persistent_env1, persistent_s3_dataset1, group5):
     # here Exception is not recognized as GqlError, so we use base class
     # toDo: back to GqlError
     share = create_share_object(
         client=client5,
-        dataset_or_item_params={'datasetUri':  persistent_s3_dataset1.datasetUri},
+        dataset_or_item_params={'datasetUri': persistent_s3_dataset1.datasetUri},
         environmentUri=persistent_env1.environmentUri,
         groupUri=group5,
         principalId=group5,
@@ -52,10 +52,10 @@ def test_submit_empty_object(client5, persistent_env1,persistent_s3_dataset1, gr
     clean_up_share(client5, share.shareUri)
 
 
-def test_add_share_items(client5, persistent_env1,persistent_s3_dataset1, group5):
+def test_add_share_items(client5, persistent_env1, persistent_s3_dataset_for_share_test, group5):
     share = create_share_object(
         client=client5,
-        dataset_or_item_params={'datasetUri':  persistent_s3_dataset1.datasetUri},
+        dataset_or_item_params={'datasetUri': persistent_s3_dataset_for_share_test.datasetUri},
         environmentUri=persistent_env1.environmentUri,
         groupUri=group5,
         principalId=group5,

@@ -1,15 +1,10 @@
 Principal = """
-          principalId
-          principalType
           principalName
-          principalIAMRoleName
+          principalType
+          principalId
+          principalRoleName
           SamlGroupName
-          environmentUri
           environmentName
-          AwsAccountId
-          region
-          organizationUri
-          organizationName
 """
 
 Dataset = """

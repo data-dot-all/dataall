@@ -16,6 +16,8 @@ from tests_new.integration_tests.modules.datasets_base.queries import list_datas
 
 from integration_tests.modules.s3_datasets.aws_clients import S3Client, KMSClient, GlueClient, LakeFormationClient
 
+from tests_new.integration_tests.modules.s3_datasets.queries import create_folder
+
 log = logging.getLogger(__name__)
 
 
@@ -42,17 +44,17 @@ def create_s3_dataset(client, owner, group, org_uri, env_uri, tags=[], autoAppro
 
 
 def import_s3_dataset(
-    client,
-    owner,
-    group,
-    org_uri,
-    env_uri,
-    bucket,
-    kms_alias='',
-    glue_db_name='',
-    tags=[],
-    autoApprovalEnabled=False,
-    confidentiality=None,
+        client,
+        owner,
+        group,
+        org_uri,
+        env_uri,
+        bucket,
+        kms_alias='',
+        glue_db_name='',
+        tags=[],
+        autoApprovalEnabled=False,
+        confidentiality=None,
 ):
     dataset = import_dataset(
         client,
@@ -119,7 +121,7 @@ def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdat
 
 @pytest.fixture(scope='session')
 def session_imported_sse_s3_dataset1(
-    client1, group1, org1, session_env1, session_id, testdata, session_env1_aws_client, resources_prefix
+        client1, group1, org1, session_env1, session_id, testdata, session_env1_aws_client, resources_prefix
 ):
     ds = None
     bucket = None
@@ -150,15 +152,15 @@ def session_imported_sse_s3_dataset1(
 
 @pytest.fixture(scope='session')
 def session_imported_kms_s3_dataset1(
-    client1,
-    group1,
-    org1,
-    session_env1,
-    session_id,
-    testdata,
-    session_env1_aws_client,
-    session_env1_integration_role_arn,
-    resources_prefix,
+        client1,
+        group1,
+        org1,
+        session_env1,
+        session_id,
+        testdata,
+        session_env1_aws_client,
+        session_env1_integration_role_arn,
+        resources_prefix,
 ):
     ds = None
     bucket = None
@@ -245,9 +247,9 @@ They are suitable for testing backwards compatibility.
 
 
 def get_or_create_persistent_s3_dataset(
-    dataset_name, client, group, env, bucket=None, kms_alias=None, glue_database=None
+        dataset_name, client, group, env, bucket=None, kms_alias=None, glue_database=None
 ):
-    dataset_name = 'persistent_s3_dataset1'
+    dataset_name = dataset_name or 'persistent_s3_dataset1'
     s3_datasets = list_datasets(client, term=dataset_name).nodes
     if s3_datasets:
         return s3_datasets[0]
@@ -285,6 +287,37 @@ def get_or_create_persistent_s3_dataset(
 @pytest.fixture(scope='session')
 def persistent_s3_dataset1(client1, group1, persistent_env1, testdata):
     return get_or_create_persistent_s3_dataset('persistent_s3_dataset1', client1, group1, persistent_env1)
+
+
+@pytest.fixture(scope='session')
+def persistent_s3_dataset_for_share_test(client1, group1, persistent_env1, testdata):
+    dataset = get_or_create_persistent_s3_dataset('persistent_s3_dataset_for_share_test', client1, group1,
+                                              persistent_env1)
+    print(dataset)
+    try:
+        create_folder(
+            client1,
+            dataset.datasetUri,
+            {
+                'label': 'people',
+                'prefix': 'people'
+            }
+        )
+        create_folder(
+            client1,
+            dataset.datasetUri,
+            {
+                'label': 'customers',
+                'prefix': 'customers'
+            }
+        )
+    except Exception as e:
+        print(e)
+        return dataset
+
+    return dataset
+
+
 
 
 @pytest.fixture(scope='session')
