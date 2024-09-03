@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List
 
 from dataall.base.context import get_context
-from dataall.base.db.exceptions import UnauthorizedOperation
+from dataall.base.db.exceptions import UnauthorizedOperation, InvalidInput
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
@@ -42,6 +42,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectStatus,
     PrincipalType,
 )
+
 log = logging.getLogger(__name__)
 
 
@@ -412,11 +413,13 @@ class ShareObjectService:
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
 
-            if not ShareObjectService.verify_principal_role(session, share):
-                raise PrincipalRoleNotFound(
-                    action='Approve Share Object Extension',
-                    message=f'The principal role {share.principalRoleName} is not found.',
-                )
+            cls.validate_share_object(
+                share_action=ShareObjectActions.Approve,
+                dataset_type=dataset.datasetType,
+                session=session,
+                dataset=dataset,
+                share=share,
+            )
 
             if dataset.enableExpiration and share.requestedExpiryDate and share.requestedExpiryDate < datetime.today():
                 raise Exception(

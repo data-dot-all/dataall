@@ -1541,6 +1541,10 @@ def test_create_share_object_with_share_expiration_added(
     mocker, client, user2, group2, env2group, env2, dataset_with_expiration
 ):
     mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='role_arn',
+    )
+    mocker.patch(
         'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=True,
     )
@@ -1577,6 +1581,10 @@ def test_create_share_object_with_non_expiring_share(
     mocker, client, user2, group2, env2group, env2, dataset_with_expiration_3
 ):
     mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='role_arn',
+    )
+    mocker.patch(
         'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=True,
     )
@@ -1606,6 +1614,10 @@ def test_create_share_object_with_non_expiring_share(
 def test_create_share_object_with_share_expiration_incorrect_share_expiration(
     mocker, client, user2, group2, env2group, env2, dataset_with_expiration
 ):
+    mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='role_arn',
+    )
     mocker.patch(
         'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=True,
