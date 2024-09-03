@@ -97,7 +97,6 @@ class BackendStack(Stack):
             reauth_apis=reauth_config.get('reauth_apis', None) if reauth_config else None,
             prod_sizing=prod_sizing,
             tooling_account_id=tooling_account_id,
-            allowed_origins=allowed_origins,
             **kwargs,
         )
         if enable_cw_canaries:
