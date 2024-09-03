@@ -54,9 +54,6 @@ export const useClient = () => {
       const authLink = new ApolloLink((operation, forward) => {
         operation.setContext({
           headers: {
-            AccessControlAllowOrigin: '*',
-            AccessControlAllowHeaders: '*',
-            'access-control-allow-origin': '*',
             Authorization: t ? `${t}` : '',
             AccessKeyId: 'none',
             SecretKey: 'none'
