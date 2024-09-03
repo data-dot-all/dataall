@@ -1,5 +1,5 @@
 from sqlalchemy import or_, and_
-from sqlalchemy.orm import with_polymorphic, load_only
+from sqlalchemy.orm import with_polymorphic
 
 from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility, MetadataFormFieldType
 from dataall.modules.metadata_forms.db.metadata_form_models import (
