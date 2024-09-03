@@ -26,6 +26,7 @@ class RedshiftTableValidator(SharesValidatorInterface):
         principal_id,
         principal_role_name,
         attachMissingPolicies,
+        permissions,
     ) -> bool:
         rs_dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(
             session=session, dataset_uri=dataset.datasetUri

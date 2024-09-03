@@ -1,4 +1,4 @@
-from dataall.base.db.exceptions import UnauthorizedOperation
+from dataall.base.db.exceptions import UnauthorizedOperation, InvalidInput
 from dataall.base.aws.iam import IAM
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
@@ -7,6 +7,7 @@ from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.services.share_object_service import SharesValidatorInterface
 from dataall.modules.shares_base.services.shares_enums import (
     PrincipalType,
+    ShareObjectDataPermission,
 )
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.shares_base.services.share_permissions import (
@@ -31,6 +32,7 @@ class S3ShareValidator(SharesValidatorInterface):
         principal_id,
         principal_role_name,
         attachMissingPolicies,
+        permissions,
     ) -> bool:
         log.info('Verifying S3 share request input')
 
@@ -51,6 +53,9 @@ class S3ShareValidator(SharesValidatorInterface):
             )
         S3ShareValidator._validate_iam_role_and_policy(
             session, environment, principal_type, principal_id, group_uri, attachMissingPolicies
+        )
+        S3ShareValidator._validate_write_request_in_same_account(
+            source_account=dataset.AwsAccountId, target_account=environment.AwsAccountId, permissions=permissions
         )
 
         return True
@@ -80,6 +85,16 @@ class S3ShareValidator(SharesValidatorInterface):
         env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
         principal_role = IAM.get_role_arn_by_name(account_id=env.AwsAccountId, region=env.region, role_name=role_name)
         return principal_role is not None
+
+    @staticmethod
+    def _validate_write_request_in_same_account(source_account, target_account, permissions):
+        log.info('Verifying write request in same account...')
+        if source_account != target_account and permissions != [ShareObjectDataPermission.Read.value]:
+            raise InvalidInput(
+                'Principal Role AWS account',
+                target_account,
+                f'be the same as the Dataset source account {source_account} when WRITE/MODIFY permissions are specified',
+            )
 
     @staticmethod
     def _validate_iam_role_and_policy(

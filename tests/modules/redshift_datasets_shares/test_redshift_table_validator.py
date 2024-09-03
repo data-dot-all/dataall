@@ -18,6 +18,7 @@ def test_redshift_validator_create(
             principal_role_name='rs_role_1',
             principal_type='Redshift_Role',
             attachMissingPolicies=False,
+            permissions=[],
         )
         # Then
         assert_that(response).is_true()
@@ -39,6 +40,7 @@ def test_redshift_validator_create_same_clusters(db, dataset_1, group, env_fixtu
             principal_role_name='rs_role_1',
             principal_type='Redshift_Role',
             attachMissingPolicies=False,
+            permissions=[],
         ).contains('InvalidConfiguration', 'CREATE_SHARE_OBJECT', 'only possible between different namespaces')
 
 
@@ -60,6 +62,7 @@ def test_redshift_validator_role_does_not_exist(
             principal_role_name='rs_role_1',
             principal_type='Redshift_Role',
             attachMissingPolicies=False,
+            permissions=[],
         ).contains('PrincipalRoleNotFound', 'CREATE_SHARE_OBJECT', 'Redshift role rs_role_1 does not exist')
 
 
@@ -81,4 +84,5 @@ def test_redshift_validator_not_admin_connection(
             principal_role_name='rs_role_1',
             principal_type='Redshift_Role',
             attachMissingPolicies=False,
+            permissions=[],
         ).contains('InvalidConfiguration', 'CREATE_SHARE_OBJECT', 'datashares require an ADMIN connection')
