@@ -16,6 +16,7 @@ export const getShareObject = ({ shareUri, filter }) => ({
         rejectPurpose
         userRoleForShareObject
         canViewLogs
+        permissions
         expiryDate
         requestedExpiryDate
         submittedForExtension

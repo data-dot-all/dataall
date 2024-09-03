@@ -5,15 +5,20 @@ from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 
 from dataall.base.utils.expiration_util import ExpirationUtils
+import logging
+from typing import List
+
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.tasks.service_handlers import Worker
+from dataall.base.aws.iam import IAM
 from dataall.base.context import get_context
+from dataall.base.db.exceptions import UnauthorizedOperation, InvalidInput
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.services.managed_iam_policies import PolicyManager
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.tasks.db.task_models import Task
-from dataall.base.db.exceptions import UnauthorizedOperation, InvalidInput
 from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
     ShareableType,
@@ -21,13 +26,16 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectStatus,
     PrincipalType,
 )
+from dataall.core.tasks.service_handlers import Worker
+from dataall.modules.datasets_base.db.dataset_models import DatasetBase
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
     ShareItemSM,
 )
+from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.services.share_exceptions import ShareItemsFound, PrincipalRoleNotFound
 from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
 from dataall.modules.shares_base.services.share_permissions import (
@@ -41,11 +49,13 @@ from dataall.modules.shares_base.services.share_permissions import (
     GET_SHARE_OBJECT,
 )
 from dataall.modules.shares_base.services.share_processor_manager import ShareProcessorManager
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
-from dataall.modules.datasets_base.db.dataset_models import DatasetBase
-from dataall.base.aws.iam import IAM
-
-import logging
+from dataall.modules.shares_base.services.shares_enums import (
+    ShareObjectActions,
+    ShareItemStatus,
+    ShareObjectStatus,
+    PrincipalType,
+    ShareObjectDataPermission,
+)
 
 log = logging.getLogger(__name__)
 
@@ -79,6 +89,7 @@ class ShareObjectService:
         principal_type,
         requestPurpose,
         attachMissingPolicies,
+        permissions: List[str],
         shareExpirationPeriod,
         nonExpirable: bool = False,
     ):
@@ -107,18 +118,19 @@ class ShareObjectService:
 
             if principal_type in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value]:
                 if principal_type == PrincipalType.ConsumptionRole.value:
-                    consumption_role: ConsumptionRole = EnvironmentService.get_environment_consumption_role(
+                    consumption_role = EnvironmentService.get_environment_consumption_role(
                         session, principal_id, environment.environmentUri
                     )
+                    principal_role_arn = consumption_role.IAMRoleArn
                     principal_role_name = consumption_role.IAMRoleName
                     managed = consumption_role.dataallManaged
-
                 else:
-                    env_group: EnvironmentGroup = EnvironmentService.get_environment_group(
-                        session, group_uri, environment.environmentUri
-                    )
+                    env_group = EnvironmentService.get_environment_group(session, group_uri, environment.environmentUri)
+                    principal_role_arn = env_group.environmentIAMRoleArn
                     principal_role_name = env_group.environmentIAMRoleName
                     managed = True
+
+                cls._validate_role_in_same_account(dataset.AwsAccountId, principal_role_arn, permissions)
 
                 share_policy_manager = PolicyManager(
                     role_name=principal_role_name,
@@ -184,6 +196,7 @@ class ShareObjectService:
                     principalRoleName=principal_role_name,
                     status=ShareObjectStatus.Draft.value,
                     requestPurpose=requestPurpose,
+                    permissions=permissions,
                     requestedExpiryDate=shareExpiryDate,
                     nonExpirable=nonExpirable,
                     shareExpirationPeriod=shareExpirationPeriod,
@@ -723,4 +736,20 @@ class ShareObjectService:
             raise UnauthorizedOperation(
                 action=CREATE_SHARE_OBJECT,
                 message=f'Team: {share_object_group} is not a member of the environment {environment_uri}',
+            )
+
+    @staticmethod
+    def _validate_role_in_same_account(aws_account_id, principal_role_arn, permissions):
+        """
+        raise if aws_account_id and role_arn are not in the same account permissions are WRITE/MODIFY
+
+        :param aws_account_id:
+        :param principal_role_arn:
+        :param permissions:
+        """
+        if f':{aws_account_id}:' not in principal_role_arn and permissions != [ShareObjectDataPermission.Read.value]:
+            raise InvalidInput(
+                'Principal Role',
+                principal_role_arn,
+                f'be in the same {aws_account_id=} when WRITE/MODIFY permissions are specified',
             )

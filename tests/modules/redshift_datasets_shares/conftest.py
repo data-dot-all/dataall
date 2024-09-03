@@ -3,7 +3,7 @@ from dataall.base.context import set_context, dispose_context, RequestContext
 from dataall.modules.shares_base.services.sharing_service import ShareData
 from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.shares_base.services.shares_enums import ShareItemStatus
+from dataall.modules.shares_base.services.shares_enums import ShareItemStatus, ShareObjectDataPermission
 from dataall.modules.shares_base.services.share_item_service import ShareItemService
 from dataall.modules.redshift_datasets.services.redshift_connection_service import RedshiftConnectionService
 from dataall.modules.redshift_datasets.services.redshift_dataset_service import RedshiftDatasetService
@@ -232,6 +232,7 @@ def redshift_share_request_cross_account(db, user2, group2, env_fixture_2, targe
         principal_type='Redshift_Role',
         requestPurpose=None,
         attachMissingPolicies=False,
+        permissions=[ShareObjectDataPermission.Read.value],
         shareExpirationPeriod=None,
     )
     dispose_context()
@@ -254,6 +255,7 @@ def redshift_share_request_2_same_account(
         principal_type='Redshift_Role',
         requestPurpose=None,
         attachMissingPolicies=False,
+        permissions=[ShareObjectDataPermission.Read.value],
         shareExpirationPeriod=None,
     )
     dispose_context()

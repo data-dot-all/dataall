@@ -7,6 +7,7 @@ from dataall.base.utils.expiration_util import ExpirationUtils
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.modules.shares_base.services.shares_enums import ShareableType, PrincipalType, ShareObjectDataPermission
 from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.shares_base.services.shares_enums import ShareableType, PrincipalType
 from dataall.modules.shares_base.db.share_object_models import ShareObject, ShareObjectItem
@@ -414,7 +415,8 @@ def share(db):
         env_group: EnvironmentGroup,
         owner: str,
         status: str,
-        shareExpirationPeriod: int = None,
+        permissions=[ShareObjectDataPermission.Read.value],
+        shareExpirationPeriod: int = None
     ) -> ShareObject:
         expirationDate = None
         if shareExpirationPeriod is not None:
@@ -430,6 +432,7 @@ def share(db):
                 principalRoleName=env_group.environmentIAMRoleName,
                 status=status,
                 expiryDate=expirationDate,
+                permissions=[permissions],
             )
             session.add(share)
             session.commit()
