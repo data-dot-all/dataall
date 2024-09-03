@@ -25,7 +25,6 @@ class ParamStoreStack(pyNestedClass):
         reauth_apis=None,
         prod_sizing=False,
         tooling_account_id='',
-        allowed_origins='*',
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
