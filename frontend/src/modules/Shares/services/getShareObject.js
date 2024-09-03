@@ -16,6 +16,7 @@ export const getShareObject = ({ shareUri, filter }) => ({
         rejectPurpose
         userRoleForShareObject
         canViewLogs
+        permissions
         principal {
           principalName
           principalType

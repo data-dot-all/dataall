@@ -5,6 +5,7 @@ from dataall.base.context import get_context
 from dataall.base.utils import Parameter
 from dataall.base.db import exceptions
 from dataall.core.stacks.aws.cloudwatch import CloudWatch
+from dataall.base.config import config
 
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
@@ -50,15 +51,17 @@ class ShareLogsService:
             )
 
         envname = os.getenv('envname', 'local')
+        log_query_period_days = config.get_property('core.log_query_period_days', 1)
+        log.info(f'log_query_period_days: {log_query_period_days}')
         log_group_name = f"/{Parameter().get_parameter(env=envname, path='resourcePrefix')}/{envname}/ecs/share-manager"
 
         query_for_name = ShareLogsService.get_share_logs_name_query(shareUri=shareUri)
         name_query_result = CloudWatch.run_query(
             query=query_for_name,
             log_group_name=log_group_name,
-            days=1,
+            days=log_query_period_days,
         )
-        if len(name_query_result) == 0:
+        if not name_query_result:
             return []
 
         name = name_query_result[0]['logStream']
@@ -67,7 +70,7 @@ class ShareLogsService:
         results = CloudWatch.run_query(
             query=query,
             log_group_name=log_group_name,
-            days=1,
+            days=log_query_period_days,
         )
         log.info(f'Running Logs query {query} for log_group_name={log_group_name}')
         return results

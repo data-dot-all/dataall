@@ -4,10 +4,11 @@ from unittest.mock import MagicMock
 
 import boto3
 import pytest
+from assertpy import assert_that
 
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionRole
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.modules.shares_base.services.shares_enums import ShareableType, PrincipalType
+from dataall.modules.shares_base.services.shares_enums import ShareableType, PrincipalType, ShareObjectDataPermission
 from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
     ShareItemActions,
@@ -407,6 +408,7 @@ def create_share_object(
     attachMissingPolicies=True,
     principalId=None,
     principalType=PrincipalType.Group.value,
+    permissions=[ShareObjectDataPermission.Read.value],
 ):
     q = """
       mutation CreateShareObject(
@@ -454,6 +456,7 @@ def create_share_object(
             'principalType': principalType,
             'requestPurpose': 'testShare',
             'attachMissingPolicies': attachMissingPolicies,
+            'permissions': permissions,
         },
     )
 
@@ -972,6 +975,34 @@ def test_create_share_object_as_approver_and_requester(mocker, client, user, gro
     assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
 
 
+def test_create_share_object_invalid_xaccount(mocker, client, user, group2, env2group, env2, dataset1):
+    # Given
+    # Existing dataset, target environment and group
+    # SharePolicy exists and is attached
+    # When a user that belongs to environment and group creates request
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
+        return_value=True,
+    )
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
+        return_value=True,
+    )
+    create_share_object_response = create_share_object(
+        mocker=mocker,
+        client=client,
+        username=user.username,
+        group=group2,
+        groupUri=env2group.groupUri,
+        environmentUri=env2.environmentUri,
+        datasetUri=dataset1.datasetUri,
+        permissions=[ShareObjectDataPermission.Write.value],
+    )
+    assert_that(create_share_object_response.errors[0].message).contains(
+        'InvalidInput', env2.EnvironmentDefaultIAMRoleArn, dataset1.AwsAccountId
+    )
+
+
 def test_create_share_object_with_item_authorized(
     mocker, client, user2, group2, env2group, env2, dataset1, table1, mock_glue_client
 ):
@@ -1106,8 +1137,9 @@ def test_create_share_object_share_policy_not_attached_attachMissingPolicies_dis
         'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=False,
     )
-    consumption_role = type('consumption_role', (object,), {})()
+    consumption_role = MagicMock(spec_set=ConsumptionRole)
     consumption_role.IAMRoleName = 'randomName'
+    consumption_role.IAMRoleArn = 'randomArn'
     consumption_role.dataallManaged = False
     mocker.patch(
         'dataall.core.environment.services.environment_service.EnvironmentService.get_environment_consumption_role',
