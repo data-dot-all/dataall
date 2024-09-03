@@ -22,6 +22,7 @@ class RedshiftDatasetsSharesApiModuleInterface(ModuleInterface):
 
     def __init__(self):
         from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
+        from dataall.modules.datasets_base.services.datasets_enums import DatasetTypes
         from dataall.modules.redshift_datasets_shares import api
         from dataall.modules.redshift_datasets_shares.db.redshift_share_object_repositories import (
             RedshiftShareEnvironmentResource,
@@ -32,9 +33,13 @@ class RedshiftDatasetsSharesApiModuleInterface(ModuleInterface):
             ShareProcessorDefinition,
         )
         from dataall.modules.shares_base.services.shares_enums import ShareableType
+        from dataall.modules.shares_base.services.share_object_service import ShareObjectService
         from dataall.modules.redshift_datasets.db.redshift_models import RedshiftTable
         from dataall.modules.redshift_datasets_shares.services.redshift_table_share_processor import (
             ProcessRedshiftShare,
+        )
+        from dataall.modules.redshift_datasets_shares.services.redshift_table_share_validator import (
+            RedshiftTableValidator,
         )
 
         EnvironmentResourceManager.register(RedshiftShareEnvironmentResource())
@@ -44,6 +49,8 @@ class RedshiftDatasetsSharesApiModuleInterface(ModuleInterface):
                 ShareableType.RedshiftTable, ProcessRedshiftShare, RedshiftTable, RedshiftTable.rsTableUri
             )
         )
+
+        ShareObjectService.register_validator(dataset_type=DatasetTypes.Redshift, validator=RedshiftTableValidator)
 
         log.info('API of redshift dataset sharing has been imported')
 
