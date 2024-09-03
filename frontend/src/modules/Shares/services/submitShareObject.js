@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-export const submitApproval = ({ shareUri }) => ({
+export const submitShareObject = ({ shareUri }) => ({
   variables: {
     shareUri
   },

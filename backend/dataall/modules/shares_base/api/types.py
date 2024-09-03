@@ -111,6 +111,8 @@ DatasetLink = gql.ObjectType(
         gql.Field(name='exists', type=gql.Boolean),
         gql.Field(name='description', type=gql.String),
         gql.Field(name='datasetType', type=gql.String),
+        gql.Field(name='enableExpiration', type=gql.Boolean),
+        gql.Field(name='expirySetting', type=gql.String),
     ],
 )
 
@@ -126,6 +128,13 @@ ShareObject = gql.ObjectType(
         gql.Field(name='datasetUri', type=gql.String),
         gql.Field(name='requestPurpose', type=gql.String),
         gql.Field(name='rejectPurpose', type=gql.String),
+        gql.Field(name='expiryDate', type=gql.String),
+        gql.Field(name='requestedExpiryDate', type=gql.String),
+        gql.Field(name='submittedForExtension', type=gql.Boolean),
+        gql.Field(name='extensionReason', type=gql.String),
+        gql.Field(name='lastExtensionDate', type=gql.String),
+        gql.Field(name='nonExpirable', type=gql.Boolean),
+        gql.Field(name='shareExpirationPeriod', type=gql.Integer),
         gql.Field(name='dataset', type=DatasetLink, resolver=resolve_dataset),
         gql.Field(name='alreadyExisted', type=gql.Boolean),
         gql.Field(name='existingSharedItems', type=gql.Boolean, resolver=resolve_existing_shared_items),

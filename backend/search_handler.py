@@ -11,6 +11,7 @@ from dataall.modules.maintenance.api.enums import MaintenanceModes
 ENVNAME = os.getenv('envname', 'local')
 es = connect(envname=ENVNAME)
 ENGINE = get_engine(envname=ENVNAME)
+ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', '*')
 
 
 def handler(event, context):
@@ -21,7 +22,7 @@ def handler(event, context):
             'statusCode': 200,
             'headers': {
                 'content-type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Origin': ALLOWED_ORIGINS,
                 'Access-Control-Allow-Headers': '*',
                 'Access-Control-Allow-Methods': '*',
             },
@@ -65,7 +66,7 @@ def handler(event, context):
                 'statusCode': 200 if success else 400,
                 'headers': {
                     'content-type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Origin': ALLOWED_ORIGINS,
                     'Access-Control-Allow-Headers': '*',
                     'Access-Control-Allow-Methods': '*',
                 },

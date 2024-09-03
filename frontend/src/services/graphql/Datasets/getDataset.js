@@ -42,6 +42,10 @@ export const getDataset = (datasetUri) => ({
         language
         confidentiality
         autoApprovalEnabled
+        enableExpiration
+        expirySetting
+        expiryMinDuration
+        expiryMaxDuration
         organization {
           organizationUri
           label

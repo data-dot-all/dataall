@@ -58,6 +58,7 @@ class BackendStack(Stack):
         custom_auth=None,
         custom_waf_rules=None,
         with_approval_tests=False,
+        allowed_origins='*',
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -198,6 +199,7 @@ class BackendStack(Stack):
             custom_domain=custom_domain,
             custom_auth=custom_auth,
             custom_waf_rules=custom_waf_rules,
+            allowed_origins=allowed_origins,
             **kwargs,
         )
 

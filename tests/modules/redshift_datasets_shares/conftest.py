@@ -261,6 +261,7 @@ def redshift_share_request_cross_account(
         requestPurpose=None,
         attachMissingPolicies=False,
         permissions=[ShareObjectDataPermission.Read.value],
+        shareExpirationPeriod=None,
     )
     dispose_context()
     yield share
@@ -290,6 +291,7 @@ def redshift_share_request_2_same_account(
         requestPurpose=None,
         attachMissingPolicies=False,
         permissions=[ShareObjectDataPermission.Read.value],
+        shareExpirationPeriod=None,
     )
     dispose_context()
     yield share
