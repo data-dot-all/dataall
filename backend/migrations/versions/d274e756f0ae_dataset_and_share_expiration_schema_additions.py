@@ -13,7 +13,7 @@ from dataall.base.db import get_engine, has_column
 
 # revision identifiers, used by Alembic.
 revision = 'd274e756f0ae'
-down_revision = '9efe5f7c69a1'
+down_revision = 'c215903b780c'
 branch_labels = None
 depends_on = None
 
