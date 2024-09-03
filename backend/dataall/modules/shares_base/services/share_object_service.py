@@ -1,27 +1,30 @@
+import logging
 from abc import ABC, abstractmethod
-from typing import Dict
-from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
-from dataall.core.tasks.service_handlers import Worker
+from typing import Dict, List
+
+from dataall.base.aws.iam import IAM
 from dataall.base.context import get_context
+from dataall.base.db.exceptions import UnauthorizedOperation, InvalidInput
 from dataall.core.activity.db.activity_models import Activity
-from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
 from dataall.core.environment.services.environment_service import EnvironmentService
+
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.environment.services.managed_iam_policies import PolicyManager
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
 from dataall.core.tasks.db.task_models import Task
-from dataall.base.db.exceptions import UnauthorizedOperation
-from dataall.modules.shares_base.services.shares_enums import (
-    ShareObjectActions,
-    ShareItemStatus,
-    ShareObjectStatus,
-    PrincipalType,
-)
+from dataall.core.tasks.service_handlers import Worker
+from dataall.modules.datasets_base.db.dataset_models import DatasetBase
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
+from dataall.modules.datasets_base.services.datasets_enums import DatasetTypes
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
     ShareItemSM,
 )
-from dataall.modules.shares_base.services.share_exceptions import ShareItemsFound
+from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
+from dataall.modules.shares_base.services.share_exceptions import ShareItemsFound, PrincipalRoleNotFound
 from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
 from dataall.modules.shares_base.services.share_permissions import (
     REJECT_SHARE_OBJECT,
@@ -34,11 +37,13 @@ from dataall.modules.shares_base.services.share_permissions import (
     GET_SHARE_OBJECT,
 )
 from dataall.modules.shares_base.services.share_processor_manager import ShareProcessorManager
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
-from dataall.modules.datasets_base.db.dataset_models import DatasetBase
-from dataall.modules.datasets_base.services.datasets_enums import DatasetTypes
-
-import logging
+from dataall.modules.shares_base.services.shares_enums import (
+    ShareObjectActions,
+    ShareItemStatus,
+    ShareObjectStatus,
+    PrincipalType,
+    ShareObjectDataPermission,
+)
 
 log = logging.getLogger(__name__)
 
@@ -115,6 +120,7 @@ class ShareObjectService:
         principal_type,
         requestPurpose,
         attachMissingPolicies,
+        permissions: List[str],
     ):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -126,6 +132,40 @@ class ShareObjectService:
             principal_role_name = cls._resolve_principal_role_name(
                 session, group_uri, environment.environmentUri, principal_id, principal_role_name, principal_type
             )
+            #TODO - BLOCK FROM MERGE CONFLICT
+            if principal_type in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value]:
+                if principal_type == PrincipalType.ConsumptionRole.value:
+                    consumption_role = EnvironmentService.get_environment_consumption_role(
+                        session, principal_id, environment.environmentUri
+                    )
+                    principal_role_arn = consumption_role.IAMRoleArn
+                    principal_role_name = consumption_role.IAMRoleName
+                    managed = consumption_role.dataallManaged
+                else:
+                    env_group = EnvironmentService.get_environment_group(session, group_uri, environment.environmentUri)
+                    principal_role_arn = env_group.environmentIAMRoleArn
+                    principal_role_name = env_group.environmentIAMRoleName
+                    managed = True
+
+                cls._validate_role_in_same_account(dataset.AwsAccountId, principal_role_arn, permissions)
+
+                share_policy_manager = PolicyManager(
+                    role_name=principal_role_name,
+                    environmentUri=environment.environmentUri,
+                    account=environment.AwsAccountId,
+                    region=environment.region,
+                    resource_prefix=environment.resourcePrefix,
+                )
+                for Policy in [
+                    Policy for Policy in share_policy_manager.initializedPolicies if Policy.policy_type == 'SharePolicy'
+                ]:
+                    # Backwards compatibility
+                    # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
+                    # We create the policy from the inline statements
+                    # In this case it could also happen that the role is the Admin of the environment
+                    if not Policy.check_if_policy_exists():
+                        Policy.create_managed_policy_from_inline_and_delete_inline()
+                    # End of backwards compatibility
 
             cls.validate_share_object(
                 share_action=ShareObjectActions.Create,
@@ -160,6 +200,7 @@ class ShareObjectService:
                     principalRoleName=principal_role_name,
                     status=ShareObjectStatus.Draft.value,
                     requestPurpose=requestPurpose,
+                    permissions=permissions,
                 )
                 ShareObjectRepository.save_and_commit(session, share)
 
@@ -469,3 +510,20 @@ class ShareObjectService:
             return env_group.environmentIAMRoleName
         else:
             return principal_role_name
+
+    #TODO - BLOCK FROM MERGE CONFLICT
+    @staticmethod
+    def _validate_role_in_same_account(aws_account_id, principal_role_arn, permissions):
+        """
+        raise if aws_account_id and role_arn are not in the same account permissions are WRITE/MODIFY
+
+        :param aws_account_id:
+        :param principal_role_arn:
+        :param permissions:
+        """
+        if f':{aws_account_id}:' not in principal_role_arn and permissions != [ShareObjectDataPermission.Read.value]:
+            raise InvalidInput(
+                'Principal Role',
+                principal_role_arn,
+                f'be in the same {aws_account_id=} when WRITE/MODIFY permissions are specified',
+            )

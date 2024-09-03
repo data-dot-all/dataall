@@ -16,6 +16,12 @@ class ShareObjectPermission(GraphQLEnumMapper):
     NoPermission = '000'
 
 
+class ShareObjectDataPermission(GraphQLEnumMapper):
+    Read = 'Read'
+    Write = 'Write'
+    Modify = 'Modify'
+
+
 class ShareObjectStatus(GraphQLEnumMapper):
     Deleted = 'Deleted'
     Approved = 'Approved'

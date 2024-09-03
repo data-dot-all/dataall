@@ -1,18 +1,26 @@
 import logging
+from typing import List
 
 from dataall.base.aws.sts import SessionHelper
 from botocore.exceptions import ClientError
-
 
 from dataall.modules.s3_datasets_shares.aws.share_policy_verifier import SharePolicyVerifier
 
 log = logging.getLogger(__name__)
 
 DATAALL_READ_ONLY_SID = 'DataAll-Bucket-ReadOnly'
+DATAALL_WRITE_ONLY_SID = 'DataAll-Bucket-WriteOnly'
+DATAALL_MODIFY_ONLY_SID = 'DataAll-Bucket-ModifyOnly'
 DATAALL_ALLOW_OWNER_SID = 'AllowAllToAdmin'
 DATAALL_DELEGATE_TO_ACCESS_POINT = 'DelegateAccessToAccessPoint'
 
-DATAALL_BUCKET_SIDS = [DATAALL_READ_ONLY_SID, DATAALL_ALLOW_OWNER_SID, DATAALL_DELEGATE_TO_ACCESS_POINT]
+DATAALL_BUCKET_SIDS = [
+    DATAALL_READ_ONLY_SID,
+    DATAALL_WRITE_ONLY_SID,
+    DATAALL_MODIFY_ONLY_SID,
+    DATAALL_ALLOW_OWNER_SID,
+    DATAALL_DELEGATE_TO_ACCESS_POINT,
+]
 
 
 class S3ControlClient:
@@ -80,6 +88,7 @@ class S3ControlClient:
         principal_id: str,
         access_point_arn: str,
         s3_prefix: str,
+        actions: List[str],
     ):
         policy = {
             'Version': '2012-10-17',
@@ -88,7 +97,7 @@ class S3ControlClient:
                     'Sid': f'{principal_id}0',
                     'Effect': 'Allow',
                     'Principal': {'AWS': '*'},
-                    'Action': 's3:ListBucket',
+                    'Action': ['s3:ListBucket'],
                     'Resource': f'{access_point_arn}',
                     'Condition': {'StringLike': {'s3:prefix': [f'{s3_prefix}/*'], 'aws:userId': [f'{principal_id}:*']}},
                 },
@@ -96,7 +105,7 @@ class S3ControlClient:
                     'Sid': f'{principal_id}1',
                     'Effect': 'Allow',
                     'Principal': {'AWS': '*'},
-                    'Action': 's3:GetObject',
+                    'Action': actions,
                     'Resource': [f'{access_point_arn}/object/{s3_prefix}/*'],
                     'Condition': {'StringLike': {'aws:userId': [f'{principal_id}:*']}},
                 },
