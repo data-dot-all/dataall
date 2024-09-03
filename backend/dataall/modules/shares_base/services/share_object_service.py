@@ -17,7 +17,6 @@ from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.services.managed_iam_policies import PolicyManager
-from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.tasks.db.task_models import Task
 from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
@@ -26,7 +25,6 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectStatus,
     PrincipalType,
 )
-from dataall.core.tasks.service_handlers import Worker
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
@@ -50,10 +48,6 @@ from dataall.modules.shares_base.services.share_permissions import (
 )
 from dataall.modules.shares_base.services.share_processor_manager import ShareProcessorManager
 from dataall.modules.shares_base.services.shares_enums import (
-    ShareObjectActions,
-    ShareItemStatus,
-    ShareObjectStatus,
-    PrincipalType,
     ShareObjectDataPermission,
 )
 

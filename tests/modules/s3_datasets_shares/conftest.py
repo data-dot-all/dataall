@@ -416,7 +416,7 @@ def share(db):
         owner: str,
         status: str,
         permissions=[ShareObjectDataPermission.Read.value],
-        shareExpirationPeriod: int = None
+        shareExpirationPeriod: int = None,
     ) -> ShareObject:
         expirationDate = None
         if shareExpirationPeriod is not None:
