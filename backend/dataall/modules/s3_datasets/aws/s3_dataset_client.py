@@ -58,9 +58,12 @@ class S3DatasetClient:
             s3_encryption = encryption['SSEAlgorithm']
             # Format (using key id): arn:aws:kms:<region>:<account-ID>:key/<key-id>
             # (using alias): arn:aws:kms:<region>:<account-ID>:alias/<alias-name>
-            kms_key = encryption.get('KMSMasterKeyID')
-            kms_id = kms_key.split('/')[-1] if kms_key else None
-            kms_id_type = 'alias' if 'alias' in kms_key else 'key'
+            kms_key = encryption.get('KMSMasterKeyID', '')
+            kms_id = None
+            kms_id_type = None
+            if kms_key:
+                kms_id = kms_key.split('/')[-1]
+                kms_id_type = 'alias' if 'alias' in kms_key else 'key'
 
             return s3_encryption, kms_id_type, kms_id
 
