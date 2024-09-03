@@ -99,6 +99,8 @@ and fetch the schemas and tables from Redshift. It is possible to select all tab
 | Redshift database schema   | Name of the Redshift schema where the tables are stored           | Yes      | No       | public
 | Redshift tables            | List of tables to be imported. They can be added at a later stage | No       | Yes      | customer, orders
 
+Once a Redshift dataset has been imported, the dataset and its imported tables can be searched by any user in the Catalog. 
+
 ## :material-card-search-outline: **Navigate dataset tabs**
 **Overview**
 
