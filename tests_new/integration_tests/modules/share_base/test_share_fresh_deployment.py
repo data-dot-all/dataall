@@ -67,7 +67,7 @@ def test_add_share_items(client5, persistent_env1, persistent_s3_dataset_for_sha
 
     items = share['items'].nodes
     assert_that(items[0].status).is_none()
-    assert_that(items).is_length(4)
+    assert_that(items).is_length(3)
 
     item_to_add = items[0]
     share_item_uri = add_share_item(client5, share.shareUri, item_to_add.itemUri, item_to_add.itemType)
@@ -97,7 +97,7 @@ def test_reject_share(client1, client5, persistent_env1, persistent_s3_dataset1,
 
     items = share['items'].nodes
     assert_that(items[0].status).is_none()
-    assert_that(items).is_length(4)
+    assert_that(items).is_length(3)
 
     item_to_add = items[0]
     add_share_item(client5, share.shareUri, item_to_add.itemUri, item_to_add.itemType)

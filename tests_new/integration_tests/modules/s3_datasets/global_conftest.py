@@ -1,3 +1,4 @@
+import json
 import logging
 import pytest
 import boto3
@@ -21,10 +22,10 @@ from tests_new.integration_tests.modules.s3_datasets.queries import create_folde
 log = logging.getLogger(__name__)
 
 
-def create_s3_dataset(client, owner, group, org_uri, env_uri, tags=[], autoApprovalEnabled=False, confidentiality=None):
+def create_s3_dataset(client, name, owner, group, org_uri, env_uri, tags=[], autoApprovalEnabled=False, confidentiality=None):
     dataset = create_dataset(
         client,
-        name='TestDatasetCreated',
+        name=name,
         owner=owner,
         group=group,
         organizationUri=org_uri,
@@ -107,6 +108,7 @@ def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdat
     try:
         ds = create_s3_dataset(
             client1,
+            name='session_s3_dataset1',
             owner='someone',
             group=group1,
             org_uri=org1['organizationUri'],
@@ -119,13 +121,13 @@ def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdat
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
 
 
-
 @pytest.fixture(scope='session')
 def session_s3_dataset2_with_table(client1, group1, org1, session_env1, session_id, testdata):
     ds = None
     try:
         ds = create_s3_dataset(
             client1,
+            name='session_s3_dataset2_with_table',
             owner='someone',
             group=group1,
             org_uri=org1['organizationUri'],
@@ -139,7 +141,7 @@ def session_s3_dataset2_with_table(client1, group1, org1, session_env1, session_
             aws_session_token=creds['sessionToken'],
         )
         GlueClient(dataset_session, ds.region).create_table(
-            database_name=ds.GlueDatabaseName, table_name='integrationtest', bucket=ds.S3Bucket
+            database_name=ds.GlueDatabaseName, table_name='integrationtest', bucket=ds.S3BucketName
         )
         response = sync_tables(client1, datasetUri=ds.datasetUri)
 
@@ -258,6 +260,7 @@ def temp_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata):
     try:
         ds = create_s3_dataset(
             client1,
+            name='temp_s3_dataset1',
             owner='someone',
             group=group1,
             org_uri=org1['organizationUri'],
@@ -300,6 +303,7 @@ def get_or_create_persistent_s3_dataset(
         else:
             s3_dataset = create_s3_dataset(
                 client,
+                name=dataset_name,
                 owner='someone',
                 group=group,
                 org_uri=env['organization']['organizationUri'],
@@ -322,32 +326,32 @@ def persistent_s3_dataset1(client1, group1, persistent_env1, testdata):
 @pytest.fixture(scope='session')
 def persistent_s3_dataset_for_share_test(client1, group1, persistent_env1, testdata):
     dataset = get_or_create_persistent_s3_dataset('persistent_s3_dataset_for_share_test', client1, group1,
-                                              persistent_env1)
-    print(dataset)
+                                                  persistent_env1)
+
     try:
         create_folder(
-            client1,
-            dataset.datasetUri,
-            {
-                'label': 'people',
-                'prefix': 'people'
-            }
-        )
-        create_folder(
-            client1,
-            dataset.datasetUri,
-            {
-                'label': 'customers',
-                'prefix': 'customers'
-            }
-        )
+                client1,
+                dataset.datasetUri,
+                {
+                    'label': 'folder1',
+                    'prefix': 'folder1'
+                }
+            )
+        creds = json.loads(generate_dataset_access_token(client1, dataset.datasetUri))
+        print(creds)
+        dataset_session = boto3.Session(
+                aws_access_key_id=creds['AccessKey'],
+                aws_secret_access_key=creds['SessionKey'],
+                aws_session_token=creds['sessionToken'],
+            )
+        GlueClient(dataset_session, dataset.region).create_table(
+                database_name=dataset.GlueDatabaseName, table_name='integrationtest', bucket=dataset.S3BucketName
+            )
+        response = sync_tables(client1, datasetUri=dataset.datasetUri)
     except Exception as e:
         print(e)
-        return dataset
 
     return dataset
-
-
 
 
 @pytest.fixture(scope='session')

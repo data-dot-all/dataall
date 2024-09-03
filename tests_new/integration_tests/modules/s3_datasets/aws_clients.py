@@ -165,7 +165,7 @@ class GlueClient:
 
     def create_table(self, database_name, bucket, table_name):
         try:
-            self._client.create_table(
+            response = self._client.create_table(
                 DatabaseName=database_name,
                 TableInput={
                     'Name': table_name,
@@ -180,6 +180,7 @@ class GlueClient:
                     },
                 },
             )
+            print(response)
         except ClientError as e:
             log.exception(f'Error creating Glue database: {e}')
 
