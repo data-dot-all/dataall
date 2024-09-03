@@ -67,6 +67,7 @@ const OrganizationView = () => {
   const dispatch = useDispatch();
   const params = useParams();
   const client = useClient();
+  const [isAdmin, setIsAdmin] = useState(false);
   const [currentTab, setCurrentTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [isArchiveObjectModalOpen, setIsArchiveObjectModalOpen] =
@@ -106,6 +107,11 @@ const OrganizationView = () => {
     const response = await client.query(getOrganization(params.uri));
     if (!response.errors) {
       setOrg(response.data.getOrganization);
+      setIsAdmin(
+        ['Admin', 'Owner'].indexOf(
+          response.data.getOrganization.userRoleInOrganization
+        ) !== -1
+      );
       setLoading(false);
     }
     setLoading(false);
@@ -171,8 +177,7 @@ const OrganizationView = () => {
                 </Breadcrumbs>
               </Grid>
               <Grid item>
-                {(org.userRoleInOrganization === 'Admin' ||
-                  org.userRoleInOrganization === 'Owner') && (
+                {isAdmin && (
                   <Box sx={{ m: -1 }}>
                     <Button
                       color="primary"
@@ -232,10 +237,7 @@ const OrganizationView = () => {
                 <MetadataAttachment
                   entityType="Organization"
                   entityUri={org.organizationUri}
-                  canEdit={
-                    org.userRoleInOrganization === 'Admin' ||
-                    org.userRoleInOrganization === 'Owner'
-                  }
+                  canEdit={isAdmin}
                 />
               )}
             </Box>
