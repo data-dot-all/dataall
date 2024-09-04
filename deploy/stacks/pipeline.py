@@ -124,7 +124,7 @@ class PipelineStack(Stack):
             f'{self.artifact_bucket_name}-key',
             removal_policy=RemovalPolicy.DESTROY,
             alias=f'{self.artifact_bucket_name}-key',
-            enable_key_rotation=True
+            enable_key_rotation=True,
         )
         self.artifact_bucket = s3.Bucket(
             self,
@@ -137,9 +137,6 @@ class PipelineStack(Stack):
             enforce_ssl=True,
             auto_delete_objects=True,
         )
-        tooling_account_cdk_principal = iam.ArnPrincipal(f'arn:aws:iam::{self.account}:role/cdk-hnb659fds-deploy-role-{self.account}-{self.region}')
-        self.artifact_bucket_key.grant_decrypt(tooling_account_cdk_principal)
-        self.artifact_bucket.grant_read(tooling_account_cdk_principal)
 
         if self.source == 'codestar_connection':
             source = CodePipelineSource.connection(
@@ -195,10 +192,6 @@ class PipelineStack(Stack):
         target_envs = target_envs or [{'envname': 'dev', 'account': self.account, 'region': self.region}]
 
         for target_env in target_envs:
-            target_env_cdk_principal = iam.ArnPrincipal(f'arn:aws:iam::{self.account}:role/cdk-hnb659fds-deploy-role-{self.account}-{self.region}')
-            self.artifact_bucket_key.grant_decrypt(target_env_cdk_principal)
-            self.artifact_bucket.grant_read(target_env_cdk_principal)
-
             self.pipeline_bucket.grant_read(iam.AccountPrincipal(target_env['account']))
 
             backend_stage = self.set_backend_stage(target_env, repository_name)
