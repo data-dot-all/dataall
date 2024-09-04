@@ -16,6 +16,13 @@ export const getShareObject = ({ shareUri, filter }) => ({
         rejectPurpose
         userRoleForShareObject
         canViewLogs
+        permissions
+        expiryDate
+        requestedExpiryDate
+        submittedForExtension
+        nonExpirable
+        extensionReason
+        shareExpirationPeriod
         principal {
           principalName
           principalType
@@ -53,6 +60,8 @@ export const getShareObject = ({ shareUri, filter }) => ({
           exists
           description
           datasetType
+          enableExpiration
+          expirySetting
         }
       }
     }
