@@ -27,7 +27,7 @@ class Transition:
             raise exceptions.UnauthorizedOperation(
                 action=self._name,
                 message=f'This transition is not possible, {prev_state} cannot go to {self._all_target_states}. '
-                f'If there is a sharing or revoking in progress wait until it is complete and try again.',
+                f'If there is a sharing or revoking in progress wait until it is complete and try again. For share extensions delete unused items and try again',
             )
         else:
             return True
@@ -50,7 +50,11 @@ class ShareObjectSM:
             ShareObjectActions.Submit.value: Transition(
                 name=ShareObjectActions.Submit.value,
                 transitions={
-                    ShareObjectStatus.Submitted.value: [ShareObjectStatus.Draft.value, ShareObjectStatus.Rejected.value]
+                    ShareObjectStatus.Submitted.value: [
+                        ShareObjectStatus.Draft.value,
+                        ShareObjectStatus.Rejected.value,
+                        ShareObjectStatus.Extension_Rejected.value,
+                    ]
                 },
             ),
             ShareObjectActions.Approve.value: Transition(
@@ -69,6 +73,7 @@ class ShareObjectSM:
                         ShareObjectStatus.Submitted.value,
                         ShareObjectStatus.Rejected.value,
                         ShareObjectStatus.Processed.value,
+                        ShareObjectStatus.Extension_Rejected.value,
                     ]
                 },
             ),
@@ -104,6 +109,7 @@ class ShareObjectSM:
                         ShareObjectStatus.Draft.value,
                         ShareObjectStatus.Submitted.value,
                         ShareObjectStatus.Processed.value,
+                        ShareObjectStatus.Extension_Rejected.value,
                     ]
                 },
             ),
@@ -114,8 +120,33 @@ class ShareObjectSM:
                         ShareObjectStatus.Submitted.value,
                         ShareObjectStatus.Rejected.value,
                         ShareObjectStatus.Processed.value,
+                        ShareObjectStatus.Extension_Rejected.value,
                     ]
                 },
+            ),
+            ShareObjectActions.Extension.value: Transition(
+                name=ShareObjectActions.Extension.value,
+                transitions={
+                    ShareObjectStatus.Submitted_For_Extension.value: [
+                        ShareObjectStatus.Processed.value,
+                        ShareObjectStatus.Extension_Rejected.value,
+                        ShareObjectStatus.Draft.value,
+                    ]
+                },
+            ),
+            ShareObjectActions.ExtensionApprove.value: Transition(
+                name=ShareObjectActions.ExtensionApprove.value,
+                transitions={ShareObjectStatus.Processed.value: [ShareObjectStatus.Submitted_For_Extension.value]},
+            ),
+            ShareObjectActions.ExtensionReject.value: Transition(
+                name=ShareObjectActions.ExtensionReject.value,
+                transitions={
+                    ShareObjectStatus.Extension_Rejected.value: [ShareObjectStatus.Submitted_For_Extension.value]
+                },
+            ),
+            ShareObjectActions.CancelExtension.value: Transition(
+                name=ShareObjectActions.CancelExtension.value,
+                transitions={ShareObjectStatus.Processed.value: [ShareObjectStatus.Submitted_For_Extension.value]},
             ),
         }
 
@@ -237,6 +268,22 @@ class ShareItemSM:
                         ShareItemStatus.Revoke_Succeeded.value,
                     ]
                 },
+            ),
+            ShareObjectActions.Extension.value: Transition(
+                name=ShareObjectActions.Extension.value,
+                transitions={ShareItemStatus.PendingExtension.value: [ShareItemStatus.Share_Succeeded.value]},
+            ),
+            ShareObjectActions.ExtensionApprove.value: Transition(
+                name=ShareObjectActions.ExtensionApprove.value,
+                transitions={ShareItemStatus.Share_Succeeded.value: [ShareItemStatus.PendingExtension.value]},
+            ),
+            ShareObjectActions.ExtensionReject.value: Transition(
+                name=ShareObjectActions.ExtensionReject.value,
+                transitions={ShareItemStatus.Share_Succeeded.value: [ShareItemStatus.PendingExtension.value]},
+            ),
+            ShareObjectActions.CancelExtension.value: Transition(
+                name=ShareObjectActions.CancelExtension.value,
+                transitions={ShareItemStatus.Share_Succeeded.value: [ShareItemStatus.PendingExtension.value]},
             ),
         }
 

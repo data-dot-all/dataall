@@ -1,9 +1,12 @@
+import itertools
 from unittest.mock import MagicMock
 
 import pytest
 import json
 
 from typing import Callable
+
+from assertpy import assert_that
 
 from dataall.core.groups.db.group_models import Group
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionRole
@@ -643,17 +646,16 @@ def test_manage_access_point_and_policy_1(mocker, target_environment: Environmen
     # Asser that access point is in resource
     assert new_ap_policy['Statement'][0]['Resource'] == access_point_arn
 
-    # Assert that listbucket and getobject permissions were added for target environment admin
-    assert 's3:GetObject' in [
-        statement['Action']
-        for statement in new_ap_policy['Statement']
-        if statement['Sid'].startswith(target_environment.SamlGroupName)
-    ]
-    assert 's3:ListBucket' in [
-        statement['Action']
-        for statement in new_ap_policy['Statement']
-        if statement['Sid'].startswith(target_environment.SamlGroupName)
-    ]
+    actions = list(
+        itertools.chain.from_iterable(
+            [
+                statement['Action']
+                for statement in new_ap_policy['Statement']
+                if statement['Sid'].startswith(target_environment.SamlGroupName)
+            ]
+        )
+    )
+    assert_that(actions).contains('s3:GetObject', 's3:ListBucket', 's3:List*')
 
 
 # Existing Access point and ap policy

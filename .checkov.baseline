@@ -168,6 +168,12 @@
                     "check_ids": [
                         "CKV_AWS_158"
                     ]
+                },
+                {
+                    "resource": "AWS::Logs::LogGroup.ECSLogGroupshareexpirationtaskdev40CB15AF",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
                 }
             ]
         },

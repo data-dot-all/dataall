@@ -418,3 +418,33 @@ class ShareObjectRepository:
             .all()
         )
         return pending_shares
+
+    @staticmethod
+    def get_all_active_shares_with_expiration(session):
+        return (
+            session.query(ShareObject)
+            .filter(and_(ShareObject.expiryDate.isnot(None), ShareObject.deleted.is_(None)))
+            .all()
+        )
+
+    @staticmethod
+    def update_dataset_shares_expiration(session, enabledExpiration, datasetUri, expirationDate):
+        """
+        When share expiration is enabled on the dataset while editing a dataset
+        update all the shares on that dataset and set minimum expiration on them
+        """
+        if enabledExpiration:
+            shares = session.query(ShareObject).filter(ShareObject.datasetUri == datasetUri).all()
+            for share in shares:
+                if share.expiryDate is None:
+                    share.expiryDate = expirationDate
+        else:
+            shares = (
+                session.query(ShareObject)
+                .filter(and_(ShareObject.datasetUri == datasetUri, ShareObject.expiryDate.isnot(None)))
+                .all()
+            )
+            for share in shares:
+                share.expiryDate = None
+        session.commit()
+        return True

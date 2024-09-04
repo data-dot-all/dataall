@@ -16,6 +16,12 @@ class ShareObjectPermission(GraphQLEnumMapper):
     NoPermission = '000'
 
 
+class ShareObjectDataPermission(GraphQLEnumMapper):
+    Read = 'Read'
+    Write = 'Write'
+    Modify = 'Modify'
+
+
 class ShareObjectStatus(GraphQLEnumMapper):
     Deleted = 'Deleted'
     Approved = 'Approved'
@@ -23,6 +29,8 @@ class ShareObjectStatus(GraphQLEnumMapper):
     Revoked = 'Revoked'
     Draft = 'Draft'
     Submitted = 'Submitted'
+    Submitted_For_Extension = 'Submitted_For_Extension'
+    Extension_Rejected = 'Extension_Rejected'
     Revoke_In_Progress = 'Revoke_In_Progress'
     Share_In_Progress = 'Share_In_Progress'
     Processed = 'Processed'
@@ -31,6 +39,7 @@ class ShareObjectStatus(GraphQLEnumMapper):
 class ShareItemStatus(GraphQLEnumMapper):
     Deleted = 'Deleted'
     PendingApproval = 'PendingApproval'
+    PendingExtension = 'PendingExtension'
     Share_Approved = 'Share_Approved'
     Share_Rejected = 'Share_Rejected'
     Share_In_Progress = 'Share_In_Progress'
@@ -58,6 +67,10 @@ class ShareObjectActions(GraphQLEnumMapper):
     Finish = 'Finish'
     FinishPending = 'FinishPending'
     Delete = 'Delete'
+    Extension = 'Extension'
+    ExtensionApprove = 'ExtensionApprove'
+    ExtensionReject = 'ExtensionReject'
+    CancelExtension = 'CancelExtension'
 
 
 class ShareItemActions(GraphQLEnumMapper):

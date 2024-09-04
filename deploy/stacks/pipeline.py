@@ -651,6 +651,7 @@ class PipelineStack(Stack):
                 custom_auth=target_env.get('custom_auth', None),
                 custom_waf_rules=target_env.get('custom_waf_rules', None),
                 with_approval_tests=target_env.get('with_approval_tests', False),
+                allowed_origins=target_env.get('allowed_origins', '*'),
             )
         )
         return backend_stage
