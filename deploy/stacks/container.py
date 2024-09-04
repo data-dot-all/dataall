@@ -15,6 +15,7 @@ from aws_cdk.aws_applicationautoscaling import Schedule
 from .pyNestedStack import pyNestedClass
 from .run_if import run_if
 from .deploy_config import deploy_config
+from .iam_utils import set_trust_policy_tooling_account
 
 
 class ContainerStack(pyNestedClass):
@@ -564,9 +565,9 @@ class ContainerStack(pyNestedClass):
             role_name=f'{resource_prefix}-{envname}-cb-stackupdater-role',
             assumed_by=iam.CompositePrincipal(
                 iam.ServicePrincipal('codebuild.amazonaws.com'),
-                iam.AccountPrincipal(tooling_account_id),
             ),
         )
+        set_trust_policy_tooling_account(cicd_stacks_updater_role, tooling_account_id)
         cicd_stacks_updater_role.add_to_policy(
             iam.PolicyStatement(
                 actions=[

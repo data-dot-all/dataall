@@ -21,6 +21,7 @@ from custom_resources.utils import get_lambda_code
 from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling
 from .waf_rules import get_waf_rules
+from .iam_utils import set_trust_policy_tooling_account
 
 
 class IdpStack(pyNestedClass):
@@ -197,8 +198,8 @@ class IdpStack(pyNestedClass):
             self,
             f'{resource_prefix}-{envname}-cognito-config-role',
             role_name=f'{resource_prefix}-{envname}-cognito-config-role',
-            assumed_by=iam.AccountPrincipal(tooling_account_id),
         )
+        set_trust_policy_tooling_account(cross_account_frontend_config_role, tooling_account_id)
         cross_account_frontend_config_role.add_to_policy(
             iam.PolicyStatement(
                 actions=[
