@@ -25,7 +25,7 @@ from .ses_stack import SesStack
 from .sqs import SqsStack
 from .trigger_function_stack import TriggerFunctionStack
 from .vpc import VpcStack
-from .iam_utils import set_trust_policy_tooling_account
+from .iam_utils import get_tooling_account_external_id
 
 
 class BackendStack(Stack):
@@ -139,8 +139,8 @@ class BackendStack(Stack):
                 f'{resource_prefix}-{envname}-frontend-config-role',
                 role_name=f'{resource_prefix}-{envname}-frontend-config-role',
                 assumed_by=iam.AccountPrincipal(tooling_account_id),
+                external_ids=[get_tooling_account_external_id(self.account)],
             )
-            set_trust_policy_tooling_account(cross_account_frontend_config_role, tooling_account_id)
             cross_account_frontend_config_role.add_to_policy(
                 iam.PolicyStatement(
                     actions=[

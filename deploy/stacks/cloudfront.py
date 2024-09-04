@@ -23,7 +23,7 @@ from custom_resources.utils import get_lambda_code
 from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling
 from .waf_rules import get_waf_rules
-from .iam_utils import set_trust_policy_tooling_account
+from .iam_utils import get_tooling_account_external_id
 
 
 class CloudfrontDistro(pyNestedClass):
@@ -228,8 +228,8 @@ class CloudfrontDistro(pyNestedClass):
                 f'S3DeploymentRole{envname}',
                 role_name=f'{resource_prefix}-{envname}-S3DeploymentRole',
                 assumed_by=iam.AccountPrincipal(tooling_account_id),
+                external_ids=[get_tooling_account_external_id(self.account)],
             )
-            set_trust_policy_tooling_account(cross_account_deployment_role, tooling_account_id)
             resources_for_cross_account = []
             resources_for_cross_account.append(f'{cloudfront_bucket.bucket_arn}/*')
             if self.user_docs_bucket is not None:
