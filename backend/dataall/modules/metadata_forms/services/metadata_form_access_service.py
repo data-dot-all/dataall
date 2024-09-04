@@ -92,20 +92,12 @@ class MetadataFormAccessService:
                 orgs = OrganizationRepository.query_user_organizations(session, username, groups, {})
                 orgs = [o.organizationUri for o in orgs]
         if target_org_uri:
-            if orgs and target_org_uri not in orgs:
-                raise exceptions.UnauthorizedOperation(
-                    action='GET METADATA FORM LIST',
-                    message=f'User {username} can not view organization {target_org_uri}',
-                )
-            orgs = [target_org_uri]
+            if orgs is None:
+                orgs = [target_org_uri]
 
         if target_env_uri:
-            if envs and target_env_uri not in envs:
-                raise exceptions.UnauthorizedOperation(
-                    action='GET METADATA FORM LIST',
-                    message=f'User {username} can not view environment {target_env_uri}',
-                )
-            envs = [target_env_uri]
+            if envs is None:
+                envs = [target_env_uri]
 
         if filter.get('entityType') == MetadataFormEntityTypes.Organizations.value:
             envs = []
