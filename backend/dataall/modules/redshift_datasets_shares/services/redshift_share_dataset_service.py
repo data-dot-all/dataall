@@ -2,16 +2,9 @@ from dataall.core.permissions.services.resource_policy_service import ResourcePo
 from dataall.base.db import exceptions
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.s3_datasets_shares.db.s3_share_object_repositories import S3ShareObjectRepository
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
-from dataall.modules.shares_base.db.share_object_item_repositories import ShareObjectItemRepository
 from dataall.modules.shares_base.services.share_permissions import SHARE_OBJECT_APPROVER
-from dataall.modules.s3_datasets.services.dataset_permissions import (
-    DELETE_DATASET,
-    DELETE_DATASET_TABLE,
-    DELETE_DATASET_FOLDER,
-    DELETE_TABLE_DATA_FILTER,
-)
+from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import DELETE_REDSHIFT_DATASET
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole, DatasetTypes
 from dataall.modules.datasets_base.services.dataset_service_interface import DatasetServiceInterface
 
@@ -21,10 +14,10 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class S3ShareDatasetService(DatasetServiceInterface):
+class RedshiftShareDatasetService(DatasetServiceInterface):
     @property
     def dataset_type(self):
-        return DatasetTypes.S3
+        return DatasetTypes.Redshift
 
     @staticmethod
     def resolve_additional_dataset_user_role(session, uri, username, groups):
@@ -38,31 +31,18 @@ class S3ShareDatasetService(DatasetServiceInterface):
     def check_before_delete(session, uri, **kwargs):
         """Implemented as part of the DatasetServiceInterface"""
         action = kwargs.get('action')
-        if action in [DELETE_DATASET_FOLDER, DELETE_DATASET_TABLE]:
-            existing_s3_shared_items = S3ShareObjectRepository.check_existing_s3_shared_items(session, uri)
-            if existing_s3_shared_items:
-                raise exceptions.ResourceShared(
-                    action=action,
-                    message='Revoke all shares for this item before deletion',
-                )
-        elif action in [DELETE_DATASET]:
+        if action in [DELETE_REDSHIFT_DATASET]:
             share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
             shares = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(
                 session=session, dataset_uri=uri, share_item_shared_states=share_item_shared_states
             )
+            log.info(f'Found {len(shares)} shares for dataset {uri}')
+            for share in shares:
+                log.info(f'Share {share.shareUri} items, {share.status}')
             if shares:
                 raise exceptions.ResourceShared(
-                    action=DELETE_DATASET,
+                    action=DELETE_REDSHIFT_DATASET,
                     message='Revoke all dataset shares before deletion.',
-                )
-        elif action in [DELETE_TABLE_DATA_FILTER]:
-            existing_share_item_w_filters = ShareObjectItemRepository.count_all_share_item_filters_with_data_filter_uri(
-                session, uri
-            )
-            if existing_share_item_w_filters:
-                raise exceptions.ResourceShared(
-                    action=action,
-                    message='Remove all share items using this filter before deletion',
                 )
         return True
 
@@ -70,14 +50,9 @@ class S3ShareDatasetService(DatasetServiceInterface):
     def execute_on_delete(session, uri, **kwargs):
         """Implemented as part of the DatasetServiceInterface"""
         action = kwargs.get('action')
-        if action in [DELETE_DATASET_FOLDER, DELETE_DATASET_TABLE]:
-            S3ShareObjectRepository.delete_s3_share_item(session, uri)
-            ShareObjectItemRepository.delete_all_share_item_filters(session, uri)
-        elif action in [DELETE_DATASET]:
+        if action in [DELETE_REDSHIFT_DATASET]:
             share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
             ShareObjectRepository.delete_dataset_shares_with_no_shared_items(session, uri, share_item_shared_states)
-        elif action in [DELETE_TABLE_DATA_FILTER]:
-            ShareObjectItemRepository.delete_share_item_filters_with_data_filter_uri(session, uri)
         return True
 
     @staticmethod
@@ -85,7 +60,7 @@ class S3ShareDatasetService(DatasetServiceInterface):
         """Implemented as part of the DatasetServiceInterface"""
         share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
         return ShareObjectRepository.list_user_shared_datasets(
-            session, username, groups, share_item_shared_states, DatasetTypes.S3
+            session, username, groups, share_item_shared_states, DatasetTypes.Redshift
         )
 
     @staticmethod

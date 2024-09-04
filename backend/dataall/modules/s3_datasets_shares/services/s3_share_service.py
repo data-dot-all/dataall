@@ -204,7 +204,7 @@ class S3ShareService:
                 account_id = dataset.AwsAccountId
                 region = dataset.region
             else:
-                share = S3ShareObjectRepository.get_share_by_dataset_attributes(
+                share = ShareObjectRepository.find_share_by_dataset_attributes(
                     session=session, dataset_uri=uri, dataset_owner=context.username
                 )
                 shared_environment = EnvironmentService.get_environment_by_uri(

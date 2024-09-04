@@ -35,11 +35,16 @@ class RedshiftDatasetsSharesApiModuleInterface(ModuleInterface):
         from dataall.modules.shares_base.services.shares_enums import ShareableType
         from dataall.modules.shares_base.services.share_object_service import ShareObjectService
         from dataall.modules.redshift_datasets.db.redshift_models import RedshiftTable
+        from dataall.modules.redshift_datasets.services.redshift_dataset_service import RedshiftDatasetService
         from dataall.modules.redshift_datasets_shares.services.redshift_table_share_processor import (
             ProcessRedshiftShare,
         )
         from dataall.modules.redshift_datasets_shares.services.redshift_table_share_validator import (
             RedshiftTableValidator,
+        )
+        from dataall.modules.datasets_base.services.dataset_list_service import DatasetListService
+        from dataall.modules.redshift_datasets_shares.services.redshift_share_dataset_service import (
+            RedshiftShareDatasetService,
         )
 
         EnvironmentResourceManager.register(RedshiftShareEnvironmentResource())
@@ -49,6 +54,8 @@ class RedshiftDatasetsSharesApiModuleInterface(ModuleInterface):
                 ShareableType.RedshiftTable, ProcessRedshiftShare, RedshiftTable, RedshiftTable.rsTableUri
             )
         )
+        RedshiftDatasetService.register(RedshiftShareDatasetService())
+        DatasetListService.register(RedshiftShareDatasetService())
 
         ShareObjectService.register_validator(dataset_type=DatasetTypes.Redshift, validator=RedshiftTableValidator)
 

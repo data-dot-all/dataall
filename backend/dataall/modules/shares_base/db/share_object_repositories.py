@@ -11,7 +11,6 @@ from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.notifications.db.notification_models import Notification
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
-
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
     PrincipalType,
@@ -41,6 +40,41 @@ class ShareObjectRepository:
             )
             .first()
         )
+
+    @staticmethod
+    def find_dataset_shares(session, dataset_uri):
+        return session.query(ShareObject).filter(ShareObject.datasetUri == dataset_uri).all()
+
+    @staticmethod
+    def find_share_by_dataset_attributes(session, dataset_uri, dataset_owner, groups=[]):
+        share: ShareObject = (
+            session.query(ShareObject)
+            .filter(ShareObject.datasetUri == dataset_uri)
+            .filter(or_(ShareObject.owner == dataset_owner, ShareObject.groupUri.in_(groups)))
+            .first()
+        )
+        return share
+
+    @staticmethod
+    def list_dataset_shares_with_existing_shared_items(
+        session, dataset_uri, share_item_shared_states, environment_uri=None, item_type=None
+    ) -> [ShareObject]:
+        query = (
+            session.query(ShareObject)
+            .outerjoin(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
+            .filter(
+                and_(
+                    ShareObject.datasetUri == dataset_uri,
+                    ShareObject.deleted.is_(None),
+                    ShareObjectItem.status.in_(share_item_shared_states),
+                )
+            )
+        )
+        if environment_uri:
+            query = query.filter(ShareObject.environmentUri == environment_uri)
+        if item_type:
+            query = query.filter(ShareObjectItem.itemType == item_type)
+        return query.all()
 
     @staticmethod
     def find_sharable_item(session, share_uri, item_uri) -> ShareObjectItem:
@@ -322,6 +356,28 @@ class ShareObjectRepository:
         return paginate(query=q, page=data.get('page', 1), page_size=data.get('pageSize', 10)).to_dict()
 
     @staticmethod
+    def list_user_shared_datasets(session, username, groups, share_item_shared_states, dataset_type) -> Query:
+        query = (
+            session.query(DatasetBase)
+            .outerjoin(
+                ShareObject,
+                ShareObject.datasetUri == DatasetBase.datasetUri,
+            )
+            .outerjoin(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
+            .filter(
+                and_(
+                    or_(
+                        ShareObject.principalId.in_(groups),
+                        ShareObject.owner == username,
+                    ),
+                    ShareObjectItem.status.in_(share_item_shared_states),
+                    DatasetBase.datasetType == dataset_type,
+                )
+            )
+        )
+        return query.distinct(DatasetBase.datasetUri)
+
+    @staticmethod
     def list_shareable_items_of_type(session, share, type, share_type_model, share_type_uri, status=None):
         """
         type: ShareableType e.g. ShareableType.StorageLocation
@@ -448,3 +504,24 @@ class ShareObjectRepository:
                 share.expiryDate = None
         session.commit()
         return True
+
+    @staticmethod
+    def delete_dataset_shares_with_no_shared_items(session, dataset_uri, share_item_shared_states):
+        shares = (
+            session.query(ShareObject)
+            .outerjoin(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
+            .filter(
+                and_(
+                    ShareObject.datasetUri == dataset_uri,
+                    ShareObjectItem.status.notin_(share_item_shared_states),
+                )
+            )
+            .all()
+        )
+        for share in shares:
+            share_items = session.query(ShareObjectItem).filter(ShareObjectItem.shareUri == share.shareUri).all()
+            for item in share_items:
+                session.delete(item)
+
+            share_obj = session.query(ShareObject).filter(ShareObject.shareUri == share.shareUri).first()
+            session.delete(share_obj)
