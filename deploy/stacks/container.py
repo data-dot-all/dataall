@@ -567,7 +567,7 @@ class ContainerStack(pyNestedClass):
                 iam.ServicePrincipal('codebuild.amazonaws.com'),
             ),
         )
-        set_trust_policy_tooling_account(cicd_stacks_updater_role, tooling_account_id)
+        set_trust_policy_tooling_account(cicd_stacks_updater_role, tooling_account_id, False)
         cicd_stacks_updater_role.add_to_policy(
             iam.PolicyStatement(
                 actions=[
