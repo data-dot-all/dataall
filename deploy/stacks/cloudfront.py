@@ -227,6 +227,7 @@ class CloudfrontDistro(pyNestedClass):
                 self,
                 f'S3DeploymentRole{envname}',
                 role_name=f'{resource_prefix}-{envname}-S3DeploymentRole',
+                assumed_by=iam.AccountPrincipal(tooling_account_id),
             )
             set_trust_policy_tooling_account(cross_account_deployment_role, tooling_account_id)
             resources_for_cross_account = []
