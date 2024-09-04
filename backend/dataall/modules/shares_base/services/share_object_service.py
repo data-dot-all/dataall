@@ -1,32 +1,21 @@
-import calendar
-import os
-from datetime import date, datetime
-
-from dateutil.relativedelta import relativedelta
+from datetime import datetime
 
 from dataall.base.utils.expiration_util import ExpirationUtils
 import logging
-from typing import List
+from abc import ABC, abstractmethod
+from typing import Dict, List
 
-from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
-from dataall.core.tasks.service_handlers import Worker
-from dataall.base.aws.iam import IAM
 from dataall.base.context import get_context
 from dataall.base.db.exceptions import UnauthorizedOperation, InvalidInput
 from dataall.core.activity.db.activity_models import Activity
-from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.environment.services.managed_iam_policies import PolicyManager
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
 from dataall.core.tasks.db.task_models import Task
-from dataall.modules.shares_base.services.shares_enums import (
-    ShareObjectActions,
-    ShareableType,
-    ShareItemStatus,
-    ShareObjectStatus,
-    PrincipalType,
-)
+from dataall.core.tasks.service_handlers import Worker
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
+from dataall.modules.datasets_base.services.datasets_enums import DatasetTypes
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_state_machines import (
@@ -34,7 +23,7 @@ from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareItemSM,
 )
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
-from dataall.modules.shares_base.services.share_exceptions import ShareItemsFound, PrincipalRoleNotFound
+from dataall.modules.shares_base.services.share_exceptions import ShareItemsFound
 from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
 from dataall.modules.shares_base.services.share_permissions import (
     REJECT_SHARE_OBJECT,
@@ -48,20 +37,67 @@ from dataall.modules.shares_base.services.share_permissions import (
 )
 from dataall.modules.shares_base.services.share_processor_manager import ShareProcessorManager
 from dataall.modules.shares_base.services.shares_enums import (
-    ShareObjectDataPermission,
+    ShareObjectActions,
+    ShareItemStatus,
+    ShareObjectStatus,
+    PrincipalType,
 )
 
 log = logging.getLogger(__name__)
 
 
-class ShareObjectService:
+class SharesValidatorInterface(ABC):
     @staticmethod
-    def verify_principal_role(session, share: ShareObject) -> bool:
-        log.info('Verifying principal IAM role...')
-        role_name = share.principalRoleName
-        env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
-        principal_role = IAM.get_role_arn_by_name(account_id=env.AwsAccountId, region=env.region, role_name=role_name)
-        return principal_role is not None
+    @abstractmethod
+    def validate_share_object_create(
+        session,
+        dataset,
+        group_uri,
+        environment,
+        principal_type,
+        principal_id,
+        principal_role_name,
+        attachMissingPolicies,
+        permissions,
+    ) -> bool:
+        """Executes checks when a share request is created"""
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def validate_share_object_submit(session, dataset, share) -> bool:
+        """Executes checks when a share item is submitted"""
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def validate_share_object_approve(session, dataset, share) -> bool:
+        """Executes checks when a share item is approved"""
+        ...
+
+
+class ShareObjectService:
+    SHARING_VALIDATORS: Dict[DatasetTypes, SharesValidatorInterface] = {}
+
+    @classmethod
+    def register_validator(cls, dataset_type: DatasetTypes, validator) -> None:
+        cls.SHARING_VALIDATORS[dataset_type] = validator
+
+    @classmethod
+    def validate_share_object(
+        cls, share_action: ShareObjectActions, dataset_type: DatasetTypes, session, dataset, *args, **kwargs
+    ):
+        log.info(f'Validating share object {share_action.value} for {dataset_type.value=}')
+        for ds_type, validator in cls.SHARING_VALIDATORS.items():
+            if ds_type.value == dataset_type.value:
+                if share_action.value == ShareObjectActions.Create.value:
+                    validator.validate_share_object_create(session, dataset, *args, **kwargs)
+                elif share_action.value == ShareObjectActions.Submit.value:
+                    validator.validate_share_object_submit(session, dataset, *args, **kwargs)
+                elif share_action.value == ShareObjectActions.Approve.value:
+                    validator.validate_share_object_approve(session, dataset, *args, **kwargs)
+                else:
+                    raise ValueError(f'Invalid share action {share_action.value}')
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(GET_SHARE_OBJECT)
@@ -92,65 +128,25 @@ class ShareObjectService:
             dataset: DatasetBase = DatasetBaseRepository.get_dataset_by_uri(session, dataset_uri)
             environment = EnvironmentService.get_environment_by_uri(session, uri)
 
-            if environment.region != dataset.region:
-                raise UnauthorizedOperation(
-                    action=CREATE_SHARE_OBJECT,
-                    message=f'Requester Team {group_uri} works in region {environment.region} '
-                    f'and the requested dataset is stored in region {dataset.region}',
-                )
-            if (
-                (dataset.stewards == group_uri or dataset.SamlAdminGroupName == group_uri)
-                and environment.environmentUri == dataset.environmentUri
-                and principal_type == PrincipalType.Group.value
-            ):
-                raise UnauthorizedOperation(
-                    action=CREATE_SHARE_OBJECT,
-                    message=f'Team: {group_uri} is managing the dataset {dataset.name}',
-                )
-
             cls._validate_group_membership(session, group_uri, environment.environmentUri)
 
-            if principal_type in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value]:
-                if principal_type == PrincipalType.ConsumptionRole.value:
-                    consumption_role = EnvironmentService.get_environment_consumption_role(
-                        session, principal_id, environment.environmentUri
-                    )
-                    principal_role_arn = consumption_role.IAMRoleArn
-                    principal_role_name = consumption_role.IAMRoleName
-                    managed = consumption_role.dataallManaged
-                else:
-                    env_group = EnvironmentService.get_environment_group(session, group_uri, environment.environmentUri)
-                    principal_role_arn = env_group.environmentIAMRoleArn
-                    principal_role_name = env_group.environmentIAMRoleName
-                    managed = True
+            principal_role_name = cls._resolve_principal_role_name(
+                session, group_uri, environment.environmentUri, principal_id, principal_role_name, principal_type
+            )
 
-                cls._validate_role_in_same_account(dataset.AwsAccountId, principal_role_arn, permissions)
-
-                share_policy_manager = PolicyManager(
-                    role_name=principal_role_name,
-                    environmentUri=environment.environmentUri,
-                    account=environment.AwsAccountId,
-                    region=environment.region,
-                    resource_prefix=environment.resourcePrefix,
-                )
-                for Policy in [
-                    Policy for Policy in share_policy_manager.initializedPolicies if Policy.policy_type == 'SharePolicy'
-                ]:
-                    # Backwards compatibility
-                    # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
-                    # We create the policy from the inline statements
-                    # In this case it could also happen that the role is the Admin of the environment
-                    if not Policy.check_if_policy_exists():
-                        Policy.create_managed_policy_from_inline_and_delete_inline()
-                    # End of backwards compatibility
-
-                    attached = Policy.check_if_policy_attached()
-                    if not attached and not managed and not attachMissingPolicies:
-                        raise Exception(
-                            f'Required customer managed policy {Policy.generate_policy_name()} is not attached to role {principal_role_name}'
-                        )
-                    elif not attached:
-                        Policy.attach_policy()
+            cls.validate_share_object(
+                share_action=ShareObjectActions.Create,
+                dataset_type=dataset.datasetType,
+                session=session,
+                dataset=dataset,
+                environment=environment,
+                group_uri=group_uri,
+                principal_id=principal_id,
+                principal_role_name=principal_role_name,
+                principal_type=principal_type,
+                attachMissingPolicies=attachMissingPolicies,
+                permissions=permissions,
+            )
 
             share = ShareObjectRepository.find_share(
                 session=session,
@@ -262,13 +258,13 @@ class ShareObjectService:
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
 
-            if share.principalType in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value]:
-                # TODO make it generic to non IAM role principals
-                if not ShareObjectService.verify_principal_role(session, share):
-                    raise PrincipalRoleNotFound(
-                        action='Submit Share Object',
-                        message=f'The principal role {share.principalRoleName} is not found.',
-                    )
+            cls.validate_share_object(
+                share_action=ShareObjectActions.Submit,
+                dataset_type=dataset.datasetType,
+                session=session,
+                dataset=dataset,
+                share=share,
+            )
 
             valid_states = [ShareItemStatus.PendingApproval.value]
             valid_share_items_states = [x for x in valid_states if x in states]
@@ -370,14 +366,14 @@ class ShareObjectService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
-            if share.principalType in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value]:
-                if not ShareObjectService.verify_principal_role(
-                    session, share
-                ):  # TODO make it generic to non IAM role principals
-                    raise PrincipalRoleNotFound(
-                        action='Approve Share Object',
-                        message=f'The principal role {share.principalRoleName} is not found.',
-                    )
+            cls.validate_share_object(
+                share_action=ShareObjectActions.Approve,
+                dataset_type=dataset.datasetType,
+                session=session,
+                dataset=dataset,
+                share=share,
+            )
+
             if dataset.enableExpiration and share.requestedExpiryDate and share.requestedExpiryDate < datetime.today():
                 raise Exception(
                     'Cannot approve share since its it past the requested expiration date. Please reject this share and submit a new share request'
@@ -417,11 +413,13 @@ class ShareObjectService:
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
 
-            if not ShareObjectService.verify_principal_role(session, share):
-                raise PrincipalRoleNotFound(
-                    action='Approve Share Object Extension',
-                    message=f'The principal role {share.principalRoleName} is not found.',
-                )
+            cls.validate_share_object(
+                share_action=ShareObjectActions.Approve,
+                dataset_type=dataset.datasetType,
+                session=session,
+                dataset=dataset,
+                share=share,
+            )
 
             if dataset.enableExpiration and share.requestedExpiryDate and share.requestedExpiryDate < datetime.today():
                 raise Exception(
@@ -733,17 +731,16 @@ class ShareObjectService:
             )
 
     @staticmethod
-    def _validate_role_in_same_account(aws_account_id, principal_role_arn, permissions):
-        """
-        raise if aws_account_id and role_arn are not in the same account permissions are WRITE/MODIFY
-
-        :param aws_account_id:
-        :param principal_role_arn:
-        :param permissions:
-        """
-        if f':{aws_account_id}:' not in principal_role_arn and permissions != [ShareObjectDataPermission.Read.value]:
-            raise InvalidInput(
-                'Principal Role',
-                principal_role_arn,
-                f'be in the same {aws_account_id=} when WRITE/MODIFY permissions are specified',
+    def _resolve_principal_role_name(
+        session, group_uri, environment_uri, principal_id, principal_role_name, principal_type
+    ):
+        if principal_type == PrincipalType.ConsumptionRole.value:
+            consumption_role: ConsumptionRole = EnvironmentService.get_environment_consumption_role(
+                session, principal_id, environment_uri
             )
+            return consumption_role.IAMRoleName
+        elif principal_type == PrincipalType.Group.value:
+            env_group: EnvironmentGroup = EnvironmentService.get_environment_group(session, group_uri, environment_uri)
+            return env_group.environmentIAMRoleName
+        else:
+            return principal_role_name
