@@ -8,6 +8,7 @@ from aws_cdk import aws_codebuild as codebuild
 from aws_cdk import aws_codecommit as codecommit
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
+from aws_cdk import aws_kms as kms
 from aws_cdk import aws_s3 as s3
 from aws_cdk import pipelines
 from aws_cdk.aws_codebuild import BuildEnvironmentVariable, BuildEnvironmentVariableType
@@ -117,6 +118,29 @@ class PipelineStack(Stack):
         )
         self.pipeline_bucket.grant_read_write(iam.AccountPrincipal(self.account))
 
+        self.artifact_bucket_name = f'{self.resource_prefix}-{self.git_branch}-artifacts-{self.account}-{self.region}'
+        self.artifact_bucket_key = kms.Key(
+            self,
+            f'{self.artifact_bucket_name}-key',
+            removal_policy=RemovalPolicy.DESTROY,
+            alias=f'{self.artifact_bucket_name}-key',
+            enable_key_rotation=True
+        )
+        self.artifact_bucket = s3.Bucket(
+            self,
+            'pipeline-artifacts-bucket',
+            bucket_name=f'{self.resource_prefix}-{self.git_branch}-artifacts-{self.account}-{self.region}',
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            removal_policy=RemovalPolicy.DESTROY,
+            versioned=True,
+            encryption_key=self.artifact_bucket_key,
+            enforce_ssl=True,
+            auto_delete_objects=True,
+        )
+        tooling_account_cdk_principal = iam.ArnPrincipal(f'arn:aws:iam::{self.account}:role/cdk-hnb659fds-deploy-role-{self.account}-{self.region}')
+        self.artifact_bucket_key.grant_decrypt(tooling_account_cdk_principal)
+        self.artifact_bucket.grant_read(tooling_account_cdk_principal)
+
         if self.source == 'codestar_connection':
             source = CodePipelineSource.connection(
                 repo_string=repo_string, branch=self.git_branch, connection_arn=repo_connection_arn
@@ -133,6 +157,7 @@ class PipelineStack(Stack):
             f'{self.resource_prefix}-{self.git_branch}-cdkpipeline',
             pipeline_name=f'{self.resource_prefix}-pipeline-{self.git_branch}',
             publish_assets_in_parallel=False,
+            artifact_bucket=self.artifact_bucket,
             synth=pipelines.CodeBuildStep(
                 'Synth',
                 input=source,
@@ -150,8 +175,6 @@ class PipelineStack(Stack):
                 role=self.baseline_codebuild_role.without_policy_updates(),
                 vpc=self.vpc,
             ),
-            cross_account_keys=True,
-            enable_key_rotation=True,
             code_build_defaults=pipelines.CodeBuildOptions(
                 build_environment=codebuild.BuildEnvironment(
                     environment_variables={
@@ -172,6 +195,10 @@ class PipelineStack(Stack):
         target_envs = target_envs or [{'envname': 'dev', 'account': self.account, 'region': self.region}]
 
         for target_env in target_envs:
+            target_env_cdk_principal = iam.ArnPrincipal(f'arn:aws:iam::{self.account}:role/cdk-hnb659fds-deploy-role-{self.account}-{self.region}')
+            self.artifact_bucket_key.grant_decrypt(target_env_cdk_principal)
+            self.artifact_bucket.grant_read(target_env_cdk_principal)
+
             self.pipeline_bucket.grant_read(iam.AccountPrincipal(target_env['account']))
 
             backend_stage = self.set_backend_stage(target_env, repository_name)
