@@ -24,7 +24,7 @@ existing infrastructure and users:
 - Redshift Serverless namespace/workgroup or Provisioned cluster: the user creating the connection must know the `namespace ID` and the `workgroup` for Redshift Serverless or the `cluster ID` for the case of Redshift Provisioned clusters. 
 - Redshift user: Redshift administrators manage Redshift users outside of data.all. Our recommendation is to create a dedicated `ADMIN` user for data.all in each onboarded cluster. Data users can be reused.
 - Connection details:
-   - Redshift user: only valid for Provisioned clusters: 
+   - Redshift user: only valid for Provisioned clusters: data.all will generate a temporary password to connect to the database. In this case no password or secret needs to be provided to data.all.
    - AWS Secrets Manager Secret (recommended): the username and password for the Redshift user can be stored in a Secret that **MUST** be tagged with 2 tags. Check the pictures below to see how it should look in the AWS Console.
        - tagKey: dataall, tagValue: True - Needed for data.all to be able to access the Secret
        - tagKey: Redshift, tagValue: Any - Needed by Redshift to use as connection
