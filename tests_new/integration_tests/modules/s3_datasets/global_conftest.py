@@ -117,7 +117,6 @@ def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdat
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
 
 
-
 @pytest.fixture(scope='session')
 def session_s3_dataset2_with_table(client1, group1, org1, session_env1, session_id, testdata):
     ds = None

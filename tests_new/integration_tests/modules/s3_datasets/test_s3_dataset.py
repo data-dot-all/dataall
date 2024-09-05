@@ -216,8 +216,6 @@ def test_get_dataset_presigned_url_upload_data_unauthorized(client2, session_s3_
     ).contains('UnauthorizedOperation', 'CREDENTIALS_DATASET', dataset_uri)
 
 
-
-
 def test_start_crawler(client1, session_s3_dataset1):
     dataset_uri = session_s3_dataset1.datasetUri
     response = start_glue_crawler(client1, datasetUri=dataset_uri, input=None)

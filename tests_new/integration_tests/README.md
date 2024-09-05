@@ -85,4 +85,9 @@ You can also run the tests locally by...
 
 ## Coverage
 
-At the moment integration tests only cover Organizations module as an example.
+At the moment integration tests cover:
+- Organizations
+- Environments
+- Datasets
+- Notebooks
+- Worksheets
