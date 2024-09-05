@@ -148,7 +148,7 @@ In the KMS key policy we need to grant explicit permission to the pivot role. At
 
 ### (Going Further) Support for Datasets with Externally-Managed Glue Catalog 
 
-If the dataset you are trying to import relates to Glue Database that is managed in a separate account, data.all's import dataset feature can also handle importing and sharing these type of datasets in data.all. Assuming the following pre-requisites are copmlete:
+If the dataset you are trying to import relates to Glue Database that is managed in a separate account, data.all's import dataset feature can also handle importing and sharing these type of datasets in data.all. Assuming the following pre-requisites are complete:
 
 - There exists an AWS Account (i.e. the Catalog Account) which is:
   - Onboarded as a data.all environment (e.g. Env A)
@@ -287,7 +287,7 @@ Once the filters are created, they will show in the Filters Table Tab:
 
 Table filters are not editable. To update an existing filter you must:
 
-1. Revoke all associated share items using the filter (if applcable)
+1. Revoke all associated share items using the filter (if applicable)
 2. Delete the table filter
 3. Create a new table filter with any updates as necessary
 
