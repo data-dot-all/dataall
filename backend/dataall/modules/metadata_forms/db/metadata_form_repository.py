@@ -75,6 +75,7 @@ class MetadataFormRepository:
         if org_uris is not None:
             query = query.filter(
                 or_(
+                    MetadataForm.SamlGroupName.in_(groups),
                     MetadataForm.visibility != MetadataFormVisibility.Organization.value,
                     and_(
                         MetadataForm.visibility == MetadataFormVisibility.Organization.value,
@@ -85,6 +86,7 @@ class MetadataFormRepository:
         if env_uris is not None:
             query = query.filter(
                 or_(
+                    MetadataForm.SamlGroupName.in_(groups),
                     MetadataForm.visibility != MetadataFormVisibility.Environment.value,
                     and_(
                         MetadataForm.visibility == MetadataFormVisibility.Environment.value,
@@ -97,7 +99,7 @@ class MetadataFormRepository:
             query = query.filter(
                 or_(
                     MetadataForm.SamlGroupName.in_(groups),
-                    MetadataForm.visibility == MetadataFormVisibility.Global.value,
+                    MetadataForm.visibility != MetadataFormVisibility.Team.value,
                     and_(
                         MetadataForm.visibility == MetadataFormVisibility.Team.value,
                         MetadataForm.homeEntity.in_(groups),
@@ -209,6 +211,7 @@ class MetadataFormRepository:
         all_mfs = MetadataFormRepository.query_metadata_forms(
             session, is_da_admin, groups, envs, orgs, filter
         ).subquery()
+        print(f'{orgs=}')
         # The c confuses a lot of people, SQLAlchemy uses this unfortunately odd name
         # as a container for columns in table objects.
         query = session.query(AttachedMetadataForm).join(all_mfs, AttachedMetadataForm.metadataFormUri == all_mfs.c.uri)
