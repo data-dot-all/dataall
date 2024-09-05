@@ -29,6 +29,7 @@
     "@mui/styles": "^5.5.1",
     "@mui/x-data-grid": "^5.17.26",
     "@mui/x-date-pickers": "^5.0.0",
+    "@mui/x-tree-view": "^6.17.0",
     "@reduxjs/toolkit": "^1.8.0",
     "@testing-library/jest-dom": "^5.16.2",
     "@testing-library/react": "^12.1.4",
@@ -37,7 +38,8 @@
     "apexcharts": "^3.33.2",
     "apollo-boost": "^0.4.9",
     "aws-amplify": "^5.3.14",
-    "axios": "^1.6.5",
+    "braces": "3.0.3",
+    "axios": "^1.7.4",
     "classnames": "^2.3.1",
     "date-fns": "^2.28.0",
     "dayjs": "^1.11.0",
@@ -66,9 +68,10 @@
     "react-scripts": "^5.0.1",
     "simplebar": "^5.3.6",
     "simplebar-react": "^2.3.6",
+    "uuid": "^10.0.0",
     "web-vitals": "^2.1.4",
     "yup": "^0.32.11",
-    "braces": "3.0.3"
+    "webpack": "^5.94.0"
   },
   "overrides": {
     "aws-amplify": {
@@ -92,7 +95,8 @@
     "follow-redirects": "1.15.6",
     "webpack-dev-middleware": "5.3.4",
     "express": "4.19.2",
-    "ejs": "3.1.10"
+    "ejs": "3.1.10",
+    "fast-xml-parser": "4.4.1"
   },
   "resolutions": {
     "react-redux": "^7.2.6",
@@ -107,7 +111,8 @@
     "webpack-dev-middleware": "5.3.4",
     "express": "4.19.2",
     "ejs": "3.1.10",
-    "ws": "^8.17.1"
+    "ws": "^8.17.1",
+    "fast-xml-parser": "4.4.1"
   },
   "devDependencies": {
     "env-cmd": "^10.1.0",

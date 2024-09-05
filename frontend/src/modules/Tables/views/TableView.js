@@ -14,12 +14,13 @@ import {
   Tabs,
   Typography
 } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import * as PropTypes from 'prop-types';
+import { useLocation, Link as RouterLink, useParams } from 'react-router-dom';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
-import { Link as RouterLink, useParams } from 'react-router-dom';
 import {
   ChevronRightIcon,
   DeleteObjectModal,
@@ -34,21 +35,21 @@ import {
   TableColumns,
   TableMetrics,
   TableOverview,
-  TablePreview
+  TablePreview,
+  TableFilters
 } from '../components';
 import { isFeatureEnabled } from 'utils';
+import config from '../../../generated/config.json';
 
 const previewDataEnabled = isFeatureEnabled('s3_datasets', 'preview_data');
 
-const tabs = [
-  { label: 'Overview', value: 'overview' },
-  { label: 'Columns', value: 'columns' },
-  { label: 'Metrics', value: 'metrics' }
-];
+const confidentialityOptionsDict =
+  config.modules.datasets_base.features.confidentiality_dropdown === true &&
+  config.modules.s3_datasets.features.custom_confidentiality_mapping
+    ? config.modules.s3_datasets.features.custom_confidentiality_mapping
+    : {};
 
-if (previewDataEnabled) {
-  tabs.unshift({ label: 'Preview', value: 'preview' });
-}
+const tabs = [{ label: 'Overview', value: 'overview' }];
 
 function TablePageHeader(props) {
   const { table, handleDeleteObjectModalOpen, isAdmin } = props;
@@ -163,10 +164,15 @@ const TableView = () => {
   const client = useClient();
   const navigate = useNavigate();
   const [table, setTable] = useState({});
-  const [currentTab, setCurrentTab] = useState(tabs[0].value);
   const [loading, setLoading] = useState(true);
   const [isDeleteObjectModalOpen, setIsDeleteObjectModalOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const location = useLocation();
+  const shareUri = location?.state?.shareUri;
+  const tab = location?.state?.tab;
+
+  const [currentTab, setCurrentTab] = useState(tab || tabs[0].value);
 
   const handleDeleteObjectModalOpen = () => {
     setIsDeleteObjectModalOpen(true);
@@ -174,6 +180,32 @@ const TableView = () => {
   const handleDeleteObjectModalClose = () => {
     setIsDeleteObjectModalOpen(false);
   };
+
+  const handleUserRole = useCallback(async (userRole, confidentiality) => {
+    const isUnclassified =
+      confidentiality === 'Unclassified' ||
+      confidentialityOptionsDict[confidentiality] === 'Unclassified';
+    const adminValue = ['Creator', 'Admin', 'Owner'].indexOf(userRole) !== -1;
+    const stewardValue = ['DataSteward'].indexOf(userRole) !== -1;
+    setIsAdmin(adminValue);
+    if (adminValue || stewardValue || isUnclassified) {
+      if (previewDataEnabled && !tabs.find((t) => t.value === 'preview')) {
+        tabs.unshift({ label: 'Preview', value: 'preview' });
+      }
+      if (!tabs.find((t) => t.value === 'columns')) {
+        tabs.push({ label: 'Columns', value: 'columns' });
+      }
+      if (!tabs.find((t) => t.value === 'metrics')) {
+        tabs.push({ label: 'Metrics', value: 'metrics' });
+      }
+      if (
+        (adminValue || stewardValue) &&
+        !tabs.find((t) => t.value === 'datafilters')
+      ) {
+        tabs.push({ label: 'Data Filters', value: 'datafilters' });
+      }
+    }
+  }, []);
 
   const deleteTable = async () => {
     const response = await client.mutate(
@@ -191,10 +223,9 @@ const TableView = () => {
     const response = await client.query(getDatasetTable(params.uri));
     if (!response.errors && response.data.getDatasetTable !== null) {
       setTable(response.data.getDatasetTable);
-      setIsAdmin(
-        ['Creator', 'Admin', 'Owner'].indexOf(
-          response.data.getDatasetTable.dataset.userRoleForDataset
-        ) !== -1
+      handleUserRole(
+        response.data.getDatasetTable.dataset.userRoleForDataset,
+        response.data.getDatasetTable.dataset.confidentiality
       );
     } else {
       setTable(null);
@@ -240,6 +271,14 @@ const TableView = () => {
             handleDeleteObjectModalOpen={handleDeleteObjectModalOpen}
             isAdmin={isAdmin}
           />
+          {shareUri && (
+            <Button
+              startIcon={<ArrowBackIcon fontSize="small" />}
+              onClick={() => navigate(`/console/shares/${shareUri}`)}
+            >
+              Go Back to Share Object
+            </Button>
+          )}
           <Box sx={{ mt: 3 }}>
             <Tabs
               indicatorColor="primary"
@@ -273,6 +312,9 @@ const TableView = () => {
             )}
             {currentTab === 'metrics' && (
               <TableMetrics table={table} isAdmin={isAdmin} />
+            )}
+            {currentTab === 'datafilters' && isAdmin && (
+              <TableFilters table={table} isAdmin={isAdmin} />
             )}
           </Box>
         </Container>

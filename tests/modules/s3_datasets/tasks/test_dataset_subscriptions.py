@@ -9,6 +9,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemStatus,
     ShareableType,
     PrincipalType,
+    ShareObjectDataPermission,
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, S3Dataset
@@ -70,8 +71,10 @@ def share(
             environmentUri=otherenv.environmentUri,
             owner='bob',
             principalId='group2',
-            principalType=PrincipalType.Environment.value,
+            principalRoleName='uri-group2',
+            principalType=PrincipalType.Group.value,
             status=ShareObjectStatus.Approved.value,
+            permissions=[ShareObjectDataPermission.Read.value],
         )
         session.add(share)
         session.commit()

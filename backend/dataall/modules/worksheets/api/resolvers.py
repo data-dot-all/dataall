@@ -18,7 +18,6 @@ def create_worksheet(context: Context, source, input: dict = None):
         return WorksheetService.create_worksheet(
             session=session,
             username=context.username,
-            uri=None,
             data=input,
         )
 

@@ -75,8 +75,20 @@ def _create_env_stack(session, env):
 
 @pytest.fixture(scope='module', autouse=True)
 def env(db, environment_group):
-    def factory(org, envname, owner, group, account, region='eu-west-1', desc='test', role='iam_role', parameters=None):
+    def factory(
+        org,
+        envname,
+        owner,
+        group,
+        account,
+        region='eu-west-1',
+        desc='test',
+        role='iam_role',
+        parameters=None,
+        envUri=None,
+    ):
         with db.scoped_session() as session:
+            kwargs = {'environmentUri': envUri} if envUri else {}
             env = Environment(
                 organizationUri=org.organizationUri,
                 AwsAccountId=account,
@@ -91,6 +103,7 @@ def env(db, environment_group):
                 EnvironmentDefaultBucketName='defaultbucketname1234567789',
                 CDKRoleArn=f'arn:aws::{account}:role/EnvRole',
                 EnvironmentDefaultAthenaWorkGroup='DefaultWorkGroup',
+                **kwargs,
             )
             session.add(env)
             session.commit()

@@ -125,7 +125,7 @@ class ParamStoreStack(pyNestedClass):
             f'toolingAccountParam{envname}',
             parameter_name=f'/dataall/{envname}/toolingAccount',
             string_value=str(tooling_account_id),
-            description=f'Stores AWS account if for the tooling account that hosts the code for environment {envname}',
+            description=f'Store AWS account if for the tooling account that hosts the code for environment {envname}',
         )
 
         if prod_sizing:

@@ -51,19 +51,13 @@ def session_env1(client1, group1, org1, session_id, testdata):
             delete_env(client1, env)
 
 
-@pytest.fixture(scope='session')
-def session_env1_integration_role_arn(session_env1):
-    yield f'arn:aws:iam::{session_env1.AwsAccountId}:role/dataall-integration-tests-role-{session_env1.region}'
-
-
-@pytest.fixture(scope='session')
-def session_env1_aws_client(session_env1, session_id, session_env1_integration_role_arn):
+def get_environment_aws_session(role_arn, env):
     try:
         base_session = boto3.Session()
-        response = base_session.client('sts', region_name=session_env1.region).assume_role(
-            RoleArn=session_env1_integration_role_arn, RoleSessionName=session_env1_integration_role_arn.split('/')[1]
+        response = base_session.client('sts', region_name=env.region).assume_role(
+            RoleArn=role_arn, RoleSessionName=role_arn.split('/')[1]
         )
-        yield boto3.Session(
+        return boto3.Session(
             aws_access_key_id=response['Credentials']['AccessKeyId'],
             aws_secret_access_key=response['Credentials']['SecretAccessKey'],
             aws_session_token=response['Credentials']['SessionToken'],
@@ -71,31 +65,26 @@ def session_env1_aws_client(session_env1, session_id, session_env1_integration_r
     except:
         log.exception('Failed to assume environment integration test role')
         raise
+
+
+@pytest.fixture(scope='session')
+def session_env1_integration_role_arn(session_env1):
+    return f'arn:aws:iam::{session_env1.AwsAccountId}:role/dataall-integration-tests-role-{session_env1.region}'
+
+
+@pytest.fixture(scope='session')
+def session_env1_aws_client(session_env1, session_env1_integration_role_arn):
+    return get_environment_aws_session(session_env1_integration_role_arn, session_env1)
 
 
 @pytest.fixture(scope='session')
 def persistent_env1_integration_role_arn(persistent_env1):
-    yield f'arn:aws:iam::{persistent_env1.AwsAccountId}:role/dataall-integration-tests-role-{persistent_env1.region}'
+    return f'arn:aws:iam::{persistent_env1.AwsAccountId}:role/dataall-integration-tests-role-{persistent_env1.region}'
 
 
 @pytest.fixture(scope='session')
-def persistent_env1_aws_client(persistent_env1, session_id):
-    try:
-        base_session = boto3.Session()
-        role_arn = (
-            f'arn:aws:iam::{persistent_env1.AwsAccountId}:role/dataall-integration-tests-role-{persistent_env1.region}'
-        )
-        response = base_session.client('sts', region_name=persistent_env1.region).assume_role(
-            RoleArn=role_arn, RoleSessionName=role_arn.split('/')[1]
-        )
-        yield boto3.Session(
-            aws_access_key_id=response['Credentials']['AccessKeyId'],
-            aws_secret_access_key=response['Credentials']['SecretAccessKey'],
-            aws_session_token=response['Credentials']['SessionToken'],
-        )
-    except:
-        log.exception('Failed to assume environment integration test role')
-        raise
+def persistent_env1_aws_client(persistent_env1, persistent_env1_integration_role_arn):
+    return get_environment_aws_session(persistent_env1_integration_role_arn, persistent_env1)
 
 
 @pytest.fixture(scope='session')
@@ -146,7 +135,7 @@ def get_or_create_persistent_env(env_name, client, group, testdata):
         if env.stack.status in ['CREATE_COMPLETE', 'UPDATE_COMPLETE']:
             return env
         else:
-            delete_env(client, env['environmentUri'])
+            delete_env(client, env)
             raise RuntimeError(f'failed to create {env_name=} {env=}')
 
 

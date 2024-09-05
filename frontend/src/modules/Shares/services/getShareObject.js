@@ -16,18 +16,20 @@ export const getShareObject = ({ shareUri, filter }) => ({
         rejectPurpose
         userRoleForShareObject
         canViewLogs
+        permissions
+        expiryDate
+        requestedExpiryDate
+        submittedForExtension
+        nonExpirable
+        extensionReason
+        shareExpirationPeriod
         principal {
-          principalId
-          principalType
           principalName
-          principalIAMRoleName
+          principalType
+          principalId
+          principalRoleName
           SamlGroupName
-          environmentUri
           environmentName
-          AwsAccountId
-          region
-          organizationUri
-          organizationName
         }
         items(filter: $filter) {
           count
@@ -45,6 +47,7 @@ export const getShareObject = ({ shareUri, filter }) => ({
             healthStatus
             healthMessage
             lastVerificationTime
+            attachedDataFilterUri
           }
         }
         dataset {
@@ -56,6 +59,9 @@ export const getShareObject = ({ shareUri, filter }) => ({
           region
           exists
           description
+          datasetType
+          enableExpiration
+          expirySetting
         }
       }
     }

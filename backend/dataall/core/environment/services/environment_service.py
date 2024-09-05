@@ -811,7 +811,7 @@ class EnvironmentService:
             return None
 
     @staticmethod
-    def get_environment_group(session, group_uri, environment_uri):
+    def get_environment_group(session, group_uri, environment_uri) -> EnvironmentGroup:
         env_group = EnvironmentRepository.get_environment_group(session, group_uri, environment_uri)
         if not env_group:
             raise exceptions.ObjectNotFound('EnvironmentGroup', f'({group_uri},{environment_uri})')

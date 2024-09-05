@@ -185,7 +185,7 @@ class PipelineStack(Stack):
                 )
 
             if target_env.get('with_approval_tests', False):
-                self.set_approval_tests_stage(target_env)
+                self.set_approval_tests_stage(backend_stage, target_env)
 
             if target_env.get('enable_update_dataall_stacks_in_cicd_pipeline', False):
                 self.set_stacks_updater_stage(target_env)
@@ -651,12 +651,14 @@ class PipelineStack(Stack):
                 custom_auth=target_env.get('custom_auth', None),
                 custom_waf_rules=target_env.get('custom_waf_rules', None),
                 with_approval_tests=target_env.get('with_approval_tests', False),
+                allowed_origins=target_env.get('allowed_origins', '*'),
             )
         )
         return backend_stage
 
     def set_approval_tests_stage(
         self,
+        backend_stage,
         target_env,
     ):
         if target_env.get('custom_auth', None) is None:
@@ -664,8 +666,7 @@ class PipelineStack(Stack):
         else:
             frontend_deployment_role_arn = f'arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-frontend-config-role'
 
-        wave = self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-approval-tests-stage")
-        wave.add_post(
+        backend_stage.add_post(
             pipelines.CodeBuildStep(
                 id='ApprovalTests',
                 build_environment=codebuild.BuildEnvironment(
@@ -888,6 +889,7 @@ class PipelineStack(Stack):
                 ip_ranges=target_env.get('ip_ranges'),
                 resource_prefix=self.resource_prefix,
                 custom_auth=target_env.get('custom_auth', None),
+                backend_region=target_env.get('region', self.region),
             ),
             pre=[
                 pipelines.CodeBuildStep(

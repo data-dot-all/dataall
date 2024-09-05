@@ -57,6 +57,7 @@ class LambdaApiStack(pyNestedClass):
         ses_configuration_set=None,
         custom_domain=None,
         custom_auth=None,
+        allowed_origins='*',
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -96,7 +97,7 @@ class LambdaApiStack(pyNestedClass):
 
         self.esproxy_dlq = self.set_dlq(f'{resource_prefix}-{envname}-esproxy-dlq')
         esproxy_sg = self.create_lambda_sgs(envname, 'esproxy', resource_prefix, vpc)
-        esproxy_env = {'envname': envname, 'LOG_LEVEL': 'INFO'}
+        esproxy_env = {'envname': envname, 'LOG_LEVEL': 'INFO', 'ALLOWED_ORIGINS': allowed_origins}
         if custom_auth:
             esproxy_env['custom_auth'] = custom_auth.get('provider', None)
         self.elasticsearch_proxy_handler = _lambda.DockerImageFunction(
@@ -125,7 +126,12 @@ class LambdaApiStack(pyNestedClass):
 
         self.api_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-graphql-dlq')
         api_handler_sg = self.create_lambda_sgs(envname, 'apihandler', resource_prefix, vpc)
-        api_handler_env = {'envname': envname, 'LOG_LEVEL': 'INFO', 'REAUTH_TTL': str(reauth_ttl)}
+        api_handler_env = {
+            'envname': envname,
+            'LOG_LEVEL': 'INFO',
+            'REAUTH_TTL': str(reauth_ttl),
+            'ALLOWED_ORIGINS': allowed_origins,
+        }
         # Check if custom domain exists and if it exists email notifications could be enabled. Create a env variable which stores the domain url. This is used for sending data.all share weblinks in the email notifications.
         if custom_domain and custom_domain.get('hosted_zone_name', None):
             api_handler_env['frontend_domain_url'] = f'https://{custom_domain.get("hosted_zone_name", None)}'

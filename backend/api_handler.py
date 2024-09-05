@@ -36,6 +36,7 @@ SCHEMA = bootstrap_schema()
 TYPE_DEFS = gql(SCHEMA.gql(with_directives=False))
 ENVNAME = os.getenv('envname', 'local')
 ENGINE = get_engine(envname=ENVNAME)
+ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', '*')
 Worker.queue = SqsQueue.send
 
 
@@ -92,7 +93,7 @@ def handler(event, context):
             'statusCode': 200,
             'headers': {
                 'content-type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Origin': ALLOWED_ORIGINS,
                 'Access-Control-Allow-Headers': '*',
                 'Access-Control-Allow-Methods': '*',
             },
@@ -146,7 +147,7 @@ def handler(event, context):
         'statusCode': 200 if success else 400,
         'headers': {
             'content-type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': ALLOWED_ORIGINS,
             'Access-Control-Allow-Headers': '*',
             'Access-Control-Allow-Methods': '*',
         },

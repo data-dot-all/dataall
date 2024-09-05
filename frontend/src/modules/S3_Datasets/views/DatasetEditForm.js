@@ -9,11 +9,15 @@ import {
   CardHeader,
   Chip,
   CircularProgress,
+  Collapse,
   Container,
+  Dialog,
+  Divider,
   FormHelperText,
   Grid,
   Link,
   MenuItem,
+  Switch,
   TextField,
   Typography
 } from '@mui/material';
@@ -32,6 +36,7 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
+  fetchEnums,
   getDataset,
   listEnvironmentGroups,
   searchGlossary,
@@ -41,6 +46,8 @@ import { updateDataset } from '../services';
 import { ConfidentialityList, Topics } from '../../constants';
 import config from '../../../generated/config.json';
 import { isFeatureEnabled } from 'utils';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Article } from '@mui/icons-material';
 
 const DatasetEditForm = (props) => {
   const dispatch = useDispatch();
@@ -62,8 +69,12 @@ const DatasetEditForm = (props) => {
         )
       : ConfidentialityList
   );
-
+  const [showAdvancedControls, setShowAdvancedControl] = useState(false);
+  const [expirationMenu, setExpirationMenu] = useState([]);
+  const [enableShareExpiration, setEnableShareExpiration] = useState(false);
   const topicsData = Topics.map((t) => ({ label: t, value: t }));
+  const [datasetEditFormModalOpen, setDatasetEditFormModalOpenClose] =
+    useState(false);
 
   const fetchGroups = useCallback(
     async (environmentUri) => {
@@ -96,6 +107,7 @@ const DatasetEditForm = (props) => {
     const response = await client.query(getDataset(params.uri));
     if (!response.errors && response.data.getDataset !== null) {
       setDataset(response.data.getDataset);
+      setEnableShareExpiration(response.data.getDataset.enableExpiration);
       fetchGroups(response.data.getDataset.environment.environmentUri).catch(
         (e) => dispatch({ type: SET_ERROR, error: e.message })
       );
@@ -139,13 +151,57 @@ const DatasetEditForm = (props) => {
     setLoading(false);
   }, [client, dispatch, params.uri, fetchGroups]);
 
+  const fetchExpirationOptions = async () => {
+    try {
+      const enumExpirationsOptions = await fetchEnums(client, ['Expiration']);
+      if (enumExpirationsOptions['Expiration'].length > 0) {
+        let datasetExpirationOptions = [];
+        enumExpirationsOptions['Expiration'].map((x) => {
+          let expirationType = { key: x.name, value: x.value };
+          datasetExpirationOptions.push(expirationType);
+        });
+        setExpirationMenu(datasetExpirationOptions);
+      } else {
+        const error = 'Could not fetch expiration options';
+        dispatch({ type: SET_ERROR, error });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    }
+  };
+
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchExpirationOptions().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client, dispatch, fetchItem]);
 
+  const handleModalPopUpWithMessage = () => {
+    setDatasetEditFormModalOpenClose(true);
+  };
+
   async function submit(values, setStatus, setSubmitting, setErrors) {
+    if (
+      enableShareExpiration !== dataset.enableExpiration ||
+      values.expirationSetting !== dataset.expirationSetting ||
+      values.minValidity !== dataset.expiryMinDuration ||
+      values.maxValidity !== dataset.expiryMaxDuration
+    ) {
+      handleModalPopUpWithMessage();
+    } else {
+      await submitUpdateDataset(values, setStatus, setSubmitting, setErrors);
+    }
+  }
+
+  async function submitUpdateDataset(
+    values,
+    setStatus,
+    setSubmitting,
+    setErrors
+  ) {
     try {
       const response = await client.mutate(
         updateDataset({
@@ -161,7 +217,15 @@ const DatasetEditForm = (props) => {
               : values.terms.map((t) => t.nodeUri),
             confidentiality: values.confidentiality,
             KmsAlias: values.KmsAlias,
-            autoApprovalEnabled: values.autoApprovalEnabled
+            autoApprovalEnabled: values.autoApprovalEnabled,
+            enableExpiration: enableShareExpiration,
+            expirySetting: enableShareExpiration
+              ? values.expirationSetting
+              : null,
+            expiryMinDuration: enableShareExpiration
+              ? values.minValidity
+              : null,
+            expiryMaxDuration: enableShareExpiration ? values.maxValidity : null
           }
         })
       );
@@ -270,7 +334,10 @@ const DatasetEditForm = (props) => {
                 stewards: dataset.stewards,
                 confidentiality: dataset.confidentiality,
                 KmsAlias: dataset.KmsAlias,
-                autoApprovalEnabled: dataset.autoApprovalEnabled
+                autoApprovalEnabled: dataset.autoApprovalEnabled,
+                expirationSetting: dataset.expirySetting,
+                minValidity: dataset.expiryMinDuration,
+                maxValidity: dataset.expiryMaxDuration
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -292,7 +359,18 @@ const DatasetEditForm = (props) => {
                   : Yup.string(),
                 autoApprovalEnabled: Yup.boolean().required(
                   '*AutoApproval property is required'
-                )
+                ),
+                expirationSetting: Yup.string().nullable(),
+                minValidity: enableShareExpiration
+                  ? Yup.number()
+                      .positive()
+                      .required('*Minimum allowed expiration is required')
+                  : Yup.number().nullable(),
+                maxValidity: enableShareExpiration
+                  ? Yup.number()
+                      .positive()
+                      .required('*Maximum allowed expiration is required')
+                  : Yup.number().nullable()
               })}
               onSubmit={async (
                 values,
@@ -309,7 +387,10 @@ const DatasetEditForm = (props) => {
                 isSubmitting,
                 setFieldValue,
                 touched,
-                values
+                values,
+                setSubmitting,
+                setStatus,
+                setErrors
               }) => (
                 <form onSubmit={handleSubmit} {...props}>
                   <Grid container spacing={3}>
@@ -510,6 +591,99 @@ const DatasetEditForm = (props) => {
                           )}
                         </CardContent>
                       </Card>
+
+                      <Card sx={{ mt: 3 }}>
+                        <Box alignItems="center" display="flex">
+                          <Box sx={{ flexGrow: 1 }}>
+                            <CardHeader title="Advanced Controls" />
+                          </Box>
+                          <ExpandMoreIcon
+                            sx={{ m: 1 }}
+                            variant="outlined"
+                            onClick={() => {
+                              setShowAdvancedControl(!showAdvancedControls);
+                            }}
+                          />
+                        </Box>
+                        <Collapse in={showAdvancedControls}>
+                          <CardContent>
+                            <Box display="flex" alignItems="center">
+                              <Typography>Enable Share Expiration</Typography>
+                              <Switch
+                                checked={enableShareExpiration}
+                                onChange={() => {
+                                  setEnableShareExpiration(
+                                    !enableShareExpiration
+                                  );
+                                }}
+                              />
+                            </Box>
+                          </CardContent>
+                          <Collapse in={enableShareExpiration}>
+                            <CardContent>
+                              <TextField
+                                fullWidth
+                                error={Boolean(
+                                  touched.expirationSetting &&
+                                    errors.expirationSetting
+                                )}
+                                helperText={
+                                  touched.expirationSetting &&
+                                  errors.expirationSetting
+                                }
+                                label="Expiration Setting For Dataset"
+                                name="expirationSetting"
+                                onChange={handleChange}
+                                select
+                                value={values.expirationSetting}
+                                variant="outlined"
+                              >
+                                {expirationMenu.map((item) => (
+                                  <MenuItem key={item.key} value={item.value}>
+                                    {item.key}
+                                  </MenuItem>
+                                ))}
+                              </TextField>
+                            </CardContent>
+                            <CardContent>
+                              <TextField
+                                error={Boolean(
+                                  touched.minValidity && errors.minValidity
+                                )}
+                                fullWidth
+                                helperText={
+                                  touched.minValidity && errors.minValidity
+                                }
+                                label="Minimum access period in months / quarters"
+                                name="minValidity"
+                                onBlur={handleBlur}
+                                onChange={handleChange}
+                                variant="outlined"
+                                inputProps={{ type: 'number' }}
+                                value={values.minValidity}
+                              />
+                            </CardContent>
+                            <CardContent>
+                              <TextField
+                                error={Boolean(
+                                  touched.maxValidity && errors.maxValidity
+                                )}
+                                fullWidth
+                                helperText={
+                                  touched.maxValidity && errors.maxValidity
+                                }
+                                label="Maximum access period in months / quarters"
+                                name="maxValidity"
+                                onBlur={handleBlur}
+                                onChange={handleChange}
+                                variant="outlined"
+                                inputProps={{ type: 'number' }}
+                                value={values.maxValidity}
+                              />
+                            </CardContent>
+                          </Collapse>
+                        </Collapse>
+                      </Card>
                     </Grid>
                     <Grid item lg={5} md={5} xs={12}>
                       <Card sx={{ mb: 3 }}>
@@ -624,6 +798,15 @@ const DatasetEditForm = (props) => {
                       </Box>
                     </Grid>
                   </Grid>
+                  <DatasetEditFormModal
+                    values={values}
+                    setSubmitting={setSubmitting}
+                    setStatus={setStatus}
+                    setErrors={setErrors}
+                    isModalOpenClose={datasetEditFormModalOpen}
+                    setModalOpenClose={setDatasetEditFormModalOpenClose}
+                    submitUpdateDataset={submitUpdateDataset}
+                  />
                 </form>
               )}
             </Formik>
@@ -631,6 +814,81 @@ const DatasetEditForm = (props) => {
         </Container>
       </Box>
     </>
+  );
+};
+
+export const DatasetEditFormModal = (props) => {
+  const {
+    values,
+    setSubmitting,
+    setStatus,
+    setErrors,
+    isModalOpenClose,
+    setModalOpenClose,
+    submitUpdateDataset
+  } = props;
+
+  const handleModalOpenClose = (triggerUpdate) => {
+    setModalOpenClose(false);
+    if (triggerUpdate) {
+      submitUpdateDataset(values, setStatus, setSubmitting, setErrors);
+    }
+  };
+
+  return (
+    <Dialog maxWidth="md" fullWidth open={isModalOpenClose}>
+      <Box sx={{ p: 2 }}>
+        <Card>
+          <CardHeader
+            title={
+              <Box>
+                There are changes to the dataset expiration settings. If there
+                are any shares on this dataset they might get updated: <br />
+                <b>
+                  If you are enabling expiration for the first time, all the
+                  shares will automatically updated to have minimum expiration
+                  period{' '}
+                </b>
+                <br />
+                <b>
+                  If you are editing an existing dataset expiration setting, all
+                  shares who don't have expiration will have minimum expiration
+                  period. All your existing shares with expiration won't change
+                </b>
+                <br />
+                <br />
+                Are you sure you want to update the dataset ?
+              </Box>
+            }
+          />
+          <Divider />
+          <Box display="flex" sx={{ p: 1 }}>
+            <Button
+              color="primary"
+              startIcon={<Article fontSize="small" />}
+              sx={{ m: 1 }}
+              variant="outlined"
+              onClick={() => {
+                handleModalOpenClose(true);
+              }}
+            >
+              Yes
+            </Button>
+            <Button
+              color="primary"
+              startIcon={<Article fontSize="small" />}
+              sx={{ m: 1 }}
+              variant="outlined"
+              onClick={() => {
+                handleModalOpenClose(false);
+              }}
+            >
+              No
+            </Button>
+          </Box>
+        </Card>
+      </Box>
+    </Dialog>
   );
 };
 
