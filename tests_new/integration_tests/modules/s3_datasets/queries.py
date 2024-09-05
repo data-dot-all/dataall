@@ -358,6 +358,7 @@ def create_folder(client, datasetUri, input):
                       createDatasetStorageLocation(datasetUri: $datasetUri, input: $input) {{
                         locationUri
                         S3Prefix
+                        label
                       }}
                     }}
                 """,
@@ -378,3 +379,39 @@ def delete_folder(client, locationUri):
     }
     response = client.query(query=query)
     return response.data.deleteDatasetStorageLocation
+
+
+def update_folder(client, locationUri, input):
+    query = {
+        'operationName': 'updateDatasetStorageLocation',
+        'variables': {'locationUri': locationUri, 'input': input},
+        'query': f"""
+                    mutation updateDatasetStorageLocation($locationUri: String!, $input: ModifyDatasetStorageLocationInput!) {{
+                      updateDatasetStorageLocation(locationUri: $locationUri, input: $input) {{
+                        locationUri
+                        S3Prefix
+                        label
+                      }}
+                    }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.updateDatasetStorageLocation
+
+
+def get_folder(client, locationUri):
+    query = {
+        'operationName': 'getDatasetStorageLocation',
+        'variables': {'locationUri': locationUri},
+        'query': f"""
+                    query getDatasetStorageLocation($locationUri: String!) {{
+                      getDatasetStorageLocation(locationUri: $locationUri) {{
+                        locationUri
+                        label
+                        S3Prefix 
+                      }}
+                    }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.getDatasetStorageLocation

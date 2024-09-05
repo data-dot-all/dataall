@@ -1,6 +1,7 @@
 import logging
 import pytest
 import boto3
+import json
 from integration_tests.client import GqlError
 from integration_tests.core.stack.utils import check_stack_ready
 
@@ -11,6 +12,7 @@ from integration_tests.modules.s3_datasets.queries import (
     delete_dataset,
     get_dataset,
     sync_tables,
+    create_folder,
 )
 from tests_new.integration_tests.modules.datasets_base.queries import list_datasets
 
@@ -94,7 +96,7 @@ def delete_s3_dataset(client, env_uri, dataset):
 
 
 """
-Session envs persist accross the duration of the whole integ test suite and are meant to make the test suite run faster (env creation takes ~2 mins).
+Session envs persist across the duration of the whole integ test suite and are meant to make the test suite run faster (env creation takes ~2 mins).
 For this reason they must stay immutable as changes to them will affect the rest of the tests.
 """
 
@@ -118,7 +120,7 @@ def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdat
 
 
 @pytest.fixture(scope='session')
-def session_s3_dataset2_with_table(client1, group1, org1, session_env1, session_id, testdata):
+def session_s3_dataset2_with_tables_and_folders(client1, group1, org1, session_env1, session_id, testdata):
     ds = None
     try:
         ds = create_s3_dataset(
@@ -129,18 +131,27 @@ def session_s3_dataset2_with_table(client1, group1, org1, session_env1, session_
             env_uri=session_env1['environmentUri'],
             tags=[session_id],
         )
-        creds = generate_dataset_access_token(client1, ds.datasetUri)
+        creds = json.loads(generate_dataset_access_token(client1, ds.datasetUri))
         dataset_session = boto3.Session(
             aws_access_key_id=creds['AccessKey'],
             aws_secret_access_key=creds['SessionKey'],
             aws_session_token=creds['sessionToken'],
         )
         GlueClient(dataset_session, ds.region).create_table(
-            database_name=ds.GlueDatabaseName, table_name='integrationtest', bucket=ds.S3Bucket
+            database_name=ds.GlueDatabaseName, table_name='integrationtest1', bucket=ds.S3BucketName
         )
-        response = sync_tables(client1, datasetUri=ds.datasetUri)
+        GlueClient(dataset_session, ds.region).create_table(
+            database_name=ds.GlueDatabaseName, table_name='integrationtest2', bucket=ds.S3BucketName
+        )
+        tables = sync_tables(client1, datasetUri=ds.datasetUri)
+        folderA = create_folder(
+            client1, datasetUri=ds.datasetUri, input={'prefix': 'sessionFolderA', 'label': 'labelSessionFolderA'}
+        )
+        folderB = create_folder(
+            client1, datasetUri=ds.datasetUri, input={'prefix': 'sessionFolderB', 'label': 'labelSessionFolderB'}
+        )
 
-        yield ds, response.get('nodes', [])[0]
+        yield ds, tables.get('nodes', []), [folderA, folderB]
     finally:
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
