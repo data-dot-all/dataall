@@ -1,17 +1,21 @@
-import logging
-from typing import List
+from datetime import datetime
 
-from dataall.base.aws.iam import IAM
+from dataall.base.utils.expiration_util import ExpirationUtils
+import logging
+from abc import ABC, abstractmethod
+from typing import Dict, List
+
 from dataall.base.context import get_context
 from dataall.base.db.exceptions import UnauthorizedOperation, InvalidInput
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.environment.services.managed_iam_policies import PolicyManager
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.tasks.service_handlers import Worker
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
+from dataall.modules.datasets_base.services.datasets_enums import DatasetTypes
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_state_machines import (
@@ -19,7 +23,7 @@ from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareItemSM,
 )
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
-from dataall.modules.shares_base.services.share_exceptions import ShareItemsFound, PrincipalRoleNotFound
+from dataall.modules.shares_base.services.share_exceptions import ShareItemsFound
 from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
 from dataall.modules.shares_base.services.share_permissions import (
     REJECT_SHARE_OBJECT,
@@ -37,20 +41,63 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemStatus,
     ShareObjectStatus,
     PrincipalType,
-    ShareObjectDataPermission,
 )
 
 log = logging.getLogger(__name__)
 
 
-class ShareObjectService:
+class SharesValidatorInterface(ABC):
     @staticmethod
-    def verify_principal_role(session, share: ShareObject) -> bool:
-        log.info('Verifying principal IAM role...')
-        role_name = share.principalRoleName
-        env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
-        principal_role = IAM.get_role_arn_by_name(account_id=env.AwsAccountId, region=env.region, role_name=role_name)
-        return principal_role is not None
+    @abstractmethod
+    def validate_share_object_create(
+        session,
+        dataset,
+        group_uri,
+        environment,
+        principal_type,
+        principal_id,
+        principal_role_name,
+        attachMissingPolicies,
+        permissions,
+    ) -> bool:
+        """Executes checks when a share request is created"""
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def validate_share_object_submit(session, dataset, share) -> bool:
+        """Executes checks when a share item is submitted"""
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def validate_share_object_approve(session, dataset, share) -> bool:
+        """Executes checks when a share item is approved"""
+        ...
+
+
+class ShareObjectService:
+    SHARING_VALIDATORS: Dict[DatasetTypes, SharesValidatorInterface] = {}
+
+    @classmethod
+    def register_validator(cls, dataset_type: DatasetTypes, validator) -> None:
+        cls.SHARING_VALIDATORS[dataset_type] = validator
+
+    @classmethod
+    def validate_share_object(
+        cls, share_action: ShareObjectActions, dataset_type: DatasetTypes, session, dataset, *args, **kwargs
+    ):
+        log.info(f'Validating share object {share_action.value} for {dataset_type.value=}')
+        for ds_type, validator in cls.SHARING_VALIDATORS.items():
+            if ds_type.value == dataset_type.value:
+                if share_action.value == ShareObjectActions.Create.value:
+                    validator.validate_share_object_create(session, dataset, *args, **kwargs)
+                elif share_action.value == ShareObjectActions.Submit.value:
+                    validator.validate_share_object_submit(session, dataset, *args, **kwargs)
+                elif share_action.value == ShareObjectActions.Approve.value:
+                    validator.validate_share_object_approve(session, dataset, *args, **kwargs)
+                else:
+                    raise ValueError(f'Invalid share action {share_action.value}')
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(GET_SHARE_OBJECT)
@@ -73,71 +120,33 @@ class ShareObjectService:
         requestPurpose,
         attachMissingPolicies,
         permissions: List[str],
+        shareExpirationPeriod,
+        nonExpirable: bool = False,
     ):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             dataset: DatasetBase = DatasetBaseRepository.get_dataset_by_uri(session, dataset_uri)
             environment = EnvironmentService.get_environment_by_uri(session, uri)
 
-            if environment.region != dataset.region:
-                raise UnauthorizedOperation(
-                    action=CREATE_SHARE_OBJECT,
-                    message=f'Requester Team {group_uri} works in region {environment.region} '
-                    f'and the requested dataset is stored in region {dataset.region}',
-                )
-            if (
-                (dataset.stewards == group_uri or dataset.SamlAdminGroupName == group_uri)
-                and environment.environmentUri == dataset.environmentUri
-                and principal_type == PrincipalType.Group.value
-            ):
-                raise UnauthorizedOperation(
-                    action=CREATE_SHARE_OBJECT,
-                    message=f'Team: {group_uri} is managing the dataset {dataset.name}',
-                )
-
             cls._validate_group_membership(session, group_uri, environment.environmentUri)
 
-            if principal_type in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value]:
-                if principal_type == PrincipalType.ConsumptionRole.value:
-                    consumption_role = EnvironmentService.get_environment_consumption_role(
-                        session, principal_id, environment.environmentUri
-                    )
-                    principal_role_arn = consumption_role.IAMRoleArn
-                    principal_role_name = consumption_role.IAMRoleName
-                    managed = consumption_role.dataallManaged
-                else:
-                    env_group = EnvironmentService.get_environment_group(session, group_uri, environment.environmentUri)
-                    principal_role_arn = env_group.environmentIAMRoleArn
-                    principal_role_name = env_group.environmentIAMRoleName
-                    managed = True
+            principal_role_name = cls._resolve_principal_role_name(
+                session, group_uri, environment.environmentUri, principal_id, principal_role_name, principal_type
+            )
 
-                cls._validate_role_in_same_account(dataset.AwsAccountId, principal_role_arn, permissions)
-
-                share_policy_manager = PolicyManager(
-                    role_name=principal_role_name,
-                    environmentUri=environment.environmentUri,
-                    account=environment.AwsAccountId,
-                    region=environment.region,
-                    resource_prefix=environment.resourcePrefix,
-                )
-                for Policy in [
-                    Policy for Policy in share_policy_manager.initializedPolicies if Policy.policy_type == 'SharePolicy'
-                ]:
-                    # Backwards compatibility
-                    # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
-                    # We create the policy from the inline statements
-                    # In this case it could also happen that the role is the Admin of the environment
-                    if not Policy.check_if_policy_exists():
-                        Policy.create_managed_policy_from_inline_and_delete_inline()
-                    # End of backwards compatibility
-
-                    attached = Policy.check_if_policy_attached()
-                    if not attached and not managed and not attachMissingPolicies:
-                        raise Exception(
-                            f'Required customer managed policy {Policy.generate_policy_name()} is not attached to role {principal_role_name}'
-                        )
-                    elif not attached:
-                        Policy.attach_policy()
+            cls.validate_share_object(
+                share_action=ShareObjectActions.Create,
+                dataset_type=dataset.datasetType,
+                session=session,
+                dataset=dataset,
+                environment=environment,
+                group_uri=group_uri,
+                principal_id=principal_id,
+                principal_role_name=principal_role_name,
+                principal_type=principal_type,
+                attachMissingPolicies=attachMissingPolicies,
+                permissions=permissions,
+            )
 
             share = ShareObjectRepository.find_share(
                 session=session,
@@ -148,6 +157,24 @@ class ShareObjectService:
                 group_uri=group_uri,
             )
             already_existed = share is not None
+
+            if (
+                dataset.enableExpiration
+                and not nonExpirable
+                and (
+                    shareExpirationPeriod > dataset.expiryMaxDuration
+                    or shareExpirationPeriod < dataset.expiryMinDuration
+                )
+            ):
+                raise Exception('Share expiration period is not within the maximum and the minimum expiration duration')
+
+            shareExpiryDate = None
+            if nonExpirable:
+                shareExpiryDate = None
+                shareExpirationPeriod = None
+            elif dataset.enableExpiration:
+                shareExpiryDate = ExpirationUtils.calculate_expiry_date(shareExpirationPeriod, dataset.expirySetting)
+
             if not share:
                 share = ShareObject(
                     datasetUri=dataset.datasetUri,
@@ -160,6 +187,9 @@ class ShareObjectService:
                     status=ShareObjectStatus.Draft.value,
                     requestPurpose=requestPurpose,
                     permissions=permissions,
+                    requestedExpiryDate=shareExpiryDate,
+                    nonExpirable=nonExpirable,
+                    shareExpirationPeriod=shareExpirationPeriod,
                 )
                 ShareObjectRepository.save_and_commit(session, share)
 
@@ -228,13 +258,13 @@ class ShareObjectService:
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
 
-            if share.principalType in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value]:
-                # TODO make it generic to non IAM role principals
-                if not ShareObjectService.verify_principal_role(session, share):
-                    raise PrincipalRoleNotFound(
-                        action='Submit Share Object',
-                        message=f'The principal role {share.principalRoleName} is not found.',
-                    )
+            cls.validate_share_object(
+                share_action=ShareObjectActions.Submit,
+                dataset_type=dataset.datasetType,
+                session=session,
+                dataset=dataset,
+                share=share,
+            )
 
             valid_states = [ShareItemStatus.PendingApproval.value]
             valid_share_items_states = [x for x in valid_states if x in states]
@@ -265,24 +295,102 @@ class ShareObjectService:
             return share
 
     @classmethod
+    @ResourcePolicyService.has_resource_permission(SUBMIT_SHARE_OBJECT)
+    def submit_share_extension(cls, uri: str, expiration: int, extension_reason: str, nonExpirable: bool):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            share, dataset, states = cls._get_share_data(session, uri)
+            if dataset.enableExpiration:
+                if nonExpirable is False and expiration is None:
+                    raise InvalidInput(
+                        param_name='Share Expiration',
+                        param_value='',
+                        constraint='period not provided. Either make your share non-expiring or provide a expiration period',
+                    )
+
+                if not nonExpirable and (
+                    expiration < dataset.expiryMinDuration or expiration > dataset.expiryMaxDuration
+                ):
+                    raise InvalidInput(
+                        param_name='Share Expiration',
+                        param_value=expiration,
+                        constraint=f'between {dataset.expiryMinDuration} and {dataset.expiryMaxDuration}',
+                    )
+
+                cls._run_transitions(session, share, states, ShareObjectActions.Extension)
+
+                if nonExpirable:
+                    share.nonExpirable = True
+                    share.requestedExpiryDate = None
+                    share.shareExpirationPeriod = None
+                else:
+                    expiration_date = ExpirationUtils.calculate_expiry_date(expiration, dataset.expirySetting)
+                    share.requestedExpiryDate = expiration_date
+                    share.shareExpirationPeriod = expiration
+
+                share.extensionReason = extension_reason
+                share.submittedForExtension = True
+
+                ShareNotificationService(
+                    session=session, dataset=dataset, share=share
+                ).notify_share_object_extension_submission(email_id=context.username)
+
+                if dataset.autoApprovalEnabled:
+                    ResourcePolicyService.attach_resource_policy(
+                        session=session,
+                        group=share.groupUri,
+                        permissions=SHARE_OBJECT_APPROVER,
+                        resource_uri=share.shareUri,
+                        resource_type=ShareObject.__name__,
+                    )
+                    share = cls.approve_share_object_extension(uri=share.shareUri)
+
+                activity = Activity(
+                    action='SHARE_OBJECT:EXTENSION_REQUEST',
+                    label='SHARE_OBJECT:EXTENSION_REQUEST',
+                    owner=get_context().username,
+                    summary=f'{get_context().username} submitted share extension request for {dataset.name} in environment with URI: {dataset.environmentUri} for the principal: {share.principalRoleName}',
+                    targetUri=dataset.datasetUri,
+                    targetType='dataset',
+                )
+
+                session.add(activity)
+
+                return share
+            else:
+                raise Exception("Share expiration cannot be extended as the dataset doesn't have expiration enabled")
+
+    @classmethod
     @ResourcePolicyService.has_resource_permission(APPROVE_SHARE_OBJECT)
     def approve_share_object(cls, uri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
-            if share.principalType in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value]:
-                if not ShareObjectService.verify_principal_role(
-                    session, share
-                ):  # TODO make it generic to non IAM role principals
-                    raise PrincipalRoleNotFound(
-                        action='Approve Share Object',
-                        message=f'The principal role {share.principalRoleName} is not found.',
-                    )
+            cls.validate_share_object(
+                share_action=ShareObjectActions.Approve,
+                dataset_type=dataset.datasetType,
+                session=session,
+                dataset=dataset,
+                share=share,
+            )
+
+            if dataset.enableExpiration and share.requestedExpiryDate and share.requestedExpiryDate < datetime.today():
+                raise Exception(
+                    'Cannot approve share since its it past the requested expiration date. Please reject this share and submit a new share request'
+                )
 
             cls._run_transitions(session, share, states, ShareObjectActions.Approve)
 
             share.rejectPurpose = ''
-            session.commit()
+            # Use share.requestedExpiryDate when a share is newly created.
+            # After first approval, if new items are added are approved, use the shareExpiryDate which is already set
+            share.expiryDate = (
+                share.requestedExpiryDate
+                if (share.submittedForExtension or share.expiryDate is None)
+                else share.expiryDate
+            )
+            share.requestedExpiryDate = None
+            share.submittedForExtension = False
 
             ShareNotificationService(session=session, dataset=dataset, share=share).notify_share_object_approval(
                 email_id=context.username
@@ -298,6 +406,52 @@ class ShareObjectService:
         Worker.queue(engine=context.db_engine, task_ids=[approve_share_task.taskUri])
         return share
 
+    @classmethod
+    @ResourcePolicyService.has_resource_permission(APPROVE_SHARE_OBJECT)
+    def approve_share_object_extension(cls, uri: str):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            share, dataset, states = cls._get_share_data(session, uri)
+
+            cls.validate_share_object(
+                share_action=ShareObjectActions.Approve,
+                dataset_type=dataset.datasetType,
+                session=session,
+                dataset=dataset,
+                share=share,
+            )
+
+            if dataset.enableExpiration and share.requestedExpiryDate and share.requestedExpiryDate < datetime.today():
+                raise Exception(
+                    'Cannot approve share extension since its it past the requested expiration date. Please reject this share and submit a new share request'
+                )
+
+            cls._run_transitions(session, share, states, ShareObjectActions.ExtensionApprove)
+
+            share.rejectPurpose = ''
+            share.expiryDate = share.requestedExpiryDate
+            share.nonExpirable = False if share.requestedExpiryDate else share.nonExpirable
+            share.requestedExpiryDate = None
+            share.submittedForExtension = False
+            share.lastExtensionDate = datetime.today()
+
+            activity = Activity(
+                action='SHARE_OBJECT:APPROVE_EXTENSION',
+                label='SHARE_OBJECT:APPROVE_EXTENSION',
+                owner=get_context().username,
+                summary=f'{get_context().username} approved share extension request for {dataset.name} in environment with URI: {dataset.environmentUri} for the principal: {share.principalRoleName}',
+                targetUri=dataset.datasetUri,
+                targetType='dataset',
+            )
+
+            session.add(activity)
+
+            ShareNotificationService(
+                session=session, dataset=dataset, share=share
+            ).notify_share_object_extension_approval(email_id=context.username)
+
+        return share
+
     @staticmethod
     @ResourcePolicyService.has_resource_permission(SUBMIT_SHARE_OBJECT)
     def update_share_request_purpose(uri: str, request_purpose) -> bool:
@@ -305,6 +459,71 @@ class ShareObjectService:
             share = ShareObjectRepository.get_share_by_uri(session, uri)
             share.requestPurpose = request_purpose
             session.commit()
+            return True
+
+    @classmethod
+    @ResourcePolicyService.has_resource_permission(SUBMIT_SHARE_OBJECT)
+    def update_share_expiration_period(cls, uri: str, expiration, nonExpirable) -> bool:
+        with get_context().db_engine.scoped_session() as session:
+            share, dataset, states = cls._get_share_data(session, uri)
+            if share.status not in [
+                ShareObjectStatus.Submitted.value,
+                ShareObjectStatus.Submitted_For_Extension.value,
+                ShareObjectStatus.Draft.value,
+            ]:
+                raise Exception(
+                    f"Cannot update share object's expiration as it is not in {', '.join([ShareObjectStatus.Submitted.value, ShareObjectStatus.Submitted_For_Extension.value, ShareObjectStatus.Draft.value])}"
+                )
+
+            invalid_states = [
+                ShareItemStatus.Share_Succeeded.value,
+                ShareItemStatus.Revoke_In_Progress.value,
+                ShareItemStatus.Share_In_Progress.value,
+                ShareItemStatus.Share_Approved.value,
+                ShareItemStatus.Revoke_Approved.value,
+            ]
+            share_item_invalid_state = [state for state in states if states in invalid_states]
+
+            if share_item_invalid_state:
+                raise Exception(
+                    f"Cannot update share object's expiration as it share items are in incorrect state { ', '.join(invalid_states)}"
+                )
+
+            if nonExpirable:
+                share.nonExpirable = nonExpirable
+                share.expiryDate = None
+                share.requestedExpiryDate = None
+                share.shareExpirationPeriod = None
+                session.commit()
+                return True
+            else:
+                share.nonExpirable = False
+
+            if dataset.enableExpiration and (
+                expiration < dataset.expiryMinDuration or expiration > dataset.expiryMaxDuration
+            ):
+                raise InvalidInput(
+                    param_name='Share Expiration',
+                    param_value=expiration,
+                    constraint=f'between {dataset.expiryMinDuration} and {dataset.expiryMaxDuration}',
+                )
+
+            if dataset.enableExpiration:
+                expiration_date = ExpirationUtils.calculate_expiry_date(expiration, dataset.expirySetting)
+            else:
+                raise Exception("Couldn't update share expiration as dataset doesn't have share expiration enabled")
+            share.requestedExpiryDate = expiration_date
+            share.shareExpirationPeriod = expiration
+            activity = Activity(
+                action='SHARE_OBJECT:UPDATE_EXTENSION_PERIOD',
+                label='SHARE_OBJECT:UPDATE_EXTENSION_PERIOD',
+                owner=get_context().username,
+                summary=f'{get_context().username} updated share extension period request for {dataset.name} in environment with URI: {dataset.environmentUri} for the principal: {share.principalRoleName}',
+                targetUri=dataset.datasetUri,
+                targetType='dataset',
+            )
+
+            session.add(activity)
             return True
 
     @staticmethod
@@ -316,23 +535,78 @@ class ShareObjectService:
             session.commit()
             return True
 
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(SUBMIT_SHARE_OBJECT)
+    def update_share_extension_purpose(uri: str, extension_purpose) -> bool:
+        with get_context().db_engine.scoped_session() as session:
+            share = ShareObjectRepository.get_share_by_uri(session, uri)
+            share.extensionReason = extension_purpose
+            return True
+
     @classmethod
     @ResourcePolicyService.has_resource_permission(REJECT_SHARE_OBJECT)
     def reject_share_object(cls, uri: str, reject_purpose: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
-            cls._run_transitions(session, share, states, ShareObjectActions.Reject)
+            if share.submittedForExtension:
+                cls._run_transitions(session, share, states, ShareObjectActions.ExtensionReject)
+            else:
+                cls._run_transitions(session, share, states, ShareObjectActions.Reject)
+
+            if share.submittedForExtension:
+                ShareNotificationService(
+                    session=session, dataset=dataset, share=share
+                ).notify_share_object_extension_rejection(email_id=context.username)
+            else:
+                ShareNotificationService(session=session, dataset=dataset, share=share).notify_share_object_rejection(
+                    email_id=context.username
+                )
 
             # Update Reject Purpose
             share.rejectPurpose = reject_purpose
-            session.commit()
+            share.submittedForExtension = False
+            share.requestedExpiryDate = None
+            share.nonExpirable = True if share.nonExpirable and share.expiryDate is None else False
 
-            ShareNotificationService(session=session, dataset=dataset, share=share).notify_share_object_rejection(
-                email_id=context.username
+            activity = Activity(
+                action='SHARE_OBJECT:REJECT',
+                label='SHARE_OBJECT:REJECT',
+                owner=get_context().username,
+                summary=f'{get_context().username} rejected share {"extension" if share.submittedForExtension else ""} request for {dataset.name} in environment with URI: {dataset.environmentUri} for the principal: {share.principalRoleName}',
+                targetUri=dataset.datasetUri,
+                targetType='dataset',
             )
 
+            session.add(activity)
+
             return share
+
+    @classmethod
+    @ResourcePolicyService.has_resource_permission(SUBMIT_SHARE_OBJECT)
+    def cancel_share_object_extension(cls, uri: str) -> bool:
+        with get_context().db_engine.scoped_session() as session:
+            share, dataset, states = cls._get_share_data(session, uri)
+
+            cls._run_transitions(session, share, states, ShareObjectActions.CancelExtension)
+
+            share.submittedForExtension = False
+            share.requestedExpiryDate = None
+            share.nonExpirable = True if share.nonExpirable and share.expiryDate is None else False
+            share.shareExpirationPeriod = None
+
+            activity = Activity(
+                action='SHARE_OBJECT:CANCEL_EXTENSION',
+                label='SHARE_OBJECT:CANCEL_EXTENSION',
+                owner=get_context().username,
+                summary=f'{get_context().username} cancelled share extension request for {dataset.name} in environment with URI: {dataset.environmentUri} for the principal: {share.principalRoleName}',
+                targetUri=dataset.datasetUri,
+                targetType='dataset',
+            )
+
+            session.add(activity)
+
+            return True
 
     @classmethod
     @ResourcePolicyService.has_resource_permission(DELETE_SHARE_OBJECT)
@@ -457,17 +731,16 @@ class ShareObjectService:
             )
 
     @staticmethod
-    def _validate_role_in_same_account(aws_account_id, principal_role_arn, permissions):
-        """
-        raise if aws_account_id and role_arn are not in the same account permissions are WRITE/MODIFY
-
-        :param aws_account_id:
-        :param principal_role_arn:
-        :param permissions:
-        """
-        if f':{aws_account_id}:' not in principal_role_arn and permissions != [ShareObjectDataPermission.Read.value]:
-            raise InvalidInput(
-                'Principal Role',
-                principal_role_arn,
-                f'be in the same {aws_account_id=} when WRITE/MODIFY permissions are specified',
+    def _resolve_principal_role_name(
+        session, group_uri, environment_uri, principal_id, principal_role_name, principal_type
+    ):
+        if principal_type == PrincipalType.ConsumptionRole.value:
+            consumption_role: ConsumptionRole = EnvironmentService.get_environment_consumption_role(
+                session, principal_id, environment_uri
             )
+            return consumption_role.IAMRoleName
+        elif principal_type == PrincipalType.Group.value:
+            env_group: EnvironmentGroup = EnvironmentService.get_environment_group(session, group_uri, environment_uri)
+            return env_group.environmentIAMRoleName
+        else:
+            return principal_role_name

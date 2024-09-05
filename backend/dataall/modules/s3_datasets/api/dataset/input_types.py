@@ -18,6 +18,10 @@ NewDatasetInput = gql.InputType(
         gql.Argument('confidentiality', gql.String),
         gql.Argument(name='stewards', type=gql.String),
         gql.Argument(name='autoApprovalEnabled', type=gql.Boolean),
+        gql.Argument(name='enableExpiration', type=gql.Boolean),
+        gql.Argument(name='expirySetting', type=gql.String),
+        gql.Argument(name='expiryMinDuration', type=gql.Integer),
+        gql.Argument(name='expiryMaxDuration', type=gql.Integer),
     ],
 )
 
@@ -36,6 +40,10 @@ ModifyDatasetInput = gql.InputType(
         gql.Argument(name='stewards', type=gql.String),
         gql.Argument('KmsAlias', gql.NonNullableType(gql.String)),
         gql.Argument(name='autoApprovalEnabled', type=gql.Boolean),
+        gql.Argument(name='enableExpiration', type=gql.Boolean),
+        gql.Argument(name='expirySetting', type=gql.String),
+        gql.Argument(name='expiryMinDuration', type=gql.Integer),
+        gql.Argument(name='expiryMaxDuration', type=gql.Integer),
     ],
 )
 
@@ -71,6 +79,10 @@ ImportDatasetInput = gql.InputType(
         gql.Argument('confidentiality', gql.String),
         gql.Argument(name='stewards', type=gql.String),
         gql.Argument(name='autoApprovalEnabled', type=gql.Boolean),
+        gql.Argument(name='enableExpiration', type=gql.Boolean),
+        gql.Argument(name='expirySetting', type=gql.String),
+        gql.Argument(name='expiryMinDuration', type=gql.Integer),
+        gql.Argument(name='expiryMaxDuration', type=gql.Integer),
     ],
 )
 

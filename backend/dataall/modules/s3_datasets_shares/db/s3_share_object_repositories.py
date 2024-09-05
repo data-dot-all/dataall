@@ -127,41 +127,6 @@ class S3ShareObjectRepository:
         return query.all()
 
     @staticmethod
-    def list_user_s3_shared_datasets(session, username, groups) -> Query:
-        share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
-        query = (
-            session.query(DatasetBase)
-            .outerjoin(
-                ShareObject,
-                ShareObject.datasetUri == DatasetBase.datasetUri,
-            )
-            .outerjoin(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
-            .filter(
-                and_(
-                    or_(
-                        ShareObject.principalId.in_(groups),
-                        ShareObject.owner == username,
-                    ),
-                    ShareObjectItem.status.in_(share_item_shared_states),
-                    ShareObjectItem.itemType.in_(
-                        [ShareableType.Table.value, ShareableType.S3Bucket.value, ShareableType.StorageLocation.value]
-                    ),
-                )
-            )
-        )
-        return query.distinct(DatasetBase.datasetUri)
-
-    @staticmethod
-    def get_share_by_dataset_attributes(session, dataset_uri, dataset_owner, groups=[]):
-        share: ShareObject = (
-            session.query(ShareObject)
-            .filter(ShareObject.datasetUri == dataset_uri)
-            .filter(or_(ShareObject.owner == dataset_owner, ShareObject.principalId.in_(groups)))
-            .first()
-        )
-        return share
-
-    @staticmethod
     def check_other_approved_share_item_table_exists(session, environment_uri, item_uri, share_item_uri):
         share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
         query = (
@@ -314,54 +279,6 @@ class S3ShareObjectRepository:
     @staticmethod
     def delete_s3_share_item(session, item_uri: str):
         session.query(ShareObjectItem).filter(ShareObjectItem.itemUri == item_uri).delete()
-
-    @staticmethod
-    def delete_s3_shares_with_no_shared_items(session, dataset_uri):
-        share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
-        shares = (
-            session.query(ShareObject)
-            .outerjoin(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
-            .filter(
-                and_(
-                    ShareObject.datasetUri == dataset_uri,
-                    ShareObjectItem.status.notin_(share_item_shared_states),
-                )
-            )
-            .all()
-        )
-        for share in shares:
-            share_items = session.query(ShareObjectItem).filter(ShareObjectItem.shareUri == share.shareUri).all()
-            for item in share_items:
-                session.delete(item)
-
-            share_obj = session.query(ShareObject).filter(ShareObject.shareUri == share.shareUri).first()
-            session.delete(share_obj)
-
-    @staticmethod
-    def find_s3_dataset_shares(session, dataset_uri):
-        return session.query(ShareObject).filter(ShareObject.datasetUri == dataset_uri).all()
-
-    @staticmethod
-    def list_s3_dataset_shares_with_existing_shared_items(
-        session, dataset_uri, environment_uri=None, item_type=None
-    ) -> [ShareObject]:
-        share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
-        query = (
-            session.query(ShareObject)
-            .outerjoin(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
-            .filter(
-                and_(
-                    ShareObject.datasetUri == dataset_uri,
-                    ShareObject.deleted.is_(None),
-                    ShareObjectItem.status.in_(share_item_shared_states),
-                )
-            )
-        )
-        if environment_uri:
-            query = query.filter(ShareObject.environmentUri == environment_uri)
-        if item_type:
-            query = query.filter(ShareObjectItem.itemType == item_type)
-        return query.all()
 
     # the next 2 methods are used in subscription task
     @staticmethod

@@ -45,6 +45,24 @@ def dataset1(
     yield d
 
 
+@pytest.fixture(scope='module')
+def dataset2(
+    module_mocker,
+    org_fixture: Organization,
+    env_fixture: Environment,
+    dataset: typing.Callable,
+    group,
+) -> S3Dataset:
+    kms_client = MagicMock()
+    module_mocker.patch('dataall.modules.s3_datasets.services.dataset_service.KmsClient', kms_client)
+
+    kms_client().get_key_id.return_value = mocked_key_id
+
+    d = dataset(org=org_fixture, env=env_fixture, name='dataset1', owner=env_fixture.owner, group=group.name)
+    print(d)
+    yield d
+
+
 def test_get_dataset(client, dataset1, env_fixture, group):
     response = client.query(
         """
@@ -528,3 +546,196 @@ def test_dataset_stack(client, dataset_fixture, group):
     dataset = dataset_fixture
     response = update_stack_query(client, dataset.datasetUri, 'dataset', dataset.SamlAdminGroupName)
     assert response.data.updateStack.targetUri == dataset.datasetUri
+
+
+def test_create_dataset_with_expiration_setting(client, env_fixture, org_fixture, db, group2, group, user, patch_es):
+    response = client.query(
+        """
+        mutation CreateDataset($input:NewDatasetInput!){
+            createDataset(
+            input:$input
+            ){
+                enableExpiration
+                expirySetting
+                expiryMinDuration
+                expiryMaxDuration
+            }
+        }
+        """,
+        username=user.username,
+        groups=[group.name],
+        input={
+            'owner': user.username,
+            'label': f'stewardsds',
+            'description': 'test dataset {name}',
+            'businessOwnerEmail': 'jeff@amazon.com',
+            'tags': ['t1', 't2'],
+            'environmentUri': env_fixture.environmentUri,
+            'SamlAdminGroupName': group.name,
+            'stewards': group2.name,
+            'organizationUri': org_fixture.organizationUri,
+            'enableExpiration': True,
+            'expirySetting': 'Monthly',
+            'expiryMinDuration': 1,
+            'expiryMaxDuration': 3,
+        },
+    )
+
+    assert response.data.createDataset.enableExpiration == True
+    assert response.data.createDataset.expirySetting == 'Monthly'
+    assert response.data.createDataset.expiryMinDuration == 1
+    assert response.data.createDataset.expiryMaxDuration == 3
+
+
+def test_update_dataset_with_expiration_setting_changes(dataset2, client, user, group, group2):
+    assert dataset2.enableExpiration == False
+    assert dataset2.expirySetting == None
+    assert dataset2.expiryMinDuration == None
+    assert dataset2.expiryMaxDuration == None
+
+    response = client.query(
+        """
+        mutation UpdateDataset($datasetUri:String!,$input:ModifyDatasetInput){
+            updateDataset(datasetUri:$datasetUri,input:$input){
+                datasetUri
+                label
+                tags
+                stewards
+                confidentiality
+                enableExpiration
+                expirySetting
+                expiryMinDuration
+                expiryMaxDuration
+            }
+        }
+        """,
+        username=user.username,
+        datasetUri=dataset2.datasetUri,
+        input={
+            'label': 'dataset1updated',
+            'stewards': group2.name,
+            'confidentiality': ConfidentialityClassification.Secret.value,
+            'KmsAlias': '',
+            'enableExpiration': True,
+            'expirySetting': 'Monthly',
+            'expiryMinDuration': 1,
+            'expiryMaxDuration': 3,
+        },
+        groups=[group.name],
+    )
+
+    assert response.data.updateDataset.enableExpiration == True
+    assert response.data.updateDataset.expirySetting == 'Monthly'
+    assert response.data.updateDataset.expiryMinDuration == 1
+    assert response.data.updateDataset.expiryMaxDuration == 3
+
+
+def test_update_dataset_with_expiration_with_incorrect_input(dataset2, client, group, group2):
+    assert dataset2.enableExpiration == False
+    assert dataset2.expirySetting == None
+    assert dataset2.expiryMinDuration == None
+    assert dataset2.expiryMaxDuration == None
+
+    response = client.query(
+        """
+        mutation UpdateDataset($datasetUri:String!,$input:ModifyDatasetInput){
+            updateDataset(datasetUri:$datasetUri,input:$input){
+                datasetUri
+                label
+                tags
+                stewards
+                confidentiality
+                enableExpiration
+                expirySetting
+                expiryMinDuration
+                expiryMaxDuration
+            }
+        }
+        """,
+        username=dataset2.owner,
+        datasetUri=dataset2.datasetUri,
+        input={
+            'label': 'dataset1updated',
+            'stewards': group2.name,
+            'confidentiality': ConfidentialityClassification.Secret.value,
+            'KmsAlias': '',
+            'enableExpiration': True,
+            'expirySetting': 'SOMETHING',
+            'expiryMinDuration': 1,
+            'expiryMaxDuration': 3,
+        },
+        groups=[group.name],
+    )
+
+    assert 'InvalidInput' in response.errors[0].message
+    assert 'Expiration Setting value SOMETHING must be is of invalid type' in response.errors[0].message
+
+    response = client.query(
+        """
+        mutation UpdateDataset($datasetUri:String!,$input:ModifyDatasetInput){
+            updateDataset(datasetUri:$datasetUri,input:$input){
+                datasetUri
+                label
+                tags
+                stewards
+                confidentiality
+                enableExpiration
+                expirySetting
+                expiryMinDuration
+                expiryMaxDuration
+            }
+        }
+        """,
+        username=dataset2.owner,
+        datasetUri=dataset2.datasetUri,
+        input={
+            'label': 'dataset1updated',
+            'stewards': group2.name,
+            'confidentiality': ConfidentialityClassification.Secret.value,
+            'KmsAlias': '',
+            'enableExpiration': True,
+            'expirySetting': 'Monthly',
+            'expiryMinDuration': -1,
+            'expiryMaxDuration': 3,
+        },
+        groups=[group.name],
+    )
+
+    assert 'InvalidInput' in response.errors[0].message
+    assert 'expiration duration  value  must be must be greater than zero' in response.errors[0].message
+
+
+def test_import_dataset_with_expiration_setting(org_fixture, env_fixture, dataset1, client, group):
+    response = client.query(
+        """
+        mutation importDataset($input:ImportDatasetInput){
+            importDataset(input:$input){
+                enableExpiration
+                expirySetting
+                expiryMinDuration
+                expiryMaxDuration
+            }
+        }
+        """,
+        username=dataset1.owner,
+        groups=[group.name],
+        input={
+            'organizationUri': org_fixture.organizationUri,
+            'environmentUri': env_fixture.environmentUri,
+            'label': 'datasetImportedin',
+            'bucketName': 'dhimportedbucketin',
+            'glueDatabaseName': 'dhimportedGlueDBin',
+            'adminRoleName': 'dhimportedRolein',
+            'KmsKeyAlias': '1234-YYEY-888',
+            'owner': dataset1.owner,
+            'SamlAdminGroupName': group.name,
+            'enableExpiration': True,
+            'expirySetting': 'Monthly',
+            'expiryMinDuration': 1,
+            'expiryMaxDuration': 3,
+        },
+    )
+    assert response.data.importDataset.enableExpiration == True
+    assert response.data.importDataset.expirySetting == 'Monthly'
+    assert response.data.importDataset.expiryMinDuration == 1
+    assert response.data.importDataset.expiryMaxDuration == 3

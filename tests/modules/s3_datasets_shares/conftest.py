@@ -3,10 +3,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from dataall.base.utils.expiration_util import ExpirationUtils
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.shares_base.services.shares_enums import ShareableType, PrincipalType, ShareObjectDataPermission
+from dataall.modules.shares_base.services.share_object_service import ShareObjectService
+from dataall.modules.shares_base.services.shares_enums import ShareableType, PrincipalType
 from dataall.modules.shares_base.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.shares_base.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
@@ -307,7 +310,14 @@ def folder_fixture(db, dataset_fixture):
 @pytest.fixture(scope='module')
 def dataset_model(db):
     def factory(
-        organization: Organization, environment: Environment, label: str, autoApprovalEnabled: bool = False
+        organization: Organization,
+        environment: Environment,
+        label: str,
+        autoApprovalEnabled: bool = False,
+        enableExpiration: bool = False,
+        expirySetting: str = None,
+        expiryMinDuration: int = None,
+        expiryMaxDuration: int = None,
     ) -> S3Dataset:
         with db.scoped_session() as session:
             dataset = S3Dataset(
@@ -327,6 +337,10 @@ def dataset_model(db):
                 IAMDatasetAdminUserArn=f'arn:aws:iam::{environment.AwsAccountId}:user/dataset',
                 IAMDatasetAdminRoleArn=f'arn:aws:iam::{environment.AwsAccountId}:role/dataset',
                 autoApprovalEnabled=autoApprovalEnabled,
+                expirySetting=expirySetting,
+                enableExpiration=enableExpiration,
+                expiryMinDuration=expiryMinDuration,
+                expiryMaxDuration=expiryMaxDuration,
             )
             session.add(dataset)
             session.commit()
@@ -402,7 +416,11 @@ def share(db):
         owner: str,
         status: str,
         permissions=[ShareObjectDataPermission.Read.value],
+        shareExpirationPeriod: int = None,
     ) -> ShareObject:
+        expirationDate = None
+        if shareExpirationPeriod is not None:
+            expirationDate = ExpirationUtils.calculate_expiry_date(shareExpirationPeriod, dataset.expirySetting)
         with db.scoped_session() as session:
             share = ShareObject(
                 datasetUri=dataset.datasetUri,
@@ -413,6 +431,7 @@ def share(db):
                 principalType=PrincipalType.Group.value,
                 principalRoleName=env_group.environmentIAMRoleName,
                 status=status,
+                expiryDate=expirationDate,
                 permissions=[permissions],
             )
             session.add(share)

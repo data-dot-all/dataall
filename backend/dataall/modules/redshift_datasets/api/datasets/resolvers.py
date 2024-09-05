@@ -107,7 +107,9 @@ def resolve_dataset_stewards_group(
     return source.stewards
 
 
-def resolve_user_role(context: Context, source: RedshiftDataset, **kwargs):
+def resolve_user_role(
+    context: Context, source: RedshiftDataset, **kwargs
+):  # TODO- duplicated with S3 datasets - follow-up PR
     if not source:
         return None
     if source.owner == context.username:
@@ -116,6 +118,13 @@ def resolve_user_role(context: Context, source: RedshiftDataset, **kwargs):
         return DatasetRole.Admin.value
     elif source.stewards in context.groups:
         return DatasetRole.DataSteward.value
+    else:
+        with context.engine.scoped_session() as session:
+            other_modules_user_role = RedshiftDatasetService.get_other_modules_dataset_user_role(
+                session, source.datasetUri, context.username, context.groups
+            )
+            if other_modules_user_role is not None:
+                return other_modules_user_role
     return DatasetRole.NoPermission.value
 
 

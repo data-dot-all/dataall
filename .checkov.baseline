@@ -134,6 +134,12 @@
                     ]
                 },
                 {
+                    "resource": "AWS::Logs::LogGroup.ECSLogGroupshareexpirationtaskdev40CB15AF",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
+                },
+                {
                     "resource": "AWS::Logs::LogGroup.ECSLogGroupsharemanagerdev49FFAB5E",
                     "check_ids": [
                         "CKV_AWS_158"
@@ -637,23 +643,6 @@
                     "check_ids": [
                         "CKV_AWS_18",
                         "CKV_AWS_21"
-                    ]
-                }
-            ]
-        },
-        {
-            "file": "/checkov_s3_dataset_synth.json",
-            "findings": [
-                {
-                    "resource": "AWS::Glue::Crawler.dhCrawler",
-                    "check_ids": [
-                        "CKV_AWS_195"
-                    ]
-                },
-                {
-                    "resource": "AWS::Glue::Job.DatasetGlueProfilingJob",
-                    "check_ids": [
-                        "CKV_AWS_195"
                     ]
                 }
             ]

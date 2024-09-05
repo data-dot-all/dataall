@@ -1,7 +1,9 @@
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.base.db import exceptions
 from dataall.modules.shares_base.db.share_object_models import ShareObject
+from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.s3_datasets_shares.db.s3_share_object_repositories import S3ShareObjectRepository
+from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.db.share_object_item_repositories import ShareObjectItemRepository
 from dataall.modules.shares_base.services.share_permissions import SHARE_OBJECT_APPROVER
 from dataall.modules.s3_datasets.services.dataset_permissions import (
@@ -27,7 +29,7 @@ class S3ShareDatasetService(DatasetServiceInterface):
     @staticmethod
     def resolve_additional_dataset_user_role(session, uri, username, groups):
         """Implemented as part of the DatasetServiceInterface"""
-        share = S3ShareObjectRepository.get_share_by_dataset_attributes(session, uri, username, groups)
+        share = ShareObjectRepository.find_share_by_dataset_attributes(session, uri, username, groups)
         if share is not None:
             return DatasetRole.Shared.value
         return None
@@ -44,8 +46,9 @@ class S3ShareDatasetService(DatasetServiceInterface):
                     message='Revoke all shares for this item before deletion',
                 )
         elif action in [DELETE_DATASET]:
-            shares = S3ShareObjectRepository.list_s3_dataset_shares_with_existing_shared_items(
-                session=session, dataset_uri=uri
+            share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
+            shares = ShareObjectRepository.list_dataset_shares_with_existing_shared_items(
+                session=session, dataset_uri=uri, share_item_shared_states=share_item_shared_states
             )
             if shares:
                 raise exceptions.ResourceShared(
@@ -61,8 +64,6 @@ class S3ShareDatasetService(DatasetServiceInterface):
                     action=action,
                     message='Remove all share items using this filter before deletion',
                 )
-        else:
-            raise exceptions.RequiredParameter('Delete action')
         return True
 
     @staticmethod
@@ -73,22 +74,24 @@ class S3ShareDatasetService(DatasetServiceInterface):
             S3ShareObjectRepository.delete_s3_share_item(session, uri)
             ShareObjectItemRepository.delete_all_share_item_filters(session, uri)
         elif action in [DELETE_DATASET]:
-            S3ShareObjectRepository.delete_s3_shares_with_no_shared_items(session, uri)
+            share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
+            ShareObjectRepository.delete_dataset_shares_with_no_shared_items(session, uri, share_item_shared_states)
         elif action in [DELETE_TABLE_DATA_FILTER]:
             ShareObjectItemRepository.delete_share_item_filters_with_data_filter_uri(session, uri)
-        else:
-            raise exceptions.RequiredParameter('Delete action')
         return True
 
     @staticmethod
     def append_to_list_user_datasets(session, username, groups):
         """Implemented as part of the DatasetServiceInterface"""
-        return S3ShareObjectRepository.list_user_s3_shared_datasets(session, username, groups)
+        share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
+        return ShareObjectRepository.list_user_shared_datasets(
+            session, username, groups, share_item_shared_states, DatasetTypes.S3
+        )
 
     @staticmethod
     def extend_attach_steward_permissions(session, dataset, new_stewards, **kwargs):
         """Implemented as part of the DatasetServiceInterface"""
-        dataset_shares = S3ShareObjectRepository.find_s3_dataset_shares(session, dataset.datasetUri)
+        dataset_shares = ShareObjectRepository.find_dataset_shares(session, dataset.datasetUri)
         if dataset_shares:
             for share in dataset_shares:
                 ResourcePolicyService.attach_resource_policy(
@@ -108,7 +111,7 @@ class S3ShareDatasetService(DatasetServiceInterface):
     @staticmethod
     def extend_delete_steward_permissions(session, dataset, **kwargs):
         """Implemented as part of the DatasetServiceInterface"""
-        dataset_shares = S3ShareObjectRepository.find_s3_dataset_shares(session, dataset.datasetUri)
+        dataset_shares = ShareObjectRepository.find_dataset_shares(session, dataset.datasetUri)
         if dataset_shares:
             for share in dataset_shares:
                 if dataset.stewards != dataset.SamlAdminGroupName:

@@ -1,5 +1,5 @@
 import logging
-
+from typing import List
 from dataall.base.context import get_context
 from dataall.base.db.paginator import paginate_list
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
@@ -12,6 +12,7 @@ from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
+from dataall.modules.datasets_base.services.dataset_service_interface import DatasetServiceInterface
 
 from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import (
     MANAGE_REDSHIFT_DATASETS,
@@ -45,6 +46,46 @@ log = logging.getLogger(__name__)
 
 
 class RedshiftDatasetService:
+    _interfaces: List[DatasetServiceInterface] = []
+
+    @classmethod
+    def register(cls, interface: DatasetServiceInterface):
+        cls._interfaces.append(interface)
+
+    @classmethod
+    def get_other_modules_dataset_user_role(cls, session, uri, username, groups) -> str:
+        """All other user role types that might come from other modules"""
+        for interface in cls._interfaces:
+            role = interface.resolve_additional_dataset_user_role(session, uri, username, groups)
+            if role is not None:
+                return role
+        return None
+
+    @classmethod
+    def check_before_delete(cls, session, uri, **kwargs) -> bool:
+        """All actions from other modules that need to be executed before deletion"""
+        can_be_deleted = [interface.check_before_delete(session, uri, **kwargs) for interface in cls._interfaces]
+        return all(can_be_deleted)
+
+    @classmethod
+    def execute_on_delete(cls, session, uri, **kwargs) -> bool:
+        """All actions from other modules that need to be executed during deletion"""
+        for interface in cls._interfaces:
+            interface.execute_on_delete(session, uri, **kwargs)
+        return True
+
+    @classmethod
+    def _attach_additional_steward_permissions(cls, session, dataset, new_stewards):
+        """All permissions from other modules that need to be granted to stewards"""
+        for interface in cls._interfaces:
+            interface.extend_attach_steward_permissions(session, dataset, new_stewards)
+
+    @classmethod
+    def _delete_additional_steward_permissions(cls, session, dataset):
+        """All permissions from other modules that need to be deleted to stewards"""
+        for interface in cls._interfaces:
+            interface.extend_delete_steward_permissions(session, dataset)
+
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
     @ResourcePolicyService.has_resource_permission(IMPORT_REDSHIFT_DATASET)
@@ -120,13 +161,15 @@ class RedshiftDatasetService:
         with context.db_engine.scoped_session() as session:
             dataset: RedshiftDataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, uri)
 
-            # TODO: when adding sharing, add check_on_delete for shared items
+            RedshiftDatasetService.check_before_delete(session, uri, action=DELETE_REDSHIFT_DATASET)
             tables: [RedshiftTable] = RedshiftDatasetRepository.list_redshift_dataset_tables(
                 session, dataset.datasetUri
             )
             for table in tables:
                 DatasetTableIndexer.delete_doc(doc_id=table.rsTableUri)
                 session.delete(table)
+
+            RedshiftDatasetService.execute_on_delete(session, uri, action=DELETE_REDSHIFT_DATASET)
 
             ResourcePolicyService.delete_resource_policy(
                 session=session, resource_uri=uri, group=dataset.SamlAdminGroupName
@@ -350,7 +393,7 @@ class RedshiftDatasetService:
                 group=dataset.stewards,
                 resource_uri=dataset.datasetUri,
             )
-
+        RedshiftDatasetService._delete_additional_steward_permissions(session, dataset)
         return dataset
 
     @staticmethod
@@ -368,4 +411,5 @@ class RedshiftDatasetService:
             resource_uri=dataset.datasetUri,
             resource_type=RedshiftDataset.__name__,
         )
+        RedshiftDatasetService._attach_additional_steward_permissions(session, dataset, new_stewards)
         return dataset
