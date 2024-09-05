@@ -1,7 +1,8 @@
 import pytest
 from assertpy import assert_that
 
-from dataall.modules.shares_base.services.shares_enums import ShareItemStatus, ShareObjectStatus, ShareItemHealthStatus
+from dataall.modules.shares_base.services.shares_enums import ShareItemStatus, ShareObjectStatus, ShareItemHealthStatus, \
+    ShareableType
 from tests_new.integration_tests.errors import GqlError
 from dataall.modules.shares_base.services.shares_enums import PrincipalType
 from tests_new.integration_tests.modules.share_base.conftest import clean_up_share
@@ -152,6 +153,9 @@ def test_share_succeeded(client1, session_share_1):
     for item in items:
         assert_that(item.status).is_equal_to(ShareItemStatus.Share_Succeeded.value)
         assert_that(item.healthStatus).is_equal_to(ShareItemHealthStatus.Healthy.value)
+    assert_that(items).extracting("itemType").contains(ShareableType.Table.value)
+    assert_that(items).extracting("itemType").contains(ShareableType.S3Bucket.value)
+    assert_that(items).extracting("itemType").contains(ShareableType.StorageLocation.value)
 
 
 @pytest.mark.dependency(depends=['test_share_succeeded'])
@@ -168,7 +172,9 @@ def test_revoke_share(client1, session_share_1):
     items = updated_share['items'].nodes
     for item in items:
         assert_that(item.status).is_equal_to(ShareItemStatus.Revoke_Approved.value)
-
+    assert_that(items).extracting("itemType").contains(ShareableType.Table.value)
+    assert_that(items).extracting("itemType").contains(ShareableType.S3Bucket.value)
+    assert_that(items).extracting("itemType").contains(ShareableType.StorageLocation.value)
 
 @pytest.mark.dependency(depends=['test_revoke_share'])
 def test_revoke_succeeded(client1, session_share_1):
@@ -179,3 +185,6 @@ def test_revoke_succeeded(client1, session_share_1):
     assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Processed.value)
     for item in items:
         assert_that(item.status).is_equal_to(ShareItemStatus.Revoke_Succeeded.value)
+    assert_that(items).extracting("itemType").contains(ShareableType.Table.value)
+    assert_that(items).extracting("itemType").contains(ShareableType.S3Bucket.value)
+    assert_that(items).extracting("itemType").contains(ShareableType.StorageLocation.value)
