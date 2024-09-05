@@ -54,10 +54,10 @@ def session_share_1(client5, client1,  persistent_env1, persistent_s3_dataset_fo
 
 
 @pytest.fixture(scope='session')
-def session_share_2(client5, client1, persistent_env1, persistent_s3_dataset, group5):
+def session_share_2(client5, client1, persistent_env1, persistent_s3_dataset_for_share_test_autoapproval, group5):
     share2 = create_share_object(
         client=client5,
-        dataset_or_item_params={'datasetUri': persistent_s3_dataset.datasetUri},
+        dataset_or_item_params={'datasetUri': persistent_s3_dataset_for_share_test_autoapproval.datasetUri},
         environmentUri=persistent_env1.environmentUri,
         groupUri=group5,
         principalId=group5,

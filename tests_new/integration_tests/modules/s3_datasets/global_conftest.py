@@ -280,7 +280,7 @@ They are suitable for testing backwards compatibility.
 
 
 def get_or_create_persistent_s3_dataset(
-        dataset_name, client, group, env, bucket=None, kms_alias=None, glue_database=None
+        dataset_name, client, group, env, autoApprovalEnabled=False, bucket=None, kms_alias='', glue_database=None
 ):
     dataset_name = dataset_name or 'persistent_s3_dataset1'
     s3_datasets = list_datasets(client, term=dataset_name).nodes
@@ -298,6 +298,7 @@ def get_or_create_persistent_s3_dataset(
                 bucket=bucket,
                 kms_alias=kms_alias,
                 glue_db_name=glue_database,
+                autoApprovalEnabled=autoApprovalEnabled
             )
 
         else:
@@ -309,6 +310,7 @@ def get_or_create_persistent_s3_dataset(
                 org_uri=env['organization']['organizationUri'],
                 env_uri=env['environmentUri'],
                 tags=[dataset_name],
+                autoApprovalEnabled=autoApprovalEnabled
             )
 
         if s3_dataset.stack.status in ['CREATE_COMPLETE', 'UPDATE_COMPLETE']:
@@ -353,11 +355,18 @@ def persistent_s3_dataset_for_share_test(client1, group1, persistent_env1, testd
 
     return dataset
 
+@pytest.fixture(scope='session')
+def persistent_s3_dataset_for_share_test_autoapproval(client1, group1, persistent_env1, testdata):
+    dataset = get_or_create_persistent_s3_dataset('persistent_s3_dataset_autoapproval', client1, group1,
+                                                  persistent_env1, autoApprovalEnabled=True)
+
+    return dataset
+
 
 @pytest.fixture(scope='session')
 def persistent_imported_sse_s3_dataset1(client1, group1, persistent_env1, testdata):
     return get_or_create_persistent_s3_dataset(
-        'persistent_imported_sse_s3_dataset1', client1, group1, persistent_env1, 'persistentimportedsses3'
+        'persistent_imported_sse_s3_dataset1', client1, group1, persistent_env1, True, 'persistentimportedsses3'
     )
 
 
@@ -368,6 +377,7 @@ def persistent_imported_kms_s3_dataset1(client1, group1, persistent_env1, testda
         client1,
         group1,
         persistent_env1,
+        False,
         'persistentimportedkms',
         'persistentimportedkms',
         'persistentimportedkms',

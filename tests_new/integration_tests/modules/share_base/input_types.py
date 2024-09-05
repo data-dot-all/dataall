@@ -6,4 +6,5 @@ def NewShareObjectInput(environmentUri, groupUri, principalId, principalType, re
         'principalType': principalType,
         'requestPurpose': requestPurpose,
         'attachMissingPolicies': attachMissingPolicies,
+        'permissions': ['Read', 'Write', 'Modify']
     }
