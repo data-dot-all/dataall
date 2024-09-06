@@ -530,11 +530,6 @@ def list_dataset_tables(client, datasetUri):
                             dataset {{
                               datasetUri
                             }}
-                            terms {{
-                              nodes {{
-                                label
-                              }}
-                            }}
                             tableUri
                             name
                             created
@@ -545,7 +540,8 @@ def list_dataset_tables(client, datasetUri):
                             S3Prefix
                             userRoleForTable
                           }}
-                      }}
+                        }}
+                     }}
                     }}
                 """,
     }

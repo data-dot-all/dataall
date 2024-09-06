@@ -198,7 +198,7 @@ class GlueClient:
                 },
             )
         except ClientError as e:
-            log.exception(f'Error creating Glue database: {e}')
+            log.exception(f'Error creating Glue table: {e}')
 
     def delete_database(self, database_name):
         """
