@@ -48,13 +48,13 @@ class MetadataFormAccessService:
         if not entityType or not entityUri:
             return None
         if entityType == MetadataFormEntityTypes.Organizations.value:
-            return entityUri
+            return [entityUri]
         elif entityType == MetadataFormEntityTypes.Environments.value:
             with get_context().db_engine.scoped_session() as session:
-                return EnvironmentRepository.get_environment_by_uri(session, entityUri).organizationUri
+                return [EnvironmentRepository.get_environment_by_uri(session, entityUri).organizationUri]
         elif entityType == MetadataFormEntityTypes.Datasets.value:
             with get_context().db_engine.scoped_session() as session:
-                return DatasetBaseRepository.get_dataset_by_uri(session, entityUri).organizationUri
+                return [DatasetBaseRepository.get_dataset_by_uri(session, entityUri).organizationUri]
         else:
             # toDo add other entities
             return None
@@ -66,40 +66,17 @@ class MetadataFormAccessService:
         if entityType == MetadataFormEntityTypes.Organizations.value:
             return None
         elif entityType == MetadataFormEntityTypes.Environments.value:
-            return entityUri
+            return [entityUri]
         elif entityType == MetadataFormEntityTypes.Datasets.value:
             with get_context().db_engine.scoped_session() as session:
-                return DatasetBaseRepository.get_dataset_by_uri(session, entityUri).environmentUri
+                return [DatasetBaseRepository.get_dataset_by_uri(session, entityUri).environmentUri]
         else:
             # toDo add other entities
             return None
 
     @staticmethod
     def get_target_orgs_and_envs(username, groups, is_da_admin=False, filter={}):
-        envs = None
-        orgs = None
-        target_org_uri = MetadataFormAccessService._target_org_uri_getter(
-            filter.get('entityType'), filter.get('entityUri')
-        )
-        target_env_uri = MetadataFormAccessService._target_env_uri_getter(
-            filter.get('entityType'), filter.get('entityUri')
-        )
-        # is user is no dataall admin, query_metadata_forms requires arrays of users envs and orgs uris
-        if not is_da_admin:
-            with get_context().db_engine.scoped_session() as session:
-                envs = EnvironmentRepository.query_user_environments(session, username, groups, {})
-                envs = [e.environmentUri for e in envs]
-                orgs = OrganizationRepository.query_user_organizations(session, username, groups, {})
-                orgs = [o.organizationUri for o in orgs]
-        if target_org_uri:
-            if orgs is None:
-                orgs = [target_org_uri]
-
-        if target_env_uri:
-            if envs is None:
-                envs = [target_env_uri]
-
-        if filter.get('entityType') == MetadataFormEntityTypes.Organizations.value:
-            envs = []
+        orgs = MetadataFormAccessService._target_org_uri_getter(filter.get('entityType'), filter.get('entityUri'))
+        envs = MetadataFormAccessService._target_env_uri_getter(filter.get('entityType'), filter.get('entityUri'))
 
         return orgs, envs

@@ -1,16 +1,25 @@
 from dataall.base.api import gql
 from dataall.modules.metadata_forms.api.resolvers import (
-    list_metadata_forms,
+    list_user_metadata_forms,
+    list_entity_metadata_forms,
     get_metadata_form,
     get_attached_metadata_form,
     list_attached_forms,
 )
 
-listMetadataForms = gql.QueryField(
-    name='listMetadataForms',
+listUserMetadataForms = gql.QueryField(
+    name='listUserMetadataForms',
     args=[gql.Argument('filter', gql.Ref('MetadataFormFilter'))],
     type=gql.Ref('MetadataFormSearchResult'),
-    resolver=list_metadata_forms,
+    resolver=list_user_metadata_forms,
+    test_scope='MetadataForm',
+)
+
+listEntityMetadataForms = gql.QueryField(
+    name='listEntityMetadataForms',
+    args=[gql.Argument('filter', gql.Ref('MetadataFormFilter'))],
+    type=gql.Ref('MetadataFormSearchResult'),
+    resolver=list_entity_metadata_forms,
     test_scope='MetadataForm',
 )
 

@@ -58,7 +58,7 @@ class MetadataFormRepository:
         return session.query(AttachedMetadataForm).get(uri)
 
     @staticmethod
-    def query_metadata_forms(session, is_da_admin, groups, env_uris, org_uris, filter):
+    def query_user_metadata_forms(session, is_da_admin, groups, env_uris, org_uris, filter):
         """
         Returns a list of metadata forms based on the user's permissions and any provided filters.
         DataAll admins can see allll forms, while non-admins can only see forms they have access to based on their group memberships.
@@ -72,41 +72,31 @@ class MetadataFormRepository:
 
         query = session.query(MetadataForm)
 
-        if org_uris is not None:
-            query = query.filter(
-                or_(
-                    MetadataForm.SamlGroupName.in_(groups),
-                    MetadataForm.visibility != MetadataFormVisibility.Organization.value,
-                    and_(
-                        MetadataForm.visibility == MetadataFormVisibility.Organization.value,
-                        MetadataForm.homeEntity.in_(org_uris),
-                    ),
-                )
-            )
-        if env_uris is not None:
-            query = query.filter(
-                or_(
-                    MetadataForm.SamlGroupName.in_(groups),
-                    MetadataForm.visibility != MetadataFormVisibility.Environment.value,
-                    and_(
-                        MetadataForm.visibility == MetadataFormVisibility.Environment.value,
-                        MetadataForm.homeEntity.in_(env_uris),
-                    ),
-                )
-            )
-
         if not is_da_admin:
             query = query.filter(
                 or_(
-                    MetadataForm.SamlGroupName.in_(groups),
-                    MetadataForm.visibility != MetadataFormVisibility.Team.value,
-                    and_(
+                    MetadataForm.SamlGroupName.in_(groups),  # user is in owner-group
+                    MetadataForm.visibility == MetadataFormVisibility.Global.value,  # MF is visible for everyone
+                    and_(  # MF is visible for Organization, that user is in
+                        MetadataForm.visibility == MetadataFormVisibility.Organization.value,
+                        MetadataForm.homeEntity.in_(org_uris),
+                    ),
+                    and_(  # MF is visible for Environment, that user is in
+                        MetadataForm.visibility == MetadataFormVisibility.Environment.value,
+                        MetadataForm.homeEntity.in_(env_uris),
+                    ),
+                    and_(  # MF is visible for Team, that user is in
                         MetadataForm.visibility == MetadataFormVisibility.Team.value,
                         MetadataForm.homeEntity.in_(groups),
                     ),
                 )
             )
 
+        query = MetadataFormRepository.filter_query(query, filter)
+        return query.order_by(MetadataForm.name)
+
+    @staticmethod
+    def exclude_attached(session, query, filter):
         if filter and filter.get('hideAttached') and filter.get('entityType') and filter.get('entityUri'):
             query = query.filter(
                 ~MetadataForm.uri.in_(
@@ -118,7 +108,10 @@ class MetadataFormRepository:
                     .subquery()
                 )
             )
+        return query
 
+    @staticmethod
+    def filter_query(query, filter):
         if filter and filter.get('search_input'):
             query = query.filter(
                 or_(
@@ -126,7 +119,55 @@ class MetadataFormRepository:
                     MetadataForm.description.ilike('%' + filter.get('search_input') + '%'),
                 )
             )
+        return query
 
+    @staticmethod
+    def query_entity_metadata_forms(
+        session, is_da_admin, groups, user_org_uris, user_env_uris, entity_orgs_uris, entity_envs_uris, filter
+    ):
+        """
+        Returns a list of metadata forms that user can attach to entity based on the user's permissions and any provided filters.
+        DataAll admins can see allll forms, while non-admins can only see forms they have access to based on their group memberships.
+        :param session:
+        :param is_da_admin: is user dataall admin
+        :param groups: user's group memberships
+        :param user_env_uris: user's environment URIs
+        :param user_org_uris: user's organization URIs
+        :param entity_orgs_uris: organizations, related to entity
+        :param entity_envs_uris: environments, related to entity
+        :param filter:
+        """
+        query = MetadataFormRepository.query_user_metadata_forms(
+            session, is_da_admin, groups, user_env_uris, user_org_uris, filter
+        )
+
+        if entity_orgs_uris is None:
+            query = query.filter(MetadataForm.visibility != MetadataFormVisibility.Organization.value)
+        else:
+            query = query.filter(
+                or_(
+                    MetadataForm.visibility != MetadataFormVisibility.Organization.value,
+                    and_(
+                        MetadataForm.visibility == MetadataFormVisibility.Organization.value,
+                        MetadataForm.homeEntity.in_(entity_orgs_uris),
+                    ),
+                )
+            )
+
+        if entity_envs_uris is None:
+            query = query.filter(MetadataForm.visibility != MetadataFormVisibility.Environment.value)
+        else:
+            query = query.filter(
+                or_(
+                    MetadataForm.visibility != MetadataFormVisibility.Environment.value,
+                    and_(
+                        MetadataForm.visibility == MetadataFormVisibility.Environment.value,
+                        MetadataForm.homeEntity.in_(entity_envs_uris),
+                    ),
+                )
+            )
+
+        query = MetadataFormRepository.exclude_attached(session, query, filter)
         return query.order_by(MetadataForm.name)
 
     @staticmethod
@@ -207,11 +248,10 @@ class MetadataFormRepository:
         return session.query(all_fields).filter(AttachedMetadataFormField.attachedFormUri == uri).all()
 
     @staticmethod
-    def query_attached_metadata_forms(session, is_da_admin, groups, envs, orgs, filter):
-        all_mfs = MetadataFormRepository.query_metadata_forms(
-            session, is_da_admin, groups, envs, orgs, filter
+    def query_attached_metadata_forms(session, is_da_admin, groups, user_envs_uris, user_orgs_uris, filter):
+        all_mfs = MetadataFormRepository.query_user_metadata_forms(
+            session, is_da_admin, groups, user_envs_uris, user_orgs_uris, filter
         ).subquery()
-        print(f'{orgs=}')
         # The c confuses a lot of people, SQLAlchemy uses this unfortunately odd name
         # as a container for columns in table objects.
         query = session.query(AttachedMetadataForm).join(all_mfs, AttachedMetadataForm.metadataFormUri == all_mfs.c.uri)

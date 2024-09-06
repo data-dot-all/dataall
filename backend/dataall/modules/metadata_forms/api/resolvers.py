@@ -28,8 +28,12 @@ def delete_attached_metadata_form(context: Context, source, attachedFormUri):
     return AttachedMetadataFormService.delete_attached_metadata_form(uri=attachedFormUri)
 
 
-def list_metadata_forms(context: Context, source, filter=None):
-    return MetadataFormService.paginated_metadata_form_list(filter=filter)
+def list_user_metadata_forms(context: Context, source, filter=None):
+    return MetadataFormService.paginated_user_metadata_form_list(filter=filter)
+
+
+def list_entity_metadata_forms(context: Context, source, filter=None):
+    return MetadataFormService.paginated_entity_metadata_form_list(filter=filter)
 
 
 def get_home_entity_name(context: Context, source: MetadataForm):

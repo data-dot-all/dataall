@@ -18,7 +18,7 @@ import {
   getAttachedMetadataForm,
   getMetadataForm,
   listAttachedMetadataForms,
-  listMetadataForms
+  listEntityMetadataForms
 } from '../services';
 import { Defaults, PlusIcon } from '../../../design';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -48,7 +48,7 @@ export const MetadataAttachment = (props) => {
 
   const fetchAvailableForms = async () => {
     const response = await client.query(
-      listMetadataForms({
+      listEntityMetadataForms({
         ...Defaults.filter,
         entityType: entityType,
         entityUri: entityUri,
@@ -57,7 +57,7 @@ export const MetadataAttachment = (props) => {
     );
     if (!response.errors) {
       setAvailableForms(
-        response.data.listMetadataForms.nodes.map((form) => ({
+        response.data.listEntityMetadataForms.nodes.map((form) => ({
           label: form.name,
           value: form.uri,
           form: form

@@ -1,5 +1,7 @@
 from dataall.base.context import get_context
 from dataall.base.db import exceptions, paginate
+from dataall.core.environment.db.environment_repositories import EnvironmentRepository
+from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyValidationService
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
 from dataall.modules.metadata_forms.services.metadata_form_access_service import MetadataFormAccessService
@@ -59,20 +61,22 @@ class AttachedMetadataFormService:
 
     @staticmethod
     def list_attached_forms(filter=None):
-        if not filter:
-            filter = {}
-
         context = get_context()
         groups = context.groups
+        username = context.username
         is_da_admin = TenantPolicyValidationService.is_tenant_admin(groups)
         filter = filter if filter is not None else {}
-        orgs, envs = MetadataFormAccessService.get_target_orgs_and_envs(
-            context.username, context.groups, is_da_admin, filter
-        )
+        user_orgs, user_envs = None, None
+        if not is_da_admin:
+            with get_context().db_engine.scoped_session() as session:
+                user_envs = EnvironmentRepository.query_user_environments(session, username, groups, {})
+                user_envs = [e.environmentUri for e in user_envs]
+                user_orgs = OrganizationRepository.query_user_organizations(session, username, groups, {})
+                user_orgs = [o.organizationUri for o in user_orgs]
         with get_context().db_engine.scoped_session() as session:
             return paginate(
                 query=MetadataFormRepository.query_attached_metadata_forms(
-                    session, is_da_admin, groups, envs, orgs, filter
+                    session, is_da_admin, groups, user_envs, user_orgs, filter
                 ),
                 page=filter.get('page', 1),
                 page_size=filter.get('pageSize', 10),
