@@ -28,7 +28,6 @@ export const listUserMetadataForms = (filter) => ({
   `
 });
 
-
 export const listEntityMetadataForms = (filter) => ({
   variables: {
     filter
