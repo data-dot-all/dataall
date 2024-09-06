@@ -161,18 +161,19 @@ def test_delete_table(client1, dataset_fixture_name, request):
 
 
 @pytest.mark.parametrize(
-    'tables_fixture_name',
+    'dataset_fixture_name,tables_fixture_name',
     [
-        'session_s3_dataset1_tables',
-        'session_imported_sse_s3_dataset1_tables',
-        'session_imported_kms_s3_dataset1_tables',
+        ('session_s3_dataset1', 'session_s3_dataset1_tables'),
+        ('session_imported_sse_s3_dataset1', 'session_imported_sse_s3_dataset1_tables'),
+        ('session_imported_kms_s3_dataset1', 'session_imported_kms_s3_dataset1_tables'),
     ],
 )
-def test_delete_table_unauthorized(client2, tables_fixture_name, request):
+def test_delete_table_unauthorized(client2, dataset_fixture_name, tables_fixture_name, request):
+    dataset = request.getfixturevalue(dataset_fixture_name)
     tables = request.getfixturevalue(tables_fixture_name)
     table_uri = tables[0].tableUri
     assert_that(delete_table).raises(GqlError).when_called_with(client2, table_uri).contains(
-        'UnauthorizedOperation', 'DELETE_DATASET_TABLE', table_uri
+        'UnauthorizedOperation', 'DELETE_DATASET_TABLE', dataset.datasetUri
     )
 
 

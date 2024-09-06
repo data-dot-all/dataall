@@ -22,6 +22,7 @@ from integration_tests.errors import GqlError
 
 log = logging.getLogger(__name__)
 
+
 @pytest.mark.parametrize(
     'dataset_fixture_name',
     ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
@@ -33,7 +34,8 @@ def test_create_import_s3_dataset(client1, dataset_fixture_name, request):
 
 
 def test_create_s3_dataset_unauthorized(client2, session_env1):
-    pass #TODO
+    pass  # TODO
+
 
 @pytest.mark.parametrize(
     'dataset_fixture_name,label',
@@ -68,6 +70,7 @@ def test_get_dataset_assume_role_url(client1, dataset_fixture_name, request):
         'https://signin.aws.amazon.com/federation'
     )
 
+
 @pytest.mark.parametrize(
     'dataset_fixture_name',
     ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
@@ -78,6 +81,7 @@ def test_get_dataset_assume_role_url_unauthorized(client2, dataset_fixture_name,
     assert_that(get_dataset_assume_role_url).raises(GqlError).when_called_with(client2, dataset_uri).contains(
         'UnauthorizedOperation', 'CREDENTIALS_DATASET', dataset_uri
     )
+
 
 @pytest.mark.parametrize(
     'dataset_fixture_name',
@@ -101,6 +105,7 @@ def test_get_dataset_presigned_url_upload_data(client1, dataset_fixture_name, re
         # Send the POST request with the presigned URL, form fields, and file data
         http_response = requests.post(response['url'], data=response['fields'], files=files)
         http_response.raise_for_status()
+
 
 @pytest.mark.parametrize(
     'dataset_fixture_name',
