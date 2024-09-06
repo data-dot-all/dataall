@@ -21,6 +21,22 @@ def test_create_folder_unauthorized(client2, session_s3_dataset1):
     ).contains('UnauthorizedOperation', 'CREATE_DATASET_FOLDER', dataset_uri)
 
 
+def test_get_folder(client1, session_s3_dataset2_with_tables_and_folders):
+    dataset, tables, folders = session_s3_dataset2_with_tables_and_folders
+    folder = folders[0]
+    response = get_folder(client1, locationUri=folder.locationUri)
+    assert_that(response.S3Prefix).is_equal_to('sessionFolderA')
+    assert_that(response.label).is_equal_to('labelSessionFolderA')
+
+
+def test_get_folder_unauthorized(client2, session_s3_dataset2_with_tables_and_folders):
+    dataset, tables, folders = session_s3_dataset2_with_tables_and_folders
+    folder = folders[0]
+    assert_that(get_folder).raises(GqlError).when_called_with(client2, locationUri=folder.locationUri).contains(
+        'UnauthorizedOperation', 'GET_DATASET_FOLDER', folder.locationUri
+    )
+
+
 def test_update_folder(client1, session_s3_dataset2_with_tables_and_folders):
     dataset, tables, folders = session_s3_dataset2_with_tables_and_folders
     folder = folders[0]
@@ -52,20 +68,4 @@ def test_delete_folder_unauthorized(client1, client2, session_s3_dataset1):
     )
     assert_that(delete_folder).raises(GqlError).when_called_with(client2, location.locationUri).contains(
         'UnauthorizedOperation', 'DELETE_DATASET_FOLDER', dataset_uri
-    )
-
-
-def test_get_folder(client1, session_s3_dataset2_with_tables_and_folders):
-    dataset, tables, folders = session_s3_dataset2_with_tables_and_folders
-    folder = folders[0]
-    response = get_folder(client1, locationUri=folder.locationUri)
-    assert_that(response.S3Prefix).is_equal_to('sessionFolderA')
-    assert_that(response.label).is_equal_to('labelSessionFolderA')
-
-
-def test_get_folder_unauthorized(client2, session_s3_dataset2_with_tables_and_folders):
-    dataset, tables, folders = session_s3_dataset2_with_tables_and_folders
-    folder = folders[0]
-    assert_that(get_folder).raises(GqlError).when_called_with(client2, locationUri=folder.locationUri).contains(
-        'UnauthorizedOperation', 'GET_DATASET_FOLDER', folder.locationUri
     )

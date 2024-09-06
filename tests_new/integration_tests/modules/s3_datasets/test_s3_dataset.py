@@ -15,7 +15,6 @@ from integration_tests.modules.s3_datasets.queries import (
     start_glue_crawler,
     update_dataset,
 )
-from integration_tests.modules.datasets_base.queries import list_datasets
 from integration_tests.core.stack.queries import update_stack
 from integration_tests.core.stack.utils import check_stack_ready
 from integration_tests.errors import GqlError

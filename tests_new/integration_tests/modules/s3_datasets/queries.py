@@ -77,6 +77,7 @@ autoApprovalEnabled
 """
 
 
+## Dataset Queries/Mutations
 def create_dataset(
     client,
     name,
@@ -270,85 +271,50 @@ def start_glue_crawler(client, datasetUri, input):
     return response.data.startGlueCrawler
 
 
-def sync_tables(client, datasetUri):
+def list_s3_datasets_owned_by_env_group(client, environment_uri, group_uri, term):
     query = {
-        'operationName': 'SyncTables',
-        'variables': {'datasetUri': datasetUri},
+        'operationName': 'listS3DatasetsOwnedByEnvGroup',
+        'variables': {'environmentUri': environment_uri, 'group_uri': group_uri, 'filter': {'term': term}},
         'query': f"""
-                    mutation SyncTables($datasetUri: String!) {{
-                      syncTables(datasetUri: $datasetUri) {{
-                        count
-                        nodes {{
-                          tableUri
-                          GlueTableName
-                          GlueDatabaseName
-                          description
-                          name
-                          label
-                          created
-                          S3Prefix
-                          dataset {{
-                            datasetUri
-                            name
-                            GlueDatabaseName
-                            userRoleForDataset
-                          }}
-                        }}
+                query listS3DatasetsOwnedByEnvGroup(
+                  $filter: DatasetFilter
+                  $environmentUri: String!
+                  $groupUri: String!
+                ) {{
+                  listS3DatasetsOwnedByEnvGroup(
+                    environmentUri: $environmentUri
+                    groupUri: $groupUri
+                    filter: $filter
+                  ) {{
+                    count
+                    page
+                    pages
+                    hasNext
+                    hasPrevious
+                    nodes {{
+                      datasetUri
+                      label
+                      AwsAccountId
+                      region
+                      GlueDatabaseName
+                      SamlAdminGroupName
+                      name
+                      S3BucketName
+                      created
+                      owner
+                      stack {{
+                        status
                       }}
                     }}
+                  }}
+                }}
                 """,
     }
     response = client.query(query=query)
-    return response.data.syncTables
+    return response.data.listDatasetsCreatedInEnvironment
 
 
-def preview_table(client, tableUri):
-    query = {
-        'operationName': 'PreviewTable',
-        'variables': {'tableUri': tableUri},
-        'query': f"""
-                    query PreviewTable($tableUri: String!) {{
-                      previewTable(tableUri: $tableUri) {{
-                        rows
-                        fields
-                      }}
-                    }}
-                """,
-    }
-    response = client.query(query=query)
-    return response.data.previewTable
-
-
-def start_dataset_profiling_run(client, input):
-    query = {
-        'operationName': 'startDatasetProfilingRun',
-        'variables': {'input': input},
-        'query': f"""
-                    mutation startDatasetProfilingRun($input: StartDatasetProfilingRunInput!) {{
-                      startDatasetProfilingRun(input: $input) {{
-                        profilingRunUri
-                      }}
-                    }}
-                """,
-    }
-    response = client.query(query=query)
-    return response.data.startDatasetProfilingRun
-
-
-def delete_table(client, tableUri):
-    query = {
-        'operationName': 'deleteDatasetTable',
-        'variables': {'tableUri': tableUri},
-        'query': f"""
-                    mutation deleteDatasetTable($tableUri: String!) {{
-                      deleteDatasetTable(tableUri: $tableUri)
-                    }}
-                """,
-    }
-    response = client.query(query=query)
-    return response.data.deleteDatasetTable
-
-
+## Folders Queries/Mutations
 def create_folder(client, datasetUri, input):
     query = {
         'operationName': 'CreateDatasetStorageLocation',
@@ -415,3 +381,384 @@ def get_folder(client, locationUri):
     }
     response = client.query(query=query)
     return response.data.getDatasetStorageLocation
+
+
+## Tables Queries/Mutations
+
+
+def update_dataset_table(client, tableUri, input):
+    query = {
+        'operationName': 'UpdateDatasetTable',
+        'variables': {'tableUri': tableUri, 'input': input},
+        'query': f"""
+                mutation UpdateDatasetTable(
+                  $tableUri: String!
+                  $input: ModifyDatasetTableInput!
+                ) {{
+                  updateDatasetTable(tableUri: $tableUri, input: $input) {{
+                    tableUri
+                  }}
+                }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.updateDatasetTable
+
+
+def delete_table(client, tableUri):
+    query = {
+        'operationName': 'deleteDatasetTable',
+        'variables': {'tableUri': tableUri},
+        'query': f"""
+                    mutation deleteDatasetTable($tableUri: String!) {{
+                      deleteDatasetTable(tableUri: $tableUri)
+                    }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.deleteDatasetTable
+
+
+def sync_tables(client, datasetUri):
+    query = {
+        'operationName': 'SyncTables',
+        'variables': {'datasetUri': datasetUri},
+        'query': f"""
+                    mutation SyncTables($datasetUri: String!) {{
+                      syncTables(datasetUri: $datasetUri) {{
+                        count
+                        nodes {{
+                          tableUri
+                          GlueTableName
+                          GlueDatabaseName
+                          description
+                          name
+                          label
+                          created
+                          S3Prefix
+                          dataset {{
+                            datasetUri
+                            name
+                            GlueDatabaseName
+                            userRoleForDataset
+                          }}
+                        }}
+                      }}
+                    }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.syncTables
+
+
+def create_table_data_filter(client, tableUri, input):
+    query = {
+        'operationName': 'createTableDataFilter',
+        'variables': {'tableUri': tableUri, 'input': input},
+        'query': f"""
+                mutation createTableDataFilter(
+                  $tableUri: String!
+                  $input: NewTableDataFilterInput!
+                ) {{
+                  createTableDataFilter(tableUri: $tableUri, input: $input) {{
+                    filterUri
+                  }}
+                }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.createTableDataFilter
+
+
+def delete_table_data_filter(client, filterUri):
+    query = {
+        'operationName': 'deleteTableDataFilter',
+        'variables': {'filterUri': filterUri},
+        'query': f"""
+                mutation deleteTableDataFilter($filterUri: String!) {{
+                  deleteTableDataFilter(filterUri: $filterUri)
+                }}
+            """,
+    }
+    response = client.query(query=query)
+    return response.data.deleteTableDataFilter
+
+
+def get_dataset_table(client, tableUri):
+    query = {
+        'operationName': 'GetDatasetTable',
+        'variables': {'tableUri': tableUri},
+        'query': f"""
+            query GetDatasetTable($tableUri: String!) {{
+                getDatasetTable(tableUri: $tableUri) {{
+                    datasetUri
+                    owner
+                    description
+                    created
+                    tags
+                    tableUri
+                    AwsAccountId
+                    GlueTableName
+                    GlueDatabaseName
+                    LastGlueTableStatus
+                    label
+                    name
+                    S3Prefix
+              }}
+            }}
+            """,
+    }
+    response = client.query(query=query)
+    return response.data.getDatasetTable
+
+
+def list_dataset_tables(client, datasetUri):
+    query = {
+        'operationName': 'GetDataset',
+        'variables': {'datasetUri': datasetUri},
+        'query': f"""
+                    query GetDataset($datasetUri: String!) {{
+                      getDataset(datasetUri: $datasetUri) {{
+                        tables(filter: $filter) {{
+                          count
+                          page
+                          pages
+                          hasNext
+                          hasPrevious
+                          nodes {{
+                            dataset {{
+                              datasetUri
+                            }}
+                            terms {{
+                              nodes {{
+                                label
+                              }}
+                            }}
+                            tableUri
+                            name
+                            created
+                            GlueTableName
+                            GlueDatabaseName
+                            description
+                            stage
+                            S3Prefix
+                            userRoleForTable
+                          }}
+                      }}
+                    }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.getDataset
+
+
+def preview_table(client, tableUri):
+    query = {
+        'operationName': 'PreviewTable',
+        'variables': {'tableUri': tableUri},
+        'query': f"""
+                    query PreviewTable($tableUri: String!) {{
+                      previewTable(tableUri: $tableUri) {{
+                        rows
+                        fields
+                      }}
+                    }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.previewTable
+
+
+def list_table_data_filters(client, tableUri, term):
+    query = {
+        'operationName': 'listTableDataFilters',
+        'variables': {'tableUri': tableUri, 'filter': {'term': term}},
+        'query': f"""
+                query listTableDataFilters(
+                  $tableUri: String!
+                  $filter: DatasetTableFilter
+                ) {{
+                  listTableDataFilters(tableUri: $tableUri, filter: $filter) {{
+                    count
+                    page
+                    pages
+                    hasNext
+                    hasPrevious
+                    nodes {{
+                      filterUri
+                      label
+                      description
+                      filterType
+                      includedCols
+                      rowExpression
+                    }}
+                  }}
+                }}
+            """,
+    }
+    response = client.query(query=query)
+    return response.data.deleteTableDataFilter
+
+
+## Table Column Queries/Mutations
+def sync_dataset_table_columns(client, tableUri):
+    query = {
+        'operationName': 'SyncDatasetTableColumns',
+        'variables': {'tableUri': tableUri},
+        'query': f"""
+            mutation SyncDatasetTableColumns($tableUri: String!) {{
+              syncDatasetTableColumns(tableUri: $tableUri) {{
+                count
+                page
+                pages
+                hasNext
+                hasPrevious
+                nodes {{
+                  columnUri
+                  name
+                  description
+                  typeName
+                }}
+              }}
+            }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.syncDatasetTableColumns
+
+
+def update_dataset_table_column(client, columnUri, input):
+    query = {
+        'operationName': 'updateDatasetTableColumn',
+        'variables': {'columnUri': columnUri, 'input': input},
+        'query': f"""
+            mutation updateDatasetTableColumn(
+              $columnUri: String!
+              $input: DatasetTableColumnInput
+            ) {{
+              updateDatasetTableColumn(columnUri: $columnUri, input: $input) {{
+                columnUri
+                description
+              }}
+            }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.updateDatasetTableColumn
+
+
+def list_dataset_table_columns(client, tableUri, term):
+    query = {
+        'operationName': 'ListDatasetTableColumns',
+        'variables': {'tableUri': tableUri, 'filter': {'term': term}},
+        'query': f"""
+            query ListDatasetTableColumns(
+      $tableUri: String!
+      $filter: DatasetTableColumnFilter
+    ) {{
+      listDatasetTableColumns(tableUri: $tableUri, filter: $filter) {{
+        count
+        page
+        pages
+        hasNext
+        hasPrevious
+        nodes {{
+          columnUri
+          name
+          label
+          description
+          typeName
+          columnType
+          terms {{
+            count
+            page
+            pages
+            nodes {{
+              linkUri
+              term {{
+                label
+                created
+                path
+                nodeUri
+              }}
+            }}
+          }}
+        }}
+      }}
+    }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.listDatasetTableColumns
+
+
+## Profiling Queries/Mutations
+def start_dataset_profiling_run(client, input):
+    query = {
+        'operationName': 'startDatasetProfilingRun',
+        'variables': {'input': input},
+        'query': f"""
+                    mutation startDatasetProfilingRun($input: StartDatasetProfilingRunInput!) {{
+                      startDatasetProfilingRun(input: $input) {{
+                        profilingRunUri
+                      }}
+                    }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.startDatasetProfilingRun
+
+
+def list_table_profiling_runs(client, tableUri):
+    query = {
+        'operationName': 'listDatasetTableProfilingRuns',
+        'variables': {'tableUri': tableUri},
+        'query': f"""
+                        query listDatasetTableProfilingRuns($tableUri: String!) {{
+      listDatasetTableProfilingRuns(tableUri: $tableUri) {{
+        count
+        page
+        pages
+        hasNext
+        hasPrevious
+        nodes {{
+          profilingRunUri
+          GlueJobRunId
+          GlueTableName
+          results
+          created
+          status
+        }}
+      }}
+    }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.listDatasetTableProfilingRuns
+
+
+def get_table_profiling_run(client, tableUri):
+    query = {
+        'operationName': 'getDatasetTableProfilingRun',
+        'variables': {'tableUri': tableUri},
+        'query': f"""
+                        query getDatasetTableProfilingRun($tableUri: String!) {{
+      getDatasetTableProfilingRun(tableUri: $tableUri) {{
+        profilingRunUri
+        status
+        GlueTableName
+        datasetUri
+        GlueJobName
+        GlueJobRunId
+        GlueTriggerSchedule
+        GlueTriggerName
+        GlueTableName
+        AwsAccountId
+        results
+        status
+      }}
+    }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.getDatasetTableProfilingRun
