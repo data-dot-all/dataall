@@ -397,6 +397,7 @@ def update_dataset_table(client, tableUri, input):
                 ) {{
                   updateDatasetTable(tableUri: $tableUri, input: $input) {{
                     tableUri
+                    label
                   }}
                 }}
                 """,

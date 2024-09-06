@@ -2,10 +2,9 @@ import logging
 from assertpy import assert_that
 
 from integration_tests.modules.s3_datasets.queries import (
-    delete_table,
-    preview_table,
     start_dataset_profiling_run,
-    sync_tables,
+    list_table_profiling_runs,
+    get_table_profiling_run,
 )
 from integration_tests.errors import GqlError
 

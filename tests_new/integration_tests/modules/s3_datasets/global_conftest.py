@@ -2,6 +2,7 @@ import logging
 import pytest
 import boto3
 import json
+import os
 from integration_tests.client import GqlError
 from integration_tests.core.stack.utils import check_stack_ready
 
@@ -95,6 +96,42 @@ def delete_s3_dataset(client, env_uri, dataset):
         return False
 
 
+def create_tables(client, dataset):
+    creds = json.loads(generate_dataset_access_token(client, dataset.datasetUri))
+    dataset_session = boto3.Session(
+        aws_access_key_id=creds['AccessKey'],
+        aws_secret_access_key=creds['SessionKey'],
+        aws_session_token=creds['sessionToken'],
+    )
+    file_path = os.path.join(os.path.dirname(__file__), 'sample_data/csv_table/csv_sample.csv')
+    S3Client(dataset_session, dataset.region).upload_file_to_prefix(
+        local_file_path=file_path, s3_path=f'{dataset.S3BucketName}/integrationtest1/'
+    )
+    GlueClient(dataset_session, dataset.region).create_table(
+        database_name=dataset.GlueDatabaseName, table_name='integrationtest1', bucket=dataset.S3BucketName
+    )
+
+    S3Client(dataset_session, dataset.region).upload_file_to_prefix(
+        local_file_path=file_path, s3_path=f'{dataset.S3BucketName}/integrationtest2/'
+    )
+    GlueClient(dataset_session, dataset.region).create_table(
+        database_name=dataset.GlueDatabaseName, table_name='integrationtest2', bucket=dataset.S3BucketName
+    )
+    response = sync_tables(client, datasetUri=dataset.datasetUri)
+    return response.get('nodes', [])
+
+
+def create_folders(client, dataset):
+    folderA = create_folder(
+        client, datasetUri=dataset.datasetUri, input={'prefix': 'sessionFolderA', 'label': 'labelSessionFolderA'}
+    )
+    folderB = create_folder(
+        client, datasetUri=dataset.datasetUri, input={'prefix': 'sessionFolderB', 'label': 'labelSessionFolderB'}
+    )
+
+    return [folderA, folderB]
+
+
 """
 Session envs persist across the duration of the whole integ test suite and are meant to make the test suite run faster (env creation takes ~2 mins).
 For this reason they must stay immutable as changes to them will affect the rest of the tests.
@@ -120,41 +157,13 @@ def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdat
 
 
 @pytest.fixture(scope='session')
-def session_s3_dataset2_with_tables_and_folders(client1, group1, org1, session_env1, session_id, testdata):
-    ds = None
-    try:
-        ds = create_s3_dataset(
-            client1,
-            owner='someone',
-            group=group1,
-            org_uri=org1['organizationUri'],
-            env_uri=session_env1['environmentUri'],
-            tags=[session_id],
-        )
-        creds = json.loads(generate_dataset_access_token(client1, ds.datasetUri))
-        dataset_session = boto3.Session(
-            aws_access_key_id=creds['AccessKey'],
-            aws_secret_access_key=creds['SessionKey'],
-            aws_session_token=creds['sessionToken'],
-        )
-        GlueClient(dataset_session, ds.region).create_table(
-            database_name=ds.GlueDatabaseName, table_name='integrationtest1', bucket=ds.S3BucketName
-        )
-        GlueClient(dataset_session, ds.region).create_table(
-            database_name=ds.GlueDatabaseName, table_name='integrationtest2', bucket=ds.S3BucketName
-        )
-        tables = sync_tables(client1, datasetUri=ds.datasetUri)
-        folderA = create_folder(
-            client1, datasetUri=ds.datasetUri, input={'prefix': 'sessionFolderA', 'label': 'labelSessionFolderA'}
-        )
-        folderB = create_folder(
-            client1, datasetUri=ds.datasetUri, input={'prefix': 'sessionFolderB', 'label': 'labelSessionFolderB'}
-        )
+def session_s3_dataset1_tables(client1, session_s3_dataset1):
+    yield create_tables(client1, session_s3_dataset1)
 
-        yield ds, tables.get('nodes', []), [folderA, folderB]
-    finally:
-        if ds:
-            delete_s3_dataset(client1, session_env1['environmentUri'], ds)
+
+@pytest.fixture(scope='session')
+def session_s3_dataset1_folders(client1, session_s3_dataset1):
+    yield create_folders(client1, session_s3_dataset1)
 
 
 @pytest.fixture(scope='session')
@@ -186,6 +195,16 @@ def session_imported_sse_s3_dataset1(
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
         if bucket:
             S3Client(session=session_env1_aws_client, region=session_env1['region']).delete_bucket(bucket)
+
+
+@pytest.fixture(scope='session')
+def session_imported_sse_s3_dataset1_tables(client1, session_imported_sse_s3_dataset1):
+    yield create_tables(client1, session_imported_sse_s3_dataset1)
+
+
+@pytest.fixture(scope='session')
+def session_imported_sse_s3_dataset1_folders(client1, session_imported_sse_s3_dataset1):
+    yield create_folders(client1, session_imported_sse_s3_dataset1)
 
 
 @pytest.fixture(scope='session')
@@ -252,6 +271,16 @@ def session_imported_kms_s3_dataset1(
             ).remove_role_from_datalake_admin(existing_lf_admins)
         if database:
             GlueClient(session=session_env1_aws_client, region=session_env1['region']).delete_database(database)
+
+
+@pytest.fixture(scope='session')
+def session_imported_kms_s3_dataset1_tables(client1, session_imported_kms_s3_dataset1):
+    yield create_tables(client1, session_imported_kms_s3_dataset1)
+
+
+@pytest.fixture(scope='session')
+def session_imported_kms_s3_dataset1_folders(client1, session_imported_kms_s3_dataset1):
+    yield create_folders(client1, session_imported_kms_s3_dataset1)
 
 
 """

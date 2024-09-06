@@ -1,6 +1,7 @@
 import logging
 import json
 import re
+import os
 from botocore.exceptions import ClientError
 
 log = logging.getLogger(__name__)
@@ -66,6 +67,22 @@ class S3Client:
             self._client.delete_bucket(Bucket=bucket_name)
         except ClientError as e:
             log.exception(f'Error deleting S3 bucket: {e}')
+
+    def upload_file_to_prefix(self, local_file_path, s3_path):
+        """
+        Upload a file from a local path to an S3 bucket with a specified prefix.
+
+        :param local_file_path: Path to the local file to be uploaded
+        :param s3_path: S3 path where the file should be uploaded, including the bucket name and prefix
+        :return: None
+        """
+        try:
+            bucket_name, prefix = s3_path.split('/', 1)
+            object_key = f'{prefix}/{os.path.basename(local_file_path)}'
+            self._client.upload_file(local_file_path, bucket_name, object_key)
+        except ClientError as e:
+            logging.error(f'Error uploading file to S3: {e}')
+            raise
 
 
 class KMSClient:
@@ -172,11 +189,11 @@ class GlueClient:
                     'Description': 'integration tests',
                     'StorageDescriptor': {
                         'Columns': [
-                            {'Name': 'column1', 'Type': 'string'},
-                            {'Name': 'column2', 'Type': 'string'},
-                            {'Name': 'column3', 'Type': 'string'},
+                            {'Name': 'Column1', 'Type': 'int'},
+                            {'Name': 'Column2', 'Type': 'string'},
+                            {'Name': 'Column3', 'Type': 'string'},
                         ],
-                        'Location': f's3://{bucket}/',
+                        'Location': f's3://{bucket}/{table_name}/',
                     },
                 },
             )
