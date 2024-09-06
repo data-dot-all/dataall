@@ -22,35 +22,26 @@ from integration_tests.errors import GqlError
 
 log = logging.getLogger(__name__)
 
-
-# Dataset Mutations
-def test_create_s3_dataset(client1, session_s3_dataset1):
-    assert_that(session_s3_dataset1.stack.status).is_in('CREATE_COMPLETE', 'UPDATE_COMPLETE')
-
-
-def test_create_s3_dataset_unauthorized():
-    # TODO
-    pass
-
-
-def test_import_sse_s3_dataset(session_imported_sse_s3_dataset1):
-    assert_that(session_imported_sse_s3_dataset1.stack.status).is_in('CREATE_COMPLETE', 'UPDATE_COMPLETE')
-
-
-def test_import_kms_s3_dataset(session_imported_kms_s3_dataset1):
-    assert_that(session_imported_kms_s3_dataset1.stack.status).is_in('CREATE_COMPLETE', 'UPDATE_COMPLETE')
-
-
-# TODO: parametrize the following tests to test: session_s3_dataset1, imported, imported kms
-
-
 @pytest.mark.parametrize(
     'dataset_fixture_name',
     ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
 )
+# Dataset Mutations
+def test_create_import_s3_dataset(client1, dataset_fixture_name, request):
+    dataset = request.getfixturevalue(dataset_fixture_name)
+    assert_that(dataset.stack.status).is_in('CREATE_COMPLETE', 'UPDATE_COMPLETE')
+
+
+def test_create_s3_dataset_unauthorized(client2, session_env1):
+    pass #TODO
+
 @pytest.mark.parametrize(
-    'label',
-    ['TestDatasetCreated', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
+    'dataset_fixture_name,label',
+    [
+        ('session_s3_dataset1', 'TestDatasetCreated'),
+        ('session_imported_sse_s3_dataset1', 'TestDatasetImported'),
+        ('session_imported_kms_s3_dataset1', 'TestDatasetImported'),
+    ],
 )
 def test_get_s3_dataset(client1, dataset_fixture_name, label, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
@@ -58,30 +49,43 @@ def test_get_s3_dataset(client1, dataset_fixture_name, label, request):
     assert_that(response.label).is_equal_to(label)
 
 
-def test_get_s3_dataset_non_admin(client2, session_s3_dataset1):
-    dataset = get_dataset(client2, session_s3_dataset1.datasetUri)
-    assert dataset
+@pytest.mark.parametrize(
+    'dataset_fixture_name',
+    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
+)
+def test_get_s3_dataset_non_admin(client2, dataset_fixture_name, request):
+    dataset = request.getfixturevalue(dataset_fixture_name)
     assert_that(dataset.userRoleForDataset).is_equal_to('NoPermission')
 
 
-def test_get_dataset_assume_role_url(client1, session_s3_dataset1):
-    dataset_uri = session_s3_dataset1.datasetUri
-
-    assert_that(get_dataset_assume_role_url(client1, dataset_uri)).starts_with(
+@pytest.mark.parametrize(
+    'dataset_fixture_name',
+    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
+)
+def test_get_dataset_assume_role_url(client1, dataset_fixture_name, request):
+    dataset = request.getfixturevalue(dataset_fixture_name)
+    assert_that(get_dataset_assume_role_url(client1, dataset.datasetUri)).starts_with(
         'https://signin.aws.amazon.com/federation'
     )
 
-
-def test_get_dataset_assume_role_url_unauthorized(client2, session_s3_dataset1):
-    dataset_uri = session_s3_dataset1.datasetUri
-
+@pytest.mark.parametrize(
+    'dataset_fixture_name',
+    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
+)
+def test_get_dataset_assume_role_url_unauthorized(client2, dataset_fixture_name, request):
+    dataset = request.getfixturevalue(dataset_fixture_name)
+    dataset_uri = dataset.datasetUri
     assert_that(get_dataset_assume_role_url).raises(GqlError).when_called_with(client2, dataset_uri).contains(
         'UnauthorizedOperation', 'CREDENTIALS_DATASET', dataset_uri
     )
 
-
-def test_get_dataset_presigned_url_upload_data(client1, session_s3_dataset1):
-    dataset_uri = session_s3_dataset1.datasetUri
+@pytest.mark.parametrize(
+    'dataset_fixture_name',
+    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
+)
+def test_get_dataset_presigned_url_upload_data(client1, dataset_fixture_name, request):
+    dataset = request.getfixturevalue(dataset_fixture_name)
+    dataset_uri = dataset.datasetUri
     file_path = os.path.join(os.path.dirname(__file__), 'sample_data/csv_table/csv_sample.csv')
     prefix = 'csv_table'
     file_name = 'csv_sample.csv'
@@ -98,9 +102,13 @@ def test_get_dataset_presigned_url_upload_data(client1, session_s3_dataset1):
         http_response = requests.post(response['url'], data=response['fields'], files=files)
         http_response.raise_for_status()
 
-
-def test_get_dataset_presigned_url_upload_data_unauthorized(client2, session_s3_dataset1):
-    dataset_uri = session_s3_dataset1.datasetUri
+@pytest.mark.parametrize(
+    'dataset_fixture_name',
+    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
+)
+def test_get_dataset_presigned_url_upload_data_unauthorized(client2, dataset_fixture_name, request):
+    dataset = request.getfixturevalue(dataset_fixture_name)
+    dataset_uri = dataset.datasetUri
     assert_that(get_dataset_presigned_role_url).raises(GqlError).when_called_with(
         client2, dataset_uri, input={'prefix': 'sample_data', 'fileName': 'name'}
     ).contains('UnauthorizedOperation', 'CREDENTIALS_DATASET', dataset_uri)
@@ -111,30 +119,40 @@ def test_list_s3_datasets_owned_by_env_group():
     pass
 
 
-def test_list_s3_datasets_owned_by_env_group_unauth():
+def test_list_s3_datasets_owned_by_env_group_unauthorized():
     # TODO
     pass
 
 
-def test_update_dataset(client1, session_s3_dataset1):
+@pytest.mark.parametrize(
+    'dataset_fixture_name',
+    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
+)
+def test_update_dataset(client1, dataset_fixture_name, request):
+    dataset = request.getfixturevalue(dataset_fixture_name)
     test_description = f'a test description {datetime.utcnow().isoformat()}'
-    dataset_uri = session_s3_dataset1.datasetUri
+    dataset_uri = dataset.datasetUri
     updated_dataset = update_dataset(
-        client1, dataset_uri, {'description': test_description, 'KmsAlias': session_s3_dataset1.KmsAlias}
+        client1, dataset_uri, {'description': test_description, 'KmsAlias': dataset.KmsAlias}
     )
     assert_that(updated_dataset).contains_entry(datasetUri=dataset_uri, description=test_description)
     env = get_dataset(client1, dataset_uri)
     assert_that(env).contains_entry(datasetUri=dataset_uri, description=test_description)
 
 
-def test_update_dataset_unauthorized(client1, client2, session_s3_dataset1):
+@pytest.mark.parametrize(
+    'dataset_fixture_name',
+    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
+)
+def test_update_dataset_unauthorized(client1, client2, dataset_fixture_name, request):
+    dataset = request.getfixturevalue(dataset_fixture_name)
     test_description = f'unauthorized {datetime.utcnow().isoformat()}'
-    dataset_uri = session_s3_dataset1.datasetUri
+    dataset_uri = dataset.datasetUri
     assert_that(update_dataset).raises(GqlError).when_called_with(
-        client2, dataset_uri, {'description': test_description, 'KmsAlias': session_s3_dataset1.KmsAlias}
+        client2, dataset_uri, {'description': test_description, 'KmsAlias': dataset.KmsAlias}
     ).contains('UnauthorizedOperation', dataset_uri)
-    dataset = get_dataset(client1, dataset_uri)
-    assert_that(dataset).contains_entry(datasetUri=dataset_uri).does_not_contain_entry(description=test_description)
+    response = get_dataset(client1, dataset_uri)
+    assert_that(response).contains_entry(datasetUri=dataset_uri).does_not_contain_entry(description=test_description)
 
 
 def test_delete_s3_dataset():

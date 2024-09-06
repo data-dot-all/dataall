@@ -83,20 +83,16 @@ def test_update_folder(client1, folders_fixture_name, request):
 
 
 @pytest.mark.parametrize(
-    'folders_fixture_name',
+    'dataset_fixture_name,folders_fixture_name',
     [
-        'session_s3_dataset1_folders',
-        'session_imported_sse_s3_dataset1_folders',
-        'session_imported_kms_s3_dataset1_folders',
+        ('session_s3_dataset1', 'session_s3_dataset1_folders'),
+        ('session_imported_sse_s3_dataset1', 'session_imported_sse_s3_dataset1_folders'),
+        ('session_imported_kms_s3_dataset1', 'session_imported_kms_s3_dataset1_folders'),
     ],
-)
-@pytest.mark.parametrize(
-    'dataset_fixture_name',
-    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
 )
 def test_update_folder_unauthorized(client2, dataset_fixture_name, folders_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
-    folder = request.getfixturevalue(folders_fixture_name)
+    folder = request.getfixturevalue(folders_fixture_name)[0]
     assert_that(update_folder).raises(GqlError).when_called_with(
         client2, locationUri=folder.locationUri, input={'label': 'newLabel'}
     ).contains('UnauthorizedOperation', 'UPDATE_DATASET_FOLDER', dataset.datasetUri)

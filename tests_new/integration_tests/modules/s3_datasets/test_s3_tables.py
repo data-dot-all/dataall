@@ -49,16 +49,12 @@ def test_sync_tables_unauthorized(client2, dataset_fixture_name, request):
 
 
 @pytest.mark.parametrize(
-    'tables_fixture_name',
+    'dataset_fixture_name,tables_fixture_name',
     [
-        'session_s3_dataset1_tables',
-        'session_imported_sse_s3_dataset1_tables',
-        'session_imported_kms_s3_dataset1_tables',
+        ('session_s3_dataset1', 'session_s3_dataset1_tables'),
+        ('session_imported_sse_s3_dataset1', 'session_imported_sse_s3_dataset1_tables'),
+        ('session_imported_kms_s3_dataset1', 'session_imported_kms_s3_dataset1_tables'),
     ],
-)
-@pytest.mark.parametrize(
-    'dataset_fixture_name',
-    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
 )
 def test_get_dataset_table(client1, dataset_fixture_name, tables_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
@@ -127,16 +123,12 @@ def test_update_dataset_table(client1, tables_fixture_name, request):
 
 
 @pytest.mark.parametrize(
-    'tables_fixture_name',
+    'dataset_fixture_name,tables_fixture_name',
     [
-        'session_s3_dataset1_tables',
-        'session_imported_sse_s3_dataset1_tables',
-        'session_imported_kms_s3_dataset1_tables',
+        ('session_s3_dataset1', 'session_s3_dataset1_tables'),
+        ('session_imported_sse_s3_dataset1', 'session_imported_sse_s3_dataset1_tables'),
+        ('session_imported_kms_s3_dataset1', 'session_imported_kms_s3_dataset1_tables'),
     ],
-)
-@pytest.mark.parametrize(
-    'dataset_fixture_name',
-    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
 )
 def test_update_dataset_table_unauthorized(client2, dataset_fixture_name, tables_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)

@@ -105,14 +105,14 @@ def create_tables(client, dataset):
     )
     file_path = os.path.join(os.path.dirname(__file__), 'sample_data/csv_table/csv_sample.csv')
     S3Client(dataset_session, dataset.region).upload_file_to_prefix(
-        local_file_path=file_path, s3_path=f'{dataset.S3BucketName}/integrationtest1/'
+        local_file_path=file_path, s3_path=f'{dataset.S3BucketName}/integrationtest1'
     )
     GlueClient(dataset_session, dataset.region).create_table(
         database_name=dataset.GlueDatabaseName, table_name='integrationtest1', bucket=dataset.S3BucketName
     )
 
     S3Client(dataset_session, dataset.region).upload_file_to_prefix(
-        local_file_path=file_path, s3_path=f'{dataset.S3BucketName}/integrationtest2/'
+        local_file_path=file_path, s3_path=f'{dataset.S3BucketName}/integrationtest2'
     )
     GlueClient(dataset_session, dataset.region).create_table(
         database_name=dataset.GlueDatabaseName, table_name='integrationtest2', bucket=dataset.S3BucketName
