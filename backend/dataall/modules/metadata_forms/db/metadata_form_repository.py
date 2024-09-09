@@ -137,35 +137,13 @@ class MetadataFormRepository:
         :param entity_envs_uris: environments, related to entity
         :param filter:
         """
+
+        env_uris = entity_envs_uris if entity_envs_uris is None or entity_envs_uris in user_env_uris else []
+        org_uris = entity_orgs_uris if entity_orgs_uris is None or entity_orgs_uris in user_org_uris else []
+
         query = MetadataFormRepository.query_user_metadata_forms(
-            session, is_da_admin, groups, user_env_uris, user_org_uris, filter
+            session, is_da_admin, groups, env_uris, org_uris, filter
         )
-
-        if entity_orgs_uris is None:
-            query = query.filter(MetadataForm.visibility != MetadataFormVisibility.Organization.value)
-        else:
-            query = query.filter(
-                or_(
-                    MetadataForm.visibility != MetadataFormVisibility.Organization.value,
-                    and_(
-                        MetadataForm.visibility == MetadataFormVisibility.Organization.value,
-                        MetadataForm.homeEntity.in_(entity_orgs_uris),
-                    ),
-                )
-            )
-
-        if entity_envs_uris is None:
-            query = query.filter(MetadataForm.visibility != MetadataFormVisibility.Environment.value)
-        else:
-            query = query.filter(
-                or_(
-                    MetadataForm.visibility != MetadataFormVisibility.Environment.value,
-                    and_(
-                        MetadataForm.visibility == MetadataFormVisibility.Environment.value,
-                        MetadataForm.homeEntity.in_(entity_envs_uris),
-                    ),
-                )
-            )
 
         query = MetadataFormRepository.exclude_attached(session, query, filter)
         return query.order_by(MetadataForm.name)
