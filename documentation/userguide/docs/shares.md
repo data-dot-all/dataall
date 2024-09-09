@@ -5,7 +5,7 @@ data.all shares data between teams securely within and environment and across en
 **Concepts**
 
 - Share request or Share Object: one for each dataset and requester team.
-- Share Item refers to the individual Redshift tables, Glue tables, folders or S3 Bucket that are added to the Share request.
+- Share Item refers to the individual Redshift table, Glue table, folder or S3 Bucket that is added to the Share request.
 
 **Shareable items**
 
@@ -220,9 +220,9 @@ can be either a data.all team IAM role or an external role defined as consumptio
 When a sharing task for a Glue Table is processed, data.all will:
 1. Create a Glue database in the target account with name of the original database plus the suffix `_shared`. This database will be re-used if other share requests for the same source databaser are processed for other principals in the same environment.
 2. (If the share is cross-account) Revoke IAMAllowedPrincipal permissions from the table to ensure Lake Formation is used in the management of the table access and update LakeFormation to use Version 3 if not already >=3
-3. Grant Lake Formation permissions the original database and table to the IAM principals in the target. If the share is cross account this step will create a RAM invitation that needs to be accepted.
-4. Create resource link table from the original table in the `_shared` database in the target account
-5. Grant Lake Formation permissions to the resource link table to the IAM principals.
+3. Grant Lake Formation permissions on the original database and table to the IAM principals in the target. If the share is cross account this step will create a RAM invitation that data.all will identify and accept.
+4. Create a resource link table from the original database table to the `_shared` database in the target account
+5. Grant Lake Formation permissions to the resource link table for the IAM principals.
 
 ### S3 Prefix sharing (Folders)
 In this type of share the permissions are granted to the IAM role specified in the request as principal. It 
@@ -230,16 +230,16 @@ can be either a data.all team IAM role or an external role defined as consumptio
 
 When a sharing task for a data.all Folder is processed, data.all will:
 1. Update the Dataset Bucket policy to allow access point sharing. This is a one-time operation
-2. Create/Update an S3 Access Point and its policy granting permissions to only the requested S3 prefix (folder) in the bucket.
+2. Create/Update an S3 Access Point and its policy granting permissions to the requested S3 prefix (folder) in the bucket for the principal IAM role.
 3. Create/Update the IAM policy "Share policy" that grants IAM permissions to the S3 Access Point and KMS key. Attach this policy to the principal IAM role.
 4. (If the Bucket is encrypted using a KMS key) Update the KMS Key policy to add permissions to the principal IAM role
 
 ### Redshift Table sharing
 In this type of share the permissions are granted to the Redshift role in the Redshift namespace specified in the request.
 
-When a sharing task for a Redshift Table is processed, data.all will:
+When processing a sharing task for XXXXX, data.all will:
 1. In the source namespace, create a Redshift datashare. Add requested schema and tables to the datashare.
-2. Grant access to the datashare to the consumer namespace (same account) or to the consumer AWS account (cross account)
+2. Grant access to the datashare for the consumer namespace (same account) or for the consumer AWS account (cross account)
 3. (If cross-account share) Authorize and associate datashare with the target namespace
 4. In the target namespace, create local database for the datashare and grant permissions to the principal Redshift role.
 5. In the target namespace, create external schema in local database and grant usage permissions to the principal Redshift role.
@@ -276,7 +276,7 @@ of the principal IAM role used in the share request (team IAM role or consumptio
 
 For example, we could use the AWS CLI with the following access point:
 ```json
- aws s3 ls arn:aws:s3:<SOURCE_REGION>:<SOURCE_AWSACCOUNTID>:accesspoint/<DATASETURI>-<REQUESTER-TEAM>/folder2/
+ aws s3 ls arn:aws:s3:<SOURCE_REGION>:<SOURCE_AWSACCOUNTID>:accesspoint/<DATASETURI>-<REQUESTER-TEAM>/<FOLDER_NAME>/
 ```
 
 
