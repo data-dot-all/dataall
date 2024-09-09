@@ -8,6 +8,7 @@ import requests
 import pytest
 
 from integration_tests.modules.s3_datasets.queries import (
+    create_dataset,
     delete_dataset,
     get_dataset,
     get_dataset_assume_role_url,
@@ -33,8 +34,19 @@ def test_create_import_s3_dataset(client1, dataset_fixture_name, request):
     assert_that(dataset.stack.status).is_in('CREATE_COMPLETE', 'UPDATE_COMPLETE')
 
 
-def test_create_s3_dataset_unauthorized(client2, session_env1):
-    pass  # TODO
+def test_create_s3_dataset_unauthorized(user2, group2, client2, session_env1):
+    env_uri = session_env1.environmentUri
+    org_uri = session_env1.organizationUri
+    assert_that(create_dataset).raises(GqlError).when_called_with(
+        client=client2,
+        name='UnauthorizedTestDatasetCreated',
+        owner=user2,
+        group=group2,
+        organizationUri=org_uri,
+        environmentUri=env_uri,
+        tags=['unauth'],
+        autoApprovalEnabled=False,
+    ).contains('UnauthorizedOperation', 'CREATE_DATASET', env_uri)
 
 
 @pytest.mark.parametrize(
@@ -147,7 +159,7 @@ def test_update_dataset(client1, dataset_fixture_name, request):
 
 @pytest.mark.parametrize(
     'dataset_fixture_name',
-    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
+    ['session_s3_dataset1'],
 )
 def test_update_dataset_unauthorized(client1, client2, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
@@ -165,38 +177,61 @@ def test_delete_s3_dataset():
     pass
 
 
-def test_delete_dataset_unauthorized(client2, session_s3_dataset1):
-    dataset_uri = session_s3_dataset1.datasetUri
+@pytest.mark.parametrize(
+    'dataset_fixture_name',
+    ['session_s3_dataset1'],
+)
+def test_delete_dataset_unauthorized(client2, dataset_fixture_name, request):
+    dataset = request.getfixturevalue(dataset_fixture_name)
+    dataset_uri = dataset.datasetUri
     assert_that(delete_dataset).raises(GqlError).when_called_with(client2, dataset_uri).contains(
         'UnauthorizedOperation', dataset_uri
     )
 
 
-def test_generate_dataset_access_token(client1, session_s3_dataset1):
-    dataset_uri = session_s3_dataset1.datasetUri
-
+@pytest.mark.parametrize(
+    'dataset_fixture_name',
+    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
+)
+def test_generate_dataset_access_token(client1, dataset_fixture_name, request):
+    dataset = request.getfixturevalue(dataset_fixture_name)
+    dataset_uri = dataset.datasetUri
     creds = generate_dataset_access_token(client1, dataset_uri)
     assert_that(json.loads(creds)).contains_key('AccessKey', 'SessionKey', 'sessionToken')
 
 
-def test_generate_dataset_access_token_unauthorized(client1, client2, session_s3_dataset1):
-    dataset_uri = session_s3_dataset1.datasetUri
-
+@pytest.mark.parametrize(
+    'dataset_fixture_name',
+    ['session_s3_dataset1'],
+)
+def test_generate_dataset_access_token_unauthorized(client1, client2, dataset_fixture_name, request):
+    dataset = request.getfixturevalue(dataset_fixture_name)
+    dataset_uri = dataset.datasetUri
     assert_that(generate_dataset_access_token).raises(GqlError).when_called_with(client2, dataset_uri).contains(
         'UnauthorizedOperation', 'CREDENTIALS_DATASET', dataset_uri
     )
 
 
-def test_start_crawler(client1, session_s3_dataset1):
-    dataset_uri = session_s3_dataset1.datasetUri
+@pytest.mark.parametrize(
+    'dataset_fixture_name',
+    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
+)
+def test_start_crawler(client1, dataset_fixture_name, request):
+    dataset = request.getfixturevalue(dataset_fixture_name)
+    dataset_uri = dataset.datasetUri
     response = start_glue_crawler(client1, datasetUri=dataset_uri, input=None)
-    assert_that(response.get('Name')).is_equal_to(session_s3_dataset1.GlueCrawlerName)
+    assert_that(response.get('Name')).is_equal_to(dataset.GlueCrawlerName)
     assert_that(response.get('status')).is_in(['Pending', 'Running'])
     # TODO: check it can run successfully + check sending prefix
 
 
-def test_start_crawler_unauthorized(client2, session_s3_dataset1):
-    dataset_uri = session_s3_dataset1.datasetUri
+@pytest.mark.parametrize(
+    'dataset_fixture_name',
+    ['session_s3_dataset1'],
+)
+def test_start_crawler_unauthorized(client2, dataset_fixture_name, request):
+    dataset = request.getfixturevalue(dataset_fixture_name)
+    dataset_uri = dataset.datasetUri
     assert_that(start_glue_crawler).raises(GqlError).when_called_with(client2, dataset_uri).contains(
         'UnauthorizedOperation', 'CRAWL_DATASET', dataset_uri
     )

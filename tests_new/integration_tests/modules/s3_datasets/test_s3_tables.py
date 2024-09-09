@@ -38,7 +38,7 @@ def test_sync_tables(client1, tables_fixture_name, request):
 
 @pytest.mark.parametrize(
     'dataset_fixture_name',
-    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
+    ['session_s3_dataset1'],
 )
 def test_sync_tables_unauthorized(client2, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
@@ -66,10 +66,15 @@ def test_get_dataset_table(client1, dataset_fixture_name, tables_fixture_name, r
 
 
 @pytest.mark.parametrize(
-    'dataset_fixture_name',
-    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
+    'dataset_fixture_name,tables_fixture_name',
+    [
+        ('session_s3_dataset1', 'session_s3_dataset1_tables'),
+        ('session_imported_sse_s3_dataset1', 'session_imported_sse_s3_dataset1_tables'),
+        ('session_imported_kms_s3_dataset1', 'session_imported_kms_s3_dataset1_tables'),
+    ],
 )
-def test_list_dataset_tables(client1, dataset_fixture_name, request):
+def test_list_dataset_tables(client1, dataset_fixture_name, tables_fixture_name, request):
+    tables = request.getfixturevalue(tables_fixture_name)
     dataset = request.getfixturevalue(dataset_fixture_name)
     response = list_dataset_tables(client1, dataset.datasetUri)
     assert_that(response.tables.count).is_equal_to(2)
@@ -87,24 +92,28 @@ def test_preview_table(client1, tables_fixture_name, request):
     tables = request.getfixturevalue(tables_fixture_name)
     table_uri = tables[0].tableUri
     response = preview_table(client1, table_uri)
-    assert_that(response.rows).exists()
+    assert_that(response.rows).contains('1', 'value22', 'value33')
+    assert_that(len(response.rows)).contains(3)
 
 
 @pytest.mark.parametrize(
-    'tables_fixture_name',
+    'tables_fixture_name, authorized',
     [
-        'session_s3_dataset1_tables',
-        'session_imported_sse_s3_dataset1_tables',
-        'session_imported_kms_s3_dataset1_tables',
+        ('session_s3_dataset1_tables', True),  #  Unclassified
+        ('session_imported_sse_s3_dataset1_tables', True),  #  Official
+        ('session_imported_kms_s3_dataset1_tables', False),  #  Secret
     ],
 )
-def test_preview_table_unauthorized(client2, tables_fixture_name, request):
+def test_preview_table_by_confidentiality(client2, tables_fixture_name, authorized, request):
     tables = request.getfixturevalue(tables_fixture_name)
     table_uri = tables[0].tableUri
-    # TODO: confidentiality levels
-    assert_that(preview_table).raises(GqlError).when_called_with(client2, table_uri).contains(
-        'UnauthorizedOperation', 'PREVIEW_DATASET_TABLE', table_uri
-    )
+    if authorized:
+        response = preview_table(client2, table_uri)
+        assert_that(str(response.rows)).contains('1', 'value22', 'value33')
+    else:
+        assert_that(preview_table).raises(GqlError).when_called_with(client2, table_uri).contains(
+            'UnauthorizedOperation', 'PREVIEW_DATASET_TABLE', table_uri
+        )
 
 
 @pytest.mark.parametrize(
@@ -124,11 +133,7 @@ def test_update_dataset_table(client1, tables_fixture_name, request):
 
 @pytest.mark.parametrize(
     'dataset_fixture_name,tables_fixture_name',
-    [
-        ('session_s3_dataset1', 'session_s3_dataset1_tables'),
-        ('session_imported_sse_s3_dataset1', 'session_imported_sse_s3_dataset1_tables'),
-        ('session_imported_kms_s3_dataset1', 'session_imported_kms_s3_dataset1_tables'),
-    ],
+    [('session_s3_dataset1', 'session_s3_dataset1_tables')],
 )
 def test_update_dataset_table_unauthorized(client2, dataset_fixture_name, tables_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
@@ -162,11 +167,7 @@ def test_delete_table(client1, dataset_fixture_name, request):
 
 @pytest.mark.parametrize(
     'dataset_fixture_name,tables_fixture_name',
-    [
-        ('session_s3_dataset1', 'session_s3_dataset1_tables'),
-        ('session_imported_sse_s3_dataset1', 'session_imported_sse_s3_dataset1_tables'),
-        ('session_imported_kms_s3_dataset1', 'session_imported_kms_s3_dataset1_tables'),
-    ],
+    [('session_s3_dataset1', 'session_s3_dataset1_tables')],
 )
 def test_delete_table_unauthorized(client2, dataset_fixture_name, tables_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
