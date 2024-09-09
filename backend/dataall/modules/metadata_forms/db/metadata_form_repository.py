@@ -138,12 +138,19 @@ class MetadataFormRepository:
         :param filter:
         """
 
-        env_uris = entity_envs_uris if entity_envs_uris is None or entity_envs_uris in user_env_uris else []
-        org_uris = entity_orgs_uris if entity_orgs_uris is None or entity_orgs_uris in user_org_uris else []
+        entity_orgs_uris = entity_orgs_uris or []
+        entity_envs_uris = entity_envs_uris or []
 
-        query = MetadataFormRepository.query_user_metadata_forms(
-            session, is_da_admin, groups, env_uris, org_uris, filter
-        )
+        orgs = list(set(user_org_uris).intersection(set(entity_orgs_uris)))
+        envs = list(set(user_env_uris).intersection(set(entity_envs_uris)))
+
+        query = MetadataFormRepository.query_user_metadata_forms(session, is_da_admin, groups, envs, orgs, filter)
+
+        if not orgs:
+            query = query.filter(MetadataForm.visibility != MetadataFormVisibility.Organization.value)
+
+        if not envs:
+            query = query.filter(MetadataForm.visibility != MetadataFormVisibility.Environment.value)
 
         query = MetadataFormRepository.exclude_attached(session, query, filter)
         return query.order_by(MetadataForm.name)
