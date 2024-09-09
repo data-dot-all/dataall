@@ -62,7 +62,7 @@ correspond to cluster it will notify the user in the error banner.
 
 **Delete a Connection**
 To delete a connection, click on the trash icon next to the item in the Actions column. If the Connection has been used 
-to import datasets it cannot be removed it cannot be removed until all associated datasets are deleted.
+to import datasets it cannot be removed until all associated datasets are deleted.
 
 ## :material-new-box: **Import a Redshift Dataset**
 To create a new dataset, navigate to the Datasets view and click on **New Dataset**. A window like the one in the picture
