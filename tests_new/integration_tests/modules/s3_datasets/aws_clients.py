@@ -239,11 +239,18 @@ class GlueClient:
                     'Description': 'integration tests',
                     'StorageDescriptor': {
                         'Columns': [
-                            {'Name': 'Column1', 'Type': 'int'},
-                            {'Name': 'Column2', 'Type': 'string'},
-                            {'Name': 'Column3', 'Type': 'string'},
+                            {'Name': 'column1', 'Type': 'int'},
+                            {'Name': 'column2', 'Type': 'string'},
+                            {'Name': 'column3', 'Type': 'string'},
                         ],
                         'Location': f's3://{bucket}/{table_name}/',
+                        'InputFormat': 'org.apache.hadoop.mapred.TextInputFormat',
+                        'OutputFormat': 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                        'Compressed': False,
+                        'SerdeInfo': {
+                            'SerializationLibrary': 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                            'Parameters': {'field.delim': ','},
+                        },
                     },
                 },
             )

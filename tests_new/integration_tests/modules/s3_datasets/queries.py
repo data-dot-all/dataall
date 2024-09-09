@@ -516,34 +516,17 @@ def get_dataset_table(client, tableUri):
 def list_dataset_tables(client, datasetUri):
     query = {
         'operationName': 'GetDataset',
-        'variables': {'datasetUri': datasetUri},
+        'variables': {'datasetUri': datasetUri, 'filter': {}},
         'query': f"""
-                    query GetDataset($datasetUri: String!) {{
-                      getDataset(datasetUri: $datasetUri) {{
-                        tables(filter: $filter) {{
-                          count
-                          page
-                          pages
-                          hasNext
-                          hasPrevious
-                          nodes {{
-                            dataset {{
-                              datasetUri
+                        query GetDataset($datasetUri: String!) {{
+                          getDataset(datasetUri: $datasetUri) {{
+                            {S3_DATASET_TYPE}
+                            tables {{
+                              count
                             }}
-                            tableUri
-                            name
-                            created
-                            GlueTableName
-                            GlueDatabaseName
-                            description
-                            stage
-                            S3Prefix
-                            userRoleForTable
                           }}
                         }}
-                     }}
-                    }}
-                """,
+                    """,
     }
     response = client.query(query=query)
     return response.data.getDataset

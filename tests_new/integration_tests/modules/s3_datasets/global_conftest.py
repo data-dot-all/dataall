@@ -149,6 +149,7 @@ def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdat
             org_uri=org1['organizationUri'],
             env_uri=session_env1['environmentUri'],
             tags=[session_id],
+            confidentiality='Unclassified',
         )
         yield ds
     finally:
@@ -186,6 +187,7 @@ def session_imported_sse_s3_dataset1(
             env_uri=session_env1['environmentUri'],
             tags=[session_id],
             bucket=bucket,
+            confidentiality='Official',
         )
         if not bucket:
             raise Exception('Error creating import dataset AWS resources')
@@ -253,6 +255,7 @@ def session_imported_kms_s3_dataset1(
             bucket=bucket,
             kms_alias=kms_alias,
             glue_db_name=database,
+            confidentiality='Secret',
         )
         yield ds
     finally:

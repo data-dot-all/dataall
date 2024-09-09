@@ -1,4 +1,5 @@
 import logging
+import pytest
 from assertpy import assert_that
 
 from integration_tests.modules.s3_datasets.queries import (
@@ -11,8 +12,17 @@ from integration_tests.errors import GqlError
 log = logging.getLogger(__name__)
 
 
-def test_start_table_profiling(client1, session_s3_dataset2_with_tables_and_folders):
-    dataset, tables, folders = session_s3_dataset2_with_tables_and_folders
+@pytest.mark.parametrize(
+    'dataset_fixture_name,tables_fixture_name',
+    [
+        ('session_s3_dataset1', 'session_s3_dataset1_tables'),
+        ('session_imported_sse_s3_dataset1', 'session_imported_sse_s3_dataset1_tables'),
+        ('session_imported_kms_s3_dataset1', 'session_imported_kms_s3_dataset1_tables'),
+    ],
+)
+def test_start_table_profiling(client1, dataset_fixture_name, tables_fixture_name, request):
+    dataset = request.getfixturevalue(dataset_fixture_name)
+    tables = request.getfixturevalue(tables_fixture_name)
     table = tables[0]
     dataset_uri = dataset.datasetUri
     response = start_dataset_profiling_run(
@@ -23,8 +33,10 @@ def test_start_table_profiling(client1, session_s3_dataset2_with_tables_and_fold
     assert_that(response.GlueTableName).is_equal_to(table.GlueTableName)
 
 
-def test_start_table_profiling_unauthorized(client2, session_s3_dataset1):
-    dataset_uri = session_s3_dataset1.datasetUri
+@pytest.mark.parametrize('dataset_fixture_name', ['session_s3_dataset1'])
+def test_start_table_profiling_unauthorized(client2, dataset_fixture_name, request):
+    dataset = request.getfixturevalue(dataset_fixture_name)
+    dataset_uri = dataset.datasetUri
     assert_that(start_dataset_profiling_run).raises(GqlError).when_called_with(client2, dataset_uri).contains(
         'UnauthorizedOperation', 'PROFILE_DATASET_TABLE', dataset_uri
     )
