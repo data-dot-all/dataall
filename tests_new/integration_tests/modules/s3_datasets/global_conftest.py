@@ -175,7 +175,7 @@ def session_imported_sse_s3_dataset1(
     bucket_name = f'{resources_prefix}importedsses3'
     try:
         bucket = S3Client(session=session_env1_aws_client, region=session_env1['region']).create_bucket(
-            bucket_name=bucket_name, kms_key_id=None
+            bucket_name=bucket_name, kms_key_arn=None
         )
 
         ds = import_s3_dataset(
@@ -226,19 +226,20 @@ def session_imported_kms_s3_dataset1(
     kms_alias = None
     resource_name = f'{resources_prefix}importedkms'
     try:
-        kms_key_id, kms_alias = KMSClient(
+        kms_id, kms_alias = KMSClient(
             session=session_env1_aws_client,
             account_id=session_env1['AwsAccountId'],
             region=session_env1['region'],
         ).create_key_with_alias(resource_name)
         bucket = S3Client(session=session_env1_aws_client, region=session_env1['region']).create_bucket(
-            bucket_name=resource_name, kms_key_id=kms_key_id
+            bucket_name=resource_name,
+            kms_key_arn=f"arn:aws:kms:{session_env1['region']}:{session_env1['AwsAccountId']}:key/{kms_id}",
         )
         lf_client = LakeFormationClient(session=session_env1_aws_client, region=session_env1['region'])
         existing_lf_admins = lf_client.add_role_to_datalake_admin(role_arn=session_env1_integration_role_arn)
         if lf_client.grant_create_database(role_arn=session_env1_integration_role_arn):
             database = GlueClient(session=session_env1_aws_client, region=session_env1['region']).create_database(
-                database_name=resource_name, bucket=resource_name
+                database_name=resource_name, bucket=bucket
             )
         if None in [bucket, database, kms_alias]:
             raise Exception('Error creating import dataset AWS resources')

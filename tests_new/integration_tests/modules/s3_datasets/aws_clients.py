@@ -17,14 +17,14 @@ class S3Client:
         """
         Create an S3 bucket.
         :param bucket_name: Name of the S3 bucket to be created
-        :param kms_key_id: KMS key ID to use for encryption if encryption_type is 'aws:kms'
+        :param kms_key_arn: KMS key Arn to use for encryption if encryption_type is 'aws:kms'
         :return: None
         """
         bucket_name = re.sub('[^a-zA-Z0-9-]', '', bucket_name).lower()
 
-        encryption_type = 'aws:kms' if kms_key_id else 'AES256'
+        encryption_type = 'aws:kms' if kms_key_arn else 'AES256'
         encryption_config = (
-            {'SSEAlgorithm': encryption_type, 'KMSMasterKeyID': kms_key_id}
+            {'SSEAlgorithm': encryption_type, 'KMSMasterKeyID': kms_key_arn}
             if encryption_type == 'aws:kms'
             else {'SSEAlgorithm': encryption_type}
         )
@@ -42,7 +42,7 @@ class S3Client:
                 Bucket=bucket_name,
                 ServerSideEncryptionConfiguration={
                     'Rules': [
-                        {'ApplyServerSideEncryptionByDefault': encryption_config, 'BucketKeyEnabled': False},
+                        {'ApplyServerSideEncryptionByDefault': encryption_config, 'BucketKeyEnabled': True},
                     ]
                 },
             )
