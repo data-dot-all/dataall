@@ -1,4 +1,5 @@
-export * from './listMetadataForms';
+export * from './listUserMetadataForms';
+export * from './listEntityMetadataForms';
 export * from './createMetadataForm';
 export * from './getMetadataForm';
 export * from './createMetadataFormField';
