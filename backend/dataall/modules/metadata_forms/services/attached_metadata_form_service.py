@@ -62,21 +62,12 @@ class AttachedMetadataFormService:
     @staticmethod
     def list_attached_forms(filter=None):
         context = get_context()
-        groups = context.groups
-        username = context.username
-        is_da_admin = TenantPolicyValidationService.is_tenant_admin(groups)
         filter = filter if filter is not None else {}
-        user_orgs, user_envs = None, None
-        if not is_da_admin:
-            with get_context().db_engine.scoped_session() as session:
-                user_envs = EnvironmentRepository.query_user_environments(session, username, groups, {})
-                user_envs = [e.environmentUri for e in user_envs]
-                user_orgs = OrganizationRepository.query_user_organizations(session, username, groups, {})
-                user_orgs = [o.organizationUri for o in user_orgs]
-        with get_context().db_engine.scoped_session() as session:
+        is_da_admin, user_orgs, user_envs = MetadataFormAccessService.get_user_admin_status_orgs_and_envs_()
+        with context.db_engine.scoped_session() as session:
             return paginate(
                 query=MetadataFormRepository.query_attached_metadata_forms(
-                    session, is_da_admin, groups, user_envs, user_orgs, filter
+                    session, is_da_admin, context.groups, user_envs, user_orgs, filter
                 ),
                 page=filter.get('page', 1),
                 page_size=filter.get('pageSize', 10),

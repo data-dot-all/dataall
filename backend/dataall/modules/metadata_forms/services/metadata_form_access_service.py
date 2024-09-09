@@ -1,6 +1,7 @@
 from dataall.base.context import get_context
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyValidationService
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.metadata_forms.db.enums import MetadataFormUserRoles, MetadataFormEntityTypes
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
@@ -42,6 +43,21 @@ class MetadataFormAccessService:
             return MetadataFormUserRoles.Owner.value
         else:
             return MetadataFormUserRoles.User.value
+
+    @staticmethod
+    def get_user_admin_status_orgs_and_envs_():
+        context = get_context()
+        groups = context.groups
+        username = context.username
+        is_da_admin = TenantPolicyValidationService.is_tenant_admin(context.groups)
+        if is_da_admin:
+            return True, None, None
+        with context.db_engine.scoped_session() as session:
+            user_envs = EnvironmentRepository.query_user_environments(session, username, groups, {})
+            user_envs = [e.environmentUri for e in user_envs]
+            user_orgs = OrganizationRepository.query_user_organizations(session, username, groups, {})
+            user_orgs = [o.organizationUri for o in user_orgs]
+            return is_da_admin, user_orgs, user_envs
 
     @staticmethod
     def _target_org_uri_getter(entityType, entityUri):
