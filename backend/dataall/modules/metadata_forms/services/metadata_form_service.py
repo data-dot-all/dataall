@@ -3,11 +3,9 @@ from dataall.base.db import exceptions, paginate
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyValidationService, TenantPolicyService
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.metadata_forms.db.enums import (
     MetadataFormVisibility,
     MetadataFormFieldType,
-    MetadataFormEntityTypes,
 )
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
@@ -113,19 +111,25 @@ class MetadataFormService:
                 return session.delete(mf)
 
     @staticmethod
-    def paginated_entity_metadata_form_list(filter=None) -> dict:
+    def _get_user_admin_status_orgs_and_envs_():
         context = get_context()
         groups = context.groups
         username = context.username
-        is_da_admin = TenantPolicyValidationService.is_tenant_admin(groups)
-        filter = filter if filter is not None else {}
-        user_orgs, user_envs = None, None
-        if not is_da_admin:
-            with get_context().db_engine.scoped_session() as session:
-                user_envs = EnvironmentRepository.query_user_environments(session, username, groups, {})
-                user_envs = [e.environmentUri for e in user_envs]
-                user_orgs = OrganizationRepository.query_user_organizations(session, username, groups, {})
-                user_orgs = [o.organizationUri for o in user_orgs]
+        is_da_admin = TenantPolicyValidationService.is_tenant_admin(context.groups)
+        if is_da_admin:
+            return True, None, None
+        with context.db_engine.scoped_session() as session:
+            user_envs = EnvironmentRepository.query_user_environments(session, username, groups, {})
+            user_envs = [e.environmentUri for e in user_envs]
+            user_orgs = OrganizationRepository.query_user_organizations(session, username, groups, {})
+            user_orgs = [o.organizationUri for o in user_orgs]
+            return is_da_admin, user_orgs, user_envs
+
+    @staticmethod
+    def paginated_entity_metadata_form_list(filter=None) -> dict:
+        context = get_context()
+        filter = filter or {}
+        is_da_admin, user_orgs, user_envs = MetadataFormService._get_user_admin_status_orgs_and_envs_()
         entity_orgs, entity_envs = MetadataFormAccessService.get_target_orgs_and_envs(
             context.username, context.groups, is_da_admin, filter
         )
@@ -134,7 +138,7 @@ class MetadataFormService:
                 query=MetadataFormRepository.query_entity_metadata_forms(
                     session,
                     is_da_admin=is_da_admin,
-                    groups=groups,
+                    groups=context.groups,
                     user_org_uris=user_orgs,
                     user_env_uris=user_envs,
                     entity_orgs_uris=entity_orgs,
@@ -148,22 +152,21 @@ class MetadataFormService:
     @staticmethod
     def paginated_user_metadata_form_list(filter=None) -> dict:
         context = get_context()
-        groups = context.groups
-        username = context.username
-        is_da_admin = TenantPolicyValidationService.is_tenant_admin(groups)
-        filter = filter if filter is not None else {}
-        orgs, envs = None, None
-        if not is_da_admin:
-            with get_context().db_engine.scoped_session() as session:
-                envs = EnvironmentRepository.query_user_environments(session, username, groups, {})
-                envs = [e.environmentUri for e in envs]
-                orgs = OrganizationRepository.query_user_organizations(session, username, groups, {})
-                orgs = [o.organizationUri for o in orgs]
-        return paginate(
-            query=MetadataFormRepository.query_user_metadata_forms(session, is_da_admin, groups, envs, orgs, filter),
-            page=filter.get('page', 1),
-            page_size=filter.get('pageSize', 5),
-        ).to_dict()
+        filter = filter or {}
+        is_da_admin, user_orgs, user_envs = MetadataFormService._get_user_admin_status_orgs_and_envs_()
+        with get_context().db_engine.scoped_session() as session:
+            return paginate(
+                query=MetadataFormRepository.query_user_metadata_forms(
+                    session,
+                    is_da_admin=is_da_admin,
+                    groups=context.groups,
+                    env_uris=user_envs,
+                    org_uris=user_orgs,
+                    filter=filter,
+                ),
+                page=filter.get('page', 1),
+                page_size=filter.get('pageSize', 5),
+            ).to_dict()
 
     @staticmethod
     def get_home_entity_name(metadata_form):
