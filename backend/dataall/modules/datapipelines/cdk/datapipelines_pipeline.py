@@ -72,6 +72,27 @@ class PipelineStack(Stack):
             env = EnvironmentService.get_environment_group(session, pipeline.SamlGroupName, pipeline.environmentUri)
         return env
 
+    def create_pipeline_artifacts_bucket(self, artifact_bucket_base_name: str):
+        artifact_bucket_key = kms.Key(
+            self,
+            f'{artifact_bucket_base_name}-key',
+            removal_policy=RemovalPolicy.RETAIN,
+            alias=f'{artifact_bucket_base_name}-key',
+            enable_key_rotation=True,
+        )
+        artifact_bucket = s3.Bucket(
+            self,
+            f'{artifact_bucket_base_name}-bucket',
+            bucket_name=f'{artifact_bucket_base_name}-bucket',
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            removal_policy=RemovalPolicy.RETAIN,
+            versioned=True,
+            encryption_key=artifact_bucket_key,
+            enforce_ssl=True,
+        )
+
+        return artifact_bucket
+
     def __init__(self, scope, id, target_uri: str = None, **kwargs):
         kwargs.setdefault('tags', {}).update({'utility': 'dataall-data-pipeline'})
         super().__init__(
@@ -227,32 +248,15 @@ class PipelineStack(Stack):
             )
             repository.apply_removal_policy(RemovalPolicy.RETAIN)
 
-        artifact_bucket_name = f'{pipeline.name}-artifacts'
-        artifact_bucket_key = kms.Key(
-            self,
-            f'{artifact_bucket_name}-key',
-            removal_policy=RemovalPolicy.RETAIN,
-            alias=f'{artifact_bucket_name}-key',
-            enable_key_rotation=True,
-        )
-        artifact_bucket = s3.Bucket(
-            self,
-            f'{artifact_bucket_name}-bucket',
-            bucket_name=f'{artifact_bucket_name}-bucket',
-            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
-            removal_policy=RemovalPolicy.RETAIN,
-            versioned=True,
-            encryption_key=artifact_bucket_key,
-            enforce_ssl=True,
-        )
-
         if pipeline.devStrategy == 'trunk':
             codepipeline_pipeline = codepipeline.Pipeline(
                 scope=self,
                 id=pipeline.name,
                 pipeline_name=pipeline.name,
                 restart_execution_on_update=True,
-                artifact_bucket=artifact_bucket,
+                artifact_bucket=self.create_pipeline_artifacts_bucket(
+                    artifact_bucket_base_name=f'{pipeline.name}-artifacts'
+                ),
             )
             self.codepipeline_pipeline = codepipeline_pipeline
             self.source_artifact = codepipeline.Artifact()
@@ -322,6 +326,9 @@ class PipelineStack(Stack):
                     id=f'{pipeline.name}-{env.stage}',
                     pipeline_name=f'{pipeline.name}-{env.stage}',
                     restart_execution_on_update=True,
+                    artifact_bucket=self.create_pipeline_artifacts_bucket(
+                        artifact_bucket_base_name=f'{pipeline.name}-artifacts-{env.stage}'
+                    ),
                 )
                 self.codepipeline_pipeline = codepipeline_pipeline
                 self.source_artifact = codepipeline.Artifact()
