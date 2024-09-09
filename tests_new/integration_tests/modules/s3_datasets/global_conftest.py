@@ -357,10 +357,30 @@ def persistent_s3_dataset1(client1, group1, persistent_env1, testdata):
 
 
 @pytest.fixture(scope='session')
+def persistent_s3_dataset1_tables(client1, persistent_s3_dataset1):
+    yield create_tables(client1, persistent_s3_dataset1)
+
+
+@pytest.fixture(scope='session')
+def persistent_s3_dataset1_folders(client1, persistent_s3_dataset1):
+    yield create_folders(client1, persistent_s3_dataset1)
+
+
+@pytest.fixture(scope='session')
 def persistent_imported_sse_s3_dataset1(client1, group1, persistent_env1, testdata):
     return get_or_create_persistent_s3_dataset(
         'persistent_imported_sse_s3_dataset1', client1, group1, persistent_env1, 'persistentimportedsses3'
     )
+
+
+@pytest.fixture(scope='session')
+def persistent_imported_sse_s3_dataset1_tables(client1, persistent_imported_sse_s3_dataset1):
+    yield create_tables(client1, persistent_imported_sse_s3_dataset1)
+
+
+@pytest.fixture(scope='session')
+def persistent_imported_sse_s3_dataset1_folders(client1, persistent_imported_sse_s3_dataset1):
+    yield create_folders(client1, persistent_imported_sse_s3_dataset1)
 
 
 @pytest.fixture(scope='session')
@@ -374,3 +394,13 @@ def persistent_imported_kms_s3_dataset1(client1, group1, persistent_env1, testda
         'persistentimportedkms',
         'persistentimportedkms',
     )
+
+
+@pytest.fixture(scope='session')
+def persistent_imported_kms_s3_dataset1_tables(client1, persistent_imported_kms_s3_dataset1):
+    yield create_tables(client1, persistent_imported_kms_s3_dataset1)
+
+
+@pytest.fixture(scope='session')
+def persistent_imported_kms_s3_dataset1_folders(client1, persistent_imported_kms_s3_dataset1):
+    yield create_folders(client1, persistent_imported_kms_s3_dataset1)
