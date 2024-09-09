@@ -317,7 +317,6 @@ They are suitable for testing backwards compatibility.
 def get_or_create_persistent_s3_dataset(
     dataset_name, client, group, env, bucket=None, kms_alias=None, glue_database=None
 ):
-    dataset_name = 'persistent_s3_dataset1'
     s3_datasets = list_datasets(client, term=dataset_name).nodes
     if s3_datasets:
         return s3_datasets[0]
@@ -359,49 +358,111 @@ def persistent_s3_dataset1(client1, group1, persistent_env1, testdata):
 
 @pytest.fixture(scope='session')
 def persistent_s3_dataset1_tables(client1, persistent_s3_dataset1):
-    yield create_tables(client1, persistent_s3_dataset1)
+    return create_tables(client1, persistent_s3_dataset1)
 
 
 @pytest.fixture(scope='session')
 def persistent_s3_dataset1_folders(client1, persistent_s3_dataset1):
-    yield create_folders(client1, persistent_s3_dataset1)
+    return create_folders(client1, persistent_s3_dataset1)
 
 
 @pytest.fixture(scope='session')
-def persistent_imported_sse_s3_dataset1(client1, group1, persistent_env1, testdata):
-    return get_or_create_persistent_s3_dataset(
-        'persistent_imported_sse_s3_dataset1', client1, group1, persistent_env1, 'persistentimportedsses3'
-    )
+def persistent_imported_sse_s3_dataset1(client1, group1, persistent_env1, persistent_env1_aws_client, testdata):
+    bucket_name = 'persistentimportedsses3'
+    bucket = None
+    try:
+        s3_client = S3Client(session=persistent_env1_aws_client, region=persistent_env1['region'])
+        bucket = s3_client.bucket_exists(bucket_name)
+        if not bucket:
+            bucket = s3_client.create_bucket(bucket_name=bucket_name, kms_key_arn=None)
+        if not bucket:
+            raise Exception('Error creating import dataset AWS resources for persistent_imported_sse_s3_dataset1')
+        return get_or_create_persistent_s3_dataset(
+            'persistent_imported_sse_s3_dataset1', client1, group1, persistent_env1, bucket_name
+        )
+    except Exception:
+        if bucket:
+            S3Client(session=persistent_env1_aws_client, region=persistent_env1['region']).delete_bucket(bucket)
 
 
 @pytest.fixture(scope='session')
 def persistent_imported_sse_s3_dataset1_tables(client1, persistent_imported_sse_s3_dataset1):
-    yield create_tables(client1, persistent_imported_sse_s3_dataset1)
+    return create_tables(client1, persistent_imported_sse_s3_dataset1)
 
 
 @pytest.fixture(scope='session')
 def persistent_imported_sse_s3_dataset1_folders(client1, persistent_imported_sse_s3_dataset1):
-    yield create_folders(client1, persistent_imported_sse_s3_dataset1)
+    return create_folders(client1, persistent_imported_sse_s3_dataset1)
 
 
 @pytest.fixture(scope='session')
-def persistent_imported_kms_s3_dataset1(client1, group1, persistent_env1, testdata):
-    return get_or_create_persistent_s3_dataset(
-        'persistent_imported_kms_s3_dataset1',
-        client1,
-        group1,
-        persistent_env1,
-        'persistentimportedkms',
-        'persistentimportedkms',
-        'persistentimportedkms',
-    )
+def persistent_imported_kms_s3_dataset1(
+    client1, group1, persistent_env1, persistent_env1_aws_client, persistent_env1_integration_role_arn, testdata
+):
+    resource_name = 'persistentimportedkms'
+    bucket = None
+    kms_alias = None
+    database = None
+    existing_lf_admins = None
+    try:
+        # Check and create KMS key
+        kms_client = KMSClient(
+            session=persistent_env1_aws_client,
+            account_id=persistent_env1['AwsAccountId'],
+            region=persistent_env1['region'],
+        )
+        kms_id, kms_alias = kms_client.get_key_id_and_alias(resource_name)
+        if not kms_id:
+            kms_id, kms_alias = kms_client.create_key_with_alias(resource_name)
+        # Check and create S3 Bucket
+        s3_client = S3Client(session=None, region=persistent_env1['region'])
+        bucket = s3_client.bucket_exists(resource_name)
+        if not bucket:
+            bucket = s3_client.create_bucket(
+                bucket_name=resource_name,
+                kms_key_arn=f"arn:aws:kms:{persistent_env1['region']}:{persistent_env1['AwsAccountId']}:key/{kms_id}",
+            )
+        # Check and create Glue database
+        lf_client = LakeFormationClient(session=persistent_env1_aws_client, region=persistent_env1['region'])
+        existing_lf_admins = lf_client.add_role_to_datalake_admin(role_arn=persistent_env1_integration_role_arn)
+        if lf_client.grant_create_database(role_arn=persistent_env1_integration_role_arn):
+            glue_client = GlueClient(session=persistent_env1_aws_client, region=persistent_env1['region'])
+            database = glue_client.get_database(resource_name)
+            if not database:
+                database = glue_client.create_database(database_name=resource_name, bucket=bucket)
+        if None in [bucket, database, kms_alias]:
+            raise Exception('Error creating import dataset AWS resources for persistent_imported_kms_s3_dataset1')
+        yield get_or_create_persistent_s3_dataset(
+            'persistent_imported_kms_s3_dataset1',
+            client1,
+            group1,
+            persistent_env1,
+            resource_name,
+            resource_name,
+            resource_name,
+        )
+    except Exception:
+        if bucket:
+            S3Client(session=persistent_env1_aws_client, region=persistent_env1['region']).delete_bucket(bucket)
+        if kms_alias:
+            KMSClient(
+                session=persistent_env1_aws_client,
+                account_id=persistent_env1['AwsAccountId'],
+                region=persistent_env1['region'],
+            ).delete_key_by_alias(kms_alias)
+        if existing_lf_admins:
+            LakeFormationClient(
+                session=persistent_env1_aws_client, region=persistent_env1['region']
+            ).remove_role_from_datalake_admin(existing_lf_admins)
+        if database:
+            GlueClient(session=persistent_env1_aws_client, region=persistent_env1['region']).delete_database(database)
 
 
 @pytest.fixture(scope='session')
 def persistent_imported_kms_s3_dataset1_tables(client1, persistent_imported_kms_s3_dataset1):
-    yield create_tables(client1, persistent_imported_kms_s3_dataset1)
+    return create_tables(client1, persistent_imported_kms_s3_dataset1)
 
 
 @pytest.fixture(scope='session')
 def persistent_imported_kms_s3_dataset1_folders(client1, persistent_imported_kms_s3_dataset1):
-    yield create_folders(client1, persistent_imported_kms_s3_dataset1)
+    return create_folders(client1, persistent_imported_kms_s3_dataset1)
