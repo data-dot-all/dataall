@@ -681,6 +681,9 @@ def start_dataset_profiling_run(client, input):
                     mutation startDatasetProfilingRun($input: StartDatasetProfilingRunInput!) {{
                       startDatasetProfilingRun(input: $input) {{
                         profilingRunUri
+                        datasetUri
+                        status
+                        GlueTableName
                       }}
                     }}
                 """,
