@@ -88,6 +88,6 @@ You can also run the tests locally by...
 At the moment integration tests cover:
 - Organizations
 - Environments
-- Datasets
+- S3 Datasets
 - Notebooks
 - Worksheets
