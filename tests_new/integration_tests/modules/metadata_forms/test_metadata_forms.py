@@ -1,6 +1,6 @@
 from assertpy import assert_that
 
-from integration_tests.modules.metadata_forms.queries import list_metadata_forms, get_metadata_form_full_info
+from integration_tests.modules.metadata_forms.queries import list_user_metadata_forms, get_metadata_form_full_info
 
 from integration_tests.modules.metadata_forms.mutations import (
     update_metadata_form_fields,
@@ -25,7 +25,7 @@ def test_delete_unauth(client2, metadata_form_1):
 
 def test_list_metadata_forms(client1, metadata_form_1):
     filter = {'page': 1, 'pageSize': 10, 'search_input': metadata_form_1.name}
-    response = list_metadata_forms(client1, filter)
+    response = list_user_metadata_forms(client1, filter)
     assert_that(response.count).is_greater_than(0)
 
     all_uris = [item.uri for item in response.nodes]
@@ -34,7 +34,7 @@ def test_list_metadata_forms(client1, metadata_form_1):
 
 def test_list_metadata_forms_access_control(client2, metadata_form_1, metadata_form_2, metadata_form_3):
     filter = {'page': 1, 'pageSize': 10}
-    response = list_metadata_forms(client2, filter)
+    response = list_user_metadata_forms(client2, filter)
     all_uris = [item.uri for item in response.nodes]
     assert_that(all_uris).does_not_contain(metadata_form_2.uri)  # visibility Team Only, team = group1
     assert_that(all_uris).contains(metadata_form_1.uri)  # visibility: Global
