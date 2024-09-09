@@ -1,6 +1,6 @@
 # **Redshift Datasets**
 
-Data producers can now import their Redshift tables into data.all and make them discoverable and shareable in an easy
+Data producers can import their Redshift tables into data.all and make them discoverable and shareable in an easy
 and secure manner.
 
 In data.all we will work with 2 main constructs:
@@ -14,17 +14,17 @@ Data.all Redshift Connections are metadata used by data.all and by data.all user
 1) Both Redshift Serverless and Provisioned clusters are supported
 2) Connections use AWS Secrets Manager secrets or Redshift users to connect to the namespace. Check the [documentation](https://docs.aws.amazon.com/redshift/latest/mgmt/query-editor-v2-using.html#query-editor-v2-connecting) to understand each mechanism. Additional connection mechanisms might be considered in the future.
 3) There are 2 types of Redshift Connections, `ADMIN` and `DATA_USER`
-    - `ADMIN` - the user whose credentials are provided has permissions to all namespace tables that can be managed in data.all and can create and manage Redshift datashares and redshift role permissions.
-    - `DATA_USER` - the user whose credentials are provided has permissions to read the tables that the data user wants to import
+    - `ADMIN` - the user whose credentials are provided has permissions to all namespace tables that can be managed in data.all and can create and manage Redshift datashares and redshift role permissions. In data.all it will be used to process share requests.
+    - `DATA_USER` - the user whose credentials are provided has permissions to read the tables that the data user wants to import. In data.all it will be used to import datasets.
 
 
 **Pre-requisites**
-Redshift clusters and users are typically managed by a dedicated team. For this reason, data.all will work "importing"
-existing infrastructure and users:
+data.all requires Redshift clusters and users to be managed by a dedicated team and infrastructure created outside of data.all. 
+For this reason, data.all will work "importing" existing infrastructure and users, requiring the following information on import:
 - Redshift Serverless namespace/workgroup or Provisioned cluster: the user creating the connection must know the `namespace ID` and the `workgroup` for Redshift Serverless or the `cluster ID` for the case of Redshift Provisioned clusters. 
 - Redshift user: Redshift administrators manage Redshift users outside of data.all. Our recommendation is to create a dedicated `ADMIN` user for data.all in each onboarded cluster. Data users can be reused.
 - Connection details:
-   - Redshift user: only valid for Provisioned clusters: data.all will generate a temporary password to connect to the database. In this case no password or secret needs to be provided to data.all.
+   - Redshift user (only valid for Provisioned clusters): data.all will generate a temporary password to connect to the database. In this case no password or secret needs to be provided to data.all.
    - AWS Secrets Manager Secret (recommended): the username and password for the Redshift user can be stored in a Secret that **MUST** be tagged with 2 tags. Check the pictures below to see how it should look in the AWS Console.
        - tagKey: dataall, tagValue: True - Needed for data.all to be able to access the Secret
        - tagKey: Redshift, tagValue: Any - Needed by Redshift to use as connection
@@ -53,7 +53,7 @@ Then, fill in the following form:
 | Namespace Id    | If the Redshift type is `serverless`, we need to introduce the namespace Id.                                   | Yes      | No       | 0000000-0000-0000-0000-000000000000
 | Workgroup       | If the Redshift type is `serverless`, we need to introduce the workgroup.                                      | Yes      | No       | workgroup1
 | Database        | Database that we will connect to inside the cluster.                                                           | Yes      | No       | dev
-| Redshift User   | Only available for `cluster` Redshift type. This is the user                                                   | Yes      | No       | TODO
+| Redshift User   | Only available for `cluster` Redshift type. This is the user                                                   | Yes      | No       | user1
 | Secret Arn      | Secrets Manager secret arn storing username and password for the connection. See pre-requisites section above. | Yes      | Yes      | arn:aws:secretsmanager:eu-west-1:000000000000:secret:redshift!redshift-cluster-1-awsuser
 
 
@@ -61,7 +61,8 @@ Data.all will verify the connection upon creation. If the database does not exis
 correspond to cluster it will notify the user in the error banner.
 
 **Delete a Connection**
-To delete a connection, click on the trash icon next to the item in the Actions column. If the Connection has been used to import datasets it cannot be removed.
+To delete a connection, click on the trash icon next to the item in the Actions column. If the Connection has been used 
+to import datasets it cannot be removed it cannot be removed until all associated datasets are deleted.
 
 ## :material-new-box: **Import a Redshift Dataset**
 To create a new dataset, navigate to the Datasets view and click on **New Dataset**. A window like the one in the picture
@@ -101,7 +102,7 @@ and fetch the schemas and tables from Redshift. It is possible to select all tab
 
 Once a Redshift dataset has been imported, the dataset and its imported tables can be searched by any user in the Catalog. 
 
-## :material-card-search-outline: **Navigate dataset tabs**
+## :material-card-search-outline: **Navigate Redshift dataset tabs**
 **Overview**
 
 This tab includes meaningful metadata about the dataset and the Redshift connection used.
@@ -122,7 +123,7 @@ entire Dataset
 
 **Add tables**
 
-![](pictures/redshift_datasets/redshift_add_tables.png#zoom#shadow)
+![](pictures/redshift_datasets/redshift_dataset_add_tables.png#zoom#shadow)
 
 **View and edit tables**
 
@@ -142,6 +143,9 @@ We can delete Redshift tables by clicking on the trash icon next to the table we
 word to describe what will happen: the metadata of the table will be deleted from data.all Catalog, but the original
 Redshift table still exists in Redshift.
 
+Dataset owners need to revoke access to the table before deleting. Data.all prevents deletion of a table if there are 
+share requests currently sharing the table.
+
 ## :material-pencil-outline: **Edit and update a dataset**
 Data owners can edit the dataset by clicking on the **edit** button, editing the editable fields and saving the changes.
 
@@ -149,3 +153,8 @@ Data owners can edit the dataset by clicking on the **edit** button, editing the
 To delete a dataset, in the selected dataset window click on the **delete** button in the top-right corner. data.all Redshift 
 Datasets don't deploy any CloudFormation stack, no additional resources need to be cleaned up. The original Redshift tables
 will still exist in Redshift.
+
+
+In the same way as it happens with single tables, Dataset owners need to revoke access to all tables before deleting. 
+Data.all prevents deletion of a dataset if there are 
+share requests currently sharing any dataset table.

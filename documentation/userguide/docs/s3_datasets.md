@@ -75,7 +75,7 @@ To create a new dataset, navigate to the Datasets view and click on **New Datase
 will allow you to select the type of Dataset you want to create or import. In this case you need to select the Create
 S3/Glue Dataset option.
 
-![](pictures/redshift_datasets/redshift_dataset_creation.png#zoom#shadow)
+![](pictures/datasets/s3_dataset_creation.png#zoom#shadow)
 
 ![create_dataset](pictures/datasets/dat_create_form.png#zoom#shadow)
 
