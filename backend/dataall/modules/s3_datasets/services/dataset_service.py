@@ -87,7 +87,7 @@ class DatasetService:
             interface.extend_attach_steward_permissions(session, dataset, new_stewards)
 
     @classmethod
-    def _delete_additional_steward__permissions(cls, session, dataset):
+    def _delete_additional_steward_permissions(cls, session, dataset):
         """All permissions from other modules that need to be deleted to stewards"""
         for interface in cls._interfaces:
             interface.extend_delete_steward_permissions(session, dataset)
@@ -511,7 +511,7 @@ class DatasetService:
                     resource_uri=tableUri,
                 )
 
-        DatasetService._delete_additional_steward__permissions(session, dataset)
+        DatasetService._delete_additional_steward_permissions(session, dataset)
         return dataset
 
     @staticmethod

@@ -1,6 +1,7 @@
 import logging
 import json
 import re
+import os
 from botocore.exceptions import ClientError
 
 log = logging.getLogger(__name__)
@@ -12,18 +13,34 @@ class S3Client:
         self._resource = session.resource('s3', region_name=region)
         self._region = region
 
-    def create_bucket(self, bucket_name, kms_key_id=None):
+    def bucket_exists(self, bucket_name):
+        """
+        Check if an S3 bucket exists.
+        :param bucket_name: Name of the S3 bucket to check
+        :return: True if the bucket exists, False otherwise
+        """
+        try:
+            self._client.head_bucket(Bucket=bucket_name)
+            return True
+        except ClientError as e:
+            if e.response['Error']['Code'] == '404':
+                return False
+            else:
+                log.error(f'Error checking if bucket {bucket_name} exists: {e}')
+                raise
+
+    def create_bucket(self, bucket_name, kms_key_arn=None):
         """
         Create an S3 bucket.
         :param bucket_name: Name of the S3 bucket to be created
-        :param kms_key_id: KMS key ID to use for encryption if encryption_type is 'aws:kms'
+        :param kms_key_arn: KMS key Arn to use for encryption if encryption_type is 'aws:kms'
         :return: None
         """
         bucket_name = re.sub('[^a-zA-Z0-9-]', '', bucket_name).lower()
 
-        encryption_type = 'aws:kms' if kms_key_id else 'AES256'
+        encryption_type = 'aws:kms' if kms_key_arn else 'AES256'
         encryption_config = (
-            {'SSEAlgorithm': encryption_type, 'KMSMasterKeyID': kms_key_id}
+            {'SSEAlgorithm': encryption_type, 'KMSMasterKeyID': kms_key_arn}
             if encryption_type == 'aws:kms'
             else {'SSEAlgorithm': encryption_type}
         )
@@ -41,7 +58,7 @@ class S3Client:
                 Bucket=bucket_name,
                 ServerSideEncryptionConfiguration={
                     'Rules': [
-                        {'ApplyServerSideEncryptionByDefault': encryption_config, 'BucketKeyEnabled': False},
+                        {'ApplyServerSideEncryptionByDefault': encryption_config, 'BucketKeyEnabled': True},
                     ]
                 },
             )
@@ -67,11 +84,47 @@ class S3Client:
         except ClientError as e:
             log.exception(f'Error deleting S3 bucket: {e}')
 
+    def upload_file_to_prefix(self, local_file_path, s3_path):
+        """
+        Upload a file from a local path to an S3 bucket with a specified prefix.
+
+        :param local_file_path: Path to the local file to be uploaded
+        :param s3_path: S3 path where the file should be uploaded, including the bucket name and prefix
+        :return: None
+        """
+        try:
+            bucket_name, prefix = s3_path.split('/', 1)
+            object_key = f'{prefix}/{os.path.basename(local_file_path)}'
+            self._client.upload_file(local_file_path, bucket_name, object_key)
+        except ClientError as e:
+            logging.error(f'Error uploading file to S3: {e}')
+            raise
+
 
 class KMSClient:
     def __init__(self, session, account_id, region):
         self._client = session.client('kms', region_name=region)
         self._account_id = account_id
+
+    def get_key_id_and_alias(self, alias_name):
+        """
+        Get the key ID and alias name for a given alias.
+        :param alias_name: The alias name to look up
+        :return: A tuple containing the key ID and alias name if the alias exists, False otherwise
+        """
+        try:
+            alias_name = alias_name.lower()
+            response = self._client.describe_key(KeyId=f'alias/{alias_name}')
+            key_id = response['KeyMetadata']['KeyId']
+            aliases = response['KeyMetadata']['Aliases']
+            for alias in aliases:
+                if alias['AliasName'] == f'alias/{alias_name}':
+                    return key_id, alias['AliasName']
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'NotFoundException':
+                return False, False
+            else:
+                log.exception(f'Error getting key ID and alias for {alias_name}: {e}')
 
     def create_key_with_alias(self, alias_name):
         try:
@@ -155,6 +208,20 @@ class GlueClient:
     def __init__(self, session, region):
         self._client = session.client('glue', region_name=region)
 
+    def get_database(self, database_name):
+        """
+        Check if a Glue database exists.
+        :param database_name: Name of the Glue database to check
+        :return: True if the database exists, False otherwise
+        """
+        try:
+            database = self._client.get_database(Name=database_name)
+            return database
+        except self._client.exceptions.EntityNotFoundException:
+            return False
+        except ClientError as e:
+            log.exception(f'Error checking if database {database_name} exists: {e}')
+
     def create_database(self, database_name, bucket):
         try:
             database_name = re.sub('[^a-zA-Z0-9_]', '', database_name).lower()
@@ -172,17 +239,24 @@ class GlueClient:
                     'Description': 'integration tests',
                     'StorageDescriptor': {
                         'Columns': [
-                            {'Name': 'column1', 'Type': 'string'},
+                            {'Name': 'column1', 'Type': 'int'},
                             {'Name': 'column2', 'Type': 'string'},
                             {'Name': 'column3', 'Type': 'string'},
                         ],
-                        'Location': f's3://{bucket}/',
+                        'Location': f's3://{bucket}/{table_name}/',
+                        'InputFormat': 'org.apache.hadoop.mapred.TextInputFormat',
+                        'OutputFormat': 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                        'Compressed': False,
+                        'SerdeInfo': {
+                            'SerializationLibrary': 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                            'Parameters': {'field.delim': ','},
+                        },
                     },
                 },
             )
             print(response)
         except ClientError as e:
-            log.exception(f'Error creating Glue database: {e}')
+            log.exception(f'Error creating Glue table: {e}')
 
     def delete_database(self, database_name):
         """

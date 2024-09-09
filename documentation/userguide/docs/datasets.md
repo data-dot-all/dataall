@@ -257,6 +257,41 @@ Catalog and then click on Synchronize as we did in step 3.
 - Or directly, <a href="https://github.com/aws-samples/aws-glue-samples/tree/master/utilities/Hive_metastore_migration">migrating from Hive Metastore.</a>
 - there are more for sure :)
 
+#### (Going Further) Creating Filters on Tables
+
+Additionally, dataset owners can create column-level or row-level filters on their dataset tables to more granularly restrict data access when sharing with other teams. 
+
+To do so dataset owners can navigate to the **Filters** Tab for a given table and select **Add New Filter**:
+
+![dataset_table_filter](pictures/datasets/dataset_table_filter.png#zoom#shadow)
+
+When creating filters, you have the choice to create a column-level filter or a row-level filter. Column-level filters prompt the user to select a subset of columns to include for the table. Row-level filters use row expressions to specify the rows to include in for the table.
+
+An example of creating a column filter is below: 
+
+![dataset_table_filter_col](pictures/datasets/dataset_table_filter_col.png#zoom#shadow)
+
+This filter restricts access on the table to only the 3 selected columns: `book_id`, `author`, and `publisher`.
+
+An example of creating a row filter is below:
+
+![dataset_table_filter_row](pictures/datasets/dataset_table_filter_row.png#zoom#shadow)
+
+This filter restricts access to only rows where `book_id` is not null, `title` is LIKE `%Harry Potter%` AND `num_pages` is greater than `100`. It is important to note that:
+- The row filter acts as the intersection (logical 'AND') of the row expression(s) - if you need the union (logical 'OR') of multiple expressions you can create separate filters here and apply multiple to the table share item
+- When creating a new row expression be sure to save the row expression by clicking the save icon (highlighted in red in the above) before creating the filter
+
+Once the filters are created, they will show in the Filters Table Tab:
+
+![dataset_table_filter_filled](pictures/datasets/dataset_table_filter_filled.png#zoom#shadow)
+
+Table filters are not editable. To update an existing filter you must:
+
+1. Revoke all associated share items using the filter (if applcable)
+2. Delete the table filter
+3. Create a new table filter with any updates as necessary
+
+These filters can be used when reviewing and approving share objects with table share items to more granularly limit data access.
 
 ### Folders
 

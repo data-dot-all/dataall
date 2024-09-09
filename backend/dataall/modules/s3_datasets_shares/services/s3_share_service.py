@@ -3,12 +3,14 @@ import logging
 from dataall.base.db import utils
 from dataall.base.context import get_context
 from dataall.base.aws.sts import SessionHelper
+from dataall.base.aws.iam import IAM
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.tasks.service_handlers import Worker
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
+from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_item_repositories import ShareObjectItemRepository
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
@@ -202,7 +204,7 @@ class S3ShareService:
                 account_id = dataset.AwsAccountId
                 region = dataset.region
             else:
-                share = S3ShareObjectRepository.get_share_by_dataset_attributes(
+                share = ShareObjectRepository.find_share_by_dataset_attributes(
                     session=session, dataset_uri=uri, dataset_owner=context.username
                 )
                 shared_environment = EnvironmentService.get_environment_by_uri(
@@ -312,3 +314,11 @@ class S3ShareService:
                 log.info(f'Error while calling the get_glue_database_from_catalog when resolving db name due to: {e}')
                 datasetGlueDatabase = GlueDatabaseName
             return datasetGlueDatabase + '_shared'
+
+    @staticmethod
+    def verify_principal_role(session, share: ShareObject) -> bool:
+        log.info('Verifying principal IAM role...')
+        role_name = share.principalRoleName
+        env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
+        principal_role = IAM.get_role_arn_by_name(account_id=env.AwsAccountId, region=env.region, role_name=role_name)
+        return principal_role is not None

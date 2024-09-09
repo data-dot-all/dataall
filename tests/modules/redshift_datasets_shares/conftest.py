@@ -25,6 +25,7 @@ def mock_redshift_data_shares(mocker):
     redshiftShareDataClient.return_value.check_role_permissions_in_database.return_value = True
     redshiftShareDataClient.return_value.check_schema_exists.return_value = True
     redshiftShareDataClient.return_value.check_role_permissions_in_schema.return_value = True
+    redshiftShareDataClient.return_value.check_redshift_role_in_namespace.return_value = True
 
     yield redshiftShareDataClient
 
@@ -118,6 +119,31 @@ def source_connection(db, user, group, env_fixture, mock_redshift_serverless, mo
         admin_group=group.name,
         data={
             'connectionName': 'connection1',
+            'redshiftType': 'serverless',
+            'clusterId': None,
+            'nameSpaceId': 'XXXXXXXXXXXXXX',
+            'workgroup': 'workgroup_name_1',
+            'database': 'database_1',
+            'redshiftUser': None,
+            'secretArn': 'arn:aws:secretsmanager:*:111111111111:secret:secret-1',
+            'connectionType': 'DATA_USER',
+        },
+    )
+    dispose_context()
+    yield connection
+    set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
+    RedshiftConnectionService.delete_redshift_connection(uri=connection.connectionUri)
+    dispose_context()
+
+
+@pytest.fixture(scope='function')
+def source_connection_admin(db, user, group, env_fixture, mock_redshift_serverless, mock_redshift_data, api_context_1):
+    set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
+    connection = RedshiftConnectionService.create_redshift_connection(
+        uri=env_fixture.environmentUri,
+        admin_group=group.name,
+        data={
+            'connectionName': 'connection1_admin',
             'redshiftType': 'serverless',
             'clusterId': None,
             'nameSpaceId': 'XXXXXXXXXXXXXX',
@@ -219,7 +245,9 @@ def table1(db, user, group, dataset_1):
 
 
 @pytest.fixture(scope='function')
-def redshift_share_request_cross_account(db, user2, group2, env_fixture_2, target_connection, dataset_1):
+def redshift_share_request_cross_account(
+    db, user2, group2, env_fixture_2, target_connection, dataset_1, mock_redshift_data_shares, source_connection_admin
+):
     set_context(RequestContext(db_engine=db, username=user2.username, groups=[group2.name], user_id=user2.username))
     share = ShareObjectService.create_share_object(
         uri=env_fixture_2.environmentUri,
@@ -241,7 +269,14 @@ def redshift_share_request_cross_account(db, user2, group2, env_fixture_2, targe
 
 @pytest.fixture(scope='function')
 def redshift_share_request_2_same_account(
-    db, user2, group2, env_fixture_same_1, target_connection_same_account, dataset_1
+    db,
+    user2,
+    group2,
+    env_fixture_same_1,
+    target_connection_same_account,
+    dataset_1,
+    mock_redshift_data_shares,
+    source_connection_admin,
 ):
     set_context(RequestContext(db_engine=db, username=user2.username, groups=[group2.name], user_id=user2.username))
     share = ShareObjectService.create_share_object(
@@ -271,6 +306,8 @@ def redshift_requested_table(db, user2, group2, redshift_share_request_cross_acc
     )
     dispose_context()
     yield item
+    with db.scoped_session() as session:
+        session.delete(item)
 
 
 @pytest.fixture(scope='function')
@@ -282,6 +319,8 @@ def redshift_requested_table_2(db, user2, group2, redshift_share_request_2_same_
     )
     dispose_context()
     yield item
+    with db.scoped_session() as session:
+        session.delete(item)
 
 
 @pytest.fixture(scope='function')
@@ -296,6 +335,7 @@ def approved_share_data_cross_account(
     dataset_1,
     env_fixture,
     env_fixture_2,
+    mock_redshift_data_shares,
 ):
     set_context(RequestContext(db_engine=db, username=user2.username, groups=[group2.name], user_id=user2.username))
     ShareObjectService.submit_share_object(uri=redshift_share_request_cross_account.shareUri)
@@ -324,6 +364,7 @@ def approved_share_data_same_account(
     dataset_1,
     env_fixture,
     env_fixture_same_1,
+    mock_redshift_data_shares,
 ):
     set_context(RequestContext(db_engine=db, username=user2.username, groups=[group2.name], user_id=user2.username))
     ShareObjectService.submit_share_object(uri=redshift_share_request_2_same_account.shareUri)

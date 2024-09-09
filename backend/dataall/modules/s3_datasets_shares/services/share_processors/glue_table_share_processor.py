@@ -15,7 +15,6 @@ from dataall.modules.shares_base.db.share_object_models import ShareObjectItemDa
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers import LFShareManager
 from dataall.modules.s3_datasets_shares.aws.ram_client import RamClient
-from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.s3_datasets_shares.services.s3_share_service import S3ShareService
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_item_repositories import ShareObjectItemRepository
@@ -75,7 +74,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
         else:
             manager = self._initialize_share_manager(self.tables)
             try:
-                if not ShareObjectService.verify_principal_role(self.session, self.share_data.share):
+                if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
                     raise PrincipalRoleNotFound(
                         'process approved shares',
                         f'Principal role {self.share_data.share.principalRoleName} is not found. Failed to update LF policy',
@@ -228,6 +227,11 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
             log.info('No tables to revoke. Skipping...')
         else:
             try:
+                if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
+                    raise PrincipalRoleNotFound(
+                        'process revoked shares',
+                        f'Principal role {self.share_data.share.principalRoleName} is not found. Failed to update LF policy',
+                    )
                 if None in [
                     manager.source_account_id,
                     manager.source_account_region,
@@ -327,11 +331,12 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     if not existing_shared_tables_in_share:
                         log.info('Revoking permissions to target shared database...')
                         manager.revoke_principals_database_permissions_to_shared_database()
-
+                    share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
                     existing_shares_with_shared_tables_in_environment = (
-                        S3ShareObjectRepository.list_s3_dataset_shares_with_existing_shared_items(
+                        ShareObjectRepository.list_dataset_shares_with_existing_shared_items(
                             session=self.session,
                             dataset_uri=self.share_data.dataset.datasetUri,
+                            share_item_shared_states=share_item_shared_states,
                             environment_uri=self.share_data.target_environment.environmentUri,
                             item_type=ShareableType.Table.value,
                         )
@@ -354,6 +359,11 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
         else:
             manager = self._initialize_share_manager(self.tables)
             try:
+                if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
+                    raise PrincipalRoleNotFound(
+                        'process verify shares',
+                        f'Share principal Role {self.share_data.share.principalRoleName} not found. Check the team or consumption IAM role used.',
+                    )
                 if None in [
                     manager.source_account_id,
                     manager.source_account_region,
