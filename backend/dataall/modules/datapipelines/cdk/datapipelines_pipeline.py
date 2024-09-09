@@ -10,6 +10,7 @@ from aws_cdk import aws_codepipeline as codepipeline
 from aws_cdk import aws_codepipeline_actions as codepipeline_actions
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_kms as kms
+from aws_cdk import aws_s3 as s3
 from aws_cdk.aws_s3_assets import Asset
 from botocore.exceptions import ClientError
 
@@ -226,12 +227,32 @@ class PipelineStack(Stack):
             )
             repository.apply_removal_policy(RemovalPolicy.RETAIN)
 
+        artifact_bucket_name = f'{pipeline.name}-artifacts'
+        artifact_bucket_key = kms.Key(
+            self,
+            f'{artifact_bucket_name}-key',
+            removal_policy=RemovalPolicy.RETAIN,
+            alias=f'{artifact_bucket_name}-key',
+            enable_key_rotation=True,
+        )
+        artifact_bucket = s3.Bucket(
+            self,
+            f'{artifact_bucket_name}-bucket',
+            bucket_name=f'{artifact_bucket_name}-bucket',
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            removal_policy=RemovalPolicy.RETAIN,
+            versioned=True,
+            encryption_key=artifact_bucket_key,
+            enforce_ssl=True,
+        )
+
         if pipeline.devStrategy == 'trunk':
             codepipeline_pipeline = codepipeline.Pipeline(
                 scope=self,
                 id=pipeline.name,
                 pipeline_name=pipeline.name,
                 restart_execution_on_update=True,
+                artifact_bucket=artifact_bucket,
             )
             self.codepipeline_pipeline = codepipeline_pipeline
             self.source_artifact = codepipeline.Artifact()

@@ -624,16 +624,9 @@
                     ]
                 },
                 {
-                    "resource": "AWS::KMS::Key.thistableArtifactsBucketEncryptionKey127159D3",
+                    "resource": "AWS::S3::Bucket.thistableartifactsbucketDB1C8C64",
                     "check_ids": [
-                        "CKV_AWS_7"
-                    ]
-                },
-                {
-                    "resource": "AWS::S3::Bucket.thistableArtifactsBucket145BFFDF",
-                    "check_ids": [
-                        "CKV_AWS_18",
-                        "CKV_AWS_21"
+                        "CKV_AWS_18"
                     ]
                 }
             ]
