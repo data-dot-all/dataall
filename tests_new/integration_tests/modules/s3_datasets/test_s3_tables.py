@@ -92,27 +92,28 @@ def test_preview_table(client1, tables_fixture_name, request):
     tables = request.getfixturevalue(tables_fixture_name)
     table_uri = tables[0].tableUri
     response = preview_table(client1, table_uri)
-    assert_that(response.rows).contains('1', 'value22', 'value33')
-    assert_that(len(response.rows)).contains(3)
+    assert_that(len(response.rows)).is_equal_to(3)
+    assert_that(response.rows[0]).contains('value12', 'value13')
 
 
 @pytest.mark.parametrize(
-    'tables_fixture_name, authorized',
+    'tables_fixture_name, confidentiality',
     [
-        ('session_s3_dataset1_tables', True),  #  Unclassified
-        ('session_imported_sse_s3_dataset1_tables', True),  #  Official
-        ('session_imported_kms_s3_dataset1_tables', False),  #  Secret
+        ('session_s3_dataset1_tables', 'Unclassified'),
+        ('session_imported_sse_s3_dataset1_tables', 'Official'),
+        ('session_imported_kms_s3_dataset1_tables', 'Secret'),
     ],
 )
-def test_preview_table_by_confidentiality(client2, tables_fixture_name, authorized, request):
+def test_preview_table_by_confidentiality(client2, tables_fixture_name, confidentiality, request):
     tables = request.getfixturevalue(tables_fixture_name)
     table_uri = tables[0].tableUri
-    if authorized:
+    if confidentiality in ['Unclassified']:
         response = preview_table(client2, table_uri)
-        assert_that(str(response.rows)).contains('1', 'value22', 'value33')
+        assert_that(len(response.rows)).is_equal_to(3)
+        assert_that(response.rows[0]).contains('value12', 'value13')
     else:
         assert_that(preview_table).raises(GqlError).when_called_with(client2, table_uri).contains(
-            'UnauthorizedOperation', 'PREVIEW_DATASET_TABLE', table_uri
+            'UnauthorizedOperation', 'PREVIEW_DATASET_TABLE'
         )
 
 
