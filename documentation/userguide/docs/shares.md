@@ -208,7 +208,7 @@ understand what really happens in AWS when dealing with downstream integrations 
 In this type of share the permissions are granted to the IAM role specified in the request as principal. It 
 can be either a data.all team IAM role or an external role defined as consumption role.
 
-When a sharing task for an S3 Bucket is processed, data.all will:
+When processing a sharing task for an S3 Bucket, data.all will:
 1. Update the S3 Bucket policy to add permissions to the principal IAM role
 2. Create/Update the IAM policy "Share policy" that grants IAM permissions to the requested S3 bucket and KMS key. Attach this policy to the principal IAM role.
 3. (If the Bucket is encrypted using a KMS key) Update the KMS Key policy to add permissions to the principal IAM role
@@ -217,7 +217,7 @@ When a sharing task for an S3 Bucket is processed, data.all will:
 In this type of share the permissions are granted to the IAM role specified in the request as principal. It 
 can be either a data.all team IAM role or an external role defined as consumption role.
 
-When a sharing task for a Glue Table is processed, data.all will:
+When processing a sharing task for a Glue Table, data.all will:
 1. Create a Glue database in the target account with name of the original database plus the suffix `_shared`. This database will be re-used if other share requests for the same source databaser are processed for other principals in the same environment.
 2. (If the share is cross-account) Revoke IAMAllowedPrincipal permissions from the table to ensure Lake Formation is used in the management of the table access and update LakeFormation to use Version 3 if not already >=3
 3. Grant Lake Formation permissions on the original database and table to the IAM principals in the target. If the share is cross account this step will create a RAM invitation that data.all will identify and accept.
@@ -228,7 +228,7 @@ When a sharing task for a Glue Table is processed, data.all will:
 In this type of share the permissions are granted to the IAM role specified in the request as principal. It 
 can be either a data.all team IAM role or an external role defined as consumption role.
 
-When a sharing task for a data.all Folder is processed, data.all will:
+When processing a sharing task for a Folder, data.all will:
 1. Update the Dataset Bucket policy to allow access point sharing. This is a one-time operation
 2. Create/Update an S3 Access Point and its policy granting permissions to the requested S3 prefix (folder) in the bucket for the principal IAM role.
 3. Create/Update the IAM policy "Share policy" that grants IAM permissions to the S3 Access Point and KMS key. Attach this policy to the principal IAM role.
@@ -237,7 +237,7 @@ When a sharing task for a data.all Folder is processed, data.all will:
 ### Redshift Table sharing
 In this type of share the permissions are granted to the Redshift role in the Redshift namespace specified in the request.
 
-When processing a sharing task for XXXXX, data.all will:
+When processing a sharing task for a Redshift table, data.all will:
 1. In the source namespace, create a Redshift datashare. Add requested schema and tables to the datashare.
 2. Grant access to the datashare for the consumer namespace (same account) or for the consumer AWS account (cross account)
 3. (If cross-account share) Authorize and associate datashare with the target namespace
