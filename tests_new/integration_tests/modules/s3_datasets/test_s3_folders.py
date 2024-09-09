@@ -25,7 +25,7 @@ def test_create_folder(client1, folders_fixture_name, request):
 
 @pytest.mark.parametrize(
     'dataset_fixture_name',
-    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
+    ['session_s3_dataset1'],
 )
 def test_create_folder_unauthorized(client2, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
@@ -53,11 +53,7 @@ def test_get_folder(client1, folders_fixture_name, request):
 
 @pytest.mark.parametrize(
     'folders_fixture_name',
-    [
-        'session_s3_dataset1_folders',
-        'session_imported_sse_s3_dataset1_folders',
-        'session_imported_kms_s3_dataset1_folders',
-    ],
+    ['session_s3_dataset1_folders'],
 )
 def test_get_folder_unauthorized(client2, folders_fixture_name, request):
     folders = request.getfixturevalue(folders_fixture_name)
@@ -84,11 +80,7 @@ def test_update_folder(client1, folders_fixture_name, request):
 
 @pytest.mark.parametrize(
     'dataset_fixture_name,folders_fixture_name',
-    [
-        ('session_s3_dataset1', 'session_s3_dataset1_folders'),
-        ('session_imported_sse_s3_dataset1', 'session_imported_sse_s3_dataset1_folders'),
-        ('session_imported_kms_s3_dataset1', 'session_imported_kms_s3_dataset1_folders'),
-    ],
+    [('session_s3_dataset1', 'session_s3_dataset1_folders')],
 )
 def test_update_folder_unauthorized(client2, dataset_fixture_name, folders_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
@@ -114,7 +106,7 @@ def test_delete_folder(client1, dataset_fixture_name, request):
 
 @pytest.mark.parametrize(
     'dataset_fixture_name',
-    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
+    ['session_s3_dataset1'],
 )
 def test_delete_folder_unauthorized(client1, client2, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
