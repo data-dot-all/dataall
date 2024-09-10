@@ -32,6 +32,7 @@ class AlbFrontStack(Stack):
         ip_ranges=None,
         custom_auth=None,
         backend_region=None,
+        log_retention_duration='TWO_YEARS',
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -321,8 +322,8 @@ class AlbFrontStack(Stack):
             self,
             f'ECSLogGroup{log_group_name}{envname}',
             log_group_name=f'/{resource_prefix}/{envname}/ecs/{log_group_name}',
-            retention=logs.RetentionDays.ONE_MONTH,
             removal_policy=RemovalPolicy.DESTROY,
+            retention=getattr(logs.RetentionDays,  self.log_retention_duration)
         )
         return log_group
 

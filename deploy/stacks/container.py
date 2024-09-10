@@ -36,11 +36,13 @@ class ContainerStack(pyNestedClass):
         email_custom_domain=None,
         ses_configuration_set=None,
         custom_domain=None,
+        log_retention_duration='TWO_YEARS',
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
         self._envname = envname
         self._resource_prefix = resource_prefix
+        self.log_retention_duration = log_retention_duration
 
         if self.node.try_get_context('image_tag'):
             image_tag = self.node.try_get_context('image_tag')
@@ -101,6 +103,7 @@ class ContainerStack(pyNestedClass):
                         ecs.CfnTaskDefinition.KeyValuePairProperty(name='envname', value=envname),
                         ecs.CfnTaskDefinition.KeyValuePairProperty(name='LOGLEVEL', value='DEBUG'),
                         ecs.CfnTaskDefinition.KeyValuePairProperty(name='config_location', value='/config.json'),
+                        ecs.CfnTaskDefinition.KeyValuePairProperty(name='LOG_RETENTION', value=self.log_retention_duration),
                     ],
                     essential=True,
                     log_configuration=ecs.CfnTaskDefinition.LogConfigurationProperty(
@@ -713,8 +716,8 @@ class ContainerStack(pyNestedClass):
             self,
             f'ECSLogGroup{log_group_name}{envname}',
             log_group_name=f'/{resource_prefix}/{envname}/ecs/{log_group_name}',
-            retention=logs.RetentionDays.ONE_MONTH,
             removal_policy=RemovalPolicy.DESTROY,
+            retention=getattr(logs.RetentionDays,  self.log_retention_duration)
         )
         return log_group
 

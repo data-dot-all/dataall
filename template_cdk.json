@@ -58,7 +58,8 @@
             "user_id": "string_USER_ID_CLAIM_NAME_MAPPING_FOR_EXTERNAL_IDP|DEFAULT=None",
             "email": "string_EMAIL_ID_CLAIM_NAME_MAPPING_FOR_EXTERNAL_IDP|DEFAULT=None"
           }
-        }
+        },
+        "log_retention_duration": "string_LOG_RETENTION_DURATION|DEFAULT=TWO_YEARS"
       }
     ]
   }

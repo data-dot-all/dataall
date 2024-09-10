@@ -38,6 +38,7 @@ class OpenSearchStack(pyNestedClass):
         lambdas=None,
         ecs_security_groups: [ec2.SecurityGroup] = None,
         prod_sizing=False,
+        log_retention_duration='TWO_YEARS',
         **kwargs,
     ):
         super().__init__(scope, id)
@@ -67,6 +68,7 @@ class OpenSearchStack(pyNestedClass):
             id='EsAppLogGroup',
             log_group_name=f'/{resource_prefix}/{envname}/opensearch',
             removal_policy=RemovalPolicy.DESTROY,
+            retention=getattr(logs.RetentionDays,  log_retention_duration),
         )
 
         self.domain = opensearch.Domain(
