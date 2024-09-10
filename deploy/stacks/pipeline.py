@@ -157,6 +157,7 @@ class PipelineStack(Stack):
             publish_assets_in_parallel=False,
             artifact_bucket=self.artifact_bucket,
             cross_account_keys=True,
+            enable_key_rotation=True,
             synth=pipelines.CodeBuildStep(
                 'Synth',
                 input=source,
