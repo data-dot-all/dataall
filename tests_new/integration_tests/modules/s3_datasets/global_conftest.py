@@ -24,7 +24,8 @@ from tests_new.integration_tests.modules.s3_datasets.queries import create_folde
 log = logging.getLogger(__name__)
 
 
-def create_s3_dataset(client, name, owner, group, org_uri, env_uri, tags=[], autoApprovalEnabled=False, confidentiality=None):
+def create_s3_dataset(client, name, owner, group, org_uri, env_uri, tags=[], autoApprovalEnabled=False,
+                      confidentiality=None):
     dataset = create_dataset(
         client,
         name=name,
@@ -163,30 +164,6 @@ def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdat
 @pytest.fixture(scope='session')
 def session_s3_dataset1_tables(client1, session_s3_dataset1):
     yield create_tables(client1, session_s3_dataset1)
-
-@pytest.fixture(scope='session')
-def session_s3_dataset2_with_table(client1, group1, org1, session_env1, session_id, testdata):
-    ds = None
-    try:
-        ds = create_s3_dataset(
-            client1,
-            name='session_s3_dataset2_with_table',
-            owner='someone',
-            group=group1,
-            org_uri=org1['organizationUri'],
-            env_uri=session_env1['environmentUri'],
-            tags=[session_id],
-        )
-        creds = generate_dataset_access_token(client1, ds.datasetUri)
-        dataset_session = boto3.Session(
-            aws_access_key_id=creds['AccessKey'],
-            aws_secret_access_key=creds['SessionKey'],
-            aws_session_token=creds['sessionToken'],
-        )
-        GlueClient(dataset_session, ds.region).create_table(
-            database_name=ds.GlueDatabaseName, table_name='integrationtest', bucket=ds.S3BucketName
-        )
-        response = sync_tables(client1, datasetUri=ds.datasetUri)
 
 
 @pytest.fixture(scope='session')
@@ -398,28 +375,29 @@ def persistent_s3_dataset_for_share_test(client1, group1, persistent_env1, testd
 
     try:
         create_folder(
-                client1,
-                dataset.datasetUri,
-                {
-                    'label': 'folder1',
-                    'prefix': 'folder1'
-                }
-            )
+            client1,
+            dataset.datasetUri,
+            {
+                'label': 'folder1',
+                'prefix': 'folder1'
+            }
+        )
         creds = json.loads(generate_dataset_access_token(client1, dataset.datasetUri))
         print(creds)
         dataset_session = boto3.Session(
-                aws_access_key_id=creds['AccessKey'],
-                aws_secret_access_key=creds['SessionKey'],
-                aws_session_token=creds['sessionToken'],
-            )
+            aws_access_key_id=creds['AccessKey'],
+            aws_secret_access_key=creds['SessionKey'],
+            aws_session_token=creds['sessionToken'],
+        )
         GlueClient(dataset_session, dataset.region).create_table(
-                database_name=dataset.GlueDatabaseName, table_name='integrationtest', bucket=dataset.S3BucketName
-            )
+            database_name=dataset.GlueDatabaseName, table_name='integrationtest', bucket=dataset.S3BucketName
+        )
         response = sync_tables(client1, datasetUri=dataset.datasetUri)
     except Exception as e:
         print(e)
 
     return dataset
+
 
 @pytest.fixture(scope='session')
 def persistent_s3_dataset_for_share_test_autoapproval(client1, group1, persistent_env1, testdata):
@@ -456,6 +434,8 @@ def persistent_imported_sse_s3_dataset1(client1, group1, persistent_env1, persis
     except Exception:
         if bucket:
             S3Client(session=persistent_env1_aws_client, region=persistent_env1['region']).delete_bucket(bucket)
+
+
 def persistent_imported_sse_s3_dataset1(client1, group1, persistent_env1, testdata):
     return get_or_create_persistent_s3_dataset(
         'persistent_imported_sse_s3_dataset1', client1, group1, persistent_env1, True, 'persistentimportedsses3'
@@ -474,6 +454,8 @@ def persistent_imported_kms_s3_dataset1(client1, group1, persistent_env1, testda
         'persistentimportedkms',
         'persistentimportedkms',
     )
+
+
 def persistent_imported_sse_s3_dataset1_tables(client1, persistent_imported_sse_s3_dataset1):
     return create_tables(client1, persistent_imported_sse_s3_dataset1)
 
@@ -485,7 +467,7 @@ def persistent_imported_sse_s3_dataset1_folders(client1, persistent_imported_sse
 
 @pytest.fixture(scope='session')
 def persistent_imported_kms_s3_dataset1(
-    client1, group1, persistent_env1, persistent_env1_aws_client, persistent_env1_integration_role_arn, testdata
+        client1, group1, persistent_env1, persistent_env1_aws_client, persistent_env1_integration_role_arn, testdata
 ):
     resource_name = 'persistentimportedkms'
     bucket = None

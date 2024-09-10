@@ -4,14 +4,14 @@ from typing import List
 
 
 def create_share_object(
-    client,
-    dataset_or_item_params: dict,
-    environmentUri,
-    groupUri,
-    principalId,
-    principalType,
-    requestPurpose,
-    attachMissingPolicies,
+        client,
+        dataset_or_item_params: dict,
+        environmentUri,
+        groupUri,
+        principalId,
+        principalType,
+        requestPurpose,
+        attachMissingPolicies,
 ):
     variables = dataset_or_item_params
     variables['input'] = NewShareObjectInput(
@@ -57,6 +57,36 @@ def submit_share_object(client, shareUri: str):
     }
     response = client.query(query=query)
     return response.data.submitShareObject
+
+
+def update_share_request_reason(client, shareUri: str, reason: str):
+    variables = {'shareUri': shareUri, 'requestPurpose': reason}
+    query = {
+        'operationName': 'updateShareRequestReason',
+        'variables': variables,
+        'query': f"""
+                    mutation updateShareRequestReason($shareUri: String!, $requestPurpose: String!) {{
+                      updateShareRequestReason(shareUri: $shareUri, requestPurpose: $requestPurpose) 
+                    }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.updateShareRequestReason
+
+
+def update_share_reject_reason(client, shareUri: str, reason: str):
+    variables = {'shareUri': shareUri, 'rejectPurpose': reason}
+    query = {
+        'operationName': 'updateShareRejectReason',
+        'variables': variables,
+        'query': f"""
+                    mutation updateShareRejectReason($shareUri: String!, $rejectPurpose: String!) {{
+                      updateShareRejectReason(shareUri: $shareUri, rejectPurpose: $rejectPurpose) 
+                    }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.updateShareRejectReason
 
 
 def reject_share_object(client, shareUri: str):
@@ -143,6 +173,24 @@ def add_share_item(client, shareUri: str, itemUri: str, itemType: str):
 
     response = client.query(query=query)
     return response.data.addSharedItem.shareItemUri
+
+
+def verify_share_items(client, shareUri: str, shareItemsUris: List[str]):
+    query = {
+        'operationName': 'verifyItemsShareObject',
+        'variables': {'input': {'shareUri': shareUri, 'itemUris': shareItemsUris}},
+        'query': f"""
+                    mutation verifyItemsShareObject($input: ShareItemSelectorInput) {{
+                        verifyItemsShareObject(input: $input) {{
+                            shareUri
+                            status
+                        }}
+                    }}
+                """,
+    }
+
+    response = client.query(query=query)
+    return response.data.verifyItemsShareObject
 
 
 def revoke_share_items(client, shareUri: str, shareItemUris: List[str]):
