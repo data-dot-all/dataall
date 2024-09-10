@@ -97,6 +97,7 @@ class CloudfrontDistro(pyNestedClass):
             removal_policy=RemovalPolicy.DESTROY,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
+            versioned=True,
             object_ownership=s3.ObjectOwnership.OBJECT_WRITER,
         )
 
@@ -387,6 +388,7 @@ class CloudfrontDistro(pyNestedClass):
             removal_policy=RemovalPolicy.DESTROY,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
+            versioned=True,
             object_ownership=s3.ObjectOwnership.OBJECT_WRITER,
         )
 
