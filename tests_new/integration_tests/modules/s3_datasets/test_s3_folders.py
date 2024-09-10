@@ -5,17 +5,15 @@ from assertpy import assert_that
 from integration_tests.modules.s3_datasets.queries import create_folder, delete_folder, update_folder, get_folder
 from integration_tests.errors import GqlError
 
+from integration_tests.modules.s3_datasets.conftest import (
+    FOLDERS_FIXTURES_PARAMS,
+    DATASETS_FIXTURES_PARAMS,
+)
+
 log = logging.getLogger(__name__)
 
 
-@pytest.mark.parametrize(
-    'folders_fixture_name',
-    [
-        'session_s3_dataset1_folders',
-        'session_imported_sse_s3_dataset1_folders',
-        'session_imported_kms_s3_dataset1_folders',
-    ],
-)
+@pytest.mark.parametrize(*FOLDERS_FIXTURES_PARAMS)
 def test_create_folder(client1, folders_fixture_name, request):
     folders = request.getfixturevalue(folders_fixture_name)
     folder = folders[0]
@@ -35,14 +33,7 @@ def test_create_folder_unauthorized(client2, dataset_fixture_name, request):
     ).contains('UnauthorizedOperation', 'CREATE_DATASET_FOLDER', dataset_uri)
 
 
-@pytest.mark.parametrize(
-    'folders_fixture_name',
-    [
-        'session_s3_dataset1_folders',
-        'session_imported_sse_s3_dataset1_folders',
-        'session_imported_kms_s3_dataset1_folders',
-    ],
-)
+@pytest.mark.parametrize(*FOLDERS_FIXTURES_PARAMS)
 def test_get_folder(client1, folders_fixture_name, request):
     folders = request.getfixturevalue(folders_fixture_name)
     folder = folders[0]
@@ -63,14 +54,7 @@ def test_get_folder_unauthorized(client2, folders_fixture_name, request):
     )
 
 
-@pytest.mark.parametrize(
-    'folders_fixture_name',
-    [
-        'session_s3_dataset1_folders',
-        'session_imported_sse_s3_dataset1_folders',
-        'session_imported_kms_s3_dataset1_folders',
-    ],
-)
+@pytest.mark.parametrize(*FOLDERS_FIXTURES_PARAMS)
 def test_update_folder(client1, folders_fixture_name, request):
     folders = request.getfixturevalue(folders_fixture_name)
     folder = folders[0]
@@ -90,10 +74,7 @@ def test_update_folder_unauthorized(client2, dataset_fixture_name, folders_fixtu
     ).contains('UnauthorizedOperation', 'UPDATE_DATASET_FOLDER', dataset.datasetUri)
 
 
-@pytest.mark.parametrize(
-    'dataset_fixture_name',
-    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
-)
+@pytest.mark.parametrize(*DATASETS_FIXTURES_PARAMS)
 def test_delete_folder(client1, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
     dataset_uri = dataset.datasetUri

@@ -20,14 +20,12 @@ from integration_tests.modules.s3_datasets.queries import (
 from integration_tests.core.stack.queries import update_stack
 from integration_tests.core.stack.utils import check_stack_ready
 from integration_tests.errors import GqlError
+from integration_tests.modules.s3_datasets.conftest import DATASETS_FIXTURES_PARAMS
 
 log = logging.getLogger(__name__)
 
 
-@pytest.mark.parametrize(
-    'dataset_fixture_name',
-    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
-)
+@pytest.mark.parametrize(*DATASETS_FIXTURES_PARAMS)
 # Dataset Mutations
 def test_create_import_s3_dataset(client1, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
@@ -61,20 +59,14 @@ def test_get_s3_dataset(client1, dataset_fixture_name, label, request):
     assert_that(response.label).is_equal_to(label)
 
 
-@pytest.mark.parametrize(
-    'dataset_fixture_name',
-    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
-)
+@pytest.mark.parametrize(*DATASETS_FIXTURES_PARAMS)
 def test_get_s3_dataset_non_admin(client2, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
     response = get_dataset(client2, dataset.datasetUri)
     assert_that(response.userRoleForDataset).is_equal_to('NoPermission')
 
 
-@pytest.mark.parametrize(
-    'dataset_fixture_name',
-    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
-)
+@pytest.mark.parametrize(*DATASETS_FIXTURES_PARAMS)
 def test_get_dataset_assume_role_url(client1, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
     assert_that(get_dataset_assume_role_url(client1, dataset.datasetUri)).starts_with(
@@ -82,10 +74,7 @@ def test_get_dataset_assume_role_url(client1, dataset_fixture_name, request):
     )
 
 
-@pytest.mark.parametrize(
-    'dataset_fixture_name',
-    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
-)
+@pytest.mark.parametrize(*DATASETS_FIXTURES_PARAMS)
 def test_get_dataset_assume_role_url_unauthorized(client2, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
     dataset_uri = dataset.datasetUri
@@ -94,10 +83,7 @@ def test_get_dataset_assume_role_url_unauthorized(client2, dataset_fixture_name,
     )
 
 
-@pytest.mark.parametrize(
-    'dataset_fixture_name',
-    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
-)
+@pytest.mark.parametrize(*DATASETS_FIXTURES_PARAMS)
 def test_get_dataset_presigned_url_upload_data(client1, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
     dataset_uri = dataset.datasetUri
@@ -118,10 +104,7 @@ def test_get_dataset_presigned_url_upload_data(client1, dataset_fixture_name, re
         http_response.raise_for_status()
 
 
-@pytest.mark.parametrize(
-    'dataset_fixture_name',
-    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
-)
+@pytest.mark.parametrize(*DATASETS_FIXTURES_PARAMS)
 def test_get_dataset_presigned_url_upload_data_unauthorized(client2, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
     dataset_uri = dataset.datasetUri
@@ -140,10 +123,7 @@ def test_list_s3_datasets_owned_by_env_group_unauthorized():
     pass
 
 
-@pytest.mark.parametrize(
-    'dataset_fixture_name',
-    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
-)
+@pytest.mark.parametrize(*DATASETS_FIXTURES_PARAMS)
 def test_update_dataset(client1, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
     test_description = f'a test description {datetime.utcnow().isoformat()}'
@@ -188,10 +168,7 @@ def test_delete_dataset_unauthorized(client2, dataset_fixture_name, request):
     )
 
 
-@pytest.mark.parametrize(
-    'dataset_fixture_name',
-    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
-)
+@pytest.mark.parametrize(*DATASETS_FIXTURES_PARAMS)
 def test_generate_dataset_access_token(client1, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
     dataset_uri = dataset.datasetUri
@@ -211,10 +188,7 @@ def test_generate_dataset_access_token_unauthorized(client1, client2, dataset_fi
     )
 
 
-@pytest.mark.parametrize(
-    'dataset_fixture_name',
-    ['session_s3_dataset1', 'session_imported_sse_s3_dataset1', 'session_imported_kms_s3_dataset1'],
-)
+@pytest.mark.parametrize(*DATASETS_FIXTURES_PARAMS)
 def test_start_crawler(client1, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
     dataset_uri = dataset.datasetUri
