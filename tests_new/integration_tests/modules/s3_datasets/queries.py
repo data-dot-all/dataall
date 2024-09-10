@@ -738,7 +738,6 @@ def get_table_profiling_run(client, tableUri):
         GlueTableName
         AwsAccountId
         results
-        status
       }}
     }}
                 """,
