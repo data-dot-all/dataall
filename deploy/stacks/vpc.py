@@ -23,7 +23,7 @@ class VpcStack(pyNestedClass):
         cidr=None,
         resource_prefix=None,
         restricted_nacl=False,
-        log_retention_duration='TWO_YEARS',
+        log_retention_duration=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)

@@ -38,7 +38,7 @@ class OpenSearchStack(pyNestedClass):
         lambdas=None,
         ecs_security_groups: [ec2.SecurityGroup] = None,
         prod_sizing=False,
-        log_retention_duration='TWO_YEARS',
+        log_retention_duration=None,
         **kwargs,
     ):
         super().__init__(scope, id)

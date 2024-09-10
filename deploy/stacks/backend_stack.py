@@ -59,7 +59,7 @@ class BackendStack(Stack):
         custom_waf_rules=None,
         with_approval_tests=False,
         allowed_origins='*',
-        log_retention_duration='TWO_YEARS',
+        log_retention_duration=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -374,6 +374,7 @@ class BackendStack(Stack):
             'ecs_security_groups': self.ecs_stack.ecs_security_groups,
             'ecs_task_role': self.ecs_stack.ecs_task_role,
             'prod_sizing': prod_sizing,
+            'log_retention_duration': log_retention_duration,
             **kwargs,
         }
         if enable_opensearch_serverless:

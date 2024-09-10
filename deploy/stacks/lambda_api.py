@@ -58,7 +58,7 @@ class LambdaApiStack(pyNestedClass):
         custom_domain=None,
         custom_auth=None,
         allowed_origins='*',
-        log_retention_duration='TWO_YEARS',
+        log_retention_duration=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)

@@ -37,7 +37,7 @@ class BackendStage(Stage):
         custom_waf_rules=None,
         with_approval_tests=False,
         allowed_origins='*',
-        log_retention_duration='TWO_YEARS',
+        log_retention_duration=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)

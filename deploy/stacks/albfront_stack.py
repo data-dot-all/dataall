@@ -32,10 +32,12 @@ class AlbFrontStack(Stack):
         ip_ranges=None,
         custom_auth=None,
         backend_region=None,
-        log_retention_duration='TWO_YEARS',
+        log_retention_duration=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
+
+        self.log_retention_duration = log_retention_duration
 
         if self.node.try_get_context('image_tag'):
             image_tag = self.node.try_get_context('image_tag')

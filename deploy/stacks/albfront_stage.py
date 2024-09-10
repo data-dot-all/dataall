@@ -18,7 +18,7 @@ class AlbFrontStage(Stage):
         ip_ranges=None,
         custom_auth=None,
         backend_region=None,
-        log_retention_duration='TWO_YEARS',
+        log_retention_duration=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)

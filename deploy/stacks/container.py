@@ -36,7 +36,7 @@ class ContainerStack(pyNestedClass):
         email_custom_domain=None,
         ses_configuration_set=None,
         custom_domain=None,
-        log_retention_duration='TWO_YEARS',
+        log_retention_duration=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
