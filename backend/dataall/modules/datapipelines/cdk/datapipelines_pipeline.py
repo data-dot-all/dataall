@@ -76,7 +76,7 @@ class PipelineStack(Stack):
         artifact_bucket_key = kms.Key(
             self,
             f'{artifact_bucket_base_name}-key',
-            removal_policy=RemovalPolicy.RETAIN,
+            removal_policy=RemovalPolicy.DESTROY,
             alias=f'{artifact_bucket_base_name}-key',
             enable_key_rotation=True,
         )
@@ -85,7 +85,7 @@ class PipelineStack(Stack):
             f'{artifact_bucket_base_name}-bucket',
             bucket_name=f'{artifact_bucket_base_name}-bucket',
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
-            removal_policy=RemovalPolicy.RETAIN,
+            removal_policy=RemovalPolicy.DESTROY,
             versioned=True,
             encryption_key=artifact_bucket_key,
             enforce_ssl=True,
