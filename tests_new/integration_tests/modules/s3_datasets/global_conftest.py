@@ -369,45 +369,6 @@ def persistent_s3_dataset1(client1, group1, persistent_env1, testdata):
 
 
 @pytest.fixture(scope='session')
-def persistent_s3_dataset_for_share_test(client1, group1, persistent_env1, testdata):
-    dataset = get_or_create_persistent_s3_dataset('persistent_s3_dataset_for_share_test', client1, group1,
-                                                  persistent_env1)
-
-    try:
-        create_folder(
-            client1,
-            dataset.datasetUri,
-            {
-                'label': 'folder1',
-                'prefix': 'folder1'
-            }
-        )
-        creds = json.loads(generate_dataset_access_token(client1, dataset.datasetUri))
-        print(creds)
-        dataset_session = boto3.Session(
-            aws_access_key_id=creds['AccessKey'],
-            aws_secret_access_key=creds['SessionKey'],
-            aws_session_token=creds['sessionToken'],
-        )
-        GlueClient(dataset_session, dataset.region).create_table(
-            database_name=dataset.GlueDatabaseName, table_name='integrationtest', bucket=dataset.S3BucketName
-        )
-        response = sync_tables(client1, datasetUri=dataset.datasetUri)
-    except Exception as e:
-        print(e)
-
-    return dataset
-
-
-@pytest.fixture(scope='session')
-def persistent_s3_dataset_for_share_test_autoapproval(client1, group1, persistent_env1, testdata):
-    dataset = get_or_create_persistent_s3_dataset('persistent_s3_dataset_autoapproval', client1, group1,
-                                                  persistent_env1, autoApprovalEnabled=True)
-
-    return dataset
-
-
-@pytest.fixture(scope='session')
 def persistent_s3_dataset1_tables(client1, persistent_s3_dataset1):
     return create_tables(client1, persistent_s3_dataset1)
 

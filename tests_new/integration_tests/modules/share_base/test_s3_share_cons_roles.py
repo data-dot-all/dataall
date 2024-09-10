@@ -1,32 +1,23 @@
-import pytest
 from assertpy import assert_that
+import pytest
 
-from dataall.modules.shares_base.services.shares_enums import ShareItemStatus, ShareObjectStatus, ShareItemHealthStatus, \
-    ShareableType
-from tests_new.integration_tests.errors import GqlError
-from dataall.modules.shares_base.services.shares_enums import PrincipalType
-from tests_new.integration_tests.modules.share_base.conftest import clean_up_share
-from tests_new.integration_tests.modules.share_base.queries import (
-    create_share_object,
-    submit_share_object,
-    add_share_item,
-    get_share_object,
-    reject_share_object,
-    approve_share_object,
-    revoke_share_items,
-    delete_share_object, verify_share_items, update_share_request_reason, update_share_reject_reason,
-)
+from dataall.modules.shares_base.services.shares_enums import PrincipalType, ShareObjectStatus, ShareItemStatus, \
+    ShareItemHealthStatus, ShareableType
 from tests_new.integration_tests.modules.share_base.utils import check_share_ready, check_share_items_verified
+from tests_new.integration_tests.modules.share_base.conftest import clean_up_share
+from tests_new.integration_tests.modules.share_base.queries import create_share_object, delete_share_object, \
+    submit_share_object, get_share_object, add_share_item, reject_share_object, update_share_reject_reason, \
+    update_share_request_reason, approve_share_object, verify_share_items, revoke_share_items
 
 
-def test_create_and_delete_share_object(client5, persistent_env1, persistent_s3_dataset1, group5):
+def test_create_and_delete_share_object(client5, persistent_env1, persistent_s3_dataset1, group5, consumption_role_1):
     share = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': persistent_s3_dataset1.datasetUri},
         environmentUri=persistent_env1.environmentUri,
         groupUri=group5,
-        principalId=group5,
-        principalType=PrincipalType.Group.value,
+        principalId=consumption_role_1.consumptionRoleUri,
+        principalType=PrincipalType.ConsumptionRole.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
     )
@@ -34,7 +25,7 @@ def test_create_and_delete_share_object(client5, persistent_env1, persistent_s3_
     delete_share_object(client5, share.shareUri)
 
 
-def test_submit_empty_object(client5, persistent_env1, persistent_s3_dataset1, group5):
+def test_submit_empty_object(client5, persistent_env1, persistent_s3_dataset1, group5,consumption_role_1):
     # here Exception is not recognized as GqlError, so we use base class
     # toDo: back to GqlError
     share = create_share_object(
@@ -42,8 +33,8 @@ def test_submit_empty_object(client5, persistent_env1, persistent_s3_dataset1, g
         dataset_or_item_params={'datasetUri': persistent_s3_dataset1.datasetUri},
         environmentUri=persistent_env1.environmentUri,
         groupUri=group5,
-        principalId=group5,
-        principalType=PrincipalType.Group.value,
+        principalId=consumption_role_1.consumptionRoleUri,
+        principalType=PrincipalType.ConsumptionRole.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
     )
@@ -53,14 +44,14 @@ def test_submit_empty_object(client5, persistent_env1, persistent_s3_dataset1, g
     clean_up_share(client5, share.shareUri)
 
 
-def test_add_share_items(client5, persistent_env1, persistent_s3_dataset_for_share_test, group5):
+def test_add_share_items(client5, persistent_env1, persistent_s3_dataset_for_share_test, group5,consumption_role_1 ):
     share = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': persistent_s3_dataset_for_share_test.datasetUri},
         environmentUri=persistent_env1.environmentUri,
         groupUri=group5,
-        principalId=group5,
-        principalType=PrincipalType.Group.value,
+        principalId=consumption_role_1.consumptionRoleUri,
+        principalType=PrincipalType.ConsumptionRole.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
     )
@@ -83,14 +74,14 @@ def test_add_share_items(client5, persistent_env1, persistent_s3_dataset_for_sha
     clean_up_share(client5, share.shareUri)
 
 
-def test_reject_share(client1, client5, persistent_env1, persistent_s3_dataset1, group5):
+def test_reject_share(client1, client5, persistent_env1, persistent_s3_dataset1, group5, consumption_role_1):
     share = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': persistent_s3_dataset1.datasetUri},
         environmentUri=persistent_env1.environmentUri,
         groupUri=group5,
-        principalId=group5,
-        principalType=PrincipalType.Group.value,
+        principalId=consumption_role_1.consumptionRoleUri,
+        principalType=PrincipalType.ConsumptionRole.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
     )
@@ -116,39 +107,40 @@ def test_reject_share(client1, client5, persistent_env1, persistent_s3_dataset1,
     clean_up_share(client5, share.shareUri)
 
 
-def test_change_share_purpose(client5, session_share_1):
-    change_request_purpose = update_share_request_reason(client5, session_share_1.shareUri, 'new purpose')
+
+def test_change_share_purpose(client5, session_share_consrole_1):
+    change_request_purpose = update_share_request_reason(client5, session_share_consrole_1.shareUri, 'new purpose')
     assert_that(change_request_purpose).is_true()
-    updated_share = get_share_object(client5, session_share_1.shareUri)
+    updated_share = get_share_object(client5, session_share_consrole_1.shareUri)
     assert_that(updated_share.requestPurpose).is_equal_to('new purpose')
 
 
 @pytest.mark.dependency()
-def test_submit_object_no_auto_approval(client5, session_share_1):
-    items = session_share_1['items'].nodes
+def test_submit_object_no_auto_approval(client5, session_share_consrole_1):
+    items = session_share_consrole_1['items'].nodes
     for item in items:
-        add_share_item(client5, session_share_1.shareUri, item.itemUri, item.itemType)
+        add_share_item(client5, session_share_consrole_1.shareUri, item.itemUri, item.itemType)
 
-    submit_share_object(client5, session_share_1.shareUri)
-    updated_share = get_share_object(client5, session_share_1.shareUri)
+    submit_share_object(client5, session_share_consrole_1.shareUri)
+    updated_share = get_share_object(client5, session_share_consrole_1.shareUri)
     assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Submitted.value)
 
 
-def test_submit_object_with_auto_approval(client5, session_share_2):
-    items = session_share_2['items'].nodes
+def test_submit_object_with_auto_approval(client5, session_share_consrole_2):
+    items = session_share_consrole_2['items'].nodes
     item_to_add = items[0]
-    add_share_item(client5, session_share_2.shareUri, item_to_add.itemUri, item_to_add.itemType)
+    add_share_item(client5, session_share_consrole_2.shareUri, item_to_add.itemUri, item_to_add.itemType)
 
-    submit_share_object(client5, session_share_2.shareUri)
-    updated_share = get_share_object(client5, session_share_2.shareUri)
+    submit_share_object(client5, session_share_consrole_2.shareUri)
+    updated_share = get_share_object(client5, session_share_consrole_2.shareUri)
     assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Approved.value)
 
 
 @pytest.mark.dependency(depends=['test_submit_object_no_auto_approval'])
-def test_approve_share(client1, session_share_1):
-    approve_share_object(client1, session_share_1.shareUri)
+def test_approve_share(client1, session_share_consrole_1):
+    approve_share_object(client1, session_share_consrole_1.shareUri)
 
-    updated_share = get_share_object(client1, session_share_1.shareUri, {'isShared': True})
+    updated_share = get_share_object(client1, session_share_consrole_1.shareUri, {'isShared': True})
     assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Approved.value)
     items = updated_share['items'].nodes
     for item in items:
@@ -156,9 +148,9 @@ def test_approve_share(client1, session_share_1):
 
 
 @pytest.mark.dependency(depends=['test_approve_share'])
-def test_share_succeeded(client1, session_share_1):
-    check_share_ready(client1, session_share_1.shareUri)
-    updated_share = get_share_object(client1, session_share_1.shareUri, {'isShared': True})
+def test_share_succeeded(client1, session_share_consrole_1):
+    check_share_ready(client1, session_share_consrole_1.shareUri)
+    updated_share = get_share_object(client1, session_share_consrole_1.shareUri, {'isShared': True})
     items = updated_share['items'].nodes
 
     assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Processed.value)
@@ -171,15 +163,15 @@ def test_share_succeeded(client1, session_share_1):
 
 
 @pytest.mark.dependency(depends=['test_share_succeeded'])
-def test_verify_share_items(client1, session_share_1):
-    updated_share = get_share_object(client1, session_share_1.shareUri, {'isShared': True})
+def test_verify_share_items(client1, session_share_consrole_1):
+    updated_share = get_share_object(client1, session_share_consrole_1.shareUri, {'isShared': True})
     items = updated_share['items'].nodes
     times = {}
     for item in items:
         times[item.shareItemUri] = item.lastVerificationTime
-    verify_share_items(client1, session_share_1.shareUri, [item.shareItemUri for item in items])
-    check_share_items_verified(client1, session_share_1.shareUri)
-    updated_share = get_share_object(client1, session_share_1.shareUri, {'isShared': True})
+    verify_share_items(client1, session_share_consrole_1.shareUri, [item.shareItemUri for item in items])
+    check_share_items_verified(client1, session_share_consrole_1.shareUri)
+    updated_share = get_share_object(client1, session_share_consrole_1.shareUri, {'isShared': True})
     items = updated_share['items'].nodes
     for item in items:
         assert_that(item.status).is_equal_to(ShareItemStatus.Share_Succeeded.value)
@@ -188,15 +180,15 @@ def test_verify_share_items(client1, session_share_1):
 
 
 @pytest.mark.dependency(depends=['test_share_succeeded'])
-def test_revoke_share(client1, session_share_1):
-    check_share_ready(client1, session_share_1.shareUri)
-    updated_share = get_share_object(client1, session_share_1.shareUri, {'isShared': True})
+def test_revoke_share(client1, session_share_consrole_1):
+    check_share_ready(client1, session_share_consrole_1.shareUri)
+    updated_share = get_share_object(client1, session_share_consrole_1.shareUri, {'isShared': True})
     items = updated_share['items'].nodes
 
     shareItemUris = [item.shareItemUri for item in items]
-    revoke_share_items(client1, session_share_1.shareUri, shareItemUris)
+    revoke_share_items(client1, session_share_consrole_1.shareUri, shareItemUris)
 
-    updated_share = get_share_object(client1, session_share_1.shareUri, {'isShared': True})
+    updated_share = get_share_object(client1, session_share_consrole_1.shareUri, {'isShared': True})
     assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Revoked.value)
     items = updated_share['items'].nodes
     for item in items:
@@ -207,9 +199,9 @@ def test_revoke_share(client1, session_share_1):
 
 
 @pytest.mark.dependency(depends=['test_revoke_share'])
-def test_revoke_succeeded(client1, session_share_1):
-    check_share_ready(client1, session_share_1.shareUri)
-    updated_share = get_share_object(client1, session_share_1.shareUri, {'isShared': True})
+def test_revoke_succeeded(client1, session_share_consrole_1):
+    check_share_ready(client1, session_share_consrole_1.shareUri)
+    updated_share = get_share_object(client1, session_share_consrole_1.shareUri, {'isShared': True})
     items = updated_share['items'].nodes
 
     assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Processed.value)
