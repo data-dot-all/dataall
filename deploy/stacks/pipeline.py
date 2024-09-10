@@ -155,6 +155,7 @@ class PipelineStack(Stack):
             pipeline_name=f'{self.resource_prefix}-pipeline-{self.git_branch}',
             publish_assets_in_parallel=False,
             artifact_bucket=self.artifact_bucket,
+            cross_account_keys=True,
             synth=pipelines.CodeBuildStep(
                 'Synth',
                 input=source,
