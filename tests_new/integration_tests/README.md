@@ -10,7 +10,7 @@ Currently **we support only Cognito based deployments** but support for any IdP 
 
 ## Pre-requisites
 
-- A real deployment of data.all in AWS
+- A real deployment of data.all in AWS. For this deployment the flag `enable_pivot_role_auto_create` must be set to `true`.
 - An SSM parameter (`/dataall/{env_name}/testdata`) in the DEPLOYMENT ACCOUNT with the following contents
     ```
     {
