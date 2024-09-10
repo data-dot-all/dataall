@@ -10,8 +10,8 @@ Currently **we support only Cognito based deployments** but support for any IdP 
 
 ## Pre-requisites
 
-- A real deployment of data.all in AWS
-- An SSM parameter (`/{resource_prefix/{env_name}/testdata`) with the following contents
+- A real deployment of data.all in AWS. For this deployment the flag `enable_pivot_role_auto_create` must be set to `true`.
+- An SSM parameter (`/dataall/{env_name}/testdata`) in the DEPLOYMENT ACCOUNT with the following contents
     ```
     {
       "users": {
@@ -85,4 +85,9 @@ You can also run the tests locally by...
 
 ## Coverage
 
-At the moment integration tests only cover Organizations module as an example.
+At the moment integration tests cover:
+- Organizations
+- Environments
+- S3 Datasets
+- Notebooks
+- Worksheets
