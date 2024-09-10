@@ -38,9 +38,10 @@ git_branch = re.sub('[^a-zA-Z0-9-_]', '', git_branch)[:99] if git_branch != '' e
 if os.getenv('GITHUB_ACTIONS'):
     logger.info('Running GitHub Actions')
     account_id = os.getenv('CDK_DEFAULT_ACCOUNT')
+    region = os.getenv('CDK_DEFAULT_REGION') or "eu-west-1"
     app = App(
         context={
-            'availability-zones:account=111111111111:region=eu-west-1': ['eu-west-1a', 'eu-west-1b', 'eu-west-1c'],
+            f'availability-zones:account=111111111111:region={region}': [f'{region}a', f'{region}b', f'{region}c'],
             'availability-zones:account=111111111111:region=us-east-1': ['us-east-1a', 'us-east-1b', 'us-east-1c'],
         }
     )
@@ -67,7 +68,7 @@ else:
 cdk_pipeline_region = app.node.try_get_context('tooling_region') or os.getenv('CDK_DEFAULT_REGION')
 
 target_envs = app.node.try_get_context('DeploymentEnvironments') or [
-    {'envname': 'dev', 'account': account_id, 'region': 'eu-west-1'}
+    {'envname': 'dev', 'account': account_id, 'region': os.getenv('CDK_DEFAULT_REGION', "eu-west-1")}
 ]
 
 resource_prefix = app.node.try_get_context('resource_prefix') or 'dataall'

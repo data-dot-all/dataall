@@ -422,18 +422,6 @@
             ]
         },
         {
-            "file": "/cdk.out/cross-region-stack-111111111111:eu-west-1.template.json",
-            "findings": [
-                {
-                    "resource": "AWS::S3::Bucket.CrossRegionCodePipelineReplicationBucketFC3227F2",
-                    "check_ids": [
-                        "CKV_AWS_18",
-                        "CKV_AWS_21"
-                    ]
-                }
-            ]
-        },
-        {
             "file": "/cdk.out/dataall-main-cicd-stack.template.json",
             "findings": [
                 {
