@@ -38,16 +38,26 @@ import {
   OrganizationOverview,
   OrganizationTeams
 } from '../components';
+import { MetadataAttachment } from '../../Metadata_Forms/components';
+import { isModuleEnabled, ModuleNames } from '../../../utils';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
   { label: 'Environments', value: 'environments', icon: <FaAws size={20} /> },
+  {
+    label: 'Metadata',
+    value: 'metadata',
+    icon: <FaAws size={20} />,
+    active: isModuleEnabled(ModuleNames.METADATA_FORMS)
+  },
   {
     label: 'Teams',
     value: 'teams',
     icon: <SupervisedUserCircleRounded fontSize="small" />
   }
 ];
+
+const activeTabs = tabs.filter((tab) => tab.active !== false);
 
 const OrganizationView = () => {
   const { settings } = useSettings();
@@ -57,6 +67,7 @@ const OrganizationView = () => {
   const dispatch = useDispatch();
   const params = useParams();
   const client = useClient();
+  const [isAdmin, setIsAdmin] = useState(false);
   const [currentTab, setCurrentTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [isArchiveObjectModalOpen, setIsArchiveObjectModalOpen] =
@@ -96,6 +107,11 @@ const OrganizationView = () => {
     const response = await client.query(getOrganization(params.uri));
     if (!response.errors) {
       setOrg(response.data.getOrganization);
+      setIsAdmin(
+        ['Admin', 'Owner'].indexOf(
+          response.data.getOrganization.userRoleInOrganization
+        ) !== -1
+      );
       setLoading(false);
     }
     setLoading(false);
@@ -161,27 +177,29 @@ const OrganizationView = () => {
                 </Breadcrumbs>
               </Grid>
               <Grid item>
-                <Box sx={{ m: -1 }}>
-                  <Button
-                    color="primary"
-                    component={RouterLink}
-                    startIcon={<PencilAltIcon fontSize="small" />}
-                    sx={{ m: 1 }}
-                    variant="outlined"
-                    to={`/console/organizations/${org.organizationUri}/edit`}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    color="primary"
-                    startIcon={<ArchiveOutlined />}
-                    sx={{ m: 1 }}
-                    variant="outlined"
-                    onClick={handleArchiveObjectModalOpen}
-                  >
-                    Archive
-                  </Button>
-                </Box>
+                {isAdmin && (
+                  <Box sx={{ m: -1 }}>
+                    <Button
+                      color="primary"
+                      component={RouterLink}
+                      startIcon={<PencilAltIcon fontSize="small" />}
+                      sx={{ m: 1 }}
+                      variant="outlined"
+                      to={`/console/organizations/${org.organizationUri}/edit`}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      color="primary"
+                      startIcon={<ArchiveOutlined />}
+                      sx={{ m: 1 }}
+                      variant="outlined"
+                      onClick={handleArchiveObjectModalOpen}
+                    >
+                      Archive
+                    </Button>
+                  </Box>
+                )}
               </Grid>
             </Grid>
             <Box sx={{ mt: 3 }}>
@@ -193,7 +211,7 @@ const OrganizationView = () => {
                 value={currentTab}
                 variant="fullWidth"
               >
-                {tabs.map((tab) => (
+                {activeTabs.map((tab) => (
                   <Tab
                     key={tab.value}
                     label={tab.label}
@@ -214,6 +232,13 @@ const OrganizationView = () => {
               )}
               {currentTab === 'environments' && (
                 <OrganizationEnvironments organization={org} />
+              )}
+              {currentTab === 'metadata' && (
+                <MetadataAttachment
+                  entityType="Organization"
+                  entityUri={org.organizationUri}
+                  canEdit={isAdmin}
+                />
               )}
             </Box>
           </Container>

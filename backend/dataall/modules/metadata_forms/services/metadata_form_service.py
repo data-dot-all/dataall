@@ -1,13 +1,15 @@
-from functools import wraps
-
 from dataall.base.context import get_context
 from dataall.base.db import exceptions, paginate
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyValidationService, TenantPolicyService
-from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility, MetadataFormUserRoles, MetadataFormFieldType
+from dataall.modules.metadata_forms.db.enums import (
+    MetadataFormVisibility,
+    MetadataFormFieldType,
+)
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
+from dataall.modules.metadata_forms.services.metadata_form_access_service import MetadataFormAccessService
 from dataall.modules.metadata_forms.services.metadata_form_permissions import MANAGE_METADATA_FORMS
 
 
@@ -84,42 +86,6 @@ class MetadataFormParamValidationService:
                     raise exceptions.InvalidInput('possibleValues', value, data.get('type'))
 
 
-class MetadataFormAccessService:
-    @staticmethod
-    def is_owner(uri):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            return MetadataFormRepository.get_metadata_form_owner(session, uri) in context.groups
-
-    @staticmethod
-    def can_perform(action: str):
-        def decorator(f):
-            @wraps(f)
-            def check_permission(*args, **kwds):
-                uri = kwds.get('uri')
-                if not uri:
-                    raise KeyError(f"{f.__name__} doesn't have parameter uri.")
-
-                if MetadataFormAccessService.is_owner(uri):
-                    return f(*args, **kwds)
-                else:
-                    raise exceptions.UnauthorizedOperation(
-                        action=action,
-                        message=f'User {get_context().username} is not the owner of the metadata form {uri}',
-                    )
-
-            return check_permission
-
-        return decorator
-
-    @staticmethod
-    def get_user_role(uri):
-        if MetadataFormAccessService.is_owner(uri):
-            return MetadataFormUserRoles.Owner.value
-        else:
-            return MetadataFormUserRoles.User.value
-
-
 class MetadataFormService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_METADATA_FORMS)
@@ -145,39 +111,63 @@ class MetadataFormService:
                 return session.delete(mf)
 
     @staticmethod
-    def paginated_metadata_form_list(filter=None) -> dict:
+    def paginated_entity_metadata_form_list(filter=None) -> dict:
         context = get_context()
-        groups = context.groups
-        is_da_admin = TenantPolicyValidationService.is_tenant_admin(groups)
-        filter = filter if filter is not None else {}
+        filter = filter or {}
+        is_da_admin, user_orgs, user_envs = MetadataFormAccessService.get_user_admin_status_orgs_and_envs_()
+        entity_orgs, entity_envs = MetadataFormAccessService.get_target_orgs_and_envs(
+            context.username, context.groups, is_da_admin, filter
+        )
         with context.db_engine.scoped_session() as session:
-            envs = None
-            orgs = None
-            # is user is no dataall admin, query_metadata_forms requires arrays of users envs and orgs uris
-            if not is_da_admin:
-                username = context.username
-                envs = EnvironmentRepository.query_user_environments(session, username, groups, {})
-                envs = [e.environmentUri for e in envs]
-                orgs = OrganizationRepository.query_user_organizations(session, username, groups, {})
-                orgs = [o.organizationUri for o in orgs]
             return paginate(
-                query=MetadataFormRepository.query_metadata_forms(session, is_da_admin, groups, envs, orgs, filter),
+                query=MetadataFormRepository.query_entity_metadata_forms(
+                    session,
+                    is_da_admin=is_da_admin,
+                    groups=context.groups,
+                    user_org_uris=user_orgs,
+                    user_env_uris=user_envs,
+                    entity_orgs_uris=entity_orgs,
+                    entity_envs_uris=entity_envs,
+                    filter=filter,
+                ),
+                page=filter.get('page', 1),
+                page_size=filter.get('pageSize', 5),
+            ).to_dict()
+
+    @staticmethod
+    def paginated_user_metadata_form_list(filter=None) -> dict:
+        context = get_context()
+        filter = filter or {}
+        is_da_admin, user_orgs, user_envs = MetadataFormAccessService.get_user_admin_status_orgs_and_envs_()
+        with get_context().db_engine.scoped_session() as session:
+            return paginate(
+                query=MetadataFormRepository.query_user_metadata_forms(
+                    session,
+                    is_da_admin=is_da_admin,
+                    groups=context.groups,
+                    env_uris=user_envs,
+                    org_uris=user_orgs,
+                    filter=filter,
+                ),
                 page=filter.get('page', 1),
                 page_size=filter.get('pageSize', 5),
             ).to_dict()
 
     @staticmethod
     def get_home_entity_name(metadata_form):
-        if metadata_form.visibility == MetadataFormVisibility.Team.value:
-            return metadata_form.homeEntity
-        elif metadata_form.visibility == MetadataFormVisibility.Organization.value:
-            with get_context().db_engine.scoped_session() as session:
-                return OrganizationRepository.get_organization_by_uri(session, metadata_form.homeEntity).name
-        elif metadata_form.visibility == MetadataFormVisibility.Environment.value:
-            with get_context().db_engine.scoped_session() as session:
-                return EnvironmentRepository.get_environment_by_uri(session, metadata_form.homeEntity).name
-        else:
-            return ''
+        try:
+            if metadata_form.visibility == MetadataFormVisibility.Team.value:
+                return metadata_form.homeEntity
+            elif metadata_form.visibility == MetadataFormVisibility.Organization.value:
+                with get_context().db_engine.scoped_session() as session:
+                    return OrganizationRepository.get_organization_by_uri(session, metadata_form.homeEntity).name
+            elif metadata_form.visibility == MetadataFormVisibility.Environment.value:
+                with get_context().db_engine.scoped_session() as session:
+                    return EnvironmentRepository.get_environment_by_uri(session, metadata_form.homeEntity).name
+            else:
+                return ''
+        except exceptions.ObjectNotFound as e:
+            return 'Not Found'
 
     @staticmethod
     def get_metadata_form_fields(uri):
@@ -225,8 +215,6 @@ class MetadataFormService:
         # validate all inputs first
         # if even one input is invalid -- decline whole batch
         for item in data:
-            if item.get('metadataFormUri') != uri:
-                raise Exception('property metadataFormUri does not match form uri')
             if item.get('uri') is None:
                 MetadataFormParamValidationService.validate_create_field_params(item)
                 to_create.append(item)
