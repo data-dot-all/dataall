@@ -1,4 +1,4 @@
-## **Tables**
+## **Glue Tables**
 In this section we will go through the different tabs in the Table window. We can reach this view:
 
 1. by selecting a table from the data Catalog
@@ -94,7 +94,7 @@ Click on the **Delete** button in the top right corner and confirm the deletion.
     revoked before deleting the table. Check the <a href="shares.html">Shares</a> section to learn how to grant and
     revoke access.
 
-## **Folders**
+## **S3 Folders**
 To open the Folder window you can either find your chosen folder in the Catalog or navigate to the dataset and
 then in the **Folders** tab click on the arrow in the *Actions* column of your folder:
 ![](pictures/tables/folder_1.png#zoom#shadow)

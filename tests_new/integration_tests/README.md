@@ -11,7 +11,7 @@ Currently **we support only Cognito based deployments** but support for any IdP 
 ## Pre-requisites
 
 - A real deployment of data.all in AWS
-- An SSM parameter (`/{resource_prefix/{env_name}/testdata`) with the following contents
+- An SSM parameter (`/dataall/{env_name}/testdata`) in the DEPLOYMENT ACCOUNT with the following contents
     ```
     {
       "users": {
@@ -88,6 +88,6 @@ You can also run the tests locally by...
 At the moment integration tests cover:
 - Organizations
 - Environments
-- Datasets
+- S3 Datasets
 - Notebooks
 - Worksheets

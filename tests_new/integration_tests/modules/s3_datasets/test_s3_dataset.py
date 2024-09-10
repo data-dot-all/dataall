@@ -34,18 +34,16 @@ def test_create_import_s3_dataset(client1, dataset_fixture_name, request):
     assert_that(dataset.stack.status).is_in('CREATE_COMPLETE', 'UPDATE_COMPLETE')
 
 
-def test_create_s3_dataset_unauthorized(user2, group2, client2, session_env1):
+def test_create_s3_dataset_unauthorized(user2, group2, client2, org1, session_env1):
     env_uri = session_env1.environmentUri
-    org_uri = session_env1.organizationUri
     assert_that(create_dataset).raises(GqlError).when_called_with(
         client=client2,
         name='UnauthorizedTestDatasetCreated',
-        owner=user2,
+        owner=user2.username,
         group=group2,
-        organizationUri=org_uri,
+        organizationUri=org1.organizationUri,
         environmentUri=env_uri,
         tags=['unauth'],
-        autoApprovalEnabled=False,
     ).contains('UnauthorizedOperation', 'CREATE_DATASET', env_uri)
 
 
@@ -69,7 +67,8 @@ def test_get_s3_dataset(client1, dataset_fixture_name, label, request):
 )
 def test_get_s3_dataset_non_admin(client2, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
-    assert_that(dataset.userRoleForDataset).is_equal_to('NoPermission')
+    response = get_dataset(client2, dataset.datasetUri)
+    assert_that(response.userRoleForDataset).is_equal_to('NoPermission')
 
 
 @pytest.mark.parametrize(
@@ -219,9 +218,8 @@ def test_generate_dataset_access_token_unauthorized(client1, client2, dataset_fi
 def test_start_crawler(client1, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
     dataset_uri = dataset.datasetUri
-    response = start_glue_crawler(client1, datasetUri=dataset_uri, input=None)
-    assert_that(response.get('Name')).is_equal_to(dataset.GlueCrawlerName)
-    assert_that(response.get('status')).is_in(['Pending', 'Running'])
+    response = start_glue_crawler(client1, datasetUri=dataset_uri, input={})
+    assert_that(response.Name).is_equal_to(dataset.GlueCrawlerName)
     # TODO: check it can run successfully + check sending prefix
 
 
@@ -232,7 +230,7 @@ def test_start_crawler(client1, dataset_fixture_name, request):
 def test_start_crawler_unauthorized(client2, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
     dataset_uri = dataset.datasetUri
-    assert_that(start_glue_crawler).raises(GqlError).when_called_with(client2, dataset_uri).contains(
+    assert_that(start_glue_crawler).raises(GqlError).when_called_with(client2, dataset_uri, {}).contains(
         'UnauthorizedOperation', 'CRAWL_DATASET', dataset_uri
     )
 

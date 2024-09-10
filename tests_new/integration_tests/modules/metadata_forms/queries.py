@@ -1,13 +1,13 @@
 # TODO: This file will be replaced by using the SDK directly
 
 
-def list_metadata_forms(client, filter):
+def list_user_metadata_forms(client, filter):
     query = {
-        'operationName': 'listMetadataForms',
+        'operationName': 'listUserMetadataForms',
         'variables': {'filter': filter},
         'query': f"""
-                  query listMetadataForms($filter: MetadataFormFilter) {{
-                    listMetadataForms(filter: $filter) {{
+                  query listUserMetadataForms($filter: MetadataFormFilter) {{
+                    listUserMetadataForms(filter: $filter) {{
                         count
                         page
                         pages
@@ -27,7 +27,7 @@ def list_metadata_forms(client, filter):
                 """,
     }
     response = client.query(query=query)
-    return response.data.listMetadataForms
+    return response.data.listUserMetadataForms
 
 
 def get_metadata_form_full_info(client, uri):

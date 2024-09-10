@@ -37,9 +37,9 @@ def test_start_table_profiling(client1, dataset_fixture_name, tables_fixture_nam
 def test_start_table_profiling_unauthorized(client2, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
     dataset_uri = dataset.datasetUri
-    assert_that(start_dataset_profiling_run).raises(GqlError).when_called_with(client2, dataset_uri).contains(
-        'UnauthorizedOperation', 'PROFILE_DATASET_TABLE', dataset_uri
-    )
+    assert_that(start_dataset_profiling_run).raises(GqlError).when_called_with(
+        client2, input={'datasetUri': dataset_uri}
+    ).contains('UnauthorizedOperation', 'PROFILE_DATASET_TABLE', dataset_uri)
 
 
 def test_list_table_profiling_runs():

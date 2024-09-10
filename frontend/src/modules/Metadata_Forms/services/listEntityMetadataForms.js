@@ -1,12 +1,12 @@
 import { gql } from 'apollo-boost';
 
-export const listMetadataForms = (filter) => ({
+export const listEntityMetadataForms = (filter) => ({
   variables: {
     filter
   },
   query: gql`
-    query listMetadataForms($filter: MetadataFormFilter) {
-      listMetadataForms(filter: $filter) {
+    query listEntityMetadataForms($filter: MetadataFormFilter) {
+      listEntityMetadataForms(filter: $filter) {
         hasTenantPermissions
         count
         page
