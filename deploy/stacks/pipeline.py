@@ -652,7 +652,7 @@ class PipelineStack(Stack):
                 custom_waf_rules=target_env.get('custom_waf_rules', None),
                 with_approval_tests=target_env.get('with_approval_tests', False),
                 allowed_origins=target_env.get('allowed_origins', '*'),
-                log_retention_duration=target_env.get('log_retention_duration', 'TWO_YEARS')
+                log_retention_duration=target_env.get('log_retention_duration', 'TWO_YEARS'),
             )
         )
         return backend_stage

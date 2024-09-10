@@ -103,7 +103,9 @@ class ContainerStack(pyNestedClass):
                         ecs.CfnTaskDefinition.KeyValuePairProperty(name='envname', value=envname),
                         ecs.CfnTaskDefinition.KeyValuePairProperty(name='LOGLEVEL', value='DEBUG'),
                         ecs.CfnTaskDefinition.KeyValuePairProperty(name='config_location', value='/config.json'),
-                        ecs.CfnTaskDefinition.KeyValuePairProperty(name='LOG_RETENTION', value=self.log_retention_duration),
+                        ecs.CfnTaskDefinition.KeyValuePairProperty(
+                            name='LOG_RETENTION', value=self.log_retention_duration
+                        ),
                     ],
                     essential=True,
                     log_configuration=ecs.CfnTaskDefinition.LogConfigurationProperty(
@@ -717,7 +719,7 @@ class ContainerStack(pyNestedClass):
             f'ECSLogGroup{log_group_name}{envname}',
             log_group_name=f'/{resource_prefix}/{envname}/ecs/{log_group_name}',
             removal_policy=RemovalPolicy.DESTROY,
-            retention=getattr(logs.RetentionDays,  self.log_retention_duration)
+            retention=getattr(logs.RetentionDays, self.log_retention_duration),
         )
         return log_group
 

@@ -68,7 +68,7 @@ class OpenSearchStack(pyNestedClass):
             id='EsAppLogGroup',
             log_group_name=f'/{resource_prefix}/{envname}/opensearch',
             removal_policy=RemovalPolicy.DESTROY,
-            retention=getattr(logs.RetentionDays,  log_retention_duration),
+            retention=getattr(logs.RetentionDays, log_retention_duration),
         )
 
         self.domain = opensearch.Domain(

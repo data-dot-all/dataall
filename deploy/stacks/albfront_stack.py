@@ -323,7 +323,7 @@ class AlbFrontStack(Stack):
             f'ECSLogGroup{log_group_name}{envname}',
             log_group_name=f'/{resource_prefix}/{envname}/ecs/{log_group_name}',
             removal_policy=RemovalPolicy.DESTROY,
-            retention=getattr(logs.RetentionDays,  self.log_retention_duration)
+            retention=getattr(logs.RetentionDays, self.log_retention_duration),
         )
         return log_group
 

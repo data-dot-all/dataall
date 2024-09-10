@@ -27,7 +27,7 @@ class VpcStack(pyNestedClass):
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
-        self.log_retention_duration=log_retention_duration
+        self.log_retention_duration = log_retention_duration
 
         if vpc_id:
             self.vpc = ec2.Vpc.from_lookup(self, 'vpc', vpc_id=vpc_id)
@@ -181,7 +181,7 @@ class VpcStack(pyNestedClass):
             f'{resource_prefix}/{envname}/flowlogs',
             log_group_name=f'{resource_prefix}/{envname}/flowlogs',
             removal_policy=RemovalPolicy.DESTROY,
-            retention=getattr(logs.RetentionDays,  self.log_retention_duration)
+            retention=getattr(logs.RetentionDays, self.log_retention_duration),
         )
         iam_policy = iam.PolicyDocument(
             assign_sids=True,
