@@ -21,6 +21,7 @@ from .cloudfront_stage import CloudfrontStage
 from .codeartifact import CodeArtifactStack
 from .ecr_stage import ECRStage
 from .vpc import VpcStack
+from .iam_utils import get_tooling_account_external_id
 
 
 class PipelineStack(Stack):
@@ -704,6 +705,7 @@ class PipelineStack(Stack):
                                     'echo "[profile buildprofile]" > ~/.aws/config',
                                     f'echo "role_arn = {frontend_deployment_role_arn}" >> ~/.aws/config',
                                     'echo "credential_source = EcsContainer" >> ~/.aws/config',
+                                    f'echo "external_id = {get_tooling_account_external_id(target_env["account"])}" >> ~/.aws/config',
                                     'aws sts get-caller-identity --profile buildprofile',
                                     f'export COGNITO_CLIENT=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/cognito/appclient --profile buildprofile --output text --query "Parameter.Value")',
                                     f'export API_ENDPOINT=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/apiGateway/backendUrl --profile buildprofile --output text --query "Parameter.Value")',
@@ -749,6 +751,7 @@ class PipelineStack(Stack):
                     'echo "[profile buildprofile]" > ~/.aws/config',
                     f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-cb-stackupdater-role" >> ~/.aws/config',
                     'echo "credential_source = EcsContainer" >> ~/.aws/config',
+                    f'echo "external_id = {get_tooling_account_external_id(target_env["account"])}" >> ~/.aws/config',
                     'aws sts get-caller-identity --profile buildprofile',
                     f"export cluster_name=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/ecs/cluster/name --profile buildprofile --output text --query 'Parameter.Value')",
                     f"export private_subnets=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/ecs/private_subnets --profile buildprofile --output text --query 'Parameter.Value')",
@@ -809,6 +812,7 @@ class PipelineStack(Stack):
                     'echo "[profile buildprofile]" > ~/.aws/config',
                     f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-S3DeploymentRole" >> ~/.aws/config',
                     'echo "credential_source = EcsContainer" >> ~/.aws/config',
+                    f'echo "external_id = {get_tooling_account_external_id(target_env["account"])}" >> ~/.aws/config',
                     'aws sts get-caller-identity --profile buildprofile',
                     'export AWS_PROFILE=buildprofile',
                     'pip install boto3==1.34.35',
@@ -847,7 +851,7 @@ class PipelineStack(Stack):
                     ),
                     commands=[
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
-                        f"make assume-role REMOTE_ACCOUNT_ID={target_env['account']} REMOTE_ROLE={self.resource_prefix}-{target_env['envname']}-S3DeploymentRole",
+                        f"make assume-role REMOTE_ACCOUNT_ID={target_env['account']} REMOTE_ROLE={self.resource_prefix}-{target_env['envname']}-S3DeploymentRole EXTERNAL_ID={get_tooling_account_external_id(target_env['account'])}",
                         '. ./.env.assumed_role',
                         'aws sts get-caller-identity',
                         'export AWS_DEFAULT_REGION=us-east-1',
@@ -948,6 +952,7 @@ class PipelineStack(Stack):
                         'echo "[profile buildprofile]" > ~/.aws/config',
                         f'echo "role_arn = {frontend_deployment_role_arn}" >> ~/.aws/config',
                         'echo "credential_source = EcsContainer" >> ~/.aws/config',
+                        f'echo "external_id = {get_tooling_account_external_id(target_env["account"])}" >> ~/.aws/config',
                         'aws sts get-caller-identity --profile buildprofile',
                         'export AWS_PROFILE=buildprofile',
                         'pip install boto3==1.34.35',

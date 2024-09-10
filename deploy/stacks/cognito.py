@@ -21,6 +21,7 @@ from custom_resources.utils import get_lambda_code
 from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling
 from .waf_rules import get_waf_rules
+from .iam_utils import get_tooling_account_external_id
 
 
 class IdpStack(pyNestedClass):
@@ -198,6 +199,7 @@ class IdpStack(pyNestedClass):
             f'{resource_prefix}-{envname}-cognito-config-role',
             role_name=f'{resource_prefix}-{envname}-cognito-config-role',
             assumed_by=iam.AccountPrincipal(tooling_account_id),
+            external_ids=[get_tooling_account_external_id(self.account)],
         )
         cross_account_frontend_config_role.add_to_policy(
             iam.PolicyStatement(

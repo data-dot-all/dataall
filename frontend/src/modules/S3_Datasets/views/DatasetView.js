@@ -44,8 +44,9 @@ import {
   DatasetOverview,
   DatasetUpload
 } from '../components';
-import { isFeatureEnabled } from 'utils';
+import { isFeatureEnabled, isModuleEnabled, ModuleNames } from 'utils';
 import { RequestAccessModal } from 'modules/Catalog/components';
+import { MetadataAttachment } from '../../Metadata_Forms/components';
 
 const DatasetView = () => {
   const dispatch = useDispatch();
@@ -69,7 +70,13 @@ const DatasetView = () => {
         value: 'data',
         icon: <ViewArrayOutlined fontSize="small" />
       },
-      { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> }
+      { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
+      {
+        label: 'Metadata',
+        value: 'metadata',
+        icon: <ForumOutlined fontSize="small" />,
+        active: isModuleEnabled(ModuleNames.METADATA_FORMS)
+      }
     ];
     if (isAdmin) {
       tabs.push({
@@ -97,7 +104,7 @@ const DatasetView = () => {
         });
       }
     }
-    return tabs;
+    return tabs.filter((tab) => tab.active !== false);
   };
 
   const handleDeleteObjectModalOpen = () => {
@@ -353,6 +360,13 @@ const DatasetView = () => {
           <Box sx={{ mt: 3 }}>
             {currentTab === 'data' && (
               <DatasetData dataset={dataset} isAdmin={isAdmin} />
+            )}
+            {currentTab === 'metadata' && (
+              <MetadataAttachment
+                entityType="Dataset"
+                entityUri={params.uri}
+                canEdit={isAdmin}
+              />
             )}
             {currentTab === 'overview' && (
               <DatasetOverview dataset={dataset} isAdmin={isAdmin} />

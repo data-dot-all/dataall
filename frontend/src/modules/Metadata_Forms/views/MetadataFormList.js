@@ -21,7 +21,7 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { fetchEnums, useClient } from 'services';
-import { listMetadataForms } from '../services';
+import { listUserMetadataForms } from '../services';
 import { MetadataFormListItem, CreateMetadataFormModal } from '../components';
 
 function MetadataFormsListPageHeader(props) {
@@ -118,11 +118,11 @@ const MetadataFormsList = () => {
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    const response = await client.query(listMetadataForms(filter));
+    const response = await client.query(listUserMetadataForms(filter));
     if (!response.errors) {
-      setItems(response.data.listMetadataForms);
+      setItems(response.data.listUserMetadataForms);
       setHasManagePermissions(
-        response.data.listMetadataForms.hasTenantPermissions
+        response.data.listUserMetadataForms.hasTenantPermissions
       );
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });

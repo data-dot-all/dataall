@@ -4,7 +4,10 @@ from dataall.modules.metadata_forms.api.resolvers import (
     get_form_fields,
     get_fields_glossary_node_name,
     get_user_role,
+    get_attached_form_fields,
     has_tenant_permissions_for_metadata_forms,
+    resolve_metadata_form,
+    resolve_metadata_form_field,
 )
 
 MetadataForm = gql.ObjectType(
@@ -50,6 +53,44 @@ MetadataFormSearchResult = gql.ObjectType(
         gql.Field(name='previousPage', type=gql.Integer),
         gql.Field(name='hasNext', type=gql.Boolean),
         gql.Field(name='hasPrevious', type=gql.Boolean),
+        gql.Field(name='hasTenantPermissions', type=gql.Boolean, resolver=has_tenant_permissions_for_metadata_forms),
+    ],
+)
+
+AttachedMetadataFormSearchResult = gql.ObjectType(
+    name='AttachedMetadataFormSearchResult',
+    fields=[
+        gql.Field(name='count', type=gql.Integer),
+        gql.Field(name='nodes', type=gql.ArrayType(gql.Ref('AttachedMetadataForm'))),
+        gql.Field(name='pageSize', type=gql.Integer),
+        gql.Field(name='nextPage', type=gql.Integer),
+        gql.Field(name='pages', type=gql.Integer),
+        gql.Field(name='page', type=gql.Integer),
+        gql.Field(name='previousPage', type=gql.Integer),
+        gql.Field(name='hasNext', type=gql.Boolean),
+        gql.Field(name='hasPrevious', type=gql.Boolean),
+    ],
+)
+
+AttachedMetadataForm = gql.ObjectType(
+    name='AttachedMetadataForm',
+    fields=[
+        gql.Field(name='uri', type=gql.ID),
+        gql.Field(name='metadataForm', type=gql.Ref('MetadataForm'), resolver=resolve_metadata_form),
+        gql.Field(name='entityUri', type=gql.String),
+        gql.Field(name='entityType', type=gql.String),
+        gql.Field(
+            name='fields', type=gql.ArrayType(gql.Ref('AttachedMetadataFormField')), resolver=get_attached_form_fields
+        ),
+    ],
+)
+
+AttachedMetadataFormField = gql.ObjectType(
+    name='AttachedMetadataFormField',
+    fields=[
+        gql.Field(name='uri', type=gql.ID),
+        gql.Field(name='field', type=gql.Ref('MetadataFormField'), resolver=resolve_metadata_form_field),
+        gql.Field(name='value', type=gql.String),
         gql.Field(name='hasTenantPermissions', type=gql.Boolean, resolver=has_tenant_permissions_for_metadata_forms),
     ],
 )

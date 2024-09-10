@@ -1,9 +1,8 @@
-# **Datasets**
-## **Datasets**
-In <span style="color:grey">*data.all*</span>, a Dataset is a representation of multiple AWS resources that helps
-users store data and establish the basis to make this data discoverable and shareable with other teams.
+# **S3 Datasets**
+In <span style="color:grey">*data.all*</span>, a S3/Glue Dataset is a representation of multiple AWS resources that helps
+users store data in a data lake and establish the basis to make this data discoverable and shareable with other teams.
 
-When data owners create a dataset the following resources are
+When data owners create a S3/Glue dataset the following resources are
 deployed on the selected environment and its linked AWS account:
 
 1.  Amazon S3 Bucket to store the data on AWS.
@@ -35,15 +34,12 @@ protected using AWS Lake Formation. With Lake Formation, the Dataset IAM role ge
 access to the Dataset Glue database only.
 
 
-### Tables and Folders
+### Glue Tables and S3 Folders
 
-Inside a dataset we can store structured data in tables and unstructured data in folders.
+Inside a S3/Glue dataset we can store structured data in Glue tables and unstructured data in S3 folders.
 
 - Tables are the representation of **AWS Glue Catalog** tables that are created on the dataset's Glue database on AWS.
-- Folders are the representation of an **Amazon S3 prefix** where
-data owners can organize their data. For example, when data is loaded, it
-can go to a folder named “raw” then after it's processed the data moves
-to a folder called “silver” and so on.
+- Folders are the representation of an **Amazon S3 prefix** where any type of file can be stored. Such as images, unstructured text formats...
 
 
 ### Dataset ownership
@@ -75,7 +71,11 @@ dataset content? users belonging to...
 
 ## :material-new-box: **Create a dataset**
 
-On left pane choose **Datasets**, then click on the **Create** button. Fill the dataset form.
+To create a new dataset, navigate to the Datasets view and click on **New Dataset**. A window like the one in the picture
+will allow you to select the type of Dataset you want to create or import. In this case you need to select the Create
+S3/Glue Dataset option.
+
+![](pictures/datasets/s3_dataset_creation.png#zoom#shadow)
 
 ![create_dataset](pictures/datasets/dat_create_form.png#zoom#shadow)
 
@@ -148,7 +148,7 @@ In the KMS key policy we need to grant explicit permission to the pivot role. At
 
 ### (Going Further) Support for Datasets with Externally-Managed Glue Catalog 
 
-If the dataset you are trying to import relates to Glue Database that is managed in a separate account, data.all's import dataset feature can also handle importing and sharing these type of datasets in data.all. Assuming the following pre-requisites are copmlete:
+If the dataset you are trying to import relates to Glue Database that is managed in a separate account, data.all's import dataset feature can also handle importing and sharing these type of datasets in data.all. Assuming the following pre-requisites are complete:
 
 - There exists an AWS Account (i.e. the Catalog Account) which is:
   - Onboarded as a data.all environment (e.g. Env A)
@@ -287,7 +287,7 @@ Once the filters are created, they will show in the Filters Table Tab:
 
 Table filters are not editable. To update an existing filter you must:
 
-1. Revoke all associated share items using the filter (if applcable)
+1. Revoke all associated share items using the filter (if applicable)
 2. Delete the table filter
 3. Create a new table filter with any updates as necessary
 
