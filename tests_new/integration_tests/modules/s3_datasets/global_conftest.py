@@ -317,9 +317,7 @@ They are suitable for testing backwards compatibility.
 """
 
 
-def get_or_create_persistent_s3_dataset(
-    dataset_name, client, group, env, bucket=None, kms_alias=None, glue_database=None
-):
+def get_or_create_persistent_s3_dataset(dataset_name, client, group, env, bucket=None, kms_alias='', glue_database=''):
     s3_datasets = list_datasets(client, term=dataset_name).nodes
     if s3_datasets:
         return s3_datasets[0]

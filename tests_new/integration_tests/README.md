@@ -11,7 +11,7 @@ Currently **we support only Cognito based deployments** but support for any IdP 
 ## Pre-requisites
 
 - A real deployment of data.all in AWS
-- An SSM parameter (`/{resource_prefix/{env_name}/testdata`) with the following contents
+- An SSM parameter (`/{resource_prefix/{env_name}/testdata`) in the DEPLOYMENT ACCOUNT with the following contents
     ```
     {
       "users": {
