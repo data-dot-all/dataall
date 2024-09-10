@@ -87,14 +87,16 @@ WorksheetQueryResult = gql.ObjectType(
     fields=[
         gql.Field(name='worksheetQueryResultUri', type=gql.ID),
         gql.Field(name='queryType', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='sqlBody', type=gql.NonNullableType(gql.String)),
+        gql.Field(name='sqlBody', type=gql.String),
         gql.Field(name='AthenaQueryId', type=gql.NonNullableType(gql.String)),
         gql.Field(name='region', type=gql.NonNullableType(gql.String)),
         gql.Field(name='AwsAccountId', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='AthenaOutputBucketName', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='AthenaOutputKey', type=gql.NonNullableType(gql.String)),
-        gql.Field(name='timeElapsedInSecond', type=gql.NonNullableType(gql.Integer)),
+        gql.Field(name='ElapsedTimeInMs', type=gql.Integer),
         gql.Field(name='created', type=gql.NonNullableType(gql.String)),
+        gql.Field(name='downloadLink', type=gql.String),
+        gql.Field(name='OutputLocation', type=gql.String),
+        gql.Field(name='expiresIn', type=gql.AWSDateTime),
+        gql.Field(name='fileFormat', type=gql.String),
     ],
 )
 

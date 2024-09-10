@@ -4,6 +4,7 @@ from dataall.modules.worksheets.db.worksheet_models import Worksheet
 from dataall.modules.worksheets.db.worksheet_repositories import WorksheetRepository
 from dataall.modules.worksheets.services.worksheet_service import WorksheetService
 from dataall.base.api.context import Context
+from dataall.modules.worksheets.services.worksheet_query_result_service import WorksheetQueryResultService
 
 
 def create_worksheet(context: Context, source, input: dict = None):
@@ -69,3 +70,10 @@ def run_sql_query(context: Context, source, environmentUri: str = None, workshee
 def delete_worksheet(context, source, worksheetUri: str = None):
     with context.engine.scoped_session() as session:
         return WorksheetService.delete_worksheet(session=session, uri=worksheetUri)
+
+
+def create_athena_query_result_download_url(context: Context, source, input: dict = None):
+    WorksheetQueryResultService.validate_input(input)
+
+    with context.engine.scoped_session() as session:
+        return WorksheetQueryResultService.download_sql_query_result(session=session, data=input)
