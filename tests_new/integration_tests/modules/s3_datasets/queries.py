@@ -274,7 +274,7 @@ def start_glue_crawler(client, datasetUri, input):
 def list_s3_datasets_owned_by_env_group(client, environment_uri, group_uri, term):
     query = {
         'operationName': 'listS3DatasetsOwnedByEnvGroup',
-        'variables': {'environmentUri': environment_uri, 'group_uri': group_uri, 'filter': {'term': term}},
+        'variables': {'environmentUri': environment_uri, 'groupUri': group_uri, 'filter': {'term': term}},
         'query': f"""
                 query listS3DatasetsOwnedByEnvGroup(
                   $filter: DatasetFilter

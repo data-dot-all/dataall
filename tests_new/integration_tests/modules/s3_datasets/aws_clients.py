@@ -251,6 +251,7 @@ class GlueClient:
                             'Parameters': {'field.delim': ','},
                         },
                     },
+                    'TableType': 'EXTERNAL_TABLE',
                 },
             )
         except ClientError as e:
