@@ -76,8 +76,9 @@ stack {
 autoApprovalEnabled
 """
 
-S3_DATASET_TABLE_FILTER_TYPE = """"
+S3_DATASET_TABLE_FILTER_TYPE = """
 filterUri
+tableUri
 label
 description
 filterType
@@ -466,10 +467,7 @@ def create_table_data_filter(client, tableUri, input):
         'operationName': 'createTableDataFilter',
         'variables': {'tableUri': tableUri, 'input': input},
         'query': f"""
-                mutation createTableDataFilter(
-                  $tableUri: String!
-                  $input: NewTableDataFilterInput!
-                ) {{
+                mutation createTableDataFilter($tableUri: String!,$input: NewTableDataFilterInput!) {{
                   createTableDataFilter(tableUri: $tableUri, input: $input) {{
                       {S3_DATASET_TABLE_FILTER_TYPE}
                   }}
