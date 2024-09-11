@@ -261,3 +261,13 @@ class MetadataFormRepository:
         mfs = MetadataFormRepository.get_all_attached_metadata_forms_for_entity(session, entityUri, entityType)
         for mf in mfs:
             session.delete(mf)
+
+    @staticmethod
+    def delete_all_home_metadata_forms(session, homeEntityUri, visibility):
+        mfs = (
+            session.query(MetadataForm)
+            .filter(and_(MetadataForm.homeEntity == homeEntityUri, MetadataForm.visibility == visibility))
+            .all()
+        )
+        for mf in mfs:
+            session.delete(mf)
