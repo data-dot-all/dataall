@@ -581,12 +581,11 @@ class EnvironmentSetup(Stack):
                     's3:CreateBucket',
                     's3:DeleteBucket',
                     's3:PutEncryptionConfiguration',
-                    's3:List*',
                     's3:GetObject*',
                     's3:DeleteObject',
                 ],
                 effect=iam.Effect.ALLOW,
-                resources=['arn:aws:s3:::dataalltesting*'],
+                resources=['arn:aws:s3:::dataalltesting*', 'arn:aws:s3:::dataalltesting*/*'],
             )
         )
         self.test_role.add_to_policy(
@@ -618,6 +617,7 @@ class EnvironmentSetup(Stack):
                     'kms:TagResource',
                     'kms:DescribeKey',
                     's3:GetBucketVersioning',
+                    's3:List*',
                 ],
                 effect=iam.Effect.ALLOW,
                 resources=['*'],
