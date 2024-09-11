@@ -106,11 +106,11 @@ class KMSClient:
         self._client = session.client('kms', region_name=region)
         self._account_id = account_id
 
-    def get_key_id_and_alias(self, alias_name):
+    def get_key_alias(self, alias_name):
         """
-        Get the key ID and alias name for a given alias.
+        Get the key alias name for a given alias.
         :param alias_name: The alias name to look up
-        :return: A tuple containing the key ID and alias name if the alias exists, False otherwise
+        :return: alias name if the alias exists, False otherwise
         """
         try:
             alias_name = alias_name.lower()
@@ -119,7 +119,7 @@ class KMSClient:
             aliases = response['KeyMetadata']['Aliases']
             for alias in aliases:
                 if alias['AliasName'] == f'alias/{alias_name}':
-                    return key_id, alias['AliasName']
+                    return alias['AliasName']
         except ClientError as e:
             if e.response['Error']['Code'] == 'NotFoundException':
                 return False, False
