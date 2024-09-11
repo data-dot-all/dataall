@@ -45,18 +45,11 @@ def test_create_s3_dataset_unauthorized(user2, group2, client2, org1, session_en
     ).contains('UnauthorizedOperation', 'CREATE_DATASET', env_uri)
 
 
-@pytest.mark.parametrize(
-    'dataset_fixture_name,label',
-    [
-        ('session_s3_dataset1', 'TestDatasetCreated'),
-        ('session_imported_sse_s3_dataset1', 'TestDatasetImported'),
-        ('session_imported_kms_s3_dataset1', 'TestDatasetImported'),
-    ],
-)
-def test_get_s3_dataset(client1, dataset_fixture_name, label, request):
+@pytest.mark.parametrize(*DATASETS_FIXTURES_PARAMS)
+def test_get_s3_dataset(client1, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
     response = get_dataset(client1, dataset.datasetUri)
-    assert_that(response.label).is_equal_to(label)
+    assert_that(response.label).is_equal_to(dataset_fixture_name)
 
 
 @pytest.mark.parametrize(*DATASETS_FIXTURES_PARAMS)
