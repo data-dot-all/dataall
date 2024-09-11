@@ -136,33 +136,3 @@ def test_delete_table_unauthorized(client2, dataset_fixture_name, tables_fixture
     assert_that(delete_table).raises(GqlError).when_called_with(client2, table_uri).contains(
         'UnauthorizedOperation', 'DELETE_DATASET_TABLE', dataset.datasetUri
     )
-
-
-def test_create_table_data_filter():
-    # TODO
-    pass
-
-
-def test_create_table_data_filter_unauthorized():
-    # TODO
-    pass
-
-
-def test_list_table_data_filters():
-    # TODO
-    pass
-
-
-def test_list_table_data_filters_unauthorized():
-    # TODO
-    pass
-
-
-def test_delete_table_data_filter():
-    # TODO
-    pass
-
-
-def test_delete_table_data_filter_unauthorized():
-    # TODO
-    pass
