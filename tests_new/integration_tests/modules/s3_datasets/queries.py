@@ -523,6 +523,9 @@ def list_dataset_tables(client, datasetUri):
                             {S3_DATASET_TYPE}
                             tables {{
                               count
+                              nodes {{
+                                GlueTableName
+                              }}
                             }}
                           }}
                         }}

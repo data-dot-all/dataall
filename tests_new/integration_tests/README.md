@@ -10,7 +10,9 @@ Currently **we support only Cognito based deployments** but support for any IdP 
 
 ## Pre-requisites
 
-- A real deployment of data.all in AWS
+- A real deployment of data.all in AWS. 
+     - For this deployment the `cdk.json` flag `enable_pivot_role_auto_create` must be set to `true`.
+     - For this deployment the `config.json` flag `cdk_pivot_role_multiple_environments_same_account` must be set to `true` if an AWS account is going to be reused for multiple environments,
 - An SSM parameter (`/dataall/{env_name}/testdata`) in the DEPLOYMENT ACCOUNT with the following contents
     ```
     {

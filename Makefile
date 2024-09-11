@@ -82,7 +82,7 @@ deploy-image:
 	docker push ${account}.dkr.ecr.${region}.amazonaws.com/${repo}:${image-tag}
 
 assume-role:
-	aws sts assume-role --role-arn "arn:aws:iam::${REMOTE_ACCOUNT_ID}:role/${REMOTE_ROLE}" --role-session-name "session1" >.assume_role_json
+	aws sts assume-role --role-arn "arn:aws:iam::${REMOTE_ACCOUNT_ID}:role/${REMOTE_ROLE}" --external-id ${EXTERNAL_ID} --role-session-name "session1" >.assume_role_json
 	echo "export AWS_ACCESS_KEY_ID=$$(cat .assume_role_json | jq '.Credentials.AccessKeyId' -r)" >.env.assumed_role
 	echo "export AWS_SECRET_ACCESS_KEY=$$(cat .assume_role_json | jq '.Credentials.SecretAccessKey' -r)" >>.env.assumed_role
 	echo "export AWS_SESSION_TOKEN=$$(cat .assume_role_json | jq '.Credentials.SessionToken' -r)" >>.env.assumed_role
