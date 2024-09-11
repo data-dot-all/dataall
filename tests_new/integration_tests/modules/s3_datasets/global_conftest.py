@@ -401,7 +401,7 @@ def persistent_s3_dataset1(client1, group1, persistent_env1, testdata):
 
 @pytest.fixture(scope='session')
 def persistent_imported_sse_s3_dataset1(client1, group1, persistent_env1, persistent_env1_aws_client, testdata):
-    bucket_name = 'dataalltestingpersistentimportedsses3'
+    bucket_name = f"dataalltesting{persistent_env1.environmentUri}perssses3{persistent_env1['AwsAccountId']}"
     bucket = None
     try:
         s3_client = S3Client(session=persistent_env1_aws_client, region=persistent_env1['region'])
@@ -425,7 +425,7 @@ def persistent_imported_sse_s3_dataset1(client1, group1, persistent_env1, persis
 def persistent_imported_kms_s3_dataset1(
     client1, group1, persistent_env1, persistent_env1_aws_client, persistent_env1_integration_role_arn, testdata
 ):
-    resource_name = 'dataalltestingpersistentimportedkms'
+    resource_name = f"dataalltesting{persistent_env1.environmentUri}perskms{persistent_env1['AwsAccountId']}"
     existing_bucket = S3Client(session=persistent_env1_aws_client, region=persistent_env1['region']).bucket_exists(
         resource_name
     )
