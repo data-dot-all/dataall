@@ -247,3 +247,17 @@ class MetadataFormRepository:
         if filter and filter.get('metadataFormUri'):
             query = query.filter(AttachedMetadataForm.metadataFormUri == filter.get('metadataFormUri'))
         return query
+
+    @staticmethod
+    def get_all_attached_metadata_forms_for_entity(session, entityUri, entityType):
+        return (
+            session.query(AttachedMetadataForm)
+            .filter(and_(AttachedMetadataForm.entityType == entityType, AttachedMetadataForm.entityUri == entityUri))
+            .all()
+        )
+
+    @staticmethod
+    def delete_attached_entity_metadata_forms(session, entityUri, entityType):
+        mfs = MetadataFormRepository.get_all_attached_metadata_forms_for_entity(session, entityUri, entityType)
+        for mf in mfs:
+            session.delete(mf)

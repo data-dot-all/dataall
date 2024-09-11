@@ -11,6 +11,8 @@ from dataall.core.permissions.services.tenant_policy_service import TenantPolicy
 from dataall.core.stacks.services.stack_service import StackService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sts import SessionHelper
+from dataall.modules.metadata_forms.db.enums import MetadataFormEntityTypes
+from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
 from dataall.modules.s3_datasets.aws.kms_dataset_client import KmsClient
 from dataall.base.context import get_context
 from dataall.core.permissions.services.group_policy_service import GroupPolicyService
@@ -22,7 +24,6 @@ from dataall.core.tasks.db.task_models import Task
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.s3_datasets.db.dataset_bucket_repositories import DatasetBucketRepository
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.modules.s3_datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.s3_datasets.aws.s3_dataset_client import S3DatasetClient
@@ -446,6 +447,9 @@ class DatasetService:
             if dataset.stewards:
                 ResourcePolicyService.delete_resource_policy(session=session, resource_uri=uri, group=dataset.stewards)
             DatasetRepository.delete_dataset(session, dataset)
+            MetadataFormRepository.delete_attached_entity_metadata_forms(
+                session, dataset.datasetUri, MetadataFormEntityTypes.Datasets.value
+            )
 
         if delete_from_aws:
             StackService.delete_stack(
