@@ -26,8 +26,7 @@ class S3Client:
             if e.response['Error']['Code'] == '404':
                 return False
             else:
-                log.error(f'Error checking if bucket {bucket_name} exists: {e}')
-                raise
+                raise Exception(f'Error checking if bucket {bucket_name} exists: {e}')
 
     def create_bucket(self, bucket_name, kms_key_arn=None):
         """
@@ -124,7 +123,7 @@ class KMSClient:
             if e.response['Error']['Code'] == 'NotFoundException':
                 return False, False
             else:
-                log.exception(f'Error getting key ID and alias for {alias_name}: {e}')
+                raise Exception(f'Error getting key alias for {alias_name}: {e}')
 
     def create_key_with_alias(self, alias_name):
         try:
@@ -220,7 +219,7 @@ class GlueClient:
         except self._client.exceptions.EntityNotFoundException:
             return False
         except ClientError as e:
-            log.exception(f'Error checking if database {database_name} exists: {e}')
+            raise Exception(f'Error checking if database {database_name} exists: {e}')
 
     def create_database(self, database_name, bucket):
         try:

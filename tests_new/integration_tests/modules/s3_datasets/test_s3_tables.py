@@ -60,7 +60,9 @@ def test_get_dataset_table(client1, dataset_fixture_name, tables_fixture_name, r
 def test_list_dataset_tables(client1, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
     response = list_dataset_tables(client1, dataset.datasetUri)
-    assert_that(response.tables.count).is_equal_to(2)
+    assert_that(response.tables.count).is_greater_than_or_equal_to(2)
+    tables = [table for table in response.tables.get('nodes', []) if table.GlueTableName.startswith('integrationtest')]
+    assert_that(len(tables)).is_equal_to(2)
 
 
 @pytest.mark.parametrize(*TABLES_FIXTURES_PARAMS)

@@ -173,7 +173,7 @@ def create_tables(client, dataset):
         database_name=dataset.GlueDatabaseName, table_name='integrationtest2', bucket=dataset.S3BucketName
     )
     response = sync_tables(client, datasetUri=dataset.datasetUri)
-    return response.get('nodes', [])
+    return [table for table in response.get('nodes', []) if table.GlueTableName.startswith('integrationtest')]
 
 
 def create_folders(client, dataset):
@@ -291,7 +291,7 @@ def session_imported_kms_s3_dataset1(
     try:
         ds = import_s3_dataset(
             client1,
-            name='session_imported_sse_s3_dataset1',
+            name='session_imported_kms_s3_dataset1',
             owner='someone',
             group=group1,
             org_uri=org1['organizationUri'],
@@ -426,21 +426,17 @@ def persistent_imported_kms_s3_dataset1(
     client1, group1, persistent_env1, persistent_env1_aws_client, persistent_env1_integration_role_arn, testdata
 ):
     resource_name = 'dataalltestingpersistentimportedkms'
-    try:
-        existing_bucket = S3Client(session=persistent_env1_aws_client, region=persistent_env1['region']).bucket_exists(
-            resource_name
-        )
-        existing_kms_alias = KMSClient(
-            session=persistent_env1_aws_client,
-            account_id=persistent_env1['AwsAccountId'],
-            region=persistent_env1['region'],
-        ).get_key_alias(resource_name)
-        existing_database = GlueClient(
-            session=persistent_env1_aws_client, region=persistent_env1['region']
-        ).get_database(resource_name)
-    except Exception:
-        raise Exception('Error verifying import dataset AWS resources for persistent_imported_kms_s3_dataset1')
-
+    existing_bucket = S3Client(session=persistent_env1_aws_client, region=persistent_env1['region']).bucket_exists(
+        resource_name
+    )
+    existing_kms_alias = KMSClient(
+        session=persistent_env1_aws_client,
+        account_id=persistent_env1['AwsAccountId'],
+        region=persistent_env1['region'],
+    ).get_key_alias(resource_name)
+    existing_database = GlueClient(session=persistent_env1_aws_client, region=persistent_env1['region']).get_database(
+        resource_name
+    )
     bucket, kms_alias, database, existing_lf_admins = create_aws_imported_resources(
         aws_client=persistent_env1_aws_client,
         integration_role_arn=persistent_env1_integration_role_arn,
