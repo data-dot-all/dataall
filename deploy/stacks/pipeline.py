@@ -1,9 +1,8 @@
-import os
 import re
 import uuid
 from typing import List
 
-from aws_cdk import Stack, Tags, RemovalPolicy
+from aws_cdk import Stack, Tags, RemovalPolicy, Duration
 from aws_cdk import aws_codebuild as codebuild
 from aws_cdk import aws_codecommit as codecommit
 from aws_cdk import aws_ec2 as ec2
@@ -12,7 +11,6 @@ from aws_cdk import aws_logs as logs
 from aws_cdk import aws_kms as kms
 from aws_cdk import aws_s3 as s3
 from aws_cdk import pipelines
-from aws_cdk.aws_codebuild import BuildEnvironmentVariable, BuildEnvironmentVariableType
 from aws_cdk.pipelines import CodePipelineSource
 
 from .albfront_stage import AlbFrontStage
@@ -543,6 +541,7 @@ class PipelineStack(Stack):
                     role=self.baseline_codebuild_role.without_policy_updates(),
                     vpc=self.vpc,
                     security_groups=[self.codebuild_sg],
+                    timeout=Duration.hours(36),
                 ),
                 pipelines.CodeBuildStep(
                     id='UploadCodeToS3',
