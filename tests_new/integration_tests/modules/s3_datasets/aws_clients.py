@@ -23,7 +23,7 @@ class S3Client:
             self._client.head_bucket(Bucket=bucket_name)
             return True
         except ClientError as e:
-            if e.response['Error']['Code'] == '404':
+            if e.response['Error']['Code'] in ['400', '403', '404']:
                 return False
             else:
                 raise Exception(f'Error checking if bucket {bucket_name} exists: {e}')
