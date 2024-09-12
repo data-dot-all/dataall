@@ -8,18 +8,12 @@ from integration_tests.modules.s3_datasets.queries import (
     get_table_profiling_run,
 )
 from integration_tests.errors import GqlError
+from integration_tests.modules.s3_datasets.conftest import DATASETS_TABLES_FIXTURES_PARAMS
 
 log = logging.getLogger(__name__)
 
 
-@pytest.mark.parametrize(
-    'dataset_fixture_name,tables_fixture_name',
-    [
-        ('session_s3_dataset1', 'session_s3_dataset1_tables'),
-        ('session_imported_sse_s3_dataset1', 'session_imported_sse_s3_dataset1_tables'),
-        ('session_imported_kms_s3_dataset1', 'session_imported_kms_s3_dataset1_tables'),
-    ],
-)
+@pytest.mark.parametrize(*DATASETS_TABLES_FIXTURES_PARAMS)
 def test_start_table_profiling(client1, dataset_fixture_name, tables_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
     tables = request.getfixturevalue(tables_fixture_name)

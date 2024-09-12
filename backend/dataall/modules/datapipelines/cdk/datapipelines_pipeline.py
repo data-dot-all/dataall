@@ -10,6 +10,7 @@ from aws_cdk import aws_codepipeline as codepipeline
 from aws_cdk import aws_codepipeline_actions as codepipeline_actions
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_kms as kms
+from aws_cdk import aws_s3 as s3
 from aws_cdk.aws_s3_assets import Asset
 from botocore.exceptions import ClientError
 
@@ -70,6 +71,27 @@ class PipelineStack(Stack):
         with engine.scoped_session() as session:
             env = EnvironmentService.get_environment_group(session, pipeline.SamlGroupName, pipeline.environmentUri)
         return env
+
+    def create_pipeline_artifacts_bucket(self, artifact_bucket_base_name: str):
+        artifact_bucket_key = kms.Key(
+            self,
+            f'{artifact_bucket_base_name}-key',
+            removal_policy=RemovalPolicy.DESTROY,
+            alias=f'{artifact_bucket_base_name}-key',
+            enable_key_rotation=True,
+        )
+        artifact_bucket = s3.Bucket(
+            self,
+            f'{artifact_bucket_base_name}-bucket',
+            bucket_name=f'{artifact_bucket_base_name}-bucket',
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            removal_policy=RemovalPolicy.DESTROY,
+            versioned=True,
+            encryption_key=artifact_bucket_key,
+            enforce_ssl=True,
+        )
+
+        return artifact_bucket
 
     def __init__(self, scope, id, target_uri: str = None, **kwargs):
         kwargs.setdefault('tags', {}).update({'utility': 'dataall-data-pipeline'})
@@ -232,6 +254,9 @@ class PipelineStack(Stack):
                 id=pipeline.name,
                 pipeline_name=pipeline.name,
                 restart_execution_on_update=True,
+                artifact_bucket=self.create_pipeline_artifacts_bucket(
+                    artifact_bucket_base_name=f'{pipeline.name}-artifacts'
+                ),
             )
             self.codepipeline_pipeline = codepipeline_pipeline
             self.source_artifact = codepipeline.Artifact()
@@ -301,6 +326,9 @@ class PipelineStack(Stack):
                     id=f'{pipeline.name}-{env.stage}',
                     pipeline_name=f'{pipeline.name}-{env.stage}',
                     restart_execution_on_update=True,
+                    artifact_bucket=self.create_pipeline_artifacts_bucket(
+                        artifact_bucket_base_name=f'{pipeline.name}-artifacts-{env.stage}'
+                    ),
                 )
                 self.codepipeline_pipeline = codepipeline_pipeline
                 self.source_artifact = codepipeline.Artifact()

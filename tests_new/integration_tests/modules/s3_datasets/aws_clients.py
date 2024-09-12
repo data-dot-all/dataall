@@ -23,11 +23,10 @@ class S3Client:
             self._client.head_bucket(Bucket=bucket_name)
             return True
         except ClientError as e:
-            if e.response['Error']['Code'] == '404':
+            if e.response['Error']['Code'] in ['400', '403', '404']:
                 return False
             else:
-                log.error(f'Error checking if bucket {bucket_name} exists: {e}')
-                raise
+                raise Exception(f'Error checking if bucket {bucket_name} exists: {e}')
 
     def create_bucket(self, bucket_name, kms_key_arn=None):
         """
@@ -106,11 +105,11 @@ class KMSClient:
         self._client = session.client('kms', region_name=region)
         self._account_id = account_id
 
-    def get_key_id_and_alias(self, alias_name):
+    def get_key_alias(self, alias_name):
         """
-        Get the key ID and alias name for a given alias.
+        Get the key alias name for a given alias.
         :param alias_name: The alias name to look up
-        :return: A tuple containing the key ID and alias name if the alias exists, False otherwise
+        :return: alias name if the alias exists, False otherwise
         """
         try:
             alias_name = alias_name.lower()
@@ -119,12 +118,12 @@ class KMSClient:
             aliases = response['KeyMetadata']['Aliases']
             for alias in aliases:
                 if alias['AliasName'] == f'alias/{alias_name}':
-                    return key_id, alias['AliasName']
+                    return alias['AliasName']
         except ClientError as e:
             if e.response['Error']['Code'] == 'NotFoundException':
                 return False, False
             else:
-                log.exception(f'Error getting key ID and alias for {alias_name}: {e}')
+                raise Exception(f'Error getting key alias for {alias_name}: {e}')
 
     def create_key_with_alias(self, alias_name):
         try:
@@ -217,10 +216,9 @@ class GlueClient:
         try:
             database = self._client.get_database(Name=database_name)
             return database
-        except self._client.exceptions.EntityNotFoundException:
-            return False
         except ClientError as e:
-            log.exception(f'Error checking if database {database_name} exists: {e}')
+            log.exception(f'Database not found, exception: {e}')
+            return False
 
     def create_database(self, database_name, bucket):
         try:
