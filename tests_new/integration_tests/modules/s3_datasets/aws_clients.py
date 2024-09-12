@@ -121,7 +121,7 @@ class KMSClient:
                     return alias['AliasName']
         except ClientError as e:
             if e.response['Error']['Code'] == 'NotFoundException':
-                return False, False
+                return False
             else:
                 raise Exception(f'Error getting key alias for {alias_name}: {e}')
 
