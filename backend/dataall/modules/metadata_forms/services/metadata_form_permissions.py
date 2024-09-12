@@ -1,5 +1,9 @@
+from dataall.core.permissions.services.environment_permissions import ENVIRONMENT_INVITED, ENVIRONMENT_ALL
+from dataall.core.permissions.services.organization_permissions import ORGANIZATION_ALL, \
+    ORGANIZATION_INVITED_DESCRIPTIONS
 from dataall.core.permissions.services.tenant_permissions import TENANT_ALL, TENANT_ALL_WITH_DESC
 from dataall.core.permissions.services.resources_permissions import RESOURCES_ALL, RESOURCES_ALL_WITH_DESC
+from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_WRITE, DATASET_ALL
 
 # ------------------------TENANT-----------------------------------
 MANAGE_METADATA_FORMS = 'MANAGE_METADATA_FORMS'
@@ -15,6 +19,15 @@ RESOURCES_ALL.extend([CREATE_METADATA_FORM, ATTACH_METADATA_FORM])
 RESOURCES_ALL_WITH_DESC[CREATE_METADATA_FORM] = 'Create metadata form within this visibility scope'
 RESOURCES_ALL_WITH_DESC[ATTACH_METADATA_FORM] = 'Attach metadata form'
 
+ORGANIZATION_ALL.extend([CREATE_METADATA_FORM, ATTACH_METADATA_FORM])
+ORGANIZATION_INVITED_DESCRIPTIONS[CREATE_METADATA_FORM] = 'Create metadata form within this visibility scope'
+ORGANIZATION_INVITED_DESCRIPTIONS[ATTACH_METADATA_FORM] = 'Attach metadata form'
+
+ENVIRONMENT_INVITED.extend([CREATE_METADATA_FORM, ATTACH_METADATA_FORM])
+ENVIRONMENT_ALL.extend([CREATE_METADATA_FORM, ATTACH_METADATA_FORM])
+
+DATASET_WRITE.extend([CREATE_METADATA_FORM, ATTACH_METADATA_FORM])
+DATASET_ALL.extend([CREATE_METADATA_FORM, ATTACH_METADATA_FORM])
 # ------------------------METADATA FORM----------------------------
 # permissions to change and delete metadata forms
 # these permissions are attached to MFs
