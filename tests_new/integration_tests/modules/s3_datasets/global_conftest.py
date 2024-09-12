@@ -54,20 +54,21 @@ def create_aws_imported_resources(
     database = None
     existing_lf_admins = None
     try:
-        if kms_alias_name:
-            kms_id, kms_alias = KMSClient(
-                session=aws_client,
-                account_id=env['AwsAccountId'],
-                region=env['region'],
-            ).create_key_with_alias(kms_alias_name)
-            bucket = S3Client(session=aws_client, region=env['region']).create_bucket(
-                bucket_name=bucket_name,
-                kms_key_arn=f"arn:aws:kms:{env['region']}:{env['AwsAccountId']}:key/{kms_id}",
-            )
-        else:
-            bucket = S3Client(session=aws_client, region=env['region']).create_bucket(
-                bucket_name=bucket_name,
-            )
+        if bucket_name:
+            if kms_alias_name:
+                kms_id, kms_alias = KMSClient(
+                    session=aws_client,
+                    account_id=env['AwsAccountId'],
+                    region=env['region'],
+                ).create_key_with_alias(kms_alias_name)
+                bucket = S3Client(session=aws_client, region=env['region']).create_bucket(
+                    bucket_name=bucket_name,
+                    kms_key_arn=f"arn:aws:kms:{env['region']}:{env['AwsAccountId']}:key/{kms_id}",
+                )
+            else:
+                bucket = S3Client(session=aws_client, region=env['region']).create_bucket(
+                    bucket_name=bucket_name,
+                )
         if glue_database_name:
             lf_client = LakeFormationClient(session=aws_client, region=env['region'])
             existing_lf_admins = lf_client.add_role_to_datalake_admin(role_arn=integration_role_arn)
@@ -441,14 +442,14 @@ def persistent_imported_kms_s3_dataset1(
         aws_client=persistent_env1_aws_client,
         integration_role_arn=persistent_env1_integration_role_arn,
         env=persistent_env1,
-        bucket_name=resource_name if existing_bucket is None else None,
-        kms_alias_name=resource_name if existing_kms_alias is None else None,
-        glue_database_name=resource_name if existing_database is None else None,
+        bucket_name=resource_name if not existing_bucket else None,
+        kms_alias_name=resource_name if not existing_kms_alias else None,
+        glue_database_name=resource_name if not existing_database else None,
     )
     if (
-        all(None in item for item in [bucket, existing_bucket])
-        or all(None in item for item in [kms_alias, existing_kms_alias])
-        or all(None in item for item in [database, existing_database])
+        (not bucket and not existing_bucket)
+        or (not kms_alias and not existing_kms_alias)
+        or (not database and not existing_database)
     ):
         delete_aws_imported_resources(
             aws_client=persistent_env1_aws_client,
@@ -465,7 +466,7 @@ def persistent_imported_kms_s3_dataset1(
         client1,
         group1,
         persistent_env1,
-        bucket,
-        kms_alias,
-        database,
+        resource_name,
+        resource_name,
+        resource_name,
     )

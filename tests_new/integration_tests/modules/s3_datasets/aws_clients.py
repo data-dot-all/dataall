@@ -216,10 +216,9 @@ class GlueClient:
         try:
             database = self._client.get_database(Name=database_name)
             return database
-        except self._client.exceptions.EntityNotFoundException:
-            return False
         except ClientError as e:
-            raise Exception(f'Error checking if database {database_name} exists: {e}')
+            log.exception(f'Database not found, exception: {e}')
+            return False
 
     def create_database(self, database_name, bucket):
         try:
