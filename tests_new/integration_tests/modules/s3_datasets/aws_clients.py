@@ -115,13 +115,10 @@ class KMSClient:
             alias_name = alias_name.lower()
             response = self._client.describe_key(KeyId=f'alias/{alias_name}')
             key_id = response['KeyMetadata']['KeyId']
-            aliases = response['KeyMetadata']['Aliases']
-            for alias in aliases:
-                if alias['AliasName'] == f'alias/{alias_name}':
-                    return alias['AliasName']
+            return alias_name
         except ClientError as e:
             if e.response['Error']['Code'] == 'NotFoundException':
-                return False, False
+                return False
             else:
                 raise Exception(f'Error getting key alias for {alias_name}: {e}')
 
