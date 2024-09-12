@@ -6,7 +6,7 @@ export const getEntityMetadataFormPermissions = (entityUri) => ({
   },
   query: gql`
     query getEntityMetadataFormPermissions($entityUri: String!) {
-      getEntityMetadataFormPermissions(entityUri: $entityUri) 
+      getEntityMetadataFormPermissions(entityUri: $entityUri)
     }
   `
 });

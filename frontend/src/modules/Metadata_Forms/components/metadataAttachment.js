@@ -15,7 +15,8 @@ import {
 } from '@mui/material';
 import {
   deleteAttachedMetadataForm,
-  getAttachedMetadataForm, getEntityMetadataFormPermissions,
+  getAttachedMetadataForm,
+  getEntityMetadataFormPermissions,
   getMetadataForm,
   listAttachedMetadataForms,
   listEntityMetadataForms
@@ -141,16 +142,24 @@ export const MetadataAttachment = (props) => {
   };
 
   const getPermissions = async () => {
-    const response = await client.query(getEntityMetadataFormPermissions(entityUri));
+    const response = await client.query(
+      getEntityMetadataFormPermissions(entityUri)
+    );
     if (!response.errors) {
-      setCanEdit(response.data.getEntityMetadataFormPermissions.includes('ATTACH_METADATA_FORM'));
+      setCanEdit(
+        response.data.getEntityMetadataFormPermissions.includes(
+          'ATTACH_METADATA_FORM'
+        )
+      );
     }
-  }
+  };
 
   useEffect(() => {
     if (client) {
       fetchList().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
-      getPermissions().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      getPermissions().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
       fetchAvailableForms().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
