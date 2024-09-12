@@ -18,6 +18,7 @@ class AlbFrontStage(Stage):
         ip_ranges=None,
         custom_auth=None,
         backend_region=None,
+        log_retention_duration=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -33,6 +34,7 @@ class AlbFrontStage(Stage):
             ip_ranges=ip_ranges,
             custom_auth=custom_auth,
             backend_region=backend_region,
+            log_retention_duration=log_retention_duration,
         )
 
         Tags.of(albfront_stack).add('Application', f'{resource_prefix}-{envname}')

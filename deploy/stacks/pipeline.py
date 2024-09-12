@@ -7,6 +7,7 @@ from aws_cdk import aws_codebuild as codebuild
 from aws_cdk import aws_codecommit as codecommit
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
+from aws_cdk import aws_logs as logs
 from aws_cdk import aws_kms as kms
 from aws_cdk import aws_s3 as s3
 from aws_cdk import pipelines
@@ -43,6 +44,9 @@ class PipelineStack(Stack):
         self.target_envs = target_envs
         self.repo_string = repo_string
         self.repo_connection_arn = repo_connection_arn
+        self.log_retention_duration = (
+            self.node.try_get_context('log_retention_duration') or logs.RetentionDays.TWO_YEARS.value
+        )
 
         self.vpc_stack = VpcStack(
             self,
@@ -52,6 +56,7 @@ class PipelineStack(Stack):
             resource_prefix=resource_prefix,
             vpc_id=self.node.try_get_context('tooling_vpc_id'),
             restricted_nacl=self.node.try_get_context('tooling_vpc_restricted_nacl'),
+            log_retention_duration=self.log_retention_duration,
             **kwargs,
         )
         self.vpc = self.vpc_stack.vpc
@@ -674,6 +679,7 @@ class PipelineStack(Stack):
                 custom_waf_rules=target_env.get('custom_waf_rules', None),
                 with_approval_tests=target_env.get('with_approval_tests', False),
                 allowed_origins=target_env.get('allowed_origins', '*'),
+                log_retention_duration=self.log_retention_duration,
             )
         )
         return backend_stage
@@ -915,6 +921,7 @@ class PipelineStack(Stack):
                 resource_prefix=self.resource_prefix,
                 custom_auth=target_env.get('custom_auth', None),
                 backend_region=target_env.get('region', self.region),
+                log_retention_duration=self.log_retention_duration,
             ),
             pre=[
                 pipelines.CodeBuildStep(
