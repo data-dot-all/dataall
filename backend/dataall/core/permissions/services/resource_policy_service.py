@@ -212,20 +212,21 @@ class ResourcePolicyService:
         session.commit()
 
     @staticmethod
-    def get_resource_policy_permissions(session, group_uri, resource_uri) -> List[ResourcePolicyPermission]:
+    def get_resource_policy_permissions(group_uri, resource_uri) -> List[ResourcePolicyPermission]:
         if not group_uri:
             raise exceptions.RequiredParameter(param_name='group_uri')
         if not resource_uri:
             raise exceptions.RequiredParameter(param_name='resource_uri')
-        policy = ResourcePolicyRepository.find_resource_policy(
-            session=session,
-            group_uri=group_uri,
-            resource_uri=resource_uri,
-        )
-        permissions = []
-        for p in policy.permissions:
-            permissions.append(p.permission)
-        return permissions
+        with get_context().db_engine.scoped_session() as session:
+            policy = ResourcePolicyRepository.find_resource_policy(
+                session=session,
+                group_uri=group_uri,
+                resource_uri=resource_uri,
+            )
+            permissions = []
+            for p in policy.permissions:
+                permissions.append(p.permission)
+            return permissions
 
     @staticmethod
     def has_resource_permission(

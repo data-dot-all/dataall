@@ -365,7 +365,6 @@ const DatasetView = () => {
               <MetadataAttachment
                 entityType="Dataset"
                 entityUri={params.uri}
-                canEdit={isAdmin}
               />
             )}
             {currentTab === 'overview' && (

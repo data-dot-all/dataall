@@ -527,7 +527,6 @@ class EnvironmentService:
         environment = EnvironmentService.get_environment_by_uri(session, uri)
 
         return ResourcePolicyService.get_resource_policy_permissions(
-            session=session,
             group_uri=group_uri,
             resource_uri=environment.environmentUri,
         )

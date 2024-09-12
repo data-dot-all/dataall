@@ -17,6 +17,7 @@ from dataall.modules.metadata_forms.services.metadata_form_permissions import (
     DELETE_METADATA_FORM_FIELD,
     UPDATE_METADATA_FORM_FIELD,
     CREATE_METADATA_FORM,
+    ALL_METADATA_FORMS_ENTITY_PERMISSIONS,
 )
 
 
@@ -263,3 +264,19 @@ class MetadataFormService:
         with get_context().db_engine.scoped_session() as session:
             MetadataFormParamValidationService.validate_update_field_params(uri, data)
             return MetadataFormRepository.update_metadata_form_field(session, fieldUri, data)
+
+    @staticmethod
+    def get_mf_permissions(entityUri):
+        context = get_context()
+        result_permissions = []
+        with context.db_engine.scoped_session() as session:
+            for permissions in ALL_METADATA_FORMS_ENTITY_PERMISSIONS:
+                if ResourcePolicyService.check_user_resource_permission(
+                    session=session,
+                    username=context.username,
+                    groups=context.groups,
+                    resource_uri=entityUri,
+                    permission_name=permissions,
+                ):
+                    result_permissions.append(permissions)
+            return result_permissions

@@ -5,6 +5,7 @@ Revises: f87aecc36d39
 Create Date: 2024-09-11 15:55:51.444403
 
 """
+
 from alembic import op
 from sqlalchemy import orm
 
@@ -15,8 +16,11 @@ from dataall.core.permissions.services.permission_service import PermissionServi
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.resources_permissions import RESOURCES_ALL_WITH_DESC
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
-from dataall.modules.metadata_forms.services.metadata_form_permissions import ATTACH_METADATA_FORM, \
-    CREATE_METADATA_FORM, METADATA_FORM_PERMISSIONS_ALL
+from dataall.modules.metadata_forms.services.metadata_form_permissions import (
+    ATTACH_METADATA_FORM,
+    CREATE_METADATA_FORM,
+    METADATA_FORM_PERMISSIONS_ALL,
+)
 
 # revision identifiers, used by Alembic.
 revision = '427db8f31999'
