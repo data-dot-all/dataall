@@ -8,8 +8,8 @@ Create Date: 2024-09-11 15:55:51.444403
 from alembic import op
 from sqlalchemy import orm
 
-from dataall.core.environment.db.environment_models import EnvironmentGroup, Environment
-from dataall.core.organizations.db.organization_models import OrganizationGroup, Organization
+from dataall.core.environment.db.environment_models import Environment
+from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.api.enums import PermissionType
 from dataall.core.permissions.services.permission_service import PermissionService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
@@ -42,22 +42,22 @@ def upgrade():
             permission_type=PermissionType.RESOURCE.name,
         )
     print('Adding organization resource permissions...')
-    orgGroups = session.query(OrganizationGroup).all()
-    for group in orgGroups:
+    orgs = session.query(Organization).all()
+    for org in orgs:
         ResourcePolicyService.attach_resource_policy(
             session=session,
-            group=group.groupUri,
-            resource_uri=group.organizationUri,
+            group=org.SamlGroupName,
+            resource_uri=org.organizationUri,
             permissions=[ATTACH_METADATA_FORM, CREATE_METADATA_FORM],
             resource_type=Organization.__name__,
         )
     print('Adding environment resource permissions...')
-    envGroups = session.query(EnvironmentGroup).all()
-    for group in envGroups:
+    envs = session.query(Environment).all()
+    for env in envs:
         ResourcePolicyService.attach_resource_policy(
             session=session,
-            group=group.groupUri,
-            resource_uri=group.environmentUri,
+            group=env.SamlGroupName,
+            resource_uri=env.environmentUri,
             permissions=[ATTACH_METADATA_FORM, CREATE_METADATA_FORM],
             resource_type=Environment.__name__,
         )
