@@ -8,16 +8,16 @@ from integration_tests.errors import GqlError
 ENVNAME = os.getenv('ENVNAME', 'dev')
 
 
+def _retry_if_connection_error(exception):
+    """Return True if we should retry, False otherwise"""
+    return isinstance(exception, requests.exceptions.ConnectionError) or isinstance(exception, requests.ReadTimeout)
+
+
 class Client:
     def __init__(self, username, password):
         self.username = username
         self.password = password
         self.token = self._get_jwt_token()
-
-    @staticmethod
-    def _retry_if_connection_error(exception):
-        """Return True if we should retry, False otherwise"""
-        return isinstance(exception, requests.exceptions.ConnectionError) or isinstance(exception, requests.ReadTimeout)
 
     @retry(
         retry_on_exception=_retry_if_connection_error,
