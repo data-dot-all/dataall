@@ -15,7 +15,6 @@ from integration_tests.modules.s3_datasets.queries import (
     sync_tables,
     create_folder,
     create_table_data_filter,
-    delete_table_data_filter,
 )
 from tests_new.integration_tests.modules.datasets_base.queries import list_datasets
 

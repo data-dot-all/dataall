@@ -44,7 +44,7 @@ FOLDERS_FIXTURES_PARAMS = (
 )
 
 TABLE_FILTERS_FIXTURES_PARAMS = (
-    'tables_fixture_name,table_filters_fixture_name',
+    'tables_fixture_name, table_filters_fixture_name',
     [
         ('session_s3_dataset1_tables', 'session_s3_dataset1_tables_data_filters'),
         ('session_imported_sse_s3_dataset1_tables', 'session_imported_sse_s3_dataset1_tables_data_filters'),

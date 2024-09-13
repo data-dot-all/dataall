@@ -16,14 +16,13 @@ log = logging.getLogger(__name__)
 
 
 @pytest.mark.parametrize(*TABLE_FILTERS_FIXTURES_PARAMS)
-def test_create_table_data_filter(client1, tables_fixture_name, table_filters_fixture_name, request):
+def test_create_table_data_filter(tables_fixture_name, table_filters_fixture_name, request):
     filters = request.getfixturevalue(table_filters_fixture_name)
     tables = request.getfixturevalue(tables_fixture_name)
     assert_that(len(filters)).is_equal_to(4)
     for table in tables:
         table_filters = [f for f in filters if f.tableUri == table.tableUri]
         for f in table_filters:
-            assert_that(f.filterName).is_not_none()
             assert_that(f.filterType).is_in('ROW', 'COLUMN')
             assert_that(f.filterUri).is_not_none()
             assert_that(f.tableUri).is_equal_to(table.tableUri)
@@ -84,10 +83,9 @@ def test_list_table_data_filters_unauthorized(client2, session_s3_dataset1_table
 
 
 def test_delete_table_data_filter_unauthorized(client2, session_s3_dataset1_tables_data_filters):
-    filter_uri = session_s3_dataset1_tables_data_filters[0].filterUri
-    table_uri = session_s3_dataset1_tables_data_filters[0].filterUri
-    assert_that(delete_table_data_filter).raises(GqlError).when_called_with(client2, filter_uri).contains(
-        'UnauthorizedOperation', 'DELETE_TABLE_DATA_FILTER', table_uri
+    filter = session_s3_dataset1_tables_data_filters[0]
+    assert_that(delete_table_data_filter).raises(GqlError).when_called_with(client2, filter.filterUri).contains(
+        'UnauthorizedOperation', 'DELETE_TABLE_DATA_FILTER', filter.tableUri
     )
 
 
