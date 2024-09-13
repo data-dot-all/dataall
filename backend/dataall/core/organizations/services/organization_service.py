@@ -21,8 +21,6 @@ from dataall.core.permissions.services.organization_permissions import (
     ORGANIZATION_INVITED_READONLY,
     ORGANIZATION_INVITED_DESCRIPTIONS,
 )
-from dataall.modules.metadata_forms.db.enums import MetadataFormEntityTypes, MetadataFormVisibility
-from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
 
 
 class OrganizationService:
@@ -176,12 +174,6 @@ class OrganizationService:
                 group=org.SamlGroupName,
                 resource_uri=org.organizationUri,
                 resource_type=models.Organization.__name__,
-            )
-            MetadataFormRepository.delete_attached_entity_metadata_forms(
-                session, org.organizationUri, MetadataFormEntityTypes.Organizations.value
-            )
-            MetadataFormRepository.delete_all_home_metadata_forms(
-                session, org.organizationUri, MetadataFormVisibility.Organization.value
             )
 
             return True

@@ -46,8 +46,6 @@ from dataall.core.permissions.services import environment_permissions
 from dataall.core.permissions.services.tenant_permissions import MANAGE_ENVIRONMENTS
 from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.core.vpc.db.vpc_repositories import VpcRepository
-from dataall.modules.metadata_forms.db.enums import MetadataFormEntityTypes, MetadataFormVisibility
-from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
 
 log = logging.getLogger(__name__)
 
@@ -886,12 +884,6 @@ class EnvironmentService:
                 KeyValueTagRepository.delete_key_value_tags(session, environment.environmentUri, 'environment')
                 EnvironmentResourceManager.delete_env(session, environment)
                 EnvironmentParameterRepository(session).delete_params(environment.environmentUri)
-                MetadataFormRepository.delete_attached_entity_metadata_forms(
-                    session, environment.environmentUri, MetadataFormEntityTypes.Environments.value
-                )
-                MetadataFormRepository.delete_all_home_metadata_forms(
-                    session, environment.environmentUri, MetadataFormVisibility.Environment.value
-                )
 
                 for group in env_groups:
                     session.delete(group)

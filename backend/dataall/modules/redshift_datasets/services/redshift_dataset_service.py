@@ -6,8 +6,6 @@ from dataall.core.permissions.services.resource_policy_service import ResourcePo
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.modules.metadata_forms.db.enums import MetadataFormEntityTypes
-from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 
@@ -186,9 +184,7 @@ class RedshiftDatasetService:
             RedshiftDatasetService._delete_dataset_term_links(session, uri)
             VoteRepository.delete_votes(session, dataset.datasetUri, VOTE_REDSHIFT_DATASET_NAME)
             session.delete(dataset)
-            MetadataFormRepository.delete_attached_entity_metadata_forms(
-                session, dataset.datasetUri, MetadataFormEntityTypes.Datasets.value
-            )
+
             session.commit()
             return True
 
