@@ -13,6 +13,9 @@ Currently **we support only Cognito based deployments** but support for any IdP 
 - A real deployment of data.all in AWS. 
      - For this deployment the `cdk.json` flag `enable_pivot_role_auto_create` must be set to `true`.
      - For this deployment the `config.json` flag `cdk_pivot_role_multiple_environments_same_account` must be set to `true` if an AWS account is going to be reused for multiple environments,
+     - Second test account is bootstraped, and first account is added to trusted policy in target regions
+      ```cdk bootstrap --trust <first-account-id> -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://<second-account-id>/region```
+  
 - An SSM parameter (`/dataall/{env_name}/testdata`) in the DEPLOYMENT ACCOUNT with the following contents
     ```
     {
