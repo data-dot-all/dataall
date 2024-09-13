@@ -142,3 +142,7 @@ def get_or_create_persistent_env(env_name, client, group, testdata):
 @pytest.fixture(scope='session')
 def persistent_env1(client1, group1, testdata):
     return get_or_create_persistent_env('persistent_env1', client1, group1, testdata)
+
+@pytest.fixture(scope='session')
+def persistent_cross_acc_env_1(client5, group5, testdata):
+    return get_or_create_persistent_env('persistent_cross_acc_env_1', client5, group5, testdata)

@@ -249,6 +249,7 @@ def session_imported_sse_s3_dataset1(
             tags=[session_id],
             bucket=bucket,
             confidentiality='Official',
+            autoApprovalEnabled=True,
         )
         yield ds
     finally:

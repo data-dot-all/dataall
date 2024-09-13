@@ -12,10 +12,11 @@ def create_share_object(
         principalType,
         requestPurpose,
         attachMissingPolicies,
+        permissions
 ):
     variables = dataset_or_item_params
     variables['input'] = NewShareObjectInput(
-        environmentUri, groupUri, principalId, principalType, requestPurpose, attachMissingPolicies
+        environmentUri, groupUri, principalId, principalType, requestPurpose, attachMissingPolicies, permissions
     )
     query = {
         'operationName': 'createShareObject',

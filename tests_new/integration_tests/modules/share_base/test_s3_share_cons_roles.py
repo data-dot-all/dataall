@@ -20,6 +20,7 @@ def test_create_and_delete_share_object(client5, persistent_env1, persistent_s3_
         principalType=PrincipalType.ConsumptionRole.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
+        permissions=['Read']
     )
     assert_that(share.status).is_equal_to(ShareObjectStatus.Draft.value)
     delete_share_object(client5, share.shareUri)
@@ -37,6 +38,7 @@ def test_submit_empty_object(client5, persistent_env1, persistent_s3_dataset1, g
         principalType=PrincipalType.ConsumptionRole.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
+        permissions=['Read']
     )
     assert_that(submit_share_object).raises(Exception).when_called_with(client5, share.shareUri).contains(
         'ShareItemsFound', 'The request is empty'
@@ -54,6 +56,7 @@ def test_add_share_items(client5, persistent_env1, persistent_s3_dataset_for_sha
         principalType=PrincipalType.ConsumptionRole.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
+        permissions=['Read']
     )
     share = get_share_object(client5, share.shareUri)
 
@@ -84,6 +87,7 @@ def test_reject_share(client1, client5, persistent_env1, persistent_s3_dataset1,
         principalType=PrincipalType.ConsumptionRole.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
+        permissions=['Read']
     )
     share = get_share_object(client5, share.shareUri)
 

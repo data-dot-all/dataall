@@ -18,33 +18,35 @@ from tests_new.integration_tests.modules.share_base.queries import (
 from tests_new.integration_tests.modules.share_base.utils import check_share_ready, check_share_items_verified
 
 
-def test_create_and_delete_share_object(client5, persistent_env1, persistent_s3_dataset1, group5):
+def test_create_and_delete_share_object(client5, persistent_cross_acc_env_1, session_s3_dataset1, group5):
     share = create_share_object(
         client=client5,
-        dataset_or_item_params={'datasetUri': persistent_s3_dataset1.datasetUri},
-        environmentUri=persistent_env1.environmentUri,
+        dataset_or_item_params={'datasetUri': session_s3_dataset1.datasetUri},
+        environmentUri=persistent_cross_acc_env_1.environmentUri,
         groupUri=group5,
         principalId=group5,
         principalType=PrincipalType.Group.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
+        permissions=['Read']
     )
     assert_that(share.status).is_equal_to(ShareObjectStatus.Draft.value)
     delete_share_object(client5, share.shareUri)
 
 
-def test_submit_empty_object(client5, persistent_env1, persistent_s3_dataset1, group5):
+def test_submit_empty_object(client5, persistent_cross_acc_env_1, session_s3_dataset1, group5):
     # here Exception is not recognized as GqlError, so we use base class
     # toDo: back to GqlError
     share = create_share_object(
         client=client5,
-        dataset_or_item_params={'datasetUri': persistent_s3_dataset1.datasetUri},
-        environmentUri=persistent_env1.environmentUri,
+        dataset_or_item_params={'datasetUri': session_s3_dataset1.datasetUri},
+        environmentUri=persistent_cross_acc_env_1.environmentUri,
         groupUri=group5,
         principalId=group5,
         principalType=PrincipalType.Group.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
+        permissions=['Read']
     )
     assert_that(submit_share_object).raises(Exception).when_called_with(client5, share.shareUri).contains(
         'ShareItemsFound', 'The request is empty'
@@ -52,16 +54,17 @@ def test_submit_empty_object(client5, persistent_env1, persistent_s3_dataset1, g
     clean_up_share(client5, share.shareUri)
 
 
-def test_add_share_items(client5, persistent_env1, persistent_s3_dataset_for_share_test, group5):
+def test_add_share_items(client5, persistent_cross_acc_env_1, session_s3_dataset1, group5):
     share = create_share_object(
         client=client5,
-        dataset_or_item_params={'datasetUri': persistent_s3_dataset_for_share_test.datasetUri},
-        environmentUri=persistent_env1.environmentUri,
+        dataset_or_item_params={'datasetUri': session_s3_dataset1.datasetUri},
+        environmentUri=persistent_cross_acc_env_1.environmentUri,
         groupUri=group5,
         principalId=group5,
         principalType=PrincipalType.Group.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
+        permissions=['Read']
     )
     share = get_share_object(client5, share.shareUri)
 
@@ -82,16 +85,17 @@ def test_add_share_items(client5, persistent_env1, persistent_s3_dataset_for_sha
     clean_up_share(client5, share.shareUri)
 
 
-def test_reject_share(client1, client5, persistent_env1, persistent_s3_dataset1, group5):
+def test_reject_share(client1, client5,  persistent_cross_acc_env_1, session_s3_dataset1, group5):
     share = create_share_object(
         client=client5,
-        dataset_or_item_params={'datasetUri': persistent_s3_dataset1.datasetUri},
-        environmentUri=persistent_env1.environmentUri,
+        dataset_or_item_params={'datasetUri': session_s3_dataset1.datasetUri},
+        environmentUri=persistent_cross_acc_env_1.environmentUri,
         groupUri=group5,
         principalId=group5,
         principalType=PrincipalType.Group.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
+        permissions=['Read']
     )
     share = get_share_object(client5, share.shareUri)
 
