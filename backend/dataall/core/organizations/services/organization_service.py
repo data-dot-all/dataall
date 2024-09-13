@@ -309,7 +309,11 @@ class OrganizationService:
     @staticmethod
     @ResourcePolicyService.has_resource_permission(GET_ORGANIZATION)
     def list_group_organization_permissions(uri, groupUri):
-        return ResourcePolicyService.get_resource_policy_permissions(group_uri=groupUri, resource_uri=uri)
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            return ResourcePolicyService.get_resource_policy_permissions(
+                session=session, group_uri=groupUri, resource_uri=uri
+            )
 
     @staticmethod
     def list_invited_organization_permissions_with_descriptions():
