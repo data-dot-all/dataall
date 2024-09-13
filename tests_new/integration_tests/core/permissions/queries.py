@@ -1,10 +1,10 @@
 # TODO: This file will be replaced by using the SDK directly
-def update_group_tenant_permissions(client, group, permissions=[]):
+def update_group_tenant_permissions(client, group_uri, permissions=[]):
     query = {
         'operationName': 'updateGroupTenantPermissions',
         'variables': {
             'input': {
-                'group': group,
+                'groupUri': group_uri,
                 'permissions': permissions,
             }
         },
