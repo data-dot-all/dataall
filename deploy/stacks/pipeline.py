@@ -1,17 +1,16 @@
-import os
 import re
 import uuid
 from typing import List
 
-from aws_cdk import Stack, Tags, RemovalPolicy
+from aws_cdk import Stack, Tags, RemovalPolicy, Duration
 from aws_cdk import aws_codebuild as codebuild
 from aws_cdk import aws_codecommit as codecommit
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
+from aws_cdk import aws_logs as logs
 from aws_cdk import aws_kms as kms
 from aws_cdk import aws_s3 as s3
 from aws_cdk import pipelines
-from aws_cdk.aws_codebuild import BuildEnvironmentVariable, BuildEnvironmentVariableType
 from aws_cdk.pipelines import CodePipelineSource
 
 from .albfront_stage import AlbFrontStage
@@ -45,6 +44,9 @@ class PipelineStack(Stack):
         self.target_envs = target_envs
         self.repo_string = repo_string
         self.repo_connection_arn = repo_connection_arn
+        self.log_retention_duration = (
+            self.node.try_get_context('log_retention_duration') or logs.RetentionDays.TWO_YEARS.value
+        )
 
         self.vpc_stack = VpcStack(
             self,
@@ -54,6 +56,7 @@ class PipelineStack(Stack):
             resource_prefix=resource_prefix,
             vpc_id=self.node.try_get_context('tooling_vpc_id'),
             restricted_nacl=self.node.try_get_context('tooling_vpc_restricted_nacl'),
+            log_retention_duration=self.log_retention_duration,
             **kwargs,
         )
         self.vpc = self.vpc_stack.vpc
@@ -156,6 +159,8 @@ class PipelineStack(Stack):
             pipeline_name=f'{self.resource_prefix}-pipeline-{self.git_branch}',
             publish_assets_in_parallel=False,
             artifact_bucket=self.artifact_bucket,
+            cross_account_keys=True,
+            enable_key_rotation=True,
             synth=pipelines.CodeBuildStep(
                 'Synth',
                 input=source,
@@ -538,6 +543,7 @@ class PipelineStack(Stack):
                     role=self.baseline_codebuild_role.without_policy_updates(),
                     vpc=self.vpc,
                     security_groups=[self.codebuild_sg],
+                    timeout=Duration.hours(36),
                 ),
                 pipelines.CodeBuildStep(
                     id='UploadCodeToS3',
@@ -673,6 +679,7 @@ class PipelineStack(Stack):
                 custom_waf_rules=target_env.get('custom_waf_rules', None),
                 with_approval_tests=target_env.get('with_approval_tests', False),
                 allowed_origins=target_env.get('allowed_origins', '*'),
+                log_retention_duration=self.log_retention_duration,
             )
         )
         return backend_stage
@@ -914,6 +921,7 @@ class PipelineStack(Stack):
                 resource_prefix=self.resource_prefix,
                 custom_auth=target_env.get('custom_auth', None),
                 backend_region=target_env.get('region', self.region),
+                log_retention_duration=self.log_retention_duration,
             ),
             pre=[
                 pipelines.CodeBuildStep(

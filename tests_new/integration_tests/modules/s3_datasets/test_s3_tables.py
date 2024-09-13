@@ -8,8 +8,6 @@ from integration_tests.modules.s3_datasets.queries import (
     update_dataset_table,
     delete_table,
     sync_tables,
-    create_table_data_filter,
-    delete_table_data_filter,
     preview_table,
     get_dataset_table,
     list_dataset_tables,

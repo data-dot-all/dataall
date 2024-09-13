@@ -58,9 +58,12 @@ class LambdaApiStack(pyNestedClass):
         custom_domain=None,
         custom_auth=None,
         allowed_origins='*',
+        log_retention_duration=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
+
+        self.log_retention_duration = log_retention_duration
 
         if self.node.try_get_context('image_tag'):
             image_tag = self.node.try_get_context('image_tag')
@@ -105,7 +108,10 @@ class LambdaApiStack(pyNestedClass):
             'ElasticSearchProxyHandler',
             function_name=f'{resource_prefix}-{envname}-esproxy',
             log_group=logs.LogGroup(
-                self, 'esproxyloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-backend-esproxy'
+                self,
+                'esproxyloggroup',
+                log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-backend-esproxy',
+                retention=getattr(logs.RetentionDays, self.log_retention_duration),
             ),
             description='dataall es search function',
             role=self.create_function_role(envname, resource_prefix, 'esproxy', pivot_role_name, vpc),
@@ -142,7 +148,10 @@ class LambdaApiStack(pyNestedClass):
             'LambdaGraphQL',
             function_name=f'{resource_prefix}-{envname}-graphql',
             log_group=logs.LogGroup(
-                self, 'graphqlloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-backend-graphql'
+                self,
+                'graphqlloggroup',
+                log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-backend-graphql',
+                retention=getattr(logs.RetentionDays, self.log_retention_duration),
             ),
             description='dataall graphql function',
             role=self.create_function_role(envname, resource_prefix, 'graphql', pivot_role_name, vpc),
@@ -173,7 +182,10 @@ class LambdaApiStack(pyNestedClass):
             'AWSWorker',
             function_name=f'{resource_prefix}-{envname}-awsworker',
             log_group=logs.LogGroup(
-                self, 'awsworkerloggroup', log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-backend-awsworker'
+                self,
+                'awsworkerloggroup',
+                log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-backend-awsworker',
+                retention=getattr(logs.RetentionDays, self.log_retention_duration),
             ),
             description='dataall aws worker for aws asynchronous tasks function',
             role=self.create_function_role(envname, resource_prefix, 'awsworker', pivot_role_name, vpc),
@@ -245,6 +257,7 @@ class LambdaApiStack(pyNestedClass):
                     self,
                     'customauthorizerloggroup',
                     log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-custom-authorizer',
+                    retention=getattr(logs.RetentionDays, self.log_retention_duration),
                 ),
                 handler='custom_authorizer_lambda.lambda_handler',
                 code=_lambda.Code.from_asset(
@@ -762,6 +775,7 @@ class LambdaApiStack(pyNestedClass):
             f'{resource_prefix}/{envname}/apigateway',
             log_group_name=f'{resource_prefix}/{envname}/apigateway',
             removal_policy=RemovalPolicy.DESTROY,
+            retention=getattr(logs.RetentionDays, self.log_retention_duration),
         )
 
         iam_policy = iam.PolicyDocument(
