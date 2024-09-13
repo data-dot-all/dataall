@@ -14,6 +14,7 @@
     "repository_source": "string_VERSION_CONTROL_SERVICE|(codecommit, codestar_connection) DEFAULT=codecommit",
     "repo_string": "string_REPOSITORY_IN_GITHUB_OWNER/REPOSITORY|DEFAULT=awslabs/aws-dataall, REQUIRED if repository_source=codestar_connection",
     "repo_connection_arn": "string_CODESTAR_SOURCE_CONNECTION_ARN_FOR_GITHUB_arn:aws:codestar-connections:region:account-id:connection/connection-id|DEFAULT=None, REQUIRED if repository_source=codestar_connection",
+    "log_retention_duration": "string_LOG_RETENTION_DURATION|DEFAULT=TWO_YEARS",
     "DeploymentEnvironments": [
       {
         "envname": "string_ENVIRONMENT_NAME|REQUIRED",
