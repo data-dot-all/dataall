@@ -267,10 +267,13 @@ export const ShareEditForm = (props) => {
       await updateRequestPurpose();
     }
 
-    if (
-      (shareExpiration && shareExpiration !== 0) ||
-      share.nonExpirable !== requestNonExpirableShare
-    ) {
+    const isExpirationUpdated =
+      (shareExpiration &&
+        shareExpiration !== 0 &&
+        share.shareExpirationPeriod !== shareExpiration) ||
+      share.nonExpirable !== requestNonExpirableShare;
+
+    if (isExpirationUpdated) {
       await updateShareExpiration();
     }
     if (
@@ -289,10 +292,13 @@ export const ShareEditForm = (props) => {
       await updateRequestPurpose();
     }
 
-    if (
-      (shareExpiration && shareExpiration !== 0) ||
-      share.nonExpirable !== requestNonExpirableShare
-    ) {
+    const isExpirationUpdated =
+      (shareExpiration &&
+        shareExpiration !== 0 &&
+        share.shareExpirationPeriod !== shareExpiration) ||
+      share.nonExpirable !== requestNonExpirableShare;
+
+    if (isExpirationUpdated) {
       await updateShareExpiration();
     }
 
@@ -358,10 +364,14 @@ export const ShareEditForm = (props) => {
     if (requestPurpose !== share.requestPurpose) {
       await updateRequestPurpose();
     }
-    if (
-      (shareExpiration && shareExpiration !== 0) ||
-      share.nonExpirable !== requestNonExpirableShare
-    ) {
+
+    const isExpirationUpdated =
+      (shareExpiration &&
+        shareExpiration !== 0 &&
+        share.shareExpirationPeriod !== shareExpiration) ||
+      share.nonExpirable !== requestNonExpirableShare;
+
+    if (isExpirationUpdated) {
       await updateShareExpiration();
     }
     if (onApply) {

@@ -431,6 +431,12 @@
                     ]
                 },
                 {
+                    "resource": "AWS::IAM::Policy.dataallmaincdkpipelinePipelineRoleDefaultPolicy98FFDB2A",
+                    "check_ids": [
+                        "CKV_AWS_111"
+                    ]
+                },
+                {
                     "resource": "AWS::Lambda::Function.CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
                     "check_ids": [
                         "CKV_AWS_115",
