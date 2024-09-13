@@ -106,9 +106,6 @@ def test_get_dataset_presigned_url_upload_data_unauthorized(client2, dataset_fix
         client2, dataset_uri, input={'prefix': 'sample_data', 'fileName': 'name'}
     ).contains('UnauthorizedOperation', 'CREDENTIALS_DATASET', dataset_uri)
 
-def test_list_s3_datasets_owned_by_env_group():
-    # TODO
-    pass
 
 def test_list_s3_datasets_owned_by_env_group(
     client1,
@@ -130,6 +127,7 @@ def test_list_s3_datasets_owned_by_env_group(
             client1, environment_uri=session_env1.environmentUri, group_uri=group2, term=session_id
         ).nodes
     ).is_length(0)
+
 
 def test_list_s3_datasets_owned_by_env_group_unauthorized():
     # TODO
