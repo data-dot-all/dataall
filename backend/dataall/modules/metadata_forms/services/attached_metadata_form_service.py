@@ -1,10 +1,6 @@
 from dataall.base.context import get_context
 from dataall.base.db import exceptions, paginate
-from dataall.core.environment.db.environment_repositories import EnvironmentRepository
-from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
-from dataall.core.permissions.services.tenant_policy_service import TenantPolicyValidationService
-from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
 from dataall.modules.metadata_forms.services.metadata_form_access_service import MetadataFormAccessService
 from dataall.modules.metadata_forms.services.metadata_form_permissions import ATTACH_METADATA_FORM

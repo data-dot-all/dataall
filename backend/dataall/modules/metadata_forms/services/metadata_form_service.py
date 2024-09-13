@@ -2,8 +2,9 @@ from dataall.base.context import get_context
 from dataall.base.db import exceptions, paginate
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
+from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicyRepository
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
-from dataall.core.permissions.services.tenant_policy_service import TenantPolicyValidationService, TenantPolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.metadata_forms.db.enums import (
     MetadataFormVisibility,
     MetadataFormFieldType,
@@ -271,12 +272,11 @@ class MetadataFormService:
         result_permissions = []
         with context.db_engine.scoped_session() as session:
             for permissions in ALL_METADATA_FORMS_ENTITY_PERMISSIONS:
-                if ResourcePolicyService.check_user_resource_permission(
+                if ResourcePolicyRepository.has_user_resource_permission(
                     session=session,
-                    username=context.username,
                     groups=context.groups,
-                    resource_uri=entityUri,
                     permission_name=permissions,
+                    resource_uri=entityUri,
                 ):
                     result_permissions.append(permissions)
             return result_permissions
