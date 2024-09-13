@@ -3,12 +3,14 @@ from integration_tests.core.stack.utils import check_stack_ready, check_stack_in
 
 
 def set_env_params(client, env, **new_params):
+    should_update = False
     new_params_list = []
     for param in env.parameters:
         new_param_value = new_params.get(param.key, param.value)
         if new_param_value != param.value:
-            new_params_list.append({'key': param.key, 'value': new_param_value})
-    if new_params_list:
+            should_update = True
+        new_params_list.append({'key': param.key, 'value': new_param_value})
+    if should_update:
         env_uri = env.environmentUri
         stack_uri = env.stack.stackUri
         check_stack_ready(client, env_uri, stack_uri)
