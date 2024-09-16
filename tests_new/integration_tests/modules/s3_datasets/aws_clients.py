@@ -99,6 +99,16 @@ class S3Client:
             logging.error(f'Error uploading file to S3: {e}')
             raise
 
+    def get_access_point(self, account_id, access_point_name):
+        try:
+            response = self._client.get_access_point(
+                AccountId=account_id,
+                Name=access_point_name
+            )
+        except Exception as e:
+            log.exception(f'Error getting access point: {e}')
+            return None
+
 
 class KMSClient:
     def __init__(self, session, account_id, region):

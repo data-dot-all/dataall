@@ -6,9 +6,12 @@ log = logging.getLogger(__name__)
 
 
 class IAMClient:
-    def __init__(self, session, region):
+    def __init__(self, session, profile, region):
         if session is None:
-            session = boto3.Session()
+            if profile is None:
+                session = boto3.Session()
+            else:
+                session = boto3.Session(profile_name=profile)
         self._client = session.client('iam', region_name=region)
         self._resource = session.resource('iam', region_name=region)
         self._region = region

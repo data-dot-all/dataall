@@ -45,7 +45,7 @@ def clean_up_share(client, shareUri):
 
 @pytest.fixture(scope='session')
 def consumption_role_1(client5, group5, persistent_cross_acc_env_1):
-    iam_client = IAMClient(session=None, region=persistent_cross_acc_env_1['region'])
+    iam_client = IAMClient(session=None, profile='second_int_test_profile', region=persistent_cross_acc_env_1['region'])
     iam_client.create_role_if_not_exists(persistent_cross_acc_env_1.AwsAccountId, test_cons_role_name)
     consumption_role = add_consumption_role(
         client5, persistent_cross_acc_env_1.environmentUri, group5, 'ShareTestConsumptionRole',
@@ -94,7 +94,8 @@ def session_share_2(client5, client1, persistent_cross_acc_env_1, session_import
 
 
 @pytest.fixture(scope='session')
-def session_share_consrole_1(client5, client1, persistent_cross_acc_env_1, session_s3_dataset1, group5,
+def session_share_consrole_1(client5, client1, persistent_cross_acc_env_1, session_s3_dataset1, session_s3_dataset1_tables,
+                             session_s3_dataset1_folders, group5,
                              consumption_role_1):
     share1cr = create_share_object(
         client=client5,
@@ -113,7 +114,7 @@ def session_share_consrole_1(client5, client1, persistent_cross_acc_env_1, sessi
 
 
 @pytest.fixture(scope='session')
-def session_share_consrole_2(client5, client1, persistent_cross_acc_env_1, session_imported_sse_s3_dataset1, group5,
+def session_share_consrole_2(client5, client1, persistent_cross_acc_env_1, session_imported_sse_s3_dataset1, session_imported_sse_s3_dataset1_tables, session_imported_sse_s3_dataset1_folders, group5,
                              consumption_role_1):
     share2cr = create_share_object(
         client=client5,
