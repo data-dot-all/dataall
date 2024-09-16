@@ -171,21 +171,12 @@ The data.all `base.api` package contains the `gql` sub-package to support GraphQ
 
 #### cdkproxy
 This package contains the code associated with the deployment of CDK stacks that correspond to data.all resources.
-`cdkproxy` is a package that exposes a REST API to run registered cloudformation stacks using AWS CDK. It is deployed as a docker container running on AWS ECS.
+`cdkproxy` is a package that runs registered cloudformation stacks using AWS CDK. It is bundled as a docker image and run as a AWS ECS task which is triggered on infastrcutre as code (IaC) operations on data.all (e.g. CRUD of data.all resources).
 
-When a data.all resource is created, the API sends an HTTP request 
-to the docker service and the code runs the appropriate stack using `cdk` cli.
+When an API request is made to create a data.all resource, such as a new dataset, the data.all backend sends a new message to an SQS Queue to asynchronously be read off the queue and start a new cdkproxy ECS task.
+The code uses a  `cdk` cli wrapper to register infrastructure and maange cdk commands, and runs the appropriate stack using `cdk` cli to deploy the IaC of the respective data.all resource.
 
-These stacks are deployed with the `cdk` cli wrapper
-The API itself consists of 4 actions/paths:
-
-- GET / : checks if the server is running
-- POST /stack/{stackid} : creates or updates the stack
-- DELETE /stack/{stackid} : deletes the stack
-- GET /stack/{stackid] : returns stack status
-
-The webserver is running on docker, using Python's  [FASTAPI](https://fastapi.tiangolo.com/) 
-web framework and running using [uvicorn](https://www.uvicorn.org/) ASGI server.
+For local data.all deployments, a webserver is run on docker using Python's [FASTAPI](https://fastapi.tiangolo.com/) web framework and running using [uvicorn](https://www.uvicorn.org/) ASGI server. Subsequnetly, data.all sends POST API Requests to the `cdkproxy` web server to start the data.all infrastructure task.
 
 ### core/ <a name="core"></a>
 Core contains those functionalities that are indispensable to run data.all. Customization of the core should be limited
