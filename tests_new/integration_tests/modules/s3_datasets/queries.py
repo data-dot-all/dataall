@@ -311,7 +311,7 @@ def list_s3_datasets_owned_by_env_group(client, environment_uri, group_uri, term
                 """,
     }
     response = client.query(query=query)
-    return response.data.listDatasetsCreatedInEnvironment
+    return response.data.listS3DatasetsOwnedByEnvGroup
 
 
 ## Folders Queries/Mutations
