@@ -1,16 +1,33 @@
 from assertpy import assert_that
 import pytest
 
-from dataall.modules.shares_base.services.shares_enums import PrincipalType, ShareObjectStatus, ShareItemStatus, \
-    ShareItemHealthStatus, ShareableType
+from dataall.modules.shares_base.services.shares_enums import (
+    PrincipalType,
+    ShareObjectStatus,
+    ShareItemStatus,
+    ShareItemHealthStatus,
+    ShareableType,
+)
 from tests_new.integration_tests.modules.share_base.utils import check_share_ready, check_share_items_verified
 from tests_new.integration_tests.modules.share_base.conftest import clean_up_share
-from tests_new.integration_tests.modules.share_base.queries import create_share_object, delete_share_object, \
-    submit_share_object, get_share_object, add_share_item, reject_share_object, update_share_reject_reason, \
-    update_share_request_reason, approve_share_object, verify_share_items, revoke_share_items
+from tests_new.integration_tests.modules.share_base.queries import (
+    create_share_object,
+    delete_share_object,
+    submit_share_object,
+    get_share_object,
+    add_share_item,
+    reject_share_object,
+    update_share_reject_reason,
+    update_share_request_reason,
+    approve_share_object,
+    verify_share_items,
+    revoke_share_items,
+)
 
 
-def test_create_and_delete_share_object(client5, persistent_cross_acc_env_1, consumption_role_1, session_s3_dataset1, group5):
+def test_create_and_delete_share_object(
+    client5, persistent_cross_acc_env_1, consumption_role_1, session_s3_dataset1, group5
+):
     share = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': session_s3_dataset1.datasetUri},
@@ -20,13 +37,13 @@ def test_create_and_delete_share_object(client5, persistent_cross_acc_env_1, con
         principalType=PrincipalType.ConsumptionRole.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
-        permissions=['Read']
+        permissions=['Read'],
     )
     assert_that(share.status).is_equal_to(ShareObjectStatus.Draft.value)
     delete_share_object(client5, share.shareUri)
 
 
-def test_submit_empty_object(client5, persistent_cross_acc_env_1, session_s3_dataset1, group5,consumption_role_1):
+def test_submit_empty_object(client5, persistent_cross_acc_env_1, session_s3_dataset1, group5, consumption_role_1):
     # here Exception is not recognized as GqlError, so we use base class
     # toDo: back to GqlError
     share = create_share_object(
@@ -38,7 +55,7 @@ def test_submit_empty_object(client5, persistent_cross_acc_env_1, session_s3_dat
         principalType=PrincipalType.ConsumptionRole.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
-        permissions=['Read']
+        permissions=['Read'],
     )
     assert_that(submit_share_object).raises(Exception).when_called_with(client5, share.shareUri).contains(
         'ShareItemsFound', 'The request is empty'
@@ -46,7 +63,7 @@ def test_submit_empty_object(client5, persistent_cross_acc_env_1, session_s3_dat
     clean_up_share(client5, share.shareUri)
 
 
-def test_add_share_items(client5, persistent_cross_acc_env_1, session_s3_dataset1, group5,consumption_role_1 ):
+def test_add_share_items(client5, persistent_cross_acc_env_1, session_s3_dataset1, group5, consumption_role_1):
     share = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': session_s3_dataset1.datasetUri},
@@ -56,7 +73,7 @@ def test_add_share_items(client5, persistent_cross_acc_env_1, session_s3_dataset
         principalType=PrincipalType.ConsumptionRole.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
-        permissions=['Read']
+        permissions=['Read'],
     )
     share = get_share_object(client5, share.shareUri)
 
@@ -77,7 +94,7 @@ def test_add_share_items(client5, persistent_cross_acc_env_1, session_s3_dataset
     clean_up_share(client5, share.shareUri)
 
 
-def test_reject_share(client1, client5, persistent_cross_acc_env_1, session_s3_dataset1,group5, consumption_role_1):
+def test_reject_share(client1, client5, persistent_cross_acc_env_1, session_s3_dataset1, group5, consumption_role_1):
     share = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': session_s3_dataset1.datasetUri},
@@ -87,7 +104,7 @@ def test_reject_share(client1, client5, persistent_cross_acc_env_1, session_s3_d
         principalType=PrincipalType.ConsumptionRole.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
-        permissions=['Read']
+        permissions=['Read'],
     )
     share = get_share_object(client5, share.shareUri)
 
@@ -109,7 +126,6 @@ def test_reject_share(client1, client5, persistent_cross_acc_env_1, session_s3_d
     assert_that(updated_share.rejectPurpose).is_equal_to('new purpose')
 
     clean_up_share(client5, share.shareUri)
-
 
 
 def test_change_share_purpose(client5, session_share_consrole_1):
@@ -161,9 +177,9 @@ def test_share_succeeded(client1, session_share_consrole_1):
     for item in items:
         assert_that(item.status).is_equal_to(ShareItemStatus.Share_Succeeded.value)
         assert_that(item.healthStatus).is_equal_to(ShareItemHealthStatus.Healthy.value)
-    assert_that(items).extracting("itemType").contains(ShareableType.Table.name)
-    assert_that(items).extracting("itemType").contains(ShareableType.S3Bucket.name)
-    assert_that(items).extracting("itemType").contains(ShareableType.StorageLocation.name)
+    assert_that(items).extracting('itemType').contains(ShareableType.Table.name)
+    assert_that(items).extracting('itemType').contains(ShareableType.S3Bucket.name)
+    assert_that(items).extracting('itemType').contains(ShareableType.StorageLocation.name)
 
 
 @pytest.mark.dependency(depends=['test_share_succeeded'])
@@ -197,9 +213,9 @@ def test_revoke_share(client1, session_share_consrole_1):
     items = updated_share['items'].nodes
     for item in items:
         assert_that(item.status).is_equal_to(ShareItemStatus.Revoke_Approved.value)
-    assert_that(items).extracting("itemType").contains(ShareableType.Table.name)
-    assert_that(items).extracting("itemType").contains(ShareableType.S3Bucket.name)
-    assert_that(items).extracting("itemType").contains(ShareableType.StorageLocation.name)
+    assert_that(items).extracting('itemType').contains(ShareableType.Table.name)
+    assert_that(items).extracting('itemType').contains(ShareableType.S3Bucket.name)
+    assert_that(items).extracting('itemType').contains(ShareableType.StorageLocation.name)
 
 
 @pytest.mark.dependency(depends=['test_revoke_share'])
@@ -211,6 +227,6 @@ def test_revoke_succeeded(client1, session_share_consrole_1):
     assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Processed.value)
     for item in items:
         assert_that(item.status).is_equal_to(ShareItemStatus.Revoke_Succeeded.value)
-    assert_that(items).extracting("itemType").contains(ShareableType.Table.name)
-    assert_that(items).extracting("itemType").contains(ShareableType.S3Bucket.name)
-    assert_that(items).extracting("itemType").contains(ShareableType.StorageLocation.name)
+    assert_that(items).extracting('itemType').contains(ShareableType.Table.name)
+    assert_that(items).extracting('itemType').contains(ShareableType.S3Bucket.name)
+    assert_that(items).extracting('itemType').contains(ShareableType.StorageLocation.name)

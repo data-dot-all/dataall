@@ -101,10 +101,7 @@ class S3Client:
 
     def get_access_point(self, account_id, access_point_name):
         try:
-            response = self._client.get_access_point(
-                AccountId=account_id,
-                Name=access_point_name
-            )
+            response = self._client.get_access_point(AccountId=account_id, Name=access_point_name)
         except Exception as e:
             log.exception(f'Error getting access point: {e}')
             return None

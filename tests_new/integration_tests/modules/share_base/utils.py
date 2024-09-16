@@ -18,9 +18,8 @@ def is_all_items_verified(share):
     items = share['items'].nodes
     statuses = [item.healthStatus for item in items]
     return not (
-            ShareItemHealthStatus.PendingVerify.value in statuses
-            or
-            ShareItemHealthStatus.PendingReApply.value in statuses)
+        ShareItemHealthStatus.PendingVerify.value in statuses or ShareItemHealthStatus.PendingReApply.value in statuses
+    )
 
 
 @poller(check_success=lambda share: not is_share_in_progress(share), timeout=600)

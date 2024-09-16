@@ -4,15 +4,15 @@ from typing import List
 
 
 def create_share_object(
-        client,
-        dataset_or_item_params: dict,
-        environmentUri,
-        groupUri,
-        principalId,
-        principalType,
-        requestPurpose,
-        attachMissingPolicies,
-        permissions
+    client,
+    dataset_or_item_params: dict,
+    environmentUri,
+    groupUri,
+    principalId,
+    principalType,
+    requestPurpose,
+    attachMissingPolicies,
+    permissions,
 ):
     variables = dataset_or_item_params
     variables['input'] = NewShareObjectInput(

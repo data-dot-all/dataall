@@ -42,16 +42,26 @@ def consumption_role_1(client5, group5, persistent_cross_acc_env_1, testdata):
     iam_client = IAMClient(session=None, profile=aws_profile, region=persistent_cross_acc_env_1['region'])
     iam_client.create_role_if_not_exists(persistent_cross_acc_env_1.AwsAccountId, test_cons_role_name)
     consumption_role = add_consumption_role(
-        client5, persistent_cross_acc_env_1.environmentUri, group5, 'ShareTestConsumptionRole',
-        f'arn:aws:iam::{persistent_cross_acc_env_1.AwsAccountId}:role/{test_cons_role_name}'
+        client5,
+        persistent_cross_acc_env_1.environmentUri,
+        group5,
+        'ShareTestConsumptionRole',
+        f'arn:aws:iam::{persistent_cross_acc_env_1.AwsAccountId}:role/{test_cons_role_name}',
     )
     yield consumption_role
     remove_consumption_role(client5, persistent_cross_acc_env_1.environmentUri, consumption_role.consumptionRoleUri)
 
 
 @pytest.fixture(scope='session')
-def session_share_1(client5, client1, persistent_cross_acc_env_1, session_s3_dataset1, session_s3_dataset1_tables,
-                    session_s3_dataset1_folders, group5):
+def session_share_1(
+    client5,
+    client1,
+    persistent_cross_acc_env_1,
+    session_s3_dataset1,
+    session_s3_dataset1_tables,
+    session_s3_dataset1_folders,
+    group5,
+):
     share1 = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': session_s3_dataset1.datasetUri},
@@ -61,7 +71,7 @@ def session_share_1(client5, client1, persistent_cross_acc_env_1, session_s3_dat
         principalType=PrincipalType.Group.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
-        permissions=['Read']
+        permissions=['Read'],
     )
     share1 = get_share_object(client5, share1.shareUri)
     yield share1
@@ -69,7 +79,15 @@ def session_share_1(client5, client1, persistent_cross_acc_env_1, session_s3_dat
 
 
 @pytest.fixture(scope='session')
-def session_share_2(client5, client1, persistent_cross_acc_env_1, session_imported_sse_s3_dataset1,session_imported_sse_s3_dataset1_tables, session_imported_sse_s3_dataset1_folders, group5):
+def session_share_2(
+    client5,
+    client1,
+    persistent_cross_acc_env_1,
+    session_imported_sse_s3_dataset1,
+    session_imported_sse_s3_dataset1_tables,
+    session_imported_sse_s3_dataset1_folders,
+    group5,
+):
     share2 = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': session_imported_sse_s3_dataset1.datasetUri},
@@ -79,7 +97,7 @@ def session_share_2(client5, client1, persistent_cross_acc_env_1, session_import
         principalType=PrincipalType.Group.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
-        permissions=['Read']
+        permissions=['Read'],
     )
     share2 = get_share_object(client5, share2.shareUri)
     yield share2
@@ -88,9 +106,16 @@ def session_share_2(client5, client1, persistent_cross_acc_env_1, session_import
 
 
 @pytest.fixture(scope='session')
-def session_share_consrole_1(client5, client1, persistent_cross_acc_env_1, session_s3_dataset1, session_s3_dataset1_tables,
-                             session_s3_dataset1_folders, group5,
-                             consumption_role_1):
+def session_share_consrole_1(
+    client5,
+    client1,
+    persistent_cross_acc_env_1,
+    session_s3_dataset1,
+    session_s3_dataset1_tables,
+    session_s3_dataset1_folders,
+    group5,
+    consumption_role_1,
+):
     share1cr = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': session_s3_dataset1.datasetUri},
@@ -100,7 +125,7 @@ def session_share_consrole_1(client5, client1, persistent_cross_acc_env_1, sessi
         principalType=PrincipalType.ConsumptionRole.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
-        permissions=['Read']
+        permissions=['Read'],
     )
     share1cr = get_share_object(client5, share1cr.shareUri)
     yield share1cr
@@ -108,8 +133,16 @@ def session_share_consrole_1(client5, client1, persistent_cross_acc_env_1, sessi
 
 
 @pytest.fixture(scope='session')
-def session_share_consrole_2(client5, client1, persistent_cross_acc_env_1, session_imported_sse_s3_dataset1, session_imported_sse_s3_dataset1_tables, session_imported_sse_s3_dataset1_folders, group5,
-                             consumption_role_1):
+def session_share_consrole_2(
+    client5,
+    client1,
+    persistent_cross_acc_env_1,
+    session_imported_sse_s3_dataset1,
+    session_imported_sse_s3_dataset1_tables,
+    session_imported_sse_s3_dataset1_folders,
+    group5,
+    consumption_role_1,
+):
     share2cr = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': session_imported_sse_s3_dataset1.datasetUri},
@@ -119,7 +152,7 @@ def session_share_consrole_2(client5, client1, persistent_cross_acc_env_1, sessi
         principalType=PrincipalType.ConsumptionRole.value,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
-        permissions=['Read']
+        permissions=['Read'],
     )
     share2cr = get_share_object(client5, share2cr.shareUri)
     yield share2cr

@@ -19,7 +19,6 @@ from tests_new.integration_tests.modules.datasets_base.queries import list_datas
 
 from integration_tests.modules.s3_datasets.aws_clients import S3Client, KMSClient, GlueClient, LakeFormationClient
 
-from tests_new.integration_tests.modules.s3_datasets.queries import create_folder
 
 log = logging.getLogger(__name__)
 
@@ -270,15 +269,15 @@ def session_imported_sse_s3_dataset1_folders(client1, session_imported_sse_s3_da
 
 @pytest.fixture(scope='session')
 def session_imported_kms_s3_dataset1(
-        client1,
-        group1,
-        org1,
-        session_env1,
-        session_id,
-        testdata,
-        session_env1_aws_client,
-        session_env1_integration_role_arn,
-        resources_prefix,
+    client1,
+    group1,
+    org1,
+    session_env1,
+    session_id,
+    testdata,
+    session_env1_aws_client,
+    session_env1_integration_role_arn,
+    resources_prefix,
 ):
     resource_name = f'{resources_prefix}importedkms'
     bucket, kms_alias, database, existing_lf_admins = create_aws_imported_resources(
@@ -362,7 +361,7 @@ They are suitable for testing backwards compatibility.
 
 
 def get_or_create_persistent_s3_dataset(
-        dataset_name, client, group, env, autoApprovalEnabled=False, bucket=None, kms_alias='', glue_database=''
+    dataset_name, client, group, env, autoApprovalEnabled=False, bucket=None, kms_alias='', glue_database=''
 ):
     dataset_name = dataset_name or 'persistent_s3_dataset1'
     s3_datasets = list_datasets(client, term=dataset_name).nodes
@@ -381,7 +380,7 @@ def get_or_create_persistent_s3_dataset(
                 bucket=bucket,
                 kms_alias=kms_alias,
                 glue_db_name=glue_database,
-                autoApprovalEnabled=autoApprovalEnabled
+                autoApprovalEnabled=autoApprovalEnabled,
             )
 
         else:
@@ -393,7 +392,7 @@ def get_or_create_persistent_s3_dataset(
                 org_uri=env['organization']['organizationUri'],
                 env_uri=env['environmentUri'],
                 tags=[dataset_name],
-                autoApprovalEnabled=autoApprovalEnabled
+                autoApprovalEnabled=autoApprovalEnabled,
             )
 
         if s3_dataset.stack.status in ['CREATE_COMPLETE', 'UPDATE_COMPLETE']:

@@ -24,11 +24,11 @@ class IAMClient:
             log.info(f'Error occurred: {e}')
             return None
 
-    def create_role(self,account_id,  role_name):
+    def create_role(self, account_id, role_name):
         try:
             role = self._client.create_role(
                 RoleName=role_name,
-                AssumeRolePolicyDocument=f'''{{
+                AssumeRolePolicyDocument=f"""{{
                                          "Version": "2012-10-17",
             "Statement": [
                 {{
@@ -40,7 +40,7 @@ class IAMClient:
                     "Condition": {{}}
                 }}
             ]
-            }}''',
+            }}""",
                 Description='Role for Lambda function',
             )
             return role

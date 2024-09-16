@@ -1,4 +1,6 @@
-def NewShareObjectInput(environmentUri, groupUri, principalId, principalType, requestPurpose, attachMissingPolicies, permissions):
+def NewShareObjectInput(
+    environmentUri, groupUri, principalId, principalType, requestPurpose, attachMissingPolicies, permissions
+):
     return {
         'environmentUri': environmentUri,
         'groupUri': groupUri,
@@ -6,5 +8,5 @@ def NewShareObjectInput(environmentUri, groupUri, principalId, principalType, re
         'principalType': principalType,
         'requestPurpose': requestPurpose,
         'attachMissingPolicies': attachMissingPolicies,
-        'permissions': permissions
+        'permissions': permissions,
     }
