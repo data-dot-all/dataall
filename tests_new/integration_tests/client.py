@@ -8,16 +8,16 @@ from integration_tests.errors import GqlError
 ENVNAME = os.getenv('ENVNAME', 'dev')
 
 
+def _retry_if_connection_error(exception):
+    """Return True if we should retry, False otherwise"""
+    return isinstance(exception, requests.exceptions.ConnectionError) or isinstance(exception, requests.ReadTimeout)
+
+
 class Client:
     def __init__(self, username, password):
         self.username = username
         self.password = password
         self.token = self._get_jwt_token()
-
-    @staticmethod
-    def _retry_if_connection_error(exception):
-        """Return True if we should retry, False otherwise"""
-        return isinstance(exception, requests.exceptions.ConnectionError) or isinstance(exception, requests.ReadTimeout)
 
     @retry(
         retry_on_exception=_retry_if_connection_error,
@@ -29,9 +29,9 @@ class Client:
         graphql_endpoint = os.path.join(os.environ['API_ENDPOINT'], 'graphql', 'api')
         headers = {'AccessKeyId': 'none', 'SecretKey': 'none', 'authorization': self.token}
         r = requests.post(graphql_endpoint, json=query, headers=headers)
-        r.raise_for_status()
         if errors := r.json().get('errors'):
             raise GqlError(errors)
+        r.raise_for_status()
 
         return DefaultMunch.fromDict(r.json())
 
