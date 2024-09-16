@@ -4,6 +4,7 @@ import logging
 from dataall.base.context import get_context
 from dataall.base.utils import Parameter
 from dataall.base.db import exceptions
+from dataall.base.utils.stack_logs_utils import is_stack_logs_visible
 from dataall.core.stacks.aws.cloudwatch import CloudWatch
 from dataall.base.config import config
 
@@ -15,7 +16,8 @@ log = logging.getLogger(__name__)
 
 class ShareLogsService:
     @staticmethod
-    def check_view_log_permissions(username, groups, shareUri):
+    @is_stack_logs_visible()
+    def check_view_log_permissions(username, groups, shareUri, target_type='shares'):
         with get_context().db_engine.scoped_session() as session:
             share = ShareObjectRepository.get_share_by_uri(session, shareUri)
             ds = DatasetBaseRepository.get_dataset_by_uri(session, share.datasetUri)

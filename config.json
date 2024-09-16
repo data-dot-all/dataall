@@ -47,11 +47,15 @@
                 "file_actions": true,
                 "aws_actions": true,
                 "preview_data": true,
-                "glue_crawler": true
+                "glue_crawler": true,
+                "show_stack_logs": "admin-only"
             }
         },
         "s3_datasets_shares": {
-            "active": true
+            "active": true,
+            "features": {
+                "show_stack_logs": "admin-only"
+            }
         },
         "redshift_datasets": {
             "active": true
@@ -73,7 +77,8 @@
         "features": {
             "env_aws_actions": true,
             "cdk_pivot_role_multiple_environments_same_account": false,
-            "enable_quicksight_monitoring": false
+            "enable_quicksight_monitoring": false,
+            "show_stack_logs": "disabled"
         },
         "log_query_period_days": 1
     }

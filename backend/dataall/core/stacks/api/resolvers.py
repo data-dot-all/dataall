@@ -4,6 +4,7 @@ import os
 
 from dataall.base.config import config
 from dataall.base.api.context import Context
+from dataall.base.utils.stack_logs_utils import is_stack_logs_visible
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.services.keyvaluetag_service import KeyValueTagService
 from dataall.core.stacks.services.stack_service import StackService
@@ -64,6 +65,7 @@ def resolve_task_id(context, source: Stack, **kwargs):
         return source.EcsTaskArn.split('/')[-1]
 
 
+@is_stack_logs_visible()
 def get_stack_logs(context: Context, source, targetUri: str = None, targetType: str = None):
     query = StackService.get_stack_logs(target_uri=targetUri, target_type=targetType)
     envname = os.getenv('envname', 'local')
