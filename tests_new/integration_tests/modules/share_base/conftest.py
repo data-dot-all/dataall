@@ -1,15 +1,8 @@
-import json
-
-import boto3
 import pytest
 
 from tests_new.integration_tests.aws_clients.iam import IAMClient
 from tests_new.integration_tests.core.environment.queries import add_consumption_role, remove_consumption_role
 from dataall.modules.shares_base.services.shares_enums import PrincipalType
-from tests_new.integration_tests.modules.s3_datasets.aws_clients import GlueClient
-from tests_new.integration_tests.modules.s3_datasets.global_conftest import get_or_create_persistent_s3_dataset
-from tests_new.integration_tests.modules.s3_datasets.queries import create_folder, generate_dataset_access_token, \
-    sync_tables
 from tests_new.integration_tests.modules.share_base.queries import (
     create_share_object,
     delete_share_object,
@@ -44,8 +37,9 @@ def clean_up_share(client, shareUri):
 
 
 @pytest.fixture(scope='session')
-def consumption_role_1(client5, group5, persistent_cross_acc_env_1):
-    iam_client = IAMClient(session=None, profile='second_int_test_profile', region=persistent_cross_acc_env_1['region'])
+def consumption_role_1(client5, group5, persistent_cross_acc_env_1, testdata):
+    aws_profile = testdata.aws_profiles['second']
+    iam_client = IAMClient(session=None, profile=aws_profile, region=persistent_cross_acc_env_1['region'])
     iam_client.create_role_if_not_exists(persistent_cross_acc_env_1.AwsAccountId, test_cons_role_name)
     consumption_role = add_consumption_role(
         client5, persistent_cross_acc_env_1.environmentUri, group5, 'ShareTestConsumptionRole',
