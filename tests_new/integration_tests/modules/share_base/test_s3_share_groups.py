@@ -1,3 +1,6 @@
+import json
+
+import boto3
 import pytest
 from assertpy import assert_that
 
@@ -8,6 +11,8 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareableType,
 )
 from dataall.modules.shares_base.services.shares_enums import PrincipalType
+from tests_new.integration_tests.modules.s3_datasets.aws_clients import S3Client
+from tests_new.integration_tests.core.environment.queries import get_environment_access_token
 from tests_new.integration_tests.modules.share_base.conftest import clean_up_share
 from tests_new.integration_tests.modules.share_base.queries import (
     create_share_object,
@@ -21,6 +26,7 @@ from tests_new.integration_tests.modules.share_base.queries import (
     verify_share_items,
     update_share_request_reason,
     update_share_reject_reason,
+    get_s3_consumption_data,
 )
 from tests_new.integration_tests.modules.share_base.utils import check_share_ready, check_share_items_verified
 
@@ -195,6 +201,25 @@ def test_verify_share_items(client1, session_share_1):
         assert_that(item.status).is_equal_to(ShareItemStatus.Share_Succeeded.value)
         assert_that(item.healthStatus).is_equal_to(ShareItemHealthStatus.Healthy.value)
         assert_that(item.lastVerificationTime).is_not_equal_to(times[item.shareItemUri])
+
+
+@pytest.mark.dependency(depends=['test_share_succeeded'])
+def test_share_items_access(client5, session_share_1, session_s3_dataset1):
+    updated_share = get_share_object(client5, session_share_1.shareUri, {'isShared': True})
+    credentials = json.loads(
+        get_environment_access_token(client5, session_share_1.environment.environmentUri, session_share_1.groupUri)
+    )
+
+    session = boto3.Session(
+        aws_access_key_id=credentials['AccessKey'],
+        aws_secret_access_key=credentials['SessionKey'],
+        aws_session_token=credentials['sessionToken'],
+    )
+    s3_client = S3Client(session, session_s3_dataset1.region)
+    consumption_data = get_s3_consumption_data(client5, session_share_1.shareUri)
+
+    assert_that(s3_client.bucket_exists(consumption_data.s3bucketName)).is_not_none()
+    assert_that(s3_client.get_access_point(session_s3_dataset1.AwsAccountId, consumption_data.s3AccessPointName)).is_not_none()
 
 
 @pytest.mark.dependency(depends=['test_share_succeeded'])

@@ -210,3 +210,22 @@ def revoke_share_items(client, shareUri: str, shareItemUris: List[str]):
 
     response = client.query(query=query)
     return response.data.revokeItemsShareObject
+
+
+def get_s3_consumption_data(client, shareUri: str):
+    query = {
+        'operationName': 'getS3ConsumptionData',
+        'variables': {'shareUri': shareUri},
+        'query': f"""
+                    query getS3ConsumptionData($shareUri: String!) {{
+                        getS3ConsumptionData(shareUri: $shareUri) {{
+                           s3AccessPointName
+                           sharedGlueDatabase
+                           s3bucketName
+                        }}
+                    }}
+                """,
+    }
+
+    response = client.query(query=query)
+    return response.data.getS3ConsumptionData

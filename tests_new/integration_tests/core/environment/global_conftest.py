@@ -16,9 +16,9 @@ from integration_tests.core.stack.utils import check_stack_ready
 log = logging.getLogger(__name__)
 
 
-def create_env(client, group, org_uri, account_id, region, tags=[]):
+def create_env(client, env_name, group, org_uri, account_id, region, tags=[]):
     env = create_environment(
-        client, name='testEnvA', group=group, organizationUri=org_uri, awsAccountId=account_id, region=region, tags=tags
+        client, name=env_name, group=group, organizationUri=org_uri, awsAccountId=account_id, region=region, tags=tags
     )
     check_stack_ready(client, env.environmentUri, env.stack.stackUri)
     return get_environment(client, env.environmentUri)
@@ -44,7 +44,9 @@ def session_env1(client1, group1, org1, session_id, testdata):
     envdata = testdata.envs['session_env1']
     env = None
     try:
-        env = create_env(client1, group1, org1.organizationUri, envdata.accountId, envdata.region, tags=[session_id])
+        env = create_env(
+            client1, 'session_env1', group1, org1.organizationUri, envdata.accountId, envdata.region, tags=[session_id]
+        )
         yield env
     finally:
         if env:
@@ -92,7 +94,9 @@ def session_env2(client1, group1, group2, org2, session_id, testdata):
     envdata = testdata.envs['session_env2']
     env = None
     try:
-        env = create_env(client1, group1, org2.organizationUri, envdata.accountId, envdata.region, tags=[session_id])
+        env = create_env(
+            client1, 'session_env2', group1, org2.organizationUri, envdata.accountId, envdata.region, tags=[session_id]
+        )
         invite_group_on_env(client1, env.environmentUri, group2, ['CREATE_DATASET'])
         yield env
     finally:
@@ -111,7 +115,7 @@ def temp_env1(client1, group1, org1, testdata):
     envdata = testdata.envs['temp_env1']
     env = None
     try:
-        env = create_env(client1, group1, org1.organizationUri, envdata.accountId, envdata.region)
+        env = create_env(client1, 'temp_env1', group1, org1.organizationUri, envdata.accountId, envdata.region)
         yield env
     finally:
         if env:
@@ -131,7 +135,9 @@ def get_or_create_persistent_env(env_name, client, group, testdata):
     else:
         envdata = testdata.envs[env_name]
         org = create_organization(client, f'org_{env_name}', group)
-        env = create_env(client, group, org.organizationUri, envdata.accountId, envdata.region, tags=[env_name])
+        env = create_env(
+            client, env_name, group, org.organizationUri, envdata.accountId, envdata.region, tags=[env_name]
+        )
         if env.stack.status in ['CREATE_COMPLETE', 'UPDATE_COMPLETE']:
             return env
         else:
