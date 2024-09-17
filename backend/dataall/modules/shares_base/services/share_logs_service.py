@@ -16,8 +16,8 @@ log = logging.getLogger(__name__)
 
 class ShareLogsService:
     @staticmethod
-    @is_stack_logs_visible()
-    def check_view_log_permissions(username, groups, shareUri, target_type='shares'):
+    @is_stack_logs_visible(targetType='shares')
+    def check_view_log_permissions(username, groups, shareUri):
         with get_context().db_engine.scoped_session() as session:
             share = ShareObjectRepository.get_share_by_uri(session, shareUri)
             ds = DatasetBaseRepository.get_dataset_by_uri(session, share.datasetUri)

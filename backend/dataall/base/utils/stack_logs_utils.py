@@ -3,14 +3,13 @@ from dataall.base.config import config
 from dataall.base.context import get_context
 
 
-def is_stack_logs_visible():
+def is_stack_logs_visible(targetType: str = None):
     def decorator(f):
         @wraps(f)
         def wrapper(*args, **kwds):
-            print(get_context().groups)
-            target_type = kwds['targetType']
+            target_type = kwds.get('targetType') if kwds.get('targetType') is not None else targetType
             if not target_type:
-                raise Exception('target_type is missing when calling decorator "is_stack_logs_visible"')
+                raise Exception('targetType is missing when calling decorator "is_stack_logs_visible"')
             value = 'disabled'
             if target_type == 'environment':
                 value = config.get_property('core.features.show_stack_logs')
@@ -22,11 +21,10 @@ def is_stack_logs_visible():
             if value == 'enabled':
                 return f(*args, **kwds)
             if value == 'admin-only':
-                return (
-                    f(*args, **kwds)
-                    if 'DAAdministrators' in get_context().groups
-                    else Exception('Stack logs are only visible to data.all administrators')
-                )
+                if 'DAAdministrators' in get_context().groups:
+                    return f(*args, **kwds)
+                else:
+                    raise Exception('Stack logs are only visible to data.all administrators')
 
             raise Exception('Stack logs are disabled. Please check "show_stack_logs" config in config.json')
 

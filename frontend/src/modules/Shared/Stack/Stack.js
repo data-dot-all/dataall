@@ -123,7 +123,7 @@ export const Stack = (props) => {
   };
 
   useEffect(() => {
-    if (client) {
+    if (client && groups) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
       setStackLogsVisibility().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
