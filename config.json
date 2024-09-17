@@ -78,7 +78,7 @@
             "env_aws_actions": true,
             "cdk_pivot_role_multiple_environments_same_account": false,
             "enable_quicksight_monitoring": false,
-            "show_stack_logs": "disabled"
+            "show_stack_logs": "admin-only"
         },
         "log_query_period_days": 1
     }
