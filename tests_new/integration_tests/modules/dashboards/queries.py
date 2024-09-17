@@ -13,14 +13,14 @@ def search_dashboards(client, filter):
         'operationName': 'searchDashboards',
         'variables': {'filter': filter},
         'query': """
-            query searchDashboards($filter: DashboardFilter) {{
-              searchDashboards(filter: $filter) {{
+            query searchDashboards($filter: DashboardFilter) {
+              searchDashboards(filter: $filter) {
                 count
                 page
                 pages
                 hasNext
                 hasPrevious
-                nodes {{
+                nodes {
                   dashboardUri
                   name
                   owner
@@ -31,21 +31,21 @@ def search_dashboards(client, filter):
                   tags
                   userRoleForDashboard
                   upvotes
-                  organization {{
+                  organization {
                     organizationUri
                     label
                     name
-                  }}
-                  environment {{
+                  }
+                  environment {
                     environmentUri
                     name
                     label
                     AwsAccountId
                     region
-                  }}
-                }}
-              }}
-            }}
+                  }
+                }
+              }
+            }
         """,
     }
     response = client.query(query=query)
@@ -54,11 +54,11 @@ def search_dashboards(client, filter):
 
 def get_dashboard(client, dashboardUri):
     query = {
-        'operationName': 'getDashboard',
+        'operationName': 'GetDashboard',
         'variables': {'dashboardUri': dashboardUri},
         'query': """
-            query GetDashboard($dashboardUri: String!) {{
-              getDashboard(dashboardUri: $dashboardUri) {{
+            query GetDashboard($dashboardUri: String!) {
+              getDashboard(dashboardUri: $dashboardUri) {
                 dashboardUri
                 name
                 owner
@@ -68,25 +68,25 @@ def get_dashboard(client, dashboardUri):
                 created
                 tags
                 userRoleForDashboard
-                environment {{
+                environment {
                   label
                   region
-                }}
-                organization {{
+                }
+                organization {
                   organizationUri
                   label
                   name
-                }}
-                terms {{
+                }
+                terms {
                   count
-                  nodes {{
+                  nodes {
                     nodeUri
                     path
                     label
-                  }}
-                }}
-              }}
-            }}
+                  }
+                }
+              }
+            }
         """,
     }
     response = client.query(query=query)
@@ -98,19 +98,19 @@ def list_dashboard_shares(client, dashboardUri, filter):
         'operationName': 'listDashboardShares',
         'variables': {'dashboardUri': dashboardUri, 'filter': filter},
         'query': """
-            query listDashboardShares($dashboardUri: String!,$filter: DashboardShareFilter!) {{
-              listDashboardShares(dashboardUri: $dashboardUri, filter: $filter) {{
+            query listDashboardShares($dashboardUri: String!,$filter: DashboardShareFilter!) {
+              listDashboardShares(dashboardUri: $dashboardUri, filter: $filter) {
                 count
-                nodes {{
+                nodes {
                   dashboardUri
                   shareUri
                   SamlGroupName
                   owner
                   created
                   status
-                }}
-              }}
-            }}
+                }
+              }
+            }
         """,
     }
     response = client.query(query=query)
@@ -119,14 +119,12 @@ def list_dashboard_shares(client, dashboardUri, filter):
 
 def get_author_session(client, environmentUri):
     query = {
-        'operationName': 'getAuthorSession',
-        'variables': {
-            'environmentUri': environmentUri,
-        },
+        'operationName': 'GetAuthorSession',
+        'variables': {'environmentUri': environmentUri},
         'query': """
-            query GetAuthorSession($environmentUri: String!) {{
+            query GetAuthorSession($environmentUri: String!) {
               getAuthorSession(environmentUri: $environmentUri)
-            }}
+            }
         """,
     }
     response = client.query(query=query)
@@ -135,14 +133,14 @@ def get_author_session(client, environmentUri):
 
 def get_reader_session(client, dashboardUri):
     query = {
-        'operationName': 'getReaderSession',
+        'operationName': 'GetReaderSession',
         'variables': {
             'dashboardUri': dashboardUri,
         },
         'query': """
-            query GetReaderSession($dashboardUri: String!) {{
+            query GetReaderSession($dashboardUri: String!) {
               getReaderSession(dashboardUri: $dashboardUri)
-            }}
+            }
         """,
     }
     response = client.query(query=query)
