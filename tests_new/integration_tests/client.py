@@ -29,9 +29,9 @@ class Client:
         graphql_endpoint = os.path.join(os.environ['API_ENDPOINT'], 'graphql', 'api')
         headers = {'AccessKeyId': 'none', 'SecretKey': 'none', 'authorization': self.token}
         r = requests.post(graphql_endpoint, json=query, headers=headers)
-        r.raise_for_status()
         if errors := r.json().get('errors'):
             raise GqlError(errors)
+        r.raise_for_status()
 
         return DefaultMunch.fromDict(r.json())
 

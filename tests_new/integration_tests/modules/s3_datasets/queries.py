@@ -76,6 +76,16 @@ stack {
 autoApprovalEnabled
 """
 
+S3_DATASET_TABLE_FILTER_TYPE = """
+filterUri
+tableUri
+label
+description
+filterType
+includedCols
+rowExpression
+"""
+
 
 ## Dataset Queries/Mutations
 def create_dataset(
@@ -457,12 +467,9 @@ def create_table_data_filter(client, tableUri, input):
         'operationName': 'createTableDataFilter',
         'variables': {'tableUri': tableUri, 'input': input},
         'query': f"""
-                mutation createTableDataFilter(
-                  $tableUri: String!
-                  $input: NewTableDataFilterInput!
-                ) {{
+                mutation createTableDataFilter($tableUri: String!,$input: NewTableDataFilterInput!) {{
                   createTableDataFilter(tableUri: $tableUri, input: $input) {{
-                    filterUri
+                      {S3_DATASET_TABLE_FILTER_TYPE}
                   }}
                 }}
                 """,
@@ -552,10 +559,10 @@ def preview_table(client, tableUri):
     return response.data.previewTable
 
 
-def list_table_data_filters(client, tableUri, term):
+def list_table_data_filters(client, tableUri):
     query = {
         'operationName': 'listTableDataFilters',
-        'variables': {'tableUri': tableUri, 'filter': {'term': term}},
+        'variables': {'tableUri': tableUri, 'filter': {}},
         'query': f"""
                 query listTableDataFilters(
                   $tableUri: String!
@@ -568,19 +575,14 @@ def list_table_data_filters(client, tableUri, term):
                     hasNext
                     hasPrevious
                     nodes {{
-                      filterUri
-                      label
-                      description
-                      filterType
-                      includedCols
-                      rowExpression
+                      {S3_DATASET_TABLE_FILTER_TYPE}
                     }}
                   }}
                 }}
             """,
     }
     response = client.query(query=query)
-    return response.data.deleteTableDataFilter
+    return response.data.listTableDataFilters
 
 
 ## Table Column Queries/Mutations
