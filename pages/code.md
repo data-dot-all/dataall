@@ -174,9 +174,9 @@ This package contains the code associated with the deployment of CDK stacks that
 `cdkproxy` is a package that runs registered cloudformation stacks using AWS CDK. It is bundled as a docker image and run as a AWS ECS task which is triggered on infastrcutre as code (IaC) operations on data.all (e.g. CRUD of data.all resources).
 
 When an API request is made to create a data.all resource, such as a new dataset, the data.all backend sends a new message to an SQS Queue to asynchronously be read off the queue and start a new cdkproxy ECS task.
-The code uses a  `cdk` cli wrapper to register infrastructure and maange cdk commands, and runs the appropriate stack using `cdk` cli to deploy the IaC of the respective data.all resource.
+The code uses a  `cdk` cli wrapper to register infrastructure and manage cdk commands, and runs the appropriate stack using `cdk` cli to deploy the IaC of the respective data.all resource.
 
-For local data.all deployments, a webserver is run on docker using Python's [FASTAPI](https://fastapi.tiangolo.com/) web framework and running using [uvicorn](https://www.uvicorn.org/) ASGI server. Subsequnetly, data.all sends POST API Requests to the `cdkproxy` web server to start the data.all infrastructure task.
+For local data.all deployments, a webserver runs on docker using Python's [FASTAPI](https://fastapi.tiangolo.com/) web framework and [uvicorn](https://www.uvicorn.org/) ASGI server. Subsequnetly, data.all sends POST API Requests to the `cdkproxy` web server to start the data.all infrastructure task.
 
 ### core/ <a name="core"></a>
 Core contains those functionalities that are indispensable to run data.all. Customization of the core should be limited
