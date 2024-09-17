@@ -103,7 +103,7 @@ class SharingService:
                                 if not success:
                                     share_successful = False
                             else:
-                                log.info(f'There are no items to share of type{type.value}')
+                                log.info(f'There are no items to share of type {type.value}')
                         except Exception as e:
                             log.exception(f'Error occurred during sharing of {type.value}')
                             ShareStatusRepository.update_share_item_status_batch(
@@ -184,6 +184,7 @@ class SharingService:
                 ):
                     for type, processor in ShareProcessorManager.SHARING_PROCESSORS.items():
                         try:
+                            log.info(f'Revoking permissions with {type.value}')
                             shareable_items = ShareObjectRepository.get_share_data_items_by_type(
                                 session,
                                 share_data.share,
@@ -191,11 +192,15 @@ class SharingService:
                                 processor.shareable_uri,
                                 status=ShareItemStatus.Revoke_Approved.value,
                             )
-                            log.info(f'Revoking permissions with {type.value}')
-                            success = processor.Processor(session, share_data, shareable_items).process_revoked_shares()
-                            log.info(f'Revoking {type.value} succeeded = {success}')
-                            if not success:
-                                revoke_successful = False
+                            if shareable_items:
+                                success = processor.Processor(
+                                    session, share_data, shareable_items
+                                ).process_revoked_shares()
+                                log.info(f'Revoking {type.value} succeeded = {success}')
+                                if not success:
+                                    revoke_successful = False
+                            else:
+                                log.info(f'There are no items to revoke of type {type.value}')
                         except Exception as e:
                             log.error(f'Error occurred during share revoking of {type.value}: {e}')
                             ShareStatusRepository.update_share_item_status_batch(
@@ -253,6 +258,7 @@ class SharingService:
             share_data, share_items = cls._get_share_data_and_items(session, share_uri, status, healthStatus)
             for type, processor in ShareProcessorManager.SHARING_PROCESSORS.items():
                 try:
+                    log.info(f'Verifying permissions with {type.value}')
                     shareable_items = ShareObjectRepository.get_share_data_items_by_type(
                         session,
                         share_data.share,
@@ -261,8 +267,10 @@ class SharingService:
                         status=status,
                         healthStatus=healthStatus,
                     )
-                    log.info(f'Verifying permissions with {type.value}')
-                    processor.Processor(session, share_data, shareable_items).verify_shares()
+                    if shareable_items:
+                        processor.Processor(session, share_data, shareable_items).verify_shares()
+                    else:
+                        log.info(f'There are no items to verify of type {type.value}')
                 except Exception as e:
                     log.error(f'Error occurred during share verifying of {type.value}: {e}')
 
@@ -319,12 +327,15 @@ class SharingService:
                                 None,
                                 ShareItemHealthStatus.PendingReApply.value,
                             )
-                            success = processor.Processor(
-                                session, share_data, shareable_items
-                            ).process_approved_shares()
-                            log.info(f'Reapplying {type.value} succeeded = {success}')
-                            if not success:
-                                reapply_successful = False
+                            if shareable_items:
+                                success = processor.Processor(
+                                    session, share_data, shareable_items
+                                ).process_approved_shares()
+                                log.info(f'Reapplying {type.value} succeeded = {success}')
+                                if not success:
+                                    reapply_successful = False
+                            else:
+                                log.info(f'There are no items to reapply of type {type.value}')
                         except Exception as e:
                             log.error(f'Error occurred during share reapplying of {type.value}: {e}')
 
