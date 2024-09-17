@@ -117,6 +117,7 @@ def delete_aws_imported_resources(aws_client, env, bucket=None, kms_alias=None, 
 
 def import_s3_dataset(
     client,
+    name,
     owner,
     group,
     org_uri,

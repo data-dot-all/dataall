@@ -16,7 +16,6 @@ pytest_plugins = [
     'integration_tests.core.organizations.global_conftest',
     'integration_tests.core.environment.global_conftest',
     'integration_tests.modules.s3_datasets.global_conftest',
-    'integration_tests.modules.share_base.global_conftest',
 ]
 
 
