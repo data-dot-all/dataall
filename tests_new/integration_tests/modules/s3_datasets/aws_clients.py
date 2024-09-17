@@ -99,13 +99,6 @@ class S3Client:
             logging.error(f'Error uploading file to S3: {e}')
             raise
 
-    def get_access_point(self, account_id, access_point_name):
-        try:
-            response = self._client.get_access_point(AccountId=account_id, Name=access_point_name)
-        except Exception as e:
-            log.exception(f'Error getting access point: {e}')
-            return None
-
 
 class KMSClient:
     def __init__(self, session, account_id, region):
@@ -122,13 +115,10 @@ class KMSClient:
             alias_name = alias_name.lower()
             response = self._client.describe_key(KeyId=f'alias/{alias_name}')
             key_id = response['KeyMetadata']['KeyId']
-            aliases = response['KeyMetadata']['Aliases']
-            for alias in aliases:
-                if alias['AliasName'] == f'alias/{alias_name}':
-                    return alias['AliasName']
+            return alias_name
         except ClientError as e:
             if e.response['Error']['Code'] == 'NotFoundException':
-                return False, False
+                return False
             else:
                 raise Exception(f'Error getting key alias for {alias_name}: {e}')
 
@@ -237,7 +227,7 @@ class GlueClient:
 
     def create_table(self, database_name, bucket, table_name):
         try:
-            response = self._client.create_table(
+            self._client.create_table(
                 DatabaseName=database_name,
                 TableInput={
                     'Name': table_name,
@@ -259,7 +249,6 @@ class GlueClient:
                     },
                 },
             )
-            print(response)
         except ClientError as e:
             log.exception(f'Error creating Glue table: {e}')
 

@@ -257,6 +257,7 @@ class PipelineStack(Stack):
                 artifact_bucket=self.create_pipeline_artifacts_bucket(
                     artifact_bucket_base_name=f'{pipeline.name}-artifacts'
                 ),
+                cross_account_keys=True,
             )
             self.codepipeline_pipeline = codepipeline_pipeline
             self.source_artifact = codepipeline.Artifact()
@@ -329,6 +330,7 @@ class PipelineStack(Stack):
                     artifact_bucket=self.create_pipeline_artifacts_bucket(
                         artifact_bucket_base_name=f'{pipeline.name}-artifacts-{env.stage}'
                     ),
+                    cross_account_keys=True,
                 )
                 self.codepipeline_pipeline = codepipeline_pipeline
                 self.source_artifact = codepipeline.Artifact()

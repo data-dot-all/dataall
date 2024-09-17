@@ -19,7 +19,6 @@ from tests_new.integration_tests.modules.datasets_base.queries import list_datas
 
 from integration_tests.modules.s3_datasets.aws_clients import S3Client, KMSClient, GlueClient, LakeFormationClient
 
-
 log = logging.getLogger(__name__)
 
 
@@ -104,7 +103,6 @@ def delete_aws_imported_resources(aws_client, env, bucket=None, kms_alias=None, 
 
 def import_s3_dataset(
     client,
-    name,
     owner,
     group,
     org_uri,
