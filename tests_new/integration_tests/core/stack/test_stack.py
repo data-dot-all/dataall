@@ -3,8 +3,6 @@ from assertpy import assert_that
 from integration_tests.core.stack.queries import get_stack_logs, list_key_value_tags, update_key_value_tags
 from integration_tests.errors import GqlError
 
-import pytest
-
 
 ##  test_update_stack and test_get_stack are not needed as they are
 ##  tested in each module that uses stacks (e.g. integration_tests.core.environment.test_environment.test_persistent_env_update)
@@ -27,30 +25,13 @@ def test_get_env_stack_logs_unauthorized(client2, session_env1):
     )
 
 
-def test_update_list_key_value_tags_add_tag(client1, session_env1, session_id):
-    # Test add tag on environment without tags
-    response = update_key_value_tags(
-        client1,
-        input={
-            'targetUri': session_env1.environmentUri,
-            'targetType': 'environment',
-            'tags': [
-                {'key': 'key1', 'value': session_id, 'cascade': False},
-                {'key': 'key2', 'value': session_id, 'cascade': True},
-            ],
-        },
-    )
-    assert_that(len(response)).is_equal_to(2)
-    assert_that(response[0]).contains_entry(key='key1', value=session_id, cascade=False)
-    assert_that(response[1]).contains_entry(key='key2', value=session_id, cascade=True)
-    # Test list tags after add
-    response = list_key_value_tags(client1, target_uri=session_env1.environmentUri, target_type='environment')
-    assert_that(len(response)).is_equal_to(2)
-    assert_that(response[0]).contains_entry(key='key1', value=session_id, cascade=False)
-    assert_that(response[1]).contains_entry(key='key2', value=session_id, cascade=True)
+def test_update_key_value_tags_add_tags(client1, environment_tags_1, session_id):
+    assert_that(len(environment_tags_1)).is_equal_to(2)
+    assert_that(environment_tags_1[0]).contains_entry(key='key1', value=session_id, cascade=False)
+    assert_that(environment_tags_1[1]).contains_entry(key='key2', value=session_id, cascade=True)
 
 
-def test_update_list_key_value_tags_add_tag_unauthorized(client2, session_env1, session_id):
+def test_update_key_value_tags_unauthorized(client2, session_env1, session_id):
     assert_that(update_key_value_tags).raises(GqlError).when_called_with(
         client=client2,
         input={
@@ -86,7 +67,19 @@ def test_update_list_key_value_tags_add_tag_invalid_input(client1, session_env1,
     )
 
 
-def test_update_list_key_value_tags_delete_tags(client1, session_env1, session_id):
+def test_update_key_value_tags_delete_tags(client1, session_env1, session_id):
+    response = update_key_value_tags(
+        client1,
+        input={
+            'targetUri': session_env1.environmentUri,
+            'targetType': 'environment',
+            'tags': [
+                {'key': 'key1delete', 'value': session_id, 'cascade': False},
+                {'key': 'key2delete', 'value': session_id, 'cascade': True},
+            ],
+        },
+    )
+    assert_that(len(response)).is_equal_to(2)
     # Test delete tag
     response = update_key_value_tags(
         client1,
@@ -100,3 +93,10 @@ def test_update_list_key_value_tags_delete_tags(client1, session_env1, session_i
     # Test list tags after delete
     response = list_key_value_tags(client1, target_uri=session_env1.environmentUri, target_type='environment')
     assert_that(response).is_equal_to([])
+
+
+def test_list_key_value_tags(client1, environment_tags_1, session_env1, session_id):
+    response = list_key_value_tags(client1, target_uri=session_env1.environmentUri, target_type='environment')
+    assert_that(len(response)).is_equal_to(2)
+    assert_that(response[0]).contains_entry(key='key1', value=session_id, cascade=False)
+    assert_that(response[1]).contains_entry(key='key2', value=session_id, cascade=True)
