@@ -14,12 +14,14 @@ from integration_tests.modules.dashboards.mutations import (
     reject_dashboard_share,
 )
 from integration_tests.modules.dashboards.conftest import create_dataall_dashboard
+from integration_tests.core.environment.utils import set_env_params
 from integration_tests.errors import GqlError
 
 UPDATED_DESC = 'new description'
 
 
 def test_get_author_session(client1, session_env1):
+    set_env_params(client1, session_env1, dashboardsEnabled='true')
     assert_that(get_author_session(client1, session_env1.environmentUri)).starts_with('https://')
 
 
@@ -66,9 +68,9 @@ def test_list_dashboard_shares(client1, session_id, dashboard1, dashboard1_share
     assert_that(list_dashboard_shares(client1, dashboard1.dashboardUri, {'term': session_id}).nodes).is_length(1)
 
 
-def test_approve_dashboard_share_unauthorized(client2, dashboard1_share):
+def test_approve_dashboard_share_unauthorized(client2, dashboard1, dashboard1_share):
     assert_that(approve_dashboard_share).raises(GqlError).when_called_with(client2, dashboard1_share.shareUri).contains(
-        'UnauthorizedOperation', 'SHARE_DASHBOARD', dashboard1_share.shareUri
+        'UnauthorizedOperation', 'SHARE_DASHBOARD', dashboard1.dashboardUri
     )
 
 

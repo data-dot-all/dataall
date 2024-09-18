@@ -6,7 +6,6 @@ from dataall.modules.dashboards.api.resolvers import (
     import_dashboard,
     reject_dashboard_share,
     request_dashboard_share,
-    share_dashboard,
     update_dashboard,
 )
 
