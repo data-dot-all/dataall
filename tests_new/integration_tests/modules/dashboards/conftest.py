@@ -24,12 +24,12 @@ def create_dataall_dashboard(client, session_id, dashboard_id, env):
 
 
 @pytest.fixture(scope='session')
-def dashboard1(session_id, client1, persistent_env1, testdata):
-    set_env_params(client1, persistent_env1, dashboardsEnabled='true')
-    dashboardId = testdata.dashboards['persistent_env1'].dashboardId
+def dashboard1(session_id, client1, session_env1, testdata):
+    set_env_params(client1, session_env1, dashboardsEnabled='true')
+    dashboardId = testdata.dashboards['session_env1'].dashboardId
     ds = None
     try:
-        ds = create_dataall_dashboard(client1, session_id, dashboardId, persistent_env1)
+        ds = create_dataall_dashboard(client1, session_id, dashboardId, session_env1)
         yield ds
     finally:
         if ds:
@@ -38,6 +38,7 @@ def dashboard1(session_id, client1, persistent_env1, testdata):
 
 @pytest.fixture(scope='function')
 def dashboard1_share(client1, client2, dashboard1, group2):
+    share = None
     try:
         share = request_dashboard_share(client2, dashboard1.dashboardUri, group2)
         yield share

@@ -19,13 +19,13 @@ from integration_tests.errors import GqlError
 UPDATED_DESC = 'new description'
 
 
-def test_get_author_session(client1, persistent_env1):
-    assert_that(get_author_session(client1, persistent_env1.environmentUri)).starts_with('https://')
+def test_get_author_session(client1, session_env1):
+    assert_that(get_author_session(client1, session_env1.environmentUri)).starts_with('https://')
 
 
-def test_get_author_session_unauthorized(client2, persistent_env1):
-    assert_that(get_author_session).raises(GqlError).when_called_with(client2, persistent_env1.environmentUri).contains(
-        'UnauthorizedOperation', 'CREATE_DASHBOARD'
+def test_get_author_session_unauthorized(client2, session_env1):
+    assert_that(get_author_session).raises(GqlError).when_called_with(client2, session_env1.environmentUri).contains(
+        'UnauthorizedOperation', 'CREATE_DASHBOARD', session_env1.environmentUri
     )
 
 
@@ -41,7 +41,7 @@ def test_list_dashboards(client1, client2, session_id, dashboard1):
 
 def test_get_dashboard_unauthorized(client2, dashboard1):
     assert_that(get_dashboard).raises(GqlError).when_called_with(client2, dashboard1.dashboardUri).contains(
-        'UnauthorizedOperation', 'GET_DASHBOARD'
+        'UnauthorizedOperation', 'GET_DASHBOARD', dashboard1.dashboardUri
     )
 
 
@@ -54,7 +54,7 @@ def test_update_dashboard(client1, dashboard1):
 def test_update_dashboard_unauthorized(client2, dashboard1):
     assert_that(update_dashboard).raises(GqlError).when_called_with(
         client2, {'dashboardUri': dashboard1.dashboardUri, 'description': UPDATED_DESC}
-    ).contains('UnauthorizedOperation', 'UPDATE_DASHBOARD')
+    ).contains('UnauthorizedOperation', 'UPDATE_DASHBOARD', dashboard1.dashboardUri)
 
 
 def test_request_dashboard_share(dashboard1_share):
@@ -68,7 +68,7 @@ def test_list_dashboard_shares(client1, session_id, dashboard1, dashboard1_share
 
 def test_approve_dashboard_share_unauthorized(client2, dashboard1_share):
     assert_that(approve_dashboard_share).raises(GqlError).when_called_with(client2, dashboard1_share.shareUri).contains(
-        'UnauthorizedOperation', 'SHARE_DASHBOARD'
+        'UnauthorizedOperation', 'SHARE_DASHBOARD', dashboard1_share.shareUri
     )
 
 
@@ -93,14 +93,14 @@ def test_get_reader_session(client1, dashboard1):
 
 def test_get_reader_session_unauthorized(client2, dashboard1):
     assert_that(get_reader_session).raises(GqlError).when_called_with(client2, dashboard1.dashboardUri).contains(
-        'UnauthorizedOperation', 'GET_DASHBOARD'
+        'UnauthorizedOperation', 'GET_DASHBOARD', dashboard1.dashboardUri
     )
 
 
-def test_delete_dashboard(client1, session_id, persistent_env1, testdata):
+def test_delete_dashboard(client1, session_id, session_env1, testdata):
     filter = {'term': session_id}
-    dashboardId = testdata.dashboards['persistent_env1'].dashboardId
-    dashboard2 = create_dataall_dashboard(client1, session_id, dashboardId, persistent_env1)
+    dashboardId = testdata.dashboards['session_env1'].dashboardId
+    dashboard2 = create_dataall_dashboard(client1, session_id, dashboardId, session_env1)
     assert_that(search_dashboards(client1, filter).nodes).is_length(2)
 
     delete_dashboard(client1, dashboard2.dashboardUri)
@@ -109,5 +109,5 @@ def test_delete_dashboard(client1, session_id, persistent_env1, testdata):
 
 def test_delete_dashboard_unauthorized(client2, dashboard1):
     assert_that(delete_dashboard).raises(GqlError).when_called_with(client2, dashboard1.dashboardUri).contains(
-        'UnauthorizedOperation', 'DELETE_DASHBOARD'
+        'UnauthorizedOperation', 'DELETE_DASHBOARD', dashboard1.dashboardUri
     )
