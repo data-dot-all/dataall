@@ -45,6 +45,7 @@ class StackRequestVerifier:
         if not target_type:
             raise RequiredParameter('targetType')
 
+
 class StackServiceUtils:
     @staticmethod
     def map_target_to_config(**kwargs):
@@ -53,6 +54,7 @@ class StackServiceUtils:
             return 'core.features.show_stack_logs'
         if target_type == 'dataset':
             return 'modules.s3_datasets.features.show_stack_logs'
+
 
 class StackService:
     @staticmethod
@@ -196,8 +198,9 @@ class StackService:
         return kv_tags
 
     @staticmethod
-    @is_feature_has_allowed_values(allowed_values=['admin-only', 'enabled', 'disabled'],
-                                   resolve_property=StackServiceUtils.map_target_to_config)
+    @is_feature_has_allowed_values(
+        allowed_values=['admin-only', 'enabled', 'disabled'], resolve_property=StackServiceUtils.map_target_to_config
+    )
     def get_stack_logs(target_uri, target_type):
         context = get_context()
         log_config = config.get_property(StackServiceUtils.map_target_to_config(target_type=target_type))
@@ -232,4 +235,3 @@ class StackService:
                     | filter @logStream like "{stack.EcsTaskArn.split('/')[-1]}"
                     """
         return query
-

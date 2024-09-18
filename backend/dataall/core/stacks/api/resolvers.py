@@ -57,11 +57,13 @@ def resolve_events(context, source: Stack, **kwargs):
         return None
     return json.dumps(source.events or {})
 
+
 def resolve_stack_visibility(context, source: Stack, **kwargs):
     if not source:
         return False
     log_config = config.get_property(StackServiceUtils.map_target_to_config(target_type=source.stack))
     return check_if_user_allowed_view_logs(context.groups, log_config)
+
 
 def resolve_task_id(context, source: Stack, **kwargs):
     if not source:

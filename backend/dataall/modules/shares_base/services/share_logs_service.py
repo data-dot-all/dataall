@@ -4,8 +4,7 @@ import logging
 from dataall.base.context import get_context
 from dataall.base.utils import Parameter
 from dataall.base.db import exceptions
-from dataall.base.utils.logs_utils import is_feature_has_allowed_values, \
-    check_if_user_allowed_view_logs
+from dataall.base.utils.logs_utils import is_feature_has_allowed_values, check_if_user_allowed_view_logs
 from dataall.core.stacks.aws.cloudwatch import CloudWatch
 from dataall.base.config import config
 
@@ -17,8 +16,10 @@ log = logging.getLogger(__name__)
 
 class ShareLogsService:
     @staticmethod
-    @is_feature_has_allowed_values(allowed_values=['admin-only', 'enabled', 'disabled'],
-                                   config_property='modules.shares_base.features.show_share_logs')
+    @is_feature_has_allowed_values(
+        allowed_values=['admin-only', 'enabled', 'disabled'],
+        config_property='modules.shares_base.features.show_share_logs',
+    )
     def check_view_log_permissions(username, groups, shareUri):
         context = get_context()
         log_config = config.get_property('modules.shares_base.features.show_share_logs')
