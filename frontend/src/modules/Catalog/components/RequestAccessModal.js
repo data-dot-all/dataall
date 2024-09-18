@@ -1,13 +1,14 @@
 import SendIcon from '@mui/icons-material/Send';
 import { LoadingButton } from '@mui/lab';
-import Autocomplete from '@mui/lab/Autocomplete';
 import {
+  Autocomplete,
   Box,
   Button,
   CardContent,
   CircularProgress,
   Dialog,
   FormControlLabel,
+  FormGroup,
   FormHelperText,
   Switch,
   TextField,
@@ -27,10 +28,13 @@ import {
   listValidEnvironments,
   requestDashboardShare,
   getConsumptionRolePolicies,
+  fetchEnums,
   useClient
 } from 'services';
 import { ShareEditForm } from '../../Shared/Shares/ShareEditForm';
 import { getShareObject } from '../../Shares/services';
+import { getDatasetExpirationDetails } from '../../DatasetsBase/services/getDatasetDetails';
+import Checkbox from '@mui/material/Checkbox';
 
 export const RequestAccessModal = (props) => {
   const { hit, onApply, onClose, open, stopLoader, ...other } = props;
@@ -51,6 +55,24 @@ export const RequestAccessModal = (props) => {
   const [share, setShare] = useState(false);
   const [loading, setLoading] = useState(false);
   const [alreadyExisted, setAlreadyExisted] = useState(false);
+  const [datasetExpirationDetails, setDatasetExpirationDetails] = useState({
+    enableExpiration: false
+  });
+  const [requestNonExpirableShare, setNonExpirableShare] = useState(false);
+  const [dataPermsEnum, setDataPermsEnum] = useState([]);
+
+  const fetchDataPermsEnum = useCallback(async () => {
+    const backendEnumName = 'ShareObjectDataPermission';
+    const backendEnumData = (await fetchEnums(client, [backendEnumName]))[
+      backendEnumName
+    ];
+    if (backendEnumData) setDataPermsEnum(backendEnumData.map((e) => e.value));
+    else
+      dispatch({
+        type: SET_ERROR,
+        error: `Could not fetch enum: ${backendEnumName}`
+      });
+  }, [client, dispatch]);
 
   const fetchEnvironments = useCallback(async () => {
     setStep(0);
@@ -78,7 +100,7 @@ export const RequestAccessModal = (props) => {
       setLoadingEnvs(false);
       stopLoader();
     }
-  }, [client, dispatch]);
+  }, [client, dispatch, stopLoader]);
 
   const fetchShareObject = async (shareUri) => {
     const response = await client.query(getShareObject({ shareUri: shareUri }));
@@ -172,13 +194,42 @@ export const RequestAccessModal = (props) => {
     }
   };
 
+  const fetchDatasetExpirationDetails = async (datasetUri) => {
+    const response = await client.query(
+      getDatasetExpirationDetails({
+        datasetUri
+      })
+    );
+    if (!response.errors) {
+      setDatasetExpirationDetails({
+        enableExpiration: response.data.getDataset.enableExpiration,
+        expirySetting: response.data.getDataset.expirySetting,
+        expiryMinDuration: response.data.getDataset.expiryMinDuration,
+        expiryMaxDuration: response.data.getDataset.expiryMaxDuration
+      });
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+  };
+
   useEffect(() => {
     if (client && open) {
       fetchEnvironments().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
+      fetchDataPermsEnum();
+      fetchDatasetExpirationDetails(hit._id).catch((e) => {
+        dispatch({ type: SET_ERROR, error: e.message });
+      });
     }
-  }, [client, open, fetchEnvironments, dispatch]);
+  }, [
+    client,
+    open,
+    stopLoader,
+    fetchEnvironments,
+    fetchDataPermsEnum,
+    dispatch
+  ]);
 
   const formDatasetRequestObject = (inputObject) => {
     return {
@@ -212,7 +263,12 @@ export const RequestAccessModal = (props) => {
       principalId: principal,
       principalType: type,
       requestPurpose: values.comment,
-      attachMissingPolicies: values.attachMissingPolicies
+      attachMissingPolicies: values.attachMissingPolicies,
+      permissions: values.permissions,
+      shareExpirationPeriod: datasetExpirationDetails.enableExpiration
+        ? parseInt(values.shareExpirationPeriod)
+        : null,
+      nonExpirable: values.nonExpirable
     };
 
     if (hit.resourceKind === 'dataset') {
@@ -303,7 +359,10 @@ export const RequestAccessModal = (props) => {
               initialValues={{
                 environmentUri: '',
                 comment: '',
-                attachMissingPolicies: false
+                attachMissingPolicies: false,
+                permissions: [dataPermsEnum[0]],
+                shareExpirationPeriod: 0,
+                nonExpirable: false
               }}
               validationSchema={Yup.object().shape({
                 environmentUri: Yup.string().required(
@@ -311,7 +370,34 @@ export const RequestAccessModal = (props) => {
                 ),
                 groupUri: Yup.string().required('*Team is required'),
                 consumptionRole: Yup.object(),
-                comment: Yup.string().max(5000)
+                comment: Yup.string().max(5000),
+                shareExpirationPeriod:
+                  datasetExpirationDetails.enableExpiration &&
+                  !requestNonExpirableShare
+                    ? Yup.number()
+                        .min(
+                          datasetExpirationDetails.expiryMinDuration,
+                          `Minimum share expiration duration is ${
+                            datasetExpirationDetails.expiryMinDuration
+                          } ${
+                            datasetExpirationDetails.expirySetting === 'Monthly'
+                              ? 'month(s)'
+                              : 'quarter(s)'
+                          }`
+                        )
+                        .max(
+                          datasetExpirationDetails.expiryMaxDuration,
+                          `Maximum share expiration duration is ${
+                            datasetExpirationDetails.expiryMaxDuration
+                          } ${
+                            datasetExpirationDetails.expirySetting === 'Monthly'
+                              ? 'month(s)'
+                              : 'quarter(s)'
+                          }`
+                        )
+                        .required('Incorrect input provided')
+                    : Yup.number().nullable(),
+                nonExpirable: Yup.boolean()
               })}
               onSubmit={async (
                 values,
@@ -483,6 +569,27 @@ export const RequestAccessModal = (props) => {
                           )}
                         </CardContent>
                         <CardContent>
+                          <Autocomplete
+                            multiple
+                            disablePortal
+                            fullWidth
+                            options={dataPermsEnum}
+                            getOptionLabel={(option) => option}
+                            defaultValue={values.permissions}
+                            onChange={(e, value) =>
+                              setFieldValue('permissions', value)
+                            }
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                fullWidth
+                                variant="outlined"
+                                label="Permissions"
+                              />
+                            )}
+                          />
+                        </CardContent>
+                        <CardContent>
                           {loadingRoles ? (
                             <CircularProgress size={10} />
                           ) : (
@@ -547,6 +654,62 @@ export const RequestAccessModal = (props) => {
                               )}
                             </Box>
                           )}
+                        </CardContent>
+                        <CardContent>
+                          <Box>
+                            {datasetExpirationDetails.enableExpiration && (
+                              <>
+                                <TextField
+                                  error={Boolean(
+                                    touched.shareExpirationPeriod &&
+                                      errors.shareExpirationPeriod
+                                  )}
+                                  fullWidth
+                                  helperText={
+                                    touched.shareExpirationPeriod &&
+                                    errors.shareExpirationPeriod
+                                  }
+                                  label={`Share Expiration Period - Request access for dataset in ${
+                                    datasetExpirationDetails.expirySetting ===
+                                    'Monthly'
+                                      ? 'month(s)'
+                                      : 'quarter(s)'
+                                  }`}
+                                  onBlur={handleBlur}
+                                  onChange={(event, value) => {
+                                    setFieldValue(
+                                      'shareExpirationPeriod',
+                                      event.target.value
+                                    );
+                                  }}
+                                  variant="outlined"
+                                  inputProps={{ type: 'number' }}
+                                  disabled={requestNonExpirableShare}
+                                />
+                              </>
+                            )}
+                            {datasetExpirationDetails.enableExpiration && (
+                              <Box sx={{ m: 1 }}>
+                                <FormGroup>
+                                  <FormControlLabel
+                                    variant="outlined"
+                                    label={
+                                      'Request non-expiring share for this dataset'
+                                    }
+                                    control={
+                                      <Checkbox
+                                        defaultChecked={false}
+                                        onChange={(event, value) => {
+                                          setFieldValue('nonExpirable', value);
+                                          setNonExpirableShare(value);
+                                        }}
+                                      />
+                                    }
+                                  />
+                                </FormGroup>
+                              </Box>
+                            )}
+                          </Box>
                         </CardContent>
                       </Box>
                     )}

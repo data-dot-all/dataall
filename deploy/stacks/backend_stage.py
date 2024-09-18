@@ -36,6 +36,8 @@ class BackendStage(Stage):
         custom_auth=None,
         custom_waf_rules=None,
         with_approval_tests=False,
+        allowed_origins='*',
+        log_retention_duration=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -69,6 +71,8 @@ class BackendStage(Stage):
             custom_auth=custom_auth,
             custom_waf_rules=custom_waf_rules,
             with_approval_tests=with_approval_tests,
+            allowed_origins=allowed_origins,
+            log_retention_duration=log_retention_duration,
             **kwargs,
         )
 

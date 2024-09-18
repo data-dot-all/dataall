@@ -11,10 +11,12 @@ from aws_cdk import (
     Duration,
     CfnResource,
     CustomResource,
+    RemovalPolicy,
     Tags,
 )
 from aws_cdk.aws_glue import CfnCrawler
 
+from dataall.base.utils.naming_convention import NamingConventionPattern, NamingConventionService
 from dataall.base import db
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.aws.sts import SessionHelper
@@ -99,6 +101,16 @@ class DatasetStack(Stack):
         env = self.get_env(dataset)
         env_group = self.get_env_group(dataset)
         self.pivot_role_name = SessionHelper.get_delegation_role_name(region=env.region)
+
+        dataset_basename = NamingConventionService(
+            target_uri=dataset.datasetUri,
+            target_label=dataset.label,
+            pattern=NamingConventionPattern.GLUE_ETL,
+            resource_prefix=env.resourcePrefix,
+        ).build_compliant_name()
+
+        glue_sec_conf_enc_key_name = f'{dataset_basename}-log-enc-key'
+        glue_sec_conf_name = f'{dataset_basename}-security-config'
 
         quicksight_default_group_arn = None
         if self.has_quicksight_enabled(env):
@@ -293,6 +305,14 @@ class DatasetStack(Stack):
                     ],
                 ),
                 iam.PolicyStatement(
+                    sid='GlueSecurityConfiguration',
+                    actions=[
+                        'glue:GetSecurityConfiguration',
+                    ],
+                    effect=iam.Effect.ALLOW,
+                    resources=['*'],
+                ),
+                iam.PolicyStatement(
                     sid='GlueAccessDefault',
                     actions=[
                         'glue:GetDatabase',
@@ -307,6 +327,7 @@ class DatasetStack(Stack):
                     actions=[
                         'logs:CreateLogGroup',
                         'logs:CreateLogStream',
+                        'logs:AssociateKmsKey',
                     ],
                     effect=iam.Effect.ALLOW,
                     resources=[
@@ -322,8 +343,28 @@ class DatasetStack(Stack):
                     effect=iam.Effect.ALLOW,
                     resources=[
                         f'arn:aws:logs:{dataset.region}:{dataset.AwsAccountId}:log-group:/aws-glue/crawlers:log-stream:{dataset.GlueCrawlerName}',
+                        f'arn:aws:logs:{dataset.region}:{dataset.AwsAccountId}:log-group:/aws-glue/crawlers-role/{dataset.GlueCrawlerName}*:log-stream:{dataset.GlueCrawlerName}*',
+                        f'arn:aws:logs:{dataset.region}:{dataset.AwsAccountId}:log-group:/aws-glue/crawlers-role/{env.resourcePrefix}*:log-stream:{env.resourcePrefix}*',
                         f'arn:aws:logs:{dataset.region}:{dataset.AwsAccountId}:log-group:/aws-glue/jobs/*',
                     ],
+                ),
+                iam.PolicyStatement(
+                    sid='LFDataFilters',
+                    actions=[
+                        'lakeformation:ListDataCellsFilter',
+                        'lakeformation:GetDataCellsFilter',
+                        'lakeformation:CreateDataCellsFilter',
+                        'lakeformation:DeleteDataCellsFilter',
+                        'lakeformation:UpdateDataCellsFilter',
+                    ],
+                    effect=iam.Effect.ALLOW,
+                    resources=['*'],  # NOTE: LF Accepts Only '*' Wildcard Resources
+                    conditions={
+                        'ForAllValues:StringEquals': {
+                            'aws:ResourceAccount': dataset.AwsAccountId,
+                            'aws:RequestedRegion': dataset.region,
+                        }
+                    },
                 ),
                 iam.PolicyStatement(
                     actions=['s3:ListBucket'],
@@ -437,6 +478,50 @@ class DatasetStack(Stack):
             },
         )
 
+        glue_sec_conf_enc_key = kms.Key(
+            self,
+            glue_sec_conf_enc_key_name,
+            removal_policy=RemovalPolicy.DESTROY,
+            alias=glue_sec_conf_enc_key_name,
+            enable_key_rotation=True,
+            admins=[
+                iam.ArnPrincipal(env.CDKRoleArn),
+            ],
+        )
+
+        glue_sec_conf_enc_key.add_to_resource_policy(
+            iam.PolicyStatement(
+                sid='EnableCrawlerIAMRoleKeyUsage',
+                resources=['*'],
+                effect=iam.Effect.ALLOW,
+                principals=[dataset_admin_role],
+                actions=['kms:Encrypt', 'kms:Decrypt', 'kms:ReEncrypt*', 'kms:GenerateDataKey*', 'kms:DescribeKey'],
+            )
+        )
+
+        glue_sec_conf_enc_key.grant_encrypt_decrypt(iam.ServicePrincipal('logs.amazonaws.com'))
+        glue_sec_conf_enc_key.grant_encrypt_decrypt(iam.ServicePrincipal('glue.amazonaws.com'))
+        glue_sec_conf_enc_key.grant_encrypt_decrypt(iam.ServicePrincipal('s3.amazonaws.com'))
+
+        glue_crawler_security_config = glue.CfnSecurityConfiguration(
+            self,
+            glue_sec_conf_name,
+            encryption_configuration=glue.CfnSecurityConfiguration.EncryptionConfigurationProperty(
+                cloud_watch_encryption=glue.CfnSecurityConfiguration.CloudWatchEncryptionProperty(
+                    cloud_watch_encryption_mode='SSE-KMS', kms_key_arn=glue_sec_conf_enc_key.key_arn
+                ),
+                job_bookmarks_encryption=glue.CfnSecurityConfiguration.JobBookmarksEncryptionProperty(
+                    job_bookmarks_encryption_mode='CSE-KMS', kms_key_arn=glue_sec_conf_enc_key.key_arn
+                ),
+                s3_encryptions=[
+                    glue.CfnSecurityConfiguration.S3EncryptionProperty(
+                        s3_encryption_mode='SSE-KMS', kms_key_arn=glue_sec_conf_enc_key.key_arn
+                    )
+                ],
+            ),
+            name=glue_sec_conf_name,
+        )
+
         # Support resources: GlueCrawler for the dataset, Profiling Job and Trigger
         crawler = glue.CfnCrawler(
             self,
@@ -444,6 +529,7 @@ class DatasetStack(Stack):
             description=f'datall Glue Crawler for S3 Bucket {dataset.S3BucketName}',
             name=dataset.GlueCrawlerName,
             database_name=dataset.GlueDatabaseName,
+            crawler_security_configuration=glue_crawler_security_config.name,
             schedule={'scheduleExpression': f'{dataset.GlueCrawlerSchedule}'} if dataset.GlueCrawlerSchedule else None,
             role=dataset_admin_role.role_arn,
             targets=CfnCrawler.TargetsProperty(
@@ -451,6 +537,9 @@ class DatasetStack(Stack):
             ),
         )
         crawler.node.add_dependency(dataset_bucket)
+        crawler.node.add_dependency(dataset_admin_policy)
+        crawler.node.add_dependency(dataset_admin_role)
+        crawler.node.add_dependency(glue_crawler_security_config)
 
         job_args = {
             '--additional-python-modules': 'urllib3<2,pydeequ',
@@ -480,6 +569,7 @@ class DatasetStack(Stack):
             role=dataset_admin_role.role_arn,
             allocated_capacity=10,
             execution_property=glue.CfnJob.ExecutionPropertyProperty(max_concurrent_runs=100),
+            security_configuration=glue_crawler_security_config.name,
             command=glue.CfnJob.JobCommandProperty(
                 name='glueetl',
                 python_version='3',

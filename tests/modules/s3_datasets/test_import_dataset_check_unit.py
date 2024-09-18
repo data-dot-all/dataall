@@ -8,7 +8,7 @@ from dataall.modules.s3_datasets.services.dataset_service import DatasetService
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 
 
-def test_s3_managed_bucket_import(mock_aws_client):
+def test_s3_managed_bucket_import(mock_aws_client, api_context_1):
     dataset = S3Dataset(KmsAlias=None)
 
     mock_encryption_bucket(mock_aws_client, 'AES256', None)
@@ -16,7 +16,7 @@ def test_s3_managed_bucket_import(mock_aws_client):
     assert DatasetService.check_imported_resources(dataset)
 
 
-def test_s3_managed_bucket_but_bucket_encrypted_with_kms(mock_aws_client):
+def test_s3_managed_bucket_but_bucket_encrypted_with_kms(mock_aws_client, api_context_1):
     dataset = S3Dataset(KmsAlias=None)
 
     mock_encryption_bucket(mock_aws_client, 'aws:kms', 'any')
@@ -24,7 +24,7 @@ def test_s3_managed_bucket_but_bucket_encrypted_with_kms(mock_aws_client):
         DatasetService.check_imported_resources(dataset)
 
 
-def test_s3_managed_bucket_but_alias_provided(mock_aws_client):
+def test_s3_managed_bucket_but_alias_provided(mock_aws_client, api_context_1):
     dataset = S3Dataset(KmsAlias='Key')
 
     mock_encryption_bucket(mock_aws_client, 'AES256', None)
@@ -32,7 +32,7 @@ def test_s3_managed_bucket_but_alias_provided(mock_aws_client):
         DatasetService.check_imported_resources(dataset)
 
 
-def test_kms_encrypted_bucket_but_key_not_exist(mock_aws_client):
+def test_kms_encrypted_bucket_but_key_not_exist(mock_aws_client, api_context_1):
     alias = 'alias'
     dataset = S3Dataset(KmsAlias=alias)
     mock_encryption_bucket(mock_aws_client, 'aws:kms', 'any')
@@ -42,7 +42,7 @@ def test_kms_encrypted_bucket_but_key_not_exist(mock_aws_client):
         DatasetService.check_imported_resources(dataset)
 
 
-def test_kms_encrypted_bucket_but_key_is_wrong(mock_aws_client):
+def test_kms_encrypted_bucket_but_key_is_wrong(mock_aws_client, api_context_1):
     alias = 'key_alias'
     kms_id = 'kms_id'
     dataset = S3Dataset(KmsAlias=alias)
@@ -54,7 +54,7 @@ def test_kms_encrypted_bucket_but_key_is_wrong(mock_aws_client):
         DatasetService.check_imported_resources(dataset)
 
 
-def test_kms_encrypted_bucket_imported(mock_aws_client):
+def test_kms_encrypted_bucket_imported(mock_aws_client, api_context_1):
     alias = 'key_alias'
     kms_id = 'kms_id'
     dataset = S3Dataset(KmsAlias=alias)

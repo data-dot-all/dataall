@@ -5,6 +5,7 @@ import {
   DeleteOutlined,
   RefreshRounded
 } from '@mui/icons-material';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import SecurityIcon from '@mui/icons-material/Security';
 import { LoadingButton } from '@mui/lab';
 import {
@@ -14,6 +15,7 @@ import {
   Card,
   CardContent,
   CardHeader,
+  Chip,
   Container,
   Divider,
   Grid,
@@ -29,9 +31,10 @@ import {
   Typography
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { useSnackbar } from 'notistack';
 import * as PropTypes from 'prop-types';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink, useParams } from 'react-router-dom';
@@ -44,7 +47,8 @@ import {
   ShareStatus,
   ShareHealthStatus,
   TextAvatar,
-  useSettings
+  useSettings,
+  Label
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
@@ -54,10 +58,13 @@ import {
   getShareObject,
   rejectShareObject,
   removeSharedItem,
-  submitApproval,
+  submitShareObject,
   revokeItemsShareObject,
   verifyItemsShareObject,
-  reApplyItemsShareObject
+  reApplyItemsShareObject,
+  getShareItemDataFilters,
+  approveShareExtension,
+  cancelShareExtension
 } from '../services';
 import {
   AddShareItemModal,
@@ -65,11 +72,14 @@ import {
   ShareItemsSelectorModal,
   ShareRejectModal,
   UpdateRejectReason,
-  UpdateRequestReason
+  UpdateRequestReason,
+  ShareItemFilterModal
 } from '../components';
 import { generateShareItemLabel } from 'utils';
 import { ShareLogs } from '../components/ShareLogs';
 import { ShareSubmitModal } from '../components/ShareSubmitModal';
+import { UpdateExtensionReason } from '../components/ShareUpdateExtension';
+import CancelIcon from '@mui/icons-material/Close';
 
 function ShareViewHeader(props) {
   const {
@@ -86,15 +96,24 @@ function ShareViewHeader(props) {
   const [accepting, setAccepting] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [cancellingExtension, setCancellingExtension] = useState(false);
   const [isRejectShareModalOpen, setIsRejectShareModalOpen] = useState(false);
   const [openLogsModal, setOpenLogsModal] = useState(null);
+  const anchorRef = useRef(null);
 
   const [isSubmitShareModalOpen, setIsSubmitShareModalOpen] = useState(false);
+
+  const datasetTypeLink =
+    share.dataset.datasetType === 'DatasetTypes.S3'
+      ? `s3-datasets`
+      : share.dataset.datasetType === 'DatasetTypes.Redshift'
+      ? `redshift-datasets`
+      : '-';
 
   const submit = async () => {
     setSubmitting(true);
     const response = await client.mutate(
-      submitApproval({
+      submitShareObject({
         shareUri: share.shareUri
       })
     );
@@ -165,7 +184,55 @@ function ShareViewHeader(props) {
     setIsSubmitShareModalOpen(false);
   };
 
-  const accept = async () => {
+  const handleApproveExtensionShare = async () => {
+    setAccepting(true);
+    const response = await client.mutate(
+      approveShareExtension({
+        shareUri: share.shareUri
+      })
+    );
+
+    if (!response.errors) {
+      enqueueSnackbar('Share Extension request approved', {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'success'
+      });
+      await fetchItems();
+      await fetchItem();
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+    setAccepting(false);
+  };
+
+  const handleCancelShareExtensionRequest = async () => {
+    setCancellingExtension(true);
+    const response = await client.mutate(
+      cancelShareExtension({
+        shareUri: share.shareUri
+      })
+    );
+
+    if (!response.errors) {
+      enqueueSnackbar('Share Extension request cancelled', {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'success'
+      });
+      await fetchItems();
+      await fetchItem();
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
+    setCancellingExtension(false);
+  };
+
+  const handleApproveShare = async () => {
     setAccepting(true);
     const response = await client.mutate(
       approveShareObject({
@@ -189,7 +256,7 @@ function ShareViewHeader(props) {
     setAccepting(false);
   };
 
-  const reject = async (rejectPurpose) => {
+  const handleRejectShare = async (rejectPurpose) => {
     setRejecting(true);
     const response = await client.mutate(
       rejectShareObject({
@@ -250,7 +317,7 @@ function ShareViewHeader(props) {
               color="textSecondary"
               variant="subtitle2"
               component={RouterLink}
-              to={`/console/s3-datasets/${share.dataset?.datasetUri}`}
+              to={`/console/${datasetTypeLink}/${share.dataset?.datasetUri}`}
             >
               {share.dataset?.datasetName}
             </Typography>
@@ -292,7 +359,8 @@ function ShareViewHeader(props) {
                         color="success"
                         startIcon={<CheckCircleOutlined />}
                         sx={{ m: 1 }}
-                        onClick={accept}
+                        onClick={handleApproveShare}
+                        ref={anchorRef}
                         type="button"
                         variant="outlined"
                       >
@@ -311,6 +379,32 @@ function ShareViewHeader(props) {
                       </LoadingButton>
                     </>
                   )}
+                  {share.status === 'Submitted_For_Extension' && (
+                    <>
+                      <LoadingButton
+                        loading={accepting}
+                        color="success"
+                        startIcon={<CheckCircleOutlined />}
+                        sx={{ m: 1 }}
+                        onClick={handleApproveExtensionShare}
+                        type="button"
+                        variant="outlined"
+                      >
+                        Approve Extension
+                      </LoadingButton>
+                      <LoadingButton
+                        loading={rejecting}
+                        color="error"
+                        sx={{ m: 1 }}
+                        startIcon={<BlockOutlined />}
+                        onClick={handleRejectShareModalOpen}
+                        type="button"
+                        variant="outlined"
+                      >
+                        Reject Extension
+                      </LoadingButton>
+                    </>
+                  )}
                 </>
               )}
               <LoadingButton
@@ -324,6 +418,24 @@ function ShareViewHeader(props) {
               >
                 Edit
               </LoadingButton>
+              {(share.userRoleForShareObject === 'Requesters' ||
+                share.userRoleForShareObject === 'ApproversAndRequesters') && (
+                <>
+                  {share.status === 'Submitted_For_Extension' && (
+                    <LoadingButton
+                      loading={cancellingExtension}
+                      color="primary"
+                      startIcon={<CancelIcon />}
+                      sx={{ m: 1 }}
+                      onClick={handleCancelShareExtensionRequest}
+                      type="button"
+                      variant="outlined"
+                    >
+                      Cancel Extension
+                    </LoadingButton>
+                  )}
+                </>
+              )}
               {(share.userRoleForShareObject === 'Requesters' ||
                 share.userRoleForShareObject === 'ApproversAndRequesters') && (
                 <>
@@ -373,7 +485,7 @@ function ShareViewHeader(props) {
           onApply={handleRejectShareModalClose}
           onClose={handleRejectShareModalClose}
           open={isRejectShareModalOpen}
-          rejectFunction={reject}
+          rejectFunction={handleRejectShare}
         />
       )}
       {isSubmitShareModalOpen && (
@@ -415,6 +527,7 @@ ShareViewHeader.propTypes = {
 export function SharedItem(props) {
   const {
     item,
+    share,
     client,
     dispatch,
     enqueueSnackbar,
@@ -422,6 +535,54 @@ export function SharedItem(props) {
     fetchItem
   } = props;
   const [isRemovingItem, setIsRemovingItem] = useState(false);
+  const [isFilterModalOpenUri, setIsFilterModalOpenUri] = useState(0);
+  const [isLoadingFilters, setIsLoadingFilters] = useState(false);
+  const [itemDataFilter, setItemDataFilter] = useState(null);
+  const [isAssignedFilterModalOpen, setIsAssignedFilterModalOpen] =
+    useState('');
+
+  const getItemDataFilters = async (attachedDataFilterUri) => {
+    setIsLoadingFilters(true);
+    try {
+      const response = await client.query(
+        getShareItemDataFilters({
+          attachedDataFilterUri: attachedDataFilterUri
+        })
+      );
+      if (!response.errors) {
+        if (response.data && response.data.getShareItemDataFilters) {
+          setItemDataFilter(response.data.getShareItemDataFilters);
+        }
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    } finally {
+      setIsLoadingFilters(false);
+    }
+  };
+
+  useEffect(() => {
+    if (client && item.itemType === 'Table' && item.attachedDataFilterUri) {
+      getItemDataFilters(item.attachedDataFilterUri);
+    }
+  }, [client, item, dispatch]);
+
+  const handleFilterModalClose = () => {
+    setIsFilterModalOpenUri(0);
+  };
+
+  const handleFilterModalOpen = (uri) => {
+    setIsFilterModalOpenUri(uri);
+  };
+
+  const handleAssignedFilterModalOpen = (label) => {
+    setIsAssignedFilterModalOpen(label);
+  };
+  const handleAssignedFilterModalClose = () => {
+    setIsAssignedFilterModalOpen('');
+  };
 
   const removeItemFromShareObject = async () => {
     setIsRemovingItem(true);
@@ -452,6 +613,40 @@ export function SharedItem(props) {
         <ShareStatus status={item.status} />
       </TableCell>
       <TableCell>
+        {isLoadingFilters ? (
+          <CircularProgress size={15} />
+        ) : (
+          <>
+            {itemDataFilter &&
+              itemDataFilter?.dataFilterNames &&
+              itemDataFilter?.dataFilterNames.length > 0 && (
+                <Button
+                  color="primary"
+                  startIcon={<OpenInNewIcon fontSize="small" />}
+                  sx={{ mr: 1 }}
+                  variant="outlined"
+                  onClick={() => {
+                    handleAssignedFilterModalOpen(itemDataFilter.label);
+                  }}
+                >
+                  {itemDataFilter?.label}
+                </Button>
+              )}
+            {isAssignedFilterModalOpen === itemDataFilter?.label && (
+              <ShareItemFilterModal
+                item={item}
+                shareUri={share.shareUri}
+                itemDataFilter={itemDataFilter}
+                onApply={() => handleAssignedFilterModalClose()}
+                onClose={() => handleAssignedFilterModalClose()}
+                open={isAssignedFilterModalOpen === itemDataFilter?.label}
+                viewOnly={true}
+              />
+            )}
+          </>
+        )}
+      </TableCell>
+      <TableCell>
         {isRemovingItem ? (
           <CircularProgress size={15} />
         ) : (
@@ -478,6 +673,34 @@ export function SharedItem(props) {
               >
                 Delete
               </Button>
+            )}
+            {/* If item status is PENDINGAPPROVAL and is of type table then have a button the is 'Assign Filters' */}
+            {item.status === 'PendingApproval' &&
+              item.itemType === 'Table' &&
+              (share.userRoleForShareObject === 'Approvers' ||
+                share.userRoleForShareObject === 'ApproversAndRequesters') && (
+                <Button
+                  color="primary"
+                  startIcon={<FilterAltIcon fontSize="small" />}
+                  sx={{ m: 1 }}
+                  variant="outlined"
+                  onClick={() => {
+                    handleFilterModalOpen(item.shareItemUri);
+                  }}
+                >
+                  Edit Filters
+                </Button>
+              )}
+            {isFilterModalOpenUri === item.shareItemUri && (
+              <ShareItemFilterModal
+                item={item}
+                shareUri={share.shareUri}
+                itemDataFilter={itemDataFilter}
+                onApply={() => handleFilterModalClose()}
+                onClose={() => handleFilterModalClose()}
+                reloadItems={fetchShareItems}
+                open={isFilterModalOpenUri === item.shareItemUri}
+              />
             )}
           </>
         )}
@@ -506,6 +729,7 @@ export function SharedItem(props) {
 
 SharedItem.propTypes = {
   item: PropTypes.any,
+  share: PropTypes.any,
   client: PropTypes.any,
   dispatch: PropTypes.any,
   enqueueSnackbar: PropTypes.any,
@@ -791,6 +1015,89 @@ const ShareView = () => {
                               </Typography>
                             </Box>
                           </Box>
+                          {share.dataset.enableExpiration && (
+                            <Box sx={{ mt: 3 }}>
+                              <Tooltip
+                                title={
+                                  'Please submit an extension share request before this date to avoid losing access data. For submitting a share request, click on edit'
+                                }
+                              >
+                                <Typography
+                                  color="textSecondary"
+                                  variant="subtitle2"
+                                >
+                                  Share Expiration Date
+                                </Typography>
+                              </Tooltip>
+                              <Box sx={{ mt: 1 }}>
+                                <Typography
+                                  color="textPrimary"
+                                  variant="subtitle2"
+                                >
+                                  {' '}
+                                  {share.nonExpirable &&
+                                  [
+                                    'Processed',
+                                    'Extension_Failed',
+                                    'Extension_Rejected'
+                                  ].some((item) =>
+                                    share.status.includes(item)
+                                  ) ? (
+                                    <Label color={'warning'}>
+                                      Non-expiring share
+                                    </Label>
+                                  ) : share.expiryDate != null ? (
+                                    <Label color={'primary'}>
+                                      {new Date(
+                                        share.expiryDate
+                                      ).toDateString()}
+                                    </Label>
+                                  ) : (
+                                    'Share expiration date not set'
+                                  )}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          )}
+                          {share.dataset.enableExpiration &&
+                            (share.status === 'Submitted_For_Extension' ||
+                              share.status === 'Draft' ||
+                              share.status === 'Submitted') && (
+                              <Box sx={{ mt: 3 }}>
+                                <Tooltip
+                                  title={
+                                    'Please submit an extension share request before this date to avoid losing access data. For submitting a share request, click on edit'
+                                  }
+                                >
+                                  <Typography
+                                    color="textSecondary"
+                                    variant="subtitle2"
+                                  >
+                                    Requested Share Expiration Date
+                                  </Typography>
+                                </Tooltip>
+                                <Box sx={{ mt: 1 }}>
+                                  <Typography
+                                    color="textPrimary"
+                                    variant="subtitle2"
+                                  >
+                                    {share.requestedExpiryDate != null ? (
+                                      <Label color={'primary'}>
+                                        {new Date(
+                                          share.requestedExpiryDate
+                                        ).toDateString()}
+                                      </Label>
+                                    ) : !share.nonExpirable ? (
+                                      'Requested expiration date not available'
+                                    ) : (
+                                      <Label color={'warning'}>
+                                        Non-expiring share
+                                      </Label>
+                                    )}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            )}
                         </Box>
                       </CardContent>
                     </Card>
@@ -876,6 +1183,56 @@ const ShareView = () => {
                               {share.rejectPurpose || '-'}
                             </Typography>
                           </Box>
+
+                          {share.dataset.enableExpiration && (
+                            <div>
+                              <Divider sx={{ mt: 2, mb: 2 }} />
+                              <Grid container spacing={3}>
+                                <Grid item md={11} xl={11} xs={22}>
+                                  <Tooltip
+                                    title={
+                                      'Extension Reason for when the share was last extended'
+                                    }
+                                  >
+                                    <Typography
+                                      color="textSecondary"
+                                      variant="subtitle2"
+                                    >
+                                      Extension Purpose
+                                    </Typography>
+                                  </Tooltip>
+                                </Grid>
+                                <Grid item md={1} xl={1} xs={2}>
+                                  {(share.userRoleForShareObject ===
+                                    'Requesters' ||
+                                    share.userRoleForShareObject ===
+                                      'ApproversAndRequesters') &&
+                                    (share.status === 'Submitted' ||
+                                      share.status ===
+                                        'Submitted_For_Extension' ||
+                                      share.status === 'Draft') &&
+                                    share.submittedForExtension && (
+                                      <UpdateExtensionReason
+                                        share={share}
+                                        client={client}
+                                        dispatch={dispatch}
+                                        enqueueSnackbar={enqueueSnackbar}
+                                        fetchItem={fetchItem}
+                                      />
+                                    )}
+                                </Grid>
+                              </Grid>
+                              <Box sx={{ mt: 1 }}>
+                                <Typography
+                                  color="textPrimary"
+                                  variant="subtitle2"
+                                  sx={{ wordBreak: 'break-word' }}
+                                >
+                                  {share.extensionReason || '-'}
+                                </Typography>
+                              </Box>
+                            </div>
+                          )}
                         </Box>
                       </CardContent>
                     </Card>
@@ -1002,6 +1359,26 @@ const ShareView = () => {
                               color="textSecondary"
                               variant="subtitle2"
                             >
+                              Permissions
+                            </Typography>
+                            <Typography color="textPrimary" variant="body2">
+                              {share.permissions.map((perm) => (
+                                <Chip label={perm} sx={{ marginRight: 1 }} />
+                              ))}
+                            </Typography>
+                          </ListItem>
+                          <ListItem
+                            disableGutters
+                            divider
+                            sx={{
+                              justifyContent: 'space-between',
+                              padding: 2
+                            }}
+                          >
+                            <Typography
+                              color="textSecondary"
+                              variant="subtitle2"
+                            >
                               Creation time
                             </Typography>
                             <Typography color="textPrimary" variant="body2">
@@ -1082,6 +1459,7 @@ const ShareView = () => {
                             <TableCell>Type</TableCell>
                             <TableCell>Name</TableCell>
                             <TableCell>Status</TableCell>
+                            <TableCell>Data Filters</TableCell>
                             <TableCell>Action</TableCell>
                             <TableCell>Health Status</TableCell>
                             <TableCell>Health Message</TableCell>
@@ -1096,6 +1474,7 @@ const ShareView = () => {
                                 <SharedItem
                                   key={sharedItem.itemUri}
                                   item={sharedItem}
+                                  share={share}
                                   client={client}
                                   dispatch={dispatch}
                                   enqueueSnackbar={enqueueSnackbar}
