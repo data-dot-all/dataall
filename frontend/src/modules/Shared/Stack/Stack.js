@@ -22,7 +22,6 @@ import { Scrollbar, StackStatus } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { getStack, updateStack, useClient } from 'services';
 import { StackLogs } from './StackLogs';
-import config from '../../../generated/config.json';
 
 export const Stack = (props) => {
   const { environmentUri, stackUri, targetUri, targetType } = props;
