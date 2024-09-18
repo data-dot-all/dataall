@@ -26,6 +26,8 @@ def test_list_tenant_groups(clientTenant):
     response = list_tenant_groups(clientTenant)
     assert_that(response.count).is_greater_than_or_equal_to(4)
     assert_that(response.nodes).is_not_empty()
+    assert_that(response.nodes[0]).contains_key('tenantPermissions')
+    ## Testing admin group DAAdministrators exists
     admin_group = next(group for group in response.nodes if group.groupUri == 'DHAdmins')
     assert_that(admin_group).contains_key('tenantPermissions')
 
