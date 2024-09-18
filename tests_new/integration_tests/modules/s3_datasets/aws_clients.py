@@ -9,7 +9,6 @@ log = logging.getLogger(__name__)
 
 class S3Client:
     def __init__(self, session, region):
-        self._control_client = session.client('s3control', region_name=region)
         self._client = session.client('s3', region_name=region)
         self._resource = session.resource('s3', region_name=region)
         self._region = region
@@ -100,19 +99,19 @@ class S3Client:
             logging.error(f'Error uploading file to S3: {e}')
             raise
 
-    def get_access_point(self, account_id, access_point_name):
-        """
-        Get the access point for a given access point name.
-        :param access_point_name: The access point name to look up
-        :return: access point name if the access point exists, False otherwise
-        """
+    def list_bucket_objects(self, bucket_name):
         try:
-            return self._control_client.get_access_point( AccountId=account_id, Name=access_point_name)
+            return self._client.list_objects(Bucket=bucket_name)
         except ClientError as e:
-            if e.response['Error']['Code'] == 'NoSuchAccessPoint':
-                return False
-            else:
-                raise Exception(f'Error getting access point: {e}')
+            logging.error(f'Error listing objects in S3: {e}')
+            raise
+
+    def list_accesspoint_folder_objects(self, access_point, folder_name):
+        try:
+            return self._client.list_objects(Bucket=access_point, Prefix=folder_name)
+        except ClientError as e:
+            logging.error(f'Error listing objects in S3: {e}')
+            raise
 
 
 class KMSClient:

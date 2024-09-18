@@ -74,6 +74,7 @@ environment{{
         AwsAccountId,
         region
         resourcePrefix    
+        name
 }}
 canViewLogs,
 userRoleForShareObject,

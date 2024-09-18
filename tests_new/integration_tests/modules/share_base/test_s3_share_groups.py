@@ -4,6 +4,7 @@ import boto3
 import pytest
 from assertpy import assert_that
 
+from tests_new.integration_tests.aws_clients.athena import AthenaClient
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemStatus,
     ShareObjectStatus,
@@ -204,8 +205,7 @@ def test_verify_share_items(client1, session_share_1):
 
 
 @pytest.mark.dependency(depends=['test_share_succeeded'])
-def test_share_items_access(client5, session_share_1, session_s3_dataset1):
-    updated_share = get_share_object(client5, session_share_1.shareUri, {'isShared': True})
+def test_share_items_access(testdata, client5, session_share_1, session_s3_dataset1):
     credentials = json.loads(
         get_environment_access_token(client5, session_share_1.environment.environmentUri, session_share_1.groupUri)
     )
@@ -215,11 +215,29 @@ def test_share_items_access(client5, session_share_1, session_s3_dataset1):
         aws_secret_access_key=credentials['SessionKey'],
         aws_session_token=credentials['sessionToken'],
     )
-    s3_client = S3Client(session, session_s3_dataset1.region)
-    consumption_data = get_s3_consumption_data(client5, session_share_1.shareUri)
 
-    assert_that(s3_client.bucket_exists(consumption_data.s3bucketName)).is_not_none()
-    assert_that(s3_client.get_access_point(session_s3_dataset1.AwsAccountId, consumption_data.s3AccessPointName)).is_not_none()
+    s3_client = S3Client(session, session_s3_dataset1.region)
+    athena_client = AthenaClient(session, session_s3_dataset1.region)
+
+    consumption_data = get_s3_consumption_data(client5, session_share_1.shareUri)
+    updated_share = get_share_object(client5, session_share_1.shareUri, {'isShared': True})
+    items = updated_share['items'].nodes
+
+    glue_db = consumption_data.sharedGlueDatabase
+    access_point_arn = f'arn:aws:s3:{session_s3_dataset1.region}:{session_s3_dataset1.account}:accesspoint/{consumption_data.s3AccessPointName}'
+    workgroup = athena_client.get_env_work_group(updated_share.environment.name)
+
+    for item in items:
+        if item.itemType == ShareableType.Table.name:
+            query = f"""SELECT * FROM {glue_db}.{item.itemName};"""
+            q_id = athena_client.run_query(query, workgroup=workgroup)
+            state = athena_client.wait_for_query(q_id)
+            assert_that(state).is_equal_to('SUCCEEDED')
+        elif item.itemType == ShareableType.S3Bucket.name:
+            assert_that(s3_client.bucket_exists(item.itemName)).is_not_none()
+            assert_that(s3_client.list_bucket_objects(item.itemName)).is_not_none()
+        elif item.itemType == ShareableType.StorageLocation.name:
+            assert_that(s3_client.list_accesspoint_folder_objects(access_point_arn, item.itemName)).is_not_none()
 
 
 @pytest.mark.dependency(depends=['test_share_succeeded'])

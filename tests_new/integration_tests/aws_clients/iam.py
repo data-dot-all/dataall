@@ -53,3 +53,32 @@ class IAMClient:
         if role is None:
             role = self.create_role(account_id, role_name)
         return role
+
+    def get_consumption_role(self, account_id, role_name):
+        role = self.get_role(role_name)
+        if role is None:
+            role = self.create_role(account_id, role_name)
+            self.put_consumption_role_policy(role_name)
+        return role
+
+    def put_consumption_role_policy(self, role_name):
+        self._client.put_role_policy(
+            RoleName=role_name,
+            PolicyName='ConsumptionPolicy',
+            PolicyDocument="""{
+                                        "Version": "2012-10-17",
+                                        "Statement": [
+                                            {
+                                                "Sid": "VisualEditor0",
+                                                "Effect": "Allow",
+                                                "Action": [
+                                                    "s3:*",
+                                                    "athena:*",
+                                                    "glue:*",
+                                                    "lakeformation:GetDataAccess"
+                                                ],
+                                                "Resource": "*"
+                                            }
+                                        ]
+                                    }""",
+        )

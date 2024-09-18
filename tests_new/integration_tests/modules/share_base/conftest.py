@@ -40,13 +40,13 @@ def clean_up_share(client, shareUri):
 def consumption_role_1(client5, group5, persistent_cross_acc_env_1, testdata):
     aws_profile = testdata.aws_profiles['second']
     iam_client = IAMClient(session=None, profile=aws_profile, region=persistent_cross_acc_env_1['region'])
-    iam_client.create_role_if_not_exists(persistent_cross_acc_env_1.AwsAccountId, test_cons_role_name)
+    role = iam_client.get_consumption_role(persistent_cross_acc_env_1.AwsAccountId, test_cons_role_name)
     consumption_role = add_consumption_role(
         client5,
         persistent_cross_acc_env_1.environmentUri,
         group5,
         'ShareTestConsumptionRole',
-        f'arn:aws:iam::{persistent_cross_acc_env_1.AwsAccountId}:role/{test_cons_role_name}',
+        role['Role']['Arn'],
     )
     yield consumption_role
     remove_consumption_role(client5, persistent_cross_acc_env_1.environmentUri, consumption_role.consumptionRoleUri)
