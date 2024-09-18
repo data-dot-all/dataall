@@ -67,7 +67,7 @@ Currently **we support only Cognito based deployments** but support for any IdP 
           "region": "eu-west-1"
         }
       },
-      "dsabhoards": {
+      "dasbhoards": {
         "session_env1": {
           "dashboardId": "..."
         },
