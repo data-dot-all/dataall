@@ -4,10 +4,10 @@ import os
 
 from dataall.base.config import config
 from dataall.base.api.context import Context
-from dataall.base.utils.stack_logs_utils import is_stack_logs_visible
+from dataall.base.utils.logs_utils import check_if_user_allowed_view_logs
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.services.keyvaluetag_service import KeyValueTagService
-from dataall.core.stacks.services.stack_service import StackService
+from dataall.core.stacks.services.stack_service import StackService, StackServiceUtils
 from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.stacks.aws.cloudwatch import CloudWatch
 from dataall.base.utils import Parameter
@@ -57,6 +57,11 @@ def resolve_events(context, source: Stack, **kwargs):
         return None
     return json.dumps(source.events or {})
 
+def resolve_stack_visibility(context, source: Stack, **kwargs):
+    if not source:
+        return False
+    log_config = config.get_property(StackServiceUtils.map_target_to_config(target_type=source.stack))
+    return check_if_user_allowed_view_logs(context.groups, log_config)
 
 def resolve_task_id(context, source: Stack, **kwargs):
     if not source:
@@ -65,7 +70,6 @@ def resolve_task_id(context, source: Stack, **kwargs):
         return source.EcsTaskArn.split('/')[-1]
 
 
-@is_stack_logs_visible()
 def get_stack_logs(context: Context, source, targetUri: str = None, targetType: str = None):
     query = StackService.get_stack_logs(target_uri=targetUri, target_type=targetType)
     envname = os.getenv('envname', 'local')

@@ -20,14 +20,13 @@ import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Scrollbar, StackStatus } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { getStack, updateStack, useClient, useGroups } from 'services';
+import { getStack, updateStack, useClient } from 'services';
 import { StackLogs } from './StackLogs';
 import config from '../../../generated/config.json';
 
 export const Stack = (props) => {
   const { environmentUri, stackUri, targetUri, targetType } = props;
   const client = useClient();
-  const groups = useGroups();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const [stack, setStack] = useState(null);
@@ -58,6 +57,7 @@ export const Stack = (props) => {
           setStack({ ...response.data.getStack });
           setStackName(`${response.data.getStack.name}`);
           setResources(JSON.parse(response.data.getStack.resources).resources);
+          setIsStackLogsVisible(response.data.getStack.canViewLogs);
         } else {
           dispatch({ type: SET_ERROR, error: response.errors[0].message });
         }
@@ -100,36 +100,11 @@ export const Stack = (props) => {
       .catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
   };
 
-  const setStackLogsVisibility = async () => {
-    let config_show_stack_logs = 'disabled';
-
-    if (targetType === 'environment') {
-      config_show_stack_logs = config.core.features.show_stack_logs;
-    }
-    if (targetType === 'dataset') {
-      config_show_stack_logs =
-        config.modules.s3_datasets.features.show_stack_logs;
-    }
-
-    if (config_show_stack_logs === 'enabled') {
-      setIsStackLogsVisible(true);
-    } else if (config_show_stack_logs === 'admin-only') {
-      setIsStackLogsVisible(groups.includes('DAAdministrators') ? true : false);
-    } else if (config_show_stack_logs === 'disabled') {
-      setIsStackLogsVisible(false);
-    } else {
-      setIsStackLogsVisible(true);
-    }
-  };
-
   useEffect(() => {
-    if (client && groups) {
+    if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
-      setStackLogsVisibility().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
     }
-  }, [client, fetchItem, dispatch, groups]);
+  }, [client, fetchItem, dispatch]);
 
   if (loading) {
     return <CircularProgress />;

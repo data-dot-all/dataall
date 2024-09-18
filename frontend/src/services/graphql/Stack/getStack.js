@@ -32,6 +32,7 @@ export const getStack = (environmentUri, stackUri, targetUri, targetType) => ({
         error
         events
         name
+        canViewLogs
       }
     }
   `
