@@ -86,7 +86,7 @@ def list_owned_datasets(client, term=''):
 
 def list_datasets_created_in_environment(client, environment_uri, term=''):
     query = {
-        'operationName': 'ListDatasets',
+        'operationName': 'ListDatasetsCreatedInEnvironment',
         'variables': {'environmentUri': environment_uri, 'filter': {'term': term}},
         'query': f"""
                 query ListDatasetsCreatedInEnvironment(
