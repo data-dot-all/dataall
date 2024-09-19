@@ -5,7 +5,7 @@ from integration_tests.core.vpc.queries import create_network, delete_network, l
 
 
 def test_create_network(network1, session_id):
-    assert_that(network1).contains_entry(label='testVpc1', tags=[session_id], vpcId='someId')
+    assert_that(network1).contains_entry(label='testVpc1', tags=[session_id], VpcId='someId')
     assert_that(network1.vpcUri).is_not_none()
 
 
@@ -58,7 +58,7 @@ def test_delete_network_unauthorized(client2, network1):
 def test_list_environment_networks(client1, network1, session_env1, session_id):
     response = list_environment_networks(client1, environment_uri=session_env1.environmentUri, term=session_id)
     assert_that(response.count).is_equal_to(1)
-    assert_that(response.nodes[0]).contains_entry(label='testVpc1', vpcId='someId', vpcUri=network1.vpcUri)
+    assert_that(response.nodes[0]).contains_entry(label='testVpc1', VpcId='someId', vpcUri=network1.vpcUri)
 
 
 def test_list_environment_networks_unauthorized(client2, network1, session_env1):

@@ -81,4 +81,4 @@ def list_environment_networks(client, environment_uri, term=''):
                 """,
     }
     response = client.query(query=query)
-    return response.data.listEnvironmentNetworks.items
+    return response.data.listEnvironmentNetworks
