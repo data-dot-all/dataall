@@ -37,7 +37,7 @@ def upgrade():
         $$ LANGUAGE plpgsql;
 
         -- Create the trigger for organization table
-        CREATE TRIGGER org_delete_trigger
+        CREATE OR REPLACE TRIGGER org_delete_trigger
         BEFORE DELETE ON organization
         FOR EACH ROW
         EXECUTE FUNCTION org_delete_trigger_function();
@@ -62,7 +62,7 @@ def upgrade():
         $$ LANGUAGE plpgsql;
 
         -- Create the trigger for environment table
-        CREATE TRIGGER env_delete_trigger
+        CREATE OR REPLACE TRIGGER env_delete_trigger
         BEFORE DELETE ON environment
         FOR EACH ROW
         EXECUTE FUNCTION env_delete_trigger_function();
@@ -82,7 +82,7 @@ def upgrade():
         $$ LANGUAGE plpgsql;
 
         -- Create the trigger for dataset table
-        CREATE TRIGGER dataset_delete_trigger
+        CREATE OR REPLACE TRIGGER dataset_delete_trigger
         BEFORE DELETE ON dataset
         FOR EACH ROW
         EXECUTE FUNCTION dataset_delete_trigger_function();
