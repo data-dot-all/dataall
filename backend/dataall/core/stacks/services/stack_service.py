@@ -69,6 +69,7 @@ class StackServiceUtils:
             return False
         return True
 
+
 class StackService:
     @staticmethod
     def resolve_parent_obj_stack(targetUri: str, environmentUri: str):
@@ -212,7 +213,9 @@ class StackService:
 
     @staticmethod
     @is_feature_has_allowed_values(
-        allowed_values=['admin-only', 'enabled', 'disabled'], default_value='enabled', resolve_property=StackServiceUtils.map_target_to_config
+        allowed_values=['admin-only', 'enabled', 'disabled'],
+        default_value='enabled',
+        resolve_property=StackServiceUtils.map_target_to_config,
     )
     def get_stack_logs(target_uri, target_type):
         context = get_context()

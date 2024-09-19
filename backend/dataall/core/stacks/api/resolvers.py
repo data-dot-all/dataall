@@ -64,7 +64,7 @@ def resolve_stack_visibility(context, source: Stack, **kwargs):
     try:
         return StackServiceUtils.check_if_user_allowed_view_logs(context.groups, log_config)
     except Exception as e:
-        log.error(f"Failed to check if user is allowed to view logs: {e}")
+        log.error(f'Failed to check if user is allowed to view logs: {e}')
         return False
 
 

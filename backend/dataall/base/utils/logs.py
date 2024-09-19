@@ -4,7 +4,10 @@ from dataall.base.utils.decorator_utls import process_func
 
 
 def is_feature_has_allowed_values(
-    allowed_values: List[Any], default_value: Any , resolve_property: Optional[Callable] = None, config_property: Optional[str] = None
+    allowed_values: List[Any],
+    default_value: Any,
+    resolve_property: Optional[Callable] = None,
+    config_property: Optional[str] = None,
 ):
     def decorator(f):
         fn, fn_decorator = process_func(f)
@@ -25,4 +28,3 @@ def is_feature_has_allowed_values(
         return fn_decorator(decorated)
 
     return decorator
-
