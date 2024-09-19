@@ -1,13 +1,22 @@
 {
     "modules": {
         "mlstudio": {
-            "active": true
+            "active": true,
+            "features": {
+                 "show_stack_logs": "admin-only"
+            }
         },
         "notebooks": {
-            "active": true
+            "active": true,
+             "features": {
+                 "show_stack_logs": "admin-only"
+            }
         },
         "datapipelines": {
-            "active": true
+            "active": true,
+             "features": {
+                 "show_stack_logs": "admin-only"
+            }
         },
         "omics": {
             "active": false

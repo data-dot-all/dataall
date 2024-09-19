@@ -4,7 +4,7 @@ import logging
 from dataall.base.context import get_context
 from dataall.base.utils import Parameter
 from dataall.base.db import exceptions
-from dataall.base.utils.logs_utils import is_feature_has_allowed_values, check_if_user_allowed_view_logs
+from dataall.base.utils.logs import is_feature_has_allowed_values
 from dataall.core.stacks.aws.cloudwatch import CloudWatch
 from dataall.base.config import config
 
@@ -18,13 +18,18 @@ class ShareLogsService:
     @staticmethod
     @is_feature_has_allowed_values(
         allowed_values=['admin-only', 'enabled', 'disabled'],
+        default_value='enabled',
         config_property='modules.shares_base.features.show_share_logs',
     )
-    def check_view_log_permissions(username, groups, shareUri):
+    def check_view_logs_permissions(username, groups, shareUri):
         context = get_context()
-        log_config = config.get_property('modules.shares_base.features.show_share_logs')
-        if not check_if_user_allowed_view_logs(context.groups, log_config):
-            return False
+        log_config = config.get_property('modules.shares_base.features.show_share_logs', 'enabled')
+        if (log_config == 'admin-only' and 'DAAdministrators' not in groups) or log_config == 'disabled':
+            raise exceptions.ResourceUnauthorized(
+                username=context.username,
+                action='View Share Logs',
+                resource_uri=shareUri,
+            )
         with context.db_engine.scoped_session() as session:
             share = ShareObjectRepository.get_share_by_uri(session, shareUri)
             ds = DatasetBaseRepository.get_dataset_by_uri(session, share.datasetUri)
@@ -52,7 +57,7 @@ class ShareLogsService:
     @staticmethod
     def get_share_logs(shareUri):
         context = get_context()
-        if not ShareLogsService.check_view_log_permissions(context.username, context.groups, shareUri):
+        if not ShareLogsService.check_view_logs_permissions(context.username, context.groups, shareUri):
             raise exceptions.ResourceUnauthorized(
                 username=context.username,
                 action='View Share Logs',

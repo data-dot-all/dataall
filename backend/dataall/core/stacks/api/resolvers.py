@@ -4,7 +4,6 @@ import os
 
 from dataall.base.config import config
 from dataall.base.api.context import Context
-from dataall.base.utils.logs_utils import check_if_user_allowed_view_logs
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.services.keyvaluetag_service import KeyValueTagService
 from dataall.core.stacks.services.stack_service import StackService, StackServiceUtils
@@ -61,8 +60,12 @@ def resolve_events(context, source: Stack, **kwargs):
 def resolve_stack_visibility(context, source: Stack, **kwargs):
     if not source:
         return False
-    log_config = config.get_property(StackServiceUtils.map_target_to_config(target_type=source.stack))
-    return check_if_user_allowed_view_logs(context.groups, log_config)
+    log_config = config.get_property(StackServiceUtils.map_target_to_config(target_type=source.stack), 'enabled')
+    try:
+        return StackServiceUtils.check_if_user_allowed_view_logs(context.groups, log_config)
+    except Exception as e:
+        log.error(f"Failed to check if user is allowed to view logs: {e}")
+        return False
 
 
 def resolve_task_id(context, source: Stack, **kwargs):

@@ -4,8 +4,8 @@ from dataall.base.utils.decorator_utls import process_func
 
 
 def is_feature_has_allowed_values(
-    allowed_values: List[Any], resolve_property: Optional[Callable] = None, config_property: Optional[str] = None
-) -> object:
+    allowed_values: List[Any], default_value: Any , resolve_property: Optional[Callable] = None, config_property: Optional[str] = None
+):
     def decorator(f):
         fn, fn_decorator = process_func(f)
 
@@ -15,7 +15,7 @@ def is_feature_has_allowed_values(
                 raise Exception('Config property not provided')
             if resolve_property:
                 config_property_value = resolve_property(*args, **kwargs)
-            value = config.get_property(config_property_value)
+            value = config.get_property(config_property_value, default_value)
             if value not in allowed_values:
                 raise Exception(
                     f'Disabled since incorrect values in config {config_property_value}. Correct config values {allowed_values}'
@@ -26,8 +26,3 @@ def is_feature_has_allowed_values(
 
     return decorator
 
-
-def check_if_user_allowed_view_logs(groups, config):
-    if (config == 'admin-only' and 'DAAdministrators' not in groups) or config == 'disabled':
-        return False
-    return True

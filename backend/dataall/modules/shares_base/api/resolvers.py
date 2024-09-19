@@ -5,7 +5,6 @@ from dataall.base.api.context import Context
 from dataall.base.db.exceptions import RequiredParameter
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.shares_base.services.shares_enums import ShareObjectPermission, PrincipalType
@@ -215,7 +214,7 @@ def resolve_user_role(context: Context, source: ShareObject, **kwargs):
 
 def resolve_can_view_logs(context: Context, source: ShareObject):
     try:
-        return ShareLogsService.check_view_log_permissions(context.username, context.groups, source.shareUri)
+        return ShareLogsService.check_view_logs_permissions(context.username, context.groups, source.shareUri)
     except Exception as e:
         log.error(f'Failed to resolve if user can view share logs due to: {e}')
         return False

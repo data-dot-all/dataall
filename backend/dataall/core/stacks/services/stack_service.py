@@ -4,7 +4,7 @@ import requests
 import logging
 
 from dataall.base.db import exceptions
-from dataall.base.utils.logs_utils import is_feature_has_allowed_values, check_if_user_allowed_view_logs
+from dataall.base.utils.logs import is_feature_has_allowed_values
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.services.keyvaluetag_service import KeyValueTagService
@@ -52,9 +52,22 @@ class StackServiceUtils:
         target_type = kwargs.get('target_type')
         if target_type == 'environment':
             return 'core.features.show_stack_logs'
-        if target_type == 'dataset':
+        elif target_type == 'dataset':
             return 'modules.s3_datasets.features.show_stack_logs'
+        elif target_type == 'mlstudio':
+            return 'modules.mlstudio.features.show_stack_logs'
+        elif target_type == 'notebooks':
+            return 'modules.notebooks.features.show_stack_logs'
+        elif target_type == 'datapipelines':
+            return 'modules.datapipelines.features.show_stack_logs'
+        else:
+            return 'Invalid Config'
 
+    @staticmethod
+    def check_if_user_allowed_view_logs(groups, config):
+        if (config == 'admin-only' and 'DAAdministrators' not in groups) or config == 'disabled':
+            return False
+        return True
 
 class StackService:
     @staticmethod
@@ -199,12 +212,12 @@ class StackService:
 
     @staticmethod
     @is_feature_has_allowed_values(
-        allowed_values=['admin-only', 'enabled', 'disabled'], resolve_property=StackServiceUtils.map_target_to_config
+        allowed_values=['admin-only', 'enabled', 'disabled'], default_value='enabled', resolve_property=StackServiceUtils.map_target_to_config
     )
     def get_stack_logs(target_uri, target_type):
         context = get_context()
-        log_config = config.get_property(StackServiceUtils.map_target_to_config(target_type=target_type))
-        if not check_if_user_allowed_view_logs(context.groups, log_config):
+        log_config = config.get_property(StackServiceUtils.map_target_to_config(target_type=target_type), 'enabled')
+        if not StackServiceUtils.check_if_user_allowed_view_logs(context.groups, log_config):
             raise exceptions.ResourceUnauthorized(
                 username=context.username,
                 action='View Stack logs',
