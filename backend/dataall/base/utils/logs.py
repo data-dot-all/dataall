@@ -18,6 +18,8 @@ def is_feature_has_allowed_values(
                 raise Exception('Config property not provided')
             if resolve_property:
                 config_property_value = resolve_property(*args, **kwargs)
+            if config_property:
+                config_property_value = config_property
             value = config.get_property(config_property_value, default_value)
             if value not in allowed_values:
                 raise Exception(

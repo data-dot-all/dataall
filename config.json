@@ -3,19 +3,19 @@
         "mlstudio": {
             "active": true,
             "features": {
-                 "show_stack_logs": "admin-only"
+                 "show_stack_logs": "enabled"
             }
         },
         "notebooks": {
             "active": true,
              "features": {
-                 "show_stack_logs": "admin-only"
+                 "show_stack_logs": "enabled"
             }
         },
         "datapipelines": {
             "active": true,
              "features": {
-                 "show_stack_logs": "admin-only"
+                 "show_stack_logs": "enabled"
             }
         },
         "omics": {
