@@ -37,7 +37,7 @@ def upgrade():
         $$ LANGUAGE plpgsql;
 
         -- Create the trigger for organization table
-        CREATE OR REPLACE TRIGGER org_delete_trigger
+        CREATE TRIGGER org_delete_trigger
         BEFORE DELETE ON organization
         FOR EACH ROW
         EXECUTE FUNCTION org_delete_trigger_function();
@@ -62,7 +62,7 @@ def upgrade():
         $$ LANGUAGE plpgsql;
 
         -- Create the trigger for environment table
-        CREATE OR REPLACE TRIGGER env_delete_trigger
+        CREATE TRIGGER env_delete_trigger
         BEFORE DELETE ON environment
         FOR EACH ROW
         EXECUTE FUNCTION env_delete_trigger_function();
@@ -82,10 +82,29 @@ def upgrade():
         $$ LANGUAGE plpgsql;
 
         -- Create the trigger for dataset table
-        CREATE OR REPLACE TRIGGER dataset_delete_trigger
+        CREATE TRIGGER dataset_delete_trigger
         BEFORE DELETE ON dataset
         FOR EACH ROW
         EXECUTE FUNCTION dataset_delete_trigger_function();
+    """)
+
+    op.execute("""
+        CREATE OR REPLACE FUNCTION metadata_form_delete_trigger_function()
+        RETURNS TRIGGER AS $$
+        BEGIN
+            -- Delete from resource_permission_policy
+            DELETE FROM resource_policy_permission
+            WHERE "sid" in (SELECT sid from resource_policy where "resourceUri"=OLD.uri and "resourceType"='MetadataForm');
+            DELETE FROM resource_policy where "resourceUri"=OLD.uri;
+            RETURN OLD;
+        END;
+        $$ LANGUAGE plpgsql;
+
+        -- Create the trigger for dataset table
+        CREATE TRIGGER metadata_form_delete_trigger
+        BEFORE DELETE ON metadata_form
+        FOR EACH ROW
+        EXECUTE FUNCTION metadata_form_delete_trigger_function();
     """)
     # ### end Alembic commands ###
 
@@ -119,6 +138,16 @@ def downgrade():
         
         -- Drop the dataset_delete_trigger_function
         DROP FUNCTION IF EXISTS dataset_delete_trigger_function;
+        """
+    )
+
+    op.execute(
+        """
+        -- Drop the dataset_delete_trigger
+        DROP TRIGGER IF EXISTS metadata_form_delete_trigger ON metadata_form;
+        
+        -- Drop the dataset_delete_trigger_function
+        DROP FUNCTION IF EXISTS metadata_form_delete_trigger_function;
         """
     )
     # ### end Alembic commands ###
