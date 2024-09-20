@@ -256,11 +256,11 @@ export const EnvironmentRedshiftConnectionAddForm = (props) => {
                         variant="outlined"
                       >
                         {connectionOptions.map((r) => (
-                          <Tooltip title={r.info} placement="right-end">
-                            <MenuItem key={r.value} value={r.value}>
-                              {r.label}
-                            </MenuItem>
-                          </Tooltip>
+                          <MenuItem key={r.value} value={r.value}>
+                            <Tooltip title={r.info} placement="right-end">
+                              <div>{r.label}</div>
+                            </Tooltip>
+                          </MenuItem>
                         ))}
                       </TextField>
                     </CardContent>
