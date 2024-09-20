@@ -253,13 +253,3 @@ class MetadataFormRepository:
         return session.query(AttachedMetadataForm).filter(
             and_(AttachedMetadataForm.entityType == entityType, AttachedMetadataForm.entityUri == entityUri)
         )
-
-    @staticmethod
-    def delete_attached_entity_metadata_forms(session, entityUri, entityType):
-        MetadataFormRepository.query_all_attached_metadata_forms_for_entity(session, entityUri, entityType).delete()
-
-    @staticmethod
-    def delete_all_home_metadata_forms(session, homeEntityUri, visibility):
-        session.query(MetadataForm).filter(
-            and_(MetadataForm.homeEntity == homeEntityUri, MetadataForm.visibility == visibility)
-        ).delete()
