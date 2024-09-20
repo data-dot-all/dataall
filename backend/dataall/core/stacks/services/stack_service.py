@@ -4,7 +4,7 @@ import requests
 import logging
 
 from dataall.base.db import exceptions
-from dataall.base.utils.logs import is_feature_has_allowed_values
+from dataall.base.feature_toggle_checker import is_feature_enabled_for_allowed_values
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.services.keyvaluetag_service import KeyValueTagService
@@ -65,7 +65,7 @@ class StackServiceUtils:
 
     @staticmethod
     def check_if_user_allowed_view_logs(groups, config):
-        if (config == 'admin-only' and 'DAAdministrators' not in groups) or config == 'disabled':
+        if (config == 'admin-only' and 'DAAdministrators' not in groups):
             return False
         return True
 
@@ -212,8 +212,9 @@ class StackService:
         return kv_tags
 
     @staticmethod
-    @is_feature_has_allowed_values(
+    @is_feature_enabled_for_allowed_values(
         allowed_values=['admin-only', 'enabled', 'disabled'],
+        enabled_values=['admin-only', 'enabled'],
         default_value='enabled',
         resolve_property=StackServiceUtils.map_target_to_config,
     )
