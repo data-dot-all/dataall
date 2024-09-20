@@ -1,6 +1,8 @@
 import { GroupAddOutlined } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
+  Alert,
+  AlertTitle,
   Autocomplete,
   Box,
   CardContent,
@@ -10,6 +12,7 @@ import {
   Grid,
   MenuItem,
   TextField,
+  Tooltip,
   Typography
 } from '@mui/material';
 import { Formik } from 'formik';
@@ -30,8 +33,16 @@ export const EnvironmentRedshiftConnectionAddForm = (props) => {
   let { groupOptions, loadingGroups } = useFetchGroups(environment);
 
   const connectionOptions = [
-    { value: 'DATA_USER', label: 'Data User' },
-    { value: 'ADMIN', label: 'Admin' }
+    {
+      value: 'DATA_USER',
+      label: 'Data User',
+      info: 'Data users should have Redshift READ permissions to tables that will be imported in data.all'
+    },
+    {
+      value: 'ADMIN',
+      label: 'Admin',
+      info: 'Admin users should have enough permissions to MANAGE DATASHARES in the namespace.'
+    }
   ];
 
   const clusterOptions = [
@@ -104,9 +115,25 @@ export const EnvironmentRedshiftConnectionAddForm = (props) => {
           Add a Redshift connection to environment {environment.label}
         </Typography>
         <Typography align="center" color="textSecondary" variant="subtitle2">
-          The Redshift connection is owned by the selected Team. It is used to
-          import Redshift Datasets.
+          The Redshift connection contains the metadata to connect to Redshift
+          with a particular user.
         </Typography>
+      </Box>
+      <Box sx={{ p: 3 }}>
+        <Box sx={{ pl: 5, pr: 5 }}>
+          <Alert
+            severity="info"
+            variant="outlined"
+            sx={{ whiteSpace: 'pre-line' }}
+          >
+            <AlertTitle>Types of Connections</AlertTitle>- DATA USER: This
+            connection will be used by the data producers to import data. It is
+            required to import a Redshift Dataset.{'\n'}- ADMIN: This connection
+            will be used by data.all backend to manage data sharing. To create a
+            share request between 2 namespaces, an ADMIN connection in the
+            source and in the target namespaces are required.
+          </Alert>
+        </Box>
         <Box sx={{ p: 3 }}>
           <Formik
             initialValues={{
@@ -177,29 +204,6 @@ export const EnvironmentRedshiftConnectionAddForm = (props) => {
                     />
                   </CardContent>
                   <CardContent>
-                    <TextField
-                      fullWidth
-                      error={Boolean(
-                        touched.connectionType && errors.connectionType
-                      )}
-                      helperText={
-                        touched.connectionType && errors.connectionType
-                      }
-                      label="Connection type"
-                      name="connectionType"
-                      onChange={handleChange}
-                      select
-                      value={values.connectionType}
-                      variant="outlined"
-                    >
-                      {connectionOptions.map((r) => (
-                        <MenuItem key={r.value} value={r.value}>
-                          {r.label}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </CardContent>
-                  <CardContent>
                     <Autocomplete
                       id="SamlAdminGroupName"
                       disablePortal
@@ -235,6 +239,31 @@ export const EnvironmentRedshiftConnectionAddForm = (props) => {
                 </Box>
                 <Grid container spacing={3}>
                   <Grid item lg={6} md={6} xs={12}>
+                    <CardContent>
+                      <TextField
+                        fullWidth
+                        error={Boolean(
+                          touched.connectionType && errors.connectionType
+                        )}
+                        helperText={
+                          touched.connectionType && errors.connectionType
+                        }
+                        label="Connection type"
+                        name="connectionType"
+                        onChange={handleChange}
+                        select
+                        value={values.connectionType}
+                        variant="outlined"
+                      >
+                        {connectionOptions.map((r) => (
+                          <Tooltip title={r.info} placement="right-end">
+                            <MenuItem key={r.value} value={r.value}>
+                              {r.label}
+                            </MenuItem>
+                          </Tooltip>
+                        ))}
+                      </TextField>
+                    </CardContent>
                     <CardContent>
                       <TextField
                         fullWidth
