@@ -28,7 +28,7 @@ class IAMClient:
     def get_tooling_account_id():
         session = boto3.Session()
         param_client = session.client('ssm', os.environ.get('AWS_REGION', 'us-east-1'))
-        parameter_path=f"/dataall/{os.environ.get('ENVNAME', 'dev')}/toolingAccount"
+        parameter_path = f"/dataall/{os.environ.get('ENVNAME', 'dev')}/toolingAccount"
         print(parameter_path)
         toolingAccount = param_client.get_parameter(Name=parameter_path)['Parameter']['Value']
         return toolingAccount
@@ -62,13 +62,13 @@ class IAMClient:
     def create_role_if_not_exists(self, account_id, role_name, test_role_name):
         role = self.get_role(role_name)
         if role is None:
-            role = self.create_role(account_id, role_name,test_role_name)
+            role = self.create_role(account_id, role_name, test_role_name)
         return role
 
-    def get_consumption_role(self, account_id, role_name,test_role_name):
+    def get_consumption_role(self, account_id, role_name, test_role_name):
         role = self.get_role(role_name)
         if role is None:
-            role = self.create_role(account_id, role_name,test_role_name)
+            role = self.create_role(account_id, role_name, test_role_name)
             self.put_consumption_role_policy(role_name)
         return role
 

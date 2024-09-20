@@ -1,7 +1,6 @@
 import pytest
 from assertpy import assert_that
 
-from tests_new.integration_tests.modules.s3_datasets.queries import get_dataset
 from tests_new.integration_tests.aws_clients.athena import AthenaClient
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemStatus,
@@ -32,21 +31,21 @@ from tests_new.integration_tests.modules.share_base.utils import (
     get_role_session,
 )
 
+ALL_S3_SHARABLE_TYPES_NAMES = [
+    ShareableType.Table.name,
+    ShareableType.StorageLocation.name,
+    ShareableType.S3Bucket.name,
+]
 
 
-@pytest.mark.parametrize(
-    'principal_type',
-    ['Group', 'ConsumptionRole'],
-)
-def test_create_and_delete_share_object(
-        client5, persistent_cross_acc_env_1, session_s3_dataset1, consumption_role_1, group5, principal_type
-):
+def test_create_and_delete_share_object(client5, persistent_cross_acc_env_1, session_s3_dataset1, principal1, group5):
+    principal_id, principal_type = principal1
     share = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': session_s3_dataset1.datasetUri},
         environmentUri=persistent_cross_acc_env_1.environmentUri,
         groupUri=group5,
-        principalId=group5 if principal_type == 'Group' else consumption_role_1.consumptionRoleUri,
+        principalId=principal_id,
         principalType=principal_type,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
@@ -56,21 +55,16 @@ def test_create_and_delete_share_object(
     delete_share_object(client5, share.shareUri)
 
 
-@pytest.mark.parametrize(
-    'principal_type',
-    ['Group', 'ConsumptionRole'],
-)
-def test_submit_empty_object(
-        client5, persistent_cross_acc_env_1, session_s3_dataset1, group5, consumption_role_1, principal_type
-):
+def test_submit_empty_object(client5, persistent_cross_acc_env_1, session_s3_dataset1, group5, principal1):
     # here Exception is not recognized as GqlError, so we use base class
     # toDo: back to GqlError
+    principal_id, principal_type = principal1
     share = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': session_s3_dataset1.datasetUri},
         environmentUri=persistent_cross_acc_env_1.environmentUri,
         groupUri=group5,
-        principalId=group5 if principal_type == 'Group' else consumption_role_1.consumptionRoleUri,
+        principalId=principal_id,
         principalType=principal_type,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
@@ -82,19 +76,14 @@ def test_submit_empty_object(
     clean_up_share(client5, share.shareUri)
 
 
-@pytest.mark.parametrize(
-    'principal_type',
-    ['Group', 'ConsumptionRole'],
-)
-def test_add_share_items(
-        client5, persistent_cross_acc_env_1, session_s3_dataset1, group5, consumption_role_1, principal_type
-):
+def test_add_share_items(client5, persistent_cross_acc_env_1, session_s3_dataset1, group5, principal1):
+    principal_id, principal_type = principal1
     share = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': session_s3_dataset1.datasetUri},
         environmentUri=persistent_cross_acc_env_1.environmentUri,
         groupUri=group5,
-        principalId=group5 if principal_type == 'Group' else consumption_role_1.consumptionRoleUri,
+        principalId=principal_id,
         principalType=principal_type,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
@@ -119,19 +108,14 @@ def test_add_share_items(
     clean_up_share(client5, share.shareUri)
 
 
-@pytest.mark.parametrize(
-    'principal_type',
-    ['Group', 'ConsumptionRole'],
-)
-def test_reject_share(
-        client1, client5, persistent_cross_acc_env_1, session_s3_dataset1, group5, consumption_role_1, principal_type
-):
+def test_reject_share(client1, client5, persistent_cross_acc_env_1, session_s3_dataset1, group5, principal1):
+    principal_id, principal_type = principal1
     share = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': session_s3_dataset1.datasetUri},
         environmentUri=persistent_cross_acc_env_1.environmentUri,
         groupUri=group5,
-        principalId=group5 if principal_type == 'Group' else consumption_role_1.consumptionRoleUri,
+        principalId=principal_id,
         principalType=principal_type,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
@@ -159,38 +143,17 @@ def test_reject_share(
     clean_up_share(client5, share.shareUri)
 
 
-@pytest.mark.parametrize(
-    'share_fixture_name',
-    ['session_share_1', 'session_share_consrole_1'],
-)
-def test_change_share_purpose(client5, share_fixture_name, request):
-    share = request.getfixturevalue(share_fixture_name)
+def test_change_share_purpose(client5, share_params_main):
+    share, dataset = share_params_main
     change_request_purpose = update_share_request_reason(client5, share.shareUri, 'new purpose')
     assert_that(change_request_purpose).is_true()
     updated_share = get_share_object(client5, share.shareUri)
     assert_that(updated_share.requestPurpose).is_equal_to('new purpose')
 
 
-@pytest.mark.parametrize(
-    'share_fixture_name,dataset_fixture_name',
-    [
-        pytest.param('session_share_1', 'session_s3_dataset1', marks=pytest.mark.dependency(name='share_1_group')),
-        pytest.param(
-            'session_share_2', 'session_imported_sse_s3_dataset1', marks=pytest.mark.dependency(name='share_2_group')
-        ),  # autoapproval
-        pytest.param(
-            'session_share_consrole_1', 'session_s3_dataset1', marks=pytest.mark.dependency(name='share_1_role')
-        ),
-        pytest.param(
-            'session_share_consrole_2',
-            'session_imported_sse_s3_dataset1',
-            marks=pytest.mark.dependency(name='share_2_role'),
-        ),
-    ],  # autoapproval
-)
-def test_submit_object(client5, share_fixture_name, dataset_fixture_name, request):
-    share = request.getfixturevalue(share_fixture_name)
-    dataset = request.getfixturevalue(dataset_fixture_name)
+@pytest.mark.dependency(name='share_submitted')
+def test_submit_object(client5, share_params_all):
+    share, dataset = share_params_all
     updated_share = get_share_object(client5, share.shareUri)
     items = updated_share['items'].nodes
     for item in items:
@@ -204,44 +167,20 @@ def test_submit_object(client5, share_fixture_name, dataset_fixture_name, reques
         assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Submitted.value)
 
 
-@pytest.mark.parametrize(
-    'share_fixture_name',
-    [
-        pytest.param(
-            'session_share_1', marks=pytest.mark.dependency(name='share_1_group_approve', depends=['share_1_group'])
-        ),
-        pytest.param(
-            'session_share_consrole_1',
-            marks=pytest.mark.dependency(name='share_1_role_approve', depends=['share_1_role']),
-        ),
-    ],
-)
-def test_approve_share(client1, share_fixture_name, request):
-    share = request.getfixturevalue(share_fixture_name)
+@pytest.mark.dependency(name='share_approved', depends=['share_submitted'])
+def test_approve_share(client1, share_params_main):
+    share, dataset = share_params_main
     approve_share_object(client1, share.shareUri)
 
     updated_share = get_share_object(client1, share.shareUri, {'isShared': True})
     assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Approved.value)
     items = updated_share['items'].nodes
-    for item in items:
-        assert_that(item.status).is_equal_to(ShareItemStatus.Share_Approved.value)
+    assert_that(items).extracting('status').contains_only(ShareItemStatus.Share_Approved.value)
 
 
-@pytest.mark.parametrize(
-    'share_fixture_name',
-    [
-        pytest.param(
-            'session_share_1',
-            marks=pytest.mark.dependency(name='share_1_group_success', depends=['share_1_group_approve']),
-        ),
-        pytest.param(
-            'session_share_consrole_1',
-            marks=pytest.mark.dependency(name='share_1_role_success', depends=['share_1_role_approve']),
-        ),
-    ],
-)
-def test_share_succeeded(client1, share_fixture_name, request):
-    share = request.getfixturevalue(share_fixture_name)
+@pytest.mark.dependency(name='share_succeeded', depends=['share_approved'])
+def test_share_succeeded(client1, share_params_main):
+    share, dataset = share_params_main
     check_share_ready(client1, share.shareUri)
     updated_share = get_share_object(client1, share.shareUri, {'isShared': True})
     items = updated_share['items'].nodes
@@ -250,87 +189,61 @@ def test_share_succeeded(client1, share_fixture_name, request):
     for item in items:
         assert_that(item.status).is_equal_to(ShareItemStatus.Share_Succeeded.value)
         assert_that(item.healthStatus).is_equal_to(ShareItemHealthStatus.Healthy.value)
-    assert_that(items).extracting('itemType').contains(ShareableType.Table.name)
-    assert_that(items).extracting('itemType').contains(ShareableType.S3Bucket.name)
-    assert_that(items).extracting('itemType').contains(ShareableType.StorageLocation.name)
+    assert_that(items).extracting('itemType').contains(*ALL_S3_SHARABLE_TYPES_NAMES)
 
 
-@pytest.mark.parametrize(
-    'share_fixture_name',
-    [
-        pytest.param(
-            'session_share_1',
-            marks=pytest.mark.dependency(name='share_1_group_verified', depends=['share_1_group_success']),
-        ),
-        pytest.param(
-            'session_share_consrole_1',
-            marks=pytest.mark.dependency(name='share_1_role_verifies', depends=['share_1_role_success']),
-        ),
-    ],
-)
-def test_verify_share_items(client1, share_fixture_name, request):
-    share = request.getfixturevalue(share_fixture_name)
+@pytest.mark.dependency(name='share_verified', depends=['share_succeeded'])
+def test_verify_share_items(client1, share_params_main):
+    share, dataset = share_params_main
     updated_share = get_share_object(client1, share.shareUri, {'isShared': True})
     items = updated_share['items'].nodes
-    times = {}
-    for item in items:
-        times[item.shareItemUri] = item.lastVerificationTime
+    times = [item.lastVerificationTime for item in items]
     verify_share_items(client1, share.shareUri, [item.shareItemUri for item in items])
     check_share_items_verified(client1, share.shareUri)
     updated_share = get_share_object(client1, share.shareUri, {'isShared': True})
     items = updated_share['items'].nodes
-    for item in items:
-        assert_that(item.status).is_equal_to(ShareItemStatus.Share_Succeeded.value)
-        assert_that(item.healthStatus).is_equal_to(ShareItemHealthStatus.Healthy.value)
-        assert_that(item.lastVerificationTime).is_not_equal_to(times[item.shareItemUri])
+    assert_that(items).extracting('status').contains_only(ShareItemStatus.Share_Succeeded.value)
+    assert_that(items).extracting('healthStatus').contains_only(ShareItemHealthStatus.Healthy.value)
+    assert_that(items).extracting('lastVerificationTime').does_not_contain(*times)
 
 
-@pytest.mark.parametrize(
-    'share_fixture_name, principal_type',
-    [
-        pytest.param('session_share_1', 'Group', marks=pytest.mark.dependency(depends=['share_1_group_verified'])),
-        pytest.param(
-            'session_share_consrole_1',
-            'ConsumptionRole',
-            marks=pytest.mark.dependency(depends=['share_1_role_verifies']),
-        ),
-    ],
-)
+@pytest.mark.dependency(depends=['share_verified'])
 def test_check_item_access(
-        client5, persistent_cross_acc_env_1_aws_client, share_fixture_name, session_s3_dataset1, principal_type, group5,
-        consumption_role_1, request
+    client5, persistent_cross_acc_env_1_aws_client, share_params_main, group5, consumption_role_1
 ):
-    share = request.getfixturevalue(share_fixture_name)
+    share, dataset = share_params_main
+    principal_type = share.principal.principalType
     if principal_type == 'Group':
         session = get_group_session(client5, share.environment.environmentUri, group5)
     elif principal_type == 'ConsumptionRole':
-        session = get_role_session(persistent_cross_acc_env_1_aws_client, consumption_role_1.IAMRoleArn,
-                                   session_s3_dataset1.region)
+        session = get_role_session(persistent_cross_acc_env_1_aws_client, consumption_role_1.IAMRoleArn, dataset.region)
     else:
         raise Exception('wrong principal type')
 
-    s3_client = S3Client(session, session_s3_dataset1.region)
-    athena_client = AthenaClient(session, session_s3_dataset1.region)
+    s3_client = S3Client(session, dataset.region)
+    athena_client = AthenaClient(session, dataset.region)
 
     consumption_data = get_s3_consumption_data(client5, share.shareUri)
     updated_share = get_share_object(client5, share.shareUri, {'isShared': True})
     items = updated_share['items'].nodes
 
     glue_db = consumption_data.sharedGlueDatabase
-    access_point_arn = f'arn:aws:s3:{session_s3_dataset1.region}:{session_s3_dataset1.AwsAccountId}:accesspoint/{consumption_data.s3AccessPointName}'
+    access_point_arn = (
+        f'arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{consumption_data.s3AccessPointName}'
+    )
     if principal_type == 'Group':
         workgroup = athena_client.get_env_work_group(updated_share.environment.name)
         athena_workgroup_output_location = ''
     else:
         workgroup = 'primary'
         athena_workgroup_output_location = (
-            f's3://dataset-{session_s3_dataset1.datasetUri}-session-query-results/athenaqueries/primary/'
+            f's3://dataset-{dataset.datasetUri}-session-query-results/athenaqueries/primary/'
         )
 
     for item in items:
         if item.itemType == ShareableType.Table.name:
             # nosemgrep-next-line:noexec
-            query = "SELECT * FROM {}.{}".format(glue_db, item.itemName)
+            query = 'SELECT * FROM {}.{}'.format(glue_db, item.itemName)
             if principal_type == 'Group':
                 q_id = athena_client.run_query(query, workgroup=workgroup)
             else:
@@ -344,21 +257,9 @@ def test_check_item_access(
             assert_that(s3_client.list_accesspoint_folder_objects(access_point_arn, item.itemName + '/')).is_not_none()
 
 
-@pytest.mark.parametrize(
-    'share_fixture_name',
-    [
-        pytest.param(
-            'session_share_1',
-            marks=pytest.mark.dependency(name='share_1_group_revoked', depends=['share_1_group_success']),
-        ),
-        pytest.param(
-            'session_share_consrole_1',
-            marks=pytest.mark.dependency(name='share_1_role_revoked', depends=['share_1_role_success']),
-        ),
-    ],
-)
-def test_revoke_share(client1, share_fixture_name, request):
-    share = request.getfixturevalue(share_fixture_name)
+@pytest.mark.dependency(name='share_revoked', depends=['share_succeeded'])
+def test_revoke_share(client1, share_params_main):
+    share, dataset = share_params_main
     check_share_ready(client1, share.shareUri)
     updated_share = get_share_object(client1, share.shareUri, {'isShared': True})
     items = updated_share['items'].nodes
@@ -369,29 +270,18 @@ def test_revoke_share(client1, share_fixture_name, request):
     updated_share = get_share_object(client1, share.shareUri, {'isShared': True})
     assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Revoked.value)
     items = updated_share['items'].nodes
-    for item in items:
-        assert_that(item.status).is_equal_to(ShareItemStatus.Revoke_Approved.value)
-    assert_that(items).extracting('itemType').contains(ShareableType.Table.name)
-    assert_that(items).extracting('itemType').contains(ShareableType.S3Bucket.name)
-    assert_that(items).extracting('itemType').contains(ShareableType.StorageLocation.name)
+
+    assert_that(items).extracting('status').contains_only(ShareItemStatus.Revoke_Approved.value)
+    assert_that(items).extracting('itemType').contains(*ALL_S3_SHARABLE_TYPES_NAMES)
 
 
-@pytest.mark.parametrize(
-    'share_fixture_name',
-    [
-        pytest.param('session_share_1', marks=pytest.mark.dependency(depends=['share_1_group_revoked'])),
-        pytest.param('session_share_consrole_1', marks=pytest.mark.dependency(depends=['share_1_role_revoked'])),
-    ],
-)
-def test_revoke_succeeded(client1, share_fixture_name, request):
-    share = request.getfixturevalue(share_fixture_name)
+@pytest.mark.dependency(name='share_revoke_succeeded', depends=['share_revoked'])
+def test_revoke_succeeded(client1, share_params_main):
+    share, dataset = share_params_main
     check_share_ready(client1, share.shareUri)
     updated_share = get_share_object(client1, share.shareUri, {'isShared': True})
     items = updated_share['items'].nodes
 
     assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Processed.value)
-    for item in items:
-        assert_that(item.status).is_equal_to(ShareItemStatus.Revoke_Succeeded.value)
-    assert_that(items).extracting('itemType').contains(ShareableType.Table.name)
-    assert_that(items).extracting('itemType').contains(ShareableType.S3Bucket.name)
-    assert_that(items).extracting('itemType').contains(ShareableType.StorageLocation.name)
+    assert_that(items).extracting('status').contains_only(ShareItemStatus.Revoke_Succeeded.value)
+    assert_that(items).extracting('itemType').contains(*ALL_S3_SHARABLE_TYPES_NAMES)

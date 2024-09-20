@@ -163,4 +163,3 @@ def persistent_cross_acc_env_1_integration_role_arn(persistent_cross_acc_env_1):
 @pytest.fixture(scope='session')
 def persistent_cross_acc_env_1_aws_client(persistent_cross_acc_env_1, persistent_cross_acc_env_1_integration_role_arn):
     return get_environment_aws_session(persistent_cross_acc_env_1_integration_role_arn, persistent_cross_acc_env_1)
-

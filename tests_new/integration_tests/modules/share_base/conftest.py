@@ -39,7 +39,11 @@ def clean_up_share(client, shareUri):
 @pytest.fixture(scope='session')
 def consumption_role_1(client5, group5, persistent_cross_acc_env_1, persistent_cross_acc_env_1_aws_client):
     iam_client = IAMClient(session=persistent_cross_acc_env_1_aws_client, region=persistent_cross_acc_env_1['region'])
-    role = iam_client.get_consumption_role(persistent_cross_acc_env_1.AwsAccountId, test_cons_role_name, f'dataall-integration-tests-role-{persistent_cross_acc_env_1.region}')
+    role = iam_client.get_consumption_role(
+        persistent_cross_acc_env_1.AwsAccountId,
+        test_cons_role_name,
+        f'dataall-integration-tests-role-{persistent_cross_acc_env_1.region}',
+    )
     consumption_role = add_consumption_role(
         client5,
         persistent_cross_acc_env_1.environmentUri,
@@ -157,3 +161,42 @@ def session_share_consrole_2(
     yield share2cr
 
     clean_up_share(client5, share2cr.shareUri)
+
+
+@pytest.fixture(params=['Group', 'ConsumptionRole'])
+def principal1(request, group5, consumption_role_1):
+    if request.param == 'Group':
+        yield group5, request.param
+    else:
+        yield consumption_role_1.consumptionRoleUri, request.param
+
+
+@pytest.fixture(params=['Group', 'ConsumptionRole'])
+def share_params_main(request, session_share_1, session_share_consrole_1, session_s3_dataset1):
+    if request.param == 'Group':
+        yield session_share_1, session_s3_dataset1
+    else:
+        yield session_share_consrole_1, session_s3_dataset1
+
+
+@pytest.fixture(params=[(False, 'Group'), (True, 'Group'), (False, 'ConsumptionRole'), (True, 'ConsumptionRole')])
+def share_params_all(
+    request,
+    session_share_1,
+    session_share_consrole_1,
+    session_s3_dataset1,
+    session_share_2,
+    session_share_consrole_2,
+    session_imported_sse_s3_dataset1,
+):
+    autoapproval, principal_type = request.param
+    if autoapproval:
+        if principal_type == 'Group':
+            yield session_share_2, session_imported_sse_s3_dataset1
+        else:
+            yield session_share_consrole_2, session_imported_sse_s3_dataset1
+    else:
+        if principal_type == 'Group':
+            yield session_share_1, session_s3_dataset1
+        else:
+            yield session_share_consrole_1, session_s3_dataset1
