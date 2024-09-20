@@ -39,7 +39,7 @@ def clean_up_share(client, shareUri):
 @pytest.fixture(scope='session')
 def consumption_role_1(client5, group5, persistent_cross_acc_env_1, persistent_cross_acc_env_1_aws_client):
     iam_client = IAMClient(session=persistent_cross_acc_env_1_aws_client, region=persistent_cross_acc_env_1['region'])
-    role = iam_client.get_consumption_role(persistent_cross_acc_env_1.AwsAccountId, test_cons_role_name)
+    role = iam_client.get_consumption_role(persistent_cross_acc_env_1.AwsAccountId, test_cons_role_name, f'dataall-integration-tests-role-{persistent_cross_acc_env_1.region}')
     consumption_role = add_consumption_role(
         client5,
         persistent_cross_acc_env_1.environmentUri,

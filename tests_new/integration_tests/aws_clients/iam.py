@@ -33,7 +33,7 @@ class IAMClient:
         toolingAccount = param_client.get_parameter(Name=parameter_path)['Parameter']['Value']
         return toolingAccount
 
-    def create_role(self, account_id, role_name):
+    def create_role(self, account_id, role_name, test_role_name):
         try:
             role = self._client.create_role(
                 RoleName=role_name,
@@ -44,7 +44,8 @@ class IAMClient:
                     "Effect": "Allow",
                     "Principal": {{
                         "AWS": ["arn:aws:iam::{account_id}:root",
-                        "arn:aws:iam::{IAMClient.get_tooling_account_id()}:root"]
+                        "arn:aws:iam::{IAMClient.get_tooling_account_id()}:root",
+                        "arn:aws:sts::{account_id}:assumed-role/{test_role_name}/{test_role_name}"]
                     }},
                     "Action": "sts:AssumeRole",
                     "Condition": {{}}
@@ -58,16 +59,16 @@ class IAMClient:
             log.error(e)
             raise e
 
-    def create_role_if_not_exists(self, account_id, role_name):
+    def create_role_if_not_exists(self, account_id, role_name, test_role_name):
         role = self.get_role(role_name)
         if role is None:
-            role = self.create_role(account_id, role_name)
+            role = self.create_role(account_id, role_name,test_role_name)
         return role
 
-    def get_consumption_role(self, account_id, role_name):
+    def get_consumption_role(self, account_id, role_name,test_role_name):
         role = self.get_role(role_name)
         if role is None:
-            role = self.create_role(account_id, role_name)
+            role = self.create_role(account_id, role_name,test_role_name)
             self.put_consumption_role_policy(role_name)
         return role
 

@@ -304,7 +304,7 @@ def test_check_item_access(
     if principal_type == 'Group':
         session = get_group_session(client5, share.environment.environmentUri, group5)
     elif principal_type == 'ConsumptionRole':
-        session = get_role_session(None, consumption_role_1.IAMRoleArn,
+        session = get_role_session(persistent_cross_acc_env_1_aws_client, consumption_role_1.IAMRoleArn,
                                    session_s3_dataset1.region)
     else:
         raise Exception('wrong principal type')
