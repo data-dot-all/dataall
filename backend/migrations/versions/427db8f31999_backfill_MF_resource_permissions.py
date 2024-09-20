@@ -78,4 +78,46 @@ def upgrade():
 
 
 def downgrade():
-    print('no downgrade supported')
+    bind = op.get_bind()
+    session = orm.Session(bind=bind)
+    all_environments = session.query(Environment).all()
+    for env in all_environments:
+        policies = ResourcePolicyService.find_resource_policies(
+            session=session,
+            group=env.SamlGroupName,
+            resource_uri=env.environmentUri,
+            resource_type=Environment.__name__,
+            permissions=[ATTACH_METADATA_FORM, CREATE_METADATA_FORM],
+        )
+        for policy in policies:
+            for permission in policy.permissions:
+                session.delete(permission)
+                session.commit()
+
+    all_organizations = session.query(Organization).all()
+    for org in all_organizations:
+        policies = ResourcePolicyService.find_resource_policies(
+            session=session,
+            group=org.SamlGroupName,
+            resource_uri=org.organizationUri,
+            permissions=[ATTACH_METADATA_FORM, CREATE_METADATA_FORM],
+            resource_type=Organization.__name__,
+        )
+        for policy in policies:
+            for permission in policy.permissions:
+                session.delete(permission)
+                session.commit()
+
+    datasets = session.query(DatasetBase).all()
+    for dataset in datasets:
+        policies = ResourcePolicyService.find_resource_policies(
+            session=session,
+            group=dataset.SamlGroupName,
+            resource_uri=dataset.datasetUri,
+            permissions=[ATTACH_METADATA_FORM],
+            resource_type=DatasetBase.__name__,
+        )
+        for policy in policies:
+            for permission in policy.permissions:
+                session.delete(permission)
+                session.commit()
