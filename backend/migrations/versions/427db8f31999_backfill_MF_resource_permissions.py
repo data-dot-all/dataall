@@ -70,7 +70,7 @@ def upgrade():
     for dataset in datasets:
         ResourcePolicyService.attach_resource_policy(
             session=session,
-            group=dataset.SamlGroupName,
+            group=dataset.SamlAdminGroupName,
             resource_uri=dataset.datasetUri,
             permissions=[ATTACH_METADATA_FORM],
             resource_type=DatasetBase.__name__,
@@ -112,7 +112,7 @@ def downgrade():
     for dataset in datasets:
         policies = ResourcePolicyService.find_resource_policies(
             session=session,
-            group=dataset.SamlGroupName,
+            group=dataset.SamlAdminGroupName,
             resource_uri=dataset.datasetUri,
             permissions=[ATTACH_METADATA_FORM],
             resource_type=DatasetBase.__name__,
