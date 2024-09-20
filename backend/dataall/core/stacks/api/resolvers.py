@@ -64,7 +64,6 @@ def resolve_stack_visibility(context, source: Stack, **kwargs):
     return StackServiceUtils.check_if_user_allowed_view_logs(context.groups, log_config)
 
 
-
 def resolve_task_id(context, source: Stack, **kwargs):
     if not source:
         return None

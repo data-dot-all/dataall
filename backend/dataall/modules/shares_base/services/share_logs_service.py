@@ -25,7 +25,7 @@ class ShareLogsService:
     def check_view_logs_permissions(username, groups, shareUri):
         context = get_context()
         log_config = config.get_property('modules.shares_base.features.show_share_logs', 'enabled')
-        if (log_config == 'admin-only' and 'DAAdministrators' not in groups):
+        if log_config == 'admin-only' and 'DAAdministrators' not in groups:
             return False
         with context.db_engine.scoped_session() as session:
             share = ShareObjectRepository.get_share_by_uri(session, shareUri)

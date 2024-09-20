@@ -65,7 +65,7 @@ class StackServiceUtils:
 
     @staticmethod
     def check_if_user_allowed_view_logs(groups, config):
-        if (config == 'admin-only' and 'DAAdministrators' not in groups):
+        if config == 'admin-only' and 'DAAdministrators' not in groups:
             return False
         return True
 

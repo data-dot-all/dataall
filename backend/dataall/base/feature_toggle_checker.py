@@ -1,6 +1,7 @@
 """
 Contains decorators that check if a feature has been enabled or not
 """
+
 from typing import List, Any, Optional, Callable
 
 from dataall.base.config import config
@@ -20,6 +21,7 @@ def is_feature_enabled(config_property: str):
         return fn_decorator(decorated)
 
     return decorator
+
 
 def is_feature_enabled_for_allowed_values(
     allowed_values: List[Any],

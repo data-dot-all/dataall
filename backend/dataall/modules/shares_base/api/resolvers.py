@@ -215,6 +215,7 @@ def resolve_user_role(context: Context, source: ShareObject, **kwargs):
 def resolve_can_view_logs(context: Context, source: ShareObject):
     return ShareLogsService.check_view_logs_permissions(context.username, context.groups, source.shareUri)
 
+
 def resolve_dataset(context: Context, source: ShareObject, **kwargs):
     if not source:
         return None
