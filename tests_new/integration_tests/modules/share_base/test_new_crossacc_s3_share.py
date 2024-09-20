@@ -1,6 +1,7 @@
 import pytest
 from assertpy import assert_that
 
+from tests_new.integration_tests.modules.s3_datasets.queries import get_dataset
 from tests_new.integration_tests.aws_clients.athena import AthenaClient
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemStatus,
@@ -32,12 +33,13 @@ from tests_new.integration_tests.modules.share_base.utils import (
 )
 
 
+
 @pytest.mark.parametrize(
     'principal_type',
     ['Group', 'ConsumptionRole'],
 )
 def test_create_and_delete_share_object(
-    client5, persistent_cross_acc_env_1, session_s3_dataset1, consumption_role_1, group5, principal_type
+        client5, persistent_cross_acc_env_1, session_s3_dataset1, consumption_role_1, group5, principal_type
 ):
     share = create_share_object(
         client=client5,
@@ -59,7 +61,7 @@ def test_create_and_delete_share_object(
     ['Group', 'ConsumptionRole'],
 )
 def test_submit_empty_object(
-    client5, persistent_cross_acc_env_1, session_s3_dataset1, group5, consumption_role_1, principal_type
+        client5, persistent_cross_acc_env_1, session_s3_dataset1, group5, consumption_role_1, principal_type
 ):
     # here Exception is not recognized as GqlError, so we use base class
     # toDo: back to GqlError
@@ -85,7 +87,7 @@ def test_submit_empty_object(
     ['Group', 'ConsumptionRole'],
 )
 def test_add_share_items(
-    client5, persistent_cross_acc_env_1, session_s3_dataset1, group5, consumption_role_1, principal_type
+        client5, persistent_cross_acc_env_1, session_s3_dataset1, group5, consumption_role_1, principal_type
 ):
     share = create_share_object(
         client=client5,
@@ -122,7 +124,7 @@ def test_add_share_items(
     ['Group', 'ConsumptionRole'],
 )
 def test_reject_share(
-    client1, client5, persistent_cross_acc_env_1, session_s3_dataset1, group5, consumption_role_1, principal_type
+        client1, client5, persistent_cross_acc_env_1, session_s3_dataset1, group5, consumption_role_1, principal_type
 ):
     share = create_share_object(
         client=client5,
@@ -295,14 +297,15 @@ def test_verify_share_items(client1, share_fixture_name, request):
     ],
 )
 def test_check_item_access(
-    client5, testdata, share_fixture_name, session_s3_dataset1, principal_type, group5, consumption_role_1, request
+        client5, persistent_cross_acc_env_1_aws_client, share_fixture_name, session_s3_dataset1, principal_type, group5,
+        consumption_role_1, request
 ):
     share = request.getfixturevalue(share_fixture_name)
     if principal_type == 'Group':
         session = get_group_session(client5, share.environment.environmentUri, group5)
     elif principal_type == 'ConsumptionRole':
-        aws_profile = testdata.aws_profiles['second']
-        session = get_role_session(aws_profile, consumption_role_1.IAMRoleArn, session_s3_dataset1.region)
+        session = get_role_session(None, consumption_role_1.IAMRoleArn,
+                                   session_s3_dataset1.region)
     else:
         raise Exception('wrong principal type')
 
@@ -326,7 +329,8 @@ def test_check_item_access(
 
     for item in items:
         if item.itemType == ShareableType.Table.name:
-            query = f"""SELECT * FROM {glue_db}.{item.itemName};"""
+            # nosemgrep-next-line:noexec
+            query = "SELECT * FROM {}.{}".format(glue_db, item.itemName)
             if principal_type == 'Group':
                 q_id = athena_client.run_query(query, workgroup=workgroup)
             else:
@@ -337,7 +341,7 @@ def test_check_item_access(
             assert_that(s3_client.bucket_exists(item.itemName)).is_not_none()
             assert_that(s3_client.list_bucket_objects(item.itemName)).is_not_none()
         elif item.itemType == ShareableType.StorageLocation.name:
-            assert_that(s3_client.list_accesspoint_folder_objects(access_point_arn, item.itemName)).is_not_none()
+            assert_that(s3_client.list_accesspoint_folder_objects(access_point_arn, item.itemName + '/')).is_not_none()
 
 
 @pytest.mark.parametrize(

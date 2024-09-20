@@ -1,17 +1,17 @@
 import logging
+import os
 
 import boto3
+
+from dataall.base.aws.parameter_store import ParameterStoreManager
 
 log = logging.getLogger(__name__)
 
 
 class IAMClient:
-    def __init__(self, session, profile, region):
+    def __init__(self, session, region):
         if session is None:
-            if profile is None:
-                session = boto3.Session()
-            else:
-                session = boto3.Session(profile_name=profile)
+            session = boto3.Session()
         self._client = session.client('iam', region_name=region)
         self._resource = session.resource('iam', region_name=region)
         self._region = region
@@ -24,6 +24,15 @@ class IAMClient:
             log.info(f'Error occurred: {e}')
             return None
 
+    @staticmethod
+    def get_tooling_account_id():
+        session = boto3.Session()
+        param_client = session.client('ssm', os.environ.get('AWS_REGION', 'us-east-1'))
+        parameter_path=f"/dataall/{os.environ.get('ENVNAME', 'dev')}/toolingAccount"
+        print(parameter_path)
+        toolingAccount = param_client.get_parameter(Name=parameter_path)['Parameter']['Value']
+        return toolingAccount
+
     def create_role(self, account_id, role_name):
         try:
             role = self._client.create_role(
@@ -34,7 +43,8 @@ class IAMClient:
                 {{
                     "Effect": "Allow",
                     "Principal": {{
-                        "AWS": "arn:aws:iam::{account_id}:root"
+                        "AWS": ["arn:aws:iam::{account_id}:root",
+                        "arn:aws:iam::{IAMClient.get_tooling_account_id()}:root"]
                     }},
                     "Action": "sts:AssumeRole",
                     "Condition": {{}}

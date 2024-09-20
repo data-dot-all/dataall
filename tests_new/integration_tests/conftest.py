@@ -38,7 +38,6 @@ class Env:
 class TestData:
     users: dict[str, User]
     envs: dict[str, Env]
-    aws_profiles: dict[str, str]
 
 
 @pytest.fixture(scope='session', autouse=True)

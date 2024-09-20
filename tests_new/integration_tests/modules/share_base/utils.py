@@ -47,6 +47,6 @@ def get_group_session(client, env_uri, group):
     )
 
 
-def get_role_session(aws_profile, role_arn, region):
-    sts_client = StsClient(session=None, profile=aws_profile, region=region)
+def get_role_session(session, role_arn, region):
+    sts_client = StsClient(session=session, region=region)
     return sts_client.get_role_session(role_arn)

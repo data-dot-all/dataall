@@ -2,12 +2,9 @@ import boto3
 
 
 class StsClient:
-    def __init__(self, session, profile, region):
-        if session is None:
-            if profile is None:
-                session = boto3.Session()
-            else:
-                session = boto3.Session(profile_name=profile)
+    def __init__(self, session, region):
+        if not session:
+            session = boto3.Session()
         self._client = session.client('sts', region_name=region)
         self._region = region
 

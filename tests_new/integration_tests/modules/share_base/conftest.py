@@ -12,7 +12,7 @@ from tests_new.integration_tests.modules.share_base.queries import (
 from tests_new.integration_tests.modules.share_base.utils import check_share_ready
 from dataall.modules.shares_base.services.shares_enums import ShareItemStatus
 
-test_cons_role_name = 'ShareTestConsumptionRole'
+test_cons_role_name = 'dataall-test-ShareTestConsumptionRole'
 
 
 def revoke_all_possible(client, shareUri):
@@ -37,9 +37,8 @@ def clean_up_share(client, shareUri):
 
 
 @pytest.fixture(scope='session')
-def consumption_role_1(client5, group5, persistent_cross_acc_env_1, testdata):
-    aws_profile = testdata.aws_profiles['second']
-    iam_client = IAMClient(session=None, profile=aws_profile, region=persistent_cross_acc_env_1['region'])
+def consumption_role_1(client5, group5, persistent_cross_acc_env_1, persistent_cross_acc_env_1_aws_client):
+    iam_client = IAMClient(session=persistent_cross_acc_env_1_aws_client, region=persistent_cross_acc_env_1['region'])
     role = iam_client.get_consumption_role(persistent_cross_acc_env_1.AwsAccountId, test_cons_role_name)
     consumption_role = add_consumption_role(
         client5,
