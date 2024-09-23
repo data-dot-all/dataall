@@ -35,9 +35,16 @@ class Env:
 
 @dataclass_json
 @dataclass
+class Dashboard:
+    dashboardId: str
+
+
+@dataclass_json
+@dataclass
 class TestData:
     users: dict[str, User]
     envs: dict[str, Env]
+    dashboards: dict[str, Dashboard]
 
 
 @pytest.fixture(scope='session', autouse=True)

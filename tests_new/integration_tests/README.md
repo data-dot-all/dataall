@@ -54,6 +54,10 @@ Currently **we support only Cognito based deployments** but support for any IdP 
         }
       },
       "envs": {
+        "persistent_env1": {
+          "accountId": "...",
+          "region": "us-east-1"
+        },
         "session_env1": {
           "accountId": "...",
           "region": "eu-central-1"
@@ -62,6 +66,11 @@ Currently **we support only Cognito based deployments** but support for any IdP 
           "accountId": "...",
           "region": "eu-west-1"
         }
+      },
+      "dashboards": {
+        "session_env1": {
+          "dashboardId": "..."
+        },
       }
     }
     ```
