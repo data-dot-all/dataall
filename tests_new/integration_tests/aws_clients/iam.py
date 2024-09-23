@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 
@@ -9,9 +10,7 @@ log = logging.getLogger(__name__)
 
 
 class IAMClient:
-    def __init__(self, session, region):
-        if session is None:
-            session = boto3.Session()
+    def __init__(self, session=boto3.Session(), region=os.environ.get('AWS_REGION', 'us-east-1')):
         self._client = session.client('iam', region_name=region)
         self._resource = session.resource('iam', region_name=region)
         self._region = region
@@ -29,29 +28,31 @@ class IAMClient:
         session = boto3.Session()
         param_client = session.client('ssm', os.environ.get('AWS_REGION', 'us-east-1'))
         parameter_path = f"/dataall/{os.environ.get('ENVNAME', 'dev')}/toolingAccount"
-        print(parameter_path)
         toolingAccount = param_client.get_parameter(Name=parameter_path)['Parameter']['Value']
         return toolingAccount
 
     def create_role(self, account_id, role_name, test_role_name):
+        policy_doc = {
+            'Version': '2012-10-17',
+            'Statement': [
+                {
+                    'Effect': 'Allow',
+                    'Principal': {
+                        'AWS': [
+                            f'arn:aws:iam::{account_id}:root',
+                            f'arn:aws:iam::{IAMClient.get_tooling_account_id()}:root',
+                            f'arn:aws:sts::{account_id}:assumed-role/{test_role_name}/{test_role_name}',
+                        ]
+                    },
+                    'Action': 'sts:AssumeRole',
+                    'Condition': {},
+                }
+            ],
+        }
         try:
             role = self._client.create_role(
                 RoleName=role_name,
-                AssumeRolePolicyDocument=f"""{{
-                                         "Version": "2012-10-17",
-            "Statement": [
-                {{
-                    "Effect": "Allow",
-                    "Principal": {{
-                        "AWS": ["arn:aws:iam::{account_id}:root",
-                        "arn:aws:iam::{IAMClient.get_tooling_account_id()}:root",
-                        "arn:aws:sts::{account_id}:assumed-role/{test_role_name}/{test_role_name}"]
-                    }},
-                    "Action": "sts:AssumeRole",
-                    "Condition": {{}}
-                }}
-            ]
-            }}""",
+                AssumeRolePolicyDocument=json.dumps(policy_doc),
                 Description='Role for Lambda function',
             )
             return role

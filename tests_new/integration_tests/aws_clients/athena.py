@@ -16,7 +16,7 @@ class AthenaClient:
             result = self._client.start_query_execution(QueryString=query, WorkGroup=workgroup)
         return result['QueryExecutionId']
 
-    @poller(check_success=lambda state: state not in ['QUEUED', 'RUNNING'], timeout=5)
+    @poller(check_success=lambda state: state not in ['QUEUED', 'RUNNING'], timeout=600, sleep_time=5)
     def _wait_for_query(self, query_id):
         result = self._client.get_query_execution(QueryExecutionId=query_id)
         return result['QueryExecution']['Status']['State']
@@ -34,3 +34,4 @@ class AthenaClient:
         for workgroup in workgroups:
             if env_name in workgroup:
                 return workgroup
+        return workgroups[0] if workgroups else None

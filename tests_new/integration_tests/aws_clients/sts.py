@@ -1,10 +1,10 @@
+import os
+
 import boto3
 
 
 class StsClient:
-    def __init__(self, session, region):
-        if not session:
-            session = boto3.Session()
+    def __init__(self, session=boto3.Session(), region=os.environ.get('AWS_REGION', 'us-east-1')):
         self._client = session.client('sts', region_name=region)
         self._region = region
 

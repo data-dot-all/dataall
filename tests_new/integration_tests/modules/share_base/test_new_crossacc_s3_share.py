@@ -1,6 +1,7 @@
 import pytest
 from assertpy import assert_that
 
+from tests_new.integration_tests.modules.s3_datasets.queries import get_folder
 from tests_new.integration_tests.aws_clients.athena import AthenaClient
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemStatus,
@@ -250,7 +251,10 @@ def test_check_item_access(
             assert_that(s3_client.bucket_exists(item.itemName)).is_not_none()
             assert_that(s3_client.list_bucket_objects(item.itemName)).is_not_none()
         elif item.itemType == ShareableType.StorageLocation.name:
-            assert_that(s3_client.list_accesspoint_folder_objects(access_point_arn, item.itemName + '/')).is_not_none()
+            folder = get_folder(client5, item.itemUri)
+            assert_that(
+                s3_client.list_accesspoint_folder_objects(access_point_arn, folder.S3Prefix + '/')
+            ).is_not_none()
 
 
 @pytest.mark.dependency(name='share_revoked', depends=['share_succeeded'])
