@@ -31,7 +31,6 @@ class AttachedMetadataFormValidationService:
 
 
 class AttachedMetadataFormService:
-
     @staticmethod
     def _get_entity_uri(data):
         return data.get('entityUri')
