@@ -31,7 +31,15 @@ class AttachedMetadataFormValidationService:
 
 
 class AttachedMetadataFormService:
+
     @staticmethod
+    def _get_entity_uri(data):
+        return data.get('entityUri')
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(
+        ATTACH_METADATA_FORM, parent_resource=_get_entity_uri, param_name='data'
+    )
     def create_attached_metadata_form(uri, data):
         AttachedMetadataFormValidationService.validate_filled_form_params(uri, data)
         context = get_context()
@@ -41,13 +49,6 @@ class AttachedMetadataFormService:
                 raise exceptions.ObjectNotFound('MetadataForm', uri)
             mf_fields = MetadataFormRepository.get_metadata_form_fields(session, uri)
             AttachedMetadataFormValidationService.validate_enrich_fields_params(mf_fields, data)
-            ResourcePolicyService.check_user_resource_permission(
-                session=session,
-                username=context.username,
-                groups=context.groups,
-                resource_uri=data.get('entityUri'),
-                permission_name=ATTACH_METADATA_FORM,
-            )
             amf = MetadataFormRepository.create_attached_metadata_form(session, uri, data)
             for f in data.get('fields'):
                 MetadataFormRepository.create_attached_metadata_form_field(
@@ -80,15 +81,11 @@ class AttachedMetadataFormService:
             ).to_dict()
 
     @staticmethod
+    @ResourcePolicyService.has_resource_permission(
+        ATTACH_METADATA_FORM, parent_resource=_get_entity_uri, param_name='data'
+    )
     def delete_attached_metadata_form(uri):
         mf = AttachedMetadataFormService.get_attached_metadata_form(uri)
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            ResourcePolicyService.check_user_resource_permission(
-                session=session,
-                username=context.username,
-                groups=context.groups,
-                resource_uri=mf.entityUri,
-                permission_name=ATTACH_METADATA_FORM,  # attach and delete are the same for now
-            )
             return session.delete(mf)
