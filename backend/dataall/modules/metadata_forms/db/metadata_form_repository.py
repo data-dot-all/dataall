@@ -70,6 +70,9 @@ class MetadataFormRepository:
         :param filter:
         """
 
+        env_uris = env_uris or []
+        org_uris = org_uris or []
+
         query = session.query(MetadataForm)
 
         if not is_da_admin:
@@ -140,6 +143,8 @@ class MetadataFormRepository:
 
         entity_orgs_uris = entity_orgs_uris or []
         entity_envs_uris = entity_envs_uris or []
+        user_org_uris = user_org_uris or []
+        user_env_uris = user_env_uris or []
 
         orgs = list(set(user_org_uris).intersection(set(entity_orgs_uris)))
         envs = list(set(user_env_uris).intersection(set(entity_envs_uris)))
