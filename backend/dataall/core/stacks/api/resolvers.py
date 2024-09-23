@@ -62,7 +62,9 @@ def resolve_stack_visibility(context, source: Stack, **kwargs):
         return False
     log_config = config.get_property(map_target_type_to_log_config_path(target_type=source.stack), 'enabled')
     try:
-        return StackService.check_if_user_allowed_view_logs(targetUri=source.targetUri, config=log_config)
+        return StackService.check_if_user_allowed_view_logs(
+            target_type=source.stack, target_uri=source.targetUri, config=log_config
+        )
     except Exception as e:
         log.error(f'Failed to check if the user is allowed to view stack logs due to: {e}')
         return False
