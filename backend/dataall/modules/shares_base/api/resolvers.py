@@ -213,7 +213,11 @@ def resolve_user_role(context: Context, source: ShareObject, **kwargs):
 
 
 def resolve_can_view_logs(context: Context, source: ShareObject):
-    return ShareLogsService.check_view_logs_permissions(context.username, context.groups, source.shareUri)
+    try:
+        return ShareLogsService.check_view_logs_permissions(source.shareUri)
+    except Exception as e:
+        log.error(f'Failed to check if user is allowed to view share logs due to: {e}')
+        return False
 
 
 def resolve_dataset(context: Context, source: ShareObject, **kwargs):

@@ -45,30 +45,20 @@ class StackRequestVerifier:
         if not target_type:
             raise RequiredParameter('targetType')
 
-
-class StackServiceUtils:
-    @staticmethod
-    def map_target_to_config(**kwargs):
-        target_type = kwargs.get('target_type')
-        if target_type == 'environment':
-            return 'core.features.show_stack_logs'
-        elif target_type == 'dataset':
-            return 'modules.s3_datasets.features.show_stack_logs'
-        elif target_type == 'mlstudio':
-            return 'modules.mlstudio.features.show_stack_logs'
-        elif target_type == 'notebooks':
-            return 'modules.notebooks.features.show_stack_logs'
-        elif target_type == 'datapipelines':
-            return 'modules.datapipelines.features.show_stack_logs'
-        else:
-            return 'Invalid Config'
-
-    @staticmethod
-    def check_if_user_allowed_view_logs(groups, config):
-        if config == 'admin-only' and 'DAAdministrators' not in groups:
-            return False
-        return True
-
+def map_target_to_config(**kwargs):
+    target_type = kwargs.get('target_type')
+    if target_type == 'environment':
+        return 'core.features.show_stack_logs'
+    elif target_type == 'dataset':
+        return 'modules.s3_datasets.features.show_stack_logs'
+    elif target_type == 'mlstudio':
+        return 'modules.mlstudio.features.show_stack_logs'
+    elif target_type == 'notebooks':
+        return 'modules.notebooks.features.show_stack_logs'
+    elif target_type == 'datapipelines':
+        return 'modules.datapipelines.features.show_stack_logs'
+    else:
+        return 'Invalid Config'
 
 class StackService:
     @staticmethod
@@ -212,21 +202,10 @@ class StackService:
         return kv_tags
 
     @staticmethod
-    @is_feature_enabled_for_allowed_values(
-        allowed_values=['admin-only', 'enabled', 'disabled'],
-        enabled_values=['admin-only', 'enabled'],
-        default_value='enabled',
-        resolve_property=StackServiceUtils.map_target_to_config,
-    )
     def get_stack_logs(target_uri, target_type):
         context = get_context()
-        log_config = config.get_property(StackServiceUtils.map_target_to_config(target_type=target_type), 'enabled')
-        if not StackServiceUtils.check_if_user_allowed_view_logs(context.groups, log_config):
-            raise exceptions.ResourceUnauthorized(
-                username=context.username,
-                action='View Stack logs',
-                resource_uri=target_uri,
-            )
+        log_config = config.get_property(map_target_to_config(target_type=target_type), 'enabled')
+        StackService.check_if_user_allowed_view_logs(context=context, targetUri=target_uri, config=log_config)
         StackRequestVerifier.verify_target_type_and_uri(target_uri, target_type)
 
         with context.db_engine.scoped_session() as session:
@@ -252,3 +231,19 @@ class StackService:
                     | filter @logStream like "{stack.EcsTaskArn.split('/')[-1]}"
                     """
         return query
+
+    @staticmethod
+    @is_feature_enabled_for_allowed_values(
+        allowed_values=['admin-only', 'enabled', 'disabled'],
+        enabled_values=['admin-only', 'enabled'],
+        default_value='enabled',
+        resolve_property=map_target_to_config,
+    )
+    def check_if_user_allowed_view_logs(context, targetUri, config):
+        if config == 'admin-only' and 'DAAdministrators' not in context.groups:
+            raise exceptions.ResourceUnauthorized(
+                username=context.username,
+                action='View Stack logs',
+                resource_uri=targetUri,
+            )
+        return True

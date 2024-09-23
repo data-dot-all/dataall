@@ -6,7 +6,7 @@ from dataall.base.config import config
 from dataall.base.api.context import Context
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.stacks.services.keyvaluetag_service import KeyValueTagService
-from dataall.core.stacks.services.stack_service import StackService, StackServiceUtils
+from dataall.core.stacks.services.stack_service import StackService, map_target_to_config
 from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.stacks.aws.cloudwatch import CloudWatch
 from dataall.base.utils import Parameter
@@ -60,8 +60,12 @@ def resolve_events(context, source: Stack, **kwargs):
 def resolve_stack_visibility(context, source: Stack, **kwargs):
     if not source:
         return False
-    log_config = config.get_property(StackServiceUtils.map_target_to_config(target_type=source.stack), 'enabled')
-    return StackServiceUtils.check_if_user_allowed_view_logs(context.groups, log_config)
+    log_config = config.get_property(map_target_to_config(target_type=source.stack), 'enabled')
+    try:
+        return StackService.check_if_user_allowed_view_logs(context=context, targetUri=source.targetUri, config=log_config)
+    except Exception as e:
+        log.error(f'Failed to check if the user is allowed to view stack logs due to: {e}')
+        return False
 
 
 def resolve_task_id(context, source: Stack, **kwargs):
