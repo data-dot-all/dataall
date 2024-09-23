@@ -233,7 +233,7 @@ def test_check_item_access(
     )
     if principal_type == 'Group':
         workgroup = athena_client.get_env_work_group(updated_share.environment.name)
-        athena_workgroup_output_location = ''
+        athena_workgroup_output_location = None
     else:
         workgroup = 'primary'
         athena_workgroup_output_location = (
@@ -244,11 +244,7 @@ def test_check_item_access(
         if item.itemType == ShareableType.Table.name:
             # nosemgrep-next-line:noexec
             query = 'SELECT * FROM {}.{}'.format(glue_db, item.itemName)
-            if principal_type == 'Group':
-                q_id = athena_client.run_query(query, workgroup=workgroup)
-            else:
-                q_id = athena_client.run_query(query, output_location=athena_workgroup_output_location)
-            state = athena_client.wait_for_query(q_id)
+            state = athena_client.execute_query(query, workgroup, athena_workgroup_output_location)
             assert_that(state).is_equal_to('SUCCEEDED')
         elif item.itemType == ShareableType.S3Bucket.name:
             assert_that(s3_client.bucket_exists(item.itemName)).is_not_none()
