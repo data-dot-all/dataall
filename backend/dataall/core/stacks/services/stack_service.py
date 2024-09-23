@@ -45,7 +45,8 @@ class StackRequestVerifier:
         if not target_type:
             raise RequiredParameter('targetType')
 
-def map_target_to_config(**kwargs):
+
+def map_target_type_to_log_config_path(**kwargs):
     target_type = kwargs.get('target_type')
     if target_type == 'environment':
         return 'core.features.show_stack_logs'
@@ -59,6 +60,7 @@ def map_target_to_config(**kwargs):
         return 'modules.datapipelines.features.show_stack_logs'
     else:
         return 'Invalid Config'
+
 
 class StackService:
     @staticmethod
@@ -204,8 +206,8 @@ class StackService:
     @staticmethod
     def get_stack_logs(target_uri, target_type):
         context = get_context()
-        log_config = config.get_property(map_target_to_config(target_type=target_type), 'enabled')
-        StackService.check_if_user_allowed_view_logs(context=context, targetUri=target_uri, config=log_config)
+        log_config = config.get_property(map_target_type_to_log_config_path(target_type=target_type), 'enabled')
+        StackService.check_if_user_allowed_view_logs(targetUri=target_uri, config=log_config)
         StackRequestVerifier.verify_target_type_and_uri(target_uri, target_type)
 
         with context.db_engine.scoped_session() as session:
@@ -237,9 +239,10 @@ class StackService:
         allowed_values=['admin-only', 'enabled', 'disabled'],
         enabled_values=['admin-only', 'enabled'],
         default_value='enabled',
-        resolve_property=map_target_to_config,
+        resolve_property=map_target_type_to_log_config_path,
     )
-    def check_if_user_allowed_view_logs(context, targetUri, config):
+    def check_if_user_allowed_view_logs(targetUri, config):
+        context = get_context()
         if config == 'admin-only' and 'DAAdministrators' not in context.groups:
             raise exceptions.ResourceUnauthorized(
                 username=context.username,

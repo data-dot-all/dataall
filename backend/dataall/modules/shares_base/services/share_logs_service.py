@@ -34,7 +34,9 @@ class ShareLogsService:
         with context.db_engine.scoped_session() as session:
             share = ShareObjectRepository.get_share_by_uri(session, shareUri)
             ds = DatasetBaseRepository.get_dataset_by_uri(session, share.datasetUri)
-            if not (ds.stewards in context.groups or ds.SamlAdminGroupName in context.groups or context.username == ds.owner):
+            if not (
+                ds.stewards in context.groups or ds.SamlAdminGroupName in context.groups or context.username == ds.owner
+            ):
                 raise exceptions.ResourceUnauthorized(
                     username=context.username,
                     action='View Share Logs',
