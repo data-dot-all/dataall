@@ -233,7 +233,6 @@ class StackService:
                     """
         return query
 
-    # Adding target_type as an argument as this is needed by the function `map_target_type_to_log_config_path` when resolving path to config
     @staticmethod
     @is_feature_enabled_for_allowed_values(
         allowed_values=['admin-only', 'enabled', 'disabled'],
