@@ -85,13 +85,18 @@ def session_cross_acc_env_1(client5, group5, testdata, org1, session_id):
     env = None
     try:
         env = create_env(
-            client5, 'session_cross_acc_env_1', group5, org1.organizationUri, envdata.accountId, envdata.region, tags=[session_id]
+            client5,
+            'session_cross_acc_env_1',
+            group5,
+            org1.organizationUri,
+            envdata.accountId,
+            envdata.region,
+            tags=[session_id],
         )
         yield env
     finally:
         if env:
             delete_env(client5, env)
-
 
 
 @pytest.fixture(scope='session')
@@ -102,7 +107,6 @@ def session_cross_acc_env_1_integration_role_arn(session_cross_acc_env_1):
 @pytest.fixture(scope='session')
 def session_cross_acc_env_1_aws_client(session_cross_acc_env_1, session_cross_acc_env_1_integration_role_arn):
     return get_environment_aws_session(session_cross_acc_env_1_integration_role_arn, session_cross_acc_env_1)
-
 
 
 @pytest.fixture(scope='session')
@@ -174,5 +178,3 @@ def get_or_create_persistent_env(env_name, client, group, testdata):
 @pytest.fixture(scope='session')
 def persistent_env1(client1, group1, testdata):
     return get_or_create_persistent_env('persistent_env1', client1, group1, testdata)
-
-

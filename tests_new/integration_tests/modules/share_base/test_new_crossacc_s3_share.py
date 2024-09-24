@@ -209,9 +209,7 @@ def test_verify_share_items(client1, share_params_main):
 
 
 @pytest.mark.dependency(depends=['share_verified'])
-def test_check_item_access(
-    client5, session_cross_acc_env_1_aws_client, share_params_main, group5, consumption_role_1
-):
+def test_check_item_access(client5, session_cross_acc_env_1_aws_client, share_params_main, group5, consumption_role_1):
     share, dataset = share_params_main
     principal_type = share.principal.principalType
     if principal_type == 'Group':

@@ -8,7 +8,12 @@ def org1(client1, group1, group5, session_id):
     Session org owned by group1
     """
     org = create_organization(client1, 'organization1', group1, tags=[session_id])
-    invite_team_to_organization(client=client1, organizationUri=org.organizationUri, group=group5, permissions=["LINK_ENVIRONMENT", "INVITE_ORGANIZATION_GROUP", "REMOVE_ORGANIZATION_GROUP"])
+    invite_team_to_organization(
+        client=client1,
+        organizationUri=org.organizationUri,
+        group=group5,
+        permissions=['LINK_ENVIRONMENT', 'INVITE_ORGANIZATION_GROUP', 'REMOVE_ORGANIZATION_GROUP'],
+    )
     yield org
     archive_organization(client1, org.organizationUri)
 
