@@ -143,19 +143,23 @@ class MetadataFormRepository:
 
         entity_orgs_uris = entity_orgs_uris or []
         entity_envs_uris = entity_envs_uris or []
-        user_org_uris = user_org_uris or []
-        user_env_uris = user_env_uris or []
 
-        orgs = list(set(user_org_uris).intersection(set(entity_orgs_uris)))
-        envs = list(set(user_env_uris).intersection(set(entity_envs_uris)))
+        query = MetadataFormRepository.query_user_metadata_forms(
+            session, is_da_admin, groups, user_env_uris, user_org_uris, filter
+        )
 
-        query = MetadataFormRepository.query_user_metadata_forms(session, is_da_admin, groups, envs, orgs, filter)
-
-        if not orgs:
-            query = query.filter(MetadataForm.visibility != MetadataFormVisibility.Organization.value)
-
-        if not envs:
-            query = query.filter(MetadataForm.visibility != MetadataFormVisibility.Environment.value)
+        query = query.filter(
+            and_(
+                or_(
+                    MetadataForm.visibility != MetadataFormVisibility.Organization.value,
+                    MetadataForm.homeEntity.in_(entity_orgs_uris),
+                ),
+                or_(
+                    MetadataForm.visibility != MetadataFormVisibility.Environment.value,
+                    MetadataForm.homeEntity.in_(entity_envs_uris),
+                ),
+            )
+        )
 
         query = MetadataFormRepository.exclude_attached(session, query, filter)
         return query.order_by(MetadataForm.name)
