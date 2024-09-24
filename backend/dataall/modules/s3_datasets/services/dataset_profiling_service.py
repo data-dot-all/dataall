@@ -106,7 +106,6 @@ class DatasetProfilingService:
             return DatasetProfilingRepository.list_table_profiling_runs(session, uri)
 
     @staticmethod
-    @is_feature_enabled("modules.s3_datasets.features.metrics_data")
     def _check_preview_permissions_if_needed(session, table_uri):
         context = get_context()
         table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, table_uri)
