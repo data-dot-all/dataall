@@ -659,6 +659,6 @@ class EnvironmentSetup(Stack):
             iam.PolicyStatement(
                 actions=['iam:GetRole', 'iam:CreateRole', 'iam:PutRolePolicy'],
                 effect=iam.Effect.ALLOW,
-                resources=[f'arn:aws:iam::{self.account}:role/dataall-test-*"'],
+                resources=[f'arn:aws:iam::{self.account}:role/dataall-test-*'],
             ),
         )

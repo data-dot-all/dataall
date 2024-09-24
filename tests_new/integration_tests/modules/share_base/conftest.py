@@ -12,7 +12,7 @@ from tests_new.integration_tests.modules.share_base.queries import (
 from tests_new.integration_tests.modules.share_base.utils import check_share_ready
 from dataall.modules.shares_base.services.shares_enums import ShareItemStatus
 
-test_cons_role_name = 'dataall-test-ShareTestConsumptionRole2'
+test_cons_role_name = 'dataall-test-ShareTestConsumptionRole'
 
 
 def revoke_all_possible(client, shareUri):
