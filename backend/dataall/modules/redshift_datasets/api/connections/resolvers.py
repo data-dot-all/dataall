@@ -38,6 +38,26 @@ def list_redshift_schema_tables(context: Context, source, connectionUri: str, sc
     return RedshiftConnectionService.list_schema_tables(uri=connectionUri, schema=schema)
 
 
+def add_redshift_connection_group_permissions(
+    context: Context, source, connectionUri: str, groupUri: str, permissions: list
+):
+    RequestValidator.required_param('connectionUri', connectionUri)
+    RequestValidator.required_param('groupUri', groupUri)
+    RequestValidator.required_param('permissions', permissions)
+    return RedshiftConnectionService.add_group_permissions(uri=connectionUri, group=groupUri, permissions=permissions)
+
+
+def delete_redshift_connection_group_permissions(context: Context, source, connectionUri: str, groupUri: str):
+    RequestValidator.required_param('connectionUri', connectionUri)
+    RequestValidator.required_param('groupUri', groupUri)
+    return RedshiftConnectionService.delete_group_permissions(uri=connectionUri, group=groupUri)
+
+
+def list_redshift_connection_group_permissions(context: Context, source, connectionUri: str, filter: dict = None):
+    RequestValidator.required_param('connectionUri', connectionUri)
+    return RedshiftConnectionService.list_connection_group_permissions(uri=connectionUri, filter=filter)
+
+
 class RequestValidator:
     def required_param(param_name: str, param_value: Any):
         if not param_value:

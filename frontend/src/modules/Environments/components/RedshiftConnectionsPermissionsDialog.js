@@ -1,9 +1,9 @@
 import {
   Button,
-  ButtonGroup,
   CardContent,
   CardHeader,
   CircularProgress,
+  Chip,
   Dialog,
   Divider
 } from '@mui/material';
@@ -22,20 +22,36 @@ import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-//import { Defaults } from 'design';
+import { Defaults } from 'design';
 
-// todo: listConnectionPermissions
-// todo UI: table with group + permissions
-// todo Add button to add a group permissions
+import {
+  listConnectionGroupPermissions,
+  addConnectionGroupPermission,
+  deleteConnectionGroupPermission
+} from '../services';
+
+/* eslint-disable no-console */
+
+const grantablePermissions = [
+  {
+    value: 'CREATE_SHARE_REQUEST_WITH_CONNECTION',
+    label: 'CREATE_SHARE_REQUEST'
+  }
+];
 
 function GridToolbar(props) {
-  const { rows, setRows, setRowModesModel } = props;
+  const { loading, setRows, setRowModesModel } = props;
 
   const handleAddGroup = () => {
     const id = Date.now();
     setRows((oldRows) => [
       ...oldRows,
-      { id, groupUri: '', permissions: 'CREATE_SHARE_REQUEST', isNew: true }
+      {
+        id,
+        groupUri: '',
+        permissions: grantablePermissions,
+        isNew: true
+      }
     ]);
     setRowModesModel((oldModel) => ({
       ...oldModel,
@@ -43,39 +59,21 @@ function GridToolbar(props) {
     }));
   };
 
-  const handleSaveAllClick = () => {
-    setRows(rows.map((row) => ({ ...row, isNew: false })));
-    setRowModesModel((prevRowModesModel) => {
-      const updatedRowModesModel = {};
-      Object.keys(prevRowModesModel).forEach((id) => {
-        updatedRowModesModel[id] = { mode: GridRowModes.View };
-      });
-      return updatedRowModesModel;
-    });
-  };
-
   return (
     <GridToolbarContainer>
-      <ButtonGroup variant="outlined">
-        <Button
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={handleAddGroup}
-        >
-          Add group
-        </Button>
-        <Button
-          color="primary"
-          startIcon={<SaveIcon />}
-          onClick={handleSaveAllClick}
-        >
-          Save changes
-        </Button>
-      </ButtonGroup>
+      <Button
+        color="primary"
+        variant="contained"
+        startIcon={<AddIcon />}
+        onClick={handleAddGroup}
+        disabled={loading}
+      >
+        Add group
+      </Button>
     </GridToolbarContainer>
   );
 }
-export const RedshiftConnectionsPermissionsDialog22 = (props) => {
+export const RedshiftConnectionsPermissionsDialog = (props) => {
   const { connection, environment, onClose, open, ...other } = props;
   const dispatch = useDispatch();
   const client = useClient();
@@ -86,22 +84,15 @@ export const RedshiftConnectionsPermissionsDialog22 = (props) => {
 
   const fetchConnectionPermissions = useCallback(async () => {
     setLoading(true);
-    // const response = await client.query(
-    //   listConnectionPermissions({
-    //     connectionUri: connection.connectionUri,
-    //     filter: Defaults.selectListFilter
-    //   })
-    // );
-    const response = {
-      data: {
-        listConnectionPermissions: {
-          nodes: [{ groupUri: 'one', permissions: ['first', 'second'] }]
-        }
-      }
-    };
+    const response = await client.query(
+      listConnectionGroupPermissions({
+        connectionUri: connection.connectionUri,
+        filter: Defaults.selectListFilter
+      })
+    );
     if (!response.errors) {
       setRows(
-        response.data.listConnectionPermissions.nodes.map((c) => ({
+        response.data.listConnectionGroupPermissions.nodes.map((c) => ({
           id: c.groupUri,
           permissions: c.permissions
         }))
@@ -151,11 +142,65 @@ export const RedshiftConnectionsPermissionsDialog22 = (props) => {
   };
 
   const handleSaveClick = (id) => () => {
-    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+    setRowModesModel({
+      ...rowModesModel,
+      [id]: { mode: GridRowModes.View }
+    });
   };
 
-  const handleDeleteClick = (id) => () => {
+  const savePermission = useCallback(
+    async (row) => {
+      console.log(
+        'savePermissions input',
+        row.groupUri,
+        row.permissions.map((permission) => permission.value),
+        connection.connectionUri
+      );
+      setLoading(true);
+
+      const response = await client.mutate(
+        addConnectionGroupPermission(
+          connection.connectionUri,
+          row.groupUri,
+          row.permissions.map((permission) => permission.value)
+        )
+      );
+      if (!response.errors) {
+        console.log('all good');
+        setGroupOptions(groupOptions.filter((g) => g !== row.groupUri));
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+      setLoading(false);
+    },
+    [client, dispatch, connection, rowModesModel, groupOptions]
+  );
+
+  const deletePermission = useCallback(
+    async (id, row) => {
+      console.log('handleDELETEClick');
+      setLoading(true);
+      //const row = rows[id];
+      console.log('handleDELETEClick2', row);
+      const response = await client.mutate(
+        deleteConnectionGroupPermission({
+          connectionUri: connection.connectionUri,
+          groupUri: row.groupUri
+        })
+      );
+      if (!response.errors) {
+        setRows(rows.filter((row) => row.id !== id));
+        setGroupOptions([...groupOptions, row.groupUri]);
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+      setLoading(false);
+    },
+    [client, dispatch, connection, rows, groupOptions]
+  );
+  const handleDeleteClick = (id, row) => () => {
     setRows(rows.filter((row) => row.id !== id));
+    deletePermission(id, row);
   };
 
   const handleCancelClick = (id) => () => {
@@ -170,15 +215,27 @@ export const RedshiftConnectionsPermissionsDialog22 = (props) => {
     }
   };
 
-  const processRowUpdate = (newRow) => {
-    const updatedRow = { ...newRow, isNew: false };
-    setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
-    return updatedRow;
+  const handleRowEditStart = (params, event) => {
+    event.defaultMuiPrevented = true;
   };
 
-  const handleRowModesModelChange = (newRowModesModel) => {
-    setRowModesModel(newRowModesModel);
+  const processRowUpdate = async (newRow) => {
+    console.log('ProcessRowUpdate, id:', newRow);
+    await savePermission(newRow);
+    console.log('#### end process update');
+    return newRow;
   };
+  //NEW
+
+  function renderArrayType(params) {
+    console.log('params', params);
+    console.log('params.value', params.value);
+
+    return params.value.map((value) => {
+      console.log('value', value);
+      return <Chip label={value.label} />;
+    });
+  }
 
   const columns = [
     {
@@ -194,8 +251,8 @@ export const RedshiftConnectionsPermissionsDialog22 = (props) => {
       headerName: 'Permissions',
       flex: 2,
       editable: false,
-      type: 'singleSelect',
-      valueOptions: ['CREATE_SHARE_REQUEST']
+      type: 'string',
+      renderCell: renderArrayType
     },
     {
       field: 'actions',
@@ -203,7 +260,7 @@ export const RedshiftConnectionsPermissionsDialog22 = (props) => {
       headerName: 'Actions',
       flex: 2,
       cellClassName: 'actions',
-      getActions: ({ id }) => {
+      getActions: ({ id, row }) => {
         const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
 
         if (isInEditMode) {
@@ -229,7 +286,7 @@ export const RedshiftConnectionsPermissionsDialog22 = (props) => {
           <GridActionsCellItem
             icon={<DeleteIcon />}
             label="Delete"
-            onClick={handleDeleteClick(id)}
+            onClick={handleDeleteClick(id, row)}
             color="inherit"
           />
         ];
@@ -253,21 +310,32 @@ export const RedshiftConnectionsPermissionsDialog22 = (props) => {
               columns={columns}
               editMode="row"
               rowModesModel={rowModesModel}
-              onRowModesModelChange={handleRowModesModelChange}
+              onRowModesModelChange={setRowModesModel}
+              onRowEditStart={handleRowEditStart}
               onRowEditStop={handleRowEditStop}
               processRowUpdate={processRowUpdate}
               onProcessRowUpdateError={(error) =>
-                dispatch({
-                  type: SET_ERROR,
-                  error: error.message
-                })
+                dispatch({ type: SET_ERROR, error: error.message })
               }
+              experimentalFeatures={{ newEditingApi: true }}
+              // rowCount={roles.count}
+              // page={roles.page - 1}
+              // pageSize={filterRoles.pageSize}
+              // paginationMode="server"
+              // onPageChange={handlePageChangeRoles}
+              loading={loading}
+              // onPageSizeChange={(pageSize) => {
+              //   setFilterRoles({ ...filterRoles, pageSize: pageSize });
+              // }}
+              getRowHeight={() => 'auto'}
+              disableSelectionOnClick
+              sx={{ wordWrap: 'break-word' }}
               components={{
                 Toolbar: GridToolbar
               }}
               componentsProps={{
                 toolbar: {
-                  rows,
+                  loading,
                   setRows,
                   setRowModesModel
                 }
@@ -280,7 +348,7 @@ export const RedshiftConnectionsPermissionsDialog22 = (props) => {
   );
 };
 
-RedshiftConnectionsPermissionsDialog22.propTypes = {
+RedshiftConnectionsPermissionsDialog.propTypes = {
   connection: PropTypes.object.isRequired,
   onClose: PropTypes.func,
   open: PropTypes.bool.isRequired,

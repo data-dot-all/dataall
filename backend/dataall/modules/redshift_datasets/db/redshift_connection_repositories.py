@@ -1,10 +1,11 @@
 import logging
 
-from sqlalchemy import or_
+from sqlalchemy import or_, and_, func
 from sqlalchemy.orm import Query
-from dataall.base.db import exceptions
+from dataall.base.db import exceptions, paginate
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
-from dataall.base.db import paginate
+from dataall.core.permissions.db.permission.permission_models import Permission
+from dataall.core.permissions.db.resource_policy.resource_policy_models import ResourcePolicy, ResourcePolicyPermission
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnection
 from dataall.modules.redshift_datasets.services.redshift_enums import RedshiftConnectionTypes
 
@@ -87,3 +88,40 @@ class RedshiftConnectionRepository:
     @staticmethod
     def delete_all_environment_connections(session, environment_uri):
         session.query(RedshiftConnection).filter(RedshiftConnection.environmentUri == environment_uri).delete()
+
+
+    @staticmethod
+    def _query_redshift_connection_group_permissions(session, connection_uri, permissions, filter) -> Query:
+
+        query = session.query(
+                ResourcePolicy.principalId.label('groupUri'),
+                func.array_agg(Permission.name).label('permissions')
+            ).join(
+                ResourcePolicyPermission,
+                ResourcePolicy.sid == ResourcePolicyPermission.sid,
+            ).join(
+                Permission,
+                Permission.permissionUri == ResourcePolicyPermission.permissionUri,
+            ).filter(
+                and_(
+                    ResourcePolicy.principalType == 'GROUP',
+                    ResourcePolicy.resourceUri == connection_uri,
+                    ResourcePolicy.resourceType == RedshiftConnection.__name__,
+                    Permission.name.in_(permissions)
+                )
+            ).group_by(ResourcePolicy.principalId)
+
+        if filter and filter.get('groupUri'):
+            query = query.filter(ResourcePolicy.principalId == filter.get('groupUri'))
+        if filter and filter.get('term'):
+            query = query.filter(ResourcePolicy.principalId.ilike(filter.get('term') + '%%'),)
+        return query.order_by(ResourcePolicy.principalId)
+
+
+    @staticmethod
+    def paginated_redshift_connection_group_permissions(session, connection_uri, permissions, filter) -> dict:
+        return paginate(
+            query=RedshiftConnectionRepository._query_redshift_connection_group_permissions(session, connection_uri, permissions, filter),
+            page=filter.get('page', RedshiftConnectionRepository._DEFAULT_PAGE),
+            page_size=filter.get('pageSize', RedshiftConnectionRepository._DEFAULT_PAGE_SIZE),
+        ).to_dict()
