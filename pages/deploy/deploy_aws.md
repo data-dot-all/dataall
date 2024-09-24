@@ -451,13 +451,22 @@ the different configuration options.
 {
     "modules": {
         "mlstudio": {
-            "active": true
+            "active": true,
+            "features": {
+                 "show_stack_logs": "enabled/disabled/admin-only"
+            }
         },
         "notebooks": {
-            "active": true
+            "active": true,
+            "features": {
+                 "show_stack_logs": "enabled/disabled/admin-only"
+            }
         },
         "datapipelines": {
-            "active": true
+            "active": true,
+            "features": {
+                 "show_stack_logs": "enabled/disabled/admin-only"
+            }
         },
         "omics": {
             "active": false
@@ -482,7 +491,7 @@ the different configuration options.
                 "Secret" : true
               }
             }
-          },
+        },
         "s3_datasets": {
             "active": true,
             "features": {
@@ -490,12 +499,19 @@ the different configuration options.
               "file_actions": true,
               "aws_actions": true,
               "preview_data": true,
-              "glue_crawler": true
+              "glue_crawler": true,
+              "show_stack_logs": "enabled/disabled/admin-only"
             }
-          },
+        },
         "s3_datasets_shares": {
             "active": true
-          },
+        },
+        "shares_base": {
+          "active": true,
+          "features": {
+            "show_share_logs": "enabled/disabled/admin-only"
+          }
+        },
         "worksheets": {
             "active": true
         },
@@ -510,7 +526,8 @@ the different configuration options.
         "features": {
             "env_aws_actions": true,
             "cdk_pivot_role_multiple_environments_same_account": false,
-            "enable_quicksight_monitoring": false
+            "enable_quicksight_monitoring": false,
+            "show_stack_logs": "enabled/disabled/admin-only"
         },
         "log_query_period_days": 1
     }
@@ -558,21 +575,22 @@ In the example config.json, the feature that enables file upload from data.all U
         "features": {
             "file_uploads": false,
         }
-    },
+    }
 ```
 
 
-| **Feature**         | **Module** | **Description**                                                                                                                                                                                                                                                                              |   
-|---------------------|------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| file_uploads        | s3_datasets   | Upload files in a Dataset in the Upload tab                                                                                                                                                                                                                                                  |
-| file_actions        | s3_datasets   | Create, Read, Update, Delete on Dataset Folders                                                                                                                                                                                                                                              |
-| aws_actions         | s3_datasets   | Get AWS Credentials and assume Dataset IAM role from data.all's UI                                                                                                                                                                                                                           |
-| preview_data        | s3_datasets   | Enable previews of dataset tables for users in data.all UI                                                                                                                                                                                                                                   |
-| glue_crawler        | s3_datasets   | Allow running Glue Crawler to catalog new data for data.all datasets directly from the UI                                                                                                                                                                                                    |
-| share_notifications | s3_datasets   | Allow additional notifications (on top of data.all's built in UI notifications) to be sent to data.all users when a dataset sharing operation occurs (currently only type `email` notifications is supported and requires `custom_domain` hosted zone parameters be specified in `cdk.json`) |
-| confidentiality_dropdown | s3_datasets | Disable / Enable use of confidentiality levels for a dataset. Please note - when this drop down is set to false each dataset is treated as if it is Official or Secret                                                                                                                       |
-| topics_dropdown | s3_datasets | Disable / Enable use of topics for a dataset | 
-|auto_approval_for_confidentiality_level | s3_datasets | Specify if auto-approval for share requests should be enabled for each confidentiality level in data.all |
+| **Feature**                             | **Module**  | **Description**                                                                                                                                                                                                                                                                              |   
+|-----------------------------------------|-------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| file_uploads                            | s3_datasets | Upload files in a Dataset in the Upload tab                                                                                                                                                                                                                                                  |
+| file_actions                            | s3_datasets | Create, Read, Update, Delete on Dataset Folders                                                                                                                                                                                                                                              |
+| aws_actions                             | s3_datasets | Get AWS Credentials and assume Dataset IAM role from data.all's UI                                                                                                                                                                                                                           |
+| preview_data                            | s3_datasets | Enable previews of dataset tables for users in data.all UI                                                                                                                                                                                                                                   |
+| glue_crawler                            | s3_datasets | Allow running Glue Crawler to catalog new data for data.all datasets directly from the UI                                                                                                                                                                                                    |
+| share_notifications                     | s3_datasets | Allow additional notifications (on top of data.all's built in UI notifications) to be sent to data.all users when a dataset sharing operation occurs (currently only type `email` notifications is supported and requires `custom_domain` hosted zone parameters be specified in `cdk.json`) |
+| confidentiality_dropdown                | s3_datasets | Disable / Enable use of confidentiality levels for a dataset. Please note - when this drop down is set to false each dataset is treated as if it is Official or Secret                                                                                                                       |
+| topics_dropdown                         | s3_datasets | Disable / Enable use of topics for a dataset                                                                                                                                                                                                                                                 | 
+| auto_approval_for_confidentiality_level | s3_datasets | Specify if auto-approval for share requests should be enabled for each confidentiality level in data.all                                                                                                                                                                                     |
+| show_stack_logs                         | s3_datasets | Enable / Disable showing stack logs or only allow admins to view stack logs. Similar config can be used in other modules to hide stack logs. Please check out the config.json in step 7 for more details                                                                                     |
 
 ### Customizing Module Features
 
@@ -614,12 +632,13 @@ a particular feature in the core is to add it to the core section of the `config
 This is the list of core features that can currently be customized. Take it as an example if you need to 
 disable or modify the bahavior any other core feature.
 
-| **Feature**           | **Module**   | **Description**                                                                                                                                                                                                                                    |   
-|-----------------------|--------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| env_aws_actions       | environments | If set to True, users can get AWS Credentials and assume Environment Group IAM roles from data.all's UI                                                                                                                                            |
+| **Feature**           | **Module**   | **Description**                                                                                                                                                                                                                                     |   
+|-----------------------|--------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| env_aws_actions       | environments | If set to True, users can get AWS Credentials and assume Environment Group IAM roles from data.all's UI                                                                                                                                             |
 | cdk_pivot_role_multiple_environments_same_account       | environments | If set to True, the CDK-created pivot role as part of the environment stack will be region specific (`dataallPivotRole-cdk-<region>`). This feature allows users to create multiple data.all environments in the same account but multiple regions. |
-| enable_quicksight_monitoring       | environments | If set to **true**, RDS security groups and VPC NACL rules are modified to allow connection of the RDS metadata database with Quicksight in the infrastructure account (default: false)                                                            |
-| log_query_period_days       | global       | Specify the time frame for querying the log history. This log history is used for Stacks view and shared log views.                                                                                                                             |
+| enable_quicksight_monitoring       | environments | If set to **true**, RDS security groups and VPC NACL rules are modified to allow connection of the RDS metadata database with Quicksight in the infrastructure account (default: false)                                                             |
+| log_query_period_days       | global       | Specify the time frame for querying the log history. This log history is used for Stacks view and shared log views.                                                                                                                                 |
+| show_stack_logs | environments | Enable/Disable showing stack logs to users or only show it to admins. Check out the config.json in Step 7 for valid config value that can be passed                                                                                                 | 
 
 
 ## 8. Run CDK synth and check cdk.context.json <a name="context"></a>
