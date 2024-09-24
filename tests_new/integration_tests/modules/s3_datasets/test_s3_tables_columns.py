@@ -67,10 +67,9 @@ def test_update_dataset_table_column(client1, tables_fixture_name, request, sess
     table_uri = tables[0].tableUri
     columns = list_dataset_table_columns(client1, table_uri)
     column_uri = columns.nodes[0].columnUri
-    response = update_dataset_table_column(
-        client1, column_uri, {'description': f'{session_id} new updated description'}
-    )
-    assert_that(response.description).is_equal_to(f'{session_id} new updated description')
+    new_desc = f'{session_id} new updated description'
+    response = update_dataset_table_column(client1, column_uri, {'description': new_desc})
+    assert_that(response.description).is_equal_to(new_desc)
 
 
 @pytest.mark.parametrize(
