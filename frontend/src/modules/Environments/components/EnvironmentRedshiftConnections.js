@@ -29,7 +29,7 @@ import {
 } from 'design';
 
 import { EnvironmentRedshiftConnectionAddForm } from './EnvironmentRedshiftConnectionAddForm';
-import { RedshiftConnectionsPermissionsDialog } from './RedshiftConnectionsPermissionsDialog';
+import { RedshiftConnectionsPermissionsDialog } from './RedshiftConnectionsPermissionsDialog3';
 import { deleteRedshiftConnection } from '../services';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';

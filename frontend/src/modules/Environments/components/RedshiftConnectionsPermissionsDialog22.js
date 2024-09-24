@@ -1,5 +1,6 @@
 import {
   Button,
+  ButtonGroup,
   CardContent,
   CardHeader,
   CircularProgress,
@@ -17,6 +18,8 @@ import {
 } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Close';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 //import { Defaults } from 'design';
@@ -25,10 +28,10 @@ import { useClient } from 'services';
 // todo UI: table with group + permissions
 // todo Add button to add a group permissions
 
-function EditToolbar(props) {
-  const { setRows, setRowModesModel } = props;
+function GridToolbar(props) {
+  const { rows, setRows, setRowModesModel } = props;
 
-  const handleClick = () => {
+  const handleAddGroup = () => {
     const id = Date.now();
     setRows((oldRows) => [
       ...oldRows,
@@ -40,15 +43,39 @@ function EditToolbar(props) {
     }));
   };
 
+  const handleSaveAllClick = () => {
+    setRows(rows.map((row) => ({ ...row, isNew: false })));
+    setRowModesModel((prevRowModesModel) => {
+      const updatedRowModesModel = {};
+      Object.keys(prevRowModesModel).forEach((id) => {
+        updatedRowModesModel[id] = { mode: GridRowModes.View };
+      });
+      return updatedRowModesModel;
+    });
+  };
+
   return (
     <GridToolbarContainer>
-      <Button color="primary" startIcon={<AddIcon />} onClick={handleClick}>
-        Add group
-      </Button>
+      <ButtonGroup variant="outlined">
+        <Button
+          color="primary"
+          startIcon={<AddIcon />}
+          onClick={handleAddGroup}
+        >
+          Add group
+        </Button>
+        <Button
+          color="primary"
+          startIcon={<SaveIcon />}
+          onClick={handleSaveAllClick}
+        >
+          Save changes
+        </Button>
+      </ButtonGroup>
     </GridToolbarContainer>
   );
 }
-export const RedshiftConnectionsPermissionsDialog = (props) => {
+export const RedshiftConnectionsPermissionsDialog22 = (props) => {
   const { connection, environment, onClose, open, ...other } = props;
   const dispatch = useDispatch();
   const client = useClient();
@@ -123,8 +150,24 @@ export const RedshiftConnectionsPermissionsDialog = (props) => {
     }
   };
 
+  const handleSaveClick = (id) => () => {
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+  };
+
   const handleDeleteClick = (id) => () => {
     setRows(rows.filter((row) => row.id !== id));
+  };
+
+  const handleCancelClick = (id) => () => {
+    setRowModesModel({
+      ...rowModesModel,
+      [id]: { mode: GridRowModes.View, ignoreModifications: true }
+    });
+
+    const editedRow = rows.find((row) => row.id === id);
+    if (editedRow.isNew) {
+      setRows(rows.filter((row) => row.id !== id));
+    }
   };
 
   const processRowUpdate = (newRow) => {
@@ -161,6 +204,27 @@ export const RedshiftConnectionsPermissionsDialog = (props) => {
       flex: 2,
       cellClassName: 'actions',
       getActions: ({ id }) => {
+        const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+
+        if (isInEditMode) {
+          return [
+            <GridActionsCellItem
+              icon={<SaveIcon />}
+              label="Save"
+              sx={{
+                color: 'primary.main'
+              }}
+              onClick={handleSaveClick(id)}
+            />,
+            <GridActionsCellItem
+              icon={<CancelIcon />}
+              label="Cancel"
+              className="textPrimary"
+              onClick={handleCancelClick(id)}
+              color="inherit"
+            />
+          ];
+        }
         return [
           <GridActionsCellItem
             icon={<DeleteIcon />}
@@ -199,10 +263,11 @@ export const RedshiftConnectionsPermissionsDialog = (props) => {
                 })
               }
               components={{
-                Toolbar: EditToolbar
+                Toolbar: GridToolbar
               }}
               componentsProps={{
                 toolbar: {
+                  rows,
                   setRows,
                   setRowModesModel
                 }
@@ -215,7 +280,7 @@ export const RedshiftConnectionsPermissionsDialog = (props) => {
   );
 };
 
-RedshiftConnectionsPermissionsDialog.propTypes = {
+RedshiftConnectionsPermissionsDialog22.propTypes = {
   connection: PropTypes.object.isRequired,
   onClose: PropTypes.func,
   open: PropTypes.bool.isRequired,
