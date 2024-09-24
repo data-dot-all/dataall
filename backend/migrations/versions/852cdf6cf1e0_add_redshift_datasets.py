@@ -147,5 +147,6 @@ def downgrade():
         )
         for policy in policies:
             for permission in policy.permissions:
-                session.delete(permission)
-                session.commit()
+                if permission.name in ENVIRONMENT_REDSHIFT_ALL:
+                    session.delete(permission)
+                    session.commit()
