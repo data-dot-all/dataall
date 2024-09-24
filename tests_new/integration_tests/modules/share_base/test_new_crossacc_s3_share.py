@@ -39,12 +39,12 @@ ALL_S3_SHARABLE_TYPES_NAMES = [
 ]
 
 
-def test_create_and_delete_share_object(client5, persistent_cross_acc_env_1, session_s3_dataset1, principal1, group5):
+def test_create_and_delete_share_object(client5, session_cross_acc_env_1, session_s3_dataset1, principal1, group5):
     principal_id, principal_type = principal1
     share = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': session_s3_dataset1.datasetUri},
-        environmentUri=persistent_cross_acc_env_1.environmentUri,
+        environmentUri=session_cross_acc_env_1.environmentUri,
         groupUri=group5,
         principalId=principal_id,
         principalType=principal_type,
@@ -56,14 +56,14 @@ def test_create_and_delete_share_object(client5, persistent_cross_acc_env_1, ses
     delete_share_object(client5, share.shareUri)
 
 
-def test_submit_empty_object(client5, persistent_cross_acc_env_1, session_s3_dataset1, group5, principal1):
+def test_submit_empty_object(client5, session_cross_acc_env_1, session_s3_dataset1, group5, principal1):
     # here Exception is not recognized as GqlError, so we use base class
     # toDo: back to GqlError
     principal_id, principal_type = principal1
     share = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': session_s3_dataset1.datasetUri},
-        environmentUri=persistent_cross_acc_env_1.environmentUri,
+        environmentUri=session_cross_acc_env_1.environmentUri,
         groupUri=group5,
         principalId=principal_id,
         principalType=principal_type,
@@ -77,12 +77,12 @@ def test_submit_empty_object(client5, persistent_cross_acc_env_1, session_s3_dat
     clean_up_share(client5, share.shareUri)
 
 
-def test_add_share_items(client5, persistent_cross_acc_env_1, session_s3_dataset1, group5, principal1):
+def test_add_share_items(client5, session_cross_acc_env_1, session_s3_dataset1, group5, principal1):
     principal_id, principal_type = principal1
     share = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': session_s3_dataset1.datasetUri},
-        environmentUri=persistent_cross_acc_env_1.environmentUri,
+        environmentUri=session_cross_acc_env_1.environmentUri,
         groupUri=group5,
         principalId=principal_id,
         principalType=principal_type,
@@ -109,12 +109,12 @@ def test_add_share_items(client5, persistent_cross_acc_env_1, session_s3_dataset
     clean_up_share(client5, share.shareUri)
 
 
-def test_reject_share(client1, client5, persistent_cross_acc_env_1, session_s3_dataset1, group5, principal1):
+def test_reject_share(client1, client5, session_cross_acc_env_1, session_s3_dataset1, group5, principal1):
     principal_id, principal_type = principal1
     share = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': session_s3_dataset1.datasetUri},
-        environmentUri=persistent_cross_acc_env_1.environmentUri,
+        environmentUri=session_cross_acc_env_1.environmentUri,
         groupUri=group5,
         principalId=principal_id,
         principalType=principal_type,
@@ -210,14 +210,14 @@ def test_verify_share_items(client1, share_params_main):
 
 @pytest.mark.dependency(depends=['share_verified'])
 def test_check_item_access(
-    client5, persistent_cross_acc_env_1_aws_client, share_params_main, group5, consumption_role_1
+    client5, session_cross_acc_env_1_aws_client, share_params_main, group5, consumption_role_1
 ):
     share, dataset = share_params_main
     principal_type = share.principal.principalType
     if principal_type == 'Group':
         session = get_group_session(client5, share.environment.environmentUri, group5)
     elif principal_type == 'ConsumptionRole':
-        session = get_role_session(persistent_cross_acc_env_1_aws_client, consumption_role_1.IAMRoleArn, dataset.region)
+        session = get_role_session(session_cross_acc_env_1_aws_client, consumption_role_1.IAMRoleArn, dataset.region)
     else:
         raise Exception('wrong principal type')
 

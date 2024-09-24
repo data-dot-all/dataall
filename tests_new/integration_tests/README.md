@@ -68,7 +68,7 @@ Currently **we support only Cognito based deployments** but support for any IdP 
                        "accountId": "...",
                        "region": "us-east-1"
                },
-              "persistent_cross_acc_env_1": {
+              "session_cross_acc_env_1": {
                        "accountId": "another acc",
                        "region": "same as session_env1"  
                },

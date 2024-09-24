@@ -37,29 +37,29 @@ def clean_up_share(client, shareUri):
 
 
 @pytest.fixture(scope='session')
-def consumption_role_1(client5, group5, persistent_cross_acc_env_1, persistent_cross_acc_env_1_aws_client):
-    iam_client = IAMClient(session=persistent_cross_acc_env_1_aws_client, region=persistent_cross_acc_env_1['region'])
+def consumption_role_1(client5, group5, session_cross_acc_env_1, session_cross_acc_env_1_aws_client):
+    iam_client = IAMClient(session=session_cross_acc_env_1_aws_client, region=session_cross_acc_env_1['region'])
     role = iam_client.get_consumption_role(
-        persistent_cross_acc_env_1.AwsAccountId,
+        session_cross_acc_env_1.AwsAccountId,
         test_cons_role_name,
-        f'dataall-integration-tests-role-{persistent_cross_acc_env_1.region}',
+        f'dataall-integration-tests-role-{session_cross_acc_env_1.region}',
     )
     consumption_role = add_consumption_role(
         client5,
-        persistent_cross_acc_env_1.environmentUri,
+        session_cross_acc_env_1.environmentUri,
         group5,
         'ShareTestConsumptionRole',
         role['Role']['Arn'],
     )
     yield consumption_role
-    remove_consumption_role(client5, persistent_cross_acc_env_1.environmentUri, consumption_role.consumptionRoleUri)
+    remove_consumption_role(client5, session_cross_acc_env_1.environmentUri, consumption_role.consumptionRoleUri)
 
 
 @pytest.fixture(scope='session')
 def session_share_1(
     client5,
     client1,
-    persistent_cross_acc_env_1,
+    session_cross_acc_env_1,
     session_s3_dataset1,
     session_s3_dataset1_tables,
     session_s3_dataset1_folders,
@@ -68,7 +68,7 @@ def session_share_1(
     share1 = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': session_s3_dataset1.datasetUri},
-        environmentUri=persistent_cross_acc_env_1.environmentUri,
+        environmentUri=session_cross_acc_env_1.environmentUri,
         groupUri=group5,
         principalId=group5,
         principalType=PrincipalType.Group.value,
@@ -85,7 +85,7 @@ def session_share_1(
 def session_share_2(
     client5,
     client1,
-    persistent_cross_acc_env_1,
+    session_cross_acc_env_1,
     session_imported_sse_s3_dataset1,
     session_imported_sse_s3_dataset1_tables,
     session_imported_sse_s3_dataset1_folders,
@@ -94,7 +94,7 @@ def session_share_2(
     share2 = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': session_imported_sse_s3_dataset1.datasetUri},
-        environmentUri=persistent_cross_acc_env_1.environmentUri,
+        environmentUri=session_cross_acc_env_1.environmentUri,
         groupUri=group5,
         principalId=group5,
         principalType=PrincipalType.Group.value,
@@ -112,7 +112,7 @@ def session_share_2(
 def session_share_consrole_1(
     client5,
     client1,
-    persistent_cross_acc_env_1,
+    session_cross_acc_env_1,
     session_s3_dataset1,
     session_s3_dataset1_tables,
     session_s3_dataset1_folders,
@@ -122,7 +122,7 @@ def session_share_consrole_1(
     share1cr = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': session_s3_dataset1.datasetUri},
-        environmentUri=persistent_cross_acc_env_1.environmentUri,
+        environmentUri=session_cross_acc_env_1.environmentUri,
         groupUri=group5,
         principalId=consumption_role_1.consumptionRoleUri,
         principalType=PrincipalType.ConsumptionRole.value,
@@ -139,7 +139,7 @@ def session_share_consrole_1(
 def session_share_consrole_2(
     client5,
     client1,
-    persistent_cross_acc_env_1,
+    session_cross_acc_env_1,
     session_imported_sse_s3_dataset1,
     session_imported_sse_s3_dataset1_tables,
     session_imported_sse_s3_dataset1_folders,
@@ -149,7 +149,7 @@ def session_share_consrole_2(
     share2cr = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': session_imported_sse_s3_dataset1.datasetUri},
-        environmentUri=persistent_cross_acc_env_1.environmentUri,
+        environmentUri=session_cross_acc_env_1.environmentUri,
         groupUri=group5,
         principalId=consumption_role_1.consumptionRoleUri,
         principalType=PrincipalType.ConsumptionRole.value,

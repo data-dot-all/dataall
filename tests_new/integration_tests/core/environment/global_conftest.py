@@ -80,6 +80,32 @@ def session_env1_aws_client(session_env1, session_env1_integration_role_arn):
 
 
 @pytest.fixture(scope='session')
+def session_cross_acc_env_1(client5, group5, testdata, org1, session_id):
+    envdata = testdata.envs['session_cross_acc_env_1']
+    env = None
+    try:
+        env = create_env(
+            client5, 'session_cross_acc_env_1', group5, org1.organizationUri, envdata.accountId, envdata.region, tags=[session_id]
+        )
+        yield env
+    finally:
+        if env:
+            delete_env(client5, env)
+
+
+
+@pytest.fixture(scope='session')
+def session_cross_acc_env_1_integration_role_arn(session_cross_acc_env_1):
+    return f'arn:aws:iam::{session_cross_acc_env_1.AwsAccountId}:role/dataall-integration-tests-role-{session_cross_acc_env_1.region}'
+
+
+@pytest.fixture(scope='session')
+def session_cross_acc_env_1_aws_client(session_cross_acc_env_1, session_cross_acc_env_1_integration_role_arn):
+    return get_environment_aws_session(session_cross_acc_env_1_integration_role_arn, session_cross_acc_env_1)
+
+
+
+@pytest.fixture(scope='session')
 def persistent_env1_integration_role_arn(persistent_env1):
     return f'arn:aws:iam::{persistent_env1.AwsAccountId}:role/dataall-integration-tests-role-{persistent_env1.region}'
 
@@ -150,16 +176,3 @@ def persistent_env1(client1, group1, testdata):
     return get_or_create_persistent_env('persistent_env1', client1, group1, testdata)
 
 
-@pytest.fixture(scope='session')
-def persistent_cross_acc_env_1(client5, group5, testdata):
-    return get_or_create_persistent_env('persistent_cross_acc_env_1', client5, group5, testdata)
-
-
-@pytest.fixture(scope='session')
-def persistent_cross_acc_env_1_integration_role_arn(persistent_cross_acc_env_1):
-    return f'arn:aws:iam::{persistent_cross_acc_env_1.AwsAccountId}:role/dataall-integration-tests-role-{persistent_cross_acc_env_1.region}'
-
-
-@pytest.fixture(scope='session')
-def persistent_cross_acc_env_1_aws_client(persistent_cross_acc_env_1, persistent_cross_acc_env_1_integration_role_arn):
-    return get_environment_aws_session(persistent_cross_acc_env_1_integration_role_arn, persistent_cross_acc_env_1)
