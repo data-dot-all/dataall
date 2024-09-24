@@ -91,8 +91,9 @@ def downgrade():
         )
         for policy in policies:
             for permission in policy.permissions:
-                session.delete(permission)
-                session.commit()
+                if permission.name in [ATTACH_METADATA_FORM, CREATE_METADATA_FORM]:
+                    session.delete(permission)
+                    session.commit()
 
     all_organizations = session.query(Organization).all()
     for org in all_organizations:
@@ -105,8 +106,9 @@ def downgrade():
         )
         for policy in policies:
             for permission in policy.permissions:
-                session.delete(permission)
-                session.commit()
+                if permission.name in [ATTACH_METADATA_FORM, CREATE_METADATA_FORM]:
+                    session.delete(permission)
+                    session.commit()
 
     datasets = session.query(DatasetBase).all()
     for dataset in datasets:
@@ -119,5 +121,6 @@ def downgrade():
         )
         for policy in policies:
             for permission in policy.permissions:
-                session.delete(permission)
-                session.commit()
+                if permission.name in [ATTACH_METADATA_FORM]:
+                    session.delete(permission)
+                    session.commit()
