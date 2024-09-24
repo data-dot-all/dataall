@@ -47,7 +47,8 @@
                 "file_actions": true,
                 "aws_actions": true,
                 "preview_data": true,
-                "glue_crawler": true
+                "glue_crawler": true,
+                "metrics_data": false
             }
         },
         "s3_datasets_shares": {
