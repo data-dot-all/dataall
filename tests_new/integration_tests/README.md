@@ -72,9 +72,15 @@ Currently **we support only Cognito based deployments** but support for any IdP 
                        "accountId": "another acc",
                        "region": "same as session_env1"  
                },
-            }
+            },
+            "dashboards": {
+                "session_env1": {
+                  "dashboardId": "..."
+                },
+              }
           }
           ```
+
 - The pipeline will create the users/groups
 
 ## Run tests

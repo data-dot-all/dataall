@@ -48,6 +48,7 @@ class VpcRepository:
                 or_(
                     Vpc.label.ilike('%' + term + '%'),
                     Vpc.VpcId.ilike('%' + term + '%'),
+                    Vpc.tags.contains(f'{{{term}}}'),
                 )
             )
         return query.order_by(Vpc.label)

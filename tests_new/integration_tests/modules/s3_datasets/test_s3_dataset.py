@@ -16,6 +16,7 @@ from integration_tests.modules.s3_datasets.queries import (
     get_dataset_presigned_role_url,
     start_glue_crawler,
     update_dataset,
+    list_s3_datasets_owned_by_env_group,
 )
 from integration_tests.core.stack.queries import update_stack
 from integration_tests.core.stack.utils import check_stack_ready
@@ -106,9 +107,26 @@ def test_get_dataset_presigned_url_upload_data_unauthorized(client2, dataset_fix
     ).contains('UnauthorizedOperation', 'CREDENTIALS_DATASET', dataset_uri)
 
 
-def test_list_s3_datasets_owned_by_env_group():
-    # TODO
-    pass
+def test_list_s3_datasets_owned_by_env_group(
+    client1,
+    session_env1,
+    group1,
+    group2,
+    session_s3_dataset1,
+    session_imported_sse_s3_dataset1,
+    session_imported_kms_s3_dataset1,
+    session_id,
+):
+    assert_that(
+        list_s3_datasets_owned_by_env_group(
+            client1, environment_uri=session_env1.environmentUri, group_uri=group1, term=session_id
+        ).nodes
+    ).is_length(3)
+    assert_that(
+        list_s3_datasets_owned_by_env_group(
+            client1, environment_uri=session_env1.environmentUri, group_uri=group2, term=session_id
+        ).nodes
+    ).is_length(0)
 
 
 def test_list_s3_datasets_owned_by_env_group_unauthorized():
@@ -144,9 +162,9 @@ def test_update_dataset_unauthorized(client1, client2, dataset_fixture_name, req
     assert_that(response).contains_entry(datasetUri=dataset_uri).does_not_contain_entry(description=test_description)
 
 
-def test_delete_s3_dataset():
-    # TODO
-    pass
+## test_delete_dataset()
+## dataset delete not tested as it is already done in the
+##  Session fixtures clean-up
 
 
 @pytest.mark.parametrize(
@@ -187,7 +205,7 @@ def test_start_crawler(client1, dataset_fixture_name, request):
     dataset_uri = dataset.datasetUri
     response = start_glue_crawler(client1, datasetUri=dataset_uri, input={})
     assert_that(response.Name).is_equal_to(dataset.GlueCrawlerName)
-    # TODO: check it can run successfully + check sending prefix
+    # TODO: check it can run successfully + check sending prefix - We should first implement it in API
 
 
 @pytest.mark.parametrize(
