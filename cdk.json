@@ -4,17 +4,6 @@
     "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": false,
     "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": true,
     "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
-    "@aws-cdk/core:stackRelativeExports": false,
-    "tooling_region": "eu-west-2",
-    "quality_gate": false,
-    "DeploymentEnvironments": [
-      {
-        "envname": "dev",
-        "account": "637423210447",
-        "region": "eu-west-2",
-        "enable_pivot_role_auto_create": true,
-        "enable_opensearch_serverless": true
-      }
-    ]
+    "@aws-cdk/core:stackRelativeExports": false
   }
 }
