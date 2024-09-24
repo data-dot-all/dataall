@@ -153,7 +153,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     manager.grant_principals_permissions_to_source_table(table, share_item, share_item_filter)
                     if manager.cross_account:
                         retries = 0
-                        retry_share_table = False
+                        retry_share_table = True
                         while retry_share_table and retries < 1:
                             (
                                 retry_share_table,

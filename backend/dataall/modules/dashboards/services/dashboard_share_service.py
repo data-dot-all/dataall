@@ -82,24 +82,6 @@ class DashboardShareService:
             )
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_DASHBOARDS)
-    @ResourcePolicyService.has_resource_permission(SHARE_DASHBOARD)
-    def share_dashboard(uri: str, principal_id: str):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            dashboard = DashboardRepository.get_dashboard_by_uri(session, uri)
-            share = DashboardRepository.create_share(
-                session=session,
-                username=context.username,
-                dashboard=dashboard,
-                principal_id=principal_id,
-                init_status=DashboardShareStatus.APPROVED,
-            )
-
-            DashboardShareService._create_share_policy(session, principal_id, dashboard.dashboardUri)
-            return share
-
-    @staticmethod
     def _change_share_status(share, status):
         DashboardShareService._check_share_status(share)
         if share.status == status.value:
