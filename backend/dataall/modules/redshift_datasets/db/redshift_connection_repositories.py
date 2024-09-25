@@ -1,4 +1,5 @@
 import logging
+from typing import List, Any
 
 from sqlalchemy import or_, and_, func
 from sqlalchemy.orm import Query
@@ -6,6 +7,7 @@ from dataall.base.db import exceptions, paginate
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.core.permissions.db.permission.permission_models import Permission
 from dataall.core.permissions.db.resource_policy.resource_policy_models import ResourcePolicy, ResourcePolicyPermission
+from dataall.core.environment.db.environment_models import EnvironmentGroup
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnection
 from dataall.modules.redshift_datasets.services.redshift_enums import RedshiftConnectionTypes
 
@@ -95,7 +97,12 @@ class RedshiftConnectionRepository:
 
         query = session.query(
                 ResourcePolicy.principalId.label('groupUri'),
-                func.array_agg(Permission.name).label('permissions')
+                func.array_agg(
+                    func.json_build_object(
+                        'name', Permission.name,
+                        'description', Permission.description
+                    )
+                ).label('permissions')
             ).join(
                 ResourcePolicyPermission,
                 ResourcePolicy.sid == ResourcePolicyPermission.sid,
@@ -125,3 +132,26 @@ class RedshiftConnectionRepository:
             page=filter.get('page', RedshiftConnectionRepository._DEFAULT_PAGE),
             page_size=filter.get('pageSize', RedshiftConnectionRepository._DEFAULT_PAGE_SIZE),
         ).to_dict()
+
+    @staticmethod
+    def list_redshift_connection_group_no_permissions(session, connection_uri, environment_uri, filter) -> list[str]:
+        groups_with_permissions = session.query(
+            ResourcePolicy.principalId).filter(
+            ResourcePolicy.resourceUri == connection_uri
+        ).all()
+
+        groups_with_permissions = [g[0] for g in groups_with_permissions]
+        logger.info(f'Groups with permissions: {groups_with_permissions}')
+
+        groups_without_permission = session.query(
+            EnvironmentGroup.groupUri.label('groupUri')).filter(
+            and_(
+                EnvironmentGroup.environmentUri == environment_uri,
+                EnvironmentGroup.groupUri.notin_(groups_with_permissions)
+            )
+        ).order_by(EnvironmentGroup.groupUri).all()
+        return [g[0] for g in groups_without_permission]
+
+
+
+

@@ -21,7 +21,10 @@ export const listConnectionGroupPermissions = ({ filter, connectionUri }) => ({
         hasPrevious
         nodes {
           groupUri
-          permissions
+          permissions {
+            name
+            description
+          }
         }
       }
     }

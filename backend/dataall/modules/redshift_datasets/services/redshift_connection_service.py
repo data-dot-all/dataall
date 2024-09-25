@@ -187,6 +187,17 @@ class RedshiftConnectionService:
             )
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_CONNECTIONS)
+    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_CONNECTION)
+    def list_connection_group_no_permissions(uri, filter):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            connection = RedshiftConnectionService.get_redshift_connection_by_uri(uri=uri)
+            return RedshiftConnectionRepository.list_redshift_connection_group_no_permissions(
+                session, uri, connection.environmentUri, filter
+            )
+
+    @staticmethod
     def _check_redshift_connection(account_id: str, region: str, connection: RedshiftConnection):
         if connection.redshiftType == RedshiftType.Serverless.value:
             if (
