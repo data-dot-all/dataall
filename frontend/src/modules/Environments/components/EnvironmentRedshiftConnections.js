@@ -287,6 +287,7 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
                         <Button
                           variant="outlined"
                           size="small"
+                          disabled={params.row.connectionType === 'DATA_USER'}
                           endIcon={<PermContactCalendarIcon />}
                           onClick={() => {
                             setSelectedConnection(params.row);

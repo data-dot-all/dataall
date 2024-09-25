@@ -118,10 +118,21 @@ Data.all will verify the connection upon creation. If the database does not exis
 correspond to cluster it will notify the user in the error banner.
 
 ### Update Connection permissions
-For `ADMIN` connections, the connection owners can grant additional permissions that allow other teams to use the 
-connection. 
+The owners of an `ADMIN` connection can grant other teams permissions to use the Connection in a share request. At the 
+moment this is the only type of permission that can be granted and it is only available for `ADMIN` connections. 
+Check the section on Connection types to understand the usage of this permission.
 
-Navigate to ... TODO
+To update the permissions, select your environment and navigate to the Connections tab. You will see that the `ADMIN` 
+connections have a button in the Permissions tab called `View and Edit` (it is disabled for `DATA_USER` connections).
+
+![](pictures/redshift_datasets/redshift_connection_menu.png#zoom#shadow)
+
+If you click on the button the following window will open. Here you can press the `Add group` and select a group
+that will get "Use Connection in share request" permissions to the connection. Do not forget to click on the save
+icon to save the permissions.
+
+![](pictures/redshift_datasets/redshift_connection_permissions.png#zoom#shadow)
+
 
 ### Delete a Connection
 To delete a connection, click on the trash icon next to the item in the Actions column. If the Connection has been used 
