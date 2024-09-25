@@ -1,13 +1,22 @@
 {
     "modules": {
         "mlstudio": {
-            "active": true
+            "active": true,
+            "features": {
+                 "show_stack_logs": "enabled"
+            }
         },
         "notebooks": {
-            "active": true
+            "active": true,
+             "features": {
+                 "show_stack_logs": "enabled"
+            }
         },
         "datapipelines": {
-            "active": true
+            "active": true,
+             "features": {
+                 "show_stack_logs": "enabled"
+            }
         },
         "omics": {
             "active": false
@@ -48,7 +57,14 @@
                 "aws_actions": true,
                 "preview_data": true,
                 "glue_crawler": true,
-                "metrics_data": true
+                "metrics_data": true,
+                "show_stack_logs": "enabled"
+            }
+        },
+        "shares_base": {
+            "active": true,
+            "features": {
+                "show_share_logs": "enabled"
             }
         },
         "s3_datasets_shares": {
@@ -74,7 +90,8 @@
         "features": {
             "env_aws_actions": true,
             "cdk_pivot_role_multiple_environments_same_account": false,
-            "enable_quicksight_monitoring": false
+            "enable_quicksight_monitoring": false,
+            "show_stack_logs": "enabled"
         },
         "log_query_period_days": 1
     }

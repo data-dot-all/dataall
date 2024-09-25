@@ -89,15 +89,6 @@ def list_dashboard_shares(
     return DashboardShareService.list_dashboard_shares(uri=dashboardUri, data=filter)
 
 
-def share_dashboard(
-    context: Context,
-    source: Dashboard,
-    principalId: str = None,
-    dashboardUri: str = None,
-):
-    return DashboardShareService.share_dashboard(uri=dashboardUri, principal_id=principalId)
-
-
 def delete_dashboard(context: Context, source, dashboardUri: str = None):
     return DashboardService.delete_dashboard(uri=dashboardUri)
 

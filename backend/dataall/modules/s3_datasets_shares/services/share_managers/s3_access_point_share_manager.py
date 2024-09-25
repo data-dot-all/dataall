@@ -40,7 +40,8 @@ from dataall.modules.shares_base.services.sharing_service import ShareData
 
 logger = logging.getLogger(__name__)
 ACCESS_POINT_CREATION_TIME = 30
-ACCESS_POINT_CREATION_RETRIES = 5
+ACCESS_POINT_CREATION_RETRIES = 10
+ACCESS_POINT_BACKOFF_COEFFICIENT = 1.1  # every time increase retry delay by 10%
 
 
 class S3AccessPointShareManager:
@@ -447,13 +448,19 @@ class S3AccessPointShareManager:
             access_point_arn = s3_client.create_bucket_access_point(self.bucket_name, self.access_point_name)
             # Access point creation is slow
             retries = 1
+            sleep_coeff = 1
             while (
                 not s3_client.get_bucket_access_point_arn(self.access_point_name)
                 and retries < ACCESS_POINT_CREATION_RETRIES
             ):
-                logger.info('Waiting 30s for access point creation to complete..')
-                time.sleep(ACCESS_POINT_CREATION_TIME)
+                logger.info(
+                    f'Attempt {retries}. Waiting {ACCESS_POINT_CREATION_TIME * sleep_coeff}s for access point creation to complete..'
+                )
+                time.sleep(ACCESS_POINT_CREATION_TIME * sleep_coeff)
+                sleep_coeff = sleep_coeff * ACCESS_POINT_BACKOFF_COEFFICIENT
                 retries += 1
+        if not s3_client.get_bucket_access_point_arn(self.access_point_name):
+            raise Exception(f'Failed to create access point {self.access_point_name}')
         existing_policy = s3_client.get_access_point_policy(self.access_point_name)
         # requester will use this role to access resources
         target_requester_id = SessionHelper.get_role_id(
