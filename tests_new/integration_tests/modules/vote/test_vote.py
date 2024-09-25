@@ -15,9 +15,7 @@ def test_count_votes(client2, vote1, session_s3_dataset1):
 
     # Assert incremeent by 1
     upvote(client2, session_s3_dataset1.datasetUri, S3_DATASET_TARGET_TYPE, True)
-    assert_that(count_upvotes(client2, session_s3_dataset1.datasetUri, S3_DATASET_TARGET_TYPE)).is_equal_to(
-        count + 1
-    )
+    assert_that(count_upvotes(client2, session_s3_dataset1.datasetUri, S3_DATASET_TARGET_TYPE)).is_equal_to(count + 1)
 
     # Assert decrement by 1
     upvote(client2, session_s3_dataset1.datasetUri, S3_DATASET_TARGET_TYPE, False)
