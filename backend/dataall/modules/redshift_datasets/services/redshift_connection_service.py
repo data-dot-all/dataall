@@ -264,4 +264,3 @@ class RedshiftConnectionService:
             if cluster.get('HsmStatus', None):
                 return RedshiftEncryptionType.HSM
         raise Exception
-

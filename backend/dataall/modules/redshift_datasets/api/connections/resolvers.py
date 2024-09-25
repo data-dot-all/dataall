@@ -57,9 +57,11 @@ def list_redshift_connection_group_permissions(context: Context, source, connect
     RequestValidator.required_param('connectionUri', connectionUri)
     return RedshiftConnectionService.list_connection_group_permissions(uri=connectionUri, filter=filter)
 
+
 def list_redshift_connection_group_no_permissions(context: Context, source, connectionUri: str, filter: dict = None):
     RequestValidator.required_param('connectionUri', connectionUri)
     return RedshiftConnectionService.list_connection_group_no_permissions(uri=connectionUri, filter=filter)
+
 
 class RequestValidator:
     def required_param(param_name: str, param_value: Any):
