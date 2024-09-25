@@ -33,6 +33,7 @@ stack {
   accountid
   region
   stackid
+  updated
   link
   outputs
   resources
@@ -242,6 +243,35 @@ def add_consumption_role(client, env_uri, group_uri, consumption_role_name, iam_
     }
     response = client.query(query=query)
     return response.data.addConsumptionRoleToEnvironment
+
+
+def get_consumption_role(client, env_uri, iam_role_name):
+    query = {
+        'operationName': 'getConsumptionRole',
+        'variables': {
+            'environmentUri': env_uri,
+            'IAMRoleName': iam_role_name,
+        },
+        'query': """
+                    query getConsumptionRole(
+                      $environmentUri: String!
+                      $IAMRoleName: String!
+                    ) {
+                      getConsumptionRole(
+                        environmentUri: $environmentUri
+                        IAMRoleName: $IAMRoleName
+                      ) {
+                        consumptionRoleUri
+                        consumptionRoleName
+                        environmentUri
+                        groupUri
+                        IAMRoleArn
+                      }
+                    }
+        """,
+    }
+    response = client.query(query=query)
+    return response.data.getConsumptionRole
 
 
 def remove_consumption_role(client, env_uri, consumption_role_uri):

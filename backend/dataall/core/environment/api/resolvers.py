@@ -285,3 +285,7 @@ def resolve_parameters(context, source: Environment, **kwargs):
     if not source:
         return None
     return EnvironmentService.get_environment_parameters(source.environmentUri)
+
+
+def get_consumption_role(context, source, environmentUri, IAMRoleName):
+    return EnvironmentService.get_consumption_role_by_name(uri=environmentUri, IAMRoleName=IAMRoleName)

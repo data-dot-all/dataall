@@ -310,3 +310,16 @@ class EnvironmentRepository:
     @staticmethod
     def query_environment_groups(session, uri):
         return session.query(EnvironmentGroup).filter(EnvironmentGroup.environmentUri == uri).all()
+
+    @staticmethod
+    def get_environment_consumption_role_by_name(session, uri, IAMRoleName):
+        return (
+            session.query(ConsumptionRole)
+            .filter(
+                and_(
+                    ConsumptionRole.environmentUri == uri,
+                    ConsumptionRole.IAMRoleName == IAMRoleName,
+                )
+            )
+            .first()
+        )

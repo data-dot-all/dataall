@@ -22,6 +22,7 @@ from dataall.core.environment.api.resolvers import (
     list_groups,
     list_valid_environments,
     get_consumption_role_policies,
+    get_consumption_role,
 )
 from dataall.core.environment.api.types import (
     Environment,
@@ -218,5 +219,17 @@ getConsumptionRolePolicies = gql.QueryField(
     ],
     type=gql.ArrayType(RoleManagedPolicy),
     resolver=get_consumption_role_policies,
+    test_scope='Environment',
+)
+
+
+getConsumptionRole = gql.QueryField(
+    name='getConsumptionRole',
+    args=[
+        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='IAMRoleName', type=gql.NonNullableType(gql.String)),
+    ],
+    type=gql.Ref('ConsumptionRole'),
+    resolver=get_consumption_role,
     test_scope='Environment',
 )

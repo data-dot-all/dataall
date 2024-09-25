@@ -12,9 +12,12 @@ from integration_tests.core.environment.queries import (
     remove_consumption_role,
     remove_group_from_env,
 )
-from integration_tests.core.stack.queries import update_stack
-from integration_tests.core.stack.utils import check_stack_in_progress, check_stack_ready
+
 from integration_tests.errors import GqlError
+
+from integration_tests.core.environment.utils import update_env_stack
+from integration_tests.core.stack.queries import get_stack
+
 
 log = logging.getLogger(__name__)
 
@@ -51,15 +54,18 @@ def test_list_envs_invited(client2, session_env1, session_env2, session_id):
 
 
 def test_persistent_env_update(client1, persistent_env1):
-    # wait for stack to get to a final state before triggering an update
-    stack_uri = persistent_env1.stack.stackUri
-    env_uri = persistent_env1.environmentUri
-    check_stack_ready(client1, env_uri, stack_uri)
-    update_stack(client1, env_uri, 'environment')
-    # wait for stack to move to "in_progress" state
-    check_stack_in_progress(client1, env_uri, stack_uri)
-    stack = check_stack_ready(client1, env_uri, stack_uri)
-    assert_that(stack.status).is_equal_to('UPDATE_COMPLETE')
+    stack = get_stack(
+        client1,
+        persistent_env1.environmentUri,
+        persistent_env1.stack.stackUri,
+        persistent_env1.environmentUri,
+        target_type='environment',
+    )
+    updated_before = datetime.strptime(stack.updated, '%Y-%m-%d %H:%M:%S.%f').timestamp()
+    stack = update_env_stack(client1, persistent_env1)
+    assert_that(stack).contains_entry(status='UPDATE_COMPLETE')
+    updated = datetime.strptime(stack.updated, '%Y-%m-%d %H:%M:%S.%f').timestamp()
+    assert_that(updated).is_greater_than_or_equal_to(updated_before)
 
 
 def test_invite_group_on_env_no_org(client1, session_env2, group4):
