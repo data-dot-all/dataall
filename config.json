@@ -57,6 +57,7 @@
                 "aws_actions": true,
                 "preview_data": true,
                 "glue_crawler": true,
+                "metrics_data": true,
                 "show_stack_logs": "enabled"
             }
         },
