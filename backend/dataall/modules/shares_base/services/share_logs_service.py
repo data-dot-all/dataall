@@ -2,6 +2,7 @@ import os
 import logging
 
 from dataall.base.context import get_context
+from dataall.base.feature_toggle_checker import is_feature_enabled_for_allowed_values
 from dataall.base.utils import Parameter
 from dataall.base.db import exceptions
 from dataall.core.stacks.aws.cloudwatch import CloudWatch
@@ -15,11 +16,33 @@ log = logging.getLogger(__name__)
 
 class ShareLogsService:
     @staticmethod
-    def check_view_log_permissions(username, groups, shareUri):
-        with get_context().db_engine.scoped_session() as session:
+    @is_feature_enabled_for_allowed_values(
+        allowed_values=['admin-only', 'enabled', 'disabled'],
+        enabled_values=['admin-only', 'enabled'],
+        default_value='enabled',
+        config_property='modules.shares_base.features.show_share_logs',
+    )
+    def check_view_logs_permissions(shareUri):
+        context = get_context()
+        log_config = config.get_property('modules.shares_base.features.show_share_logs', 'enabled')
+        if log_config == 'admin-only' and 'DAAdministrators' not in context.groups:
+            raise exceptions.ResourceUnauthorized(
+                username=context.username,
+                action='View Share Logs',
+                resource_uri=shareUri,
+            )
+        with context.db_engine.scoped_session() as session:
             share = ShareObjectRepository.get_share_by_uri(session, shareUri)
             ds = DatasetBaseRepository.get_dataset_by_uri(session, share.datasetUri)
-            return ds.stewards in groups or ds.SamlAdminGroupName in groups or username == ds.owner
+            if not (
+                ds.stewards in context.groups or ds.SamlAdminGroupName in context.groups or context.username == ds.owner
+            ):
+                raise exceptions.ResourceUnauthorized(
+                    username=context.username,
+                    action='View Share Logs',
+                    resource_uri=shareUri,
+                )
+            return True
 
     @staticmethod
     def get_share_logs_name_query(shareUri):
@@ -43,13 +66,7 @@ class ShareLogsService:
     @staticmethod
     def get_share_logs(shareUri):
         context = get_context()
-        if not ShareLogsService.check_view_log_permissions(context.username, context.groups, shareUri):
-            raise exceptions.ResourceUnauthorized(
-                username=context.username,
-                action='View Share Logs',
-                resource_uri=shareUri,
-            )
-
+        ShareLogsService.check_view_logs_permissions(shareUri)
         envname = os.getenv('envname', 'local')
         log_query_period_days = config.get_property('core.log_query_period_days', 1)
         log.info(f'log_query_period_days: {log_query_period_days}')
