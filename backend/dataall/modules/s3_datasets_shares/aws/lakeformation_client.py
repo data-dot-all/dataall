@@ -8,6 +8,10 @@ from dataall.base.aws.sts import SessionHelper
 
 log = logging.getLogger('aws:lakeformation')
 
+NUMBER_OF_RETRIES = 5
+SLEEP_TIME = 5
+BACKOFF_COEFF = 1.1
+
 
 class LakeFormationClient:
     def __init__(self, account_id, region):
@@ -160,16 +164,29 @@ class LakeFormationClient:
                     if permissions_with_grant_options:
                         grant_dict['PermissionsWithGrantOption'] = permissions_with_grant_options
 
-                    response = self._client.grant_permissions(**grant_dict)
+                    retries = 0
+                    last_error = None
+                    while retries < NUMBER_OF_RETRIES:
+                        try:
+                            response = self._client.grant_permissions(**grant_dict)
+                            last_error = None
+                            log.info(
+                                f'Successfully granted principal {principal} '
+                                f'permissions {permissions} '
+                                f'and permissions with grant options {permissions_with_grant_options} '
+                                f'to {str(resource)}  '
+                                f'response: {response}'
+                            )
+                            time.sleep(2)
+                            break
 
-                    log.info(
-                        f'Successfully granted principal {principal} '
-                        f'permissions {permissions} '
-                        f'and permissions with grant options {permissions_with_grant_options} '
-                        f'to {str(resource)}  '
-                        f'response: {response}'
-                    )
-                    time.sleep(2)
+                        except ClientError as e:
+                            last_error = e
+                            time.sleep(SLEEP_TIME * (BACKOFF_COEFF**retries))
+                            retries += 1
+
+                    if last_error:
+                        raise last_error
 
             except ClientError as e:
                 log.error(
