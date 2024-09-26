@@ -1,5 +1,7 @@
 from assertpy import assert_that
 
+from integration_tests.errors import GqlError
+
 from integration_tests.modules.feed.queries import post_feed_message, get_feed
 
 
@@ -22,3 +24,21 @@ def test_post_feed_message(client1, session_s3_dataset1, session_id):
     feed = get_feed(client1, session_s3_dataset1.datasetUri, S3_DATASET_TARGET_TYPE, filter={'term': session_id})
     assert_that(feed.messages.count).is_equal_to(feed_message_count + 1)
     assert_that(feed.messages.nodes[0].content).is_equal_to(session_id)
+
+
+def test_post_feed_message_invalid(client1, session_s3_dataset1):
+    assert_that(post_feed_message).raises(GqlError).when_called_with(
+        client1, session_s3_dataset1.datasetUri, None, None
+    ).contains('targetType', 'must not be null')
+    assert_that(post_feed_message).raises(GqlError).when_called_with(
+        client1, None, S3_DATASET_TARGET_TYPE, None
+    ).contains('targetUri', 'must not be null')
+
+
+def test_get_feed_invalid(client1, session_s3_dataset1):
+    assert_that(get_feed).raises(GqlError).when_called_with(client1, session_s3_dataset1.datasetUri, None).contains(
+        'targetType', 'must not be null'
+    )
+    assert_that(get_feed).raises(GqlError).when_called_with(client1, None, S3_DATASET_TARGET_TYPE).contains(
+        'targetUri', 'must not be null'
+    )
