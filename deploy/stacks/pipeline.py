@@ -738,6 +738,7 @@ class PipelineStack(Stack):
                 role=self.expanded_codebuild_role.without_policy_updates(),
                 vpc=self.vpc,
                 security_groups=[self.codebuild_sg],
+                timeout=Duration.hours(4),
             )
         )
 
