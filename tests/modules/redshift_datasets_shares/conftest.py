@@ -280,7 +280,14 @@ def table1(db, user, group, dataset_1):
 
 @pytest.fixture(scope='function')
 def redshift_share_request_cross_account(
-    db, user2, group2, env_fixture_2, target_connection, dataset_1, mock_redshift_data_shares, source_connection_admin
+    db,
+    user2,
+    group2,
+    env_fixture_2,
+    target_connection_admin,
+    dataset_1,
+    mock_redshift_data_shares,
+    source_connection_admin,
 ):
     set_context(RequestContext(db_engine=db, username=user2.username, groups=[group2.name], user_id=user2.username))
     share = ShareObjectService.create_share_object(
@@ -289,7 +296,7 @@ def redshift_share_request_cross_account(
         item_type=None,
         item_uri=None,
         group_uri=group2.name,
-        principal_id=target_connection.connectionUri,
+        principal_id=target_connection_admin.connectionUri,
         principal_role_name='rs_role_1',
         principal_type='Redshift_Role',
         requestPurpose=None,

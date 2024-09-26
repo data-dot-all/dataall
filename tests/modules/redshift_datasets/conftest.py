@@ -6,6 +6,7 @@ import pytest
 from dataall.base.context import set_context, dispose_context, RequestContext
 from dataall.modules.redshift_datasets.services.redshift_connection_service import RedshiftConnectionService
 from dataall.modules.redshift_datasets.services.redshift_dataset_service import RedshiftDatasetService
+from dataall.modules.redshift_datasets.services.redshift_connection_permissions import REDSHIFT_GRANTABLE_PERMISSIONS
 
 ENVNAME = os.environ.get('envname', 'pytest')
 
@@ -110,6 +111,7 @@ def connection1_serverless(db, user, group, env_fixture, mock_redshift_serverles
             'database': 'database_1',
             'redshiftUser': None,
             'secretArn': 'arn:aws:secretsmanager:*:111111111111:secret:secret-1',
+            'connectionType': 'DATA_USER',
         },
     )
     yield connection
@@ -134,11 +136,48 @@ def connection2_cluster(
             'database': 'database_1',
             'redshiftUser': None,
             'secretArn': 'arn:aws:secretsmanager:*:111111111111:secret:secret-2',
+            'connectionType': 'DATA_USER',
         },
     )
     yield connection
     set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
     RedshiftConnectionService.delete_redshift_connection(uri=connection.connectionUri)
+    dispose_context()
+
+
+@pytest.fixture(scope='function')
+def connection3_admin(
+    db, user, group, env_fixture, mock_redshift, mock_redshift_data, mock_redshift_kms, api_context_1
+):
+    connection = RedshiftConnectionService.create_redshift_connection(
+        uri=env_fixture.environmentUri,
+        admin_group=group.name,
+        data={
+            'connectionName': 'connection3',
+            'redshiftType': 'cluster',
+            'clusterId': 'cluster-id',
+            'nameSpaceId': None,
+            'workgroup': None,
+            'database': 'database_1',
+            'redshiftUser': None,
+            'secretArn': 'arn:aws:secretsmanager:*:111111111111:secret:secret-3',
+            'connectionType': 'ADMIN',
+        },
+    )
+    yield connection
+    set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
+    RedshiftConnectionService.delete_redshift_connection(uri=connection.connectionUri)
+    dispose_context()
+
+
+@pytest.fixture(scope='function')
+def connection3_admin_permissions(db, connection3_admin, user, group, group2, api_context_1):
+    RedshiftConnectionService.add_group_permissions(
+        uri=connection3_admin.connectionUri, group=group2.groupUri, permissions=REDSHIFT_GRANTABLE_PERMISSIONS
+    )
+    yield RedshiftConnectionService.list_connection_group_permissions(uri=connection3_admin.connectionUri, filter={})
+    set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
+    RedshiftConnectionService.delete_group_permissions(uri=connection3_admin.connectionUri, group=group2.groupUri)
     dispose_context()
 
 
