@@ -71,6 +71,13 @@ class IAMClient:
             self.put_consumption_role_policy(role_name)
         return role
 
+    def delete_role(self, role_name):
+        try:
+            self._client.delete_role(RoleName=role_name)
+        except Exception as e:
+            log.error(e)
+            raise e
+
     def put_consumption_role_policy(self, role_name):
         self._client.put_role_policy(
             RoleName=role_name,
