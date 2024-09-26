@@ -97,6 +97,14 @@ def api_context_2(db, user2, group2):
     dispose_context()
 
 
+@pytest.fixture(scope='function')
+def api_context_3(db, user3, group3):
+    yield set_context(
+        RequestContext(db_engine=db, username=user3.username, groups=[group3.name], user_id=user3.username)
+    )
+    dispose_context()
+
+
 @pytest.fixture(scope='module')
 def env_fixture_2(env, environment_group, org_fixture, user2, group2, tenant, env_params):
     env2 = env(org_fixture, 'dev', 'bob', 'testadmins', '2222222222', parameters=env_params)
@@ -112,7 +120,7 @@ def env_fixture_same_1(env, environment_group, org_fixture, user2, group2, tenan
 
 
 @pytest.fixture(scope='function')
-def source_connection(db, user, group, env_fixture, mock_redshift_serverless, mock_redshift_data, api_context_1):
+def source_connection_data_user(db, user, group, env_fixture, mock_redshift_serverless, mock_redshift_data):
     set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
     connection = RedshiftConnectionService.create_redshift_connection(
         uri=env_fixture.environmentUri,
@@ -137,7 +145,7 @@ def source_connection(db, user, group, env_fixture, mock_redshift_serverless, mo
 
 
 @pytest.fixture(scope='function')
-def source_connection_admin(db, user, group, env_fixture, mock_redshift_serverless, mock_redshift_data, api_context_1):
+def source_connection_admin(db, user, group, env_fixture, mock_redshift_serverless, mock_redshift_data):
     set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
     connection = RedshiftConnectionService.create_redshift_connection(
         uri=env_fixture.environmentUri,
@@ -162,7 +170,33 @@ def source_connection_admin(db, user, group, env_fixture, mock_redshift_serverle
 
 
 @pytest.fixture(scope='function')
-def target_connection(db, user2, group2, env_fixture_2, mock_redshift_serverless, mock_redshift_data):
+def target_connection_data_user(db, user2, group2, env_fixture_2, mock_redshift_serverless, mock_redshift_data):
+    """Cross-account connection"""
+    set_context(RequestContext(db_engine=db, username=user2.username, groups=[group2.name], user_id=user2.username))
+    connection = RedshiftConnectionService.create_redshift_connection(
+        uri=env_fixture_2.environmentUri,
+        admin_group=group2.name,
+        data={
+            'connectionName': 'connection2',
+            'redshiftType': 'serverless',
+            'clusterId': None,
+            'nameSpaceId': 'YYYYYYYYYYYYYY',
+            'workgroup': 'workgroup_name_1',
+            'database': 'database_1',
+            'redshiftUser': None,
+            'secretArn': 'arn:aws:secretsmanager:*:222222222222:secret:secret-2',
+            'connectionType': 'DATA_USER',
+        },
+    )
+    dispose_context()
+    yield connection
+    set_context(RequestContext(db_engine=db, username=user2.username, groups=[group2.name], user_id=user2.username))
+    RedshiftConnectionService.delete_redshift_connection(uri=connection.connectionUri)
+    dispose_context()
+
+
+@pytest.fixture(scope='function')
+def target_connection_admin(db, user2, group2, env_fixture_2, mock_redshift_serverless, mock_redshift_data):
     """Cross-account connection"""
     set_context(RequestContext(db_engine=db, username=user2.username, groups=[group2.name], user_id=user2.username))
     connection = RedshiftConnectionService.create_redshift_connection(
@@ -214,7 +248,7 @@ def target_connection_same_account(db, user2, group2, env_fixture_same_1, mock_r
 
 
 @pytest.fixture(scope='function')
-def dataset_1(db, user, group, env_fixture, source_connection):
+def dataset_1(db, user, group, env_fixture, source_connection_data_user):
     set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
     dataset = RedshiftDatasetService.import_redshift_dataset(
         uri=env_fixture.environmentUri,
@@ -222,7 +256,7 @@ def dataset_1(db, user, group, env_fixture, source_connection):
         data={
             'label': 'dataset_1',
             'SamlAdminGroupName': group.name,
-            'connectionUri': source_connection.connectionUri,
+            'connectionUri': source_connection_data_user.connectionUri,
             'schema': 'public',
             'tables': [],
         },

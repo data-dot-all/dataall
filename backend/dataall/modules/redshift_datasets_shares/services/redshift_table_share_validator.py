@@ -1,3 +1,4 @@
+from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.shares_base.services.share_object_service import SharesValidatorInterface
@@ -32,7 +33,7 @@ class RedshiftTableValidator(SharesValidatorInterface):
         attachMissingPolicies,
         permissions,
     ) -> bool:
-        RedshiftTableValidator._validate_target_connection_permissions(uri=principal_id)
+        RedshiftTableValidator._validate_target_connection_permissions(session=session, uri=principal_id)
         rs_dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(
             session=session, dataset_uri=dataset.datasetUri
         )
@@ -114,6 +115,12 @@ class RedshiftTableValidator(SharesValidatorInterface):
             )
 
     @staticmethod
-    @ResourcePolicyService.has_resource_permission(CREATE_SHARE_REQUEST_WITH_CONNECTION)
-    def _validate_target_connection_permissions(uri):
-        return True
+    def _validate_target_connection_permissions(session, uri):
+        context = get_context()
+        return ResourcePolicyService.check_user_resource_permission(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            resource_uri=uri,
+            permission_name=CREATE_SHARE_REQUEST_WITH_CONNECTION,
+        )
