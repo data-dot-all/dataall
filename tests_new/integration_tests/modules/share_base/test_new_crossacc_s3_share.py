@@ -1,11 +1,6 @@
 import pytest
 from assertpy import assert_that
 
-from dataall.modules.shares_base.services.shares_enums import (
-    ShareItemStatus,
-    ShareObjectStatus,
-)
-
 from tests_new.integration_tests.modules.share_base.conftest import clean_up_share
 from tests_new.integration_tests.modules.share_base.queries import (
     create_share_object,
@@ -31,6 +26,11 @@ from tests_new.integration_tests.modules.share_base.shared_test_functions import
     check_approve_share_object,
     check_share_succeeded,
 )
+ALL_S3_SHARABLE_TYPES_NAMES = [
+    'Table',
+    'StorageLocation',
+    'S3Bucket',
+]
 
 
 def test_create_and_delete_share_object(client5, session_cross_acc_env_1, session_s3_dataset1, principal1, group5):
@@ -46,7 +46,7 @@ def test_create_and_delete_share_object(client5, session_cross_acc_env_1, sessio
         attachMissingPolicies=True,
         permissions=['Read'],
     )
-    assert_that(share.status).is_equal_to(ShareObjectStatus.Draft.value)
+    assert_that(share.status).is_equal_to('Draft')
     delete_share_object(client5, share.shareUri)
 
 
@@ -98,7 +98,7 @@ def test_add_share_items(client5, session_cross_acc_env_1, session_s3_dataset1, 
     items = updated_share['items'].nodes
     assert_that(items).is_length(1)
     assert_that(items[0].shareItemUri).is_equal_to(share_item_uri)
-    assert_that(items[0].status).is_equal_to(ShareItemStatus.PendingApproval.value)
+    assert_that(items[0].status).is_equal_to('PendingApproval')
 
     clean_up_share(client5, share.shareUri)
 
@@ -128,7 +128,7 @@ def test_reject_share(client1, client5, session_cross_acc_env_1, session_s3_data
 
     reject_share_object(client1, share.shareUri)
     updated_share = get_share_object(client1, share.shareUri)
-    assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Rejected.value)
+    assert_that(updated_share.status).is_equal_to('Rejected')
 
     change_request_purpose = update_share_reject_reason(client1, share.shareUri, 'new purpose')
     assert_that(change_request_purpose).is_true()
