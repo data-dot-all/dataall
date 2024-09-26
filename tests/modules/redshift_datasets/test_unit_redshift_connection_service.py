@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock
-
 from assertpy import assert_that
 
 from dataall.modules.redshift_datasets.services.redshift_connection_service import RedshiftConnectionService

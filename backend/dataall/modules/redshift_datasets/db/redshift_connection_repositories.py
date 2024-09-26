@@ -1,5 +1,4 @@
 import logging
-from typing import List, Any
 
 from sqlalchemy import or_, and_, func
 from sqlalchemy.orm import Query
