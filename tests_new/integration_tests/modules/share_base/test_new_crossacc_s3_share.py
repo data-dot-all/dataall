@@ -26,11 +26,6 @@ from tests_new.integration_tests.modules.share_base.shared_test_functions import
     check_approve_share_object,
     check_share_succeeded,
 )
-ALL_S3_SHARABLE_TYPES_NAMES = [
-    'Table',
-    'StorageLocation',
-    'S3Bucket',
-]
 
 
 def test_create_and_delete_share_object(client5, session_cross_acc_env_1, session_s3_dataset1, principal1, group5):

@@ -18,18 +18,12 @@ from tests_new.integration_tests.modules.share_base.utils import (
 )
 from tests_new.integration_tests.aws_clients.athena import AthenaClient
 from tests_new.integration_tests.modules.s3_datasets.aws_clients import S3Client
-from dataall.modules.shares_base.services.shares_enums import (
-    ShareableType,
-    ShareItemStatus,
-    ShareItemHealthStatus,
-    ShareObjectStatus,
-)
 from tests_new.integration_tests.modules.s3_datasets.queries import get_folder
 
 ALL_S3_SHARABLE_TYPES_NAMES = [
-    ShareableType.Table.name,
-    ShareableType.StorageLocation.name,
-    ShareableType.S3Bucket.name,
+    'Table',
+    'StorageLocation',
+    'S3Bucket',
 ]
 
 
@@ -40,7 +34,7 @@ def add_all_items_to_share(client, shareUri):
         assert_that(add_share_item(client, shareUri, item.itemUri, item.itemType)).is_not_none()
     updated_share = get_share_object(client, shareUri)
     items = updated_share['items'].nodes
-    assert_that(items).extracting('status').contains_only(ShareItemStatus.PendingApproval.value)
+    assert_that(items).extracting('status').contains_only('PendingApproval')
 
 
 def delete_all_non_shared_items(client, shareUri):
@@ -48,10 +42,10 @@ def delete_all_non_shared_items(client, shareUri):
     items = updated_share['items'].nodes
     for item in items:
         if item.status in [
-            ShareItemStatus.Revoke_Succeeded.value,
-            ShareItemStatus.PendingApproval.value,
-            ShareItemStatus.Share_Rejected.value,
-            ShareItemStatus.Share_Failed.value,
+            'Revoke_Succeeded',
+            'PendingApproval',
+            'Share_Rejected',
+            'Share_Failed',
         ]:
             assert_that(remove_share_item(client, item.shareItemUri)).is_true()
 
@@ -60,17 +54,17 @@ def check_submit_share_object(client, shareUri, dataset):
     submit_share_object(client, shareUri)
     updated_share = get_share_object(client, shareUri)
     if dataset.autoApprovalEnabled:
-        assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Approved.value)
+        assert_that(updated_share.status).is_equal_to('Approved')
     else:
-        assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Submitted.value)
+        assert_that(updated_share.status).is_equal_to('Submitted')
 
 
 def check_approve_share_object(client, shareUri):
     approve_share_object(client, shareUri)
     updated_share = get_share_object(client, shareUri, {'isShared': True})
-    assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Approved.value)
+    assert_that(updated_share.status).is_equal_to('Approved')
     items = updated_share['items'].nodes
-    assert_that(items).extracting('status').contains_only(ShareItemStatus.Share_Approved.value)
+    assert_that(items).extracting('status').contains_only('Share_Approved')
 
 
 def check_share_succeeded(client, shareUri, check_contains_all_item_types=False):
@@ -78,10 +72,10 @@ def check_share_succeeded(client, shareUri, check_contains_all_item_types=False)
     updated_share = get_share_object(client, shareUri, {'isShared': True})
     items = updated_share['items'].nodes
 
-    assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Processed.value)
+    assert_that(updated_share.status).is_equal_to('Processed')
     for item in items:
-        assert_that(item.status).is_equal_to(ShareItemStatus.Share_Succeeded.value)
-        assert_that(item.healthStatus).is_equal_to(ShareItemHealthStatus.Healthy.value)
+        assert_that(item.status).is_equal_to('Share_Succeeded')
+        assert_that(item.healthStatus).is_equal_to('Healthy')
     if check_contains_all_item_types:
         assert_that(items).extracting('itemType').contains(*ALL_S3_SHARABLE_TYPES_NAMES)
 
@@ -94,8 +88,8 @@ def check_verify_share_items(client, shareUri):
     check_share_items_verified(client, shareUri)
     updated_share = get_share_object(client, shareUri, {'isShared': True})
     items = updated_share['items'].nodes
-    assert_that(items).extracting('status').contains_only(ShareItemStatus.Share_Succeeded.value)
-    assert_that(items).extracting('healthStatus').contains_only(ShareItemHealthStatus.Healthy.value)
+    assert_that(items).extracting('status').contains_only('Share_Succeeded')
+    assert_that(items).extracting('healthStatus').contains_only('Healthy')
     assert_that(items).extracting('lastVerificationTime').does_not_contain(*times)
 
 
@@ -169,14 +163,14 @@ def check_share_items_access(
         )
 
     for item in items:
-        should_have_access = item.status == ShareItemStatus.Share_Succeeded.value
-        if item.itemType == ShareableType.Table.name:
+        should_have_access = item.status == 'Share_Succeeded'
+        if item.itemType == 'Table':
             check_table_access(
                 athena_client, glue_db, item.itemName, workgroup, athena_workgroup_output_location, should_have_access
             )
-        elif item.itemType == ShareableType.S3Bucket.name:
+        elif item.itemType == 'S3Bucket':
             check_bucket_access(client, s3_client, item.itemName, should_have_access)
-        elif item.itemType == ShareableType.StorageLocation.name:
+        elif item.itemType == 'StorageLocation':
             check_accesspoint_access(client, s3_client, access_point_arn, item.itemUri, should_have_access)
 
 
@@ -188,10 +182,10 @@ def revoke_and_check_all_shared_items(client, shareUri, check_contains_all_item_
     revoke_share_items(client, shareUri, shareItemUris)
 
     updated_share = get_share_object(client, shareUri, {'isShared': True})
-    assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Revoked.value)
+    assert_that(updated_share.status).is_equal_to('Revoked')
     items = updated_share['items'].nodes
 
-    assert_that(items).extracting('status').contains_only(ShareItemStatus.Revoke_Approved.value)
+    assert_that(items).extracting('status').contains_only('Revoke_Approved')
     if check_contains_all_item_types:
         assert_that(items).extracting('itemType').contains(*ALL_S3_SHARABLE_TYPES_NAMES)
 
@@ -201,7 +195,7 @@ def check_all_items_revoke_job_succeeded(client, shareUri, check_contains_all_it
     updated_share = get_share_object(client, shareUri)
     items = updated_share['items'].nodes
 
-    assert_that(updated_share.status).is_equal_to(ShareObjectStatus.Processed.value)
-    assert_that(items).extracting('status').contains_only(ShareItemStatus.Revoke_Succeeded.value)
+    assert_that(updated_share.status).is_equal_to('Processed')
+    assert_that(items).extracting('status').contains_only('Revoke_Succeeded')
     if check_contains_all_item_types:
         assert_that(items).extracting('itemType').contains(*ALL_S3_SHARABLE_TYPES_NAMES)
