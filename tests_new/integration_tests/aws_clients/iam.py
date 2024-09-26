@@ -4,8 +4,6 @@ import os
 
 import boto3
 
-from dataall.base.aws.parameter_store import ParameterStoreManager
-
 log = logging.getLogger(__name__)
 
 
