@@ -2,7 +2,6 @@ import pytest
 
 from tests_new.integration_tests.aws_clients.iam import IAMClient
 from tests_new.integration_tests.core.environment.queries import add_consumption_role, remove_consumption_role
-from dataall.modules.shares_base.services.shares_enums import PrincipalType
 from tests_new.integration_tests.modules.share_base.queries import (
     create_share_object,
     delete_share_object,
@@ -10,7 +9,6 @@ from tests_new.integration_tests.modules.share_base.queries import (
     revoke_share_items,
 )
 from tests_new.integration_tests.modules.share_base.utils import check_share_ready
-from dataall.modules.shares_base.services.shares_enums import ShareItemStatus
 
 test_cons_role_name = 'dataall-test-ShareTestConsumptionRole'
 
@@ -18,10 +16,10 @@ test_cons_role_name = 'dataall-test-ShareTestConsumptionRole'
 def revoke_all_possible(client, shareUri):
     share = get_share_object(client, shareUri, {'isShared': True})
     statuses_can_delete = [
-        ShareItemStatus.PendingApproval.value,
-        ShareItemStatus.Revoke_Succeeded.value,
-        ShareItemStatus.Share_Failed.value,
-        ShareItemStatus.Share_Rejected.value,
+        'PendingApproval',
+        'Revoke_Succeeded',
+        'Share_Failed',
+        'Share_Rejected',
     ]
 
     shareItemUris = [item.shareItemUri for item in share['items'].nodes if item.status not in statuses_can_delete]
@@ -71,7 +69,7 @@ def session_share_1(
         environmentUri=session_cross_acc_env_1.environmentUri,
         groupUri=group5,
         principalId=group5,
-        principalType=PrincipalType.Group.value,
+        principalType='Group',
         requestPurpose='test create share object',
         attachMissingPolicies=True,
         permissions=['Read'],
@@ -97,7 +95,7 @@ def session_share_2(
         environmentUri=session_cross_acc_env_1.environmentUri,
         groupUri=group5,
         principalId=group5,
-        principalType=PrincipalType.Group.value,
+        principalType='Group',
         requestPurpose='test create share object',
         attachMissingPolicies=True,
         permissions=['Read'],
@@ -125,7 +123,7 @@ def session_share_consrole_1(
         environmentUri=session_cross_acc_env_1.environmentUri,
         groupUri=group5,
         principalId=consumption_role_1.consumptionRoleUri,
-        principalType=PrincipalType.ConsumptionRole.value,
+        principalType='ConsumptionRole',
         requestPurpose='test create share object',
         attachMissingPolicies=True,
         permissions=['Read'],
@@ -152,7 +150,7 @@ def session_share_consrole_2(
         environmentUri=session_cross_acc_env_1.environmentUri,
         groupUri=group5,
         principalId=consumption_role_1.consumptionRoleUri,
-        principalType=PrincipalType.ConsumptionRole.value,
+        principalType='ConsumptionRole',
         requestPurpose='test create share object',
         attachMissingPolicies=True,
         permissions=['Read'],
