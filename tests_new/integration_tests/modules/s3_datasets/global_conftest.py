@@ -1,4 +1,6 @@
 import logging
+import time
+
 import pytest
 import boto3
 import json
@@ -19,6 +21,7 @@ from integration_tests.modules.s3_datasets.queries import (
 from tests_new.integration_tests.modules.datasets_base.queries import list_datasets
 
 from integration_tests.modules.s3_datasets.aws_clients import S3Client, KMSClient, GlueClient, LakeFormationClient
+from integration_tests.core.stack.queries import update_stack
 
 log = logging.getLogger(__name__)
 
@@ -398,7 +401,15 @@ They are suitable for testing backwards compatibility.
 
 
 def get_or_create_persistent_s3_dataset(
-    dataset_name, client, group, env, autoApprovalEnabled=False, bucket=None, kms_alias='', glue_database=''
+    dataset_name,
+    client,
+    group,
+    env,
+    autoApprovalEnabled=False,
+    bucket=None,
+    kms_alias='',
+    glue_database='',
+    withContent=False,
 ):
     dataset_name = dataset_name or 'persistent_s3_dataset1'
     s3_datasets = list_datasets(client, term=dataset_name).nodes
@@ -431,6 +442,9 @@ def get_or_create_persistent_s3_dataset(
                 tags=[dataset_name],
                 autoApprovalEnabled=autoApprovalEnabled,
             )
+            if withContent:
+                create_tables(client, s3_dataset)
+                create_folders(client, s3_dataset)
 
         if s3_dataset.stack.status in ['CREATE_COMPLETE', 'UPDATE_COMPLETE']:
             return s3_dataset
@@ -441,7 +455,21 @@ def get_or_create_persistent_s3_dataset(
 
 @pytest.fixture(scope='session')
 def persistent_s3_dataset1(client1, group1, persistent_env1, testdata):
-    return get_or_create_persistent_s3_dataset('persistent_s3_dataset1', client1, group1, persistent_env1)
+    return get_or_create_persistent_s3_dataset(
+        'persistent_s3_dataset1', client1, group1, persistent_env1, withContent=True
+    )
+
+
+@pytest.fixture(scope='session')
+def updated_persistent_s3_dataset1(client1, persistent_s3_dataset1):
+    target_type = 'dataset'
+    stack_uri = persistent_s3_dataset1.stack.stackUri
+    env_uri = persistent_s3_dataset1.environment.environmentUri
+    dataset_uri = persistent_s3_dataset1.datasetUri
+    update_stack(client1, dataset_uri, target_type)
+    time.sleep(120)
+    check_stack_ready(client1, env_uri=env_uri, stack_uri=stack_uri, target_uri=dataset_uri, target_type=target_type)
+    return get_dataset(client1, dataset_uri)
 
 
 @pytest.fixture(scope='session')

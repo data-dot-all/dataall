@@ -16,7 +16,6 @@ from integration_tests.core.organizations.queries import create_organization
 from integration_tests.core.stack.utils import check_stack_ready
 from tests_new.integration_tests.core.environment.utils import update_env_stack
 
-
 log = logging.getLogger(__name__)
 
 
@@ -193,6 +192,12 @@ def updated_persistent_env1(client1, group1, persistent_env1):
 @pytest.fixture(scope='session')
 def persistent_cross_acc_env_1(client5, group5, testdata):
     return get_or_create_persistent_env('persistent_cross_acc_env_1', client5, group5, testdata)
+
+
+@pytest.fixture(scope='session')
+def updated_persistent_cross_acc_env_1(client5, group5, persistent_cross_acc_env_1):
+    update_env_stack(client5, persistent_cross_acc_env_1)
+    return get_environment(client5, persistent_cross_acc_env_1.environmentUri)
 
 
 @pytest.fixture(scope='session')
