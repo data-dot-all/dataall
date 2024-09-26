@@ -11,10 +11,11 @@ from dataall.modules.redshift_datasets.db.redshift_connection_repositories impor
 from dataall.modules.redshift_datasets.services.redshift_connection_permissions import (
     MANAGE_REDSHIFT_CONNECTIONS,
     REDSHIFT_CONNECTION_ALL,
+    REDSHIFT_GRANTABLE_PERMISSIONS,
     DELETE_REDSHIFT_CONNECTION,
     GET_REDSHIFT_CONNECTION,
+    MANAGE_REDSHIFT_CONNECTION_PERMISSIONS,
     CREATE_REDSHIFT_CONNECTION,
-    REDSHIFT_GRANTABLE_PERMISSIONS,
     LIST_ENVIRONMENT_REDSHIFT_CONNECTIONS,
 )
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnection
@@ -149,7 +150,7 @@ class RedshiftConnectionService:
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_CONNECTIONS)
-    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_CONNECTION)
+    @ResourcePolicyService.has_resource_permission(MANAGE_REDSHIFT_CONNECTION_PERMISSIONS)
     def add_group_permissions(uri, group, permissions) -> bool:
         context = get_context()
         connection = RedshiftConnectionService.get_redshift_connection_by_uri(uri=uri)
@@ -173,7 +174,7 @@ class RedshiftConnectionService:
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_CONNECTIONS)
-    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_CONNECTION)
+    @ResourcePolicyService.has_resource_permission(MANAGE_REDSHIFT_CONNECTION_PERMISSIONS)
     def delete_group_permissions(uri, group) -> bool:
         context = get_context()
         connection = RedshiftConnectionService.get_redshift_connection_by_uri(uri=uri)
@@ -193,7 +194,7 @@ class RedshiftConnectionService:
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_CONNECTIONS)
-    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_CONNECTION)
+    @ResourcePolicyService.has_resource_permission(MANAGE_REDSHIFT_CONNECTION_PERMISSIONS)
     def list_connection_group_permissions(uri, filter):
         context = get_context()
         permissions = REDSHIFT_GRANTABLE_PERMISSIONS
@@ -204,7 +205,7 @@ class RedshiftConnectionService:
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_CONNECTIONS)
-    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_CONNECTION)
+    @ResourcePolicyService.has_resource_permission(MANAGE_REDSHIFT_CONNECTION_PERMISSIONS)
     def list_connection_group_no_permissions(uri, filter):
         context = get_context()
         with context.db_engine.scoped_session() as session:
