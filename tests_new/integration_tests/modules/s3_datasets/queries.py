@@ -632,7 +632,7 @@ def update_dataset_table_column(client, columnUri, input):
     return response.data.updateDatasetTableColumn
 
 
-def list_dataset_table_columns(client, tableUri, term):
+def list_dataset_table_columns(client, tableUri, term=''):
     query = {
         'operationName': 'ListDatasetTableColumns',
         'variables': {'tableUri': tableUri, 'filter': {'term': term}},
