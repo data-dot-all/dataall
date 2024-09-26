@@ -76,6 +76,16 @@ stack {
 autoApprovalEnabled
 """
 
+S3_DATASET_TABLE_FILTER_TYPE = """
+filterUri
+tableUri
+label
+description
+filterType
+includedCols
+rowExpression
+"""
+
 
 ## Dataset Queries/Mutations
 def create_dataset(
@@ -274,7 +284,7 @@ def start_glue_crawler(client, datasetUri, input):
 def list_s3_datasets_owned_by_env_group(client, environment_uri, group_uri, term):
     query = {
         'operationName': 'listS3DatasetsOwnedByEnvGroup',
-        'variables': {'environmentUri': environment_uri, 'group_uri': group_uri, 'filter': {'term': term}},
+        'variables': {'environmentUri': environment_uri, 'groupUri': group_uri, 'filter': {'term': term}},
         'query': f"""
                 query listS3DatasetsOwnedByEnvGroup(
                   $filter: DatasetFilter
@@ -311,7 +321,7 @@ def list_s3_datasets_owned_by_env_group(client, environment_uri, group_uri, term
                 """,
     }
     response = client.query(query=query)
-    return response.data.listDatasetsCreatedInEnvironment
+    return response.data.listS3DatasetsOwnedByEnvGroup
 
 
 ## Folders Queries/Mutations
@@ -457,12 +467,9 @@ def create_table_data_filter(client, tableUri, input):
         'operationName': 'createTableDataFilter',
         'variables': {'tableUri': tableUri, 'input': input},
         'query': f"""
-                mutation createTableDataFilter(
-                  $tableUri: String!
-                  $input: NewTableDataFilterInput!
-                ) {{
+                mutation createTableDataFilter($tableUri: String!,$input: NewTableDataFilterInput!) {{
                   createTableDataFilter(tableUri: $tableUri, input: $input) {{
-                    filterUri
+                      {S3_DATASET_TABLE_FILTER_TYPE}
                   }}
                 }}
                 """,
@@ -552,10 +559,10 @@ def preview_table(client, tableUri):
     return response.data.previewTable
 
 
-def list_table_data_filters(client, tableUri, term):
+def list_table_data_filters(client, tableUri):
     query = {
         'operationName': 'listTableDataFilters',
-        'variables': {'tableUri': tableUri, 'filter': {'term': term}},
+        'variables': {'tableUri': tableUri, 'filter': {}},
         'query': f"""
                 query listTableDataFilters(
                   $tableUri: String!
@@ -568,19 +575,14 @@ def list_table_data_filters(client, tableUri, term):
                     hasNext
                     hasPrevious
                     nodes {{
-                      filterUri
-                      label
-                      description
-                      filterType
-                      includedCols
-                      rowExpression
+                      {S3_DATASET_TABLE_FILTER_TYPE}
                     }}
                   }}
                 }}
             """,
     }
     response = client.query(query=query)
-    return response.data.deleteTableDataFilter
+    return response.data.listTableDataFilters
 
 
 ## Table Column Queries/Mutations
@@ -630,7 +632,7 @@ def update_dataset_table_column(client, columnUri, input):
     return response.data.updateDatasetTableColumn
 
 
-def list_dataset_table_columns(client, tableUri, term):
+def list_dataset_table_columns(client, tableUri, term=''):
     query = {
         'operationName': 'ListDatasetTableColumns',
         'variables': {'tableUri': tableUri, 'filter': {'term': term}},
@@ -741,7 +743,6 @@ def get_table_profiling_run(client, tableUri):
         GlueTableName
         AwsAccountId
         results
-        status
       }}
     }}
                 """,

@@ -6,7 +6,6 @@ from dataall.modules.dashboards.api.resolvers import (
     import_dashboard,
     reject_dashboard_share,
     request_dashboard_share,
-    share_dashboard,
     update_dashboard,
 )
 
@@ -33,17 +32,6 @@ deleteDashboard = gql.MutationField(
     type=gql.Boolean,
     args=[gql.Argument(name='dashboardUri', type=gql.NonNullableType(gql.String))],
     resolver=delete_dashboard,
-)
-
-
-shareDashboard = gql.MutationField(
-    name='shareDashboard',
-    type=gql.Ref('DashboardShare'),
-    args=[
-        gql.Argument(name='principalId', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='dashboardUri', type=gql.NonNullableType(gql.String)),
-    ],
-    resolver=share_dashboard,
 )
 
 requestDashboardShare = gql.MutationField(

@@ -99,6 +99,20 @@ class S3Client:
             logging.error(f'Error uploading file to S3: {e}')
             raise
 
+    def list_bucket_objects(self, bucket_name):
+        try:
+            return self._client.list_objects(Bucket=bucket_name)
+        except ClientError as e:
+            logging.error(f'Error listing objects in S3: {e}')
+            raise
+
+    def list_accesspoint_folder_objects(self, access_point, folder_name):
+        try:
+            return self._client.list_objects(Bucket=access_point, Prefix=folder_name)
+        except ClientError as e:
+            logging.error(f'Error listing objects in S3: {e}')
+            raise
+
 
 class KMSClient:
     def __init__(self, session, account_id, region):
@@ -247,6 +261,7 @@ class GlueClient:
                             'Parameters': {'field.delim': ','},
                         },
                     },
+                    'TableType': 'EXTERNAL_TABLE',
                 },
             )
         except ClientError as e:

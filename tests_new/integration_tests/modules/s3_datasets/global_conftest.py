@@ -14,12 +14,26 @@ from integration_tests.modules.s3_datasets.queries import (
     get_dataset,
     sync_tables,
     create_folder,
+    create_table_data_filter,
 )
 from tests_new.integration_tests.modules.datasets_base.queries import list_datasets
 
 from integration_tests.modules.s3_datasets.aws_clients import S3Client, KMSClient, GlueClient, LakeFormationClient
 
 log = logging.getLogger(__name__)
+
+COL_FILTER_INPUT = {
+    'filterName': 'columnfilter',
+    'description': 'test column',
+    'filterType': 'COLUMN',
+    'includedCols': ['column1'],
+}
+ROW_FILTER_INPUT = {
+    'filterName': 'rowfilter',
+    'description': 'test row',
+    'filterType': 'ROW',
+    'rowExpression': '"column2" LIKE \'%value%\' AND "column1" IS NOT NULL',
+}
 
 
 def create_s3_dataset(
@@ -188,6 +202,15 @@ def create_folders(client, dataset):
     return [folderA, folderB]
 
 
+def create_filters(client, tables):
+    filter_list = []
+    for table in tables:
+        filter_list.append(create_table_data_filter(client, table.tableUri, input=COL_FILTER_INPUT))
+        filter_list.append(create_table_data_filter(client, table.tableUri, input=ROW_FILTER_INPUT))
+
+    return filter_list
+
+
 """
 Session envs persist across the duration of the whole integ test suite and are meant to make the test suite run faster (env creation takes ~2 mins).
 For this reason they must stay immutable as changes to them will affect the rest of the tests.
@@ -247,6 +270,7 @@ def session_imported_sse_s3_dataset1(
             tags=[session_id],
             bucket=bucket,
             confidentiality='Official',
+            autoApprovalEnabled=True,
         )
         yield ds
     finally:
@@ -327,6 +351,21 @@ def session_imported_kms_s3_dataset1_folders(client1, session_imported_kms_s3_da
     yield create_folders(client1, session_imported_kms_s3_dataset1)
 
 
+@pytest.fixture(scope='session')
+def session_s3_dataset1_tables_data_filters(client1, session_s3_dataset1_tables):
+    yield create_filters(client1, session_s3_dataset1_tables)
+
+
+@pytest.fixture(scope='session')
+def session_imported_sse_s3_dataset1_tables_data_filters(client1, session_imported_sse_s3_dataset1_tables):
+    yield create_filters(client1, session_imported_sse_s3_dataset1_tables)
+
+
+@pytest.fixture(scope='session')
+def session_imported_kms_s3_dataset1_tables_data_filters(client1, session_imported_kms_s3_dataset1_tables):
+    yield create_filters(client1, session_imported_kms_s3_dataset1_tables)
+
+
 """
 Temp envs will be created and deleted per test, use with caution as they might increase the runtime of the test suite.
 They are suitable to test env mutations.
@@ -358,7 +397,10 @@ They are suitable for testing backwards compatibility.
 """
 
 
-def get_or_create_persistent_s3_dataset(dataset_name, client, group, env, bucket=None, kms_alias='', glue_database=''):
+def get_or_create_persistent_s3_dataset(
+    dataset_name, client, group, env, autoApprovalEnabled=False, bucket=None, kms_alias='', glue_database=''
+):
+    dataset_name = dataset_name or 'persistent_s3_dataset1'
     s3_datasets = list_datasets(client, term=dataset_name).nodes
     if s3_datasets:
         return s3_datasets[0]
@@ -375,6 +417,7 @@ def get_or_create_persistent_s3_dataset(dataset_name, client, group, env, bucket
                 bucket=bucket,
                 kms_alias=kms_alias,
                 glue_db_name=glue_database,
+                autoApprovalEnabled=autoApprovalEnabled,
             )
 
         else:
@@ -386,6 +429,7 @@ def get_or_create_persistent_s3_dataset(dataset_name, client, group, env, bucket
                 org_uri=env['organization']['organizationUri'],
                 env_uri=env['environmentUri'],
                 tags=[dataset_name],
+                autoApprovalEnabled=autoApprovalEnabled,
             )
 
         if s3_dataset.stack.status in ['CREATE_COMPLETE', 'UPDATE_COMPLETE']:

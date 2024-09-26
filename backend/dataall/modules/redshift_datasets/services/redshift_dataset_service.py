@@ -2,6 +2,7 @@ import logging
 from typing import List
 from dataall.base.context import get_context
 from dataall.base.db.paginator import paginate_list
+from dataall.base.db import exceptions
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.permissions.services.group_policy_service import GroupPolicyService
@@ -40,6 +41,7 @@ from dataall.modules.redshift_datasets.services.redshift_constants import (
     GLOSSARY_REDSHIFT_DATASET_TABLE_NAME,
     VOTE_REDSHIFT_DATASET_NAME,
 )
+from dataall.modules.redshift_datasets.services.redshift_enums import RedshiftConnectionTypes
 
 
 log = logging.getLogger(__name__)
@@ -94,6 +96,13 @@ class RedshiftDatasetService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
+            connection = RedshiftConnectionRepository.get_redshift_connection(session, data.get('connectionUri'))
+            if connection.connectionType != RedshiftConnectionTypes.DATA_USER.value:
+                raise exceptions.InvalidInput(
+                    'Connection',
+                    connection.name,
+                    f'Invalid connection. Only DATA_USER connections can be used to import Redshift Datasets and connection {connection.name} is of type {connection.connectionType}',
+                )
 
             dataset = RedshiftDatasetRepository.create_redshift_dataset(
                 session=session, username=context.username, env=environment, data=data

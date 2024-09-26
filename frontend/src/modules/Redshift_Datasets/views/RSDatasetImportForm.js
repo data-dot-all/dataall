@@ -125,7 +125,8 @@ const RSDatasetImportForm = (props) => {
           filter: {
             ...Defaults.selectListFilter,
             environmentUri: environmentUri,
-            groupUri: groupUri
+            groupUri: groupUri,
+            connectionType: 'DATA_USER'
           }
         })
       );
