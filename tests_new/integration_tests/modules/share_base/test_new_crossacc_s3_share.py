@@ -27,8 +27,8 @@ from tests_new.integration_tests.modules.share_base.utils import (
 )
 
 ALL_S3_SHARABLE_TYPES_NAMES = [
-    'DatasetTable',
-    'DatasetStorageLocation',
+    'Table',
+    'StorageLocation',
     'S3Bucket',
 ]
 
@@ -234,7 +234,7 @@ def test_check_item_access(client5, session_cross_acc_env_1_aws_client, share_pa
         )
 
     for item in items:
-        if item.itemType == 'DatasetTable':
+        if item.itemType == 'Table':
             # nosemgrep-next-line:noexec
             query = 'SELECT * FROM {}.{}'.format(glue_db, item.itemName)
             state = athena_client.execute_query(query, workgroup, athena_workgroup_output_location)
@@ -242,7 +242,7 @@ def test_check_item_access(client5, session_cross_acc_env_1_aws_client, share_pa
         elif item.itemType == 'S3Bucket':
             assert_that(s3_client.bucket_exists(item.itemName)).is_not_none()
             assert_that(s3_client.list_bucket_objects(item.itemName)).is_not_none()
-        elif item.itemType == 'DatasetStorageLocation':
+        elif item.itemType == 'StorageLocation':
             folder = get_folder(client5, item.itemUri)
             assert_that(
                 s3_client.list_accesspoint_folder_objects(access_point_arn, folder.S3Prefix + '/')
