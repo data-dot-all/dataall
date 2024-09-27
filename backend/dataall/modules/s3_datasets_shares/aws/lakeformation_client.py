@@ -180,7 +180,8 @@ class LakeFormationClient:
                             time.sleep(2)
                             break
 
-                        except ClientError as e:
+                        except self._client.exceptions.exceptions.ConcurrentModificationException as e:
+                            log.info(f'ConcurrentModificationException occurred. Retry {retries}')
                             last_error = e
                             time.sleep(SLEEP_TIME * (BACKOFF_COEFF**retries))
                             retries += 1
