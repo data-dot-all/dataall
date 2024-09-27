@@ -21,14 +21,6 @@ class IAMClient:
             log.info(f'Error occurred: {e}')
             return None
 
-    @staticmethod
-    def get_tooling_account_id():
-        session = boto3.Session()
-        param_client = session.client('ssm', os.environ.get('AWS_REGION', 'us-east-1'))
-        parameter_path = f"/dataall/{os.environ.get('ENVNAME', 'dev')}/toolingAccount"
-        toolingAccount = param_client.get_parameter(Name=parameter_path)['Parameter']['Value']
-        return toolingAccount
-
     def create_role(self, account_id, role_name, test_role_name):
         policy_doc = {
             'Version': '2012-10-17',
@@ -38,7 +30,6 @@ class IAMClient:
                     'Principal': {
                         'AWS': [
                             f'arn:aws:iam::{account_id}:root',
-                            f'arn:aws:iam::{IAMClient.get_tooling_account_id()}:root',
                             f'arn:aws:sts::{account_id}:assumed-role/{test_role_name}/{test_role_name}',
                         ]
                     },
