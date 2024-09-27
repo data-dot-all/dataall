@@ -277,3 +277,7 @@ def test_revoke_succeeded(client1, share_params_main):
     assert_that(updated_share.status).is_equal_to('Processed')
     assert_that(items).extracting('status').contains_only('Revoke_Succeeded')
     assert_that(items).extracting('itemType').contains(*ALL_S3_SHARABLE_TYPES_NAMES)
+
+
+def test_1(consumption_role_1):
+    print(consumption_role_1.IAMRoleArn)

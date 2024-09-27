@@ -21,6 +21,13 @@ class IAMClient:
             log.info(f'Error occurred: {e}')
             return None
 
+    def delete_role(self, role_name):
+        try:
+            self._client.delete_role(RoleName=role_name)
+        except Exception as e:
+            log.error(e)
+            raise e
+
     def create_role(self, account_id, role_name, test_role_name):
         policy_doc = {
             'Version': '2012-10-17',
