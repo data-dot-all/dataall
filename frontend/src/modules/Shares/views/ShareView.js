@@ -76,12 +76,10 @@ import {
   UpdateRequestReason,
   ShareItemFilterModal
 } from '../components';
-import {
-  generateShareItemLabel,
-  createLinkMarkup
-} from 'utils';
+import { generateShareItemLabel, createLinkMarkup } from 'utils';
 import { ShareLogs } from '../components/ShareLogs';
 import { ShareSubmitModal } from '../components/ShareSubmitModal';
+import { useTheme } from '@mui/styles';
 import { UpdateExtensionReason } from '../components/ShareUpdateExtension';
 import CancelIcon from '@mui/icons-material/Close';
 
