@@ -4,7 +4,7 @@ Request context is a storage for associated with the request and should accessib
 that in the request scope
 
 The class uses Flask's approach to handle request: ThreadLocal
-That approach should work fine for AWS Lambdas and local server that uses Flask app
+That approach should work fine for AWS Lambdas and local server that uses FastApi app
 """
 
 from dataclasses import dataclass

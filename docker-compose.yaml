@@ -37,7 +37,7 @@ services:
       dockerfile: docker/dev/Dockerfile
       args:
         CONTAINER_UID: ${UID}
-    entrypoint: /bin/bash -c "../build/wait-for-it.sh elasticsearch:9200 -t 30 && python3.9 local_graphql_server.py"
+    entrypoint: /bin/bash -c "../build/wait-for-it.sh elasticsearch:9200 -t 30 && uvicorn local_graphql_server:app --host 0.0.0.0 --port 5000 --reload"
     expose:
       - 5000
     ports:
