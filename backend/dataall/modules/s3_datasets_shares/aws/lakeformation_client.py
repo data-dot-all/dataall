@@ -10,6 +10,10 @@ from dataall.base.aws.sts import SessionHelper
 log = logging.getLogger('aws:lakeformation')
 
 
+def _retry_if_concurrency_error(exception):
+    return 'ConcurrentModificationException' in str(exception)
+
+
 class LakeFormationClient:
     def __init__(self, account_id, region):
         self._session = SessionHelper.remote_session(accountid=account_id, region=region)
@@ -132,9 +136,6 @@ class LakeFormationClient:
                 check_resource=data_filter_resource,
             )
         return True
-
-    def _retry_if_concurrency_error(self, exception):
-        return isinstance(exception, self._client.exceptions.ConcurrentModificationException)
 
     @retry(
         retry_on_exception=_retry_if_concurrency_error,
