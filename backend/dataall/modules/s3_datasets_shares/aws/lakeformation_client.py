@@ -3,14 +3,11 @@ from typing import List
 import time
 
 from botocore.exceptions import ClientError
+from retrying import retry
 
 from dataall.base.aws.sts import SessionHelper
 
 log = logging.getLogger('aws:lakeformation')
-
-NUMBER_OF_RETRIES = 5
-SLEEP_TIME = 5
-BACKOFF_COEFF = 1.1
 
 
 class LakeFormationClient:
@@ -136,6 +133,18 @@ class LakeFormationClient:
             )
         return True
 
+    def _retry_if_concurrency_error(self, exception):
+        return isinstance(exception, self._client.exceptions.ConcurrentModificationException)
+
+    @retry(
+        retry_on_exception=_retry_if_concurrency_error,
+        stop_max_attempt_number=5,
+        wait_random_min=1000,
+        wait_random_max=3000,
+    )
+    def _call_grant_permission_with_retry(self, grant_dict):
+        return self._client.grant_permissions(**grant_dict)
+
     def _grant_permissions_to_resource(
         self,
         principals: List,
@@ -164,30 +173,16 @@ class LakeFormationClient:
                     if permissions_with_grant_options:
                         grant_dict['PermissionsWithGrantOption'] = permissions_with_grant_options
 
-                    retries = 0
-                    last_error = None
-                    while retries < NUMBER_OF_RETRIES:
-                        try:
-                            response = self._client.grant_permissions(**grant_dict)
-                            last_error = None
-                            log.info(
-                                f'Successfully granted principal {principal} '
-                                f'permissions {permissions} '
-                                f'and permissions with grant options {permissions_with_grant_options} '
-                                f'to {str(resource)}  '
-                                f'response: {response}'
-                            )
-                            time.sleep(2)
-                            break
+                    response = self._call_grant_permission_with_retry(grant_dict)
 
-                        except self._client.exceptions.exceptions.ConcurrentModificationException as e:
-                            log.info(f'ConcurrentModificationException occurred. Retry {retries}')
-                            last_error = e
-                            time.sleep(SLEEP_TIME * (BACKOFF_COEFF**retries))
-                            retries += 1
-
-                    if last_error:
-                        raise last_error
+                    log.info(
+                        f'Successfully granted principal {principal} '
+                        f'permissions {permissions} '
+                        f'and permissions with grant options {permissions_with_grant_options} '
+                        f'to {str(resource)}  '
+                        f'response: {response}'
+                    )
+                    time.sleep(2)
 
             except ClientError as e:
                 log.error(
