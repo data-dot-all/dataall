@@ -59,7 +59,10 @@
                 "glue_crawler": true,
                 "metrics_data": true,
                 "show_stack_logs": "enabled",
-                "generate_metadata_ai": true
+                "generate_metadata_ai": {
+                    "active": true,
+                    "model_id": "anthropic.claude-3-sonnet-20240229-v1:0"
+                }
             }
         },
         "shares_base": {
