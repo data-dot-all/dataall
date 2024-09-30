@@ -35,6 +35,8 @@ export const Stack = (props) => {
   const [resources, setResources] = useState([]);
   const [stackName, setStackName] = useState(null);
   const [openLogsModal, setOpenLogsModal] = useState(null);
+  const [isStackLogsVisible, setIsStackLogsVisible] = useState(false);
+
   const handleOpenLogsModal = () => {
     setOpenLogsModal(true);
   };
@@ -54,6 +56,7 @@ export const Stack = (props) => {
           setStack({ ...response.data.getStack });
           setStackName(`${response.data.getStack.name}`);
           setResources(JSON.parse(response.data.getStack.resources).resources);
+          setIsStackLogsVisible(response.data.getStack.canViewLogs);
         } else {
           dispatch({ type: SET_ERROR, error: response.errors[0].message });
         }
@@ -120,15 +123,17 @@ export const Stack = (props) => {
             >
               Refresh
             </Button>
-            <Button
-              color="primary"
-              startIcon={<Article fontSize="small" />}
-              sx={{ m: 1 }}
-              variant="outlined"
-              onClick={handleOpenLogsModal}
-            >
-              Logs
-            </Button>
+            {isStackLogsVisible === true && (
+              <Button
+                color="primary"
+                startIcon={<Article fontSize="small" />}
+                sx={{ m: 1 }}
+                variant="outlined"
+                onClick={handleOpenLogsModal}
+              >
+                Logs
+              </Button>
+            )}
             <LoadingButton
               color="primary"
               loading={updating}
@@ -256,13 +261,15 @@ export const Stack = (props) => {
               )}
             </Box>
           )}
-          <StackLogs
-            environmentUri={environmentUri}
-            stack={stack}
-            targetType={targetType}
-            onClose={handleCloseOpenLogs}
-            open={openLogsModal}
-          />
+          {isStackLogsVisible === true && (
+            <StackLogs
+              environmentUri={environmentUri}
+              stack={stack}
+              targetType={targetType}
+              onClose={handleCloseOpenLogs}
+              open={openLogsModal}
+            />
+          )}
         </Box>
       )}
     </Box>

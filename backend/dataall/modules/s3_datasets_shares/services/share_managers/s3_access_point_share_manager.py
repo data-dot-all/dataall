@@ -453,10 +453,14 @@ class S3AccessPointShareManager:
                 not s3_client.get_bucket_access_point_arn(self.access_point_name)
                 and retries < ACCESS_POINT_CREATION_RETRIES
             ):
-                logger.info('Waiting 30s for access point creation to complete..')
+                logger.info(
+                    f'Attempt {retries}. Waiting {ACCESS_POINT_CREATION_TIME * sleep_coeff}s for access point creation to complete..'
+                )
                 time.sleep(ACCESS_POINT_CREATION_TIME * sleep_coeff)
                 sleep_coeff = sleep_coeff * ACCESS_POINT_BACKOFF_COEFFICIENT
                 retries += 1
+        if not s3_client.get_bucket_access_point_arn(self.access_point_name):
+            raise Exception(f'Failed to create access point {self.access_point_name}')
         existing_policy = s3_client.get_access_point_policy(self.access_point_name)
         # requester will use this role to access resources
         target_requester_id = SessionHelper.get_role_id(

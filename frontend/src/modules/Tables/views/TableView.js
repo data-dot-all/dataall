@@ -42,6 +42,7 @@ import { isFeatureEnabled } from 'utils';
 import config from '../../../generated/config.json';
 
 const previewDataEnabled = isFeatureEnabled('s3_datasets', 'preview_data');
+const metricsEnabled = isFeatureEnabled('s3_datasets', 'metrics_data');
 
 const confidentialityOptionsDict =
   config.modules.datasets_base.features.confidentiality_dropdown === true &&
@@ -195,7 +196,7 @@ const TableView = () => {
       if (!tabs.find((t) => t.value === 'columns')) {
         tabs.push({ label: 'Columns', value: 'columns' });
       }
-      if (!tabs.find((t) => t.value === 'metrics')) {
+      if (metricsEnabled && !tabs.find((t) => t.value === 'metrics')) {
         tabs.push({ label: 'Metrics', value: 'metrics' });
       }
       if (
@@ -310,7 +311,7 @@ const TableView = () => {
             {currentTab === 'columns' && (
               <TableColumns table={table} isAdmin={isAdmin} />
             )}
-            {currentTab === 'metrics' && (
+            {metricsEnabled && currentTab === 'metrics' && (
               <TableMetrics table={table} isAdmin={isAdmin} />
             )}
             {currentTab === 'datafilters' && isAdmin && (

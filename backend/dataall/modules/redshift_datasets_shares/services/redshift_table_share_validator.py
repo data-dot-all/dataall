@@ -54,7 +54,7 @@ class RedshiftTableValidator(SharesValidatorInterface):
 
     @staticmethod
     def validate_share_object_submit(session, dataset, share) -> bool:
-        environment = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
+        environment = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
         RedshiftTableValidator._validate_redshift_role(
             session=session,
             environment=environment,
@@ -66,7 +66,7 @@ class RedshiftTableValidator(SharesValidatorInterface):
 
     @staticmethod
     def validate_share_object_approve(session, dataset, share) -> bool:
-        environment = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
+        environment = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
         RedshiftTableValidator._validate_redshift_role(
             session=session,
             environment=environment,

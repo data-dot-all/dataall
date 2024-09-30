@@ -3,6 +3,8 @@ import os
 import requests
 import logging
 
+from dataall.base.db import exceptions
+from dataall.base.feature_toggle_checker import is_feature_enabled_for_allowed_values
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.services.keyvaluetag_service import KeyValueTagService
@@ -42,6 +44,22 @@ class StackRequestVerifier:
             raise RequiredParameter('targetUri')
         if not target_type:
             raise RequiredParameter('targetType')
+
+
+def map_target_type_to_log_config_path(**kwargs):
+    target_type = kwargs.get('target_type')
+    if target_type == 'environment':
+        return 'core.features.show_stack_logs'
+    elif target_type == 'dataset':
+        return 'modules.s3_datasets.features.show_stack_logs'
+    elif target_type == 'mlstudio':
+        return 'modules.mlstudio.features.show_stack_logs'
+    elif target_type == 'notebooks':
+        return 'modules.notebooks.features.show_stack_logs'
+    elif target_type == 'datapipelines':
+        return 'modules.datapipelines.features.show_stack_logs'
+    else:
+        return 'Invalid Config'
 
 
 class StackService:
@@ -188,6 +206,7 @@ class StackService:
     @staticmethod
     def get_stack_logs(target_uri, target_type):
         context = get_context()
+        StackService.check_if_user_allowed_view_logs(target_type=target_type, target_uri=target_uri)
         StackRequestVerifier.verify_target_type_and_uri(target_uri, target_type)
 
         with context.db_engine.scoped_session() as session:
@@ -213,3 +232,21 @@ class StackService:
                     | filter @logStream like "{stack.EcsTaskArn.split('/')[-1]}"
                     """
         return query
+
+    @staticmethod
+    @is_feature_enabled_for_allowed_values(
+        allowed_values=['admin-only', 'enabled', 'disabled'],
+        enabled_values=['admin-only', 'enabled'],
+        default_value='enabled',
+        resolve_property=map_target_type_to_log_config_path,
+    )
+    def check_if_user_allowed_view_logs(target_type: str, target_uri: str):
+        context = get_context()
+        config_value = config.get_property(map_target_type_to_log_config_path(target_type=target_type), 'enabled')
+        if config_value == 'admin-only' and 'DAAdministrators' not in context.groups:
+            raise exceptions.ResourceUnauthorized(
+                username=context.username,
+                action='View Stack logs',
+                resource_uri=f'{target_uri} ( Resource type: {target_type} )',
+            )
+        return True
