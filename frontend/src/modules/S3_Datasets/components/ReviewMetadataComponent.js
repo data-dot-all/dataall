@@ -1,33 +1,14 @@
-// import { LoadingButton } from '@mui/lab';
 import {
-  // Autocomplete,
   Button,
-  // CardContent,
-  // CardHeader,
-  // Checkbox,
   Box,
   Chip,
-  // Divider,
-  // FormControl,
-  // FormGroup,
-  // FormControlLabel,
-  // FormLabel,
-  // Grid,
-  // InputLabel,
-  // MenuItem,
-  // Select,
-  // Switch,
-  // TextField,
   Typography,
   CircularProgress
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-// import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
-// import * as Yup from 'yup';
-// import { ChipInput, Defaults } from 'design';
 import { Scrollbar } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
@@ -40,16 +21,13 @@ import SampleDataPopup from './SampleDataPopup';
 import React, { useState } from 'react';
 import SubitemDescriptionsGrid from './SubitemDescriptionsGrid';
 
-/* eslint-disable no-console */
 export const ReviewMetadataComponent = (props) => {
   const {
     dataset,
-    // targetType,
     targets,
     setTargets,
     selectedMetadataTypes,
     version
-    // setVersion
   } = props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
@@ -133,8 +111,8 @@ export const ReviewMetadataComponent = (props) => {
             metadataTypes: Object.entries(selectedMetadataTypes)
               .filter(([key, value]) => value === true)
               .map(([key]) => key),
-            version: version, // You'll need to pass the `version` prop here
-            sampleData: sampleDataWithoutTypename // You can pass the sample data here if needed
+            version: version,
+            sampleData: sampleDataWithoutTypename
           })
         );
 
@@ -177,7 +155,7 @@ export const ReviewMetadataComponent = (props) => {
         });
       }
 
-      closeSampleDataPopup(); // Close the popup after generating the metadata
+      closeSampleDataPopup();
     } catch (err) {
       dispatch({ type: SET_ERROR, error: err.message });
     }
@@ -200,35 +178,35 @@ export const ReviewMetadataComponent = (props) => {
           updatedMetadata.KmsAlias = dataset.KmsAlias;
           const response = await client.mutate(
             updateDataset({
-              datasetUri: target.targetUri, // Use target.targetUri instead of dataset.datasetUri
+              datasetUri: target.targetUri,
               input: updatedMetadata
             })
           );
 
           if (!response.errors) {
-            return { ...target, success: true }; // Return the updated target with success flag
+            return { ...target, success: true };
           } else {
             dispatch({ type: SET_ERROR, error: response.errors[0].message });
-            return { ...target, success: false }; // Return the target with success flag set to false
+            return { ...target, success: false };
           }
         } else if (target.targetType === 'Table') {
           const response = await client.mutate(
             updateDatasetTable({
-              tableUri: target.targetUri, // Use target.targetUri instead of dataset.datasetUri
+              tableUri: target.targetUri,
               input: updatedMetadata
             })
           );
 
           if (!response.errors) {
-            return { ...target, success: true }; // Return the updated target with success flag
+            return { ...target, success: true };
           } else {
             dispatch({ type: SET_ERROR, error: response.errors[0].message });
-            return { ...target, success: false }; // Return the target with success flag set to false
+            return { ...target, success: false };
           }
         } else if (target.targetType === 'Folder') {
           const response = await client.mutate(
             updateDatasetStorageLocation({
-              locationUri: target.targetUri, // Use target.targetUri instead of dataset.datasetUri
+              locationUri: target.targetUri,
               input: updatedMetadata
             })
           );
