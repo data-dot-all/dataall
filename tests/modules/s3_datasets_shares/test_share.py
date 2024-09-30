@@ -2109,7 +2109,7 @@ def test_submit_share_extension_request_with_auto_approval(
         return_value='fake_role_arn',
     )
     # Submit a share extension request with a dataset which has auto approval on it
-    submit_share_extension(client, user2, group2, share3_with_expiration_processed_with_autoapproval.shareUri, 1)
+    submit_share_extension(client, user2, group2, share3_with_expiration_processed_with_autoapproval.shareUri, 2)
 
     get_share_object_response = get_share_object(
         client=client,
@@ -2125,7 +2125,7 @@ def test_submit_share_extension_request_with_auto_approval(
     share_expiration_date = datetime.strptime(get_share_object_response.data.getShareObject.expiryDate, date_format)
     assert (
         share_expiration_date.date()
-        == ExpirationUtils.calculate_expiry_date(1, dataset_with_expiration_with_autoapproval.expirySetting).date()
+        == ExpirationUtils.calculate_expiry_date(2, dataset_with_expiration_with_autoapproval.expirySetting).date()
     )
 
 
@@ -2272,7 +2272,7 @@ def test_approve_share_extension(
     )
 
     # Submit a share extension request
-    submit_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri, 1)
+    submit_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri, 2)
 
     get_share_object_response = get_share_object(
         client=client,
@@ -2289,7 +2289,7 @@ def test_approve_share_extension(
     )
     assert (
         share_expiration_date.date()
-        == ExpirationUtils.calculate_expiry_date(1, dataset_with_expiration_2.expirySetting).date()
+        == ExpirationUtils.calculate_expiry_date(2, dataset_with_expiration_2.expirySetting).date()
     )
     requested_expiration_date_raw = get_share_object_response.data.getShareObject.requestedExpiryDate
 
