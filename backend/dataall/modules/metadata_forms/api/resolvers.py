@@ -94,3 +94,7 @@ def has_tenant_permissions_for_metadata_forms(context: Context, source: Metadata
 
 def resolve_metadata_form_field(context: Context, source: AttachedMetadataFormField):
     return MetadataFormService.get_metadata_form_field_by_uri(uri=source.fieldUri)
+
+
+def get_entity_metadata_form_permissions(context: Context, source, entityUri):
+    return MetadataFormService.get_mf_permissions(entityUri=entityUri)
