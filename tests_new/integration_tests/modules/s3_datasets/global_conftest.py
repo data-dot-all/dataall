@@ -270,6 +270,7 @@ def session_imported_sse_s3_dataset1(
             tags=[session_id],
             bucket=bucket,
             confidentiality='Official',
+            autoApprovalEnabled=True,
         )
         yield ds
     finally:
@@ -396,7 +397,10 @@ They are suitable for testing backwards compatibility.
 """
 
 
-def get_or_create_persistent_s3_dataset(dataset_name, client, group, env, bucket=None, kms_alias='', glue_database=''):
+def get_or_create_persistent_s3_dataset(
+    dataset_name, client, group, env, autoApprovalEnabled=False, bucket=None, kms_alias='', glue_database=''
+):
+    dataset_name = dataset_name or 'persistent_s3_dataset1'
     s3_datasets = list_datasets(client, term=dataset_name).nodes
     if s3_datasets:
         return s3_datasets[0]
@@ -413,6 +417,7 @@ def get_or_create_persistent_s3_dataset(dataset_name, client, group, env, bucket
                 bucket=bucket,
                 kms_alias=kms_alias,
                 glue_db_name=glue_database,
+                autoApprovalEnabled=autoApprovalEnabled,
             )
 
         else:
@@ -424,6 +429,7 @@ def get_or_create_persistent_s3_dataset(dataset_name, client, group, env, bucket
                 org_uri=env['organization']['organizationUri'],
                 env_uri=env['environmentUri'],
                 tags=[dataset_name],
+                autoApprovalEnabled=autoApprovalEnabled,
             )
 
         if s3_dataset.stack.status in ['CREATE_COMPLETE', 'UPDATE_COMPLETE']:

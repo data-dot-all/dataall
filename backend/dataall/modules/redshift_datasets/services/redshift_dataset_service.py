@@ -193,6 +193,7 @@ class RedshiftDatasetService:
             RedshiftDatasetService._delete_dataset_term_links(session, uri)
             VoteRepository.delete_votes(session, dataset.datasetUri, VOTE_REDSHIFT_DATASET_NAME)
             session.delete(dataset)
+
             session.commit()
             return True
 

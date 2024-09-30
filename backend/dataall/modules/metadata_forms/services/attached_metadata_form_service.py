@@ -1,10 +1,9 @@
 from dataall.base.context import get_context
 from dataall.base.db import exceptions, paginate
-from dataall.core.environment.db.environment_repositories import EnvironmentRepository
-from dataall.core.organizations.db.organization_repositories import OrganizationRepository
-from dataall.core.permissions.services.tenant_policy_service import TenantPolicyValidationService
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
 from dataall.modules.metadata_forms.services.metadata_form_access_service import MetadataFormAccessService
+from dataall.modules.metadata_forms.services.metadata_form_permissions import ATTACH_METADATA_FORM
 
 
 class AttachedMetadataFormValidationService:
@@ -33,15 +32,22 @@ class AttachedMetadataFormValidationService:
 
 class AttachedMetadataFormService:
     @staticmethod
+    def _get_entity_uri(data):
+        return data.get('entityUri')
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(
+        ATTACH_METADATA_FORM, parent_resource=_get_entity_uri, param_name='data'
+    )
     def create_attached_metadata_form(uri, data):
         AttachedMetadataFormValidationService.validate_filled_form_params(uri, data)
-        with get_context().db_engine.scoped_session() as session:
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
             mf = MetadataFormRepository.get_metadata_form(session, uri)
             if not mf:
                 raise exceptions.ObjectNotFound('MetadataForm', uri)
             mf_fields = MetadataFormRepository.get_metadata_form_fields(session, uri)
             AttachedMetadataFormValidationService.validate_enrich_fields_params(mf_fields, data)
-
             amf = MetadataFormRepository.create_attached_metadata_form(session, uri, data)
             for f in data.get('fields'):
                 MetadataFormRepository.create_attached_metadata_form_field(
@@ -74,7 +80,11 @@ class AttachedMetadataFormService:
             ).to_dict()
 
     @staticmethod
+    @ResourcePolicyService.has_resource_permission(
+        ATTACH_METADATA_FORM, parent_resource=_get_entity_uri, param_name='data'
+    )
     def delete_attached_metadata_form(uri):
         mf = AttachedMetadataFormService.get_attached_metadata_form(uri)
-        with get_context().db_engine.scoped_session() as session:
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
             return session.delete(mf)

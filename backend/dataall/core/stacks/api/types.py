@@ -6,6 +6,7 @@ from dataall.core.stacks.api.resolvers import (
     resolve_events,
     resolve_task_id,
     resolve_error,
+    resolve_stack_visibility,
 )
 
 Stack = gql.ObjectType(
@@ -27,6 +28,7 @@ Stack = gql.ObjectType(
         gql.Field(name='events', type=gql.String, resolver=resolve_events),
         gql.Field(name='EcsTaskArn', type=gql.String),
         gql.Field(name='EcsTaskId', type=gql.String, resolver=resolve_task_id),
+        gql.Field(name='canViewLogs', type=gql.Boolean, resolver=resolve_stack_visibility),
     ],
 )
 
