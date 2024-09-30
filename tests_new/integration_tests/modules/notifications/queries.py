@@ -29,11 +29,10 @@ def delete_notification(client, uri):
     return response.data.deleteNotification
 
 
-## TODO
-def list_notifications(client):
+def list_notifications(client, filter={}):
     query = {
         'operationName': 'listNotifications',
-        'variables': {'filter': {'term': ''}},
+        'variables': {'filter': filter},
         'query': """
             query listNotifications($filter: NotificationFilter) {
               listNotifications(filter: $filter) {
@@ -71,7 +70,6 @@ def count_unread_notificiations(client):
     return response.data.countUnreadNotifications
 
 
-## TODO
 def count_read_notificiations(client):
     query = {
         'operationName': 'countReadNotifications',
@@ -97,4 +95,4 @@ def count_deleted_notificiations(client):
                 """,
     }
     response = client.query(query=query)
-    return response.data.countUnreadNotifications
+    return response.data.countDeletedNotifications
