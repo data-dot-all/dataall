@@ -3,15 +3,11 @@ from typing import List
 import time
 
 from botocore.exceptions import ClientError
-from retrying import retry
+from retrying import Retrying
 
 from dataall.base.aws.sts import SessionHelper
 
 log = logging.getLogger('aws:lakeformation')
-
-
-def _retry_if_concurrency_error(exception):
-    return 'ConcurrentModificationException' in str(exception)
 
 
 class LakeFormationClient:
@@ -137,15 +133,6 @@ class LakeFormationClient:
             )
         return True
 
-    @retry(
-        retry_on_exception=_retry_if_concurrency_error,
-        stop_max_attempt_number=5,
-        wait_random_min=1000,
-        wait_random_max=3000,
-    )
-    def _call_grant_permission_with_retry(self, grant_dict):
-        return self._client.grant_permissions(**grant_dict)
-
     def _grant_permissions_to_resource(
         self,
         principals: List,
@@ -174,7 +161,14 @@ class LakeFormationClient:
                     if permissions_with_grant_options:
                         grant_dict['PermissionsWithGrantOption'] = permissions_with_grant_options
 
-                    response = self._call_grant_permission_with_retry(grant_dict)
+                    response = Retrying(
+                        retry_on_exception=lambda ex: isinstance(
+                            ex, self._client.exceptions.ConcurrentModificationException
+                        ),
+                        stop_max_attempt_number=5,
+                        wait_random_min=1000,
+                        wait_random_max=3000,
+                    ).call(self._client.grant_permissions, **grant_dict)
 
                     log.info(
                         f'Successfully granted principal {principal} '
