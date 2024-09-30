@@ -12,7 +12,7 @@ Metadata forms serve several key purposes:
 - Facilitate data lineage and impact analysis
 - Streamline metadata management workflows
 
-![metadata form levels](pictures/metadata_forms/mf_levels.png#zoom#shadow)
+![metadata form levels](pictures/metadata_forms/mf_levels.jpg#zoom#shadow)
 
 This user guide provides instructions on how to create, manage, and use metadata forms in data.all. It covers form creation, attaching forms to entities, filling out forms, managing form visibility and permissions, and enforcing form usage. Whether you are a data producer adding metadata, a data consumer leveraging it, or an administrator standardizing on formats, this guide will help you get the most value out of metadata forms.
 
@@ -65,3 +65,12 @@ User can delete the form with button "Delete" in the upper right corner of the f
 
 **Attach Metadata Form**
 
+User with required access can attach metadata form to Organization, Environment or Dataset.
+To attach new metadata form or view already attached use the tab "Metadata" on entity view page.
+
+In the column on the left all attached metadata forms are listed. When user clicks on the form, it content appears
+on the right.
+If user has permission to attach metadata forms to this entity, the button "+ Attach Form" appears over the attached metadata form list.
+After user clicks this button and selects the available form from drop-dow list, they can fill in the form displayed on the right.
+
+![metadata form attach](pictures/metadata_forms/attach_mf.png#zoom#shadow)
