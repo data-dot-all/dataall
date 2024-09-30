@@ -14,7 +14,7 @@ from dataall.modules.s3_datasets.api.dataset.resolvers import (
     start_crawler,
     generate_metadata,
     test_read,
-    read_sample_data
+    read_sample_data,
 )
 from dataall.modules.s3_datasets.api.dataset.enums import MetadataGenerationTargets
 
@@ -75,11 +75,13 @@ StartGlueCrawler = gql.MutationField(
 )
 generateMetadata = gql.MutationField(
     name='generateMetadata',
-    args=[gql.Argument(name='resourceUri', type=gql.NonNullableType(gql.String)),
-          gql.Argument(name='targetType', type=MetadataGenerationTargets.toGraphQLEnum()),
-          gql.Argument(name='version', type=gql.Integer),
-          gql.Argument(name='metadataTypes', type=gql.ArrayType(gql.String)),
-          gql.Argument(name='sampleData', type=gql.Ref('SampleDataInput'))],
+    args=[
+        gql.Argument(name='resourceUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='targetType', type=MetadataGenerationTargets.toGraphQLEnum()),
+        gql.Argument(name='version', type=gql.Integer),
+        gql.Argument(name='metadataTypes', type=gql.ArrayType(gql.String)),
+        gql.Argument(name='sampleData', type=gql.Ref('SampleDataInput')),
+    ],
     type=gql.Ref('GeneratedMetadata'),
     resolver=generate_metadata,
 )

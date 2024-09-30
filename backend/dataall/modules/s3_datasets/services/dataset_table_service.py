@@ -198,10 +198,10 @@ class DatasetTableService:
                 prompt_type=MetadataGenerationTargets.Table.value,
                 label=table.label,
                 columns={','.join(table_column.label)},
-                subitem_descriptions = {','.join(table_column.description)},
-                subitem_ids = {','.join(table_column.columnUri)},
+                subitem_descriptions={','.join(table_column.description)},
+                subitem_ids={','.join(table_column.columnUri)},
                 description=table.description,
                 tags=table.tags,
                 metadata_type=metadataTypes,
-                sample_data=sampleData
+                sample_data=sampleData,
             )

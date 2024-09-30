@@ -48,7 +48,6 @@ from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_ALL
 from dataall.modules.datasets_base.services.dataset_service_interface import DatasetServiceInterface
 from dataall.modules.s3_datasets.aws.bedrock_metadata_client import BedrockClient
-from dataall.modules.s3_datasets.aws.s3_dataset_client import S3DatasetClient
 from dataall.modules.s3_datasets.services.dataset_enums import MetadataGenerationTargets
 
 log = logging.getLogger(__name__)
@@ -327,6 +326,7 @@ class DatasetService:
         DatasetService._deploy_dataset_stack(dataset)
 
         return dataset
+
     @staticmethod
     def get_dataset_statistics(dataset: S3Dataset):
         with get_context().db_engine.scoped_session() as session:
@@ -582,7 +582,5 @@ class DatasetService:
                 table_description=table_descriptions,
                 tags=dataset.tags,
                 metadata_type=metadataTypes,
-                folders=folders
-
+                folders=folders,
             )
-

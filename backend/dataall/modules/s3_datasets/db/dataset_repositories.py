@@ -282,26 +282,33 @@ class DatasetRepository(EnvironmentResource):
 
     @staticmethod
     def query_dataset_tables_folders(session, dataset_uri):
-        q1 = session.query(
+        q1 = (
+            session.query(
                 S3Dataset.datasetUri,
                 DatasetTable.tableUri.label('targetUri'),
                 DatasetTable.name.label('name'),
-                literal("Table", type_=sqlalchemy.types.String).label('targetType'),
-            ).join(
+                literal('Table', type_=sqlalchemy.types.String).label('targetType'),
+            )
+            .join(
                 DatasetTable,
                 DatasetTable.datasetUri == S3Dataset.datasetUri,
-            ).filter(S3Dataset.datasetUri == dataset_uri)
-        q2 = session.query(
+            )
+            .filter(S3Dataset.datasetUri == dataset_uri)
+        )
+        q2 = (
+            session.query(
                 S3Dataset.datasetUri,
                 DatasetStorageLocation.locationUri.label('targetUri'),
                 DatasetStorageLocation.name.label('name'),
                 literal('Folder', type_=sqlalchemy.types.String).label('targetType'),
-            ).join(
+            )
+            .join(
                 DatasetStorageLocation,
                 DatasetStorageLocation.datasetUri == S3Dataset.datasetUri,
-            ).filter(S3Dataset.datasetUri == dataset_uri)
+            )
+            .filter(S3Dataset.datasetUri == dataset_uri)
+        )
         return q1.union(q2)
-
 
     @staticmethod
     def paginated_dataset_tables_folders(session, dataset_uri, data):
@@ -310,5 +317,3 @@ class DatasetRepository(EnvironmentResource):
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
-
-        

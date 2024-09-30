@@ -53,7 +53,6 @@ DatasetMetadataInput = gql.InputType(
         gql.Argument('description', gql.String),
         gql.Argument('tags', gql.ArrayType(gql.String)),
         gql.Argument('topics', gql.ArrayType(gql.Ref('Topic'))),
-        
     ],
 )
 

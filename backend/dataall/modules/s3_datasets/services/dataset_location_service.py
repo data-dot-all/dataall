@@ -23,6 +23,7 @@ from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation
 from dataall.modules.s3_datasets.aws.bedrock_metadata_client import BedrockClient
 from dataall.modules.s3_datasets.aws.s3_dataset_client import S3DatasetClient
 from dataall.modules.s3_datasets.services.dataset_enums import MetadataGenerationTargets
+
 log = logging.getLogger(__name__)
 
 
@@ -143,6 +144,7 @@ class DatasetLocationService:
         }
         for group in permission_group:
             ResourcePolicyService.delete_resource_policy(session=session, group=group, resource_uri=location_uri)
+
     @staticmethod
     def generate_metadata_for_folder(resourceUri, version, metadataTypes, sampleData):
         context = get_context()
@@ -151,13 +153,12 @@ class DatasetLocationService:
             dataset = DatasetRepository.get_dataset_by_uri(session, folder.datasetUri)
             files = S3DatasetClient(dataset).list_bucket_files(folder.S3BucketName, folder.S3Prefix)
             file_names = [f['Key'] for f in files]
-            log.info("file names", file_names)
+            log.info('file names', file_names)
             return BedrockClient(folder.AWSAccountId, 'us-east-1').generate_metadata(
                 prompt_type=MetadataGenerationTargets.Folder.value,
                 label=folder.label,
                 file_names=file_names,
                 description=folder.description,
                 tags=folder.tags,
-                metadata_type=metadataTypes
+                metadata_type=metadataTypes,
             )
-

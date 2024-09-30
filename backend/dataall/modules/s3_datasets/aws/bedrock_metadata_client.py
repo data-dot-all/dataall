@@ -7,13 +7,14 @@ from botocore.exceptions import ClientError
 
 log = logging.getLogger(__name__)
 
+
 class BedrockClient:
     def __init__(self, account_id: str, region: str):
         session = SessionHelper.remote_session(accountid=account_id, region=region)
         self._client = session.client('bedrock-runtime', region_name=region)
         self._account_id = account_id
         self.region = region
-  
+
     def _generate_prompt(self, **kwargs):
         prompt_type = kwargs.get('prompt_type', 'Table')
         common_data = {
@@ -27,11 +28,11 @@ class BedrockClient:
             'folder_description': kwargs.get('folder_description', ''),
             'folder_tags': kwargs.get('folder_tags', ''),
             'tables': kwargs.get('tables', []),
-            'table_description' : kwargs.get('table_descriptions', ''),
-            'metadata_types' : kwargs.get('metadata_type', []),
+            'table_description': kwargs.get('table_descriptions', ''),
+            'metadata_types': kwargs.get('metadata_type', []),
             'folders': kwargs.get('folders', []),
-            'sample_data': kwargs.get('sample_data', [])
-            }
+            'sample_data': kwargs.get('sample_data', []),
+        }
         if prompt_type == 'Table':
             return f"""
              Generate or improve metadata for a common_data['label'] table using the following provided data:
@@ -60,7 +61,7 @@ class BedrockClient:
                 For tags and topics, ensure the output is a string list.  Label is singular so you should return only one label as string.
 
             """
- 
+
         elif prompt_type == 'S3_Dataset':
             return f"""
               Generate or improve metadata for a dataset using the following provided data:
@@ -101,47 +102,42 @@ class BedrockClient:
               Return a python dictionary, all the keys must be lowercase. Don't use ' ' in your response, use " ".   Include file types as pdf, and write file names in description.
               Evaluate if the given parameters are sufficient for generating the requested metadata, if not, respond with "NotEnoughData" for all values of dictionary keys.
          """
-    
+
     def _invoke_model(self, prompt):
-        messages=[{ "role":'user', "content":[{'type':'text','text': prompt}]}]
-        body=json.dumps(
+        messages = [{'role': 'user', 'content': [{'type': 'text', 'text': prompt}]}]
+        body = json.dumps(
             {
-                "anthropic_version": "bedrock-2023-05-31",
-                "max_tokens": 4096,
-                "messages": messages,
-                "temperature": 0.5,
-                "top_p": 0.5,
-                "stop_sequences": ["\n\nHuman:"],
-                "top_k":250
+                'anthropic_version': 'bedrock-2023-05-31',
+                'max_tokens': 4096,
+                'messages': messages,
+                'temperature': 0.5,
+                'top_p': 0.5,
+                'stop_sequences': ['\n\nHuman:'],
+                'top_k': 250,
             }
         )
-        modelId = "anthropic.claude-3-sonnet-20240229-v1:0"
+        modelId = 'anthropic.claude-3-sonnet-20240229-v1:0'
         response = self._client.invoke_model(body=body, modelId=modelId)
         response_body = json.loads(response.get('body').read())
-        return response_body.get("content", [])
-    
-    def _parse_response(self, response_content, targetName, subitem_ids ):
+        return response_body.get('content', [])
+
+    def _parse_response(self, response_content, targetName, subitem_ids):
         output_str = response_content[0]['text']
 
-
         output_dict = json.loads(output_str)
-        if not output_dict.get("name"):
-            output_dict["name"] = targetName
-        
+        if not output_dict.get('name'):
+            output_dict['name'] = targetName
+
         if output_dict.get('subitem_descriptions'):
             subitem_ids = subitem_ids.pop()
             subitem_ids = subitem_ids.split(',')
-            subitem_ids = subitem_ids[:len(output_dict["subitem_descriptions"])]
+            subitem_ids = subitem_ids[: len(output_dict['subitem_descriptions'])]
             subitem_descriptions = []
-            for index, (key, value) in enumerate(output_dict["subitem_descriptions"].items()):
-                subitem_descriptions.append({
-                    "label": key,
-                    "description": value,
-                    "subitem_id": subitem_ids[index]
-                })
-            output_dict["subitem_descriptions"] = subitem_descriptions
+            for index, (key, value) in enumerate(output_dict['subitem_descriptions'].items()):
+                subitem_descriptions.append({'label': key, 'description': value, 'subitem_id': subitem_ids[index]})
+            output_dict['subitem_descriptions'] = subitem_descriptions
         return output_dict
-  
+
     def generate_metadata(self, **kwargs):
         prompt = self._generate_prompt(**kwargs)
         response_content = self._invoke_model(prompt)

@@ -157,34 +157,41 @@ def list_datasets_owned_by_env_group(
     if not filter:
         filter = {}
     return DatasetService.list_datasets_owned_by_env_group(environmentUri, groupUri, filter)
+
+
 @is_feature_enabled('modules.s3_datasets.features.generate_metadata_ai')
 # @ResourceThresholdRepository.invocation_handler('generate_metadata_ai')
 # To make this treshold work treshold limits should be added on resource_treshold_repository into the resource paths dictionary.
 # as an example; 'nlq' : 'modules.worksheets.features.max_count_per_day' here max_count_per_day shall be defined for metadata generation
 # or it could be used as it is by using different key or even the same key after merge.
 
-def generate_metadata(context : Context, source: S3Dataset, resourceUri, targetType, version, metadataTypes, sampleData): #TODO add type hints
+def generate_metadata(
+    context: Context, source: S3Dataset, resourceUri, targetType, version, metadataTypes, sampleData
+):  # TODO add type hints
     RequestValidator.validate_generation_request(data=resourceUri)
     if targetType == MetadataGenerationTargets.S3_Dataset.value:
-        return DatasetService.generate_metadata_for_dataset(resourceUri=resourceUri, version=version,
-                                                metadataTypes=metadataTypes, sampleData=sampleData)
+        return DatasetService.generate_metadata_for_dataset(
+            resourceUri=resourceUri, version=version, metadataTypes=metadataTypes, sampleData=sampleData
+        )
 
     elif targetType == MetadataGenerationTargets.Table.value:
-        return DatasetTableService.generate_metadata_for_table(resourceUri=resourceUri,
-                                                            version=version,
-                                                            metadataTypes=metadataTypes, sampleData=sampleData)
+        return DatasetTableService.generate_metadata_for_table(
+            resourceUri=resourceUri, version=version, metadataTypes=metadataTypes, sampleData=sampleData
+        )
     elif targetType == MetadataGenerationTargets.Folder.value:
-        return DatasetLocationService.generate_metadata_for_folder(resourceUri=resourceUri,
-                                                            version=version,
-                                                            metadataTypes=metadataTypes, sampleData=sampleData)
+        return DatasetLocationService.generate_metadata_for_folder(
+            resourceUri=resourceUri, version=version, metadataTypes=metadataTypes, sampleData=sampleData
+        )
     else:
-        raise Exception("Unsupported target type for metadata generation")
+        raise Exception('Unsupported target type for metadata generation')
 
-def read_sample_data(context : Context, source: S3Dataset, tableUri):
+
+def read_sample_data(context: Context, source: S3Dataset, tableUri):
     RequestValidator.validate_generation_request(data=tableUri)
     return DatasetTableService.preview(uri=tableUri)
 
-def test_read(context : Context, source: S3Dataset, resourceUri, targetType, version, metadataTypes):
+
+def test_read(context: Context, source: S3Dataset, resourceUri, targetType, version, metadataTypes):
     RequestValidator.validate_generation_request(data=resourceUri)
     sample_data = DatasetTableService.preview(uri=resourceUri)
     log.info('sample_data:', sample_data)
@@ -193,17 +200,21 @@ def test_read(context : Context, source: S3Dataset, resourceUri, targetType, ver
         targetType=targetType,
         version=version,
         metadataTypes=metadataTypes,
-        sampleData=sample_data)
-def update_dataset_metadata(context : Context, source: S3Dataset, resourceUri):
+        sampleData=sample_data,
+    )
+
+
+def update_dataset_metadata(context: Context, source: S3Dataset, resourceUri):
     RequestValidator.validate_generation_request(data=resourceUri)
     return DatasetService.update_dataset(uri=resourceUri, data=input)
 
-def list_dataset_tables_folders(context : Context, source: S3Dataset, datasetUri, filter: dict = None
-):
+
+def list_dataset_tables_folders(context: Context, source: S3Dataset, datasetUri, filter: dict = None):
     if not filter:
         filter = {}
     RequestValidator.validate_generation_request(data=datasetUri)
-    return DatasetService.list_dataset_tables_folders(dataset_uri=datasetUri, filter=filter);
+    return DatasetService.list_dataset_tables_folders(dataset_uri=datasetUri, filter=filter)
+
 
 class RequestValidator:
     @staticmethod

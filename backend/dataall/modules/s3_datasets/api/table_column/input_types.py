@@ -23,6 +23,6 @@ SubitemDescription = gql.InputType(
     arguments=[
         gql.Argument(name='label', type=gql.String),
         gql.Argument(name='description', type=gql.String),
-        gql.Argument(name='subitem_id', type=gql.String)
+        gql.Argument(name='subitem_id', type=gql.String),
     ],
 )
