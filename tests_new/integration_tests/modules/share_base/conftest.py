@@ -51,7 +51,7 @@ def consumption_role_1(client5, group5, session_cross_acc_env_1, session_cross_a
     )
     yield consumption_role
     remove_consumption_role(client5, session_cross_acc_env_1.environmentUri, consumption_role.consumptionRoleUri)
-    iam_client.delete_role(role['Role']['RoleName'])
+    iam_client.delete_consumption_role(role['Role']['RoleName'])
 
 
 @pytest.fixture(scope='session')
