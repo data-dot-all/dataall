@@ -2,21 +2,23 @@
 Teams can browse data.all catalog and request access for data assets.
 data.all shares data between teams securely within and environment and across environments without any data movement.
 
-
-Datasets can contain tables and folders. Tables are Glue Tables registered in Glue Catalog.
-data.all uses (and automates)
-<a href="https://docs.aws.amazon.com/lake-formation/latest/dg/sharing-catalog-resources.html" target="_blank">Lake Formation sharing feature</a>
-to create access permissions to tables, meaning that no data is copied between  AWS accounts.
-
-Under-the-hood, folders are prefixes inside the dataset S3 bucket. To create sharing of folders in data.all,
-we create an S3 access point per requester group to handle its access to specific prefixes in the dataset.
-
-data.all also supports the sharing of the entire S3 Bucket to requestors using IAM permissions and S3/KMS policies if desired.
-
 **Concepts**
 
 - Share request or Share Object: one for each dataset and requester team.
-- Share Item refers to the individual tables and folders or S3 Bucket that are added to the Share request.
+- Share Item refers to the individual Redshift table, Glue table, folder or S3 Bucket that is added to the Share request.
+
+**Shareable items**
+
+In data.all there are 2 types of datasets: S3 Datasets and Redshift Datasets. Here is an overview of the items that can
+be shared using data.all by type of dataset. A detailed explanation of the technical details for each type can be found 
+in the AWS data sharing technical details section.
+
+- From S3 Datasets we can share:
+     - S3 Bucket of the Dataset - using IAM permissions and S3/KMS policies
+     - one or multiple Glue Tables (Tables) - using [Lake Formation](<a href="https://docs.aws.amazon.com/lake-formation/latest/dg/sharing-catalog-resources.html" target="_blank">Lake Formation sharing feature</a>) to create access permissions to tables, meaning that no data is copied between AWS accounts.
+     - one or multiple S3 Prefixes (Folders) - using S3 access points to manage granular S3 policies.
+- From Redshift Datasets we can share:
+     - one or multiple Redshift Tables - using Redshift datashares
 
 **Sharing workflow**
 
@@ -45,7 +47,7 @@ However, the request cannot contain any shared items. Users must revoke all shar
 ![wf](pictures/shares/share_sm.png#zoom#shadow)
 
 
-### **Create a share request (requester)**
+## **Create a share request (requester)**
 
 On left pane choose **Catalog** then **Search** for the table you want to access. Click on the lock icon of the selected
 data asset.
@@ -100,6 +102,29 @@ Approvers can see the request in their received share requests, alongside the cu
 
 ![submit_share_2](pictures/shares/shares_outbox.png#zoom#shadow)
 
+## (Optional Pre-Approval Work) Adding Filters to Glue Table Share Items (approver)
+
+As an approver, you will also see the option to **Edit Filters** for Glue Table share items:
+
+![share_table_filter](pictures/shares/share_table_filter.png#zoom#shadow)
+
+Here an approver can attach one or more filters that were created on the table previously to the table:
+
+![share_table_filter_edit](pictures/shares/share_table_filter_edit.png#zoom#shadow)
+
+Once assigned, the filter will appear in the share object view and can be clicked on to view the underlying associated data filters assigned
+
+![share_table_filter_attached](pictures/shares/share_table_filter_attached.png#zoom#shadow)
+
+![share_table_filter_view](pictures/shares/share_table_filter_view.png#zoom#shadow)
+
+Before sharing as the table - approvers can also edit the assigned filter and remove underlying data filters or attach new ones as needed. Once the share is approved there is no longer the ability to edit filters and the table item must be revoked and re-shared to assign new filters.
+
+**NOTE:** If more than 1 filter is assigned to a table share item, the resulting data access is evaluated as the union (logical 'OR') of the filters assigned. 
+
+**NOTE:** If assigning filter(s) to a table share item, the **Item Filter Name** specified will be used in naming the table resource link for the consumer, meaning the consumer will be reading for table named - `tablename_filtername`
+
+
 ## **Approve/Reject a share request (approver)**
 
 As an approver, click on **Learn more** in the `SUBMITTED` request and in the share view you can check the tables and folders added in the request.
@@ -116,7 +141,8 @@ are in `SHARE_IN_PROGRESS` state.
 
 ![accept_share](pictures/shares/shares_in_progress.png#zoom#shadow)
 
-When the task is completed, the items go to `SHARE_SUCCEEDED` or `SHARE_FAILED` and the request is `PROCESSED`.
+When the task is completed, the items go to `SHARE_SUCCEEDED` or `SHARE_FAILED` and the request is `PROCESSED`. To understand
+what happens under-the-hood when each share item is processed, check out the AWS data sharing technical details section.
 
 ![accept_share](pictures/shares/shares_completed.png#zoom#shadow)
 
@@ -174,26 +200,92 @@ we receive an error. Once we have revoked access to all items we can delete the 
 
 ![share](pictures/shares/shares_delete_unauth.png#zoom#shadow)
 
+## **AWS data sharing technical details**
+Here is a brief explanation of how each type of sharing mechanism is implemented in data.all. It is important to 
+understand what really happens in AWS when dealing with downstream integrations that will consume shared data.
+
+### S3 Bucket sharing
+In this type of share the permissions are granted to the IAM role specified in the request as principal. It 
+can be either a data.all team IAM role or an external role defined as consumption role.
+
+When processing a sharing task for an S3 Bucket, data.all will:
+1. Update the S3 Bucket policy to add permissions to the principal IAM role
+2. Create/Update the IAM policy "Share policy" that grants IAM permissions to the requested S3 bucket and KMS key. Attach this policy to the principal IAM role.
+3. (If the Bucket is encrypted using a KMS key) Update the KMS Key policy to add permissions to the principal IAM role
+
+### Glue Table sharing
+In this type of share the permissions are granted to the IAM role specified in the request as principal. It 
+can be either a data.all team IAM role or an external role defined as consumption role.
+
+When processing a sharing task for a Glue Table, data.all will:
+1. Create a Glue database in the target account with name of the original database plus the suffix `_shared`. This database will be re-used if other share requests for the same source databaser are processed for other principals in the same environment.
+2. (If the share is cross-account) Revoke IAMAllowedPrincipal permissions from the table to ensure Lake Formation is used in the management of the table access and update LakeFormation to use Version 3 if not already >=3
+3. Grant Lake Formation permissions on the original database and table to the IAM principals in the target. If the share is cross account this step will create a RAM invitation that data.all will identify and accept.
+4. Create a resource link table from the original database table to the `_shared` database in the target account
+5. Grant Lake Formation permissions to the resource link table for the IAM principals.
+
+### S3 Prefix sharing (Folders)
+In this type of share the permissions are granted to the IAM role specified in the request as principal. It 
+can be either a data.all team IAM role or an external role defined as consumption role.
+
+When processing a sharing task for a Folder, data.all will:
+1. Update the Dataset Bucket policy to allow access point sharing. This is a one-time operation
+2. Create/Update an S3 Access Point and its policy granting permissions to the requested S3 prefix (folder) in the bucket for the principal IAM role.
+3. Create/Update the IAM policy "Share policy" that grants IAM permissions to the S3 Access Point and KMS key. Attach this policy to the principal IAM role.
+4. (If the Bucket is encrypted using a KMS key) Update the KMS Key policy to add permissions to the principal IAM role
+
+### Redshift Table sharing
+In this type of share the permissions are granted to the Redshift role in the Redshift namespace specified in the request.
+
+When processing a sharing task for a Redshift table, data.all will:
+1. In the source namespace, create a Redshift datashare. Add requested schema and tables to the datashare.
+2. Grant access to the datashare for the consumer namespace (same account) or for the consumer AWS account (cross account)
+3. (If cross-account share) Authorize and associate datashare with the target namespace
+4. In the target namespace, create local database for the datashare and grant permissions to the principal Redshift role.
+5. In the target namespace, create external schema in local database and grant usage permissions to the principal Redshift role.
+6. For the local database and for the external schema, grant select access to the requested table to the principal Redshift role.
 
 ## **Consume shared data**
-Data.all tables are Glue tables shared using AWS Lake Formation, therefore any service that reads Glue tables and integrates
-with Lake Formation is able to consume the data. Permissions are granted to the team role or the consumption role that 
-has been specified in the request.
+Knowing what we know form the previous section we can now define some ways of consuming the shared data for each type of shareable item.
 
-For the case of folders, the underlying sharing mechanism used is S3 Access Points. You can read data inside a prefix using 
-the IAM role of the requester (same as with tables) and executing get calls to the S3 access point.
-
-For example:
-```json
- aws s3 ls arn:aws:s3:<SOURCE_REGION>:<SOURCE_AWSACCOUNTID>:accesspoint/<DATASETURI>-<REQUESTER-TEAM>/folder2/
-```
-
+### S3 Bucket sharing
 For S3 bucket sharing, IAM policies, S3 bucket policies, and KMS Key policies (if applicable) are updated to enable sharing of the S3 Bucket resource.
+Therefore, we can use S3 API calls to access the data referring the Bucket directly. We need to assume or use the credentials
+of the principal IAM role used in the share request (team IAM role or consumption IAM role).
 
-For example, access to the bucket would be similar to:
+Here is an example using the AWS CLI:
+
 ```json
  aws s3 ls s3://<BUCKET_NAME>
 ```
+
+### Glue Table sharing
+
+Glue tables are shared using AWS Lake Formation, therefore any service that reads Glue tables and integrates
+with Lake Formation is able to consume the data.
+
+We need to assume or use the credentials
+of the principal IAM role used in the share request (team IAM role or consumption IAM role).
+
+### S3 Prefix sharing (Folders)
+For the case of folders, the underlying sharing mechanism used is S3 Access Points. You can read data inside a prefix 
+executing API calls to the S3 access point.
+
+We need to assume or use the credentials
+of the principal IAM role used in the share request (team IAM role or consumption IAM role).
+
+For example, we could use the AWS CLI with the following access point:
+```json
+ aws s3 ls arn:aws:s3:<SOURCE_REGION>:<SOURCE_AWSACCOUNTID>:accesspoint/<DATASETURI>-<REQUESTER-TEAM>/<FOLDER_NAME>/
+```
+
+
+### Redshift Table sharing
+
+Redshift tables are shared through Redshift datashares and the principal of the share request is a Redshift role. Thus,
+we can consume data accessing the Redshift Query editor or other applications that consume from Redshift with a user
+that has access to the Redshift role. 
+
 
 ## **Email Notification on share requests**
 
@@ -213,31 +305,4 @@ where <SHARE_ACTION> corresponds to "submitted", "approved", "revoked", "rejecte
 needed for during the deployment phase. Please review steps for setting up email notification on <a href="https://awslabs.github.io/aws-dataall/">data.all</a> webpage
 in the `Deploy to AWS` section
 
-
-[//]: # (### **Use data subscriptions**)
-
-[//]: # (data.all helps data owners publish notification updates to all their data consumers.)
-
-[//]: # (It also helps data consumers react to new data shared by the owners.)
-
-[//]: # ()
-[//]: # (#### Step 1: Enable subscriptions on the environment)
-
-[//]: # ()
-[//]: # (Check the <a href="environments.html">environment</a> documentation for the steps to enable subscriptions.)
-
-[//]: # ()
-[//]: # (!!!abstract "AWS SNS Topics")
-
-[//]: # (    When subscriptions are enabled, **as a data producer you can publish a message** to the producers SNS topic.)
-
-[//]: # (    You can also **subscribe to data consumers SNS topic** to be aware of the latest data updates from the producers.)
-
-[//]: # ()
-[//]: # (#### Step 2: Publish notification update)
-
-[//]: # (**IMPORTANT**)
-
-[//]: # ()
-[//]: # (This feature is disabled at the moment)
 

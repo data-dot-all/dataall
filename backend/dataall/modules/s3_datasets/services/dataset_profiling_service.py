@@ -1,8 +1,10 @@
 import json
 
+from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
+from dataall.base.db import exceptions
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.tasks.db.task_models import Task
@@ -21,6 +23,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import PREVIEW_DAT
 class DatasetProfilingService:
     @staticmethod
     @ResourcePolicyService.has_resource_permission(PROFILE_DATASET_TABLE)
+    @is_feature_enabled('modules.s3_datasets.features.metrics_data')
     def start_profiling_run(uri, table_uri, glue_table_name):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -54,6 +57,7 @@ class DatasetProfilingService:
         return run
 
     @staticmethod
+    @is_feature_enabled('modules.s3_datasets.features.metrics_data')
     def resolve_profiling_run_status(run_uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -63,11 +67,13 @@ class DatasetProfilingService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(GET_DATASET)
+    @is_feature_enabled('modules.s3_datasets.features.metrics_data')
     def list_profiling_runs(uri):
         with get_context().db_engine.scoped_session() as session:
             return DatasetProfilingRepository.list_profiling_runs(session, uri)
 
     @classmethod
+    @is_feature_enabled('modules.s3_datasets.features.metrics_data')
     def get_dataset_table_profiling_run(cls, uri: str):
         with get_context().db_engine.scoped_session() as session:
             cls._check_preview_permissions_if_needed(session, table_uri=uri)
@@ -93,6 +99,7 @@ class DatasetProfilingService:
             return run
 
     @classmethod
+    @is_feature_enabled('modules.s3_datasets.features.metrics_data')
     def list_table_profiling_runs(cls, uri: str):
         with get_context().db_engine.scoped_session() as session:
             cls._check_preview_permissions_if_needed(session=session, table_uri=uri)
@@ -106,12 +113,9 @@ class DatasetProfilingService:
         if (
             ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality)
             != ConfidentialityClassification.Unclassified.value
-        ):
-            ResourcePolicyService.check_user_resource_permission(
-                session=session,
-                username=context.username,
-                groups=context.groups,
-                resource_uri=table.tableUri,
-                permission_name=PREVIEW_DATASET_TABLE,
+        ) and (dataset.SamlAdminGroupName not in context.groups and dataset.stewards not in context.groups):
+            raise exceptions.UnauthorizedOperation(
+                action='GET_TABLE_PROFILING_METRICS',
+                message='User is not authorized to view Profiling Metrics for Confidential datasets',
             )
         return True

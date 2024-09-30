@@ -15,6 +15,8 @@ from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
+from dataall.modules.shares_base.db.share_object_models import ShareObject
+from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +49,10 @@ class DatasetRepository(EnvironmentResource):
             businessOwnerDelegationEmails=data.get('businessOwnerDelegationEmails', []),
             stewards=data.get('stewards') if data.get('stewards') else data['SamlAdminGroupName'],
             autoApprovalEnabled=data.get('autoApprovalEnabled', False),
+            enableExpiration=data.get('enableExpiration', False),
+            expirySetting=data.get('expirySetting'),
+            expiryMinDuration=data.get('expiryMinDuration'),
+            expiryMaxDuration=data.get('expiryMaxDuration'),
         )
 
         cls._set_import_data(dataset, data)

@@ -4,7 +4,6 @@ from typing import List
 
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers import S3AccessPointShareManager
-from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.s3_datasets_shares.services.s3_share_service import S3ShareService
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
@@ -63,10 +62,10 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                 new_state = shared_item_SM.run_transition(ShareObjectActions.Start.value)
                 shared_item_SM.update_state_single_item(self.session, sharing_item, new_state)
             try:
-                if not ShareObjectService.verify_principal_role(self.session, self.share_data.share):
+                if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
                     raise PrincipalRoleNotFound(
                         'process approved shares',
-                        f'Principal role {self.share_data.share.principalIAMRoleName} is not found. Failed to update bucket policy',
+                        f'Principal role {self.share_data.share.principalRoleName} is not found. Failed to update bucket policy',
                     )
 
                 manager.manage_bucket_policy()
@@ -129,6 +128,11 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
             revoked_item_SM.update_state_single_item(self.session, removing_item, new_state)
 
             try:
+                if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
+                    raise PrincipalRoleNotFound(
+                        'process approved shares',
+                        f'Principal role {self.share_data.share.principalRoleName} is not found. Failed to update bucket policy',
+                    )
                 access_point_policy = manager.revoke_access_in_access_point_policy()
 
                 if len(access_point_policy['Statement']) > 0:
@@ -180,6 +184,11 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
             )
 
             try:
+                if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
+                    raise PrincipalRoleNotFound(
+                        'process verify shares',
+                        f'Share principal Role {self.share_data.share.principalRoleName} not found. Check the team or consumption IAM role used.',
+                    )
                 manager.check_bucket_policy()
                 manager.check_target_role_access_policy()
                 manager.check_access_point_and_policy()

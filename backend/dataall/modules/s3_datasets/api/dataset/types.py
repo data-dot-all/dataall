@@ -109,6 +109,10 @@ Dataset = gql.ObjectType(
         gql.Field(name='language', type=gql.Ref('Language')),
         gql.Field(name='stack', type=gql.Ref('Stack'), resolver=resolve_dataset_stack),
         gql.Field(name='autoApprovalEnabled', type=gql.Boolean),
+        gql.Field(name='enableExpiration', type=gql.Boolean),
+        gql.Field(name='expirySetting', type=gql.String),
+        gql.Field(name='expiryMinDuration', type=gql.Integer),
+        gql.Field(name='expiryMaxDuration', type=gql.Integer),
     ],
 )
 

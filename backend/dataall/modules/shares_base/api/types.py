@@ -3,6 +3,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareableType,
     PrincipalType,
     ShareItemHealthStatus,
+    ShareObjectDataPermission,
 )
 from dataall.modules.shares_base.api.resolvers import (
     resolve_dataset,
@@ -15,7 +16,6 @@ from dataall.modules.shares_base.api.resolvers import (
     resolve_can_view_logs,
 )
 from dataall.core.environment.api.resolvers import resolve_environment
-
 
 ShareItem = gql.ObjectType(
     name='ShareItem',
@@ -31,8 +31,21 @@ ShareItem = gql.ObjectType(
         gql.Field('healthStatus', ShareItemHealthStatus.toGraphQLEnum()),
         gql.Field('healthMessage', gql.String),
         gql.Field('lastVerificationTime', gql.String),
+        gql.Field('attachedDataFilterUri', gql.String),
     ],
 )
+
+ShareObjectItemDataFilter = gql.ObjectType(
+    name='ShareObjectItemDataFilter',
+    fields=[
+        gql.Field(name='attachedDataFilterUri', type=gql.String),
+        gql.Field(name='label', type=gql.String),
+        gql.Field(name='dataFilterUris', type=gql.ArrayType(gql.String)),
+        gql.Field(name='dataFilterNames', type=gql.ArrayType(gql.String)),
+        gql.Field(name='itemUri', type=gql.String),
+    ],
+)
+
 
 NotSharedItem = gql.ObjectType(
     name='NotSharedItem',
@@ -45,7 +58,6 @@ NotSharedItem = gql.ObjectType(
         gql.Field('created', gql.String),
     ],
 )
-
 
 NotSharedItemsSearchResult = gql.ObjectType(
     name='NotSharedItemsSearchResult',
@@ -61,7 +73,6 @@ NotSharedItemsSearchResult = gql.ObjectType(
         gql.Field(name='nodes', type=gql.ArrayType(NotSharedItem)),
     ],
 )
-
 
 SharedItemSearchResult = gql.ObjectType(
     name='SharedItemSearchResult',
@@ -99,6 +110,9 @@ DatasetLink = gql.ObjectType(
         gql.Field(name='region', type=gql.String),
         gql.Field(name='exists', type=gql.Boolean),
         gql.Field(name='description', type=gql.String),
+        gql.Field(name='datasetType', type=gql.String),
+        gql.Field(name='enableExpiration', type=gql.Boolean),
+        gql.Field(name='expirySetting', type=gql.String),
     ],
 )
 
@@ -114,6 +128,13 @@ ShareObject = gql.ObjectType(
         gql.Field(name='datasetUri', type=gql.String),
         gql.Field(name='requestPurpose', type=gql.String),
         gql.Field(name='rejectPurpose', type=gql.String),
+        gql.Field(name='expiryDate', type=gql.String),
+        gql.Field(name='requestedExpiryDate', type=gql.String),
+        gql.Field(name='submittedForExtension', type=gql.Boolean),
+        gql.Field(name='extensionReason', type=gql.String),
+        gql.Field(name='lastExtensionDate', type=gql.String),
+        gql.Field(name='nonExpirable', type=gql.Boolean),
+        gql.Field(name='shareExpirationPeriod', type=gql.Integer),
         gql.Field(name='dataset', type=DatasetLink, resolver=resolve_dataset),
         gql.Field(name='alreadyExisted', type=gql.Boolean),
         gql.Field(name='existingSharedItems', type=gql.Boolean, resolver=resolve_existing_shared_items),
@@ -149,9 +170,9 @@ ShareObject = gql.ObjectType(
             type=gql.Ref('ShareObjectPermission'),
             resolver=resolve_user_role,
         ),
+        gql.Field('permissions', gql.ArrayType(ShareObjectDataPermission.toGraphQLEnum())),
     ],
 )
-
 
 ShareSearchResult = gql.ObjectType(
     name='ShareSearchResult',
@@ -186,7 +207,6 @@ EnvironmentPublishedItem = gql.ObjectType(
     ],
 )
 
-
 EnvironmentPublishedItemSearchResults = gql.ObjectType(
     name='EnvironmentPublishedItemSearchResults',
     fields=[
@@ -202,20 +222,14 @@ EnvironmentPublishedItemSearchResults = gql.ObjectType(
 Principal = gql.ObjectType(
     name='Principal',
     fields=[
-        gql.Field(name='principalId', type=gql.ID),
-        gql.Field(name='principalType', type=PrincipalType.toGraphQLEnum()),
         gql.Field(name='principalName', type=gql.String),
-        gql.Field(name='principalIAMRoleName', type=gql.String),
+        gql.Field(name='principalType', type=PrincipalType.toGraphQLEnum()),
+        gql.Field(name='principalId', type=gql.ID),
+        gql.Field(name='principalRoleName', type=gql.String),
         gql.Field(name='SamlGroupName', type=gql.String),
         gql.Field(name='environmentName', type=gql.String),
-        gql.Field(name='environmentUri', type=gql.String),
-        gql.Field(name='AwsAccountId', type=gql.String),
-        gql.Field(name='region', type=gql.String),
-        gql.Field(name='organizationName', type=gql.String),
-        gql.Field(name='organizationUri', type=gql.String),
     ],
 )
-
 
 PrincipalSearchResult = gql.ObjectType(
     name='PrincipalSearchResult',

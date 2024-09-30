@@ -2,10 +2,10 @@ import os
 import json
 import logging
 from typing import List
-from dataall.core.resource_lock.db.resource_lock_repositories import ResourceLockRepository
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db import exceptions
-from dataall.base.utils.naming_convention import NamingConventionPattern
+from dataall.base.utils.naming_convention import NamingConventionPattern, NamingConventionService
+from dataall.base.utils.expiration_util import ExpirationUtils
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.stacks.services.stack_service import StackService
@@ -21,6 +21,8 @@ from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.s3_datasets.db.dataset_bucket_repositories import DatasetBucketRepository
+from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.modules.s3_datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.s3_datasets.aws.s3_dataset_client import S3DatasetClient
@@ -43,7 +45,7 @@ from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRep
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetTable
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
-from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ
+from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_ALL
 from dataall.modules.datasets_base.services.dataset_service_interface import DatasetServiceInterface
 from dataall.modules.s3_datasets.aws.bedrock_metadata_client import BedrockClient
 from dataall.modules.s3_datasets.aws.s3_dataset_client import S3DatasetClient
@@ -88,7 +90,7 @@ class DatasetService:
             interface.extend_attach_steward_permissions(session, dataset, new_stewards)
 
     @classmethod
-    def _delete_additional_steward__permissions(cls, session, dataset):
+    def _delete_additional_steward_permissions(cls, session, dataset):
         """All permissions from other modules that need to be deleted to stewards"""
         for interface in cls._interfaces:
             interface.extend_delete_steward_permissions(session, dataset)
@@ -108,17 +110,32 @@ class DatasetService:
         return True
 
     @staticmethod
-    def check_imported_resources(dataset: S3Dataset):
+    def check_imported_resources(dataset: S3Dataset, data: dict = {}):
+        # check that resource names are valid
+        if dataset.S3BucketName:
+            NamingConventionService(
+                target_uri=dataset.datasetUri,
+                target_label=dataset.S3BucketName,
+                pattern=NamingConventionPattern.S3,
+            ).validate_imported_name()
+
         if dataset.importedGlueDatabase:
-            if len(dataset.GlueDatabaseName) > NamingConventionPattern.GLUE.value.get('max_length'):
-                raise exceptions.InvalidInput(
-                    param_name='GlueDatabaseName',
-                    param_value=dataset.GlueDatabaseName,
-                    constraint=f"less than {NamingConventionPattern.GLUE.value.get('max_length')} characters",
+            NamingConventionService(
+                target_uri=dataset.datasetUri,
+                target_label=data.get('glueDatabaseName', 'undefined'),
+                pattern=NamingConventionPattern.GLUE,
+            ).validate_imported_name()
+
+        with get_context().db_engine.scoped_session() as session:
+            if DatasetBucketRepository.get_dataset_bucket_by_name(session, dataset.S3BucketName):
+                raise exceptions.ResourceAlreadyExists(
+                    action=IMPORT_DATASET,
+                    message=f'Dataset with bucket {dataset.S3BucketName} already exists',
                 )
+
         kms_alias = dataset.KmsAlias
 
-        s3_encryption, kms_id = S3DatasetClient(dataset).get_bucket_encryption()
+        s3_encryption, kms_id_type, kms_id = S3DatasetClient(dataset).get_bucket_encryption()
         if kms_alias not in [None, 'Undefined', '', 'SSE-S3']:  # user-defined KMS encryption
             if s3_encryption == 'AES256':
                 raise exceptions.InvalidInput(
@@ -126,6 +143,11 @@ class DatasetService:
                     param_value=dataset.KmsAlias,
                     constraint=f'empty, Bucket {dataset.S3BucketName} is encrypted with AWS managed key (SSE-S3). KmsAlias {kms_alias} should NOT be provided as input parameter.',
                 )
+            NamingConventionService(
+                target_uri=dataset.datasetUri,
+                target_label=kms_alias,
+                pattern=NamingConventionPattern.KMS,
+            ).validate_imported_name()
 
             key_exists = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).check_key_exists(
                 key_alias=f'alias/{kms_alias}'
@@ -136,11 +158,14 @@ class DatasetService:
                     message=f'KMS key with alias={kms_alias} cannot be found - Please check if KMS Key Alias exists in account {dataset.AwsAccountId}',
                 )
 
-            key_id = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).get_key_id(
-                key_alias=f'alias/{kms_alias}'
-            )
+            key_matches = kms_id == kms_alias
+            if kms_id_type == 'key':
+                key_id = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).get_key_id(
+                    key_alias=f'alias/{kms_alias}'
+                )
+                key_matches = key_id == kms_id
 
-            if key_id != kms_id:
+            if not key_matches:
                 raise exceptions.InvalidInput(
                     param_name='KmsAlias',
                     param_value=dataset.KmsAlias,
@@ -165,7 +190,7 @@ class DatasetService:
             dataset = DatasetRepository.build_dataset(username=context.username, env=environment, data=data)
 
             if dataset.imported:
-                DatasetService.check_imported_resources(dataset)
+                DatasetService.check_imported_resources(dataset, data)
 
             dataset = DatasetRepository.create_dataset(session=session, env=environment, dataset=dataset, data=data)
             DatasetBucketRepository.create_dataset_bucket(session, dataset, data)
@@ -259,11 +284,20 @@ class DatasetService:
             dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             if data and isinstance(data, dict):
                 if data.get('imported', False):
-                    DatasetService.check_imported_resources(dataset)
+                    DatasetService.check_imported_resources(dataset, data)
 
                 for k in data.keys():
                     if k not in ['stewards', 'KmsAlias']:
                         setattr(dataset, k, data.get(k))
+
+                ShareObjectRepository.update_dataset_shares_expiration(
+                    session=session,
+                    enabledExpiration=dataset.enableExpiration,
+                    datasetUri=dataset.datasetUri,
+                    expirationDate=ExpirationUtils.calculate_expiry_date(
+                        expirationPeriod=dataset.expiryMinDuration, expirySetting=dataset.expirySetting
+                    ),
+                )
 
                 if data.get('KmsAlias') not in ['Undefined'] and data.get('KmsAlias') != dataset.KmsAlias:
                     dataset.KmsAlias = 'SSE-S3' if data.get('KmsAlias') == '' else data.get('KmsAlias')
@@ -479,7 +513,7 @@ class DatasetService:
                     resource_uri=tableUri,
                 )
 
-        DatasetService._delete_additional_steward__permissions(session, dataset)
+        DatasetService._delete_additional_steward_permissions(session, dataset)
         return dataset
 
     @staticmethod
@@ -510,7 +544,7 @@ class DatasetService:
             ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=new_stewards,
-                permissions=DATASET_TABLE_READ,
+                permissions=DATASET_TABLE_ALL,
                 resource_uri=tableUri,
                 resource_type=DatasetTable.__name__,
             )

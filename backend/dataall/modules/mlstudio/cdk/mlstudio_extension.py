@@ -2,6 +2,7 @@
 Extends an environment stack for SageMaker Studio Domain
 """
 
+import os
 import logging
 
 from aws_cdk import (
@@ -63,7 +64,7 @@ class SageMakerDomainExtension(EnvironmentStackExtension):
                     setup,
                     f'SageMakerStudio{_environment.name}',
                     log_group_name=f'/{_environment.resourcePrefix}/{_environment.name}/vpc/sagemakerstudio',
-                    retention=logs.RetentionDays.ONE_MONTH,
+                    retention=getattr(logs.RetentionDays, os.environ.get('LOG_RETENTION', 'TWO_YEARS')),
                     removal_policy=RemovalPolicy.DESTROY,
                 )
                 vpc_flow_role = iam.Role(

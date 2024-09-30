@@ -11,14 +11,17 @@ import os
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import Column, String, orm
+from sqlalchemy.ext.declarative import declarative_base
 
-from dataall.base.db import get_engine, has_table, Base
+from dataall.base.db import get_engine, has_table
 
 # revision identifiers, used by Alembic.
 revision = 'b833ad41db68'
 down_revision = '458572580709'
 branch_labels = None
 depends_on = None
+
+Base = declarative_base()
 
 
 class Maintenance(Base):

@@ -25,6 +25,7 @@ from .ses_stack import SesStack
 from .sqs import SqsStack
 from .trigger_function_stack import TriggerFunctionStack
 from .vpc import VpcStack
+from .iam_utils import get_tooling_account_external_id
 
 
 class BackendStack(Stack):
@@ -58,6 +59,8 @@ class BackendStack(Stack):
         custom_auth=None,
         custom_waf_rules=None,
         with_approval_tests=False,
+        allowed_origins='*',
+        log_retention_duration=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -74,6 +77,7 @@ class BackendStack(Stack):
             vpc_endpoints_sg=vpc_endpoints_sg,
             vpc_id=vpc_id,
             restricted_nacl=vpc_restricted_nacls,
+            log_retention_duration=log_retention_duration,
             **kwargs,
         )
         vpc = self.vpc_stack.vpc
@@ -137,6 +141,7 @@ class BackendStack(Stack):
                 f'{resource_prefix}-{envname}-frontend-config-role',
                 role_name=f'{resource_prefix}-{envname}-frontend-config-role',
                 assumed_by=iam.AccountPrincipal(tooling_account_id),
+                external_ids=[get_tooling_account_external_id(self.account)],
             )
             cross_account_frontend_config_role.add_to_policy(
                 iam.PolicyStatement(
@@ -198,6 +203,8 @@ class BackendStack(Stack):
             custom_domain=custom_domain,
             custom_auth=custom_auth,
             custom_waf_rules=custom_waf_rules,
+            allowed_origins=allowed_origins,
+            log_retention_duration=log_retention_duration,
             **kwargs,
         )
 
@@ -222,6 +229,7 @@ class BackendStack(Stack):
             email_custom_domain=ses_stack.ses_identity.email_identity_name if ses_stack is not None else None,
             ses_configuration_set=ses_stack.configuration_set.configuration_set_name if ses_stack is not None else None,
             custom_domain=custom_domain,
+            log_retention_duration=log_retention_duration,
             **kwargs,
         )
 
@@ -368,6 +376,7 @@ class BackendStack(Stack):
             'ecs_security_groups': self.ecs_stack.ecs_security_groups,
             'ecs_task_role': self.ecs_stack.ecs_task_role,
             'prod_sizing': prod_sizing,
+            'log_retention_duration': log_retention_duration,
             **kwargs,
         }
         if enable_opensearch_serverless:

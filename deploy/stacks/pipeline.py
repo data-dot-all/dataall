@@ -1,16 +1,16 @@
-import os
 import re
 import uuid
 from typing import List
 
-from aws_cdk import Stack, Tags, RemovalPolicy
+from aws_cdk import Stack, Tags, RemovalPolicy, Duration
 from aws_cdk import aws_codebuild as codebuild
 from aws_cdk import aws_codecommit as codecommit
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
+from aws_cdk import aws_logs as logs
+from aws_cdk import aws_kms as kms
 from aws_cdk import aws_s3 as s3
 from aws_cdk import pipelines
-from aws_cdk.aws_codebuild import BuildEnvironmentVariable, BuildEnvironmentVariableType
 from aws_cdk.pipelines import CodePipelineSource
 
 from .albfront_stage import AlbFrontStage
@@ -20,6 +20,7 @@ from .cloudfront_stage import CloudfrontStage
 from .codeartifact import CodeArtifactStack
 from .ecr_stage import ECRStage
 from .vpc import VpcStack
+from .iam_utils import get_tooling_account_external_id
 
 
 class PipelineStack(Stack):
@@ -43,6 +44,9 @@ class PipelineStack(Stack):
         self.target_envs = target_envs
         self.repo_string = repo_string
         self.repo_connection_arn = repo_connection_arn
+        self.log_retention_duration = (
+            self.node.try_get_context('log_retention_duration') or logs.RetentionDays.TWO_YEARS.value
+        )
 
         self.vpc_stack = VpcStack(
             self,
@@ -52,6 +56,7 @@ class PipelineStack(Stack):
             resource_prefix=resource_prefix,
             vpc_id=self.node.try_get_context('tooling_vpc_id'),
             restricted_nacl=self.node.try_get_context('tooling_vpc_restricted_nacl'),
+            log_retention_duration=self.log_retention_duration,
             **kwargs,
         )
         self.vpc = self.vpc_stack.vpc
@@ -117,6 +122,26 @@ class PipelineStack(Stack):
         )
         self.pipeline_bucket.grant_read_write(iam.AccountPrincipal(self.account))
 
+        self.artifact_bucket_name = f'{self.resource_prefix}-{self.git_branch}-artifacts-{self.account}-{self.region}'
+        self.artifact_bucket_key = kms.Key(
+            self,
+            f'{self.artifact_bucket_name}-key',
+            removal_policy=RemovalPolicy.DESTROY,
+            alias=f'{self.artifact_bucket_name}-key',
+            enable_key_rotation=True,
+        )
+        self.artifact_bucket = s3.Bucket(
+            self,
+            'pipeline-artifacts-bucket',
+            bucket_name=f'{self.resource_prefix}-{self.git_branch}-artifacts-{self.account}-{self.region}',
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            removal_policy=RemovalPolicy.DESTROY,
+            versioned=True,
+            encryption_key=self.artifact_bucket_key,
+            enforce_ssl=True,
+            auto_delete_objects=True,
+        )
+
         if self.source == 'codestar_connection':
             source = CodePipelineSource.connection(
                 repo_string=repo_string, branch=self.git_branch, connection_arn=repo_connection_arn
@@ -133,6 +158,9 @@ class PipelineStack(Stack):
             f'{self.resource_prefix}-{self.git_branch}-cdkpipeline',
             pipeline_name=f'{self.resource_prefix}-pipeline-{self.git_branch}',
             publish_assets_in_parallel=False,
+            artifact_bucket=self.artifact_bucket,
+            cross_account_keys=True,
+            enable_key_rotation=True,
             synth=pipelines.CodeBuildStep(
                 'Synth',
                 input=source,
@@ -150,8 +178,6 @@ class PipelineStack(Stack):
                 role=self.baseline_codebuild_role.without_policy_updates(),
                 vpc=self.vpc,
             ),
-            cross_account_keys=True,
-            enable_key_rotation=True,
             code_build_defaults=pipelines.CodeBuildOptions(
                 build_environment=codebuild.BuildEnvironment(
                     environment_variables={
@@ -185,7 +211,7 @@ class PipelineStack(Stack):
                 )
 
             if target_env.get('with_approval_tests', False):
-                self.set_approval_tests_stage(target_env)
+                self.set_approval_tests_stage(backend_stage, target_env)
 
             if target_env.get('enable_update_dataall_stacks_in_cicd_pipeline', False):
                 self.set_stacks_updater_stage(target_env)
@@ -517,6 +543,7 @@ class PipelineStack(Stack):
                     role=self.baseline_codebuild_role.without_policy_updates(),
                     vpc=self.vpc,
                     security_groups=[self.codebuild_sg],
+                    timeout=Duration.hours(36),
                 ),
                 pipelines.CodeBuildStep(
                     id='UploadCodeToS3',
@@ -651,12 +678,15 @@ class PipelineStack(Stack):
                 custom_auth=target_env.get('custom_auth', None),
                 custom_waf_rules=target_env.get('custom_waf_rules', None),
                 with_approval_tests=target_env.get('with_approval_tests', False),
+                allowed_origins=target_env.get('allowed_origins', '*'),
+                log_retention_duration=self.log_retention_duration,
             )
         )
         return backend_stage
 
     def set_approval_tests_stage(
         self,
+        backend_stage,
         target_env,
     ):
         if target_env.get('custom_auth', None) is None:
@@ -664,8 +694,7 @@ class PipelineStack(Stack):
         else:
             frontend_deployment_role_arn = f'arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-frontend-config-role'
 
-        wave = self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-approval-tests-stage")
-        wave.add_post(
+        backend_stage.add_post(
             pipelines.CodeBuildStep(
                 id='ApprovalTests',
                 build_environment=codebuild.BuildEnvironment(
@@ -682,6 +711,7 @@ class PipelineStack(Stack):
                                     'echo "[profile buildprofile]" > ~/.aws/config',
                                     f'echo "role_arn = {frontend_deployment_role_arn}" >> ~/.aws/config',
                                     'echo "credential_source = EcsContainer" >> ~/.aws/config',
+                                    f'echo "external_id = {get_tooling_account_external_id(target_env["account"])}" >> ~/.aws/config',
                                     'aws sts get-caller-identity --profile buildprofile',
                                     f'export COGNITO_CLIENT=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/cognito/appclient --profile buildprofile --output text --query "Parameter.Value")',
                                     f'export API_ENDPOINT=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/apiGateway/backendUrl --profile buildprofile --output text --query "Parameter.Value")',
@@ -708,6 +738,7 @@ class PipelineStack(Stack):
                 role=self.expanded_codebuild_role.without_policy_updates(),
                 vpc=self.vpc,
                 security_groups=[self.codebuild_sg],
+                timeout=Duration.hours(4),
             )
         )
 
@@ -727,6 +758,7 @@ class PipelineStack(Stack):
                     'echo "[profile buildprofile]" > ~/.aws/config',
                     f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-cb-stackupdater-role" >> ~/.aws/config',
                     'echo "credential_source = EcsContainer" >> ~/.aws/config',
+                    f'echo "external_id = {get_tooling_account_external_id(target_env["account"])}" >> ~/.aws/config',
                     'aws sts get-caller-identity --profile buildprofile',
                     f"export cluster_name=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/ecs/cluster/name --profile buildprofile --output text --query 'Parameter.Value')",
                     f"export private_subnets=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/ecs/private_subnets --profile buildprofile --output text --query 'Parameter.Value')",
@@ -787,9 +819,10 @@ class PipelineStack(Stack):
                     'echo "[profile buildprofile]" > ~/.aws/config',
                     f'echo "role_arn = arn:aws:iam::{target_env["account"]}:role/{self.resource_prefix}-{target_env["envname"]}-S3DeploymentRole" >> ~/.aws/config',
                     'echo "credential_source = EcsContainer" >> ~/.aws/config',
+                    f'echo "external_id = {get_tooling_account_external_id(target_env["account"])}" >> ~/.aws/config',
                     'aws sts get-caller-identity --profile buildprofile',
                     'export AWS_PROFILE=buildprofile',
-                    'pip install boto3==1.34.35',
+                    'pip install boto3==1.35.26',
                     'pip install beautifulsoup4',
                     'python deploy/configs/frontend_config.py',
                     'export AWS_DEFAULT_REGION=us-east-1',
@@ -825,7 +858,7 @@ class PipelineStack(Stack):
                     ),
                     commands=[
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
-                        f"make assume-role REMOTE_ACCOUNT_ID={target_env['account']} REMOTE_ROLE={self.resource_prefix}-{target_env['envname']}-S3DeploymentRole",
+                        f"make assume-role REMOTE_ACCOUNT_ID={target_env['account']} REMOTE_ROLE={self.resource_prefix}-{target_env['envname']}-S3DeploymentRole EXTERNAL_ID={get_tooling_account_external_id(target_env['account'])}",
                         '. ./.env.assumed_role',
                         'aws sts get-caller-identity',
                         'export AWS_DEFAULT_REGION=us-east-1',
@@ -861,7 +894,7 @@ class PipelineStack(Stack):
                 'aws sts get-caller-identity --profile buildprofile',
                 'export AWS_PROFILE=buildprofile',
                 'pip install --upgrade pip',
-                'pip install boto3==1.34.35',
+                'pip install boto3==1.35.26',
                 'python deploy/configs/rum_config.py',
             ],
             role=self.expanded_codebuild_role.without_policy_updates(),
@@ -889,6 +922,7 @@ class PipelineStack(Stack):
                 resource_prefix=self.resource_prefix,
                 custom_auth=target_env.get('custom_auth', None),
                 backend_region=target_env.get('region', self.region),
+                log_retention_duration=self.log_retention_duration,
             ),
             pre=[
                 pipelines.CodeBuildStep(
@@ -926,9 +960,10 @@ class PipelineStack(Stack):
                         'echo "[profile buildprofile]" > ~/.aws/config',
                         f'echo "role_arn = {frontend_deployment_role_arn}" >> ~/.aws/config',
                         'echo "credential_source = EcsContainer" >> ~/.aws/config',
+                        f'echo "external_id = {get_tooling_account_external_id(target_env["account"])}" >> ~/.aws/config',
                         'aws sts get-caller-identity --profile buildprofile',
                         'export AWS_PROFILE=buildprofile',
-                        'pip install boto3==1.34.35',
+                        'pip install boto3==1.35.26',
                         'pip install beautifulsoup4',
                         'python deploy/configs/frontend_config.py',
                         'unset AWS_PROFILE',

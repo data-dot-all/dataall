@@ -117,3 +117,7 @@ def test_add_consumption_role_unauthorized(client2, session_env2, group1):
     assert_that(add_consumption_role).raises(GqlError).when_called_with(
         client2, env_uri, group1, 'TestConsumptionRole', f'arn:aws:iam::{session_env2.AwsAccountId}:role/Admin'
     ).contains('UnauthorizedOperation', 'ADD_ENVIRONMENT_CONSUMPTION_ROLES', env_uri)
+
+
+def test_create_crossaccount_env(client5, session_cross_acc_env_1, group5):
+    assert_that(session_cross_acc_env_1.stack.status).is_in('CREATE_COMPLETE', 'UPDATE_COMPLETE')
