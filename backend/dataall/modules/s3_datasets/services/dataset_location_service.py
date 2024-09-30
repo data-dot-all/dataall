@@ -146,8 +146,9 @@ class DatasetLocationService:
             ResourcePolicyService.delete_resource_policy(session=session, group=group, resource_uri=location_uri)
 
     @staticmethod
-    def generate_metadata_for_folder(resourceUri, version, metadataTypes, sampleData):
+    def generate_metadata_for_folder(resourceUri, version, metadataTypes):
         context = get_context()
+        # TODO decide what to do with version
         with context.db_engine.scoped_session() as session:
             folder = DatasetLocationRepository.get_location_by_uri(session, resourceUri)
             dataset = DatasetRepository.get_dataset_by_uri(session, folder.datasetUri)

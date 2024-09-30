@@ -567,7 +567,8 @@ class DatasetService:
             return DatasetRepository.paginated_dataset_tables_folders(session, dataset_uri, filter)
 
     @staticmethod
-    def generate_metadata_for_dataset(resourceUri, version, metadataTypes, sampleData):
+    def generate_metadata_for_dataset(resourceUri, version, metadataTypes):
+        # TODO decide what to do with version
         context = get_context()
         with context.db_engine.scoped_session() as session:
             dataset = DatasetBaseRepository.get_dataset_by_uri(session, resourceUri)

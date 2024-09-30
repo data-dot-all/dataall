@@ -1,5 +1,5 @@
 import logging
-
+import re
 from dataall.base.api.context import Context
 from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.base.utils.expiration_util import Expiration
@@ -13,7 +13,7 @@ from dataall.modules.datasets_base.services.datasets_enums import DatasetRole, C
 from dataall.modules.s3_datasets.services.dataset_service import DatasetService
 from dataall.modules.s3_datasets.services.dataset_table_service import DatasetTableService
 from dataall.modules.s3_datasets.services.dataset_location_service import DatasetLocationService
-from dataall.modules.s3_datasets.services.dataset_enums import MetadataGenerationTargets
+from dataall.modules.s3_datasets.services.dataset_enums import MetadataGenerationTargets, MetadataGenerationTypes
 
 log = logging.getLogger(__name__)
 
@@ -159,60 +159,56 @@ def list_datasets_owned_by_env_group(
     return DatasetService.list_datasets_owned_by_env_group(environmentUri, groupUri, filter)
 
 
-@is_feature_enabled('modules.s3_datasets.features.generate_metadata_ai')
 # @ResourceThresholdRepository.invocation_handler('generate_metadata_ai')
 # To make this treshold work treshold limits should be added on resource_treshold_repository into the resource paths dictionary.
 # as an example; 'nlq' : 'modules.worksheets.features.max_count_per_day' here max_count_per_day shall be defined for metadata generation
 # or it could be used as it is by using different key or even the same key after merge.
-
+@is_feature_enabled('modules.s3_datasets.features.generate_metadata_ai')
 def generate_metadata(
-    context: Context, source: S3Dataset, resourceUri, targetType, version, metadataTypes, sampleData
-):  # TODO add type hints
-    RequestValidator.validate_generation_request(data=resourceUri)
+    context: Context,
+    source: S3Dataset,
+    resourceUri: str,
+    targetType: str,
+    version: int,
+    metadataTypes: list,
+    sampleData: dict = {},
+):
+    RequestValidator.validate_uri(param_name='resourceUri', param_value=resourceUri)
+    if metadataTypes not in [item.value for item in MetadataGenerationTypes]:
+        raise InvalidInput(
+            'metadataType',
+            metadataTypes,
+            f'a list of allowed values {[item.value for item in MetadataGenerationTypes]}',
+        )
+    # TODO validate sampleData and make it generic for S3
     if targetType == MetadataGenerationTargets.S3_Dataset.value:
         return DatasetService.generate_metadata_for_dataset(
-            resourceUri=resourceUri, version=version, metadataTypes=metadataTypes, sampleData=sampleData
+            resourceUri=resourceUri, version=version, metadataTypes=metadataTypes
         )
-
     elif targetType == MetadataGenerationTargets.Table.value:
         return DatasetTableService.generate_metadata_for_table(
             resourceUri=resourceUri, version=version, metadataTypes=metadataTypes, sampleData=sampleData
         )
     elif targetType == MetadataGenerationTargets.Folder.value:
         return DatasetLocationService.generate_metadata_for_folder(
-            resourceUri=resourceUri, version=version, metadataTypes=metadataTypes, sampleData=sampleData
+            resourceUri=resourceUri, version=version, metadataTypes=metadataTypes
         )
     else:
         raise Exception('Unsupported target type for metadata generation')
 
 
-def read_sample_data(context: Context, source: S3Dataset, tableUri):
-    RequestValidator.validate_generation_request(data=tableUri)
+def read_sample_data(context: Context, source: S3Dataset, tableUri: str):
+    RequestValidator.validate_uri(param_name='tableUri', param_value=tableUri)
     return DatasetTableService.preview(uri=tableUri)
 
 
-def test_read(context: Context, source: S3Dataset, resourceUri, targetType, version, metadataTypes):
-    RequestValidator.validate_generation_request(data=resourceUri)
-    sample_data = DatasetTableService.preview(uri=resourceUri)
-    log.info('sample_data:', sample_data)
-    return DatasetTableService.generate_metadata(
-        resourceUri=resourceUri,
-        targetType=targetType,
-        version=version,
-        metadataTypes=metadataTypes,
-        sampleData=sample_data,
-    )
-
-
-def update_dataset_metadata(context: Context, source: S3Dataset, resourceUri):
-    RequestValidator.validate_generation_request(data=resourceUri)
+def update_dataset_metadata(context: Context, source: S3Dataset, resourceUri: str):
     return DatasetService.update_dataset(uri=resourceUri, data=input)
 
 
-def list_dataset_tables_folders(context: Context, source: S3Dataset, datasetUri, filter: dict = None):
+def list_dataset_tables_folders(context: Context, source: S3Dataset, datasetUri: str, filter: dict = None):
     if not filter:
         filter = {}
-    RequestValidator.validate_generation_request(data=datasetUri)
     return DatasetService.list_dataset_tables_folders(dataset_uri=datasetUri, filter=filter)
 
 
@@ -261,9 +257,16 @@ class RequestValidator:
             )
 
     @staticmethod
-    def validate_generation_request(data):
-        if not data:
-            raise RequiredParameter(data)
+    def validate_uri(param_name: str, param_value: str):
+        if not param_value:
+            raise RequiredParameter(param_name)
+        pattern = r'^[a-z0-9]{8}$'
+        if not re.match(pattern, param_value):
+            raise InvalidInput(
+                param_name=param_name,
+                param_value=param_value,
+                constraint='8 characters long and contain only lowercase letters and numbers',
+            )
 
     @staticmethod
     def validate_import_request(data):

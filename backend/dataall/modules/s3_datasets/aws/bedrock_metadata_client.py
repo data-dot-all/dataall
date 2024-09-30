@@ -12,8 +12,6 @@ class BedrockClient:
     def __init__(self, account_id: str, region: str):
         session = SessionHelper.remote_session(accountid=account_id, region=region)
         self._client = session.client('bedrock-runtime', region_name=region)
-        self._account_id = account_id
-        self.region = region
 
     def _generate_prompt(self, **kwargs):
         prompt_type = kwargs.get('prompt_type', 'Table')

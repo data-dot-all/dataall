@@ -188,8 +188,10 @@ class DatasetTableService:
             session=session, group=None, resource_uri=table_uri, resource_type=DatasetTable.__name__
         )
 
+    # TODO ADD PERMISSIONS!
     @staticmethod
     def generate_metadata_for_table(resourceUri, version, metadataTypes, sampleData):
+        # TODO decide what to do with version
         context = get_context()
         with context.db_engine.scoped_session() as session:
             table = DatasetTableRepository.get_dataset_table_by_uri(session, resourceUri)

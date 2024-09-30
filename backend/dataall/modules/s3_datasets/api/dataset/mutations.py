@@ -1,10 +1,5 @@
 from dataall.base.api import gql
-from dataall.modules.s3_datasets.api.dataset.input_types import (
-    ModifyDatasetInput,
-    NewDatasetInput,
-    ImportDatasetInput,
-    DatasetMetadataInput,
-)
+from dataall.modules.s3_datasets.api.dataset.input_types import ModifyDatasetInput, NewDatasetInput, ImportDatasetInput
 from dataall.modules.s3_datasets.api.dataset.resolvers import (
     create_dataset,
     update_dataset,
@@ -13,8 +8,6 @@ from dataall.modules.s3_datasets.api.dataset.resolvers import (
     import_dataset,
     start_crawler,
     generate_metadata,
-    test_read,
-    read_sample_data,
 )
 from dataall.modules.s3_datasets.api.dataset.enums import MetadataGenerationTargets
 
@@ -77,9 +70,9 @@ generateMetadata = gql.MutationField(
     name='generateMetadata',
     args=[
         gql.Argument(name='resourceUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='targetType', type=MetadataGenerationTargets.toGraphQLEnum()),
+        gql.Argument(name='targetType', type=gql.NonNullableType(MetadataGenerationTargets.toGraphQLEnum())),
         gql.Argument(name='version', type=gql.Integer),
-        gql.Argument(name='metadataTypes', type=gql.ArrayType(gql.String)),
+        gql.Argument(name='metadataTypes', type=gql.NonNullableType(gql.ArrayType(gql.String))),
         gql.Argument(name='sampleData', type=gql.Ref('SampleDataInput')),
     ],
     type=gql.Ref('GeneratedMetadata'),
