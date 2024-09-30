@@ -31,8 +31,9 @@ class AttachedMetadataFormValidationService:
 
 
 class AttachedMetadataFormService:
+    # session is rudimentary here, but it is required for the ResourcePolicyService to work
     @staticmethod
-    def _get_entity_uri(data):
+    def _get_entity_uri(session, data):
         return data.get('entityUri')
 
     @staticmethod
