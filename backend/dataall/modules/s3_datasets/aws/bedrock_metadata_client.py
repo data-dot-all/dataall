@@ -1,12 +1,12 @@
 import logging
 import json
-import re
+from dataall.base.config import config
 from dataall.base.aws.sts import SessionHelper
-from botocore.exceptions import ClientError
 
 
 log = logging.getLogger(__name__)
 
+#  TODO: refactoring with prompt templates
 
 class BedrockClient:
     def __init__(self, account_id: str, region: str):
@@ -114,8 +114,9 @@ class BedrockClient:
                 'top_k': 250,
             }
         )
-        modelId = 'anthropic.claude-3-sonnet-20240229-v1:0'
-        response = self._client.invoke_model(body=body, modelId=modelId)
+        #TODO: adjust input depending on model
+        model_id = config.get_property('modules.s3_datasets.features.generate_metadata_ai.model_id')
+        response = self._client.invoke_model(body=body, modelId=model_id)
         response_body = json.loads(response.get('body').read())
         return response_body.get('content', [])
 
@@ -137,6 +138,8 @@ class BedrockClient:
         return output_dict
 
     def generate_metadata(self, **kwargs):
+        #  TODO: refactor to use explicit params instead of kwargs
         prompt = self._generate_prompt(**kwargs)
         response_content = self._invoke_model(prompt)
+        # TODO: add templated output so that we can avoid parsing the response too much
         return self._parse_response(response_content, kwargs.get('label', ' '), kwargs.get('subitem_ids', ' '))
