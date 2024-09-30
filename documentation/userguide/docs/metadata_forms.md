@@ -69,8 +69,12 @@ User with required access can attach metadata form to Organization, Environment 
 To attach new metadata form or view already attached use the tab "Metadata" on entity view page.
 
 In the column on the left all attached metadata forms are listed. When user clicks on the form, it content appears
-on the right.
+on the right. The attached form can be deleted by click on "bin" icon next to form name in the list.
+
+![metadata form attached_list](pictures/metadata_forms/attached_mf_list.png#zoom#shadow)
+
 If user has permission to attach metadata forms to this entity, the button "+ Attach Form" appears over the attached metadata form list.
 After user clicks this button and selects the available form from drop-dow list, they can fill in the form displayed on the right.
+After all required fields are filled, press "Attach" button in the right upper corner of the editing area.
 
 ![metadata form attach](pictures/metadata_forms/attach_mf.png#zoom#shadow)
