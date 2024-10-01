@@ -4,7 +4,7 @@ from assertpy import assert_that
 from tests_new.integration_tests.aws_clients.athena import AthenaClient
 from tests_new.integration_tests.modules.s3_datasets.aws_clients import S3Client
 from tests_new.integration_tests.modules.s3_datasets.queries import get_folder
-from tests_new.integration_tests.modules.share_base.conftest import clean_up_share
+from tests_new.integration_tests.modules.share_base.global_conftest import clean_up_share
 from tests_new.integration_tests.modules.share_base.queries import (
     create_share_object,
     submit_share_object,

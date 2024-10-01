@@ -657,7 +657,13 @@ class EnvironmentSetup(Stack):
 
         self.test_role.add_to_policy(
             iam.PolicyStatement(
-                actions=['iam:GetRole', 'iam:CreateRole', 'iam:PutRolePolicy'],
+                actions=[
+                    'iam:GetRole',
+                    'iam:CreateRole',
+                    'iam:DeleteRole',
+                    'iam:PutRolePolicy',
+                    'iam:DeleteRolePolicy',
+                ],
                 effect=iam.Effect.ALLOW,
                 resources=[f'arn:aws:iam::{self.account}:role/dataall-test-*'],
             ),
