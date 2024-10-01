@@ -245,33 +245,31 @@ def add_consumption_role(client, env_uri, group_uri, consumption_role_name, iam_
     return response.data.addConsumptionRoleToEnvironment
 
 
-def get_consumption_role(client, env_uri, iam_role_name):
+def list_environment_consumption_roles(client, env_uri, filter):
     query = {
-        'operationName': 'getConsumptionRole',
-        'variables': {
-            'environmentUri': env_uri,
-            'IAMRoleName': iam_role_name,
-        },
+        'operationName': 'listEnvironmentConsumptionRoles',
+        'variables': {'environmentUri': env_uri, 'filter': filter},
         'query': """
-                    query getConsumptionRole(
-                      $environmentUri: String!
-                      $IAMRoleName: String!
-                    ) {
-                      getConsumptionRole(
-                        environmentUri: $environmentUri
-                        IAMRoleName: $IAMRoleName
-                      ) {
-                        consumptionRoleUri
-                        consumptionRoleName
-                        environmentUri
-                        groupUri
-                        IAMRoleArn
+                    query listEnvironmentConsumptionRoles($environmentUri: String!, $filter: ConsumptionRoleFilter) {
+                      listEnvironmentConsumptionRoles(environmentUri: $environmentUri, filter: $filter) {
+                        count
+                        page
+                        pages
+                        hasNext
+                        hasPrevious
+                        nodes {
+                          consumptionRoleUri
+                          consumptionRoleName
+                          environmentUri
+                          groupUri
+                          IAMRoleArn
+                        }
                       }
                     }
         """,
     }
     response = client.query(query=query)
-    return response.data.getConsumptionRole
+    return response.data.listEnvironmentConsumptionRoles
 
 
 def remove_consumption_role(client, env_uri, consumption_role_uri):

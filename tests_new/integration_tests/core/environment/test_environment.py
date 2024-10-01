@@ -61,10 +61,10 @@ def test_persistent_env_update(client1, persistent_env1):
         persistent_env1.environmentUri,
         target_type='environment',
     )
-    updated_before = datetime.strptime(stack.updated, '%Y-%m-%d %H:%M:%S.%f').timestamp()
+    updated_before = datetime.strptime(stack.updated, '%Y-%m-%d %H:%M:%S.%f')
     stack = update_env_stack(client1, persistent_env1)
     assert_that(stack).contains_entry(status='UPDATE_COMPLETE')
-    updated = datetime.strptime(stack.updated, '%Y-%m-%d %H:%M:%S.%f').timestamp()
+    updated = datetime.strptime(stack.updated, '%Y-%m-%d %H:%M:%S.%f')
     assert_that(updated).is_greater_than_or_equal_to(updated_before)
 
 

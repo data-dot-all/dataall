@@ -2,6 +2,7 @@ from assertpy import assert_that
 from botocore.exceptions import ClientError
 
 from tests_new.integration_tests.aws_clients.utils import get_group_session, get_role_session
+from tests_new.integration_tests.core.environment.queries import get_environment_access_token
 from tests_new.integration_tests.modules.share_base.queries import (
     get_share_object,
     get_s3_consumption_data,
@@ -137,7 +138,8 @@ def check_share_items_access(
     dataset = share.dataset
     principal_type = share.principal.principalType
     if principal_type == 'Group':
-        session = get_group_session(client, share.environment.environmentUri, group)
+        credentials_str = get_environment_access_token(client, share.environment.environmentUri, group)
+        session = get_group_session(credentials_str)
     elif principal_type == 'ConsumptionRole':
         session = get_role_session(env_client, consumption_role.IAMRoleArn, dataset.region)
     else:

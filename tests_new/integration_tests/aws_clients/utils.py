@@ -4,33 +4,8 @@ import boto3
 from tests_new.integration_tests.aws_clients.sts import StsClient
 
 
-# it's here and not in Env test module, because it's used only here and we don't want circular dependencies
-def get_environment_access_token(client, env_uri, group_uri):
-    query = {
-        'operationName': 'generateEnvironmentAccessToken',
-        'variables': {
-            'environmentUri': env_uri,
-            'groupUri': group_uri,
-        },
-        'query': """
-                     query generateEnvironmentAccessToken(
-                      $environmentUri: String!
-                      $groupUri: String
-                    ) {
-                      generateEnvironmentAccessToken(
-                        environmentUri: $environmentUri
-                        groupUri: $groupUri
-                      )
-                    }
-        """,
-    }
-    response = client.query(query=query)
-    return response.data.generateEnvironmentAccessToken
-
-
-def get_group_session(client, env_uri, group):
-    credentials = json.loads(get_environment_access_token(client, env_uri, group))
-
+def get_group_session(credentials_str):
+    credentials = json.loads(credentials_str)
     return boto3.Session(
         aws_access_key_id=credentials['AccessKey'],
         aws_secret_access_key=credentials['SessionKey'],

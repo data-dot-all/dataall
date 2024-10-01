@@ -3,8 +3,8 @@ import pytest
 from tests_new.integration_tests.aws_clients.iam import IAMClient
 from tests_new.integration_tests.core.environment.queries import (
     add_consumption_role,
-    get_consumption_role,
     remove_consumption_role,
+    list_environment_consumption_roles,
 )
 from tests_new.integration_tests.modules.share_base.queries import (
     create_share_object,
@@ -74,7 +74,7 @@ def session_consumption_role_1(client5, group5, session_cross_acc_env_1, session
     yield consumption_role
     remove_consumption_role(client5, session_cross_acc_env_1.environmentUri, consumption_role.consumptionRoleUri)
     iam_client = IAMClient(session=session_cross_acc_env_1_aws_client, region=session_cross_acc_env_1['region'])
-    iam_client.delete_consumption_role(role['Role']['RoleName'])
+    iam_client.delete_consumption_role(consumption_role['Role']['RoleName'])
 
 
 @pytest.fixture(scope='session')
@@ -229,13 +229,13 @@ def share_params_all(
 
 @pytest.fixture(scope='session')
 def persistent_consumption_role_1(client5, group5, persistent_cross_acc_env_1, persistent_cross_acc_env_1_aws_client):
-    consumption_role = get_consumption_role(
+    consumption_roles_result = list_environment_consumption_roles(
         client5,
         persistent_cross_acc_env_1.environmentUri,
-        test_persistent_cons_role_name,
+        {'term': 'PersistentConsRole1'},
     )
 
-    if not consumption_role:
+    if consumption_roles_result.count == 0:
         consumption_role = create_consumption_role(
             client5,
             group5,
@@ -244,7 +244,9 @@ def persistent_consumption_role_1(client5, group5, persistent_cross_acc_env_1, p
             test_persistent_cons_role_name,
             'PersistentConsRole1',
         )
-    yield consumption_role
+        yield consumption_role
+    else:
+        yield consumption_roles_result.nodes[0]
 
 
 @pytest.fixture(scope='session')
