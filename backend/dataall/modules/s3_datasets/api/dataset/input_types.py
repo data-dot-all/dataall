@@ -46,6 +46,15 @@ ModifyDatasetInput = gql.InputType(
         gql.Argument(name='expiryMaxDuration', type=gql.Integer),
     ],
 )
+DatasetMetadataInput = gql.InputType(
+    name='DatasetMetadataInput',
+    arguments=[
+        gql.Argument('label', gql.String),
+        gql.Argument('description', gql.String),
+        gql.Argument('tags', gql.ArrayType(gql.String)),
+        gql.Argument('topics', gql.ArrayType(gql.Ref('Topic'))),
+    ],
+)
 
 DatasetPresignedUrlInput = gql.InputType(
     name='DatasetPresignedUrlInput',
@@ -57,6 +66,14 @@ DatasetPresignedUrlInput = gql.InputType(
 
 
 CrawlerInput = gql.InputType(name='CrawlerInput', arguments=[gql.Argument(name='prefix', type=gql.String)])
+
+SampleDataInput = gql.InputType(
+    name='SampleDataInput',
+    arguments=[
+        gql.Field(name='fields', type=gql.ArrayType(gql.String)),
+        gql.Field(name='rows', type=gql.ArrayType(gql.String)),
+    ],
+)
 
 ImportDatasetInput = gql.InputType(
     name='ImportDatasetInput',

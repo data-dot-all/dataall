@@ -140,3 +140,47 @@ GlueCrawler = gql.ObjectType(
         gql.Field(name='status', type=gql.String),
     ],
 )
+SubitemDescription = gql.ObjectType(
+    name='SubitemDescription',
+    fields=[
+        gql.Field(name='label', type=gql.String),
+        gql.Field(name='description', type=gql.String),
+        gql.Field(name='subitem_id', type=gql.String),
+    ],
+)
+GeneratedMetadata = gql.ObjectType(
+    name='GeneratedMetadata',
+    fields=[
+        gql.Field(name='type', type=gql.String),  # Table, Column,  Folder, Dataset
+        gql.Field(name='label', type=gql.String),
+        gql.Field(name='topics', type=gql.ArrayType(gql.String)),
+        gql.Field(name='tags', type=gql.ArrayType(gql.String)),
+        gql.Field(name='description', type=gql.String),
+        gql.Field(name='name', type=gql.String),
+        gql.Field(name='subitem_descriptions', type=gql.ArrayType(gql.Ref('SubitemDescription'))),
+    ],
+)
+
+DatasetItem = gql.ObjectType(
+    name='DatasetItem',
+    fields=[
+        gql.Field(name='name', type=gql.String),
+        gql.Field(name='targetType', type=gql.String),
+        gql.Field(name='targetUri', type=gql.String),
+    ],
+)
+
+DatasetItemsSearchResult = gql.ObjectType(
+    name='DatasetItemsSearchResult',
+    fields=[
+        gql.Field(name='count', type=gql.Integer),
+        gql.Field(name='nodes', type=gql.ArrayType(DatasetItem)),
+        gql.Field(name='pageSize', type=gql.Integer),
+        gql.Field(name='nextPage', type=gql.Integer),
+        gql.Field(name='pages', type=gql.Integer),
+        gql.Field(name='page', type=gql.Integer),
+        gql.Field(name='previousPage', type=gql.Integer),
+        gql.Field(name='hasNext', type=gql.Boolean),
+        gql.Field(name='hasPrevious', type=gql.Boolean),
+    ],
+)

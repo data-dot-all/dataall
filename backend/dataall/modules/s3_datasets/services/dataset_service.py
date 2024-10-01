@@ -47,6 +47,8 @@ from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetTabl
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_ALL
 from dataall.modules.datasets_base.services.dataset_service_interface import DatasetServiceInterface
+from dataall.modules.s3_datasets.aws.bedrock_metadata_client import BedrockClient
+from dataall.modules.s3_datasets.services.dataset_enums import MetadataGenerationTargets
 
 log = logging.getLogger(__name__)
 
@@ -557,3 +559,29 @@ class DatasetService:
         for table_uri in tables:
             GlossaryRepository.delete_glossary_terms_links(session, table_uri, 'DatasetTable')
         GlossaryRepository.delete_glossary_terms_links(session, dataset_uri, 'Dataset')
+
+    @staticmethod
+    def list_dataset_tables_folders(dataset_uri, filter):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            return DatasetRepository.paginated_dataset_tables_folders(session, dataset_uri, filter)
+
+    @staticmethod
+    def generate_metadata_for_dataset(resourceUri, version, metadataTypes):
+        # TODO decide what to do with version
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            dataset = DatasetBaseRepository.get_dataset_by_uri(session, resourceUri)
+            table_labels = [t.label for t in DatasetRepository.get_dataset_tables(session, resourceUri)]
+            table_descriptions = [t.description for t in DatasetRepository.get_dataset_tables(session, resourceUri)]
+            folders = [f.label for f in DatasetLocationRepository.get_dataset_folders(session, resourceUri)]
+            return BedrockClient(dataset.AwsAccountId, 'us-east-1').generate_metadata(
+                prompt_type=MetadataGenerationTargets.S3_Dataset.value,
+                label=dataset.label,
+                tables=table_labels,
+                description=dataset.description,
+                table_description=table_descriptions,
+                tags=dataset.tags,
+                metadata_type=metadataTypes,
+                folders=folders,
+            )

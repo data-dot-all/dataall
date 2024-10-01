@@ -29,6 +29,10 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
 from dataall.modules.s3_datasets.services.dataset_service import DatasetService
 from dataall.base.utils import json_utils
 from dataall.base.db import exceptions
+from dataall.modules.s3_datasets.aws.bedrock_metadata_client import BedrockClient
+from dataall.modules.s3_datasets.db.dataset_column_repositories import DatasetColumnRepository
+from dataall.modules.s3_datasets.services.dataset_enums import MetadataGenerationTargets
+
 
 log = logging.getLogger(__name__)
 
@@ -183,3 +187,23 @@ class DatasetTableService:
         ResourcePolicyService.delete_resource_policy(
             session=session, group=None, resource_uri=table_uri, resource_type=DatasetTable.__name__
         )
+
+    # TODO ADD PERMISSIONS!
+    @staticmethod
+    def generate_metadata_for_table(resourceUri, version, metadataTypes, sampleData):
+        # TODO decide what to do with version
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            table = DatasetTableRepository.get_dataset_table_by_uri(session, resourceUri)
+            table_column = DatasetColumnRepository.get_table_info_metadata_generation(session, resourceUri)
+            return BedrockClient(table_column.AWSAccountId, 'us-east-1').generate_metadata(
+                prompt_type=MetadataGenerationTargets.Table.value,
+                label=table.label,
+                columns={','.join(table_column.label)},
+                subitem_descriptions={','.join(table_column.description)},
+                subitem_ids={','.join(table_column.columnUri)},
+                description=table.description,
+                tags=table.tags,
+                metadata_type=metadataTypes,
+                sample_data=sampleData,
+            )

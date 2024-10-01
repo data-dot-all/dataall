@@ -1,9 +1,5 @@
 from dataall.base.api import gql
-from dataall.modules.s3_datasets.api.dataset.input_types import (
-    ModifyDatasetInput,
-    NewDatasetInput,
-    ImportDatasetInput,
-)
+from dataall.modules.s3_datasets.api.dataset.input_types import ModifyDatasetInput, NewDatasetInput, ImportDatasetInput
 from dataall.modules.s3_datasets.api.dataset.resolvers import (
     create_dataset,
     update_dataset,
@@ -11,7 +7,9 @@ from dataall.modules.s3_datasets.api.dataset.resolvers import (
     delete_dataset,
     import_dataset,
     start_crawler,
+    generate_metadata,
 )
+from dataall.modules.s3_datasets.api.dataset.enums import MetadataGenerationTargets
 
 createDataset = gql.MutationField(
     name='createDataset',
@@ -67,4 +65,16 @@ StartGlueCrawler = gql.MutationField(
     ],
     resolver=start_crawler,
     type=gql.Ref('GlueCrawler'),
+)
+generateMetadata = gql.MutationField(
+    name='generateMetadata',
+    args=[
+        gql.Argument(name='resourceUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='targetType', type=gql.NonNullableType(MetadataGenerationTargets.toGraphQLEnum())),
+        gql.Argument(name='version', type=gql.Integer),
+        gql.Argument(name='metadataTypes', type=gql.NonNullableType(gql.ArrayType(gql.String))),
+        gql.Argument(name='sampleData', type=gql.Ref('SampleDataInput')),
+    ],
+    type=gql.Ref('GeneratedMetadata'),
+    resolver=generate_metadata,
 )
