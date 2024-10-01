@@ -15,20 +15,6 @@ def mark_notification_read(client, uri):
     return response.data.markNotificationAsRead
 
 
-def delete_notification(client, uri):
-    query = {
-        'operationName': 'deleteNotification',
-        'variables': {'notificationUri': uri},
-        'query': """
-            mutation deleteNotification($notificationUri: String!) {
-              deleteNotification(notificationUri: $notificationUri)
-            }
-                """,
-    }
-    response = client.query(query=query)
-    return response.data.deleteNotification
-
-
 def list_notifications(client, filter={}):
     query = {
         'operationName': 'listNotifications',
@@ -56,7 +42,7 @@ def list_notifications(client, filter={}):
     return response.data.listNotifications
 
 
-def count_unread_notificiations(client):
+def count_unread_notifications(client):
     query = {
         'operationName': 'countUnreadNotifications',
         'variables': {},
@@ -68,31 +54,3 @@ def count_unread_notificiations(client):
     }
     response = client.query(query=query)
     return response.data.countUnreadNotifications
-
-
-def count_read_notificiations(client):
-    query = {
-        'operationName': 'countReadNotifications',
-        'variables': {},
-        'query': """
-            query countReadNotifications {
-              countReadNotifications
-            }
-                """,
-    }
-    response = client.query(query=query)
-    return response.data.countReadNotifications
-
-
-def count_deleted_notificiations(client):
-    query = {
-        'operationName': 'countDeletedNotifications',
-        'variables': {},
-        'query': """
-            query countDeletedNotifications {
-              countDeletedNotifications
-            }
-                """,
-    }
-    response = client.query(query=query)
-    return response.data.countDeletedNotifications
