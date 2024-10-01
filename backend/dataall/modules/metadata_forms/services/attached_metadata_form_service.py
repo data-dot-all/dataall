@@ -80,9 +80,15 @@ class AttachedMetadataFormService:
                 page_size=filter.get('pageSize', 10),
             ).to_dict()
 
+    # session is rudimentary here, but it is required for the ResourcePolicyService to work
+    @staticmethod
+    def _get_entity_uri_by_mf_uri(session, uri):
+        mf = AttachedMetadataFormService.get_attached_metadata_form(uri)
+        return mf.entityUri
+
     @staticmethod
     @ResourcePolicyService.has_resource_permission(
-        ATTACH_METADATA_FORM, parent_resource=_get_entity_uri, param_name='data'
+        ATTACH_METADATA_FORM, parent_resource=_get_entity_uri_by_mf_uri, param_name='uri'
     )
     def delete_attached_metadata_form(uri):
         mf = AttachedMetadataFormService.get_attached_metadata_form(uri)
