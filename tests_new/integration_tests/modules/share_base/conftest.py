@@ -74,7 +74,7 @@ def session_consumption_role_1(client5, group5, session_cross_acc_env_1, session
     yield consumption_role
     remove_consumption_role(client5, session_cross_acc_env_1.environmentUri, consumption_role.consumptionRoleUri)
     iam_client = IAMClient(session=session_cross_acc_env_1_aws_client, region=session_cross_acc_env_1['region'])
-    iam_client.delete_role(test_session_cons_role_name)
+    iam_client.delete_consumption_role(role['Role']['RoleName'])
 
 
 @pytest.fixture(scope='session')
