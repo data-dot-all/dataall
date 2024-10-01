@@ -28,7 +28,6 @@ jobs:
       - name: Install
         run: |
           pip3 install --upgrade --force pip
-          pip -V
-          python -m pip install bandit
+          pip3 install bandit
       - name: Bandit
         run: bandit -r -lll -ii .
