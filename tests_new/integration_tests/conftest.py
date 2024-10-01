@@ -167,11 +167,6 @@ def session_id() -> str:
     return datetime.datetime.utcnow().isoformat()
 
 
-@pytest.fixture(scope='session', autouse=True)
-def session_start_timestamp(session_id) -> float:
-    yield datetime.datetime.fromisoformat(session_id).timestamp()
-
-
 @pytest.fixture(scope='session')
 def resources_prefix(session_id) -> str:
     re.sub('[^a-zA-Z0-9-]', '', session_id).lower()
