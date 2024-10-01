@@ -15,6 +15,7 @@ class VoteRepository:
             .filter(
                 models.Vote.targetUri == targetUri,
                 models.Vote.targetType == targetType,
+                models.Vote.username == get_context().username,
             )
             .first()
         )
@@ -24,6 +25,7 @@ class VoteRepository:
         vote: models.Vote = (
             session.query(models.Vote)
             .filter(
+                models.Vote.username == get_context().username,
                 models.Vote.targetUri == targetUri,
                 models.Vote.targetType == targetType,
             )
