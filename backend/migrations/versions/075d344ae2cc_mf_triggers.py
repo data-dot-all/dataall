@@ -46,8 +46,8 @@ def upgrade():
         EXECUTE FUNCTION org_delete_trigger_function();
         """.format(SCHEMA_NAME=ENVNAME)
 
-    op.execute(SQL_ORG_TRIGGER_DEF)
-    op.execute(SQL_ORG_TRIGGER_CREATE)
+    op.execute(SQL_ORG_TRIGGER_DEF)  # nosemgrep
+    op.execute(SQL_ORG_TRIGGER_CREATE)  # nosemgrep
 
     SQL_ENV_TRIGGER_DEF = """CREATE OR REPLACE FUNCTION env_delete_trigger_function()
         RETURNS TRIGGER AS $$
@@ -73,8 +73,8 @@ def upgrade():
         EXECUTE FUNCTION env_delete_trigger_function();
         """.format(SCHEMA_NAME=ENVNAME)
 
-    op.execute(SQL_ENV_TRIGGER_DEF)
-    op.execute(SQL_ENV_TRIGGER_CREATE)
+    op.execute(SQL_ENV_TRIGGER_DEF)  # nosemgrep
+    op.execute(SQL_ENV_TRIGGER_CREATE)  # nosemgrep
 
     SQL_DATASET_TRIGGER_DEF = """
             CREATE OR REPLACE FUNCTION dataset_delete_trigger_function()
@@ -95,8 +95,8 @@ def upgrade():
         FOR EACH ROW
         EXECUTE FUNCTION dataset_delete_trigger_function();""".format(SCHEMA_NAME=ENVNAME)
 
-    op.execute(SQL_DATASET_TRIGGER_DEF)
-    op.execute(SQL_DATASET_TRIGGER_CREATE)
+    op.execute(SQL_DATASET_TRIGGER_DEF)  # nosemgrep
+    op.execute(SQL_DATASET_TRIGGER_CREATE)  # nosemgrep
 
     SQL_RESOURCE_TRIGGER_DEF = """
         CREATE OR REPLACE FUNCTION metadata_form_delete_trigger_function()
@@ -116,8 +116,8 @@ def upgrade():
         FOR EACH ROW
         EXECUTE FUNCTION metadata_form_delete_trigger_function();""".format(SCHEMA_NAME=ENVNAME)
 
-    op.execute(SQL_RESOURCE_TRIGGER_DEF)
-    op.execute(SQL_RESOURCE_TRIGGER_CREATE)
+    op.execute(SQL_RESOURCE_TRIGGER_DEF)  # nosemgrep
+    op.execute(SQL_RESOURCE_TRIGGER_CREATE)  # nosemgrep
     # # ### end Alembic commands ###
 
 
