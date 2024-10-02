@@ -235,9 +235,7 @@ def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdat
     finally:
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
-            delete_aws_dataset_resources(
-                aws_client=session_env1_aws_client, env=session_env1, bucket=ds.S3BucketName, kms_alias=ds.KmsAlias
-            )
+            delete_aws_dataset_resources(aws_client=session_env1_aws_client, env=session_env1, bucket=ds.S3BucketName)
 
 
 @pytest.fixture(scope='session')
@@ -392,9 +390,8 @@ def temp_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata, 
     finally:
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
-            delete_aws_dataset_resources(
-                aws_client=session_env1_aws_client, env=session_env1, bucket=ds.S3BucketName, kms_alias=ds.KmsAlias
-            )
+
+            delete_aws_dataset_resources(aws_client=session_env1_aws_client, env=session_env1, bucket=ds.S3BucketName)
 
 
 """

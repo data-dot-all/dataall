@@ -12,6 +12,7 @@ from integration_tests.core.environment.queries import (
 )
 from integration_tests.core.organizations.queries import create_organization
 from integration_tests.core.stack.utils import check_stack_ready
+from tests_new.integration_tests.aws_clients.s3 import S3Client
 
 log = logging.getLogger(__name__)
 
@@ -50,6 +51,9 @@ def session_env1(client1, group1, org1, session_id, testdata):
         yield env
     finally:
         if env:
+            role = f'arn:aws:iam::{env.AwsAccountId}:role/dataall-integration-tests-role-{env.region}'
+            session = get_environment_aws_session(role, env)
+            S3Client(session=session, region=env.region).delete_bucket(env.EnvironmentDefaultBucketName)
             delete_env(client1, env)
 
 
