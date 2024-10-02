@@ -1,3 +1,5 @@
+from dataall.base.context import get_context
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.shares_base.services.share_object_service import SharesValidatorInterface
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound, InvalidConfiguration
@@ -9,6 +11,9 @@ from dataall.modules.shares_base.services.share_permissions import (
 from dataall.modules.redshift_datasets_shares.aws.redshift_data import redshift_share_data_client
 from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
 from dataall.modules.redshift_datasets.db.redshift_dataset_repositories import RedshiftDatasetRepository
+from dataall.modules.redshift_datasets.services.redshift_connection_permissions import (
+    CREATE_SHARE_REQUEST_WITH_CONNECTION,
+)
 
 import logging
 
@@ -28,8 +33,12 @@ class RedshiftTableValidator(SharesValidatorInterface):
         attachMissingPolicies,
         permissions,
     ) -> bool:
+        RedshiftTableValidator._validate_target_connection_permissions(session=session, uri=principal_id)
         rs_dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(
             session=session, dataset_uri=dataset.datasetUri
+        )
+        RedshiftTableValidator._validate_source_connection(
+            session=session, dataset_connection_uri=rs_dataset.connectionUri
         )
         RedshiftTableValidator._validate_clusters(
             session=session, source_connection_uri=rs_dataset.connectionUri, target_connection_uri=principal_id
@@ -40,9 +49,6 @@ class RedshiftTableValidator(SharesValidatorInterface):
             principal_id=principal_id,
             principal_role_name=principal_role_name,
             action=CREATE_SHARE_OBJECT,
-        )
-        RedshiftTableValidator._validate_source_connection(
-            session=session, dataset_connection_uri=rs_dataset.connectionUri
         )
         return True
 
@@ -105,5 +111,16 @@ class RedshiftTableValidator(SharesValidatorInterface):
         ):
             raise InvalidConfiguration(
                 action=CREATE_SHARE_OBJECT,
-                message='Redshift data.all datashares require an ADMIN connection in both clusters',
+                message='Redshift data.all datashares require an ADMIN connection in the SOURCE namespace',
             )
+
+    @staticmethod
+    def _validate_target_connection_permissions(session, uri):
+        context = get_context()
+        return ResourcePolicyService.check_user_resource_permission(
+            session=session,
+            username=context.username,
+            groups=context.groups,
+            resource_uri=uri,
+            permission_name=CREATE_SHARE_REQUEST_WITH_CONNECTION,
+        )
