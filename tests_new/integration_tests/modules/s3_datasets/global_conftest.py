@@ -95,7 +95,7 @@ def create_aws_imported_resources(
     return bucket, kms_alias, database, existing_lf_admins
 
 
-def delete_aws_imported_resources(aws_client, env, bucket=None, kms_alias=None, database=None, existing_lf_admins=None):
+def delete_aws_dataset_resources(aws_client, env, bucket=None, kms_alias=None, database=None, existing_lf_admins=None):
     try:
         if bucket:
             S3Client(session=aws_client, region=env['region']).delete_bucket(bucket)
@@ -218,7 +218,7 @@ For this reason they must stay immutable as changes to them will affect the rest
 
 
 @pytest.fixture(scope='session')
-def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata):
+def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata, session_env1_aws_client):
     ds = None
     try:
         ds = create_s3_dataset(
@@ -235,6 +235,9 @@ def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdat
     finally:
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
+            delete_aws_dataset_resources(
+                aws_client=session_env1_aws_client, env=session_env1, bucket=ds.S3BucketName, kms_alias=ds.KmsAlias
+            )
 
 
 @pytest.fixture(scope='session')
@@ -276,7 +279,7 @@ def session_imported_sse_s3_dataset1(
     finally:
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
-        delete_aws_imported_resources(aws_client=session_env1_aws_client, env=session_env1, bucket=bucket)
+        delete_aws_dataset_resources(aws_client=session_env1_aws_client, env=session_env1, bucket=bucket)
 
 
 @pytest.fixture(scope='session')
@@ -331,7 +334,7 @@ def session_imported_kms_s3_dataset1(
     finally:
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
-        delete_aws_imported_resources(
+        delete_aws_dataset_resources(
             aws_client=session_env1_aws_client,
             env=session_env1,
             bucket=bucket,
@@ -373,7 +376,7 @@ They are suitable to test env mutations.
 
 
 @pytest.fixture(scope='function')
-def temp_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata):
+def temp_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata, session_env1_aws_client):
     ds = None
     try:
         ds = create_s3_dataset(
@@ -389,6 +392,9 @@ def temp_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata):
     finally:
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
+            delete_aws_dataset_resources(
+                aws_client=session_env1_aws_client, env=session_env1, bucket=ds.S3BucketName, kms_alias=ds.KmsAlias
+            )
 
 
 """
@@ -495,7 +501,7 @@ def persistent_imported_kms_s3_dataset1(
         or (not kms_alias and not existing_kms_alias)
         or (not database and not existing_database)
     ):
-        delete_aws_imported_resources(
+        delete_aws_dataset_resources(
             aws_client=persistent_env1_aws_client,
             env=persistent_env1,
             bucket=bucket,
