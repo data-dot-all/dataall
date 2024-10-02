@@ -1,8 +1,8 @@
 # **Metadata Forms**
 
-**Concepts**
+**Introduction**
 
-Metadata forms allow users to add structured contextual information to various entities in the Data.all platform. By creating and attaching metadata forms, user can standardize and enrich metadata in a customizable way.
+Metadata forms allow users to add structured contextual information to various entities in the data.all platform. By creating and attaching metadata forms, user can standardize and enrich metadata in a customizable way.
 
 Metadata forms serve several key purposes:
 
