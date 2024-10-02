@@ -16,8 +16,12 @@ class IAMClient:
         self._region = region
 
     def get_role(self, role_name):
-        role = self._client.get_role(RoleName=role_name)
-        return role
+        try:
+            role = self._client.get_role(RoleName=role_name)
+            return role
+        except self._client.exceptions.NoSuchEntityException as e:
+            log.info(f'Error occurred: {e}')
+            return None
 
     def delete_role(self, role_name):
         self._client.delete_role(RoleName=role_name)
