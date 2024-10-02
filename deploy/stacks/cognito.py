@@ -108,7 +108,7 @@ class IdpStack(pyNestedClass):
             auth_flows=AuthFlow(user_password=with_approval_tests, user_srp=True, custom=True),
             prevent_user_existence_errors=True,
             refresh_token_validity=Duration.minutes(cognito_user_session_timeout_inmins),
-            id_toekn_validity=Duration.minutes(id_token_duration),
+            id_token_validity=Duration.minutes(id_token_duration),
         )
 
         if enable_cw_rum:
