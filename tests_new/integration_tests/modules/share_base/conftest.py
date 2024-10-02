@@ -8,6 +8,7 @@ def principal1(request, group5, session_consumption_role_1):
     else:
         yield session_consumption_role_1.consumptionRoleUri, request.param
 
+
 # --------------SESSION PARAM FIXTURES----------------------------
 
 
