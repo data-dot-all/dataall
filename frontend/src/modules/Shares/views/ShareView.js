@@ -3,6 +3,7 @@ import {
   BlockOutlined,
   CheckCircleOutlined,
   DeleteOutlined,
+  Warning,
   RefreshRounded
 } from '@mui/icons-material';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
@@ -18,6 +19,9 @@ import {
   Chip,
   Container,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogActions,
   Grid,
   Link,
   List,
@@ -28,6 +32,7 @@ import {
   TableHead,
   TableRow,
   Tooltip,
+  Stack,
   Typography
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -83,6 +88,8 @@ import { useTheme } from '@mui/styles';
 import { UpdateExtensionReason } from '../components/ShareUpdateExtension';
 import CancelIcon from '@mui/icons-material/Close';
 
+const isReadOnlyShare = (share) => share.permissions.every((p) => p === 'Read');
+
 function ShareViewHeader(props) {
   const {
     share,
@@ -96,6 +103,7 @@ function ShareViewHeader(props) {
     loading
   } = props;
   const [accepting, setAccepting] = useState(false);
+  const [acceptingWarning, setAcceptingWarning] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [cancellingExtension, setCancellingExtension] = useState(false);
@@ -361,7 +369,11 @@ function ShareViewHeader(props) {
                         color="success"
                         startIcon={<CheckCircleOutlined />}
                         sx={{ m: 1 }}
-                        onClick={handleApproveShare}
+                        onClick={async () =>
+                          isReadOnlyShare(share)
+                            ? handleApproveShare()
+                            : setAcceptingWarning(true)
+                        }
                         ref={anchorRef}
                         type="button"
                         variant="outlined"
@@ -379,6 +391,31 @@ function ShareViewHeader(props) {
                       >
                         Reject
                       </LoadingButton>
+                      <Dialog
+                        open={acceptingWarning}
+                        onClose={async () => setAcceptingWarning(false)}
+                      >
+                        <DialogTitle>
+                          Write or Modify permissions requested, do you want to
+                          proceed with the Approval?
+                        </DialogTitle>
+                        <DialogActions>
+                          <Button
+                            onClick={async () => {
+                              setAcceptingWarning(false);
+                              handleApproveShare();
+                            }}
+                          >
+                            Yes
+                          </Button>
+                          <Button
+                            onClick={async () => setAcceptingWarning(false)}
+                            autoFocus
+                          >
+                            No
+                          </Button>
+                        </DialogActions>
+                      </Dialog>
                     </>
                   )}
                   {share.status === 'Submitted_For_Extension' && (
@@ -1362,12 +1399,26 @@ const ShareView = () => {
                               padding: 2
                             }}
                           >
-                            <Typography
-                              color="textSecondary"
-                              variant="subtitle2"
+                            <Stack
+                              spacing={1}
+                              alignItems="center"
+                              direction="row"
                             >
-                              Permissions
-                            </Typography>
+                              <Typography
+                                color="textSecondary"
+                                variant="subtitle2"
+                              >
+                                Permissions
+                              </Typography>
+                              {!isReadOnlyShare(share) && (
+                                <Tooltip
+                                  title="non-readonly share request"
+                                  arrow
+                                >
+                                  <Warning color="warning" />
+                                </Tooltip>
+                              )}
+                            </Stack>
                             <Typography color="textPrimary" variant="body2">
                               {share.permissions.map((perm) => (
                                 <Chip label={perm} sx={{ marginRight: 1 }} />
