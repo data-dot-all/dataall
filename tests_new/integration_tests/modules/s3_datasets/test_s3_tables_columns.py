@@ -21,8 +21,8 @@ def test_sync_dataset_table_columns(client1, tables_fixture_name, request):
     tables = request.getfixturevalue(tables_fixture_name)
     response = sync_dataset_table_columns(client1, tables[0].tableUri)
     assert_that(response.count).is_equal_to(3)
-    assert_that(response.nodes[0].name).is_equal_to('column1')
-    assert_that(response.nodes[0].typeName).is_equal_to('int')
+    assert_that(response.nodes).extracting('name').contains('column1', 'column2', 'column3')
+    assert_that(response.nodes).extracting('typeName').contains('int', 'string', 'string')
 
 
 @pytest.mark.parametrize(
@@ -44,8 +44,8 @@ def test_list_dataset_table_columns(client1, tables_fixture_name, request):
     table_uri = tables[0].tableUri
     response = list_dataset_table_columns(client1, table_uri)
     assert_that(response.count).is_equal_to(3)
-    assert_that(response.nodes[0].name).is_equal_to('column1')
-    assert_that(response.nodes[0].columnUri).is_not_none()
+    assert_that(response.nodes).extracting('name').contains('column1', 'column2', 'column3')
+    assert_that(response.nodes).extracting('columnUri').does_not_contain(None)
 
 
 @pytest.mark.parametrize(*TABLES_CONFIDENTIALITY_FIXTURES_PARAMS)
