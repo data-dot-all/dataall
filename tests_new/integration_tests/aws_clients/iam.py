@@ -19,7 +19,7 @@ class IAMClient:
         try:
             role = self._client.get_role(RoleName=role_name)
             return role
-        except Exception as e:
+        except self._client.exceptions.NoSuchEntityException as e:
             log.info(f'Error occurred: {e}')
             return None
 
