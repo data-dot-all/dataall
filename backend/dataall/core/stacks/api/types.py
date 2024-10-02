@@ -21,6 +21,7 @@ Stack = gql.ObjectType(
         gql.Field(name='region', type=gql.NonNullableType(gql.String)),
         gql.Field(name='status', type=gql.String),
         gql.Field(name='stackid', type=gql.String),
+        gql.Field(name='updated', type=gql.AWSDateTime),
         gql.Field(name='link', type=gql.String, resolver=resolve_link),
         gql.Field(name='outputs', type=gql.String, resolver=resolve_outputs),
         gql.Field(name='resources', type=gql.String, resolver=resolve_resources),

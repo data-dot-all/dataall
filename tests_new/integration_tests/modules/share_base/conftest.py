@@ -2,11 +2,13 @@ import pytest
 
 
 @pytest.fixture(params=['Group', 'ConsumptionRole'])
-def principal1(request, group5, consumption_role_1):
+def principal1(request, group5, session_consumption_role_1):
     if request.param == 'Group':
         yield group5, request.param
     else:
-        yield consumption_role_1.consumptionRoleUri, request.param
+        yield session_consumption_role_1.consumptionRoleUri, request.param
+
+# --------------SESSION PARAM FIXTURES----------------------------
 
 
 @pytest.fixture(params=['Group', 'ConsumptionRole'])
@@ -38,3 +40,14 @@ def share_params_all(
             yield session_share_1, session_s3_dataset1
         else:
             yield session_share_consrole_1, session_s3_dataset1
+
+
+# --------------PERSISTENT FIXTURES----------------------------
+
+
+@pytest.fixture(params=['Group', 'ConsumptionRole'])
+def persistent_share_params_main(request, persistent_role_share_1, persistent_group_share_1):
+    if request.param == 'Group':
+        yield persistent_group_share_1
+    else:
+        yield persistent_role_share_1

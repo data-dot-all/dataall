@@ -44,6 +44,7 @@ def get_stack(client, env_uri, stack_uri, target_uri, target_type):
                         accountid
                         region
                         stackid
+                        updated
                         link
                         outputs
                         resources

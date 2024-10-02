@@ -176,6 +176,21 @@ def add_share_item(client, shareUri: str, itemUri: str, itemType: str):
     return response.data.addSharedItem.shareItemUri
 
 
+def remove_share_item(client, shareItemUri: str):
+    query = {
+        'operationName': 'removeSharedItem',
+        'variables': {'shareItemUri': shareItemUri},
+        'query': f"""
+                    mutation removeSharedItem($shareItemUri: String!) {{
+                        removeSharedItem(shareItemUri: $shareItemUri)
+                    }}
+                """,
+    }
+
+    response = client.query(query=query)
+    return response.data.removeSharedItem
+
+
 def verify_share_items(client, shareUri: str, shareItemsUris: List[str]):
     query = {
         'operationName': 'verifyItemsShareObject',

@@ -19,4 +19,3 @@ countUnreadNotifications = gql.QueryField(
     type=gql.Integer,
     resolver=count_unread_notifications,
 )
-

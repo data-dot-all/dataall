@@ -1,4 +1,6 @@
 import logging
+from datetime import datetime
+
 import pytest
 import boto3
 
@@ -12,6 +14,7 @@ from integration_tests.core.environment.queries import (
 )
 from integration_tests.core.organizations.queries import create_organization
 from integration_tests.core.stack.utils import check_stack_ready
+from tests_new.integration_tests.core.environment.utils import update_env_stack
 
 log = logging.getLogger(__name__)
 
@@ -178,3 +181,30 @@ def get_or_create_persistent_env(env_name, client, group, testdata):
 @pytest.fixture(scope='session')
 def persistent_env1(client1, group1, testdata):
     return get_or_create_persistent_env('persistent_env1', client1, group1, testdata)
+
+
+@pytest.fixture(scope='session')
+def updated_persistent_env1(client1, group1, persistent_env1):
+    update_env_stack(client1, persistent_env1)
+    return get_environment(client1, persistent_env1.environmentUri)
+
+
+@pytest.fixture(scope='session')
+def persistent_cross_acc_env_1(client5, group5, testdata):
+    return get_or_create_persistent_env('persistent_cross_acc_env_1', client5, group5, testdata)
+
+
+@pytest.fixture(scope='session')
+def updated_persistent_cross_acc_env_1(client5, group5, persistent_cross_acc_env_1):
+    update_env_stack(client5, persistent_cross_acc_env_1)
+    return get_environment(client5, persistent_cross_acc_env_1.environmentUri)
+
+
+@pytest.fixture(scope='session')
+def persistent_cross_acc_env_1_integration_role_arn(persistent_cross_acc_env_1):
+    return f'arn:aws:iam::{persistent_cross_acc_env_1.AwsAccountId}:role/dataall-integration-tests-role-{persistent_cross_acc_env_1.region}'
+
+
+@pytest.fixture(scope='session')
+def persistent_cross_acc_env_1_aws_client(persistent_cross_acc_env_1, persistent_cross_acc_env_1_integration_role_arn):
+    return get_environment_aws_session(persistent_cross_acc_env_1_integration_role_arn, persistent_cross_acc_env_1)

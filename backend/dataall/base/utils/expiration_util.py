@@ -9,11 +9,21 @@ class ExpirationUtils:
     def calculate_expiry_date(expirationPeriod, expirySetting):
         currentDate = date.today()
         if expirySetting == Expiration.Quartely.value:
-            quarterlyCalculatedDate = currentDate + relativedelta(months=expirationPeriod * 3 - 1)
+            if currentDate < datetime(currentDate.year, currentDate.month, 15).date():
+                # First half of the month - extend 2.X months
+                quarterlyCalculatedDate = currentDate + relativedelta(months=expirationPeriod * 3 - 1)
+            else:
+                # Second half of the month - extend 3.X months
+                quarterlyCalculatedDate = currentDate + relativedelta(months=expirationPeriod * 3)
             day = calendar.monthrange(quarterlyCalculatedDate.year, quarterlyCalculatedDate.month)[1]
             shareExpiryDate = datetime(quarterlyCalculatedDate.year, quarterlyCalculatedDate.month, day)
         elif expirySetting == Expiration.Monthly.value:
-            monthlyCalculatedDate = currentDate + relativedelta(months=expirationPeriod - 1)
+            if currentDate < datetime(currentDate.year, currentDate.month, 15).date():
+                # First half of the month - extend until end of month
+                monthlyCalculatedDate = currentDate + relativedelta(months=expirationPeriod - 1)
+            else:
+                # Second half of the month - extend until end of next month
+                monthlyCalculatedDate = currentDate + relativedelta(months=expirationPeriod)
             monthEndDay = calendar.monthrange(monthlyCalculatedDate.year, monthlyCalculatedDate.month)[1]
             shareExpiryDate = datetime(monthlyCalculatedDate.year, monthlyCalculatedDate.month, monthEndDay)
         else:
