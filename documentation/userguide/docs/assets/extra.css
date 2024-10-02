@@ -32,3 +32,12 @@ img[src*="#no-border"] {
 a.md-logo img {
     border: none;
 }
+
+
+.signout-button {
+  color: white !important;
+  padding: 10px 20px !important;
+  border-radius: 4px;
+  font-size: 20px;
+  border: 1px solid white;
+}
