@@ -8,15 +8,39 @@ Metadata forms serve several key purposes:
 
 - Improve data discovery by enabling more consistent, complete, and meaningful metadata
 - Capture domain-specific or organizational metadata standards
-- Enforce governance policies around data documentation
-- Facilitate data lineage and impact analysis
 - Streamline metadata management workflows
+- Search among all entities in data.all based on attached metadata
+
+**Metadata Form lifecycle and usage**
+
+1. User given the permission from data.all administrators can create metadata forms with the Global visibility and visibility for their teams. Owners and Admins of Organizations and Environments can create metadata forms with Environment-Wide and Organization-wide visibility for owned entities.
+2. Once form is created, the owners can add enforcement rules (see the section below).
+3. All changes in metadata form can be performed only by its owner. 
+4. Metadata form can be attached to an entity by the user with sufficient permissions. Permissions are given by the owner or admin of the entity.
+5. Attached metadata forms can be edited or deleted by any user with sufficient permissions.
+
+**Metadata Forms levels and enforcement**
+
+Metadata forms can be obligatory to fill in on different levels. User can select the metadata form and entity types, that should have this form attached.  Enforcement affects selected entity types on all lower levels hierarchically.
 
 ![metadata form levels](pictures/metadata_forms/mf_levels.jpg#zoom#shadow)
 
-This user guide provides instructions on how to create, manage, and use metadata forms in data.all. It covers form creation, attaching forms to entities, filling out forms, managing form visibility and permissions, and enforcing form usage. Whether you are a data producer adding metadata, a data consumer leveraging it, or an administrator standardizing on formats, this guide will help you get the most value out of metadata forms.
+Who can enforce:
 
-With customizable forms that can be attached across many entities, metadata forms provide a flexible and extensible mechanism for metadata management. Use this guide to learn how to configure and apply forms to address your specific metadata use cases and data governance needs.
+* Data.all admins can enforce any form on any level across the platform. They have full control over metadata form enforcement.
+* Owners/admins of the data can enforce forms for this levels and levels below in the hierarchy. For example, an org admin can enforce a form for the org, all teams in that org, all environments in the org, all datasets in those environments, etc.
+* Share approvers and requestors can enforce forms for a specific share they are involved with. However, they can only delete enforcement rules they created themselves - they cannot delete rules created by others
+
+So in summary, enforcement capabilities cascade along with administrative privileges in the hierarchy. Global admins have full control, org/env admins can enforce for their sphere and below, dataset admins for the datasets and items in it, and share requesters and approvers for a specific share.
+
+**View Metadata Forms**
+By clicking Metadata Forms in the Discovery section of the left side pane users can open a list of metadata forms available for them.
+The criteria for availability:
+1. The group, that user belong to, is an owner of the metadata form.
+2. Metadata form has Global visibility.
+2. Metadata form has Team-Only visibility and the user is a member of this team.
+3. Metadata form has Environment-Wide of Organization-Wide visibility and user has access to this environment/organization.
+4. Administrators can view all metadata forms.
 
 ![metadata form list](pictures/metadata_forms/mf_list.png#zoom#shadow)
 
@@ -47,7 +71,7 @@ When the editor mode is enabled, user can
 
 1. add fields using the button '+ Add field' in the left upper corner of the table;
 2. delete fields using 'bin' icon in the end of the table row. When the user pushes the button, the row is disabled, which indicates it is marked for deletion, but user can restore the field by clicking the button (now with "refresh") again;
-3. arrange fields using drag and drop;
+3. arrange fields using drag and drop, fields will be shown in rendered metadata form in the order they appear in this list (from top to bottom);
 4. edit all parameters of the field.
 
 When finished, click "Save" to apply changes.
@@ -68,7 +92,7 @@ User can delete the form with button "Delete" in the upper right corner of the f
 User with required access can attach metadata form to Organization, Environment or Dataset.
 To attach new metadata form or view already attached use the tab "Metadata" on entity view page.
 
-In the column on the left all attached metadata forms are listed. When user clicks on the form, it content appears
+In the column on the left all attached metadata forms are listed. When user clicks on the form, its content appears
 on the right. The attached form can be deleted by click on "bin" icon next to form name in the list.
 
 ![metadata form attached_list](pictures/metadata_forms/attached_mf_list.png#zoom#shadow)
