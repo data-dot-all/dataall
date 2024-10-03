@@ -11,13 +11,25 @@ Metadata forms serve several key purposes:
 - Streamline metadata management workflows
 - Search among all entities in data.all based on attached metadata
 
+**Metadata Forms visibility**
+
+Visibility setting defines who can view and attach a metadata form to an entity.
+
+- Global visibility means the metadata form is visible and attachable to any entity by all users across the platform
+- Organization/Environment-Wide visibility limits the form to a specific organization/environment - it can only be seen by members of this organization/environment and attached to entities in that organization/environment
+- Team-Only visibility restricts the form to just members of a specific team, but does not restrict to which entities it can be attached to
+
+The same visibility restrictions apply to the attached metadata form. E.g. is userA can see Metadata Form A, but can't see Metadata Forms B, and both of these
+metadata forms attached to the dataset (attachedA and attachedB), so userA can view attachedA, but can not view attachedB.
+
 **Metadata Form lifecycle and usage**
 
 1. User given the permission from data.all administrators can create metadata forms with the Global visibility and visibility for their teams. Owners and Admins of Organizations and Environments can create metadata forms with Environment-Wide and Organization-wide visibility for owned entities.
 2. Once form is created, the owners can add enforcement rules (see the section below).
 3. All changes in metadata form can be performed only by its owner. 
-4. Metadata form can be attached to an entity by the user with sufficient permissions. Permissions are given by the owner or admin of the entity.
-5. Attached metadata forms can be edited or deleted by any user with sufficient permissions.
+4. In case owner deletes metadata form all its attached entities are deleted in cascade mode. 
+5. Metadata form can be attached to an entity by the user with sufficient permissions. Permissions are given by the owner or admin of the entity (in case of Environments and Organizations). In case of Datasets the owner and steward teams have these permissions and also the teams with whom the dataset was shared.
+6. Attached metadata forms can be edited or deleted by any user with sufficient permissions.
 
 **Metadata Forms levels and enforcement**
 
@@ -28,14 +40,14 @@ Metadata forms can be obligatory to fill in on different levels. User can select
 Who can enforce:
 
 * Data.all admins can enforce any form on any level across the platform. They have full control over metadata form enforcement.
-* Owners/admins of the data can enforce forms for this levels and levels below in the hierarchy. For example, an org admin can enforce a form for the org, all teams in that org, all environments in the org, all datasets in those environments, etc.
+* Owners/admins  of a data.all entity can enforce forms for this levels and levels below in the hierarchy. For example, an org admin can enforce a form for the org, all teams in that org, all environments in the org, all datasets in those environments, etc.
 * Share approvers and requestors can enforce forms for a specific share they are involved with. However, they can only delete enforcement rules they created themselves - they cannot delete rules created by others
 
 So in summary, enforcement capabilities cascade along with administrative privileges in the hierarchy. Global admins have full control, org/env admins can enforce for their sphere and below, dataset admins for the datasets and items in it, and share requesters and approvers for a specific share.
 
 **View Metadata Forms**
-By clicking Metadata Forms in the Discovery section of the left side pane users can open a list of metadata forms available for them.
-The criteria for availability:
+By clicking Metadata Forms in the Discovery section of the left side pane users can open a list of metadata forms visible for them.
+The criteria for visibility:
 1. The group, that user belong to, is an owner of the metadata form.
 2. Metadata form has Global visibility.
 2. Metadata form has Team-Only visibility and the user is a member of this team.
