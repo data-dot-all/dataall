@@ -1,9 +1,9 @@
 import logging
-from datetime import datetime
 
 import pytest
 import boto3
 
+from integration_tests.aws_clients.sts import STSClient
 from integration_tests.client import GqlError
 from integration_tests.core.environment.queries import (
     create_environment,
@@ -56,22 +56,6 @@ def session_env1(client1, group1, org1, session_id, testdata):
             delete_env(client1, env)
 
 
-def get_environment_aws_session(role_arn, env):
-    try:
-        base_session = boto3.Session()
-        response = base_session.client('sts', region_name=env.region).assume_role(
-            RoleArn=role_arn, RoleSessionName=role_arn.split('/')[1]
-        )
-        return boto3.Session(
-            aws_access_key_id=response['Credentials']['AccessKeyId'],
-            aws_secret_access_key=response['Credentials']['SecretAccessKey'],
-            aws_session_token=response['Credentials']['SessionToken'],
-        )
-    except:
-        log.exception('Failed to assume environment integration test role')
-        raise
-
-
 @pytest.fixture(scope='session')
 def session_env1_integration_role_arn(session_env1):
     return f'arn:aws:iam::{session_env1.AwsAccountId}:role/dataall-integration-tests-role-{session_env1.region}'
@@ -79,7 +63,9 @@ def session_env1_integration_role_arn(session_env1):
 
 @pytest.fixture(scope='session')
 def session_env1_aws_client(session_env1, session_env1_integration_role_arn):
-    return get_environment_aws_session(session_env1_integration_role_arn, session_env1)
+    return STSClient(
+        role_arn=session_env1_integration_role_arn, region=session_env1.get('region'), session_name='Session_1'
+    ).get_refreshable_session()
 
 
 @pytest.fixture(scope='session')
@@ -109,7 +95,11 @@ def session_cross_acc_env_1_integration_role_arn(session_cross_acc_env_1):
 
 @pytest.fixture(scope='session')
 def session_cross_acc_env_1_aws_client(session_cross_acc_env_1, session_cross_acc_env_1_integration_role_arn):
-    return get_environment_aws_session(session_cross_acc_env_1_integration_role_arn, session_cross_acc_env_1)
+    return STSClient(
+        role_arn=session_cross_acc_env_1_integration_role_arn,
+        region=session_cross_acc_env_1.get('region'),
+        session_name='Session_cross_1',
+    ).get_refreshable_session()
 
 
 @pytest.fixture(scope='session')
@@ -119,7 +109,9 @@ def persistent_env1_integration_role_arn(persistent_env1):
 
 @pytest.fixture(scope='session')
 def persistent_env1_aws_client(persistent_env1, persistent_env1_integration_role_arn):
-    return get_environment_aws_session(persistent_env1_integration_role_arn, persistent_env1)
+    return STSClient(
+        role_arn=persistent_env1_integration_role_arn, region=persistent_env1.get('region'), session_name='Persistent_1'
+    ).get_refreshable_session()
 
 
 @pytest.fixture(scope='session')
@@ -207,4 +199,8 @@ def persistent_cross_acc_env_1_integration_role_arn(persistent_cross_acc_env_1):
 
 @pytest.fixture(scope='session')
 def persistent_cross_acc_env_1_aws_client(persistent_cross_acc_env_1, persistent_cross_acc_env_1_integration_role_arn):
-    return get_environment_aws_session(persistent_cross_acc_env_1_integration_role_arn, persistent_cross_acc_env_1)
+    return STSClient(
+        role_arn=persistent_cross_acc_env_1_integration_role_arn,
+        region=persistent_cross_acc_env_1.get('region'),
+        session_name='Persistent_cross_1',
+    ).get_refreshable_session()
