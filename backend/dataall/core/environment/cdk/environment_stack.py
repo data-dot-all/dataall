@@ -591,6 +591,8 @@ class EnvironmentSetup(Stack):
                     'arn:aws:s3:::dataalltesting*/*',
                     'arn:aws:s3:::dataall-session*',
                     'arn:aws:s3:::dataall-session*/*',
+                    'arn:aws:s3:::dataall-test-session*',
+                    'arn:aws:s3:::dataall-test-session*/*',
                     'arn:aws:s3:::dataall-temp*',
                     'arn:aws:s3:::dataall-temp*/*',
                 ],
@@ -612,6 +614,7 @@ class EnvironmentSetup(Stack):
             iam.PolicyStatement(
                 actions=[
                     'lakeformation:GrantPermissions',
+                    'lakeformation:RevokePermissions',
                     'lakeformation:PutDataLakeSettings',
                     'lakeformation:GetDataLakeSettings',
                     'glue:GetDatabase',
@@ -673,9 +676,14 @@ class EnvironmentSetup(Stack):
                     'iam:DeleteRole',
                     'iam:PutRolePolicy',
                     'iam:DeleteRolePolicy',
+                    'iam:DetachRolePolicy',
+                    'iam:ListAttachedRolePolicies',
                 ],
                 effect=iam.Effect.ALLOW,
-                resources=[f'arn:aws:iam::{self.account}:role/dataall-test-*'],
+                resources=[
+                    f'arn:aws:iam::{self.account}:role/dataall-test-*',
+                    f'arn:aws:iam::{self.account}:role/dataall-session*',
+                ],
             ),
         )
 
