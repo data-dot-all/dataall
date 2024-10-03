@@ -3,6 +3,8 @@ import json
 import time
 from itertools import count
 
+from retrying import Retrying
+
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.db import utils
 from dataall.base.aws.sts import SessionHelper
@@ -442,25 +444,7 @@ class S3AccessPointShareManager:
         """
 
         s3_client = S3ControlClient(self.source_account_id, self.source_environment.region)
-        access_point_arn = s3_client.get_bucket_access_point_arn(self.access_point_name)
-        if not access_point_arn:
-            logger.info(f'Access point {self.access_point_name} does not exists, creating...')
-            access_point_arn = s3_client.create_bucket_access_point(self.bucket_name, self.access_point_name)
-            # Access point creation is slow
-            retries = 1
-            sleep_coeff = 1
-            while (
-                not s3_client.get_bucket_access_point_arn(self.access_point_name)
-                and retries < ACCESS_POINT_CREATION_RETRIES
-            ):
-                logger.info(
-                    f'Attempt {retries}. Waiting {ACCESS_POINT_CREATION_TIME * sleep_coeff}s for access point creation to complete..'
-                )
-                time.sleep(ACCESS_POINT_CREATION_TIME * sleep_coeff)
-                sleep_coeff = sleep_coeff * ACCESS_POINT_BACKOFF_COEFFICIENT
-                retries += 1
-        if not s3_client.get_bucket_access_point_arn(self.access_point_name):
-            raise Exception(f'Failed to create access point {self.access_point_name}')
+        access_point_arn = s3_client.create_bucket_access_point(self.bucket_name, self.access_point_name)
         existing_policy = s3_client.get_access_point_policy(self.access_point_name)
         # requester will use this role to access resources
         target_requester_id = SessionHelper.get_role_id(
@@ -505,9 +489,17 @@ class S3AccessPointShareManager:
                 self.s3_prefix,
                 perms_to_actions(self.share.permissions, SidType.BucketPolicy),
             )
-        s3_client.attach_access_point_policy(
-            access_point_name=self.access_point_name, policy=json.dumps(access_point_policy)
-        )
+
+        policy_dict = {
+            'access_point_name': self.access_point_name,
+            'policy': json.dumps(access_point_policy),
+        }
+        Retrying(
+            retry_on_exception=lambda ex: 'NoSuchAccessPoint' in str(ex),
+            stop_max_attempt_number=5,
+            wait_random_min=1000,
+            wait_random_max=3000,
+        ).call(s3_client.attach_access_point_policy, **policy_dict)
 
     def check_dataset_bucket_key_policy(self) -> None:
         """
