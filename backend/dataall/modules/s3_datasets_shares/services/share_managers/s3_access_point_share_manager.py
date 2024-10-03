@@ -1,6 +1,5 @@
 import logging
 import json
-import time
 from itertools import count
 
 from retrying import Retrying
@@ -41,9 +40,6 @@ from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation
 from dataall.modules.shares_base.services.sharing_service import ShareData
 
 logger = logging.getLogger(__name__)
-ACCESS_POINT_CREATION_TIME = 30
-ACCESS_POINT_CREATION_RETRIES = 10
-ACCESS_POINT_BACKOFF_COEFFICIENT = 1.1  # every time increase retry delay by 10%
 
 
 class S3AccessPointShareManager:
