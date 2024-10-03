@@ -19,11 +19,10 @@ class S3Client:
         try:
             # Delete all objects in the bucket before deleting the bucket
             bucket = self._resource.Bucket(bucket_name)
-            bucket_versioning = self._resource.BucketVersioning(bucket_name)
-            if bucket_versioning.status == 'Enabled':
-                bucket.object_versions.delete()
-            else:
-                bucket.objects.all().delete()
-            self._client.delete_bucket(Bucket=bucket_name)
+            # Delete all object versions
+            bucket.object_versions.all().delete()
+            # Delete any remaining objects (if versioning was not enabled)
+            bucket.objects.all().delete()
+            bucket.delete()
         except ClientError as e:
             log.exception(f'Error deleting S3 bucket: {e}')
