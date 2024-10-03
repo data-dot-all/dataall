@@ -1,6 +1,8 @@
 import pytest
 from assertpy import assert_that
 
+from integration_tests.errors import GqlError
+from integration_tests.modules.s3_datasets.aws_clients import LakeFormationClient
 from integration_tests.modules.shares.s3_datasets_shares.conftest import clean_up_share
 from tests_new.integration_tests.modules.shares.queries import (
     create_share_object,
@@ -11,12 +13,9 @@ from tests_new.integration_tests.modules.shares.queries import (
     delete_share_object,
     update_share_request_reason,
     update_share_reject_reason,
+    reapply_items_share_object,
 )
-from tests_new.integration_tests.modules.shares.utils import (
-    check_share_ready,
-)
-
-from integration_tests.modules.shares.s3_datasets_shares.shared_test_functions import (
+from tests_new.integration_tests.modules.shares.s3_datasets_shares.shared_test_functions import (
     check_share_items_access,
     check_verify_share_items,
     revoke_and_check_all_shared_items,
@@ -25,6 +24,9 @@ from integration_tests.modules.shares.s3_datasets_shares.shared_test_functions i
     check_submit_share_object,
     check_approve_share_object,
     check_share_succeeded,
+)
+from tests_new.integration_tests.modules.shares.utils import (
+    check_share_ready,
 )
 
 
@@ -174,6 +176,47 @@ def test_check_item_access(
     check_share_items_access(
         client5, group5, share.shareUri, session_consumption_role_1, session_cross_acc_env_1_aws_client
     )
+
+
+@pytest.mark.dependency(name='unhealthy_items', depends=['share_verified'])
+def test_unhealthy_items(
+    client5, session_cross_acc_env_1_aws_client, session_cross_acc_env_1_integration_role_arn, share_params_main
+):
+    share, _ = share_params_main
+    iam = session_cross_acc_env_1_aws_client.resource('iam')
+    principal_role = iam.Role(share.principal.principalRoleName)
+    # break s3 by removing policies
+    for policy in principal_role.attached_policies.all():
+        if '/dataall-env-' in policy.arn and 'share-policy' in policy.arn:
+            principal_role.detach_policy(PolicyArn=policy.arn)
+    # break lf by removing DESCRIBE perms from principal
+    lf_client = LakeFormationClient(session_cross_acc_env_1_aws_client, session_cross_acc_env_1_aws_client.region_name)
+    lf_client.add_role_to_datalake_admin(session_cross_acc_env_1_integration_role_arn)
+    db_name = f'dataall_{share.dataset.datasetName}_{share.dataset.datasetUri}_shared'.replace('-', '_')
+    lf_client.revoke_db_perms(principal_role.arn, db_name, ['DESCRIBE'])
+    # verify all items are `Unhealthy`
+    check_verify_share_items(client5, share.shareUri, expected_health_status=['Unhealthy'])
+
+
+def test_reapply_unauthoried(client5, share_params_main):
+    share, _ = share_params_main
+    share_uri = share.shareUri
+    share_object = get_share_object(client5, share_uri)
+    item_uris = [item.shareItemUri for item in share_object['items'].nodes]
+    assert_that(reapply_items_share_object).raises(GqlError).when_called_with(client5, share_uri, item_uris).contains(
+        'UnauthorizedOperation'
+    )
+
+
+def test_reapply(client1, share_params_main):
+    share, _ = share_params_main
+    share_uri = share.shareUri
+    share_object = get_share_object(client1, share_uri)
+    item_uris = [item.shareItemUri for item in share_object['items'].nodes]
+    reapply_items_share_object(client1, share_uri, item_uris)
+    share_object = get_share_object(client1, share_uri)
+    assert_that(share_object['items'].nodes).extracting('healthStatus').contains_only('PendingReApply')
+    check_share_items_verified(client1, share_uri)
 
 
 @pytest.mark.dependency(name='share_revoked', depends=['share_succeeded'])

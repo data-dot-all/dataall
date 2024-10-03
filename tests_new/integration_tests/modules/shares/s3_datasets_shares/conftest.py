@@ -253,15 +253,15 @@ def persistent_consumption_role_1(client5, group5, persistent_cross_acc_env_1, p
 def persistent_group_share_1(
     client5,
     client1,
-    updated_persistent_env1,
-    updated_persistent_cross_acc_env_1,
+    persistent_env1,
+    persistent_cross_acc_env_1,
     updated_persistent_s3_dataset1,
     group5,
 ):
     share1 = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': updated_persistent_s3_dataset1.datasetUri},
-        environmentUri=updated_persistent_cross_acc_env_1.environmentUri,
+        environmentUri=persistent_cross_acc_env_1.environmentUri,
         groupUri=group5,
         principalId=group5,
         principalType='Group',
@@ -285,8 +285,8 @@ def persistent_group_share_1(
 def persistent_role_share_1(
     client5,
     client1,
-    updated_persistent_env1,
-    updated_persistent_cross_acc_env_1,
+    persistent_env1,
+    persistent_cross_acc_env_1,
     updated_persistent_s3_dataset1,
     group5,
     persistent_consumption_role_1,
@@ -294,7 +294,7 @@ def persistent_role_share_1(
     share1 = create_share_object(
         client=client5,
         dataset_or_item_params={'datasetUri': updated_persistent_s3_dataset1.datasetUri},
-        environmentUri=updated_persistent_cross_acc_env_1.environmentUri,
+        environmentUri=persistent_cross_acc_env_1.environmentUri,
         groupUri=group5,
         principalId=persistent_consumption_role_1.consumptionRoleUri,
         principalType='ConsumptionRole',
