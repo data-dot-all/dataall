@@ -49,10 +49,9 @@ class S3ControlClient:
                 Bucket=bucket_name,
             )
         except Exception as e:
-            if 'AccessPointAlreadyOwnedByYou' in str(e):
-                log.info(f'S3 bucket access point {access_point_name} already exists on {self._account_id}')
-                return self.get_bucket_access_point_arn(access_point_name)
             log.error(f'S3 bucket access point creation failed for location {bucket_name} : {e}')
+            if 'AccessPointAlreadyOwnedByYou' in str(e):
+                return self.get_bucket_access_point_arn(access_point_name)
             raise e
         else:
             return access_point['AccessPointArn']
