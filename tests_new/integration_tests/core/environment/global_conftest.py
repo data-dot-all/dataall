@@ -1,4 +1,5 @@
 import logging
+import time
 from datetime import datetime
 
 import pytest
@@ -12,7 +13,11 @@ from integration_tests.core.environment.queries import (
     list_environments,
     invite_group_on_env,
 )
-from integration_tests.core.organizations.queries import create_organization
+from integration_tests.core.organizations.queries import (
+    create_organization,
+    list_organizations,
+    invite_team_to_organization,
+)
 from integration_tests.core.stack.utils import check_stack_ready
 from tests_new.integration_tests.core.environment.utils import update_env_stack
 
@@ -195,7 +200,25 @@ def persistent_cross_acc_env_1(client5, group5, testdata):
 
 
 @pytest.fixture(scope='session')
-def updated_persistent_cross_acc_env_1(client5, group5, persistent_cross_acc_env_1):
+def updated_persistent_cross_acc_env_1(client5, group5, client6, group6, persistent_cross_acc_env_1):
+    if list_organizations(client6).count == 0:
+        invite_team_to_organization(client5, persistent_cross_acc_env_1.organization.organizationUri, group6)
+    if list_environments(client6).count == 0:
+        invite_group_on_env(
+            client5,
+            persistent_cross_acc_env_1.environmentUri,
+            group6,
+            [
+                'UPDATE_ENVIRONMENT',
+                'GET_ENVIRONMENT',
+                'ADD_ENVIRONMENT_CONSUMPTION_ROLES',
+                'LIST_ENVIRONMENT_CONSUMPTION_ROLES',
+                'LIST_ENVIRONMENT_GROUPS',
+                'CREDENTIALS_ENVIRONMENT',
+                'CREATE_SHARE_OBJECT',
+                'LIST_ENVIRONMENT_SHARED_WITH_OBJECTS',
+            ],
+        )
     update_env_stack(client5, persistent_cross_acc_env_1)
     return get_environment(client5, persistent_cross_acc_env_1.environmentUri)
 
