@@ -5,9 +5,11 @@ log = logging.getLogger(__name__)
 
 
 class S3Client:
-    def __init__(self, session, region):
+    def __init__(self, session, account, region):
         self._client = session.client('s3', region_name=region)
+        self._control_client = session.client('s3control', region_name=region)
         self._resource = session.resource('s3', region_name=region)
+        self._account = account
         self._region = region
 
     def delete_bucket(self, bucket_name):
@@ -23,6 +25,11 @@ class S3Client:
             bucket.object_versions.all().delete()
             # Delete any remaining objects (if versioning was not enabled)
             bucket.objects.all().delete()
+            # Delete any remaining access point
+            paginator = self._control_client.get_paginator('list_access_points')
+            for page in paginator.paginate(AccountId=self._account, Bucket=bucket_name):
+                for access_point in page['AccessPointList']:
+                    self._control_client.delete_access_point(AccountId=self._account, Name=access_point['Name'])
             bucket.delete()
         except ClientError as e:
             log.exception(f'Error deleting S3 bucket: {e}')

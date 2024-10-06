@@ -53,7 +53,9 @@ def session_env1(client1, group1, org1, session_id, testdata):
         if env:
             role = f'arn:aws:iam::{env.AwsAccountId}:role/dataall-integration-tests-role-{env.region}'
             session = get_environment_aws_session(role, env)
-            S3Client(session=session, region=env.region).delete_bucket(env.EnvironmentDefaultBucketName)
+            S3Client(session=session, account=env.account, region=env.region).delete_bucket(
+                env.EnvironmentDefaultBucketName
+            )
             delete_env(client1, env)
 
 

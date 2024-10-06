@@ -626,6 +626,8 @@ class EnvironmentSetup(Stack):
                     'kms:DescribeKey',
                     's3:GetBucketVersioning',
                     's3:List*',
+                    's3:ListAccessPoints',
+                    's3:DeleteAccessPoint',
                 ],
                 effect=iam.Effect.ALLOW,
                 resources=['*'],
