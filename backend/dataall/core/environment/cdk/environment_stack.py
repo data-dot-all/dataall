@@ -583,6 +583,7 @@ class EnvironmentSetup(Stack):
                     's3:PutEncryptionConfiguration',
                     's3:GetObject*',
                     's3:DeleteObject',
+                    's3:DeleteObjectVersion',
                 ],
                 effect=iam.Effect.ALLOW,
                 resources=[
