@@ -40,7 +40,6 @@ class DatasetTableService:
         return table.datasetUri
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     def get_table(uri: str):
         with get_context().db_engine.scoped_session() as session:
             return DatasetTableRepository.get_dataset_table_by_uri(session, uri)
@@ -109,6 +108,7 @@ class DatasetTableService:
             return AthenaTableClient(env, table).get_table()
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(GET_DATASET_TABLE)
     def get_glue_table_properties(uri: str):
         with get_context().db_engine.scoped_session() as session:

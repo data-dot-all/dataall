@@ -106,6 +106,7 @@ class GlossariesService:
             return GlossaryRepository.delete_node(session=session, uri=uri)
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_GLOSSARIES)
     def approve_term_association(linkUri: str):
         with _session() as session:
             return GlossaryRepository.approve_term_association(
@@ -113,6 +114,7 @@ class GlossariesService:
             )
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_GLOSSARIES)
     def dismiss_term_association(linkUri: str):
         with _session() as session:
             return GlossaryRepository.dismiss_term_association(

@@ -133,6 +133,7 @@ class OmicsService:
             return OmicsRepository(session).paginated_omics_workflows(filter=filter)
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_OMICS_RUNS)
     def delete_omics_runs(uris: List[str], delete_from_aws: bool) -> bool:
         """Deletes Omics runs from the database and if delete_from_aws is True from AWS as well"""
         for uri in uris:

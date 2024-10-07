@@ -232,7 +232,6 @@ class DatasetService:
         return DatasetService.create_dataset(uri=uri, admin_group=admin_group, data=data)
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     def get_dataset(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -242,6 +241,7 @@ class DatasetService:
             return dataset
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def get_file_upload_presigned_url(uri: str, data: dict):
         with get_context().db_engine.scoped_session() as session:
@@ -337,6 +337,7 @@ class DatasetService:
         }
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def get_dataset_assume_role_url(uri):
         context = get_context()
@@ -362,6 +363,7 @@ class DatasetService:
         return url
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CRAWL_DATASET)
     def start_crawler(uri: str, data: dict = None):
         engine = get_context().db_engine
@@ -393,6 +395,7 @@ class DatasetService:
             }
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def generate_dataset_access_token(uri):
         with get_context().db_engine.scoped_session() as session:
@@ -410,6 +413,7 @@ class DatasetService:
         return json.dumps(credentials)
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(DELETE_DATASET)
     def delete_dataset(uri: str, delete_from_aws: bool = False):
         context = get_context()

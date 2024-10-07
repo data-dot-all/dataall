@@ -256,7 +256,6 @@ class RedshiftDatasetService:
             return table
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
     @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
     def get_redshift_dataset(uri):
         context = get_context()
@@ -267,7 +266,6 @@ class RedshiftDatasetService:
             return dataset
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
     @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
     def list_redshift_dataset_tables(uri, filter):
         context = get_context()
@@ -278,7 +276,6 @@ class RedshiftDatasetService:
             )
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
     @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
     def list_redshift_schema_dataset_tables(uri):
         with get_context().db_engine.scoped_session() as session:
@@ -299,14 +296,12 @@ class RedshiftDatasetService:
             return tables
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
     @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
     def get_dataset_upvotes(uri):
         with get_context().db_engine.scoped_session() as session:
             return VoteRepository.count_upvotes(session, uri, target_type=VOTE_REDSHIFT_DATASET_NAME) or 0
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
     @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET_TABLE)
     def get_redshift_dataset_table(uri):
         context = get_context()
@@ -315,7 +310,6 @@ class RedshiftDatasetService:
             return table
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
     @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET_TABLE)
     def list_redshift_dataset_table_columns(uri, filter):
         context = get_context()
