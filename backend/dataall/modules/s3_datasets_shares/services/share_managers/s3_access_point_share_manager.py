@@ -493,8 +493,8 @@ class S3AccessPointShareManager:
         Retrying(
             retry_on_exception=lambda ex: 'NoSuchAccessPoint' in str(ex),
             stop_max_attempt_number=10,
-            wait_random_min=5000,
-            wait_random_max=10000,
+            wait_random_min=10000,
+            wait_random_max=30000,
         ).call(s3_client.attach_access_point_policy, **policy_dict)
 
     def check_dataset_bucket_key_policy(self) -> None:
