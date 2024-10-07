@@ -11,7 +11,7 @@ export const MetadataMainModal = (props) => {
   const [targetType, setTargetType] = useState('');
   const [targets, setTargets] = useState([]);
   const [targetOptions, setTargetOptions] = useState([]);
-  const [version, setVersion] = useState(0);
+  const [version, setVersion] = useState(0); //TODO: use version and add previous response in backend
   const [selectedMetadataTypes, setSelectedMetadataTypes] = useState({
     label: false,
     description: false,

@@ -1,3 +1,4 @@
+export * from './batchUpdateTableColumnDescriptions';
 export * from './createDataset';
 export * from './deleteDataset';
 export * from './generateDatasetAccessToken';
@@ -6,6 +7,7 @@ export * from './getDatasetPresignedUrl';
 export * from './importDataset';
 export * from './listDatasetStorageLocations';
 export * from './listDatasetTablesFolders';
+export * from './listSampleData';
 export * from './startGlueCrawler';
 export * from './syncTables';
 export * from './updateDataset';

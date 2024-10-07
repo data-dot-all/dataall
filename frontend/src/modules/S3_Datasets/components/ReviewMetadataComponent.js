@@ -1,10 +1,5 @@
-import {
-  Button,
-  Box,
-  Chip,
-  Typography,
-  CircularProgress
-} from '@mui/material';
+import React, { useState } from 'react';
+import { Button, Box, Chip, Typography, CircularProgress } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
@@ -12,23 +7,20 @@ import AutoModeIcon from '@mui/icons-material/AutoMode';
 import { Scrollbar } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
-import { updateDataset, generateMetadataBedrock } from '../services';
 import { updateDatasetTable } from 'modules/Tables/services';
-import { BatchUpdateDatasetTableColumn } from '../services/batchUpdateTableColumnDescriptions';
-import { listSampleData } from '../services/listSampleData';
 import { updateDatasetStorageLocation } from 'modules/Folders/services';
+import {
+  BatchUpdateDatasetTableColumn,
+  listSampleData,
+  updateDataset,
+  generateMetadataBedrock
+} from '../services';
 import SampleDataPopup from './SampleDataPopup';
-import React, { useState } from 'react';
 import SubitemDescriptionsGrid from './SubitemDescriptionsGrid';
 
 export const ReviewMetadataComponent = (props) => {
-  const {
-    dataset,
-    targets,
-    setTargets,
-    selectedMetadataTypes,
-    version
-  } = props;
+  const { dataset, targets, setTargets, selectedMetadataTypes, version } =
+    props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const client = useClient();
@@ -99,7 +91,6 @@ export const ReviewMetadataComponent = (props) => {
     }
   }
   const handleAcceptAndRegenerate = async () => {
-    // Perform any necessary actions for accepting and regenerating the data
     try {
       const targetIndex = targets.findIndex((t) => t.targetUri === targetUri);
       if (targetIndex !== -1) {
@@ -166,7 +157,6 @@ export const ReviewMetadataComponent = (props) => {
       const updatedTargets = targets.map(async (target) => {
         const updatedMetadata = {};
 
-        // Loop through selectedMetadataTypes and add the corresponding key-value pairs to updatedMetadata
         Object.entries(selectedMetadataTypes).forEach(
           ([metadataType, checked]) => {
             if (checked) {
@@ -212,7 +202,7 @@ export const ReviewMetadataComponent = (props) => {
           );
 
           if (!response.errors) {
-            return { ...target, success: true }; // Return the updated target with success flag
+            return { ...target, success: true };
           } else {
             dispatch({ type: SET_ERROR, error: response.errors[0].message });
             return { ...target, success: false }; // Return the target with success flag set to false
@@ -465,7 +455,6 @@ export const ReviewMetadataComponent = (props) => {
       <Button
         color="primary"
         size="small"
-        //startIcon={<AutoModeIcon size={15} />}
         sx={{ m: 2 }}
         onClick={() => saveMetadata(targets)}
         type="button"

@@ -155,7 +155,7 @@ class DatasetLocationService:
             files = S3DatasetClient(dataset).list_bucket_files(folder.S3BucketName, folder.S3Prefix)
             file_names = [f['Key'] for f in files]
             log.info('file names', file_names)
-            return BedrockClient(folder.AWSAccountId, 'us-east-1').generate_metadata(
+            return BedrockClient().generate_metadata(
                 prompt_type=MetadataGenerationTargets.Folder.value,
                 label=folder.label,
                 file_names=file_names,

@@ -1,11 +1,8 @@
-// import { LoadingButton } from '@mui/lab';
+import { useState, useCallback } from 'react';
 import {
-  // Autocomplete,
   Avatar,
   Box,
   Button,
-  // CardContent,
-  // CardHeader,
   Checkbox,
   Chip,
   Divider,
@@ -18,25 +15,17 @@ import {
   MenuItem,
   Select,
   Switch,
-  // TextField,
   Typography
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-// import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
-// import { useCallback, useEffect, useState } from 'react';
-import { useState } from 'react';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
-// import * as Yup from 'yup';
-// import { ChipInput, Defaults } from 'design';
 import { Defaults, Scrollbar } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
 import { listDatasetTablesFolders, generateMetadataBedrock } from '../services';
-import { useCallback } from 'react';
 
-/* eslint-disable no-console */
 export const GenerateMetadataComponent = (props) => {
   const {
     dataset,
@@ -361,17 +350,19 @@ export const GenerateMetadataComponent = (props) => {
                 }
                 label="Tags"
               />
-              <FormControlLabel
-                control={
-                  <Switch
-                    name="subitem_descriptions"
-                    checked={selectedMetadataTypes.subitem_descriptions}
-                    onChange={handleMetadataChange}
-                    disabled={targetType === 'Dataset'}
-                  />
-                }
-                label="Subitem Descriptions"
-              />
+              {targetType !== 'Dataset' && (
+                <FormControlLabel
+                  control={
+                    <Switch
+                      name="subitem descriptions (e.g. column descriptions)"
+                      checked={selectedMetadataTypes.subitem_descriptions}
+                      onChange={handleMetadataChange}
+                      disabled={targetType === 'Dataset'}
+                    />
+                  }
+                  label="Subitem Descriptions"
+                />
+              )}
               <FormControlLabel
                 control={
                   <Switch
@@ -398,7 +389,7 @@ export const GenerateMetadataComponent = (props) => {
           variant="contained"
           disabled={Object.values(selectedMetadataTypes).every(
             (value) => value === false
-          )} // Note: I tested my multiple API call by setting this to {false} directly.
+          )}
         >
           Generate
         </Button>

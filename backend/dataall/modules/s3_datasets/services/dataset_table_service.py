@@ -196,7 +196,7 @@ class DatasetTableService:
         with context.db_engine.scoped_session() as session:
             table = DatasetTableRepository.get_dataset_table_by_uri(session, resourceUri)
             table_column = DatasetColumnRepository.get_table_info_metadata_generation(session, resourceUri)
-            return BedrockClient(table_column.AWSAccountId, 'us-east-1').generate_metadata(
+            return BedrockClient().generate_metadata(
                 prompt_type=MetadataGenerationTargets.Table.value,
                 label=table.label,
                 columns={','.join(table_column.label)},

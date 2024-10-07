@@ -48,7 +48,10 @@ from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_ALL
 from dataall.modules.datasets_base.services.dataset_service_interface import DatasetServiceInterface
 from dataall.modules.s3_datasets.aws.bedrock_metadata_client import BedrockClient
-from dataall.modules.s3_datasets.services.dataset_enums import MetadataGenerationTargets
+from dataall.modules.s3_datasets.services.dataset_metadata_service import (
+    MetadataOutput,
+    DatasetMetadataGenerationService,
+)
 
 log = logging.getLogger(__name__)
 
@@ -572,16 +575,19 @@ class DatasetService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             dataset = DatasetBaseRepository.get_dataset_by_uri(session, resourceUri)
-            table_labels = [t.label for t in DatasetRepository.get_dataset_tables(session, resourceUri)]
-            table_descriptions = [t.description for t in DatasetRepository.get_dataset_tables(session, resourceUri)]
-            folders = [f.label for f in DatasetLocationRepository.get_dataset_folders(session, resourceUri)]
-            return BedrockClient(dataset.AwsAccountId, 'us-east-1').generate_metadata(
-                prompt_type=MetadataGenerationTargets.S3_Dataset.value,
+            tables = DatasetRepository.get_dataset_tables(session, dataset.datasetUri)
+            table_labels = [t.label for t in tables]
+            table_descriptions = [t.description for t in tables]
+            folder_labels = [f.label for f in DatasetLocationRepository.get_dataset_folders(session, resourceUri)]
+            template = DatasetMetadataGenerationService.get_dataset_prompt_template()
+            prompt = DatasetMetadataGenerationService.format_dataset_prompt_template(
+                template=template,
+                metadata_types=metadataTypes,
                 label=dataset.label,
-                tables=table_labels,
                 description=dataset.description,
-                table_description=table_descriptions,
                 tags=dataset.tags,
-                metadata_type=metadataTypes,
-                folders=folders,
+                table_labels=table_labels,
+                table_descriptions=table_descriptions,
+                folder_labels=folder_labels,
             )
+            return BedrockClient().invoke_model(prompt_template=template, prompt=prompt, output_object=MetadataOutput)
