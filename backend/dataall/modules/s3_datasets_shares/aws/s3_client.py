@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import List
 
 from dataall.base.aws.sts import SessionHelper
@@ -43,18 +44,28 @@ class S3ControlClient:
 
     def create_bucket_access_point(self, bucket_name: str, access_point_name: str):
         try:
-            access_point = self._client.create_access_point(
+            self._client.create_access_point(
                 AccountId=self._account_id,
                 Name=access_point_name,
                 Bucket=bucket_name,
             )
         except Exception as e:
             log.error(f'S3 bucket access point creation failed for location {bucket_name} : {e}')
-            if 'AccessPointAlreadyOwnedByYou' in str(e):
-                return self.get_bucket_access_point_arn(access_point_name)
-            raise e
-        else:
-            return access_point['AccessPointArn']
+            if 'AccessPointAlreadyOwnedByYou' not in str(e):
+                raise e
+
+        return self.try_get_bucket_access_point_arn(bucket_name, access_point_name)
+
+    def try_get_bucket_access_point_arn(self, bucket_name: str, access_point_name: str):
+        for attempt in range(5):
+            all_acess_points = self._client.list_access_points(
+                AccountId=self._account_id, Bucket=bucket_name, MaxResults=1000
+            )
+            for ap in all_acess_points['AccessPointList']:
+                if ap['Name'] == access_point_name:
+                    return ap['AccessPointArn']
+            time.sleep(30)
+        return None
 
     def delete_bucket_access_point(self, access_point_name: str):
         try:

@@ -486,16 +486,9 @@ class S3AccessPointShareManager:
                 perms_to_actions(self.share.permissions, SidType.BucketPolicy),
             )
 
-        policy_dict = {
-            'access_point_name': self.access_point_name,
-            'policy': json.dumps(access_point_policy),
-        }
-        Retrying(
-            retry_on_exception=lambda ex: 'NoSuchAccessPoint' in str(ex),
-            stop_max_attempt_number=10,
-            wait_random_min=10000,
-            wait_random_max=30000,
-        ).call(s3_client.attach_access_point_policy, **policy_dict)
+        s3_client.attach_access_point_policy(
+            access_point_name=self.access_point_name, policy=json.dumps(access_point_policy)
+        )
 
     def check_dataset_bucket_key_policy(self) -> None:
         """
