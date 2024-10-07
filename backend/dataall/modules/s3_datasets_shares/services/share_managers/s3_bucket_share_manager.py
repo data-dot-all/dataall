@@ -1,7 +1,8 @@
 import json
 import logging
 from itertools import count
-
+from typing import List
+from warnings import warn
 from dataall.base.aws.iam import IAM
 from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.db.environment_models import Environment
@@ -16,7 +17,6 @@ from dataall.modules.s3_datasets_shares.services.s3_share_alarm_service import S
 from dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service import (
     S3SharePolicyService,
     IAM_S3_BUCKETS_STATEMENT_SID,
-    EMPTY_STATEMENT_SID,
 )
 from dataall.modules.s3_datasets_shares.services.share_managers.s3_utils import (
     generate_policy_statement,
@@ -83,116 +83,137 @@ class S3BucketShareManager:
             role_name=self.target_requester_IAMRoleName,
             resource_prefix=self.target_environment.resourcePrefix,
         )
-        share_resource_policy_name = share_policy_service.generate_policy_name()
+        share_policy_service.initialize_statements()
 
-        if not share_policy_service.check_if_policy_exists():
+        share_resource_policy_name = share_policy_service.generate_indexed_policy_name(index=0)
+
+        warn(
+            "Convert all your share's requestor policies to managed policies with indexes. Deprecation >= ?? ",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        old_managed_policy_name = share_policy_service.generate_old_policy_name()
+        if not share_policy_service.check_if_policy_exists(policy_name=old_managed_policy_name):
+            logger.info(
+                f'No managed policy exists for the role: {self.target_requester_IAMRoleName}. Reapply share create managed policies.'
+            )
+            self.bucket_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
+            return
+
+        if share_policy_service.check_if_policy_attached(policy_name=old_managed_policy_name):
+            logger.info(
+                f'Older version of managed policy present which is without index. Correct managed policy: {share_resource_policy_name}. Reapply share to correct managed policy'
+            )
+            self.bucket_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
+            return
+
+        if not share_policy_service.check_if_managed_policies_exists():
             logger.info(f'IAM Policy {share_resource_policy_name} does not exist')
             self.bucket_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
             return
 
-        if not share_policy_service.check_if_policy_attached():
+        unattached_policies: List[str] = share_policy_service.get_policies_unattached_to_role()
+        if len(unattached_policies) > 0:
             logger.info(
-                f'IAM Policy {share_resource_policy_name} exists but is not attached to role {self.share.principalRoleName}'
+                f'IAM Policies {unattached_policies} exists but are not attached to role {self.share.principalRoleName}'
             )
-            self.bucket_errors.append(
-                ShareErrorFormatter.dne_error_msg('IAM Policy attached', share_resource_policy_name)
-            )
+            self.bucket_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy attached', unattached_policies))
             return
 
         s3_target_resources = [f'arn:aws:s3:::{self.bucket_name}', f'arn:aws:s3:::{self.bucket_name}/*']
 
-        version_id, policy_document = IAM.get_managed_policy_default_version(
-            self.target_environment.AwsAccountId, self.target_environment.region, share_resource_policy_name
-        )
-        s3_statement_index = S3SharePolicyService._get_statement_by_sid(
-            policy_document, f'{IAM_S3_BUCKETS_STATEMENT_SID}S3'
-        )
-
-        if s3_statement_index is None:
-            logger.info(f'IAM Policy Statement {IAM_S3_BUCKETS_STATEMENT_SID}S3 does not exist')
+        if not S3SharePolicyService.check_if_sid_exists(
+            f'{IAM_S3_BUCKETS_STATEMENT_SID}S3', share_policy_service.total_s3_stmts
+        ):
+            logger.info(f'IAM Policy Statement with base Sid: {IAM_S3_BUCKETS_STATEMENT_SID}S3 does not exist')
             self.bucket_errors.append(
                 ShareErrorFormatter.missing_permission_error_msg(
                     self.target_requester_IAMRoleName,
-                    'IAM Policy Statement',
-                    f'{IAM_S3_BUCKETS_STATEMENT_SID}S3',
+                    'IAM Policy Statement Sid',
+                    f'{IAM_S3_BUCKETS_STATEMENT_SID}S3-<index>',
                     'S3 Bucket',
                     f'{self.bucket_name}',
                 )
             )
-        elif not share_policy_service.check_resource_in_policy_statement(
+        elif not share_policy_service.check_resource_in_policy_statements(
             target_resources=s3_target_resources,
-            existing_policy_statement=policy_document['Statement'][s3_statement_index],
+            existing_policy_statements=share_policy_service.total_s3_stmts,
         ):
             logger.info(
-                f'IAM Policy Statement {IAM_S3_BUCKETS_STATEMENT_SID}S3 does not contain resources {s3_target_resources}'
+                f'IAM Policy Statement with Sid {IAM_S3_BUCKETS_STATEMENT_SID}S3-<index> does not contain resources {s3_target_resources}'
             )
             self.bucket_errors.append(
                 ShareErrorFormatter.missing_permission_error_msg(
                     self.target_requester_IAMRoleName,
-                    'IAM Policy Resource',
-                    f'{IAM_S3_BUCKETS_STATEMENT_SID}S3',
+                    'IAM Policy Resource(s)',
+                    f'{IAM_S3_BUCKETS_STATEMENT_SID}S3-<index>',
                     'S3 Bucket',
                     f'{self.bucket_name}',
                 )
             )
         else:
-            policy_check, missing_permissions, extra_permissions = (
-                share_policy_service.check_s3_actions_in_policy_statement(
-                    existing_policy_statement=policy_document['Statement'][s3_statement_index]
-                )
+            policy_sid_actions_map = share_policy_service.check_s3_actions_in_policy_statement(
+                existing_policy_statements=share_policy_service.total_s3_stmts
             )
-            if not policy_check:
-                logger.info(f'IAM Policy Statement {IAM_S3_BUCKETS_STATEMENT_SID}S3 has invalid actions')
-                if missing_permissions:
-                    self.bucket_errors.append(
-                        ShareErrorFormatter.missing_permission_error_msg(
-                            self.target_requester_IAMRoleName,
-                            'IAM Policy Action',
-                            missing_permissions,
-                            'S3 Bucket',
-                            f'{self.bucket_name}',
+
+            for sid in policy_sid_actions_map:
+                policy_check = policy_sid_actions_map[sid].get('policy_check')
+                missing_permissions = policy_sid_actions_map[sid].get('missing_permissions')
+                extra_permissions = policy_sid_actions_map[sid].get('extra_permissions')
+                # Check if policy violations are present
+                if policy_check:
+                    logger.info(f'IAM Policy Statement {sid} has invalid actions')
+                    if missing_permissions:
+                        self.bucket_errors.append(
+                            ShareErrorFormatter.missing_permission_error_msg(
+                                self.target_requester_IAMRoleName,
+                                'IAM Policy Action',
+                                missing_permissions,
+                                'S3 Bucket',
+                                f'{self.bucket_name}',
+                            )
                         )
-                    )
-                if extra_permissions:
-                    self.bucket_errors.append(
-                        ShareErrorFormatter.not_allowed_permission_error_msg(
-                            self.target_requester_IAMRoleName,
-                            'IAM Policy Action',
-                            extra_permissions,
-                            'S3 Bucket',
-                            f'{self.bucket_name}',
+                    if extra_permissions:
+                        self.bucket_errors.append(
+                            ShareErrorFormatter.not_allowed_permission_error_msg(
+                                self.target_requester_IAMRoleName,
+                                'IAM Policy Action',
+                                extra_permissions,
+                                'S3 Bucket',
+                                f'{self.bucket_name}',
+                            )
                         )
-                    )
 
         if kms_key_id:
-            kms_statement_index = S3SharePolicyService._get_statement_by_sid(
-                policy_document, f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS'
-            )
             kms_target_resources = [f'arn:aws:kms:{self.bucket_region}:{self.source_account_id}:key/{kms_key_id}']
-            if kms_statement_index is None:
-                logger.info(f'IAM Policy Statement {IAM_S3_BUCKETS_STATEMENT_SID}KMS does not exist')
+
+            if not S3SharePolicyService.check_if_sid_exists(
+                f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS', share_policy_service.total_s3_kms_stmts
+            ):
+                logger.info(
+                    f'IAM Policy Statement with base Sid: {IAM_S3_BUCKETS_STATEMENT_SID}KMS-<index> does not exist'
+                )
                 self.bucket_errors.append(
                     ShareErrorFormatter.missing_permission_error_msg(
                         self.target_requester_IAMRoleName,
                         'IAM Policy Statement',
-                        f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS',
+                        f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS-<index>',
                         'KMS Key',
                         f'{kms_key_id}',
                     )
                 )
-
-            elif not share_policy_service.check_resource_in_policy_statement(
+            elif not share_policy_service.check_resource_in_policy_statements(
                 target_resources=kms_target_resources,
-                existing_policy_statement=policy_document['Statement'][kms_statement_index],
+                existing_policy_statements=share_policy_service.total_s3_kms_stmts,
             ):
                 logger.info(
-                    f'IAM Policy Statement {IAM_S3_BUCKETS_STATEMENT_SID}KMS does not contain resources {kms_target_resources}'
+                    f'IAM Policy Statement {IAM_S3_BUCKETS_STATEMENT_SID}KMS-<index> does not contain resources {kms_target_resources}'
                 )
                 self.bucket_errors.append(
                     ShareErrorFormatter.missing_permission_error_msg(
                         self.target_requester_IAMRoleName,
                         'IAM Policy Resource',
-                        f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS',
+                        f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS-<index>',
                         'KMS Key',
                         f'{kms_key_id}',
                     )
@@ -213,31 +234,8 @@ class S3BucketShareManager:
             role_name=self.target_requester_IAMRoleName,
             resource_prefix=self.target_environment.resourcePrefix,
         )
-
-        # Backwards compatibility
-        # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
-        # We create the policy from the inline statements and attach it to the role
-        if not share_policy_service.check_if_policy_exists():
-            share_policy_service.create_managed_policy_from_inline_and_delete_inline()
-            share_policy_service.attach_policy()
-        # End of backwards compatibility
-
-        if not share_policy_service.check_if_policy_attached():
-            if self.share.principalType == PrincipalType.Group.value:
-                share_policy_service.attach_policy()
-            else:
-                consumption_role = EnvironmentService.get_consumption_role(
-                    session=self.session, uri=self.share.principalId
-                )
-                if consumption_role.dataallManaged:
-                    share_policy_service.attach_policy()
-
-        share_resource_policy_name = share_policy_service.generate_policy_name()
-
-        logger.info(f'Share policy name is {share_resource_policy_name}')
-        version_id, policy_document = IAM.get_managed_policy_default_version(
-            self.target_account_id, self.target_environment.region, share_resource_policy_name
-        )
+        share_policy_service.process_backwards_compatibility_for_target_iam_roles()
+        share_policy_service.initialize_statements()
 
         key_alias = f'alias/{self.target_bucket.KmsAlias}'
         kms_client = KmsClient(self.source_account_id, self.source_environment.region)
@@ -245,31 +243,65 @@ class S3BucketShareManager:
 
         s3_target_resources = [f'arn:aws:s3:::{self.bucket_name}', f'arn:aws:s3:::{self.bucket_name}/*']
 
-        share_policy_service.add_missing_resources_to_policy_statement(
-            resource_type='s3',
-            target_resources=s3_target_resources,
-            statement_sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}S3',
-            policy_document=policy_document,
-        )
-
-        share_policy_service.remove_empty_statement(policy_doc=policy_document, statement_sid=EMPTY_STATEMENT_SID)
-
+        kms_target_resources = []
         if kms_key_id:
             kms_target_resources = [f'arn:aws:kms:{self.bucket_region}:{self.source_account_id}:key/{kms_key_id}']
-            share_policy_service.add_missing_resources_to_policy_statement(
-                resource_type='kms',
-                target_resources=kms_target_resources,
-                statement_sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS',
-                policy_document=policy_document,
+
+        managed_policy_exists = share_policy_service.check_if_managed_policies_exists()
+
+        if not managed_policy_exists:
+            logger.info('Managed policies do not exist. Creating one')
+            # Create a managed policy with naming convention and index
+            share_resource_policy_name = share_policy_service.generate_indexed_policy_name(index=0)
+            IAM.create_managed_policy(
+                self.target_account_id,
+                self.target_environment.region,
+                share_resource_policy_name,
+                json.dumps(share_policy_service.generate_empty_policy()),
             )
 
-        IAM.update_managed_policy_default_version(
-            self.target_account_id,
-            self.target_environment.region,
-            share_resource_policy_name,
-            version_id,
-            json.dumps(policy_document),
+        s3_kms_statement_chunks = []
+        s3_statements = share_policy_service.total_s3_stmts
+        s3_statement_chunks = share_policy_service.add_resources_and_generate_split_statements(
+            statements=s3_statements,
+            target_resources=s3_target_resources,
+            sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}S3',
+            resource_type='s3',
         )
+        logger.info(f'Number of S3 statements created after splitting: {len(s3_statement_chunks)}')
+        logger.debug(f'S3 statements after adding resources and splitting: {s3_statement_chunks}')
+
+        if kms_target_resources:
+            s3_kms_statements = share_policy_service.total_s3_kms_stmts
+            s3_kms_statement_chunks = share_policy_service.add_resources_and_generate_split_statements(
+                statements=s3_kms_statements,
+                target_resources=kms_target_resources,
+                sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS',
+                resource_type='kms',
+            )
+            logger.info(f'Number of S3 KMS statements created after splitting: {len(s3_kms_statement_chunks)}')
+            logger.debug(f'S3 KMS statements after adding resources and splitting: {s3_kms_statement_chunks}')
+
+        share_policy_service.merge_statements_and_update_policies(
+            target_sid=IAM_S3_BUCKETS_STATEMENT_SID,
+            target_s3_statements=s3_statement_chunks,
+            target_s3_kms_statements=s3_kms_statement_chunks,
+        )
+
+        if not share_policy_service.check_if_policies_attached():
+            logger.info(
+                f'Found some policies are not attached to the target IAM role: {self.target_requester_IAMRoleName}. Attaching policies now'
+            )
+            if self.share.principalType == PrincipalType.Group.value:
+                share_managed_policies = share_policy_service.get_managed_policies()
+                share_policy_service.attach_policies(share_managed_policies)
+            else:
+                consumption_role = EnvironmentService.get_consumption_role(
+                    session=self.session, uri=self.share.principalId
+                )
+                if consumption_role.dataallManaged:
+                    share_managed_policies = share_policy_service.get_managed_policies()
+                    share_policy_service.attach_policies(share_managed_policies)
 
     def get_bucket_policy_or_default(self):
         """
@@ -511,18 +543,8 @@ class S3BucketShareManager:
             environmentUri=target_environment.environmentUri,
             resource_prefix=target_environment.resourcePrefix,
         )
-        # Backwards compatibility
-        # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
-        # We create the policy from the inline statements and attach it to the role
-        if not share_policy_service.check_if_policy_exists():
-            share_policy_service.create_managed_policy_from_inline_and_delete_inline()
-            share_policy_service.attach_policy()
-        # End of backwards compatibility
-
-        share_resource_policy_name = share_policy_service.generate_policy_name()
-        version_id, policy_document = IAM.get_managed_policy_default_version(
-            self.target_account_id, self.target_environment.region, share_resource_policy_name
-        )
+        share_policy_service.process_backwards_compatibility_for_target_iam_roles()
+        share_policy_service.initialize_statements()
 
         key_alias = f'alias/{target_bucket.KmsAlias}'
         kms_client = KmsClient(target_bucket.AwsAccountId, target_bucket.region)
@@ -532,25 +554,44 @@ class S3BucketShareManager:
             f'arn:aws:s3:::{target_bucket.S3BucketName}',
             f'arn:aws:s3:::{target_bucket.S3BucketName}/*',
         ]
-        share_policy_service.remove_resource_from_statement(
-            target_resources=s3_target_resources,
-            statement_sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}S3',
-            policy_document=policy_document,
-        )
+
+        kms_target_resources = []
         if kms_key_id:
             kms_target_resources = [f'arn:aws:kms:{target_bucket.region}:{target_bucket.AwsAccountId}:key/{kms_key_id}']
-            share_policy_service.remove_resource_from_statement(
-                target_resources=kms_target_resources,
-                statement_sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS',
-                policy_document=policy_document,
-            )
 
-        IAM.update_managed_policy_default_version(
-            self.target_account_id,
-            self.target_environment.region,
-            share_resource_policy_name,
-            version_id,
-            json.dumps(policy_document),
+        managed_policy_exists = share_policy_service.check_if_managed_policies_exists()
+
+        if not managed_policy_exists:
+            logger.info(f'Managed policies for share with uri: {share.shareUri} are not found')
+            return
+
+        s3_kms_statement_chunks = []
+        s3_statements = share_policy_service.total_s3_stmts
+
+        s3_statement_chunks = share_policy_service.remove_resources_and_generate_split_statements(
+            statements=s3_statements,
+            target_resources=s3_target_resources,
+            sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}S3',
+            resource_type='s3',
+        )
+        logger.info(f'Number of S3 statements created after splitting: {len(s3_statement_chunks)}')
+        logger.debug(f'S3 statements after adding resources and splitting: {s3_statement_chunks}')
+
+        if kms_target_resources:
+            s3_kms_statements = share_policy_service.total_s3_kms_stmts
+            s3_kms_statement_chunks = share_policy_service.remove_resources_and_generate_split_statements(
+                statements=s3_kms_statements,
+                target_resources=kms_target_resources,
+                sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS',
+                resource_type='kms',
+            )
+            logger.info(f'Number of S3 KMS statements created after splitting: {len(s3_kms_statement_chunks)}')
+            logger.debug(f'S3 KMS statements after adding resources and splitting: {s3_kms_statement_chunks}')
+
+        share_policy_service.merge_statements_and_update_policies(
+            target_sid=IAM_S3_BUCKETS_STATEMENT_SID,
+            target_s3_statements=s3_statement_chunks,
+            target_s3_kms_statements=s3_kms_statement_chunks,
         )
 
     def delete_target_role_bucket_key_policy(

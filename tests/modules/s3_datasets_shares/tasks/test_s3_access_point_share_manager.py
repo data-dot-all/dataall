@@ -385,7 +385,7 @@ def test_grant_target_role_access_policy_test_empty_policy(
         account=target_environment.AwsAccountId,
         region=target_environment.region,
         resource_prefix=target_environment.resourcePrefix,
-    ).generate_policy_name()
+    ).generate_base_policy_name()
     # Then
     iam_update_role_policy_mock.assert_called_with(
         target_environment.AwsAccountId,
@@ -939,7 +939,7 @@ def test_delete_target_role_access_policy_no_remaining_statement(
         account=target_environment.AwsAccountId,
         region=target_environment.region,
         resource_prefix=target_environment.resourcePrefix,
-    ).generate_policy_name()
+    ).generate_base_policy_name()
 
     iam_update_role_policy_mock.assert_called_with(
         target_environment.AwsAccountId,
@@ -1043,7 +1043,7 @@ def test_delete_target_role_access_policy_with_remaining_statement(
         account=target_environment.AwsAccountId,
         region=target_environment.region,
         resource_prefix=target_environment.resourcePrefix,
-    ).generate_policy_name()
+    ).generate_base_policy_name()
 
     iam_update_role_policy_mock.assert_called_with(
         target_environment.AwsAccountId,

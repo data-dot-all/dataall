@@ -56,6 +56,17 @@ class NamingConventionService:
         suffix = f'-{self.target_uri}' if len(self.target_uri) else ''
         return f"{slugify(self.resource_prefix + '-' + self.target_label[:(max_length - len(self.resource_prefix + self.target_uri))] + suffix, regex_pattern=fr'{regex}', separator=separator, lowercase=True)}"
 
+    def build_compliant_name_with_index(self, index: int = None) -> str:
+        """
+        Builds a compliant AWS resource name
+        """
+        regex = NamingConventionPattern[self.service].value['regex']
+        separator = NamingConventionPattern[self.service].value['separator']
+        max_length = NamingConventionPattern[self.service].value['max_length']
+        suffix = f'-{self.target_uri}' if len(self.target_uri) else ''
+        suffix = suffix + f'-{index}' if index is not None else suffix
+        return f"{slugify(self.resource_prefix + '-' + self.target_label[:(max_length - len(self.resource_prefix + self.target_uri))] + suffix, regex_pattern=fr'{regex}', separator=separator, lowercase=True)}"
+
     def validate_name(self):
         regex = NamingConventionPattern[self.service].value['regex']
         max_length = NamingConventionPattern[self.service].value['max_length']

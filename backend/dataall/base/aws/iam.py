@@ -67,6 +67,25 @@ class IAM:
             return None
 
     @staticmethod
+    def list_policy_names_by_policy_pattern(account_id: str, region: str, policy_name: str):
+        try:
+            client = IAM.client(account_id, region)
+            # Setting Scope to 'Local' to fetch all the policies created in this account
+            paginator = client.get_paginator('list_policies')
+            policies = []
+            for page in paginator.paginate(Scope='Local'):
+                policies.extend(page['Policies'])
+            policy_names = [policy.get('PolicyName') for policy in policies]
+            return [policy_nm for policy_nm in policy_names if policy_name in policy_nm]
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(
+                    f'Data.all Environment Pivot Role does not have permissions to get policies with pattern {policy_name} due to: {e}'
+                )
+            log.error(f'Failed to get policies for policy pattern due to: {e}')
+            return []
+
+    @staticmethod
     def delete_role_policy(
         account_id: str,
         region: str,
@@ -93,6 +112,23 @@ class IAM:
             client = IAM.client(account_id, region)
             response = client.get_policy(PolicyArn=arn)
             return response['Policy']
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(
+                    f'Data.all Environment Pivot Role does not have permissions to to get policy {policy_name}: {e}'
+                )
+            log.error(f'Failed to get policy {policy_name}: {e}')
+            return None
+
+    @staticmethod
+    def get_managed_policy_document_by_name(account_id: str, region: str, policy_name: str):
+        try:
+            arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
+            client = IAM.client(account_id, region)
+            policy = IAM.get_managed_policy_by_name(account_id, region, policy_name)
+            policyVersionId = policy['DefaultVersionId']
+            response = client.get_policy_version(PolicyArn=arn, VersionId=policyVersionId)
+            return response['PolicyVersion']['Document']
         except ClientError as e:
             if e.response['Error']['Code'] == 'AccessDenied':
                 raise Exception(
