@@ -81,7 +81,7 @@ class S3Client:
                 bucket.objects.all().delete()
             self._client.delete_bucket(Bucket=bucket_name)
         except ClientError as e:
-            log.exception(f'Error deleting S3 bucket: {e}')
+            log.exception('Error deleting S3 bucket')
 
     def upload_file_to_prefix(self, local_file_path, s3_path):
         """
