@@ -8,7 +8,7 @@ permalink: /deploy-aws/
 - [Pre-requisites](#pre-reqs)
 - [1. Clone data.all code](#clone)
 - [2. Setup Python virtualenv](#env)
-- [3. Mirror the code to a CodeCommit or CodeStar Connections repository](#code)
+- [3. Mirror the code to a CodeCommit or CodeConnections repository ](#code)
 - [4. Bootstrap tooling account](#boot)
 - [5. Bootstrap deployment account(s)](#boot2)
 - [6. Configure the deployment options in the cdk.json file](#cdkjson)
@@ -78,27 +78,13 @@ source venv/bin/activate
 pip install -r ./deploy/requirements.txt
 pip install git-remote-codecommit
 ```
-## 3. Mirror the code to a CodeCommit or CodeStar Connections repository <a name="code"></a>
-### Using CodeCommit:
-Assuming AWS tooling account Administrator credentials, create an AWS CodeCommit repository, mirror the data.all code 
-and push your changes:
-Run the following to check your credentials:
-```bash
-aws sts get-caller-identity
-```
-```bash
-aws codecommit create-repository --repository-name dataall
-git remote rm origin
-git remote add origin codecommit::<aws-region>://dataall
-git init
-git add .
-git commit -m "First commit"
-git push --set-upstream origin main
-```
-### Using CodeStar Connection to GitHub, GitHub Enterprise, GitLab or Bitbucket:
-If you choose to use a GitHub, GitLab or Bitbucket repository, it's important to note that you need to set up an AWS CodeStar connection to your repository for seamless integration. 
+## 3. Mirror the code to a CodeCommit or CodeConnections repository <a name="code"></a>
+
+### Using CodeConnections to GitHub, GitHub Enterprise, GitLab or Bitbucket:
+If you choose to use a GitHub, GitLab or Bitbucket repository, it's important to note that you need to set up an AWS CodeConnections connection to your repository for seamless integration. 
+
 This connection allows AWS CodePipeline to interact securely with GitHub, GitHub Enterprise, GitLab or Bitbucket. 
-Before mirroring the data.all code and pushing any changes, make sure to set up the CodeStar connection by following 
+Before mirroring the data.all code and pushing any changes, make sure to set up the CodeConnections by following 
 the steps detailed in the [documentation](https://docs.aws.amazon.com/dtconsole/latest/userguide/connections-create.html):
 1. Log in to the AWS Management Console.
 2. Navigate to the AWS Developer tools > Settings > Connections.
@@ -116,6 +102,29 @@ git add .
 git commit -m "First commit"
 git push --set-upstream origin main
 ```
+
+### Using CodeCommit:
+
+> [!WARNING]
+> CodeCommit is no longer an active service for new AWS Customers. It is recommended to use the above method of CodeConnections when deploying a new instance of data.all. To learn more about CodeCommit's availability, please refer to the documentation [here](https://aws.amazon.com/blogs/devops/how-to-migrate-your-aws-codecommit-repository-to-another-git-provider/).
+
+Assuming AWS tooling account Administrator credentials, create an AWS CodeCommit repository, mirror the data.all code 
+and push your changes:
+Run the following to check your credentials:
+```bash
+aws sts get-caller-identity
+```
+```bash
+aws codecommit create-repository --repository-name dataall
+git remote rm origin
+git remote add origin codecommit::<aws-region>://dataall
+git init
+git add .
+git commit -m "First commit"
+git push --set-upstream origin main
+```
+
+
 ## 4. Bootstrap tooling account <a name="boot"></a>
 The **Tooling** account is where the code repository, and the CI/CD pipeline are deployed.
 It needs to be bootstrapped with CDK in 2 regions, your selected region and us-east-1.
@@ -169,7 +178,7 @@ of our repository. Open it, you should be seen something like:
     "resource_prefix": "string_PREFIX_FOR_ALL_RESOURCES_CREATED_BY_THIS_APP|DEFAULT=dataall",
     "repository_source": "string_VERSION_CONTROL_SERVICE|(codecommit, codestar_connection) DEFAULT=codecommit",
     "repo_string": "string_REPOSITORY_IN_GITHUB_OWNER/REPOSITORY|DEFAULT=awslabs/aws-dataall, REQUIRED if repository_source=codestar_connection",
-    "repo_connection_arn": "string_CODESTAR_SOURCE_CONNECTION_ARN_FOR_GITHUB_arn:aws:codestar-connections:region:account-id:connection/connection-id|DEFAULT=None, REQUIRED if repository_source=codestar_connection",
+    "repo_connection_arn": "string_CODESTAR_SOURCE_CONNECTION_ARN_FOR_GITHUB_arn:aws:codeconnections:region:account-id:connection/connection-id|DEFAULT=None, REQUIRED if repository_source=codestar_connection",
     "DeploymentEnvironments": [
       {
         "envname": "string_ENVIRONMENT_NAME|REQUIRED",
@@ -234,7 +243,7 @@ and find 2 examples of cdk.json files.
 | resource_prefix                               | Optional              | The prefix used for AWS created resources. It must be in lower case without any special character. (default: dataall)                                                                                                                                                                                                                                                                                                |
 | source                                        | Optional              | The version control source for the repository. It can take 2 values 'codecommit' or 'codestar_connection'. (default: 'codecommit')                                                                                                                                                                                                                                                                                   |
 | repo_string                                   | Optional              | The repository path as string. Required if source='codestar_connection' (default: 'awslabs/aws-dataall')                                                                                                                                                                                                                                                                                                             |
-| repo_connection_arn                           | Optional              | The arn of the CodeStar connection connecting with the source repository. Required if source='codestar_connection'(default: None)                                                                                                                                                                                                                                                                                    |
+| repo_connection_arn                           | Optional              | The arn of the CodeConnection connecting with the source repository. Required if source='codestar_connection'(default: None)                                                                                                                                                                                                                                                                                    |
 | **Deployment environments Parameters**        | **Optional/Required** | **Definition**                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ----------------------------                  | ---------             | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                                                                                                                          |
 | envname                                       | REQUIRED              | The name of the deployment environment (e.g dev, qa, prod,...). It must be in lower case without any special character.                                                                                                                                                                                                                                                                                              |
@@ -450,7 +459,7 @@ the different configuration options.
             "active": true
         },
         "datapipelines": {
-            "active": true
+            "active": false
         },
         "omics": {
             "active": false
@@ -530,7 +539,6 @@ check the [UserGuide](https://github.com/data-dot-all/dataall/blob/main/UserGuid
 | s3_datasets_shares | datasets_base, notifications                        | Sub-module that allows sharing of Datasets through Lake Formation and S3                                                   |
 | datasets_base   | None                                                | Shared code related to Datasets (not exposed on `config.json`).                                                            |
 | worksheets      | datasets                                            | Athena query editor integrated in data.all UI                                                                              |
-| datapipelines   | feed                                                | CICD pipelines that deploy [AWS DDK](https://awslabs.github.io/aws-ddk/) applications                                      |
 | omics           | None                                                | adds the capability to view and instantiate HealthOmics Ready2Run workflows as runs that can output and save omic data as data.all Datasets.|
 | mlstudio        | None                                                | SageMaker Studio users that can open a session directly from data.all UI                                                   |
 | notebooks       | None                                                | SageMaker Notebooks created and accessible from data.all UI                                                                |
