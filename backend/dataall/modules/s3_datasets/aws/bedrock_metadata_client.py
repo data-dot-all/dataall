@@ -4,13 +4,12 @@ from dataall.base.config import config
 from dataall.base.aws.sts import SessionHelper
 from langchain_aws import BedrockLLM
 from langchain.prompts import PromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
+from langchain_core.pydantic_v1 import BaseModel
 from langchain_core.output_parsers import JsonOutputParser
 
 log = logging.getLogger(__name__)
 
 
-#  TODO: refactoring with prompt templates
 #  TODO session for infra account - should we use a dedicated role?
 class BedrockClient:
     def __init__(self):

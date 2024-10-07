@@ -11,28 +11,42 @@ class MetadataOutput(BaseModel):
 
 
 class DatasetMetadataGenerationService:
+    COMMON_TASK_PROMPT = """
+    Your task is to generate or improve the metadata fields for a {target_type}. """
+    COMMON_METADATA_FIELDS_PROMPT = """
+    If any of the input parameters is equal to "No description provided" or is None or [] do not use that particular 
+    input for generating the metadata fields.
+    There are 4 metadata fields that can be requested to you
+        1. label - 1 to 3 words
+        2. description - less than 30 words
+        3. tags - list of strings (less than 3), where each string can take any value
+        4. topics -  list of strings (less than 3), where each string must be one of the following topics ['Finance', 'Marketing', 'Engineering', 'HR', 'Operations', 'Sales', 'Other']
+    This time the user has requested ONLY the following metadata fields: {metadata_types}
+    Your response should strictly contain only the requested metadata fields.
+    """
+    COMMON_OUTPUT_PROMPT = """
+    Return the result as a Python dictionary where the keys are the requested metadata fields, all the keys must be lowercase and the values are the corresponding generated metadata.
+    """
+
     @staticmethod
     def get_dataset_prompt_template() -> PromptTemplate:
-        prompt_template = """
-              Generate or improve metadata for a dataset using the following provided data:
+        prompt_template = (
+            DatasetMetadataGenerationService.COMMON_TASK_PROMPT
+            + """
+            Use the following input data:
                 - Dataset name: {label}
                 - Current dataset description: {description}
                 - Current tags for dataset: {tags}
                 - Table names in the dataset: {table_names}
                 - Folder names in the dataset: {folder_names}
-                **Important**: 
-                    - If the data indicates "No description provided" or is None or [] do not use that particular input for generating metadata.
-                    - Only focus on generating the following metadata types as specified by the user: {metadata_types}. Do not include any other metadata types.
-                    - Return the result as a Python dictionary.
-                Your response should strictly contain the requested metadata types. Don't use ' ' in your response, use " ".
-                For example, if the requested metadata types are "tags" and "description", the response should be:
-                    "tags":<tags>
-                    "description":<description>
-                Evaluate if the given parameters are sufficient for generating the requested metadata, if not, respond with listing table names and folder names for description and for label keep the current name
-                For tags and topics, ensure the output is a string list.  Label is singular so you should return only one label as string. 
-                Return the result as a Python dictionary where the keys are the requested metadata types, all the keys must be lowercase and the values are the corresponding generated metadata.
-
-            """
+                """
+            + DatasetMetadataGenerationService.COMMON_METADATA_FIELDS_PROMPT
+            + """
+                Evaluate if the given parameters are sufficient for generating the requested metadata, 
+                if not, respond with "NotEnoughData" for all values of dictionary keys.
+                """
+            + DatasetMetadataGenerationService.COMMON_OUTPUT_PROMPT
+        )
         return PromptTemplate.from_template(prompt_template)
 
     @staticmethod
@@ -49,6 +63,7 @@ class DatasetMetadataGenerationService:
         # TODO: add table description
         # TODO add input validation
         return template.format(
+            target_type="dataset",
             label=label,
             description=description,
             tags=tags,
@@ -59,14 +74,25 @@ class DatasetMetadataGenerationService:
 
     @staticmethod
     def get_table_prompt_template() -> PromptTemplate:
+        prompt_template = (
+            DatasetMetadataGenerationService.COMMON_TASK_PROMPT
+            + """
+            Use the following input data:
+                - Table name: {label}
+                - Current table description: {description}
+                - Current tags for table: {tags}
+                - Column names: {columns}
+                - Column Descriptions: {column_descriptions}
+                - Sample data: {sample_data}
+                """
+            + DatasetMetadataGenerationService.COMMON_METADATA_FIELDS_PROMPT
+            + """
+                Evaluate if the given parameters are sufficient for generating the requested metadata, 
+                if not, respond with "NotEnoughData" for all values of dictionary keys.
+                """
+            + DatasetMetadataGenerationService.COMMON_OUTPUT_PROMPT
+        )
         prompt_template = """
-                 Generate or improve metadata for a common_data['label'] table using the following provided data:
-                    - Table name: {label}
-                    - Current table description: {description}
-                    - Current tags for table: {tags}
-                    - Column names: {columns}
-                    - Column Descriptions: {column_descriptions}
-                    - (Only Input) Sample data: {sample_data}
                     **Important**: 
                     - If the data indicates "No description provided," do not use that particular input for generating metadata, these data is optional you should still generate in that case.
                     - Only focus on generating the following metadata types as specified by the user: {metadata_types}. Do not include any other metadata types.
