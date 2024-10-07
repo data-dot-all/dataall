@@ -179,6 +179,7 @@ of our repository. Open it, you should be seen something like:
     "repository_source": "string_VERSION_CONTROL_SERVICE|(codecommit, codestar_connection) DEFAULT=codecommit",
     "repo_string": "string_REPOSITORY_IN_GITHUB_OWNER/REPOSITORY|DEFAULT=awslabs/aws-dataall, REQUIRED if repository_source=codestar_connection",
     "repo_connection_arn": "string_CODESTAR_SOURCE_CONNECTION_ARN_FOR_GITHUB_arn:aws:codeconnections:region:account-id:connection/connection-id|DEFAULT=None, REQUIRED if repository_source=codestar_connection",
+    "log_retention_duration": "string_LOG_RETENTION_DURATION|DEFAULT=TWO_YEARS",
     "DeploymentEnvironments": [
       {
         "envname": "string_ENVIRONMENT_NAME|REQUIRED",
@@ -202,6 +203,7 @@ of our repository. Open it, you should be seen something like:
         "enable_cw_canaries": "boolean_SET_CLOUDWATCH_CANARIES_FOR_FRONTEND_TESTING|DEFAULT=false",
         "shared_dashboards_sessions": "string_TYPE_SESSION_SHARED_DASHBOARDS|(reader, anonymous) DEFAULT=anonymous",
         "enable_pivot_role_auto_create": "boolean_ENABLE_PIVOT_ROLE_AUTO_CREATE_IN_ENVIRONMENT|DEFAULT=false",
+        "allowed_origins": "string_TYPE_DOMAIN_ORIGIN|DEFAULT=*",
         "enable_update_dataall_stacks_in_cicd_pipeline": "boolean_ENABLE_UPDATE_DATAALL_STACKS_IN_CICD_PIPELINE|DEFAULT=false",
         "enable_opensearch_serverless": "boolean_USE_OPENSEARCH_SERVERLESS|DEFAULT=false",
         "cognito_user_session_timeout_inmins": "integer_COGNITO_USER_SESSION_TIMEOUT_INMINS|DEFAULT=43200",
@@ -244,6 +246,8 @@ and find 2 examples of cdk.json files.
 | source                                        | Optional              | The version control source for the repository. It can take 2 values 'codecommit' or 'codestar_connection'. (default: 'codecommit')                                                                                                                                                                                                                                                                                   |
 | repo_string                                   | Optional              | The repository path as string. Required if source='codestar_connection' (default: 'awslabs/aws-dataall')                                                                                                                                                                                                                                                                                                             |
 | repo_connection_arn                           | Optional              | The arn of the CodeConnection connecting with the source repository. Required if source='codestar_connection'(default: None)                                                                                                                                                                                                                                                                                    |
+| log_retention_duration                        | Optional              | The CloudWatch log retention days for all data.all compute log groups (e.g. Lambda and ECS Tasks), VPC flow logs, and API Activity logs - this parameter is specified as a string value of one of the AWS CDK enum RetentionDays members (default: `TWO_YEARS`) |
+
 | **Deployment environments Parameters**        | **Optional/Required** | **Definition**                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ----------------------------                  | ---------             | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                                                                                                                          |
 | envname                                       | REQUIRED              | The name of the deployment environment (e.g dev, qa, prod,...). It must be in lower case without any special character.                                                                                                                                                                                                                                                                                              |
@@ -267,6 +271,7 @@ and find 2 examples of cdk.json files.
 | cognito_user_session_timeout_inmins           | Optional              | The number of minutes to set the refresh token validity time for user session's in Cognito before a user must re-login to the data.all UI (default: 43200 - i.e. 30 days)                                                                                                                                                                                                                                            |
 | reauth_config                                 | Optional              | A dictionary containing a list of API operations that require a user to re-authenticate before proceedind (`reauth_apis`) and a time to live (`ttl`) for how long a user's re-auth session is valid to perform re-auth APIs before having to re-authenticate again                                                                                                                                                   |
 | custom_auth                                   | Optional              | A dictionary containing set of parameters to setup external IDP ( Authentication and Authorization) in data.all. Custom Auth Configuration : `provider`, `url`, `redirect_url`, `client_id`, `response_types`, `scopes`, `jwks_url`, `claims_mapping` (Nested dictionary containing configuration : `user_id`, `email`). All the configurations are required if setting data.all with an external OIDC supported IDP |
+| allowed_origins                               | Optional              | A string origin to be specified as the `Access-Control-Allow-Origin` response header when returning responses from bakend (default: `'*'`) |
 
 **Example 1**: Basic deployment: this is an example of a minimum configured cdk.json file.
 
@@ -309,6 +314,7 @@ deploy to 2 deployments accounts.
     "git_release": true,
     "quality_gate": false,
     "resource_prefix": "da",
+    "log_retention_duration": "SIX_YEARS",
     "DeploymentEnvironments": [
         {
             "envname": "dev",
@@ -341,6 +347,7 @@ deploy to 2 deployments accounts.
             "enable_update_dataall_stacks_in_cicd_pipeline": true,
             "enable_opensearch_serverless": true,
             "cognito_user_session_timeout_inmins": 240,
+            "allowed_origins": "https://example.com",
             "reauth_config": {
               "reauth_apis": ["CreateDataset", "ImportDataset", "deleteDataset"],
               "ttl": 10
@@ -513,7 +520,8 @@ the different configuration options.
             "env_aws_actions": true,
             "cdk_pivot_role_multiple_environments_same_account": false,
             "enable_quicksight_monitoring": false
-        }
+        },
+        "log_query_period_days": 1
     }
 }
 ```
@@ -607,17 +615,19 @@ a particular feature in the core is to add it to the core section of the `config
             "env_aws_actions": true,
             "cdk_pivot_role_multiple_environments_same_account": false,
             "enable_quicksight_monitoring": false
-        }
+        },
+        "log_query_period_days": 1
     }
 ```
 This is the list of core features that can currently be customized. Take it as an example if you need to 
 disable or modify the bahavior any other core feature.
 
-| **Feature**           | **Module**     | **Description**                                                                                                                                                                                                                                     |   
-|-----------------------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| env_aws_actions       | environments   | If set to True, users can get AWS Credentials and assume Environment Group IAM roles from data.all's UI                                                                                                                                             |
-| cdk_pivot_role_multiple_environments_same_account       | environments   | If set to True, the CDK-created pivot role as part of the environment stack will be region specific (`dataallPivotRole-cdk-<region>`). This feature allows users to create multiple data.all environments in the same account but multiple regions. |
-| enable_quicksight_monitoring       | environments   |  If set to **true**, RDS security groups and VPC NACL rules are modified to allow connection of the RDS metadata database with Quicksight in the infrastructure account (default: false)        |
+| **Feature**           | **Module**   | **Description**                                                                                                                                                                                                                                    |   
+|-----------------------|--------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| env_aws_actions       | environments | If set to True, users can get AWS Credentials and assume Environment Group IAM roles from data.all's UI                                                                                                                                            |
+| cdk_pivot_role_multiple_environments_same_account       | environments | If set to True, the CDK-created pivot role as part of the environment stack will be region specific (`dataallPivotRole-cdk-<region>`). This feature allows users to create multiple data.all environments in the same account but multiple regions. |
+| enable_quicksight_monitoring       | environments | If set to **true**, RDS security groups and VPC NACL rules are modified to allow connection of the RDS metadata database with Quicksight in the infrastructure account (default: false)                                                            |
+| log_query_period_days       | global       | Specify the time frame for querying the log history. This log history is used for Stacks view and shared log views.                                                                                                                             |
 
 
 ## 8. Run CDK synth and check cdk.context.json <a name="context"></a>
