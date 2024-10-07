@@ -39,3 +39,31 @@ RedshiftTable = gql.ObjectType(
         gql.Field('alreadyAdded', gql.String),
     ],
 )
+
+ConnectionPermission = gql.ObjectType(
+    name='ConnectionPermission',
+    fields=[
+        gql.Field(name='name', type=gql.String),
+        gql.Field(name='description', type=gql.String),
+    ],
+)
+
+ConnectionGroup = gql.ObjectType(
+    name='ConnectionGroup',
+    fields=[
+        gql.Field(name='groupUri', type=gql.String),
+        gql.Field(name='permissions', type=gql.ArrayType(ConnectionPermission)),
+    ],
+)
+
+ConnectionGroupSearchResult = gql.ObjectType(
+    name='ConnectionGroupSearchResult',
+    fields=[
+        gql.Field(name='count', type=gql.Integer),
+        gql.Field(name='page', type=gql.Integer),
+        gql.Field(name='pages', type=gql.Integer),
+        gql.Field(name='hasNext', type=gql.Boolean),
+        gql.Field(name='hasPrevious', type=gql.Boolean),
+        gql.Field(name='nodes', type=gql.ArrayType(ConnectionGroup)),
+    ],
+)

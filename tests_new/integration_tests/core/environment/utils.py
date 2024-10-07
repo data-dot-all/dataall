@@ -1,5 +1,6 @@
 from integration_tests.core.environment.queries import update_environment
 from integration_tests.core.stack.utils import check_stack_ready, check_stack_in_progress
+from integration_tests.core.stack.queries import update_stack
 
 
 def set_env_params(client, env, **new_params):
@@ -34,3 +35,14 @@ def set_env_params(client, env, **new_params):
         )
         check_stack_in_progress(client, env_uri, stack_uri)
         check_stack_ready(client, env_uri, stack_uri)
+
+
+def update_env_stack(client, env):
+    stack_uri = env.stack.stackUri
+    env_uri = env.environmentUri
+    # wait for stack to get to a final state before triggering an update
+    check_stack_ready(client, env_uri, stack_uri)
+    update_stack(client, env_uri, 'environment')
+    # wait for stack to move to "in_progress" state
+    check_stack_in_progress(client, env_uri, stack_uri)
+    return check_stack_ready(client, env_uri, stack_uri)

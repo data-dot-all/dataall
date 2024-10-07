@@ -104,7 +104,7 @@ class S3Client:
             return self._client.list_objects(Bucket=bucket_name)
         except ClientError as e:
             logging.error(f'Error listing objects in S3: {e}')
-            raise
+            raise e
 
     def list_accesspoint_folder_objects(self, access_point, folder_name):
         try:

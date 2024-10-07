@@ -19,16 +19,12 @@ class IAMClient:
         try:
             role = self._client.get_role(RoleName=role_name)
             return role
-        except Exception as e:
+        except self._client.exceptions.NoSuchEntityException as e:
             log.info(f'Error occurred: {e}')
             return None
 
     def delete_role(self, role_name):
-        try:
-            self._client.delete_role(RoleName=role_name)
-        except Exception as e:
-            log.error(e)
-            raise e
+        self._client.delete_role(RoleName=role_name)
 
     def create_role(self, account_id, role_name, test_role_name):
         policy_doc = {
@@ -47,16 +43,12 @@ class IAMClient:
                 }
             ],
         }
-        try:
-            role = self._client.create_role(
-                RoleName=role_name,
-                AssumeRolePolicyDocument=json.dumps(policy_doc),
-                Description='Role for Lambda function',
-            )
-            return role
-        except Exception as e:
-            log.error(e)
-            raise e
+        role = self._client.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=json.dumps(policy_doc),
+            Description='Role for Lambda function',
+        )
+        return role
 
     def get_consumption_role(self, account_id, role_name, test_role_name):
         role = self.get_role(role_name)
