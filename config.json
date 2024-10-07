@@ -13,9 +13,9 @@
             }
         },
         "datapipelines": {
-            "active": true,
+            "active": false,
              "features": {
-                 "show_stack_logs": "enabled"
+                 "show_stack_logs": "disabled"
             }
         },
         "omics": {
