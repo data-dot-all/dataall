@@ -58,6 +58,7 @@ class S3ControlClient:
 
     @retry(retry_on_result=lambda arn: arn is None, stop_max_attempt_number=10, wait_fixed=30000)
     def try_get_bucket_access_point_arn(self, bucket_name: str, access_point_name: str):
+        log.info(f'Attempt to get access point arn for bucket {bucket_name} and accesspoint {access_point_name}')
         all_access_points = self._client.list_access_points(
             AccountId=self._account_id, Bucket=bucket_name, MaxResults=1000
         )
