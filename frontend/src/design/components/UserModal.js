@@ -8,7 +8,6 @@ import {
   TableRow,
   TableCell,
   TableBody,
-  Link,
   Dialog,
   CircularProgress
 } from '@mui/material';
@@ -75,7 +74,7 @@ const UserModal = ({ teams, open, onClose }) => {
                 <TableRow key={index}>
                   <TableCell>
                     <Typography color="textSecondary" variant="body2">
-                        {userId}
+                      {userId}
                     </Typography>
                   </TableCell>
                 </TableRow>

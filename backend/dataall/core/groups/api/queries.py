@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from dataall.core.groups.api.resolvers import get_group, list_groups, get_groups_for_user
+from dataall.core.groups.api.resolvers import get_group, list_groups, get_groups_for_user, list_user
 
 getGroup = gql.QueryField(
     name='getGroup',
