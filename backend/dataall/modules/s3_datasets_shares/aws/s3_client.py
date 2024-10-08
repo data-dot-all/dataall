@@ -1,5 +1,5 @@
 import logging
-import time
+from retrying import retry
 from typing import List
 
 from dataall.base.aws.sts import SessionHelper
@@ -56,15 +56,14 @@ class S3ControlClient:
 
         return self.try_get_bucket_access_point_arn(bucket_name, access_point_name)
 
+    @retry(retry_on_result=lambda arn: arn is None, stop_max_attempt_number=10, wait_fixed=30000)
     def try_get_bucket_access_point_arn(self, bucket_name: str, access_point_name: str):
-        for attempt in range(5):
-            all_acess_points = self._client.list_access_points(
-                AccountId=self._account_id, Bucket=bucket_name, MaxResults=1000
-            )
-            for ap in all_acess_points['AccessPointList']:
-                if ap['Name'] == access_point_name:
-                    return ap['AccessPointArn']
-            time.sleep(30)
+        all_access_points = self._client.list_access_points(
+            AccountId=self._account_id, Bucket=bucket_name, MaxResults=1000
+        )
+        for ap in all_access_points['AccessPointList']:
+            if ap['Name'] == access_point_name:
+                return ap['AccessPointArn']
         return None
 
     def delete_bucket_access_point(self, access_point_name: str):

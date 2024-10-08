@@ -2,7 +2,6 @@ import logging
 import json
 from itertools import count
 
-from retrying import Retrying
 
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.db import utils
@@ -441,6 +440,8 @@ class S3AccessPointShareManager:
 
         s3_client = S3ControlClient(self.source_account_id, self.source_environment.region)
         access_point_arn = s3_client.create_bucket_access_point(self.bucket_name, self.access_point_name)
+        if not access_point_arn:
+            raise Exception('Failed to create access point')
         existing_policy = s3_client.get_access_point_policy(self.access_point_name)
         # requester will use this role to access resources
         target_requester_id = SessionHelper.get_role_id(
