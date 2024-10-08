@@ -19,7 +19,7 @@ from integration_tests.modules.s3_datasets.queries import (
     create_table_data_filter,
 )
 from tests_new.integration_tests.modules.datasets_base.queries import list_datasets
-
+from integration_tests.aws_clients.s3 import S3Client as S3CommonClient
 from integration_tests.modules.s3_datasets.aws_clients import S3Client, KMSClient, GlueClient, LakeFormationClient
 from integration_tests.core.stack.queries import update_stack
 
@@ -101,7 +101,7 @@ def create_aws_imported_resources(
 def delete_aws_dataset_resources(aws_client, env, bucket=None, kms_alias=None, database=None, existing_lf_admins=None):
     try:
         if bucket:
-            S3Client(session=aws_client, region=env['region']).delete_bucket(bucket)
+            S3CommonClient(session=aws_client, account=env.AwsAccountId, region=env.region).delete_bucket(bucket)
         if kms_alias:
             KMSClient(
                 session=aws_client,

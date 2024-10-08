@@ -65,24 +65,6 @@ class S3Client:
         except ClientError as e:
             log.exception('Error creating S3 bucket')
 
-    def delete_bucket(self, bucket_name):
-        """
-        Delete an S3 bucket.
-        :param bucket_name: Name of the S3 bucket to be deleted
-        :return: None
-        """
-        try:
-            # Delete all objects in the bucket before deleting the bucket
-            bucket = self._resource.Bucket(bucket_name)
-            bucket_versioning = self._resource.BucketVersioning(bucket_name)
-            if bucket_versioning.status == 'Enabled':
-                bucket.object_versions.delete()
-            else:
-                bucket.objects.all().delete()
-            self._client.delete_bucket(Bucket=bucket_name)
-        except ClientError as e:
-            log.exception('Error deleting S3 bucket')
-
     def upload_file_to_prefix(self, local_file_path, s3_path):
         """
         Upload a file from a local path to an S3 bucket with a specified prefix.

@@ -26,10 +26,11 @@ class S3Client:
             # Delete any remaining objects (if versioning was not enabled)
             bucket.objects.all().delete()
             # Delete any remaining access point
-            paginator = self._control_client.get_paginator('list_access_points')
-            for page in paginator.paginate(AccountId=self._account, Bucket=bucket_name):
-                for access_point in page['AccessPointList']:
-                    self._control_client.delete_access_point(AccountId=self._account, Name=access_point['Name'])
+            access_points = self._control_client.list_access_points(AccountId=self._account, Bucket=bucket_name)[
+                'AccessPointList'
+            ]
+            for access_point in access_points:
+                self._control_client.delete_access_point(AccountId=self._account, Name=access_point['Name'])
             bucket.delete()
         except ClientError as e:
             log.exception(f'Error deleting S3 bucket: {e}')
