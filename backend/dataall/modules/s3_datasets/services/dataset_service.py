@@ -28,6 +28,7 @@ from dataall.modules.s3_datasets.aws.s3_dataset_client import S3DatasetClient
 from dataall.modules.s3_datasets.db.dataset_location_repositories import DatasetLocationRepository
 from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.s3_datasets.indexers.dataset_indexer import DatasetIndexer
+from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicyRepository
 from dataall.modules.s3_datasets.services.dataset_permissions import (
     CREDENTIALS_DATASET,
     GET_DATASET,
@@ -47,7 +48,7 @@ from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetTabl
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_ALL
 from dataall.modules.datasets_base.services.dataset_service_interface import DatasetServiceInterface
-
+from copy import deepcopy
 log = logging.getLogger(__name__)
 
 
@@ -91,6 +92,31 @@ class DatasetService:
         """All permissions from other modules that need to be deleted to stewards"""
         for interface in cls._interfaces:
             interface.extend_delete_steward_permissions(session, dataset)
+
+    @staticmethod
+    def _obfuscate_s3_dataset_resources(dataset):
+        # Create a shallow copy of the dataset
+        obfuscated_dataset = deepcopy(dataset)
+
+        # Define the fields to potentially obfuscate and their obfuscation functions
+        sensitive_fields = {
+            'AwsAccountId': lambda x: '********' if x else None,
+            'S3BucketName': lambda x: f"{x[:3]}{'*' * (len(x) - 6)}{x[-3:]}" if x else None,
+            'GlueDatabaseName': lambda x: f"{x[:3]}{'*' * (len(x) - 4)}{x[-2:]}" if x else None,
+            'GlueCrawlerName': lambda x: f"{x[:3]}{'*' * (len(x) - 6)}{x[-3:]}" if x else None,
+            "GlueCrawlerSchedule": lambda x: '********' if x else None,
+            "GlueProfilingJobName": lambda x: f"{x[:3]}{'*' * (len(x) - 6)}{x[-3:]}" if x else None,
+            "GlueProfilingTriggerSchedule": lambda x: '********' if x else None,
+            "KmsAlias": lambda x: '********' if x else None,
+            "IamDatasetAdminRoleArn": lambda x: '********' if x else None,
+        }
+
+        # Check authorization
+        for field, obfuscate_func in sensitive_fields.items():
+            if hasattr(obfuscated_dataset, field):
+                setattr(obfuscated_dataset, field, obfuscate_func(getattr(obfuscated_dataset, field)))
+        return obfuscated_dataset
+
 
     @staticmethod
     def check_dataset_account(session, environment):
@@ -239,15 +265,16 @@ class DatasetService:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             if dataset.SamlAdminGroupName in context.groups:
                 dataset.userRoleForDataset = DatasetRole.Admin.value
+
+            if not ResourcePolicyRepository.has_user_resource_permission(
+                session=session,
+                groups=context.groups,
+                permission_name=GET_DATASET,
+                resource_uri=uri,
+            ):
+                return DatasetService._obfuscate_s3_dataset_resources(dataset)
             return dataset
 
-    @staticmethod
-    @ResourcePolicyService.has_resource_permission(GET_DATASET)
-    def get_dataset_resources(uri):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-            return dataset
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)

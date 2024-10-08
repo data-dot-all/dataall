@@ -17,13 +17,11 @@ export const getDataset = (datasetUri) => ({
         imported
         userRoleForDataset
         SamlAdminGroupName
-        resourceDetails {
-          AwsAccountId
-          KmsAlias
-          S3BucketName
-          GlueDatabaseName
-          IAMDatasetAdminRoleArn
-        }
+        AwsAccountId
+        KmsAlias
+        S3BucketName
+        GlueDatabaseName
+        IAMDatasetAdminRoleArn
         tags
         businessOwnerEmail
         stewards

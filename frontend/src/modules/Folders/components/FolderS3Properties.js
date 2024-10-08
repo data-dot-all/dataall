@@ -19,7 +19,7 @@ export const FolderS3Properties = (props) => {
           S3 URI
         </Typography>
         <Typography color="textPrimary" variant="body2">
-          {`s3://${folder.dataset.resourceDetails?.S3BucketName}/${folder.S3Prefix}/`}
+          {`s3://${folder.dataset.S3BucketName}/${folder.S3Prefix}/`}
         </Typography>
       </CardContent>
       <CardContent>
@@ -27,7 +27,7 @@ export const FolderS3Properties = (props) => {
           S3 ARN
         </Typography>
         <Typography color="textPrimary" variant="body2">
-          {`arn:aws:s3:::${folder.dataset.resourceDetails?.S3BucketName}/${folder.S3Prefix}/`}
+          {`arn:aws:s3:::${folder.dataset.S3BucketName}/${folder.S3Prefix}/`}
         </Typography>
       </CardContent>
       <CardContent>
@@ -43,7 +43,7 @@ export const FolderS3Properties = (props) => {
           Account
         </Typography>
         <Typography color="textPrimary" variant="body2">
-          {folder.dataset.resourceDetails?.AwsAccountId}
+          {folder.dataset.AwsAccountId}
         </Typography>
       </CardContent>
     </Card>

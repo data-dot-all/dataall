@@ -19,7 +19,7 @@ export const DatasetConsoleAccess = (props) => {
           Account
         </Typography>
         <Typography color="textPrimary" variant="body2">
-          {dataset.resourceDetails?.AwsAccountId}
+          {dataset.AwsAccountId}
         </Typography>
       </CardContent>
       <CardContent>
@@ -28,7 +28,7 @@ export const DatasetConsoleAccess = (props) => {
         </Typography>
         <Typography color="textPrimary" variant="body2">
           arn:aws:s3:::
-          {dataset.resourceDetails?.S3BucketName}
+          {dataset.S3BucketName}
         </Typography>
       </CardContent>
       <CardContent>
@@ -36,7 +36,7 @@ export const DatasetConsoleAccess = (props) => {
           Glue database
         </Typography>
         <Typography color="textPrimary" variant="body2">
-          {`arn:aws:glue:${dataset.region}:${dataset.resourceDetails?.AwsAccountId}/database:${dataset.resourceDetails?.GlueDatabaseName}`}
+          {`arn:aws:glue:${dataset.region}:${dataset.AwsAccountId}/database:${dataset.GlueDatabaseName}`}
         </Typography>
       </CardContent>
       <CardContent>
@@ -44,16 +44,16 @@ export const DatasetConsoleAccess = (props) => {
           IAM role
         </Typography>
         <Typography color="textPrimary" variant="body2">
-          {dataset.resourceDetails?.IAMDatasetAdminRoleArn}
+          {dataset.IAMDatasetAdminRoleArn}
         </Typography>
       </CardContent>
-      {dataset.resourceDetails?.KmsAlias === 'SSE-S3' || dataset.resourceDetails?.KmsAlias === 'Undefined' ? (
+      {dataset.KmsAlias === 'SSE-S3' || dataset.KmsAlias === 'Undefined' ? (
         <CardContent>
           <Typography color="textSecondary" variant="subtitle2">
             S3 Encryption
           </Typography>
           <Typography color="textPrimary" variant="body2">
-            {`${dataset.resourceDetails?.KmsAlias}`}
+            {`${dataset.KmsAlias}`}
           </Typography>
         </CardContent>
       ) : (
@@ -62,7 +62,7 @@ export const DatasetConsoleAccess = (props) => {
             S3 Encryption SSE-KMS
           </Typography>
           <Typography color="textPrimary" variant="body2">
-            {`arn:aws:kms:${dataset.region}:${dataset.resourceDetails?.AwsAccountId}/alias:${dataset.resourceDetails?.KmsAlias}`}
+            {`arn:aws:kms:${dataset.region}:${dataset.AwsAccountId}/alias:${dataset.KmsAlias}`}
           </Typography>
         </CardContent>
       )}
