@@ -15,7 +15,7 @@
         "datapipelines": {
             "active": false,
              "features": {
-                 "show_stack_logs": "disabled"
+                 "show_stack_logs": "enabled"
             }
         },
         "omics": {
