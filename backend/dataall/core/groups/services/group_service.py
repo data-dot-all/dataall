@@ -70,7 +70,6 @@ class GroupService:
             user_list = service_provider.get_user_list_from_group(groupUri)
             return user_list
         except Exception as e:
-            logger.error(f"Failed to get users list for group {groupUri}. Error: {e}")
             raise Exception(f"Failed to get users list for group {groupUri}. Error: {e}")
 
     @staticmethod

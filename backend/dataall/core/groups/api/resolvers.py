@@ -56,5 +56,5 @@ def list_user(context, source, groupUri):
     if not groupUri:
         raise exceptions.RequiredParameter('groupUri')
 
-    user_list = UserService.get_user_list_for_group(groupUri)
+    user_list = GroupService.get_user_list_for_group(groupUri)
     return user_list
