@@ -108,7 +108,6 @@ class DatasetTableService:
             return AthenaTableClient(env, table).get_table()
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(GET_DATASET_TABLE)
     def get_glue_table_properties(uri: str):
         with get_context().db_engine.scoped_session() as session:
@@ -116,6 +115,7 @@ class DatasetTableService:
             return json_utils.to_string(table.GlueTableProperties).replace('\\', ' ')
 
     @classmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(SYNC_DATASET)
     def sync_tables_for_dataset(cls, uri):
         context = get_context()
