@@ -493,7 +493,12 @@ def persistent_imported_sse_s3_dataset1(client1, group1, persistent_env1, persis
     except Exception as e:
         raise Exception(f'Error creating {bucket_name=} due to: {e}')
     return get_or_create_persistent_s3_dataset(
-        'persistent_imported_sse_s3_dataset1', client1, group1, persistent_env1, bucket_name
+        'persistent_imported_sse_s3_dataset1',
+        client1,
+        group1,
+        persistent_env1,
+        autoApprovalEnabled=False,
+        bucket=bucket_name,
     )
 
 
@@ -541,7 +546,8 @@ def persistent_imported_kms_s3_dataset1(
         client1,
         group1,
         persistent_env1,
-        resource_name,
-        resource_name,
-        resource_name,
+        autoApprovalEnabled=False,
+        bucket=resource_name,
+        kms_alias=resource_name,
+        glue_database=resource_name,
     )
