@@ -362,7 +362,7 @@ performance from actual user sessions in near real time.
 
 Environments are workspaces where one or multiple teams can work. They are the door between our users in data.all and AWS, that is
 why we say that we "link" environments because we link each environment to **ONE** AWS account, in **ONE** specific region.
-Under each environment we create other data.all resources, such as datasets, pipelines and notebooks. 
+Under each environment we create other data.all resources, such as datasets and notebooks. 
 
 For the deployment of CloudFormation stacks we call upon a CDK trust policy between the Deployment account and the Environment account.
 As for the SDK calls, from the deployment account we assume a certain IAM role in the environment accounts, the pivotRole.
@@ -396,7 +396,7 @@ manually update the pivot role template. IAM policies cannot be scoped down to n
 
 ### CDK bootstrap <a name="cdk"></a>
 We need to bootstrap the environment account to provision resources the AWS CDK needs to perform the deployment of
-environments, datasets, pipelines and other data.all resources. 
+environments, datasets, and other data.all resources. 
 
 Run the following command with AWS credentials of the environment account: 
 ```bash
@@ -578,8 +578,9 @@ and underlying access to the data in AWS.
 
 ### Pipelines
 
-A Pipeline has a pipeline-Team with UI permissions on the Pipeline
-and underlying access to the data in AWS.
+> [!WARNING]
+> As of v2.7.0 - data.all Pipelines is no longer a supported resource due to the restriction of the CodeCommit service to only existing AWS Customers. To learn more about CodeCommit's availability, please refer to the documentation [here](https://aws.amazon.com/blogs/devops/how-to-migrate-your-aws-codecommit-repository-to-another-git-provider/).
+
 
 ### Dashboards
 
