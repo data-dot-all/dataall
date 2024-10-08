@@ -22,7 +22,8 @@ import {
   Pager,
   RefreshTableMenu,
   Scrollbar,
-  SearchIcon
+  SearchIcon,
+  UserModal
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
@@ -36,6 +37,10 @@ export const EnvironmentSharedDatasets = ({ environment }) => {
   const [filter, setFilter] = useState(Defaults.filter);
   const [loading, setLoading] = useState(null);
   const [inputValue, setInputValue] = useState('');
+
+  const [ModalOpen, setIsModalOpen] = useState(false);
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => setIsModalOpen(false);
 
   const fetchItems = useCallback(async () => {
     const response = await client.query(
@@ -139,7 +144,19 @@ export const EnvironmentSharedDatasets = ({ environment }) => {
                       <TableCell>{item.itemName}</TableCell>
                       <TableCell>{item.datasetName}</TableCell>
                       <TableCell>{item.environmentName}</TableCell>
-                      <TableCell>{item.principalId}</TableCell>
+                      <TableCell>
+                        <div
+                          onClick={handleOpenModal}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          {item.principalId}
+                        </div>
+                      </TableCell>
+                      <UserModal
+                        teams={environment.SamlGroupName}
+                        open={ModalOpen}
+                        onClose={handleCloseModal}
+                      />
                       <TableCell>
                         <IconButton
                           onClick={() => {

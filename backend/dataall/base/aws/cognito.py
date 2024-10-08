@@ -39,6 +39,9 @@ class Cognito(ServiceProvider):
         else:
             return group_email_ids
 
+    def get_user_list_from_group(self, groupName):
+        return get_user_emailids_from_group(groupName)
+
     def list_groups(self, envname: str, region: str):
         user_pool_id = None
         groups = []

@@ -9,18 +9,24 @@ import {
   Typography
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useState } from 'react';
 import * as BsIcons from 'react-icons/bs';
 import * as FaIcons from 'react-icons/fa';
 import * as FiIcons from 'react-icons/fi';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
 import { IconAvatar, Label, StackStatus, useCardStyle } from 'design';
+import { UserModal } from 'design';
 
 export const EnvironmentListItem = (props) => {
   const { environment } = props;
   const classes = useCardStyle();
   const navigate = useNavigate();
+
+  const [ModalOpen, setIsModalOpen] = useState(false);
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => setIsModalOpen(false);
+
   return (
     <Grid item key={environment.environmentUri} md={3} xs={12} {...props}>
       <Card key={environment.environmentUri} className={classes.card} raised>
@@ -151,9 +157,16 @@ export const EnvironmentListItem = (props) => {
                   WebkitLineClamp: 2
                 }}
               >
-                <Tooltip title={environment.SamlGroupName || '-'}>
-                  <span>{environment.SamlGroupName || '-'}</span>
-                </Tooltip>
+                <Box sx={{ cursor: 'pointer' }} onClick={handleOpenModal}>
+                  <Tooltip title={environment.SamlGroupName || '-'}>
+                    <span>{environment.SamlGroupName || '-'}</span>
+                  </Tooltip>
+                </Box>
+                <UserModal
+                  teams={environment.SamlGroupName}
+                  open={ModalOpen}
+                  onClose={handleCloseModal}
+                />
               </Typography>
             </Grid>
           </Grid>

@@ -63,6 +63,16 @@ class GroupService:
         groups = service_provider.get_groups_for_user(userId)
         return groups
 
+    @staticmethod                                                                  
+    def get_user_list_for_group(groupUri):
+        try:
+            service_provider = ServiceProviderFactory.get_service_provider_instance()
+            user_list = service_provider.get_user_list_from_group(groupUri)
+            return user_list
+        except Exception as e:
+            logger.error(f"Failed to get users list for group {groupUri}. Error: {e}")
+            raise Exception(f"Failed to get users list for group {groupUri}. Error: {e}")
+
     @staticmethod
     def list_groups_without_invited(filter: dict = None):
         with get_context().db_engine.scoped_session() as session:

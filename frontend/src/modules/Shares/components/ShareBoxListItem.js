@@ -12,7 +12,8 @@ import { Link as RouterLink } from 'react-router-dom';
 import { ShareStatus, useCardStyle } from 'design';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
-import React from 'react';
+import { UserModal } from 'design';
+import React, { useState } from 'react';
 
 export const ShareBoxListItem = ({ share }) => {
   const classes = useCardStyle();
@@ -22,6 +23,18 @@ export const ShareBoxListItem = ({ share }) => {
       : share.dataset.datasetType === 'DatasetTypes.Redshift'
       ? '/static/icons/Arch_Amazon-Redshift_64.svg'
       : '-';
+
+  const [ModalOpen, setIsModalOpen] = useState(false);
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => setIsModalOpen(false);
+
+  const [DataOwnerModalOpen, setIsDataOwnerModalOpen] = useState(false);
+  const handleDataOwnerOpenModal = () => {
+    setIsDataOwnerModalOpen(true);
+  };
+  const handleCloseDataOwnerModal = () => {
+    setIsDataOwnerModalOpen(false);
+  };
 
   return (
     <Card
@@ -70,7 +83,14 @@ export const ShareBoxListItem = ({ share }) => {
               variant="body1"
               style={{ wordWrap: 'break-word' }}
             >
-              {`${share.principal.SamlGroupName}`}
+              <div sx={{ cursor: 'pointer' }} onClick={handleOpenModal}>
+                {`${share.principal.SamlGroupName}`}
+              </div>
+              <UserModal
+                teams={share.principal.SamlGroupName}
+                open={ModalOpen}
+                onClose={handleCloseModal}
+              />
             </Typography>
           </Box>
         </Grid>
@@ -129,9 +149,24 @@ export const ShareBoxListItem = ({ share }) => {
             >
               Dataset Owner
             </Typography>
-            <Typography color="textSecondary" variant="body1">
-              {`${share.dataset.SamlAdminGroupName}`}
+            <Typography
+              color="textSecondary"
+              variant="body1"
+              style={{ cursor: 'pointer', wordWrap: 'break-word' }}
+            >
+              {/* YAHOO ONLY CHANGE */}
+              <div
+                sx={{ cursor: 'pointer' }}
+                onClick={handleDataOwnerOpenModal}
+              >
+                {`${share.dataset.SamlAdminGroupName}`}
+              </div>
             </Typography>
+            <UserModal
+              teams={share.dataset.SamlAdminGroupName}
+              open={DataOwnerModalOpen}
+              onClose={handleCloseDataOwnerModal}
+            />
           </Box>
         </Grid>
         <Grid item justifyContent="flex-end" md={0.7} lg={0.7} xl={0.7}>

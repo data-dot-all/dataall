@@ -9,18 +9,24 @@ import {
   Typography
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useState } from 'react';
 import * as BiIcon from 'react-icons/bi';
 import * as FaIcons from 'react-icons/fa';
 import { FaUserPlus } from 'react-icons/fa';
 import { useNavigate } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
 import { IconAvatar, Label, useCardStyle } from 'design';
+import { UserModal } from 'design';
 
 export const OrganizationListItem = (props) => {
   const { organization } = props;
   const classes = useCardStyle();
   const navigate = useNavigate();
+
+  const [ModalOpen, setIsModalOpen] = useState(false);
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => setIsModalOpen(false);
+
   return (
     <Grid item key={organization.orgnanizationUri} md={3} xs={12} {...props}>
       <Card key={organization.orgnanizationUri} className={classes.card} raised>
@@ -150,10 +156,17 @@ export const OrganizationListItem = (props) => {
                   WebkitLineClamp: 2
                 }}
               >
-                <Tooltip title={organization.SamlGroupName || '-'}>
-                  <span>{organization.SamlGroupName || '-'}</span>
-                </Tooltip>
+                <Box sx={{ cursor: 'pointer' }} onClick={handleOpenModal}>
+                  <Tooltip title={organization.SamlGroupName || '-'}>
+                    <span>{organization.SamlGroupName || '-'}</span>
+                  </Tooltip>
+                </Box>
               </Typography>
+              <UserModal
+                teams={organization.SamlGroupName}
+                open={ModalOpen}
+                onClose={handleCloseModal}
+              />
             </Grid>
           </Grid>
         </Box>

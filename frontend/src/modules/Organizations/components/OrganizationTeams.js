@@ -31,7 +31,8 @@ import {
   Pager,
   RefreshTableMenu,
   Scrollbar,
-  SearchIcon
+  SearchIcon,
+  UserModal
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
@@ -91,14 +92,37 @@ function TeamRow({
     }
   };
 
+  const [openUserModal, setIsModalOpen] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState(null);
+
+  const handleOpenModal = (team) => {
+    setSelectedTeam(team.groupUri);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedTeam(null);
+  };
+
   return (
     <TableRow hover>
-      <TableCell>
+      <TableCell
+        onClick={() => handleOpenModal(team)}
+        style={{ cursor: 'pointer' }}
+      >
         {team.groupUri}{' '}
         {team.groupUri === organization.SamlGroupName && (
           <Label color="primary">Admins</Label>
         )}
       </TableCell>
+      {openUserModal && (
+        <UserModal
+          teams={selectedTeam}
+          open={openUserModal}
+          onClose={handleCloseModal}
+        />
+      )}
       <TableCell>
         {team.groupUri !== organization.SamlGroupName ? (
           <LoadingButton
