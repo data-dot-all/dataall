@@ -1,7 +1,7 @@
 from assertpy import assert_that
 from botocore.exceptions import ClientError
+import boto3
 
-from tests_new.integration_tests.aws_clients.utils import get_group_session, get_role_session
 from tests_new.integration_tests.core.environment.queries import get_environment_access_token
 from tests_new.integration_tests.modules.share_base.queries import (
     get_share_object,
@@ -17,6 +17,7 @@ from tests_new.integration_tests.modules.share_base.utils import (
     check_share_items_verified,
     check_share_ready,
 )
+from tests_new.integration_tests.aws_clients.sts import STSClient
 from tests_new.integration_tests.aws_clients.athena import AthenaClient
 from tests_new.integration_tests.modules.s3_datasets.aws_clients import S3Client
 from tests_new.integration_tests.modules.s3_datasets.queries import get_folder
@@ -138,10 +139,16 @@ def check_share_items_access(
     dataset = share.dataset
     principal_type = share.principal.principalType
     if principal_type == 'Group':
-        credentials_str = get_environment_access_token(client, share.environment.environmentUri, group)
-        session = get_group_session(credentials_str)
+        credentials = get_environment_access_token(client, share.environment.environmentUri, group)
+        session = boto3.Session(
+            aws_access_key_id=credentials['AccessKey'],
+            aws_secret_access_key=credentials['SessionKey'],
+            aws_session_token=credentials['sessionToken'],
+        )
     elif principal_type == 'ConsumptionRole':
-        session = get_role_session(env_client, consumption_role.IAMRoleArn, dataset.region)
+        session = STSClient(
+            role_arn=consumption_role.IAMRoleArn, region=dataset.region, session_name='ConsumptionRole'
+        ).get_role_session()
     else:
         raise Exception('wrong principal type')
 

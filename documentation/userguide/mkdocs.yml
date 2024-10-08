@@ -16,7 +16,6 @@ nav:
         - Worksheets: worksheets.md
         - Notebooks: notebooks.md
         - ML Studio: mlstudio.md
-        - Pipelines: pipelines.md
         - Dashboards: dashboards.md
     - Security: security.md
     - Monitoring: monitoring.md
