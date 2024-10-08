@@ -201,9 +201,11 @@ def persistent_cross_acc_env_1(client5, group5, testdata):
 
 @pytest.fixture(scope='session')
 def updated_persistent_cross_acc_env_1(client5, group5, client6, group6, persistent_cross_acc_env_1):
-    if list_organizations(client6).count == 0:
+    orgs = [org.organizationUri for org in list_organizations(client6).nodes]
+    envs = [org.environmentUri for org in list_environments(client6).nodes]
+    if persistent_cross_acc_env_1.organization.organizationUri not in orgs:
         invite_team_to_organization(client5, persistent_cross_acc_env_1.organization.organizationUri, group6)
-    if list_environments(client6).count == 0:
+    if persistent_cross_acc_env_1.environmentUri not in envs:
         invite_group_on_env(
             client5,
             persistent_cross_acc_env_1.environmentUri,
