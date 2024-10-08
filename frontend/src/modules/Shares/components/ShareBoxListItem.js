@@ -154,7 +154,6 @@ export const ShareBoxListItem = ({ share }) => {
               variant="body1"
               style={{ cursor: 'pointer', wordWrap: 'break-word' }}
             >
-              {/* YAHOO ONLY CHANGE */}
               <div
                 sx={{ cursor: 'pointer' }}
                 onClick={handleDataOwnerOpenModal}
