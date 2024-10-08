@@ -35,6 +35,12 @@ def get_dataset(context, source, datasetUri=None):
     return DatasetService.get_dataset(uri=datasetUri)
 
 
+def _resolve_dataset_resources(context: Context, source: S3Dataset, **kwargs):
+    if not source:
+        return None
+    return DatasetService.get_dataset_resources(uri=source.datasetUri)
+
+
 def resolve_user_role(context: Context, source: S3Dataset, **kwargs):
     if not source:
         return None

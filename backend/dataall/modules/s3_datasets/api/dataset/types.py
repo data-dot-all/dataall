@@ -11,6 +11,7 @@ from dataall.modules.s3_datasets.api.dataset.resolvers import (
     get_dataset_statistics,
     get_dataset_glossary_terms,
     resolve_dataset_stack,
+    _resolve_dataset_resources
 )
 from dataall.core.environment.api.enums import EnvironmentPermission
 
@@ -20,6 +21,21 @@ DatasetStatistics = gql.ObjectType(
         gql.Field(name='tables', type=gql.Integer),
         gql.Field(name='locations', type=gql.Integer),
         gql.Field(name='upvotes', type=gql.Integer),
+    ],
+)
+
+S3DatasetResources = gql.ObjectType(
+    name='S3DatasetResources',
+    fields=[
+        gql.Field(name='AwsAccountId', type=gql.String),
+        gql.Field(name='S3BucketName', type=gql.String),
+        gql.Field(name='GlueDatabaseName', type=gql.String),
+        gql.Field(name='GlueCrawlerName', type=gql.String),
+        gql.Field(name='GlueCrawlerSchedule', type=gql.String),
+        gql.Field(name='GlueProfilingJobName', type=gql.String),
+        gql.Field(name='GlueProfilingTriggerSchedule', type=gql.String),
+        gql.Field(name='IAMDatasetAdminRoleArn', type=gql.String),
+        gql.Field(name='KmsAlias', type=gql.String),
     ],
 )
 
@@ -35,16 +51,8 @@ Dataset = gql.ObjectType(
         gql.Field(name='created', type=gql.String),
         gql.Field(name='updated', type=gql.String),
         gql.Field(name='admins', type=gql.ArrayType(gql.String)),
-        gql.Field(name='AwsAccountId', type=gql.String),
         gql.Field(name='region', type=gql.String),
-        gql.Field(name='S3BucketName', type=gql.String),
-        gql.Field(name='GlueDatabaseName', type=gql.String),
-        gql.Field(name='GlueCrawlerName', type=gql.String),
-        gql.Field(name='GlueCrawlerSchedule', type=gql.String),
-        gql.Field(name='GlueProfilingJobName', type=gql.String),
-        gql.Field(name='GlueProfilingTriggerSchedule', type=gql.String),
-        gql.Field(name='IAMDatasetAdminRoleArn', type=gql.String),
-        gql.Field(name='KmsAlias', type=gql.String),
+        gql.Field(name='resourceDetails', type=gql.Ref('S3DatasetResources'), resolver=_resolve_dataset_resources),
         gql.Field(name='bucketCreated', type=gql.Boolean),
         gql.Field(name='glueDatabaseCreated', type=gql.Boolean),
         gql.Field(name='iamAdminRoleCreated', type=gql.Boolean),

@@ -256,7 +256,6 @@ class RedshiftDatasetService:
             return table
 
     @staticmethod
-    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET)
     def get_redshift_dataset(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -302,7 +301,6 @@ class RedshiftDatasetService:
             return VoteRepository.count_upvotes(session, uri, target_type=VOTE_REDSHIFT_DATASET_NAME) or 0
 
     @staticmethod
-    @ResourcePolicyService.has_resource_permission(GET_REDSHIFT_DATASET_TABLE)
     def get_redshift_dataset_table(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:

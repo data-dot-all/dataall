@@ -224,7 +224,7 @@ export const DatasetFolders = (props) => {
                           </Link>
                         </TableCell>
                         <TableCell>
-                          {`s3://${dataset.S3BucketName}/${folder.S3Prefix}`}
+                          {`s3://${dataset.resourceDetails?.S3BucketName || '<BUCKET_NAME>'}/${folder.S3Prefix}`}
                         </TableCell>
                         <TableCell>{folder.description}</TableCell>
                         <TableCell>

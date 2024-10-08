@@ -260,8 +260,8 @@ export const DatasetTables = (props) => {
                             {table.GlueTableName}
                           </Link>
                         </TableCell>
-                        <TableCell>{table.GlueDatabaseName}</TableCell>
-                        <TableCell>{table.S3Prefix}</TableCell>
+                        <TableCell>{table.resourceDetails?.GlueDatabaseName}</TableCell>
+                        <TableCell>{table.resourceDetails?.S3Prefix}</TableCell>
                         <TableCell>
                           {isAdmin && (
                             <IconButton

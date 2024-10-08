@@ -30,6 +30,7 @@ from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTab
 from dataall.modules.s3_datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.s3_datasets.services.dataset_permissions import (
     CREDENTIALS_DATASET,
+    GET_DATASET,
     CRAWL_DATASET,
     DELETE_DATASET,
     MANAGE_DATASETS,
@@ -238,6 +239,14 @@ class DatasetService:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             if dataset.SamlAdminGroupName in context.groups:
                 dataset.userRoleForDataset = DatasetRole.Admin.value
+            return dataset
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(GET_DATASET)
+    def get_dataset_resources(uri):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             return dataset
 
     @staticmethod

@@ -59,7 +59,6 @@ class DatasetLocationService:
             return DatasetLocationRepository.list_dataset_locations(session=session, uri=uri, data=filter)
 
     @staticmethod
-    @ResourcePolicyService.has_resource_permission(GET_DATASET_FOLDER)
     def get_storage_location(uri):
         with get_context().db_engine.scoped_session() as session:
             return DatasetLocationRepository.get_location_by_uri(session, uri)
