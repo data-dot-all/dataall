@@ -34,7 +34,7 @@ class Cognito(ServiceProvider):
             if envname in ['local', 'dkrcompose']:
                 log.error('Local development environment does not support Cognito')
                 return ['anonymous@amazon.com']
-            log.error(f'Failed to get email ids for Cognito group {groupName} due to {e}')
+            log.error(f'Failed to get usernames for Cognito group {groupName} due to {e}')
             raise e
         else:
             return group_email_ids
