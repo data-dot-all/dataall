@@ -678,3 +678,13 @@ class EnvironmentSetup(Stack):
                 resources=[f'arn:aws:iam::{self.account}:role/dataall-test-*'],
             ),
         )
+
+        self.test_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    'quicksight:DescribeAccountSubscription',
+                ],
+                effect=iam.Effect.ALLOW,
+                resources=[f'arn:aws:quicksight:*:{self.account}:*'],
+            ),
+        )
