@@ -26,11 +26,9 @@ getGroupsForUser = gql.QueryField(
 )
 
 
-listUsersForGroup = gql.QueryField(                                          
+listUsersForGroup = gql.QueryField(
     name='listUsersForGroup',
-    args=[
-        gql.Argument(name='groupUri', type=gql.NonNullableType(gql.String))
-    ],
+    args=[gql.Argument(name='groupUri', type=gql.NonNullableType(gql.String))],
     type=gql.ArrayType(gql.String),
     resolver=list_user,
 )

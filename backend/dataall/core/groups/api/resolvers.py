@@ -52,7 +52,7 @@ def get_groups_for_user(context, source, userid):
     return GroupService.get_groups_for_user(userid)
 
 
-def list_user(context, source, groupUri):                    
+def list_user(context, source, groupUri):
     if not groupUri:
         raise exceptions.RequiredParameter('groupUri')
 
