@@ -5,6 +5,8 @@ from dataall.modules.metadata_forms.api.resolvers import (
     create_metadata_form_fields,
     delete_metadata_form_field,
     batch_metadata_form_field_update,
+    create_attached_metadata_form,
+    delete_attached_metadata_form,
 )
 
 createMetadataForm = gql.MutationField(
@@ -12,6 +14,17 @@ createMetadataForm = gql.MutationField(
     args=[gql.Argument(name='input', type=gql.NonNullableType(gql.Ref('NewMetadataFormInput')))],
     type=gql.Ref('MetadataForm'),
     resolver=create_metadata_form,
+    test_scope='MetadataForm',
+)
+
+createAttachedMetadataForm = gql.MutationField(
+    name='createAttachedMetadataForm',
+    args=[
+        gql.Argument(name='formUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='input', type=gql.NonNullableType(gql.Ref('NewAttachedMetadataFormInput'))),
+    ],
+    type=gql.Ref('AttachedMetadataForm'),
+    resolver=create_attached_metadata_form,
     test_scope='MetadataForm',
 )
 
@@ -24,6 +37,17 @@ deleteMetadataForm = gql.MutationField(
     resolver=delete_metadata_form,
     test_scope='MetadataForm',
 )
+
+deleteAttachedMetadataForm = gql.MutationField(
+    name='deleteAttachedMetadataForm',
+    args=[
+        gql.Argument(name='attachedFormUri', type=gql.NonNullableType(gql.String)),
+    ],
+    type=gql.Boolean,
+    resolver=delete_attached_metadata_form,
+    test_scope='MetadataForm',
+)
+
 
 createMetadataFormFields = gql.MutationField(
     name='createMetadataFormFields',

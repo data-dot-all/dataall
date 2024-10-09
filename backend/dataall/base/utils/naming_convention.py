@@ -4,10 +4,21 @@ from .slugify import slugify
 
 
 class NamingConventionPattern(Enum):
-    S3 = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 63}
+    S3 = {
+        'regex': '[^a-zA-Z0-9-]',
+        'separator': '-',
+        'max_length': 63,
+        'valid_external_regex': '(?!(^xn--|.+-s3alias$))^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$',
+    }
+    KMS = {'regex': '[^a-zA-Z0-9-]$', 'separator': '-', 'max_length': 63, 'valid_external_regex': '^[a-zA-Z0-9_-]+$'}
     IAM = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 63}  # Role names up to 64 chars
     IAM_POLICY = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 128}  # Policy names up to 128 chars
-    GLUE = {'regex': '[^a-zA-Z0-9_]', 'separator': '_', 'max_length': 240}  # Limit 255 - 15 extra chars buffer
+    GLUE = {
+        'regex': '[^a-zA-Z0-9_]',
+        'separator': '_',
+        'max_length': 240,
+        'valid_external_regex': '^[a-zA-Z0-9_]+$',
+    }  # Limit 255 - 15 extra chars buffer
     GLUE_ETL = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 52}
     NOTEBOOK = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 63}
     MLSTUDIO_DOMAIN = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 63}
@@ -43,14 +54,30 @@ class NamingConventionService:
         separator = NamingConventionPattern[self.service].value['separator']
         max_length = NamingConventionPattern[self.service].value['max_length']
         suffix = f'-{self.target_uri}' if len(self.target_uri) else ''
-        return f"{slugify(self.resource_prefix + '-' + self.target_label[:(max_length- len(self.resource_prefix + self.target_uri))] + suffix, regex_pattern=fr'{regex}', separator=separator, lowercase=True)}"
+        return f"{slugify(self.resource_prefix + '-' + self.target_label[:(max_length - len(self.resource_prefix + self.target_uri))] + suffix, regex_pattern=fr'{regex}', separator=separator, lowercase=True)}"
 
     def validate_name(self):
         regex = NamingConventionPattern[self.service].value['regex']
         max_length = NamingConventionPattern[self.service].value['max_length']
+        if 'arn:aws:' in self.target_label:
+            raise Exception(f'An error occurred (InvalidInput): name expected, arn-like string received: {regex}')
         if not re.search(regex, self.target_label):
             raise Exception(
                 f'An error occurred (InvalidInput): label value {self.target_label} must match the pattern {regex}'
+            )
+        elif len(self.target_label) > max_length:
+            raise Exception(
+                f'An error occurred (InvalidInput): label value {self.target_label} must be less than {max_length} characters'
+            )
+
+    def validate_imported_name(self):
+        max_length = NamingConventionPattern[self.service].value['max_length']
+        valid_external_regex = NamingConventionPattern[self.service].value.get('valid_external_regex', '.*')
+        if 'arn:aws:' in self.target_label:
+            raise Exception('An error occurred (InvalidInput): name expected, arn-like string received')
+        if not re.search(valid_external_regex, self.target_label):
+            raise Exception(
+                f'An error occurred (InvalidInput): label value {self.target_label} must match the pattern {valid_external_regex}'
             )
         elif len(self.target_label) > max_length:
             raise Exception(

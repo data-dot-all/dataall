@@ -1,6 +1,5 @@
 from dataall.base.api.constants import SortDirection, gql
-from dataall.modules.shares_base.services.shares_enums import ShareableType, ShareSortField
-
+from dataall.modules.shares_base.services.shares_enums import ShareableType, ShareSortField, ShareObjectDataPermission
 
 NewShareObjectInput = gql.InputType(
     name='NewShareObjectInput',
@@ -12,9 +11,11 @@ NewShareObjectInput = gql.InputType(
         gql.Argument(name='principalType', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='requestPurpose', type=gql.String),
         gql.Argument(name='attachMissingPolicies', type=gql.Boolean),
+        gql.Argument(name='permissions', type=gql.ArrayType(ShareObjectDataPermission.toGraphQLEnum())),
+        gql.Argument(name='shareExpirationPeriod', type=gql.Integer),
+        gql.Argument(name='nonExpirable', type=gql.Boolean),
     ],
 )
-
 
 AddSharedItemInput = gql.InputType(
     name='AddSharedItemInput',
@@ -24,7 +25,6 @@ AddSharedItemInput = gql.InputType(
     ],
 )
 
-
 ShareItemSelectorInput = gql.InputType(
     name='ShareItemSelectorInput',
     arguments=[
@@ -32,7 +32,6 @@ ShareItemSelectorInput = gql.InputType(
         gql.Argument(name='itemUris', type=gql.NonNullableType(gql.ArrayType(gql.String))),
     ],
 )
-
 
 ShareSortCriteria = gql.InputType(
     name='ShareSortCriteria',
@@ -56,7 +55,6 @@ ShareObjectFilter = gql.InputType(
         gql.Argument('share_iam_roles', gql.ArrayType(gql.String)),
     ],
 )
-
 
 ShareableObjectFilter = gql.InputType(
     name='ShareableObjectFilter',

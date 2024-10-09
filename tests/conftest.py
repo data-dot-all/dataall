@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from unittest.mock import MagicMock
 
 import pytest
+from starlette.testclient import TestClient
+
 from dataall.base.db import get_engine, create_schema_and_tables, Engine
 from dataall.base.loader import load_modules, ImportMode, list_loaded_modules
 from glob import glob
@@ -72,7 +74,7 @@ def app(db):
 
 @pytest.fixture(scope='module')
 def client(app) -> ClientWrapper:
-    with app.test_client() as client:
+    with TestClient(app) as client:
         yield ClientWrapper(client)
 
 
@@ -192,7 +194,7 @@ def mock_aws_client(module_mocker):
     # there can be other mocker clients
     module_mocker.patch('dataall.modules.s3_datasets.aws.s3_dataset_client.SessionHelper', session_helper)
 
-    module_mocker.patch('dataall.modules.s3_datasets_shares.aws.kms_client.SessionHelper', session_helper)
+    module_mocker.patch('dataall.modules.s3_datasets.aws.kms_dataset_client.SessionHelper', session_helper)
 
     module_mocker.patch('dataall.base.aws.sts.SessionHelper', session_helper)
 

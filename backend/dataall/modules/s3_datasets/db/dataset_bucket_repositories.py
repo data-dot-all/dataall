@@ -31,3 +31,7 @@ class DatasetBucketRepository:
         buckets = session.query(DatasetBucket).filter(DatasetBucket.datasetUri == dataset_uri).all()
         for bucket in buckets:
             session.delete(bucket)
+
+    @staticmethod
+    def get_dataset_bucket_by_name(session, bucket_name) -> DatasetBucket:
+        return session.query(DatasetBucket).filter(DatasetBucket.S3BucketName == bucket_name).first()

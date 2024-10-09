@@ -24,7 +24,15 @@ export const ShareStatus = (props) => {
       ].includes(status)
     )
       return 'error';
-    if (['PendingApproval', 'Submitted'].includes(status)) return 'warning';
+    if (
+      [
+        'PendingApproval',
+        'Submitted',
+        'Submitted_For_Extension',
+        'PendingExtension'
+      ].includes(status)
+    )
+      return 'warning';
     return 'info';
   };
   return <Label color={setTagColor(status)}>{status}</Label>;

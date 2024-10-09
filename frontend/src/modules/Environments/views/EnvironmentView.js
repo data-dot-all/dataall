@@ -47,6 +47,7 @@ import {
   EnvironmentNetworks
 } from '../components';
 import { ModuleNames, isModuleEnabled } from 'utils';
+import { MetadataAttachment } from '../../Metadata_Forms/components';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
@@ -54,6 +55,11 @@ const tabs = [
     label: 'Teams',
     value: 'teams',
     icon: <SupervisedUserCircleRounded fontSize="small" />
+  },
+  {
+    label: 'Metadata',
+    value: 'metadata',
+    active: isModuleEnabled(ModuleNames.METADATA_FORMS)
   },
   {
     label: 'Datasets',
@@ -214,28 +220,30 @@ const EnvironmentView = () => {
               </Breadcrumbs>
             </Grid>
             <Grid item>
-              <Box sx={{ m: -1 }}>
-                <Button
-                  color="primary"
-                  component={RouterLink}
-                  startIcon={<PencilAltIcon fontSize="small" />}
-                  sx={{ m: 1 }}
-                  variant="outlined"
-                  to={`/console/environments/${env.environmentUri}/edit`}
-                >
-                  Edit
-                </Button>
-                <Button
-                  color="primary"
-                  startIcon={<FaTrash size={15} />}
-                  sx={{ m: 1 }}
-                  onClick={handleArchiveObjectModalOpen}
-                  type="button"
-                  variant="outlined"
-                >
-                  Delete
-                </Button>
-              </Box>
+              {isAdmin && (
+                <Box sx={{ m: -1 }}>
+                  <Button
+                    color="primary"
+                    component={RouterLink}
+                    startIcon={<PencilAltIcon fontSize="small" />}
+                    sx={{ m: 1 }}
+                    variant="outlined"
+                    to={`/console/environments/${env.environmentUri}/edit`}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    color="primary"
+                    startIcon={<FaTrash size={15} />}
+                    sx={{ m: 1 }}
+                    onClick={handleArchiveObjectModalOpen}
+                    type="button"
+                    variant="outlined"
+                  >
+                    Delete
+                  </Button>
+                </Box>
+              )}
             </Grid>
           </Grid>
           <Box sx={{ mt: 3 }}>
@@ -262,6 +270,12 @@ const EnvironmentView = () => {
           <Box sx={{ mt: 3 }}>
             {currentTab === 'overview' && (
               <EnvironmentOverview environment={env} />
+            )}
+            {currentTab === 'metadata' && (
+              <MetadataAttachment
+                entityType="Environment"
+                entityUri={env.environmentUri}
+              />
             )}
             {currentTab === 'teams' && <EnvironmentTeams environment={env} />}
             {currentTab === 'datasets' && (

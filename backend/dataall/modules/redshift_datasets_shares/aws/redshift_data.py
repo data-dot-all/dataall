@@ -1,5 +1,6 @@
 import logging
 import time
+from botocore.exceptions import ClientError
 from dataall.base.aws.sts import SessionHelper
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnection
 
@@ -74,6 +75,19 @@ class RedshiftShareDataClient:
     def quoted_object_names(*names) -> str:
         quoted_names = [RedshiftShareDataClient.double_quoted_name(name) for name in names if name]
         return '.'.join(quoted_names)
+
+    def check_redshift_role_in_namespace(self, role) -> bool:
+        """Check that a redshift role exists in database"""
+        try:
+            log.info(f'Checking {role=} exists...')
+            sql_statement = 'SELECT role_name FROM SVV_ROLES;'
+            records = self._execute_statement_return_records(sql=sql_statement)
+            roles = [[d for d in record][0]['stringValue'] for record in records]
+            log.info(f'Found {roles=}')
+            return role in roles
+        except Exception as e:
+            log.error(f'Checking of {role=} failed due to: {e}')
+            return False
 
     def create_datashare(self, datashare: str) -> bool:
         """Create datashare if not already created.

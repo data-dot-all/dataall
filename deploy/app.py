@@ -38,9 +38,10 @@ git_branch = re.sub('[^a-zA-Z0-9-_]', '', git_branch)[:99] if git_branch != '' e
 if os.getenv('GITHUB_ACTIONS'):
     logger.info('Running GitHub Actions')
     account_id = os.getenv('CDK_DEFAULT_ACCOUNT')
+    region = os.getenv('CDK_DEFAULT_REGION', 'eu-west-1')
     app = App(
         context={
-            'availability-zones:account=111111111111:region=eu-west-1': ['eu-west-1a', 'eu-west-1b', 'eu-west-1c'],
+            f'availability-zones:account=111111111111:region={region}': [f'{region}a', f'{region}b', f'{region}c'],
             'availability-zones:account=111111111111:region=us-east-1': ['us-east-1a', 'us-east-1b', 'us-east-1c'],
         }
     )
@@ -48,7 +49,7 @@ else:
     account_id = boto3.client('sts').get_caller_identity().get('Account') or os.getenv('CDK_DEFAULT_ACCOUNT')
     try:
         logger.info('Trying to get cdkjson parameter from SSM')
-        ssmc = boto3.client('ssm', os.getenv('CDK_DEFAULT_REGION'))
+        ssmc = boto3.client('ssm', os.getenv('CDK_DEFAULT_REGION', 'eu-west-1'))
         response = ssmc.get_parameter(Name=f'/dataall/{git_branch}/cdkjson')
         cdkjson = json.loads(response['Parameter']['Value']).get('context')
 
@@ -64,10 +65,10 @@ else:
         app = App()
         logger.info('Loaded context from cdk.json file in repository')
 
-cdk_pipeline_region = app.node.try_get_context('tooling_region') or os.getenv('CDK_DEFAULT_REGION')
+cdk_pipeline_region = app.node.try_get_context('tooling_region') or os.getenv('CDK_DEFAULT_REGION', 'eu-west-1')
 
 target_envs = app.node.try_get_context('DeploymentEnvironments') or [
-    {'envname': 'dev', 'account': account_id, 'region': 'eu-west-1'}
+    {'envname': 'dev', 'account': account_id, 'region': os.getenv('CDK_DEFAULT_REGION', 'eu-west-1')}
 ]
 
 resource_prefix = app.node.try_get_context('resource_prefix') or 'dataall'

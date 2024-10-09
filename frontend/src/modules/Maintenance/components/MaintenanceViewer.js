@@ -320,7 +320,7 @@ export const MaintenanceViewer = () => {
     if (maintenanceModesEnum['MaintenanceModes'].length > 0) {
       setMaintenanceModes(
         maintenanceModesEnum['MaintenanceModes'].map((elem) => {
-          return { label: elem.value, value: elem.name };
+          return { label: elem.value, value: elem.value };
         })
       );
     } else {

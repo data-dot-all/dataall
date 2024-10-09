@@ -23,6 +23,7 @@ from custom_resources.utils import get_lambda_code
 from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling
 from .waf_rules import get_waf_rules
+from .iam_utils import get_tooling_account_external_id
 
 
 class CloudfrontDistro(pyNestedClass):
@@ -96,6 +97,7 @@ class CloudfrontDistro(pyNestedClass):
             removal_policy=RemovalPolicy.DESTROY,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
+            versioned=True,
             object_ownership=s3.ObjectOwnership.OBJECT_WRITER,
         )
 
@@ -227,6 +229,7 @@ class CloudfrontDistro(pyNestedClass):
                 f'S3DeploymentRole{envname}',
                 role_name=f'{resource_prefix}-{envname}-S3DeploymentRole',
                 assumed_by=iam.AccountPrincipal(tooling_account_id),
+                external_ids=[get_tooling_account_external_id(self.account)],
             )
             resources_for_cross_account = []
             resources_for_cross_account.append(f'{cloudfront_bucket.bucket_arn}/*')
@@ -385,6 +388,7 @@ class CloudfrontDistro(pyNestedClass):
             removal_policy=RemovalPolicy.DESTROY,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
+            versioned=True,
             object_ownership=s3.ObjectOwnership.OBJECT_WRITER,
         )
 

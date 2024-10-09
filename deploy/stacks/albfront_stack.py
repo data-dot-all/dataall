@@ -32,9 +32,12 @@ class AlbFrontStack(Stack):
         ip_ranges=None,
         custom_auth=None,
         backend_region=None,
+        log_retention_duration=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
+
+        self.log_retention_duration = log_retention_duration
 
         if self.node.try_get_context('image_tag'):
             image_tag = self.node.try_get_context('image_tag')
@@ -321,8 +324,8 @@ class AlbFrontStack(Stack):
             self,
             f'ECSLogGroup{log_group_name}{envname}',
             log_group_name=f'/{resource_prefix}/{envname}/ecs/{log_group_name}',
-            retention=logs.RetentionDays.ONE_MONTH,
             removal_policy=RemovalPolicy.DESTROY,
+            retention=getattr(logs.RetentionDays, self.log_retention_duration),
         )
         return log_group
 

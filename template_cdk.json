@@ -14,6 +14,7 @@
     "repository_source": "string_VERSION_CONTROL_SERVICE|(codecommit, codestar_connection) DEFAULT=codecommit",
     "repo_string": "string_REPOSITORY_IN_GITHUB_OWNER/REPOSITORY|DEFAULT=awslabs/aws-dataall, REQUIRED if repository_source=codestar_connection",
     "repo_connection_arn": "string_CODESTAR_SOURCE_CONNECTION_ARN_FOR_GITHUB_arn:aws:codestar-connections:region:account-id:connection/connection-id|DEFAULT=None, REQUIRED if repository_source=codestar_connection",
+    "log_retention_duration": "string_LOG_RETENTION_DURATION|DEFAULT=TWO_YEARS",
     "DeploymentEnvironments": [
       {
         "envname": "string_ENVIRONMENT_NAME|REQUIRED",
@@ -39,6 +40,7 @@
         "shared_dashboards_sessions": "string_TYPE_SESSION_SHARED_DASHBOARDS|(reader, anonymous) DEFAULT=anonymous",
         "enable_opensearch_serverless": "boolean_USE_OPENSEARCH_SERVERLESS|DEFAULT=false",
         "enable_pivot_role_auto_create": "boolean_ENABLE_PIVOT_ROLE_AUTO_CREATE_IN_ENVIRONMENT|DEFAULT=false",
+        "allowed_origins": "string_TYPE_DOMAIN_ORIGIN|DEFAULT=*",
         "enable_update_dataall_stacks_in_cicd_pipeline": "boolean_ENABLE_UPDATE_DATAALL_STACKS_IN_CICD_PIPELINE|DEFAULT=false",
         "reauth_config": {
           "reauth_apis": "list_of_strings_OPERATION_NAMES_TO_REQUIRE_REAUTH_ON|DEFAULT=None",
