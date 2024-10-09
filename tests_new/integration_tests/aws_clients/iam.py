@@ -36,6 +36,10 @@ class IAMClient:
                         'AWS': [
                             f'arn:aws:iam::{account_id}:root',
                             f'arn:aws:sts::{account_id}:assumed-role/{test_role_name}/{test_role_name}',
+                            f'arn:aws:sts::{account_id}:assumed-role/{test_role_name}/Session_1',
+                            f'arn:aws:sts::{account_id}:assumed-role/{test_role_name}/Session_cross_1',
+                            f'arn:aws:sts::{account_id}:assumed-role/{test_role_name}/Persistent_cross_1',
+                            f'arn:aws:sts::{account_id}:assumed-role/{test_role_name}/Persistent_1',
                         ]
                     },
                     'Action': 'sts:AssumeRole',
