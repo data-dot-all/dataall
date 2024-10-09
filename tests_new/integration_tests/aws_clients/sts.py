@@ -45,8 +45,8 @@ class STSClient:
         session.set_config_variable('region', self.region)
         return Session(botocore_session=session)
 
-    def get_role_session(self) -> Session:
-        sts_client = boto3.client('sts', region_name=self.region)
+    def get_role_session(self, session) -> Session:
+        sts_client = session.client('sts', region_name=self.region)
         assumed_role_object = sts_client.assume_role(RoleArn=self.role_arn, RoleSessionName=self.session_name)
         credentials = assumed_role_object['Credentials']
 
