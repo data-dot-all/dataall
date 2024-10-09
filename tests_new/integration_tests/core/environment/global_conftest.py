@@ -55,7 +55,7 @@ def session_env1(client1, group1, org1, session_id, testdata):
     finally:
         if env:
             role = f'arn:aws:iam::{env.AwsAccountId}:role/dataall-integration-tests-role-{env.region}'
-            session = get_environment_aws_session(role, env)
+            session = STSClient(role_arn=role, region=env.region, session_name='Session_1').get_refreshable_session()
             S3Client(session=session, account=env.AwsAccountId, region=env.region).delete_bucket(
                 env.EnvironmentDefaultBucketName
             )
