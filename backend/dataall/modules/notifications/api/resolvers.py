@@ -48,23 +48,3 @@ def count_unread_notifications(context: Context, source):
         return NotificationRepository.count_unread_notifications(
             session=session, username=get_context().username, groups=get_context().groups
         )
-
-
-def count_deleted_notifications(context: Context, source):
-    with _session() as session:
-        return NotificationRepository.count_deleted_notifications(
-            session=session, username=get_context().username, groups=get_context().groups
-        )
-
-
-def count_read_notifications(context: Context, source):
-    with _session() as session:
-        return NotificationRepository.count_read_notifications(
-            session=session, username=get_context().username, groups=get_context().groups
-        )
-
-
-def delete(context: Context, source, notificationUri):
-    _required_uri(notificationUri)
-    with _session() as session:
-        return NotificationRepository.delete_notification(session=session, notificationUri=notificationUri)
