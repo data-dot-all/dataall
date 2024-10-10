@@ -32,16 +32,10 @@ class IAMClient:
             'Statement': [
                 {
                     'Effect': 'Allow',
-                    'Principal': {'AWS': ['*']},
-                    'Action': 'sts:AssumeRole',
-                    'Condition': {
-                        'StringLike': {
-                            'aws:PrincipalArn': [
-                                f'arn:aws:iam::{account_id}:root',
-                                f'arn:aws:iam::{account_id}:role/{test_role_name}',
-                            ]
-                        }
+                    'Principal': {
+                        'AWS': [f'arn:aws:iam::{account_id}:root', f'arn:aws:iam::{account_id}:role/{test_role_name}']
                     },
+                    'Action': 'sts:AssumeRole',
                 }
             ],
         }
