@@ -3,7 +3,7 @@
 
 def list_environment_redshift_connections(client, term='', environment_uri=None, group_uri=None, connection_type=None):
     query = {
-        'operationName': 'llistEnvironmentRedshiftConnections',
+        'operationName': 'listEnvironmentRedshiftConnections',
         'variables': {
             'filter': {
                 'term': term,
@@ -72,10 +72,10 @@ def list_redshift_schema_tables(client, connection_uri, schema):
     return response.data.listRedshiftSchemaTables
 
 
-def list_redshift_connection_group_permissions(client, connection_uri, term=''):
+def list_redshift_connection_group_permissions(client, connection_uri, filter={}):
     query = {
         'operationName': 'listConnectionGroupPermissions',
-        'variables': {'connectionUri': connection_uri, 'filter': {'term': term}},
+        'variables': {'connectionUri': connection_uri, 'filter': filter},
         'query': """
             query listConnectionGroupPermissions(
                   $filter: GroupFilter
@@ -128,16 +128,16 @@ def list_redshift_connection_group_no_permissions(client, connection_uri, term='
 def create_redshift_connection(
     client,
     connection_name,
-    connection_type,
     environment_uri,
     group_uri,
     redshift_type,
-    cluster_id,
-    namespace_id,
-    workgroup,
     database,
-    redshift_user,
-    secret_arn,
+    connection_type,
+    cluster_id=None,
+    namespace_id=None,
+    workgroup=None,
+    redshift_user=None,
+    secret_arn=None,
 ):
     query = {
         'operationName': 'createRedshiftConnection',

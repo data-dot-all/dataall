@@ -6,6 +6,8 @@ from integration_tests.conftest import RedshiftConnection
 from integration_tests.modules.redshift_datasets.connection_queries import (
     create_redshift_connection,
     delete_redshift_connection,
+    add_redshift_connection_group_permissions,
+    delete_redshift_connection_group_permissions,
 )
 
 log = logging.getLogger(__name__)
@@ -65,6 +67,24 @@ def session_connection_serverless_admin(client1, group1, session_env1, testdata)
 
 
 @pytest.fixture(scope='session')
+def session_connection_serverless_admin_group_with_permissions(client1, group2, session_connection_serverless_admin):
+    permissions = None
+    try:
+        permissions = add_redshift_connection_group_permissions(
+            client=client1,
+            connection_uri=session_connection_serverless_admin.connectionUri,
+            group_uri=group2,
+            permissions=['CREATE_SHARE_REQUEST_WITH_CONNECTION'],
+        )
+        yield group2
+    finally:
+        if permissions:
+            delete_redshift_connection_group_permissions(
+                client=client1, connection_uri=session_connection_serverless_admin.connectionUri, group_uri=group2
+            )
+
+
+@pytest.fixture(scope='session')
 def session_connection_serverless_data_user(client1, group1, session_env1, testdata):
     connection = None
     try:
@@ -84,50 +104,38 @@ def session_connection_serverless_data_user(client1, group1, session_env1, testd
 
 
 @pytest.fixture(scope='session')
-def session_connection_cluster_admin(client1, group1, session_cross_acc_env_1, testdata):
+def session_connection_cluster_admin(client5, group5, session_cross_acc_env_1, testdata):
     connection = None
     try:
         connection = create_connection(
-            client=client1,
-            name='connection_serverless_admin_session_env1',
+            client=client5,
+            name='connection_cluster_admin_session_cross_acc_env_1',
             conn_type='ADMIN',
             env=session_cross_acc_env_1,
-            group=group1,
+            group=group5,
             red_type='cluster',
-            connection_data=testdata.redshift_connections['connection_serverless_admin_session_env1'],
+            connection_data=testdata.redshift_connections['connection_cluster_admin_session_cross_acc_env_1'],
         )
         yield connection
     finally:
         if connection:
-            delete_redshift_connection(client=client1, connection_uri=connection.connectionUri)
+            delete_redshift_connection(client=client5, connection_uri=connection.connectionUri)
 
 
 @pytest.fixture(scope='session')
-def session_connection_cluster_data_user(client1, group1, session_cross_acc_env_1, testdata):
+def session_connection_cluster_data_user(client5, group5, session_cross_acc_env_1, testdata):
     connection = None
     try:
         connection = create_connection(
-            client=client1,
-            name='connection_serverless_data_user_session_env1',
+            client=client5,
+            name='connection_cluster_data_user_session_cross_acc_env_1',
             conn_type='DATA_USER',
             env=session_cross_acc_env_1,
-            group=group1,
+            group=group5,
             red_type='cluster',
-            connection_data=testdata.redshift_connections['connection_serverless_data_user_session_env1'],
+            connection_data=testdata.redshift_connections['connection_cluster_data_user_session_cross_acc_env_1'],
         )
         yield connection
     finally:
         if connection:
-            delete_redshift_connection(client=client1, connection_uri=connection.connectionUri)
-
-
-@pytest.fixture(scope='session')
-def session_redshift_dataset1_serverless(
-    client1, group1, session_env1, session_id, session_connection1_serverless_data_user
-):
-    pass
-
-
-@pytest.fixture(scope='session')
-def session_redshift_dataset2_cluster(client1, group1, session_env1, session_id, session_connection2_cluster_data_user):
-    pass
+            delete_redshift_connection(client=client5, connection_uri=connection.connectionUri)
