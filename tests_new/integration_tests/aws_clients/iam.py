@@ -35,10 +35,10 @@ class IAMClient:
                     'Principal': {'AWS': ['*']},
                     'Action': 'sts:AssumeRole',
                     'Condition': {
-                        'ArnLike': {
+                        'StringLike': {
                             'aws:PrincipalArn': [
                                 f'arn:aws:iam::{account_id}:root',
-                                f'arn:aws:sts::{account_id}:assumed-role/{test_role_name}/*',
+                                f'arn:aws:iam::{account_id}:role/{test_role_name}',
                             ]
                         }
                     },
