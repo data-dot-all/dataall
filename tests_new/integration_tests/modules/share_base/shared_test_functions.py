@@ -148,7 +148,7 @@ def check_share_items_access(
     elif principal_type == 'ConsumptionRole':
         session = STSClient(
             role_arn=consumption_role.IAMRoleArn, region=dataset.region, session_name='ConsumptionRole'
-        ).get_role_session()
+        ).get_role_session(env_client)
     else:
         raise Exception('wrong principal type')
 
