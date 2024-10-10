@@ -33,7 +33,7 @@ class IAMClient:
                 {
                     'Effect': 'Allow',
                     'Principal': {
-                        'AWS': [f'arn:aws:iam::{account_id}:root', f'arn:aws:iam::{account_id}:role/{test_role_name}']
+                        'AWS': [f'arn:aws:iam::{account_id}:role/{test_role_name}']
                     },
                     'Action': 'sts:AssumeRole',
                 }
