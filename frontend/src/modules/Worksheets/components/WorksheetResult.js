@@ -23,15 +23,17 @@ import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import { Download } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
-import {
-  useClient
-} from 'services';
-import {
-  createWorksheetQueryResultDownloadUrl
-} from '../services';
+import { useClient } from 'services';
+import { createWorksheetQueryResultDownloadUrl } from '../services';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 
-export const WorksheetResult = ({ results, loading, currentEnv, athenaQueryId, worksheetUri }) => {
+export const WorksheetResult = ({
+  results,
+  loading,
+  currentEnv,
+  athenaQueryId,
+  worksheetUri
+}) => {
   const [runningDownloadQuery, setRunningDownloadQuery] = useState(false);
   const [fileType, setFileType] = useState('csv');
   const client = useClient();
@@ -55,7 +57,8 @@ export const WorksheetResult = ({ results, loading, currentEnv, athenaQueryId, w
 
       if (!response.errors) {
         const link = document.createElement('a');
-        link.href = response.data.createWorksheetQueryResultDownloadUrl.downloadLink;
+        link.href =
+          response.data.createWorksheetQueryResultDownloadUrl.downloadLink;
         // Append to html link element page
         document.body.appendChild(link);
         // Start download
@@ -70,7 +73,7 @@ export const WorksheetResult = ({ results, loading, currentEnv, athenaQueryId, w
     } finally {
       setRunningDownloadQuery(false);
     }
-  }, [client, dispatch, currentEnv, athenaQueryId, fileType])
+  }, [client, dispatch, currentEnv, athenaQueryId, fileType]);
 
   if (loading) {
     return <CircularProgress />;
@@ -98,8 +101,16 @@ export const WorksheetResult = ({ results, loading, currentEnv, athenaQueryId, w
                     value={fileType}
                     onChange={handleChange}
                   >
-                    <FormControlLabel value="csv" control={<Radio />} label="CSV" />
-                    <FormControlLabel value="xlsx" control={<Radio />} label="XLSX" />
+                    <FormControlLabel
+                      value="csv"
+                      control={<Radio />}
+                      label="CSV"
+                    />
+                    <FormControlLabel
+                      value="xlsx"
+                      control={<Radio />}
+                      label="XLSX"
+                    />
                   </RadioGroup>
 
                   <LoadingButton
@@ -113,7 +124,6 @@ export const WorksheetResult = ({ results, loading, currentEnv, athenaQueryId, w
                     Download
                   </LoadingButton>
                 </Stack>
-
               </>
             }
           />

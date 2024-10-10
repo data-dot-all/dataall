@@ -8,9 +8,7 @@ export const createWorksheetQueryResultDownloadUrl = (input) => ({
     mutation CreateWorksheetQueryResultDownloadUrl(
       $input: WorksheetQueryResultDownloadUrlInput!
     ) {
-      createWorksheetQueryResultDownloadUrl(
-        input: $input
-      ) {
+      createWorksheetQueryResultDownloadUrl(input: $input) {
         downloadLink
         AthenaQueryId
         expiresIn

@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from dataall.core.environment.db.environment_models import Environment
+
     try:
         from mypy_boto3_s3 import S3Client as S3ClientType
     except ImportError:
@@ -19,7 +20,6 @@ log = logging.getLogger(__name__)
 
 
 class S3Client:
-
     def __init__(self, env: 'Environment'):
         self._client = SessionHelper.remote_session(env.AwsAccountId, env.region).client('s3', region_name=env.region)
         self._env = env
@@ -55,14 +55,12 @@ class S3Client:
             log.error(f'Failed to check object existence due to: {e}')
             raise AWSResourceNotFound('s3_object_exists', f'Object {key} not found in bucket {bucket}')
 
-
     def put_object(self, bucket, key, body):
         try:
             self.client.put_object(Bucket=bucket, Key=key, Body=body)
         except ClientError as e:
             log.error(f'Failed to put object due to: {e}')
             raise e
-
 
     def get_object(self, bucket, key) -> str:
         try:

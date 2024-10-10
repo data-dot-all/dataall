@@ -1,7 +1,6 @@
 import datetime
 import enum
 
-from future.backports.email.policy import default
 from sqlalchemy import Column, DateTime, Integer, Enum, String, BigInteger
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import query_expression

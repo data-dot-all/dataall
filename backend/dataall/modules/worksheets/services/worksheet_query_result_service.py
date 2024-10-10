@@ -1,19 +1,19 @@
 import csv
 import io
 import os
-from datetime import datetime, timedelta, UTC as DATETIME_UTC
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 
 from openpyxl import Workbook
 
 from dataall.base.db import exceptions
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.worksheets.aws.s3_client import S3Client
 from dataall.modules.worksheets.db.worksheet_models import WorksheetQueryResult
 from dataall.modules.worksheets.db.worksheet_repositories import WorksheetRepository
 from dataall.modules.worksheets.services.worksheet_enums import WorksheetResultsFormat
-from dataall.modules.worksheets.services.worksheet_permissions import RUN_ATHENA_QUERY
+from dataall.modules.worksheets.services.worksheet_permissions import RUN_ATHENA_QUERY_TENANT
 from dataall.modules.worksheets.services.worksheet_service import WorksheetService
 
 if TYPE_CHECKING:
@@ -40,14 +40,12 @@ class WorksheetQueryResultService:
             fileFormat=data.get('fileFormat'),
             OutputLocation=f's3://{environment_bucket}/athenaqueries/{athena_workgroup}/',
             region=region,
-            AwsAccountId=aws_account_id
+            AwsAccountId=aws_account_id,
         )
         return sql_query_result
 
     @staticmethod
-    def build_s3_file_path(
-        workgroup: str, query_id: str, athena_queries_dir: str = None
-    ) -> str:
+    def build_s3_file_path(workgroup: str, query_id: str, athena_queries_dir: str = None) -> str:
         athena_queries_dir = athena_queries_dir or WorksheetQueryResultService._DEFAULT_ATHENA_QUERIES_PATH
         return f'{athena_queries_dir}/{workgroup}/{query_id}'
 
@@ -65,9 +63,9 @@ class WorksheetQueryResultService:
         return excel_buffer
 
     @staticmethod
-    @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
-    def download_sql_query_result(session: 'Session', data: dict = None):
-        environment = EnvironmentService.get_environment_by_uri(session, data.get('environmentUri'))
+    @TenantPolicyService.has_tenant_permission(RUN_ATHENA_QUERY_TENANT)
+    def download_sql_query_result(session: 'Session', env_uri: str, data: dict = None):
+        environment = EnvironmentService.get_environment_by_uri(session, env_uri)
         worksheet = WorksheetService.get_worksheet_by_uri(session, data.get('worksheetUri'))
         env_group = EnvironmentService.get_environment_group(
             session, worksheet.SamlAdminGroupName, environment.environmentUri
@@ -90,11 +88,18 @@ class WorksheetQueryResultService:
         )
         if sql_query_result.fileFormat == WorksheetResultsFormat.XLSX.value:
             try:
-                csv_data = s3_client.get_object(bucket=environment.EnvironmentDefaultBucketName, key=f'{output_file_s3_path}.{WorksheetResultsFormat.CSV.value}')
+                csv_data = s3_client.get_object(
+                    bucket=environment.EnvironmentDefaultBucketName,
+                    key=f'{output_file_s3_path}.{WorksheetResultsFormat.CSV.value}',
+                )
                 excel_buffer = WorksheetQueryResultService.convert_csv_to_xlsx(csv_data)
-                s3_client.put_object(bucket=environment.EnvironmentDefaultBucketName, key=f'{output_file_s3_path}.{WorksheetResultsFormat.XLSX.value}', body=excel_buffer)
+                s3_client.put_object(
+                    bucket=environment.EnvironmentDefaultBucketName,
+                    key=f'{output_file_s3_path}.{WorksheetResultsFormat.XLSX.value}',
+                    body=excel_buffer,
+                )
             except Exception as e:
-                raise exceptions.AWSResourceNotAvailable('CONVERT_CSV_TO_EXCEL',f'Failed to convert csv to xlsx: {e}')
+                raise exceptions.AWSResourceNotAvailable('CONVERT_CSV_TO_EXCEL', f'Failed to convert csv to xlsx: {e}')
 
         s3_client.object_exists(
             bucket=environment.EnvironmentDefaultBucketName, key=f'{output_file_s3_path}.{sql_query_result.fileFormat}'
@@ -106,7 +111,9 @@ class WorksheetQueryResultService:
                 expire_minutes=WorksheetQueryResultService._DEFAULT_QUERY_RESULTS_TIMEOUT,
             )
             sql_query_result.downloadLink = url
-            sql_query_result.expiresIn = datetime.now(DATETIME_UTC) + timedelta(minutes=WorksheetQueryResultService._DEFAULT_QUERY_RESULTS_TIMEOUT)
+            sql_query_result.expiresIn = datetime.utcnow() + timedelta(
+                minutes=WorksheetQueryResultService._DEFAULT_QUERY_RESULTS_TIMEOUT
+            )
 
         session.add(sql_query_result)
         session.commit()

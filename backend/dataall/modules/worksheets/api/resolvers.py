@@ -73,18 +73,23 @@ def delete_worksheet(context, source, worksheetUri: str = None):
 
 
 def create_athena_query_result_download_url(context: Context, source, input: dict = None):
-
     if not input:
         # raise exceptions.InvalidInput('data', input, 'input is required')
         raise exceptions.RequiredParameter('data')
+    if not input.get('environmentUri'):
+        raise exceptions.RequiredParameter('environmentUri')
     if not input.get('athenaQueryId'):
         raise exceptions.RequiredParameter('athenaQueryId')
     if not input.get('fileFormat'):
         raise exceptions.RequiredParameter('fileFormat')
     if not hasattr(WorksheetResultsFormat, input.get('fileFormat').upper()):
         raise exceptions.InvalidInput(
-            'fileFormat', input.get('fileFormat'),
-            ', '.join(result_format.value for result_format in WorksheetResultsFormat))
+            'fileFormat',
+            input.get('fileFormat'),
+            ', '.join(result_format.value for result_format in WorksheetResultsFormat),
+        )
+
+    env_uri = input['environmentUri']
 
     with context.engine.scoped_session() as session:
-        return WorksheetQueryResultService.download_sql_query_result(session=session, data=input)
+        return WorksheetQueryResultService.download_sql_query_result(session=session, env_uri=env_uri, data=input)
