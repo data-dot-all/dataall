@@ -37,33 +37,13 @@ def worksheet(client, tenant, group):
 @pytest.fixture(scope='module', autouse=True)
 def mock_s3_client(module_mocker):
     s3_client = MagicMock()
-    module_mocker.patch('dataall.modules.worksheets.services.worksheet_query_result_service.S3_client', s3_client)
-
-    # s3_client.client.return_value = s3_client
+    module_mocker.patch('dataall.modules.worksheets.services.worksheet_query_result_service.S3_client', s3_client, autospec=True)
 
     s3_client().object_exists.return_value = True
     s3_client().put_object.return_value = None
     s3_client().get_object.return_value = '123,123,123'
     s3_client.get_presigned_url.return_value = 'https://s3.amazonaws.com/file/123.csv'
     yield s3_client
-
-
-# @pytest.fixture(scope='module')
-# def dataset1(
-#     module_mocker,
-#     org_fixture: Organization,
-#     env_fixture: Environment,
-#     dataset: typing.Callable,
-#     group,
-# ) -> S3Dataset:
-#     kms_client = MagicMock()
-#     module_mocker.patch('dataall.modules.s3_datasets.services.dataset_service.KmsClient', kms_client)
-#
-#     kms_client().get_key_id.return_value = mocked_key_id
-#
-#     d = dataset(org=org_fixture, env=env_fixture, name='dataset1', owner=env_fixture.owner, group=group.name)
-#     print(d)
-#     yield d
 
 
 def test_create_worksheet(client, worksheet):
@@ -188,7 +168,6 @@ def test_create_query_download_url(client, worksheet, env_fixture):
         """
         mutation CreateWorksheetQueryResultDownloadUrl($input:WorksheetQueryResultDownloadUrlInput){
             createWorksheetQueryResultDownloadUrl(input:$input){
-                queryType
                 sqlBody
                 AthenaQueryId
                 region

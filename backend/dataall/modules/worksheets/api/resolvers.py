@@ -1,5 +1,5 @@
 from dataall.base.db import exceptions
-from dataall.modules.worksheets.api.enums import WorksheetRole
+from dataall.modules.worksheets.services.worksheet_enums import WorksheetRole, WorksheetResultsFormat
 from dataall.modules.worksheets.db.worksheet_models import Worksheet
 from dataall.modules.worksheets.db.worksheet_repositories import WorksheetRepository
 from dataall.modules.worksheets.services.worksheet_service import WorksheetService
@@ -73,7 +73,18 @@ def delete_worksheet(context, source, worksheetUri: str = None):
 
 
 def create_athena_query_result_download_url(context: Context, source, input: dict = None):
-    WorksheetQueryResultService.validate_input(input)
+
+    if not input:
+        # raise exceptions.InvalidInput('data', input, 'input is required')
+        raise exceptions.RequiredParameter('data')
+    if not input.get('athenaQueryId'):
+        raise exceptions.RequiredParameter('athenaQueryId')
+    if not input.get('fileFormat'):
+        raise exceptions.RequiredParameter('fileFormat')
+    if not hasattr(WorksheetResultsFormat, input.get('fileFormat').upper()):
+        raise exceptions.InvalidInput(
+            'fileFormat', input.get('fileFormat'),
+            ', '.join(result_format.value for result_format in WorksheetResultsFormat))
 
     with context.engine.scoped_session() as session:
         return WorksheetQueryResultService.download_sql_query_result(session=session, data=input)

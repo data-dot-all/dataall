@@ -1,6 +1,7 @@
 import datetime
 import enum
 
+from future.backports.email.policy import default
 from sqlalchemy import Column, DateTime, Integer, Enum, String, BigInteger
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import query_expression
@@ -27,10 +28,10 @@ class Worksheet(Resource, Base):
 
 class WorksheetQueryResult(Base):
     __tablename__ = 'worksheet_query_result'
+    worksheetQueryResultUri = Column(String, primary_key=True, default=utils.uuid('worksheetQueryResultUri'))
     worksheetUri = Column(String, nullable=False)
-    AthenaQueryId = Column(String, primary_key=True)
+    AthenaQueryId = Column(String, nullable=False)
     status = Column(String, nullable=True)
-    queryType = Column(Enum(QueryType), nullable=False, default=True)
     sqlBody = Column(String, nullable=True)
     AwsAccountId = Column(String, nullable=False)
     region = Column(String, nullable=False)

@@ -1,40 +1,22 @@
 import { gql } from 'apollo-boost';
 
-export const createWorksheetQueryResultDownloadUrl = ({
-  fileFormat,
-  environmentUri,
-  athenaQueryId,
-  worksheetUri
-}) => ({
+export const createWorksheetQueryResultDownloadUrl = (input) => ({
   variables: {
-    fileFormat,
-    environmentUri,
-    athenaQueryId,
-    worksheetUri
+    input
   },
   query: gql`
     mutation CreateWorksheetQueryResultDownloadUrl(
-      $fileFormat: String!
-      $environmentUri: String!
-      $athenaQueryId: String!
-      $worksheetUri: String!
+      $input: WorksheetQueryResultDownloadUrlInput!
     ) {
       createWorksheetQueryResultDownloadUrl(
-        input: {
-          fileFormat: $fileFormat
-          environmentUri: $environmentUri
-          athenaQueryId: $athenaQueryId
-          worksheetUri: $worksheetUri
-        }
+        input: $input
       ) {
         downloadLink
         AthenaQueryId
         expiresIn
         fileFormat
-        OutputLocation
+        outputLocation
       }
     }
   `
 });
-
-
