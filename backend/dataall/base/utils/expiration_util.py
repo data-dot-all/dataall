@@ -8,7 +8,9 @@ class ExpirationUtils:
     @staticmethod
     def calculate_expiry_date(expirationPeriod, expirySetting):
         currentDate = date.today()
-        last_week_start_date, last_week_end_date = ExpirationUtils.get_last_week_date_range(currentDate.year, currentDate.month)
+        last_week_start_date, last_week_end_date = ExpirationUtils.get_last_week_date_range(
+            currentDate.year, currentDate.month
+        )
         if expirySetting == Expiration.Quartely.value:
             if last_week_start_date <= currentDate <= last_week_end_date:
                 # If in the last week of the month extend x3 months
@@ -40,6 +42,7 @@ class ExpirationUtils:
         start_date = last_date - timedelta(days=last_week_day)
 
         return start_date, last_date
+
 
 # Enums used for dataset expiration.
 # Could be repurposed for environment, worksheet, etc if need be
