@@ -2,7 +2,7 @@
 
 **Introduction**
 
-Metadata forms allow users to add structured contextual information to various entities in the data.all platform. By creating and attaching metadata forms, user can standardize and enrich metadata in a customizable way.
+Metadata forms allow data.all users to add structured contextual information to various entities in the data.all platform. By creating and attaching metadata forms, users can standardize and enrich metadata in a customizable way.
 
 Metadata forms serve several key purposes:
 
@@ -19,8 +19,7 @@ Visibility setting defines who can view and attach a metadata form to an entity.
 - Organization/Environment-Wide visibility limits the form to a specific organization/environment - it can only be seen by members of this organization/environment and attached to entities in that organization/environment
 - Team-Only visibility restricts the form to just members of a specific team, but does not restrict to which entities it can be attached to
 
-The same visibility restrictions apply to the attached metadata form. E.g. is userA can see Metadata Form A, but can't see Metadata Forms B, and both of these
-metadata forms attached to the dataset (attachedA and attachedB), so userA can view attachedA, but can not view attachedB.
+The same visibility restrictions apply to the attached metadata form. For example, if userA can see Metadata Form A, but can't see Metadata Form B, and both of these metadata forms are attached to a dataset; then when userA opens the dataset, they will see the attached metadata form A but not the attached metadata form B.
 
 **Metadata Form lifecycle and usage**
 
@@ -48,10 +47,10 @@ So in summary, enforcement capabilities cascade along with administrative privil
 **View Metadata Forms**
 By clicking Metadata Forms in the Discovery section of the left side pane users can open a list of metadata forms visible for them.
 The criteria for visibility:
-1. The group, that user belong to, is an owner of the metadata form.
+1. The group, that the user belong to, is an owner of the metadata form.
 2. Metadata form has Global visibility.
 2. Metadata form has Team-Only visibility and the user is a member of this team.
-3. Metadata form has Environment-Wide of Organization-Wide visibility and user has access to this environment/organization.
+3. Metadata form has Environment-Wide of Organization-Wide visibility and the user has access to this environment/organization.
 4. Administrators can view all metadata forms.
 
 ![metadata form list](pictures/metadata_forms/mf_list.png#zoom#shadow)
@@ -79,7 +78,7 @@ To create a new metadata form:
 You will be redirected to the metadata form page. It contains details overview, instruments to edit form fields and preview tab.
 
 In the field editor, use the "Edit" button in the upper right corner of the table to update fields. 
-When the editor mode is enabled, user can 
+When the editor mode is enabled, the user can 
 
 1. add fields using the button '+ Add field' in the left upper corner of the table;
 2. delete fields using 'bin' icon in the end of the table row. When the user pushes the button, the row is disabled, which indicates it is marked for deletion, but user can restore the field by clicking the button (now with "refresh") again;
@@ -104,7 +103,7 @@ User can delete the form with button "Delete" in the upper right corner of the f
 User with required access can attach metadata form to Organization, Environment or Dataset.
 To attach new metadata form or view already attached use the tab "Metadata" on entity view page.
 
-In the column on the left all attached metadata forms are listed. When user clicks on the form, its content appears
+In the column on the left all attached metadata forms are listed. When the user clicks on the form, its content appears
 on the right. The attached form can be deleted by click on "bin" icon next to form name in the list.
 
 ![metadata form attached_list](pictures/metadata_forms/attached_mf_list.png#zoom#shadow)
@@ -114,3 +113,17 @@ After user clicks this button and selects the available form from drop-dow list,
 After all required fields are filled, press "Attach" button in the right upper corner of the editing area.
 
 ![metadata form attach](pictures/metadata_forms/attach_mf.png#zoom#shadow)
+
+
+**Permissions Summary**
+1. **Create Metadata Form:** User given the permission from data.all administrators can create metadata forms with the Global visibility and visibility for their teams. Owners and Admins of Organizations and Environments can create metadata forms with Environment-Wide and Organization-wide visibility for owned entities.
+2. **Edit and delete Metadata Form:** This actions available only for owners of the metadata form.
+3. **Enforce Metadata Form Usage**: 
+* Data.all admins can enforce any form on any level across the platform. They have full control over metadata form enforcement.
+* Owners/admins  of a data.all entity can enforce forms for this levels and levels below in the hierarchy. For example, an org admin can enforce a form for the org, all teams in that org, all environments in the org, all datasets in those environments, etc.
+* Share approvers and requestors can enforce forms for a specific share they are involved with. However, they can only delete enforcement rules they created themselves - they cannot delete rules created by others
+4. **Attach Metadata Form**: 
+* Users must have relevant  permissions for target entity (given by entity admin)
+* Users must have access to view the target metadata form (see paragraph "View Metadata Forms")
+* Target entity must be in target metadata form scope (see paragraph "Metadata Forms Levels")
+5. **Delete Attached Metadata Form**:  Users must have relevant  permissions for target entity (given by entity admin)
