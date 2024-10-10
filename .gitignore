@@ -72,3 +72,5 @@ yarn-error.log*
 .idea
 /.ruff_cache/
 /testdata.json
+deploy/cdk_exec_policy/V2cdkExecPolicy.yaml
+test-envrole.json
