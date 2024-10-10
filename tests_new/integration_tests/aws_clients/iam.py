@@ -32,18 +32,16 @@ class IAMClient:
             'Statement': [
                 {
                     'Effect': 'Allow',
-                    'Principal': {
-                        'AWS': [
-                            f'arn:aws:iam::{account_id}:root',
-                            f'arn:aws:sts::{account_id}:assumed-role/{test_role_name}/{test_role_name}',
-                            f'arn:aws:sts::{account_id}:assumed-role/{test_role_name}/Session_1',
-                            f'arn:aws:sts::{account_id}:assumed-role/{test_role_name}/Session_cross_1',
-                            f'arn:aws:sts::{account_id}:assumed-role/{test_role_name}/Persistent_cross_1',
-                            f'arn:aws:sts::{account_id}:assumed-role/{test_role_name}/Persistent_1',
-                        ]
-                    },
+                    'Principal': {'AWS': ['*']},
                     'Action': 'sts:AssumeRole',
-                    'Condition': {},
+                    'Condition': {
+                        'ArnLike': {
+                            'aws:PrincipalArn': [
+                                f'arn:aws:iam::{account_id}:root',
+                                f'arn:aws:sts::{account_id}:assumed-role/{test_role_name}/*',
+                            ]
+                        }
+                    },
                 }
             ],
         }
