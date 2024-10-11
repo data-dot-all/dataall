@@ -3,7 +3,6 @@ import logging
 import os
 import re
 import sys
-from typing import Optional
 from dataclasses import dataclass
 
 import pytest

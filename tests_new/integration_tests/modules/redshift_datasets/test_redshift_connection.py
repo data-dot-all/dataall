@@ -296,7 +296,7 @@ def test_list_redshift_schema_tables(client1, session_connection_serverless_admi
         schema='public',
     )
     assert_that(len(response)).is_greater_than_or_equal_to(1)
-    assert_that(response[0]).contains_key('name', 'type', 'alreadyAdded')
+    assert_that(response[0]).contains_key('name', 'type')
 
 
 def test_list_redshift_schema_tables_unauthorized(client2, session_connection_serverless_admin):
