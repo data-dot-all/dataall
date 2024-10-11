@@ -7,7 +7,7 @@ import { UserModal } from 'design';
 export const OrganizationOverview = (props) => {
   const { organization, ...other } = props;
 
-  const [ModalOpen, setIsModalOpen] = useState(false);
+  const [modalOpen, setIsModalOpen] = useState(false);
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
@@ -34,8 +34,8 @@ export const OrganizationOverview = (props) => {
           created={organization.created}
         />
         <UserModal
-          teams={organization.SamlGroupName}
-          open={ModalOpen}
+          team={organization.SamlGroupName}
+          open={modalOpen}
           onClose={handleCloseModal}
         />
       </Grid>

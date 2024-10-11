@@ -38,7 +38,7 @@ export const EnvironmentSharedDatasets = ({ environment }) => {
   const [loading, setLoading] = useState(null);
   const [inputValue, setInputValue] = useState('');
 
-  const [ModalOpen, setIsModalOpen] = useState(false);
+  const [modalOpen, setIsModalOpen] = useState(false);
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
@@ -153,8 +153,8 @@ export const EnvironmentSharedDatasets = ({ environment }) => {
                         </div>
                       </TableCell>
                       <UserModal
-                        teams={environment.SamlGroupName}
-                        open={ModalOpen}
+                        team={environment.SamlGroupName}
+                        open={modalOpen}
                         onClose={handleCloseModal}
                       />
                       <TableCell>

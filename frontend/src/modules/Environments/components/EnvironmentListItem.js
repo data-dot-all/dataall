@@ -23,7 +23,7 @@ export const EnvironmentListItem = (props) => {
   const classes = useCardStyle();
   const navigate = useNavigate();
 
-  const [ModalOpen, setIsModalOpen] = useState(false);
+  const [modalOpen, setIsModalOpen] = useState(false);
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
@@ -163,8 +163,8 @@ export const EnvironmentListItem = (props) => {
                   </Tooltip>
                 </Box>
                 <UserModal
-                  teams={environment.SamlGroupName}
-                  open={ModalOpen}
+                  team={environment.SamlGroupName}
+                  open={modalOpen}
                   onClose={handleCloseModal}
                 />
               </Typography>

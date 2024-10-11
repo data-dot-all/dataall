@@ -174,7 +174,7 @@ function TeamRow({
 
       {openUserModal && (
         <UserModal
-          teams={selectedTeam}
+          team={selectedTeam}
           open={openUserModal}
           onClose={handleCloseModal}
         />

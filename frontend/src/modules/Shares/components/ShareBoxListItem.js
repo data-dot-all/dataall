@@ -24,11 +24,11 @@ export const ShareBoxListItem = ({ share }) => {
       ? '/static/icons/Arch_Amazon-Redshift_64.svg'
       : '-';
 
-  const [ModalOpen, setIsModalOpen] = useState(false);
+  const [modalOpen, setIsModalOpen] = useState(false);
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
-  const [DataOwnerModalOpen, setIsDataOwnerModalOpen] = useState(false);
+  const [dataOwnerModalOpen, setIsDataOwnerModalOpen] = useState(false);
   const handleDataOwnerOpenModal = () => {
     setIsDataOwnerModalOpen(true);
   };
@@ -87,8 +87,8 @@ export const ShareBoxListItem = ({ share }) => {
                 {`${share.principal.SamlGroupName}`}
               </div>
               <UserModal
-                teams={share.principal.SamlGroupName}
-                open={ModalOpen}
+                team={share.principal.SamlGroupName}
+                open={modalOpen}
                 onClose={handleCloseModal}
               />
             </Typography>
@@ -162,8 +162,8 @@ export const ShareBoxListItem = ({ share }) => {
               </div>
             </Typography>
             <UserModal
-              teams={share.dataset.SamlAdminGroupName}
-              open={DataOwnerModalOpen}
+              team={share.dataset.SamlAdminGroupName}
+              open={dataOwnerModalOpen}
               onClose={handleCloseDataOwnerModal}
             />
           </Box>

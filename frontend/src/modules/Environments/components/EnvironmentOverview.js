@@ -9,7 +9,7 @@ import { EnvironmentFeatures } from './EnvironmentFeatures';
 export const EnvironmentOverview = (props) => {
   const { environment, ...other } = props;
 
-  const [ModalOpen, setIsModalOpen] = useState(false);
+  const [modalOpen, setIsModalOpen] = useState(false);
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
@@ -43,8 +43,8 @@ export const EnvironmentOverview = (props) => {
           status={environment.stack?.status}
         />
         <UserModal
-          teams={environment.SamlGroupName}
-          open={ModalOpen}
+          team={environment.SamlGroupName}
+          open={modalOpen}
           onClose={handleCloseModal}
         />
         <Box sx={{ mt: 3 }}>

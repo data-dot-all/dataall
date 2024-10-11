@@ -797,11 +797,11 @@ const ShareView = () => {
   const [isReApplyShareItemModalOpen, setIsReApplyShareItemModalOpen] =
     useState(false);
 
-  const [ModalOpen, setIsModalOpen] = useState(false);
+  const [modalOpen, setIsModalOpen] = useState(false);
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
-  const [RequestTeamModalOpen, setIsRequestTeamModalOpen] = useState(false);
+  const [requestTeamModalOpen, setIsRequestTeamModalOpen] = useState(false);
   const handleRequestTeamOpenModal = () => {
     setIsRequestTeamModalOpen(true);
   };
@@ -1043,8 +1043,8 @@ const ShareView = () => {
                                   {share.dataset.SamlAdminGroupName || '-'}
                                 </Box>
                                 <UserModal
-                                  teams={share.dataset.SamlAdminGroupName}
-                                  open={ModalOpen}
+                                  team={share.dataset.SamlAdminGroupName}
+                                  open={modalOpen}
                                   onClose={handleCloseModal}
                                 />
                               </Typography>
@@ -1400,8 +1400,8 @@ const ShareView = () => {
                                 {share.principal.SamlGroupName || '-'}
                               </Box>
                               <UserModal
-                                teams={share.principal.SamlGroupName}
-                                open={RequestTeamModalOpen}
+                                team={share.principal.SamlGroupName}
+                                open={requestTeamModalOpen}
                                 onClose={handleCloseRequestTeamModal}
                               />
                             </Typography>

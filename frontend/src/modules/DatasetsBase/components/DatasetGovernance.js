@@ -22,7 +22,7 @@ export const DatasetGovernance = (props) => {
       : [{ label: '-', nodeUri: '-' }];
   const tags = dataset.tags.length > 0 ? dataset.tags : ['-'];
 
-  const [ModalOpen, setIsModalOpen] = useState(false);
+  const [modalOpen, setIsModalOpen] = useState(false);
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
@@ -112,8 +112,8 @@ export const DatasetGovernance = (props) => {
                 {dataset.SamlAdminGroupName}
               </div>
               <UserModal
-                teams={dataset.SamlAdminGroupName}
-                open={ModalOpen}
+                team={dataset.SamlAdminGroupName}
+                open={modalOpen}
                 onClose={handleCloseModal}
               />
             </Typography>
@@ -130,7 +130,7 @@ export const DatasetGovernance = (props) => {
                 {dataset.stewards}
               </div>
               <UserModal
-                teams={dataset.stewards}
+                team={dataset.stewards}
                 open={stewardsModalOpen}
                 onClose={handleCloseStewardsModal}
               />

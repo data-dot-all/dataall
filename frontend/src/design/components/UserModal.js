@@ -15,7 +15,7 @@ import { useClient } from '../../services';
 import { useDispatch } from '../../globalErrors';
 import { listUserForGroup } from '../../services/graphql/Groups/listUserForGroup';
 
-const UserModal = ({ teams, open, onClose }) => {
+const UserModal = ({ team, open, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [teamUsers, setTeamUsers] = useState([]);
   const dispatch = useDispatch();
@@ -25,7 +25,7 @@ const UserModal = ({ teams, open, onClose }) => {
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        const response = await client.query(listUserForGroup(teams)); // Use the GraphQL query function to fetch users in Team
+        const response = await client.query(listUserForGroup(team)); // Use the GraphQL query function to fetch users in Team
         if (response && response.data && response.data.listUsersForGroup) {
           setTeamUsers(response.data.listUsersForGroup);
         }
@@ -34,10 +34,10 @@ const UserModal = ({ teams, open, onClose }) => {
         setLoading(false);
       }
     };
-    if (client && teams) {
+    if (client && team) {
       fetchUsers();
     }
-  }, [dispatch, client, teams]);
+  }, [dispatch, client, team]);
 
   return (
     <Dialog maxWidth="lg" onClose={onClose} open={open}>

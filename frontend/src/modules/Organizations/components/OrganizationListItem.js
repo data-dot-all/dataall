@@ -23,7 +23,7 @@ export const OrganizationListItem = (props) => {
   const classes = useCardStyle();
   const navigate = useNavigate();
 
-  const [ModalOpen, setIsModalOpen] = useState(false);
+  const [modalOpen, setIsModalOpen] = useState(false);
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
@@ -163,8 +163,8 @@ export const OrganizationListItem = (props) => {
                 </Box>
               </Typography>
               <UserModal
-                teams={organization.SamlGroupName}
-                open={ModalOpen}
+                team={organization.SamlGroupName}
+                open={modalOpen}
                 onClose={handleCloseModal}
               />
             </Grid>
