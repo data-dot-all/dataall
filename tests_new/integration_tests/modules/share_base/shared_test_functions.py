@@ -22,6 +22,8 @@ from tests_new.integration_tests.aws_clients.athena import AthenaClient
 from tests_new.integration_tests.modules.s3_datasets.aws_clients import S3Client
 from tests_new.integration_tests.modules.s3_datasets.queries import get_folder
 
+import json
+
 ALL_S3_SHARABLE_TYPES_NAMES = [
     'Table',
     'StorageLocation',
@@ -139,7 +141,8 @@ def check_share_items_access(
     dataset = share.dataset
     principal_type = share.principal.principalType
     if principal_type == 'Group':
-        credentials = get_environment_access_token(client, share.environment.environmentUri, group)
+        credentials_str = get_environment_access_token(client, share.environment.environmentUri, group)
+        credentials = json.loads(credentials_str)
         session = boto3.Session(
             aws_access_key_id=credentials['AccessKey'],
             aws_secret_access_key=credentials['SessionKey'],
@@ -148,7 +151,7 @@ def check_share_items_access(
     elif principal_type == 'ConsumptionRole':
         session = STSClient(
             role_arn=consumption_role.IAMRoleArn, region=dataset.region, session_name='ConsumptionRole'
-        ).get_role_session()
+        ).get_role_session(env_client)
     else:
         raise Exception('wrong principal type')
 
