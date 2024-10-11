@@ -7,6 +7,15 @@ from integration_tests.modules.dashboards.mutations import (
 )
 from integration_tests.modules.dashboards.queries import get_dashboard
 from integration_tests.core.environment.utils import set_env_params
+from integration_tests.modules.dashboards.aws_clients import QuickSightClient
+
+
+@pytest.fixture(scope='session')
+def quicksight_account_exists(session_env1, session_env1_aws_client):
+    if not QuickSightClient(
+        session_env1_aws_client, session_env1.AwsAccountId, session_env1.region
+    ).check_enterprise_account_exists():
+        pytest.skip('Skipping QuickSight tests because QuickSight account does not exist')
 
 
 def create_dataall_dashboard(client, session_id, dashboard_id, env):
