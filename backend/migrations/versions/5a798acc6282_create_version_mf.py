@@ -43,9 +43,11 @@ def upgrade():
         session.add(version)
         session.commit()
 
-    op.add_column('attached_metadata_form', sa.Column('version', sa.Integer(), nullable=False))
+    op.add_column('attached_metadata_form', sa.Column('version', sa.Integer()))
     for amf in session.query(AttachedMetadataForm).all():
         amf.version = 1
+        session.commit()
+    op.alter_column('attached_metadata_form', 'version', nullable=False)
     op.create_foreign_key(
         'fk_attached_mf_version_uri',
         'attached_metadata_form',
@@ -65,9 +67,11 @@ def upgrade():
         ondelete='CASCADE',
     )
 
-    op.add_column('metadata_form_field', sa.Column('version', sa.Integer(), nullable=False))
+    op.add_column('metadata_form_field', sa.Column('version', sa.Integer()))
     for field in session.query(MetadataFormField).all():
         field.version = 1
+        session.commit()
+    op.alter_column('metadata_form_field', 'version', nullable=False)
     op.create_foreign_key(
         'fk_version',
         'metadata_form_field',
