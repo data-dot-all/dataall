@@ -2,7 +2,6 @@ import logging
 
 import pytest
 
-from dataall.modules.redshift_datasets.api.datasets.resolvers import delete_redshift_dataset
 from integration_tests.core.stack.utils import check_stack_ready, check_stack_in_progress
 from integration_tests.conftest import RedshiftConnection
 from integration_tests.modules.redshift_datasets.connection_queries import (
@@ -12,7 +11,11 @@ from integration_tests.modules.redshift_datasets.connection_queries import (
     delete_redshift_connection_group_permissions,
 )
 
-from integration_tests.modules.redshift_datasets.dataset_queries import import_redshift_dataset
+from integration_tests.modules.redshift_datasets.dataset_queries import (
+    import_redshift_dataset,
+    delete_redshift_dataset,
+    list_redshift_dataset_tables,
+)
 
 log = logging.getLogger(__name__)
 
@@ -181,6 +184,14 @@ def session_redshift_dataset_serverless(
     finally:
         if dataset:
             delete_redshift_dataset(client=client1, dataset_uri=dataset.datasetUri)
+
+
+@pytest.fixture(scope='session')
+def session_redshift_dataset_serverless_table(client1, session_redshift_dataset_serverless):
+    tables = list_redshift_dataset_tables(
+        client=client1, dataset_uri=session_redshift_dataset_serverless.datasetUri, term=REDSHIFT_TABLE1
+    )
+    yield tables.nodes[0]
 
 
 @pytest.fixture(scope='session')
