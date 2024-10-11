@@ -115,6 +115,7 @@ class MetadataFormService:
                 )
 
             form = MetadataFormRepository.create_metadata_form(session, data)
+            version = MetadataFormRepository.create_metadata_form_version(session, form.uri, 1)
             return form
 
     # toDo: add permission check
