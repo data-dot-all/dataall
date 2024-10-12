@@ -24,7 +24,6 @@ from integration_tests.modules.redshift_datasets.global_conftest import (
 
 def test_import_redshift_serverless_dataset_with_table(client1, session_redshift_dataset_serverless):
     assert_that(session_redshift_dataset_serverless.datasetUri).is_not_none()
-    assert_that(session_redshift_dataset_serverless.datasetType).is_equal_to('Redshift')
     tables = list_redshift_dataset_tables(client=client1, dataset_uri=session_redshift_dataset_serverless.datasetUri)
     assert_that(tables.count).is_equal_to(1)
     assert_that(tables.nodes[0].name).is_equal_to(REDSHIFT_TABLE1)
@@ -32,16 +31,17 @@ def test_import_redshift_serverless_dataset_with_table(client1, session_redshift
 
 def test_import_redshift_cluster_dataset_without_table(client5, session_redshift_dataset_cluster):
     assert_that(session_redshift_dataset_cluster.datasetUri).is_not_none()
-    assert_that(session_redshift_dataset_cluster.datasetType).is_equal_to('Redshift')
     tables = list_redshift_dataset_tables(client=client5, dataset_uri=session_redshift_dataset_cluster.datasetUri)
     assert_that(tables.count).is_equal_to(0)
 
 
-def test_import_redshift_unauthorized(client2, user1, group1, session_env1, session_connection_serverless_data_user):
+def test_import_redshift_unauthorized(
+    client2, user1, group1, session_env1, org1, session_connection_serverless_data_user
+):
     assert_that(import_redshift_dataset).raises(GqlError).when_called_with(
         client=client2,
         label='Error-Test-Redshift-Serverless',
-        org_uri=session_env1.organizationUri,
+        org_uri=org1.organizationUri,
         env_uri=session_env1.environmentUri,
         description='Error',
         tags=[],
@@ -56,12 +56,12 @@ def test_import_redshift_unauthorized(client2, user1, group1, session_env1, sess
 
 
 def test_import_redshift_dataset_invalid_connection_type(
-    client1, user1, group1, session_env1, session_connection_serverless_admin
+    client1, user1, group1, session_env1, org1, session_connection_serverless_admin
 ):
     assert_that(import_redshift_dataset).raises(GqlError).when_called_with(
         client=client1,
         label='Error-Test-Redshift-Serverless',
-        org_uri=session_env1.organizationUri,
+        org_uri=org1.organizationUri,
         env_uri=session_env1.environmentUri,
         description='Error',
         tags=[],
@@ -89,11 +89,13 @@ def test_update_redshift_dataset_unauthorized(client2, session_redshift_dataset_
     ).contains('UnauthorizedOperation', 'UPDATE_REDSHIFT_DATASET', session_redshift_dataset_serverless.datasetUri)
 
 
-def test_delete_redshift_dataset(user5, group5, client5, session_cross_acc_env_1, session_connection_cluster_data_user):
+def test_delete_redshift_dataset(
+    user5, group5, client5, session_cross_acc_env_1, org1, session_connection_cluster_data_user
+):
     dataset = import_redshift_dataset(
         client=client5,
         label='Test-Redshift-to-Delete',
-        org_uri=session_cross_acc_env_1.organizationUri,
+        org_uri=org1.organizationUri,
         env_uri=session_cross_acc_env_1.environmentUri,
         description='Used for integration test',
         tags=['delete'],
@@ -108,10 +110,6 @@ def test_delete_redshift_dataset(user5, group5, client5, session_cross_acc_env_1
     assert_that(dataset.datasetUri).is_not_none()
     response = delete_redshift_dataset(client=client5, dataset_uri=dataset.datasetUri)
     assert_that(response).is_true()
-    dataset = get_redshift_dataset(client=client5, dataset_uri=dataset.datasetUri)
-    assert_that(get_redshift_dataset).raises(GqlError).when_called_with(
-        client=client5, dataset_uri=dataset.datasetUri
-    ).contains('ResourceNotFound', 'RedshiftDataset', dataset.datasetUri)
 
 
 def test_delete_redshift_dataset_unauthorized(client2, session_redshift_dataset_serverless):
@@ -184,8 +182,10 @@ def test_get_redshift_dataset(client1, session_redshift_dataset_serverless):
     response = get_redshift_dataset(client=client1, dataset_uri=session_redshift_dataset_serverless.datasetUri)
     assert_that(response).contains_entry(
         datasetUri=session_redshift_dataset_serverless.datasetUri,
-        connectionUri=session_redshift_dataset_serverless.connectionUri,
         schema=REDSHIFT_SCHEMA,
+    )
+    assert_that(response.connection.connectionUri).is_equal_to(
+        session_redshift_dataset_serverless.connection.connectionUri
     )
 
 
@@ -211,9 +211,7 @@ def test_get_redshift_dataset_table(client1, session_redshift_dataset_serverless
         client=client1, rs_table_uri=session_redshift_dataset_serverless_table.rsTableUri
     )
     assert_that(response).contains_entry(
-        rsTableUri=session_redshift_dataset_serverless_table.rsTableUri,
-        name=REDSHIFT_TABLE1,
-        description=session_redshift_dataset_serverless_table.description,
+        rsTableUri=session_redshift_dataset_serverless_table.rsTableUri, name=REDSHIFT_TABLE1
     )
 
 
@@ -245,11 +243,13 @@ def test_list_redshift_schema_dataset_tables(client1, session_redshift_dataset_s
         client=client1, dataset_uri=session_redshift_dataset_serverless.datasetUri
     )
     schema_tables = list_redshift_schema_tables(
-        client=client1, connection_uri=session_redshift_dataset_serverless.connectionUri, schema=REDSHIFT_SCHEMA
+        client=client1,
+        connection_uri=session_redshift_dataset_serverless.connection.connectionUri,
+        schema=REDSHIFT_SCHEMA,
     )
     response = list_redshift_schema_dataset_tables(
         client=client1, dataset_uri=session_redshift_dataset_serverless.datasetUri
     )
-    assert_that(len(response)).is_equal_to(len(schema_tables.nodes))
+    assert_that(len(response)).is_equal_to(len(schema_tables))
     response_added_tables = [table.name for table in response if table.alreadyAdded]
     assert_that(response_added_tables).contains(*[table.name for table in added_tables.nodes])

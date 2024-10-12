@@ -160,14 +160,14 @@ def session_connection_cluster_data_user(client5, group5, session_cross_acc_env_
 
 @pytest.fixture(scope='session')
 def session_redshift_dataset_serverless(
-    client1, group1, user1, session_env1, session_connection_serverless_data_user, session_id
+    client1, group1, user1, session_env1, org1, session_connection_serverless_data_user, session_id
 ):
     dataset = None
     try:
         dataset = import_redshift_dataset(
             client=client1,
             label='Test-Redshift-Serverless',
-            org_uri=session_env1.organizationUri,
+            org_uri=org1.organizationUri,
             env_uri=session_env1.environmentUri,
             description='Used for integration test',
             tags=[session_id],
@@ -195,14 +195,14 @@ def session_redshift_dataset_serverless_table(client1, session_redshift_dataset_
 
 @pytest.fixture(scope='session')
 def session_redshift_dataset_cluster(
-    client1, group5, user5, session_cross_acc_env_1, session_connection_cluster_data_user, session_id
+    client5, group5, user5, session_cross_acc_env_1, org1, session_connection_cluster_data_user, session_id
 ):
     dataset = None
     try:
         dataset = import_redshift_dataset(
-            client=client1,
-            label='Test-Redshift-Serverless',
-            org_uri=session_cross_acc_env_1.organizationUri,
+            client=client5,
+            label='Test-Redshift-Cluster',
+            org_uri=org1.organizationUri,
             env_uri=session_cross_acc_env_1.environmentUri,
             description='Used for integration test',
             tags=[session_id],
@@ -217,4 +217,4 @@ def session_redshift_dataset_cluster(
         yield dataset
     finally:
         if dataset:
-            delete_redshift_dataset(client=client1, dataset_uri=dataset.datasetUri)
+            delete_redshift_dataset(client=client5, dataset_uri=dataset.datasetUri)
