@@ -154,7 +154,6 @@ class WorksheetService:
         return {'error': None, 'response': response}
 
     @staticmethod
-    
     @ResourceThresholdRepository.invocation_handler('nlq')
     def unstruct_query(session, uri, worksheetUri, prompt, datasetUri, key):
         environment = EnvironmentService.get_environment_by_uri(session, uri)
@@ -162,7 +161,6 @@ class WorksheetService:
         worksheet = WorksheetService.get_worksheet_by_uri(session, worksheetUri)
 
         dataset = DatasetRepository.get_dataset_by_uri(session, datasetUri)
-
 
         env_group = EnvironmentService.get_environment_group(
             session, worksheet.SamlAdminGroupName, environment.environmentUri

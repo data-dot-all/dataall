@@ -1,5 +1,11 @@
 from dataall.base.api import gql
-from dataall.modules.worksheets.api.resolvers import get_worksheet, list_worksheets, run_sql_query, text_to_sql, unstruct_query
+from dataall.modules.worksheets.api.resolvers import (
+    get_worksheet,
+    list_worksheets,
+    run_sql_query,
+    text_to_sql,
+    unstruct_query,
+)
 
 
 getWorksheet = gql.QueryField(
@@ -54,5 +60,3 @@ unstructuredQuery = gql.QueryField(
     ],
     resolver=unstruct_query,
 )
-
-

@@ -95,6 +95,7 @@ def text_to_sql(
 
         return response
 
+
 @is_feature_enabled('modules.worksheets.features.nlq')
 def unstruct_query(
     context,

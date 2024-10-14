@@ -10,4 +10,3 @@ class ResourceTreshold(Base):
     actionType = Column(String(64), nullable=False)
     date = Column(Date, default=func.current_date(), nullable=False)
     count = Column(Integer, default=1, nullable=False)
-
