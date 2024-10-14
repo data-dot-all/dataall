@@ -1,5 +1,5 @@
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
-from dataall.core.resource_threshold.db.resource_threshold import ResourceTreshold
+from dataall.core.resource_threshold.db.resource_threshold import ResourceThreshold
 from sqlalchemy import and_, func
 from dataall.base.config import config
 
@@ -10,12 +10,12 @@ class ResourceThresholdRepository(EnvironmentResource):
     @staticmethod
     def get_count_today(session, username, action_type):
         amount = (
-            session.query(ResourceTreshold.count)
+            session.query(ResourceThreshold.count)
             .filter(
                 and_(
-                    ResourceTreshold.username == username,
-                    ResourceTreshold.actionType == action_type,
-                    ResourceTreshold.date == func.current_date(),
+                    ResourceThreshold.username == username,
+                    ResourceThreshold.actionType == action_type,
+                    ResourceThreshold.date == func.current_date(),
                 )
             )
             .scalar()
@@ -27,28 +27,28 @@ class ResourceThresholdRepository(EnvironmentResource):
         user_entry = ResourceThresholdRepository.get_user_entry(session, username, action_type)
         if user_entry:
             user_entry.update(
-                {ResourceTreshold.count: 1, ResourceTreshold.date: func.current_date()}, synchronize_session=False
+                {ResourceThreshold.count: 1, ResourceThreshold.date: func.current_date()}, synchronize_session=False
             )
             session.commit()
         else:
-            action_entry = ResourceTreshold(username=username, actionType=action_type)
+            action_entry = ResourceThreshold(username=username, actionType=action_type)
             session.add(action_entry)
 
     @staticmethod
     def increment_count(session, username, action_type):
-        session.query(ResourceTreshold).filter(
+        session.query(ResourceThreshold).filter(
             and_(
-                ResourceTreshold.username == username,
-                ResourceTreshold.actionType == action_type,
-                ResourceTreshold.date == func.current_date(),
+                ResourceThreshold.username == username,
+                ResourceThreshold.actionType == action_type,
+                ResourceThreshold.date == func.current_date(),
             )
-        ).update({ResourceTreshold.count: ResourceTreshold.count + 1}, synchronize_session=False)
+        ).update({ResourceThreshold.count: ResourceThreshold.count + 1}, synchronize_session=False)
         session.commit()
 
     @staticmethod
     def get_user_entry(session, username, action_type):
-        entry = session.query(ResourceTreshold).filter(
-            and_(ResourceTreshold.username == username, ResourceTreshold.actionType == action_type)
+        entry = session.query(ResourceThreshold).filter(
+            and_(ResourceThreshold.username == username, ResourceThreshold.actionType == action_type)
         )
         return entry
 

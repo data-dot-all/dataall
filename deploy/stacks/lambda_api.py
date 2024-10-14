@@ -156,7 +156,7 @@ class LambdaApiStack(pyNestedClass):
             ),
             description='dataall graphql function',
             role=self.create_function_role(
-                envname, resource_prefix, 'graphql', pivot_role_name, vpc, self._get_bedrock_policy_statement()
+                envname, resource_prefix, 'graphql', pivot_role_name, vpc, self._get_bedrock_policy_statement() or []
             ),
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['api_handler.handler']
