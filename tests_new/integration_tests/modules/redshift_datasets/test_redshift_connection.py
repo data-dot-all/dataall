@@ -155,49 +155,59 @@ def test_add_connection_group_permissions(client1, group2, session_connection_se
     assert_that(session_connection_serverless_admin_group_with_permissions).is_equal_to(group2)
 
 
-def test_add_connection_group_permissions_unauthorized(client2, group3, session_connection_serverless_admin):
+def test_add_connection_group_permissions_unauthorized(client2, group2, session_connection_serverless_admin):
     assert_that(add_redshift_connection_group_permissions).raises(GqlError).when_called_with(
         client=client2,
         connection_uri=session_connection_serverless_admin.connectionUri,
-        group_uri=group3,
+        group_uri=group2,
         permissions=['CREATE_SHARE_REQUEST_WITH_CONNECTION'],
     ).contains(
         'UnauthorizedOperation',
-        'MANAGE_REDSHIFT_CONNECTION_PERMISSIONS',
+        'EDIT_REDSHIFT_CONNECTION_PERMISSIONS',
         session_connection_serverless_admin.connectionUri,
     )
 
 
 def test_add_connection_group_permissions_invalid_connection_type(
-    client1, group3, session_connection_serverless_data_user
+    client1, group2, session_connection_serverless_data_user
 ):
     assert_that(add_redshift_connection_group_permissions).raises(GqlError).when_called_with(
         client=client1,
         connection_uri=session_connection_serverless_data_user.connectionUri,
-        group_uri=group3,
+        group_uri=group2,
         permissions=['CREATE_SHARE_REQUEST_WITH_CONNECTION'],
     ).contains('InvalidInput', 'ConnectionType', session_connection_serverless_data_user.connectionType)
 
 
-def test_add_connection_group_permissions_invalid_permissions(client1, group3, session_connection_serverless_admin):
+def test_add_connection_group_permissions_invalid_permissions(client1, group2, session_connection_serverless_admin):
     assert_that(add_redshift_connection_group_permissions).raises(GqlError).when_called_with(
         client=client1,
         connection_uri=session_connection_serverless_admin.connectionUri,
-        group_uri=group3,
+        group_uri=group2,
         permissions=['INVALID_PERMISSION'],
     ).contains('InvalidInput', 'INVALID_PERMISSION', 'Permissions')
 
 
-def test_delete_connection_group_permissions(client1, group3, session_connection_serverless_admin):
-    response = add_redshift_connection_group_permissions(
+def test_add_connection_group_permissions_invalid_group(client1, group3, session_connection_serverless_admin):
+    assert_that(add_redshift_connection_group_permissions).raises(GqlError).when_called_with(
         client=client1,
         connection_uri=session_connection_serverless_admin.connectionUri,
         group_uri=group3,
         permissions=['CREATE_SHARE_REQUEST_WITH_CONNECTION'],
+    ).contains('InvalidInput', group3, 'Team')
+
+
+def test_delete_connection_group_permissions(client1, group2, session_connection_serverless_admin):
+    response = delete_redshift_connection_group_permissions(
+        client=client1, connection_uri=session_connection_serverless_admin.connectionUri, group_uri=group2
     )
     assert_that(response).is_true()
-    response = delete_redshift_connection_group_permissions(
-        client=client1, connection_uri=session_connection_serverless_admin.connectionUri, group_uri=group3
+    # Revert changes
+    response = add_redshift_connection_group_permissions(
+        client=client1,
+        connection_uri=session_connection_serverless_admin.connectionUri,
+        group_uri=group2,
+        permissions=['CREATE_SHARE_REQUEST_WITH_CONNECTION'],
     )
     assert_that(response).is_true()
 
@@ -209,7 +219,7 @@ def test_delete_connection_group_permissions_unauthorized(client2, group3, sessi
         group_uri=group3,
     ).contains(
         'UnauthorizedOperation',
-        'MANAGE_REDSHIFT_CONNECTION_PERMISSIONS',
+        'EDIT_REDSHIFT_CONNECTION_PERMISSIONS',
         session_connection_serverless_admin.connectionUri,
     )
 
@@ -336,7 +346,7 @@ def test_list_redshift_connection_group_permissions_unauthorized(client2, sessio
         client=client2, connection_uri=session_connection_serverless_admin.connectionUri
     ).contains(
         'UnauthorizedOperation',
-        'MANAGE_REDSHIFT_CONNECTION_PERMISSIONS',
+        'EDIT_REDSHIFT_CONNECTION_PERMISSIONS',
         session_connection_serverless_admin.connectionUri,
     )
 
@@ -357,6 +367,6 @@ def test_list_redshift_connection_group_no_permissions_unauthorized(client2, ses
         client=client2, connection_uri=session_connection_serverless_admin.connectionUri
     ).contains(
         'UnauthorizedOperation',
-        'MANAGE_REDSHIFT_CONNECTION_PERMISSIONS',
+        'EDIT_REDSHIFT_CONNECTION_PERMISSIONS',
         session_connection_serverless_admin.connectionUri,
     )
