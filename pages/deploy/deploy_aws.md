@@ -509,7 +509,7 @@ the different configuration options.
               "aws_actions": true,
               "preview_data": true,
               "glue_crawler": true,
-              "show_stack_logs": "enabled/disabled/admin-only"
+              "show_stack_logs": "enabled|disabled|admin-only"
             }
         },
         "s3_datasets_shares": {
@@ -518,7 +518,7 @@ the different configuration options.
         "shares_base": {
           "active": true,
           "features": {
-            "show_share_logs": "enabled/disabled/admin-only"
+            "show_share_logs": "enabled|disabled|admin-only"
           }
         },
         "worksheets": {
@@ -536,7 +536,7 @@ the different configuration options.
             "env_aws_actions": true,
             "cdk_pivot_role_multiple_environments_same_account": false,
             "enable_quicksight_monitoring": false,
-            "show_stack_logs": "enabled/disabled/admin-only"
+            "show_stack_logs": "enabled|disabled|admin-only"
         },
         "log_query_period_days": 1
     }
