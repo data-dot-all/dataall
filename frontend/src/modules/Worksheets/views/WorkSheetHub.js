@@ -1,62 +1,211 @@
-import React, { useState } from 'react';
-import { Box, Tabs, Tab } from '@mui/material';
-import WorksheetView from './WorksheetView';
-import AISQLGenerator from './AISQLGen';
-import DocumentSummarizer from './UnstructuredView';
-import { isFeatureEnabled } from 'utils';
+import {
+  Box,
+  Card,
+  CircularProgress,
+  List,
+  ListItem,
+  ListItemIcon,
+  MenuItem,
+  TextField,
+  Tooltip,
+  Typography
+} from '@mui/material';
+import React from 'react';
+import { CgHashtag } from 'react-icons/cg';
+import { VscSymbolString } from 'react-icons/vsc';
+import { Scrollbar } from 'design';
 
-const WorksheetHub = () => {
-  const [currentTab, setCurrentTab] = useState('Structured');
-
-  const handleTabChange = (event, newValue) => {
-    setCurrentTab(newValue);
-  };
-
-  const getTabs = () => {
-    const tabs = [];
-
-    tabs.push({
-      label: 'Structured Data',
-      value: 'Structured',
-      component: <WorksheetView />
-    });
-    if (isFeatureEnabled('worksheets', 'nlq')) {
-      tabs.push({
-        label: 'AI SQL Generator',
-        value: '"AISQLGen"',
-        component: <AISQLGenerator />
-      });
-      tabs.push({
-        label: 'Document Summarizer',
-        value: 'Unstructured',
-        component: <DocumentSummarizer />
-      });
-    }
-
-    return tabs;
-  };
-
+const WorksheetHub = ({
+  handleEnvironmentChange,
+  loadingEnvs,
+  currentEnv,
+  environmentOptions,
+  worksheet,
+  handleDatabaseChange,
+  selectedDatabase,
+  loadingDatabases,
+  databaseOptions,
+  handleTableChange,
+  selectedTable,
+  loadingTables,
+  tableOptions,
+  loadingColumns,
+  columns
+}) => {
   return (
-    <Box sx={{ width: '100%' }}>
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={currentTab} onChange={handleTabChange}>
-          {getTabs().map(
-            (tab) =>
-              (tab.key === 'StructuredData' ||
-                isFeatureEnabled('worksheets', 'nlq')) && (
-                <Tab key={tab.value} value={tab.value} label={tab.label} />
-              )
-          )}
-        </Tabs>
-      </Box>
-      {getTabs().map(
-        (tab) =>
-          currentTab === tab.value &&
-          (tab.value === 'StructuredData' ||
-            isFeatureEnabled('worksheets', 'nlq')) && (
-            <Box key={tab.value}>{tab.component}</Box>
-          )
-      )}
+    <Box
+      sx={{
+        display: 'flex',
+        backgroundColor: 'background.paper',
+        borderRight: 1,
+        borderBottom: 1,
+        borderColor: 'divider',
+        flexDirection: 'column',
+        maxWidth: '100%',
+        width: 350,
+        height: '100%'
+      }}
+    >
+      <Scrollbar options={{ suppressScrollX: true }}>
+        <Box sx={{ p: 2 }}>
+          <Card>
+            <Box sx={{ p: 2, mt: 2 }}>
+              <TextField
+                fullWidth
+                label="Environment"
+                name="environment"
+                onChange={(event) => {
+                  handleEnvironmentChange(event);
+                }}
+                select
+                value={currentEnv}
+                variant="outlined"
+                InputProps={{
+                  endAdornment: (
+                    <>
+                      {loadingEnvs ? (
+                        <CircularProgress color="inherit" size={20} />
+                      ) : null}
+                    </>
+                  )
+                }}
+              >
+                {environmentOptions.map((environment) => (
+                  <MenuItem
+                    key={environment.environmentUri}
+                    value={environment}
+                  >
+                    {environment.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Box>
+            <Box sx={{ p: 2, mt: 2 }}>
+              <TextField
+                disabled
+                fullWidth
+                label="Team"
+                name="team"
+                value={worksheet ? worksheet.SamlAdminGroupName : ''}
+                variant="outlined"
+              />
+            </Box>
+            <Box sx={{ p: 2 }}>
+              <TextField
+                fullWidth
+                label="Database"
+                name="database"
+                onChange={(event) => {
+                  handleDatabaseChange(event);
+                }}
+                select
+                value={selectedDatabase}
+                variant="outlined"
+                InputProps={{
+                  endAdornment: (
+                    <>
+                      {loadingDatabases ? (
+                        <CircularProgress color="inherit" size={20} />
+                      ) : null}
+                    </>
+                  )
+                }}
+              >
+                {databaseOptions.length > 0 ? (
+                  databaseOptions.map((database) => (
+                    <MenuItem key={database.datasetUri} value={database}>
+                      {database.label}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>No databases found</MenuItem>
+                )}
+              </TextField>
+            </Box>
+            <Box sx={{ p: 2 }}>
+              <TextField
+                fullWidth
+                label="Table"
+                name="table"
+                onChange={(event) => {
+                  handleTableChange(event);
+                }}
+                select
+                value={selectedTable}
+                variant="outlined"
+                InputProps={{
+                  endAdornment: (
+                    <>
+                      {loadingTables ? (
+                        <CircularProgress color="inherit" size={20} />
+                      ) : null}
+                    </>
+                  )
+                }}
+              >
+                {tableOptions.length > 0 ? (
+                  tableOptions.map((table) => (
+                    <MenuItem key={table.tableUri} value={table}>
+                      {table.GlueTableName}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>No tables found</MenuItem>
+                )}
+              </TextField>
+            </Box>
+            {loadingColumns ? (
+              <CircularProgress size={15} />
+            ) : (
+              <Box sx={{ p: 2 }}>
+                {columns && columns.length > 0 && (
+                  <Box>
+                    <Typography color="textSecondary" variant="subtitle2">
+                      Columns
+                    </Typography>
+                    <List dense>
+                      {columns.map((col) => (
+                        <Box>
+                          <ListItem key={col.columnUri}>
+                            {col.typeName !== 'string' ? (
+                              <ListItemIcon>
+                                <CgHashtag />
+                              </ListItemIcon>
+                            ) : (
+                              <ListItemIcon>
+                                <VscSymbolString />
+                              </ListItemIcon>
+                            )}
+                            <Typography
+                              sx={{
+                                width: '200px',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                WebkitBoxOrient: 'vertical',
+                                WebkitLineClamp: 2
+                              }}
+                            >
+                              <Tooltip title={col.name}>
+                                <Typography
+                                  color="textPrimary"
+                                  variant="subtitle2"
+                                >
+                                  {col.name.substring(0, 22)}
+                                </Typography>
+                              </Tooltip>
+                            </Typography>
+                          </ListItem>
+                        </Box>
+                      ))}
+                    </List>
+                  </Box>
+                )}
+              </Box>
+            )}
+          </Card>
+        </Box>
+      </Scrollbar>
     </Box>
   );
 };

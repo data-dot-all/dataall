@@ -2,30 +2,23 @@ import { PlayArrowOutlined, SaveOutlined } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
   Box,
-  Card,
   CircularProgress,
   Divider,
   IconButton,
-  List,
-  ListItem,
-  ListItemIcon,
-  MenuItem,
-  TextField,
-  Tooltip,
-  Typography
+  Typography,
+  Tabs,
+  Tab
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { CgHashtag } from 'react-icons/cg';
 import { FaTrash } from 'react-icons/fa';
-import { VscSymbolString } from 'react-icons/vsc';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Defaults,
   DeleteObjectWithFrictionModal,
   PencilAltIcon,
-  Scrollbar
+  useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
@@ -49,6 +42,30 @@ import {
   WorksheetEditFormModal,
   WorksheetResult
 } from '../components';
+import { isFeatureEnabled } from 'utils';
+import AISQLGenerator from './AISQLGen';
+import DocumentSummarizer from './UnstructuredView';
+import WorksheetHub from './WorkSheetHub';
+
+const tabs = [
+  {
+    label: 'Structured Data',
+    value: 'Structured',
+    active: true
+  },
+  {
+    label: 'AI SQL Generator',
+    value: 'AISQLGen',
+    active: isFeatureEnabled('worksheets', 'nlq')
+  },
+  {
+    label: 'Document Summarizer',
+    value: 'Unstructured',
+    active: isFeatureEnabled('worksheets', 'nlq')
+  }
+];
+
+const activeTabs = tabs.filter((tab) => tab.active !== false);
 
 const WorksheetView = () => {
   const navigate = useNavigate();
@@ -63,6 +80,7 @@ const WorksheetView = () => {
   const [sqlBody, setSqlBody] = useState(
     " select 'A' as dim, 23 as nb\n union \n select 'B' as dim, 43 as nb "
   );
+  const [textBody, setTextBody] = useState('');
   const [currentEnv, setCurrentEnv] = useState();
   const [loadingEnvs, setLoadingEnvs] = useState(false);
   const [loadingDatabases, setLoadingDatabases] = useState(false);
@@ -76,6 +94,13 @@ const WorksheetView = () => {
   const [runningQuery, setRunningQuery] = useState(false);
   const [isEditWorksheetOpen, setIsEditWorksheetOpen] = useState(null);
   const [isDeleteWorksheetOpen, setIsDeleteWorksheetOpen] = useState(null);
+  const [currentTab, setCurrentTab] = useState(activeTabs[0].value);
+  const { settings } = useSettings();
+
+  const handleTabChange = (event, newValue) => {
+    setCurrentTab(newValue);
+  };
+
   const handleEditWorksheetModalOpen = () => {
     setIsEditWorksheetOpen(true);
   };
@@ -362,6 +387,14 @@ const WorksheetView = () => {
     );
   }
 
+  function handleSQLChange(value) {
+    setSqlBody(value);
+  }
+
+  function handleTextChange(value) {
+    setTextBody(value);
+  }
+
   function handleDatabaseChange(event) {
     setColumns([]);
     setTableOptions([]);
@@ -392,6 +425,24 @@ const WorksheetView = () => {
       <Helmet>
         <title>Worksheet | data.all</title>
       </Helmet>
+      <Tabs
+        indicatorColor="primary"
+        scrollButtons="auto"
+        textColor="primary"
+        value={currentTab}
+        variant="fullWidth"
+        onChange={handleTabChange}
+      >
+        {activeTabs.map((tab) => (
+          <Tab
+            key={tab.value}
+            label={tab.label}
+            value={tab.value}
+            icon={settings.tabIcons ? tab.icon : null}
+            iconPosition="start"
+          />
+        ))}
+      </Tabs>
       <Box
         sx={{
           backgroundColor: 'background.default',
@@ -412,166 +463,55 @@ const WorksheetView = () => {
             height: '100%'
           }}
         >
-          <Scrollbar options={{ suppressScrollX: true }}>
-            <Box sx={{ p: 2 }}>
-              <Card>
-                <Box sx={{ p: 2, mt: 2 }}>
-                  <TextField
-                    fullWidth
-                    label="Environment"
-                    name="environment"
-                    onChange={(event) => {
-                      handleEnvironmentChange(event);
-                    }}
-                    select
-                    value={currentEnv}
-                    variant="outlined"
-                    InputProps={{
-                      endAdornment: (
-                        <>
-                          {loadingEnvs ? (
-                            <CircularProgress color="inherit" size={20} />
-                          ) : null}
-                        </>
-                      )
-                    }}
-                  >
-                    {environmentOptions.map((environment) => (
-                      <MenuItem
-                        key={environment.environmentUri}
-                        value={environment}
-                      >
-                        {environment.label}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Box>
-                <Box sx={{ p: 2, mt: 2 }}>
-                  <TextField
-                    disabled
-                    fullWidth
-                    label="Team"
-                    name="team"
-                    value={worksheet ? worksheet.SamlAdminGroupName : ''}
-                    variant="outlined"
-                  />
-                </Box>
-                <Box sx={{ p: 2 }}>
-                  <TextField
-                    fullWidth
-                    label="Database"
-                    name="database"
-                    onChange={(event) => {
-                      handleDatabaseChange(event);
-                    }}
-                    select
-                    value={selectedDatabase}
-                    variant="outlined"
-                    InputProps={{
-                      endAdornment: (
-                        <>
-                          {loadingDatabases ? (
-                            <CircularProgress color="inherit" size={20} />
-                          ) : null}
-                        </>
-                      )
-                    }}
-                  >
-                    {databaseOptions.length > 0 ? (
-                      databaseOptions.map((database) => (
-                        <MenuItem key={database.datasetUri} value={database}>
-                          {database.label}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem disabled>No databases found</MenuItem>
-                    )}
-                  </TextField>
-                </Box>
-                <Box sx={{ p: 2 }}>
-                  <TextField
-                    fullWidth
-                    label="Table"
-                    name="table"
-                    onChange={(event) => {
-                      handleTableChange(event);
-                    }}
-                    select
-                    value={selectedTable}
-                    variant="outlined"
-                    InputProps={{
-                      endAdornment: (
-                        <>
-                          {loadingTables ? (
-                            <CircularProgress color="inherit" size={20} />
-                          ) : null}
-                        </>
-                      )
-                    }}
-                  >
-                    {tableOptions.length > 0 ? (
-                      tableOptions.map((table) => (
-                        <MenuItem key={table.tableUri} value={table}>
-                          {table.GlueTableName}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem disabled>No tables found</MenuItem>
-                    )}
-                  </TextField>
-                </Box>
-                {loadingColumns ? (
-                  <CircularProgress size={15} />
-                ) : (
-                  <Box sx={{ p: 2 }}>
-                    {columns && columns.length > 0 && (
-                      <Box>
-                        <Typography color="textSecondary" variant="subtitle2">
-                          Columns
-                        </Typography>
-                        <List dense>
-                          {columns.map((col) => (
-                            <Box>
-                              <ListItem key={col.columnUri}>
-                                {col.typeName !== 'string' ? (
-                                  <ListItemIcon>
-                                    <CgHashtag />
-                                  </ListItemIcon>
-                                ) : (
-                                  <ListItemIcon>
-                                    <VscSymbolString />
-                                  </ListItemIcon>
-                                )}
-                                <Typography
-                                  sx={{
-                                    width: '200px',
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    WebkitBoxOrient: 'vertical',
-                                    WebkitLineClamp: 2
-                                  }}
-                                >
-                                  <Tooltip title={col.name}>
-                                    <Typography
-                                      color="textPrimary"
-                                      variant="subtitle2"
-                                    >
-                                      {col.name.substring(0, 22)}
-                                    </Typography>
-                                  </Tooltip>
-                                </Typography>
-                              </ListItem>
-                            </Box>
-                          ))}
-                        </List>
-                      </Box>
-                    )}
-                  </Box>
-                )}
-              </Card>
-            </Box>
-          </Scrollbar>
+          {currentTab === 'Structured' && (
+            <WorksheetHub
+              handleEnvironmentChange={handleEnvironmentChange}
+              loadingEnvs={loadingEnvs}
+              environmentOptions={environmentOptions}
+              currentEnv={currentEnv}
+              worksheet={worksheet}
+              handleDatabaseChange={handleDatabaseChange}
+              selectedDatabase={selectedDatabase}
+              loadingDatabases={loadingDatabases}
+              databaseOptions={databaseOptions}
+              handleTableChange={handleTableChange}
+              selectedTable={selectedTable}
+              loadingTables={loadingTables}
+              tableOptions={tableOptions}
+              loadingColumns={loadingColumns}
+              columns={columns}
+            />
+          )}
+          {currentTab === 'AISQLGen' && (
+            <AISQLGenerator
+              handleEnvironmentChange={handleEnvironmentChange}
+              loadingEnvs={loadingEnvs}
+              environmentOptions={environmentOptions}
+              currentEnv={currentEnv}
+              worksheet={worksheet}
+              handleDatabaseChange={handleDatabaseChange}
+              selectedDatabase={selectedDatabase}
+              loadingDatabases={loadingDatabases}
+              databaseOptions={databaseOptions}
+              loadingTables={loadingTables}
+              tableOptions={tableOptions}
+              handleSQLChange={handleSQLChange}
+            />
+          )}
+          {currentTab === 'Unstructured' && (
+            <DocumentSummarizer
+              handleEnvironmentChange={handleEnvironmentChange}
+              loadingEnvs={loadingEnvs}
+              environmentOptions={environmentOptions}
+              currentEnv={currentEnv}
+              worksheet={worksheet}
+              handleDatabaseChange={handleDatabaseChange}
+              selectedDatabase={selectedDatabase}
+              loadingDatabases={loadingDatabases}
+              databaseOptions={databaseOptions}
+              handleTextChange={handleTextChange}
+            />
+          )}
         </Box>
         <Box
           sx={{
@@ -607,37 +547,45 @@ const WorksheetView = () => {
               <FaTrash size={16} />
             </IconButton>
           </Box>
-          <Divider />
-          <Box sx={{ p: 2 }}>
-            <SQLQueryEditor sql={sqlBody} setSqlBody={setSqlBody} />
-          </Box>
-          <Divider />
-          <Box
-            sx={{
-              alignItems: 'center',
-              backgroundColor: 'background.paper',
-              display: 'flex',
-              flexShrink: 0,
-              height: 68,
-              p: 2
-            }}
-          >
-            <LoadingButton
-              disabled={!currentEnv?.value}
-              loading={runningQuery}
-              color="primary"
-              onClick={runQuery}
-              startIcon={<PlayArrowOutlined fontSize="small" />}
-              sx={{ m: 1 }}
-              variant="contained"
-            >
-              Run Query
-            </LoadingButton>
-          </Box>
-          <Divider />
-          <Box sx={{ p: 2 }}>
-            <WorksheetResult results={results} loading={runningQuery} />
-          </Box>
+          {currentTab !== 'Unstructured' ? (
+            <>
+              <Divider />
+              <Box sx={{ p: 2 }}>
+                <SQLQueryEditor sql={sqlBody} setSqlBody={setSqlBody} />
+              </Box>
+              <Divider />
+              <Box
+                sx={{
+                  alignItems: 'center',
+                  backgroundColor: 'background.paper',
+                  display: 'flex',
+                  flexShrink: 0,
+                  height: 68,
+                  p: 2
+                }}
+              >
+                <LoadingButton
+                  disabled={!currentEnv?.value}
+                  loading={runningQuery}
+                  color="primary"
+                  onClick={runQuery}
+                  startIcon={<PlayArrowOutlined fontSize="small" />}
+                  sx={{ m: 1 }}
+                  variant="contained"
+                >
+                  Run Query
+                </LoadingButton>
+              </Box>
+              <Divider />
+              <Box sx={{ p: 2 }}>
+                <WorksheetResult results={results} loading={runningQuery} />
+              </Box>
+            </>
+          ) : (
+            <Box sx={{ p: 2 }}>
+              <SQLQueryEditor sql={textBody} setSqlBody={setTextBody} />
+            </Box>
+          )}
         </Box>
       </Box>
       {worksheet && isEditWorksheetOpen && (
