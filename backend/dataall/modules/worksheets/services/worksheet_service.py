@@ -131,7 +131,7 @@ class WorksheetService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
-    @ResourceThresholdRepository.invocation_handler('nlq')
+    @ResourceThresholdRepository.check_invocation_count('nlq')
     def run_nlq(session, uri, worksheetUri, prompt, datasetUri, table_names):
         environment = EnvironmentService.get_environment_by_uri(session, uri)
         dataset = DatasetRepository.get_dataset_by_uri(session, datasetUri)
@@ -154,7 +154,7 @@ class WorksheetService:
         return {'error': None, 'response': response}
 
     @staticmethod
-    @ResourceThresholdRepository.invocation_handler('nlq')
+    @ResourceThresholdRepository.check_invocation_count('nlq')
     def unstruct_query(session, uri, worksheetUri, prompt, datasetUri, key):
         environment = EnvironmentService.get_environment_by_uri(session, uri)
 

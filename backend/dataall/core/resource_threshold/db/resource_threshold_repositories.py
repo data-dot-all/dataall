@@ -1,14 +1,14 @@
-from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.core.resource_threshold.db.resource_threshold import ResourceThreshold
 from sqlalchemy import and_, func
 from dataall.base.config import config
+from dataall.base.db import exceptions
 
 
-class ResourceThresholdRepository(EnvironmentResource):
-    resource_paths = {'nlq': 'modules.worksheets.features.max_count_per_day'}
+class ResourceThresholdRepository:
+    _RESOURCE_PATHS = {'nlq': 'modules.worksheets.features.max_count_per_day'}
 
     @staticmethod
-    def get_count_today(session, username, action_type):
+    def _get_count_today(session, username, action_type):
         amount = (
             session.query(ResourceThreshold.count)
             .filter(
@@ -23,8 +23,8 @@ class ResourceThresholdRepository(EnvironmentResource):
         return amount if amount else 0
 
     @staticmethod
-    def add_entry(session, username, action_type):
-        user_entry = ResourceThresholdRepository.get_user_entry(session, username, action_type)
+    def _add_entry(session, username, action_type):
+        user_entry = ResourceThresholdRepository._get_user_entry(session, username, action_type)
         if user_entry:
             user_entry.update(
                 {ResourceThreshold.count: 1, ResourceThreshold.date: func.current_date()}, synchronize_session=False
@@ -35,7 +35,7 @@ class ResourceThresholdRepository(EnvironmentResource):
             session.add(action_entry)
 
     @staticmethod
-    def increment_count(session, username, action_type):
+    def _increment_count(session, username, action_type):
         session.query(ResourceThreshold).filter(
             and_(
                 ResourceThreshold.username == username,
@@ -46,33 +46,36 @@ class ResourceThresholdRepository(EnvironmentResource):
         session.commit()
 
     @staticmethod
-    def get_user_entry(session, username, action_type):
+    def _get_user_entry(session, username, action_type):
         entry = session.query(ResourceThreshold).filter(
             and_(ResourceThreshold.username == username, ResourceThreshold.actionType == action_type)
         )
         return entry
 
     @staticmethod
-    def invocation_handler(action_type):
+    def check_invocation_count(action_type):
         def decorator(func):
             def wrapper(session, username, *args, **kwargs):
-                count = ResourceThresholdRepository.get_count_today(
+                count = ResourceThresholdRepository._get_count_today(
                     session=session, username=username, action_type=action_type
                 )
-                max_count = config.get_property(ResourceThresholdRepository.resource_paths[action_type], 10)
+                max_count = config.get_property(ResourceThresholdRepository._RESOURCE_PATHS[action_type], 10)
                 if count < max_count:
-                    response = func(session, *args, **kwargs)
                     if count == 0:
-                        ResourceThresholdRepository.add_entry(
+                        ResourceThresholdRepository._add_entry(
                             session=session, username=username, action_type=action_type
                         )
                     else:
-                        ResourceThresholdRepository.increment_count(
+                        ResourceThresholdRepository._increment_count(
                             session=session, username=username, action_type=action_type
                         )
-                    return response
+                    return func(session, *args, **kwargs)
                 else:
-                    return {'error': None, 'response': 'Error: too many requests'}
+                    raise exceptions.ResourceThresholdExceeded(
+                        username=username,
+                        action=action_type,
+                        message='Requests exceeded max invocation count',
+                    )
 
             return wrapper
 
