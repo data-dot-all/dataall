@@ -13,6 +13,7 @@ from integration_tests.modules.redshift_datasets.connection_queries import (
 log = logging.getLogger(__name__)
 
 REDSHIFT_DATABASE = 'dev'
+REDSHIFT_SCHEMA = 'public'
 
 
 def create_connection(client, env, group, name, conn_type, red_type, connection_data=RedshiftConnection):
