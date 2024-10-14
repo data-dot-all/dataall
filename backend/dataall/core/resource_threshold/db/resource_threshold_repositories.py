@@ -71,11 +71,7 @@ class ResourceThresholdRepository:
                         )
                     return func(session, *args, **kwargs)
                 else:
-                    raise exceptions.ResourceThresholdExceeded(
-                        username=username,
-                        action=action_type,
-                        message='Requests exceeded max invocation count',
-                    )
+                    raise exceptions.ResourceThresholdExceeded(username=username, action=action_type)
 
             return wrapper
 

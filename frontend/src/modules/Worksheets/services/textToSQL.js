@@ -28,9 +28,7 @@ export const textToSQL = ({
         worksheetUri: $worksheetUri
         datasetUri: $datasetUri
         tableNames: $tableNames
-      ) {
-        response
-      }
+      )
     }
   `
 });

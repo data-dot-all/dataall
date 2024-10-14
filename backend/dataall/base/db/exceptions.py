@@ -184,11 +184,12 @@ class ResourceLockTimeout(Exception):
 
 
 class ResourceThresholdExceeded(Exception):
-    def __init__(self, action, message):
+    def __init__(self, username, action):
+        self.username = username
         self.action = action
         self.message = f"""
                     An error occurred (ResourceThresholdExceeded) when calling {self.action} operation:
-                    {message}
+                    Requests exceeded max daily invocation count for User: {self.username}
                 """
 
     def __str__(self):

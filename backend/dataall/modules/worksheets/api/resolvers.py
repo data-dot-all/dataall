@@ -77,17 +77,14 @@ def text_to_sql(
     context: Context,
     source,
     environmentUri: str = None,
-    worksheetUri: str = None,
     prompt: str = None,
     datasetUri: str = None,
     tableNames: list = None,
 ):
     with context.engine.scoped_session() as session:
         response = WorksheetService.run_nlq(
-            username=context.username,
             session=session,
             uri=environmentUri,
-            worksheetUri=worksheetUri,
             prompt=prompt,
             datasetUri=datasetUri,
             table_names=tableNames,

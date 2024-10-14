@@ -41,13 +41,6 @@ AthenaQueryResult = gql.ObjectType(
     ],
 )
 
-TextToSQLResult = gql.ObjectType(
-    name='TextToSQLResult',
-    fields=[
-        gql.Field(name='error', type=gql.String),
-        gql.Field(name='response', type=gql.String),
-    ],
-)
 
 UnstructuredQueryResult = gql.ObjectType(
     name='UnstructuredQueryResult',

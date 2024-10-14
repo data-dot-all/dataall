@@ -132,7 +132,7 @@ class WorksheetService:
     @staticmethod
     @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
     @ResourceThresholdRepository.check_invocation_count('nlq')
-    def run_nlq(session, uri, worksheetUri, prompt, datasetUri, table_names):
+    def run_nlq(session, uri, prompt, datasetUri, table_names):
         environment = EnvironmentService.get_environment_by_uri(session, uri)
         dataset = DatasetRepository.get_dataset_by_uri(session, datasetUri)
         glue_client = GlueClient(
@@ -140,18 +140,15 @@ class WorksheetService:
         )
 
         metadata = []
-        if ' ' in table_names:
-            table_names = table_names.split(' ')
-            for table in table_names:
-                metadata.append(glue_client.get_metadata(table))
-        else:
-            metadata = glue_client.get_metadata(table_names)
+        for table in table_names:
+            metadata.append(glue_client.get_metadata(table))
 
         bedrock_client = StructuredBedrockClient(account_id=environment.AwsAccountId, region='us-east-1')
 
-        response = bedrock_client.invoke_model(prompt, metadata)
+        response = bedrock_client.invoke_model(prompt, '\n'.join(metadata))
 
-        return {'error': None, 'response': response}
+        return response
+        # {'error': None, 'response': }
 
     @staticmethod
     @ResourceThresholdRepository.check_invocation_count('nlq')

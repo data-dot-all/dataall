@@ -64,8 +64,8 @@ WHERE a1.address = '900 Somerville Avenue' AND a2.address = '2 Finnigan Street'"
 
 class StructuredBedrockClient:
     def __init__(self, account_id: str, region: str):
-        self.__session = SessionHelper.get_session()
-        self._client = self.__session.client('bedrock-runtime', region_name=region)
+        self._session = SessionHelper.get_session()
+        self._client = self._session.client('bedrock-runtime', region_name=region)
         model_id = 'anthropic.claude-3-sonnet-20240229-v1:0'
         model_kwargs = {
             'max_tokens': 2048,
@@ -81,9 +81,6 @@ class StructuredBedrockClient:
         )
 
     def invoke_model(self, prompt: str, metadata: str):
-        # context = str(metadata)
-        context = '\n'.join(metadata) if isinstance(metadata, list) else metadata
-
         messages = [
             (
                 'system',
@@ -132,5 +129,5 @@ class StructuredBedrockClient:
         prompts = ChatPromptTemplate.from_messages(messages)
 
         chain = prompts | self.__model | StrOutputParser()
-        response = chain.invoke({'question': prompt, 'context': context, 'examples': examples})
+        response = chain.invoke({'question': prompt, 'context': metadata, 'examples': examples})
         return response

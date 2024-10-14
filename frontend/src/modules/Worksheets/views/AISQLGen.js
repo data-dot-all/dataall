@@ -66,7 +66,7 @@ const AISQLGenerator = () => {
     " select 'A' as dim, 23 as nb\n union \n select 'B' as dim, 43 as nb "
   );
   const [currentEnv, setCurrentEnv] = useState();
-  const [invocing, setInvocing] = useState(false);
+  const [invoking, setInvoking] = useState(false);
   const [loadingEnvs, setLoadingEnvs] = useState(false);
   const [loadingDatabases, setLoadingDatabases] = useState(false);
   const [databaseOptions, setDatabaseOptions] = useState([]);
@@ -234,7 +234,7 @@ const AISQLGenerator = () => {
   }, [client, dispatch, enqueueSnackbar, worksheet, sqlBody]);
 
   const handleSubmit = async () => {
-    setInvocing(true);
+    setInvoking(true);
     setSqlBody('');
     const selectTablesString = selectedTables.join(' ');
     const oldPrompt = prompt;
@@ -247,17 +247,17 @@ const AISQLGenerator = () => {
       environmentUri: currentEnv.environmentUri,
       worksheetUri: worksheet.worksheetUri,
       datasetUri: selectedDatabase.value,
-      tableNames: selectTablesString
+      tableNames: selectedTables
     });
     setPrompt(oldPrompt);
     const response = await client.query(queryObject);
-    const message = response.data.textToSQL.response;
+    const message = response.data.textToSQL;
     if (message.split(':')[0] === 'Error') {
       dispatch({ type: SET_ERROR, error: message.split(':')[1] });
     } else {
       setSqlBody(response.data.textToSQL.response);
     }
-    setInvocing(false);
+    setInvoking(false);
   };
 
   const runQuery = useCallback(async () => {
@@ -530,7 +530,7 @@ const AISQLGenerator = () => {
                 </Box>
                 <Box sx={{ p: 2 }}>
                   <LoadingButton
-                    loading={invocing}
+                    loading={invoking}
                     variant="contained"
                     onClick={handleSubmit}
                     fullWidth
@@ -540,16 +540,6 @@ const AISQLGenerator = () => {
                       : 'Retry SQL Generation'}
                   </LoadingButton>
                 </Box>
-                {/* {(failedQueries.length != 0) && (<Box sx={{ p: 2 }}>
-                  <LoadingButton
-                    loading={invocing}
-                    variant="contained"
-                    onClick={handleSubmit}
-                    fullWidth
-                  >
-                    Retry Generation
-                  </LoadingButton>
-                </Box>)} */}
               </Card>
             </Box>
           </Scrollbar>
