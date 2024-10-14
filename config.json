@@ -1,102 +1,102 @@
 {
-  "modules": {
-      "mlstudio": {
-          "active": true,
-          "features": {
-               "show_stack_logs": "enabled"
-          }
-      },
-      "notebooks": {
-          "active": true,
-           "features": {
-               "show_stack_logs": "enabled"
-          }
-      },
-      "datapipelines": {
-          "active": false,
-           "features": {
-               "show_stack_logs": "enabled"
-          }
-      },
-      "omics": {
-          "active": false
-      },
-      "metadata_forms": {
-          "active": true
-      },
-      "datasets_base": {
-          "active": true,
-          "features": {
-              "share_notifications": {
-                  "email": {
-                      "active": false,
-                      "persistent_reminders": false,
-                      "parameters": {
-                          "group_notifications": true
-                      }
-                  }
-              },
-              "confidentiality_dropdown" : true,
-              "topics_dropdown" : true,
-              "auto_approval_for_confidentiality_level" : {
-                  "Unclassified" : true,
-                  "Official" : true,
-                  "Secret" : true
-              },
-              "share_expiration" : {
-                  "active" : true,
-                  "run_schedule" : [1, 3, 7, 14, 21, 28]
-              }
-          }
-      },
-      "s3_datasets": {
-          "active": true,
-          "features": {
-              "file_uploads": true,
-              "file_actions": true,
-              "aws_actions": true,
-              "preview_data": true,
-              "glue_crawler": true,
-              "metrics_data": true,
-              "show_stack_logs": "enabled"
-          }
-      },
-      "shares_base": {
-          "active": true,
-          "features": {
-              "show_share_logs": "enabled"
-          }
-      },
-      "s3_datasets_shares": {
-          "active": true
-      },
-      "redshift_datasets": {
-          "active": true
-      },
-      "redshift_datasets_shares": {
-          "active": true
-      },
-      "worksheets": {
-          "active": true,
-          "features": {
-              "nlq":true,
-              "max_count_per_day": 25
-          }
-      },
-      "dashboards": {
-          "active": true
-      },
-      "maintenance": {
-          "active" : true
-      }
-  },
-  "core": {
-      "features": {
-          "env_aws_actions": true,
-          "cdk_pivot_role_multiple_environments_same_account": false,
-          "enable_quicksight_monitoring": false,
-          "show_stack_logs": "enabled"
-      },
-      "log_query_period_days": 1
-  }
+    "modules": {
+        "mlstudio": {
+            "active": true,
+            "features": {
+                 "show_stack_logs": "enabled"
+            }
+        },
+        "notebooks": {
+            "active": true,
+             "features": {
+                 "show_stack_logs": "enabled"
+            }
+        },
+        "datapipelines": {
+            "active": false,
+             "features": {
+                 "show_stack_logs": "enabled"
+            }
+        },
+        "omics": {
+            "active": false
+        },
+        "metadata_forms": {
+            "active": true
+        },
+        "datasets_base": {
+            "active": true,
+            "features": {
+                "share_notifications": {
+                    "email": {
+                        "active": false,
+                        "persistent_reminders": false,
+                        "parameters": {
+                            "group_notifications": true
+                        }
+                    }
+                },
+                "confidentiality_dropdown" : true,
+                "topics_dropdown" : true,
+                "auto_approval_for_confidentiality_level" : {
+                    "Unclassified" : true,
+                    "Official" : true,
+                    "Secret" : true
+                },
+                "share_expiration" : {
+                    "active" : true,
+                    "run_schedule" : [1, 3, 7, 14, 21, 28]
+                }
+            }
+        },
+        "s3_datasets": {
+            "active": true,
+            "features": {
+                "file_uploads": true,
+                "file_actions": true,
+                "aws_actions": true,
+                "preview_data": true,
+                "glue_crawler": true,
+                "metrics_data": true,
+                "show_stack_logs": "enabled"
+            }
+        },
+        "shares_base": {
+            "active": true,
+            "features": {
+                "show_share_logs": "enabled"
+            }
+        },
+        "s3_datasets_shares": {
+            "active": true
+        },
+        "redshift_datasets": {
+            "active": true
+        },
+        "redshift_datasets_shares": {
+            "active": true
+        },
+        "worksheets": {
+            "active": true,
+            "features": {
+                "nlq":true,
+                "max_count_per_day": 25
+            }
+        },
+        "dashboards": {
+            "active": true
+        },
+        "maintenance": {
+            "active" : true
+        }
+    },
+    "core": {
+        "features": {
+            "env_aws_actions": true,
+            "cdk_pivot_role_multiple_environments_same_account": false,
+            "enable_quicksight_monitoring": false,
+            "show_stack_logs": "enabled"
+        },
+        "log_query_period_days": 1
+    }
 }
