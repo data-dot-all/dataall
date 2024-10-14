@@ -161,8 +161,12 @@ class RedshiftConnectionService:
                 param_value=permissions,
                 constraint=f'one of the possible grantable permissions {REDSHIFT_GRANTABLE_PERMISSIONS}',
             )
-
+        env_groups = EnvironmentService.list_all_environment_groups(uri=connection.environmentUri)
         with context.db_engine.scoped_session() as session:
+            if group not in env_groups:
+                raise exceptions.InvalidInput(
+                    param_name='Team', param_value=group, constraint='a team invited to the Environment.'
+                )
             ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=group,

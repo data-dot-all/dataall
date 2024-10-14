@@ -261,21 +261,21 @@ def test_list_schema_tables_unauthorized(connection1_serverless, api_context_2):
 
 
 def test_add_group_permissions(
-    connection3_admin, connection3_admin_permissions, group2, api_context_1, mock_redshift_data
+    connection3_admin, connection3_admin_permissions, invited_group_to_environment, api_context_1, mock_redshift_data
 ):
-    # Given an ADMIN connection and another group
+    # Given an ADMIN connection
     # When
     assert_that(connection3_admin_permissions.get('count', 0)).is_equal_to(2)
     groups = [g.groupUri for g in connection3_admin_permissions.get('nodes', [])]
     assert_that(groups).contains(connection3_admin.SamlGroupName)
-    assert_that(groups).contains(group2.groupUri)
+    assert_that(groups).contains(invited_group_to_environment.name)
 
 
 def test_add_group_permissions_unauthorized(connection3_admin, group2, api_context_2):
     # Given that an unauthorized user tries to add permissions to a connection
     # When/Then
     assert_that(RedshiftConnectionService.add_group_permissions).raises(Exception).when_called_with(
-        uri=connection3_admin.connectionUri, group=group2.groupUri, permissions=REDSHIFT_GRANTABLE_PERMISSIONS
+        uri=connection3_admin.connectionUri, group=group2.name, permissions=REDSHIFT_GRANTABLE_PERMISSIONS
     ).contains('UnauthorizedOperation', 'EDIT_REDSHIFT_CONNECTION_PERMISSIONS', connection3_admin.connectionUri)
 
 
@@ -283,7 +283,7 @@ def test_add_group_permissions_non_admin_connection(connection2_cluster, group2,
     # Given a DATA_USER connection and another group
     # When/Then
     assert_that(RedshiftConnectionService.add_group_permissions).raises(Exception).when_called_with(
-        uri=connection2_cluster.connectionUri, group=group2.groupUri, permissions=REDSHIFT_GRANTABLE_PERMISSIONS
+        uri=connection2_cluster.connectionUri, group=group2.name, permissions=REDSHIFT_GRANTABLE_PERMISSIONS
     ).contains('InvalidInput', connection2_cluster.connectionType, 'Only ADMIN connections')
 
 
@@ -292,18 +292,28 @@ def test_add_group_permissions_invalid_permissions(connection3_admin, group2, ap
     invalid_permissions = ['INVALID_PERMISSION']
     # When/Then
     assert_that(RedshiftConnectionService.add_group_permissions).raises(Exception).when_called_with(
-        uri=connection3_admin.connectionUri, group=group2.groupUri, permissions=invalid_permissions
+        uri=connection3_admin.connectionUri, group=group2.name, permissions=invalid_permissions
     ).contains('InvalidInput', invalid_permissions[0], 'grantable permissions')
 
 
-def test_delete_group_permissions(connection3_admin, group2, api_context_1, mock_redshift_data):
+def test_add_group_permissions_invalid_team(connection3_admin, group3, api_context_1):
+    # Given a Team that does not belong to environment, group3
+    # When/Then
+    assert_that(RedshiftConnectionService.add_group_permissions).raises(Exception).when_called_with(
+        uri=connection3_admin.connectionUri, group=group3.name, permissions=REDSHIFT_GRANTABLE_PERMISSIONS
+    ).contains('InvalidInput', group3.name, 'team invited')
+
+
+def test_delete_group_permissions(connection3_admin, invited_group_to_environment, api_context_1, mock_redshift_data):
     # Given
     RedshiftConnectionService.add_group_permissions(
-        uri=connection3_admin.connectionUri, group=group2.groupUri, permissions=REDSHIFT_GRANTABLE_PERMISSIONS
+        uri=connection3_admin.connectionUri,
+        group=invited_group_to_environment.name,
+        permissions=REDSHIFT_GRANTABLE_PERMISSIONS,
     )
     # When
     response = RedshiftConnectionService.delete_group_permissions(
-        uri=connection3_admin.connectionUri, group=group2.groupUri
+        uri=connection3_admin.connectionUri, group=invited_group_to_environment.name
     )
     # Then
     assert_that(response).is_true()
@@ -317,7 +327,7 @@ def test_delete_group_permissions(connection3_admin, group2, api_context_1, mock
 def test_delete_group_permissions_unauthorized(connection3_admin, connection3_admin_permissions, group2, api_context_2):
     # When/Then
     assert_that(RedshiftConnectionService.delete_group_permissions).raises(Exception).when_called_with(
-        uri=connection3_admin.connectionUri, group=group2.groupUri
+        uri=connection3_admin.connectionUri, group=group2.name
     ).contains('UnauthorizedOperation', 'EDIT_REDSHIFT_CONNECTION_PERMISSIONS', connection3_admin.connectionUri)
 
 
@@ -331,7 +341,7 @@ def test_delete_group_permissions_owner_team(connection3_admin, api_context_1):
 def test_delete_group_permissions_non_admin_connection(connection1_serverless, group2, api_context_1):
     # When/Then
     assert_that(RedshiftConnectionService.delete_group_permissions).raises(Exception).when_called_with(
-        uri=connection1_serverless.connectionUri, group=group2.groupUri
+        uri=connection1_serverless.connectionUri, group=group2.name
     ).contains('InvalidInput', connection1_serverless.connectionType, 'Only ADMIN connections')
 
 
@@ -359,8 +369,8 @@ def test_list_connection_group_no_permissions(
     # Given group1=connection3_admin.SamlGroupName
     # group2 and group3 are part of the environment
     # group4 is not part of the environment
-    env_g2 = environment_group(env_fixture, group2.groupUri)
-    env_g3 = environment_group(env_fixture, group3.groupUri)
+    env_g2 = environment_group(env_fixture, group2.name)
+    env_g3 = environment_group(env_fixture, group3.name)
 
     # When
     response = RedshiftConnectionService.list_connection_group_no_permissions(
@@ -368,7 +378,7 @@ def test_list_connection_group_no_permissions(
     )
     # Then only group2 and group3 are part of the environment but do not have permissions
     assert_that(len(response)).is_equal_to(2)
-    assert_that(response).contains_only(group2.groupUri, group3.groupUri)
+    assert_that(response).contains_only(group2.name, group3.name)
 
 
 def test_list_connection_group_no_permissions_unauthorized(connection3_admin, api_context_2):
