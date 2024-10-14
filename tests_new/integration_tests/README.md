@@ -147,6 +147,18 @@ CREATE TABLE nation (
 diststyle all;
 ```
 
+### Dashboard Tests Pre-Requisities
+
+In order to run the tests on the dashboards module the following steps are required:
+
+- Create Enterprise QuickSight Subscription in `session_env1` AWS Account
+- Update QuickSight Account with a Reader Capacity Pricing Plan (required for generating embed URLs - `GenerateEmbedUrlForAnonymousUser`)
+- Create / Publish a QuickSight Dashboard
+- Create a QuickSight Group named `dataall` and give owner access of the published dashboard to the `dataall` group
+- Provide the `dashboardId` in the `config.json` as shown above
+
+Rather than failing if the above pre-requisites are not completed, if ther eis no QuickSight Account is detected in `session_env1` the dashboard tests will be **skipped**.
+
 ## Run tests
 
 The tests are executed in CodeBuild as part of the CICD pipeline if the cdk.json parameter `with_approval_tests` is set
