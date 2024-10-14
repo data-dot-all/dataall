@@ -276,7 +276,7 @@ def test_add_group_permissions_unauthorized(connection3_admin, group2, api_conte
     # When/Then
     assert_that(RedshiftConnectionService.add_group_permissions).raises(Exception).when_called_with(
         uri=connection3_admin.connectionUri, group=group2.groupUri, permissions=REDSHIFT_GRANTABLE_PERMISSIONS
-    ).contains('UnauthorizedOperation', 'MANAGE_REDSHIFT_CONNECTION_PERMISSIONS', connection3_admin.connectionUri)
+    ).contains('UnauthorizedOperation', 'EDIT_REDSHIFT_CONNECTION_PERMISSIONS', connection3_admin.connectionUri)
 
 
 def test_add_group_permissions_non_admin_connection(connection2_cluster, group2, api_context_1, mock_redshift_data):
@@ -318,7 +318,7 @@ def test_delete_group_permissions_unauthorized(connection3_admin, connection3_ad
     # When/Then
     assert_that(RedshiftConnectionService.delete_group_permissions).raises(Exception).when_called_with(
         uri=connection3_admin.connectionUri, group=group2.groupUri
-    ).contains('UnauthorizedOperation', 'MANAGE_REDSHIFT_CONNECTION_PERMISSIONS', connection3_admin.connectionUri)
+    ).contains('UnauthorizedOperation', 'EDIT_REDSHIFT_CONNECTION_PERMISSIONS', connection3_admin.connectionUri)
 
 
 def test_delete_group_permissions_owner_team(connection3_admin, api_context_1):
@@ -350,7 +350,7 @@ def test_list_connection_group_permissions_unauthorized(connection3_admin, api_c
     # When/Then
     assert_that(RedshiftConnectionService.list_connection_group_permissions).raises(Exception).when_called_with(
         uri=connection3_admin.connectionUri, filter={}
-    ).contains('UnauthorizedOperation', 'MANAGE_REDSHIFT_CONNECTION_PERMISSIONS', connection3_admin.connectionUri)
+    ).contains('UnauthorizedOperation', 'EDIT_REDSHIFT_CONNECTION_PERMISSIONS', connection3_admin.connectionUri)
 
 
 def test_list_connection_group_no_permissions(
@@ -375,7 +375,7 @@ def test_list_connection_group_no_permissions_unauthorized(connection3_admin, ap
     # When/Then
     assert_that(RedshiftConnectionService.list_connection_group_no_permissions).raises(Exception).when_called_with(
         uri=connection3_admin.connectionUri, filter={}
-    ).contains('UnauthorizedOperation', 'MANAGE_REDSHIFT_CONNECTION_PERMISSIONS', connection3_admin.connectionUri)
+    ).contains('UnauthorizedOperation', 'EDIT_REDSHIFT_CONNECTION_PERMISSIONS', connection3_admin.connectionUri)
 
 
 def test_list_connection_group_no_permissions_non_admin_connection(connection1_serverless, api_context_1):
