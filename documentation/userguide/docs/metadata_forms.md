@@ -47,6 +47,7 @@ So in summary, enforcement capabilities cascade along with administrative privil
 **View Metadata Forms**
 By clicking Metadata Forms in the Discovery section of the left side pane users can open a list of metadata forms visible for them.
 The criteria for visibility:
+
 1. The group, that the user belong to, is an owner of the metadata form.
 2. Metadata form has Global visibility.
 2. Metadata form has Team-Only visibility and the user is a member of this team.
@@ -116,18 +117,21 @@ After all required fields are filled, press "Attach" button in the right upper c
 
 
 **Permissions Summary**
-1. **Create Metadata Form:** User given the permission from data.all administrators can create metadata forms with the Global visibility and visibility for their teams. Owners and Admins of Organizations and Environments can create metadata forms with Environment-Wide and Organization-wide visibility for owned entities.
-2. **Edit and delete Metadata Form:** These actions available only for owners of the metadata form.
-3. **Enforce Metadata Form Usage**: 
 
-* Data.all admins can enforce any form on any level across the platform. They have full control over metadata form enforcement.
-* Owners/admins  of a data.all entity can enforce forms for these levels and levels below in the hierarchy. For example, an org admin can enforce a form for the org, all teams in that org, all environments in the org, all datasets in those environments, etc.
-* Share approvers and requestors can enforce forms for a specific share they are involved with. However, they can only delete enforcement rules they created themselves - they cannot delete rules created by others
+***Create Metadata Form:*** User given the permission from data.all administrators can create metadata forms with the Global visibility and visibility for their teams. Owners and Admins of Organizations and Environments can create metadata forms with Environment-Wide and Organization-wide visibility for owned entities.
 
-4. **Attach Metadata Form**: 
+***Edit and delete Metadata Form:*** These actions available only for owners of the metadata form.
 
-* Users must have relevant  permissions for target entity (ATTACH_METADATA_FORM, given by entity admin)
-* Users must have access to view the target metadata form (see paragraph "View Metadata Forms")
-* Target entity must be in target metadata form scope (see paragraph "Metadata Forms Levels")
+***Enforce Metadata Form Usage***: 
 
-5. **Delete Attached Metadata Form**:  Users must have relevant  permissions for target entity (ATTACH_METADATA_FORM, given by entity admin)
+- Data.all admins can enforce any form on any level across the platform. They have full control over metadata form enforcement. 
+- Owners/admins  of a data.all entity can enforce forms for these levels and levels below in the hierarchy. For example, an org admin can enforce a form for the org, all teams in that org, all environments in the org, all datasets in those environments, etc. 
+- Share approvers and requestors can enforce forms for a specific share they are involved with. However, they can only delete enforcement rules they created themselves - they cannot delete rules created by others
+
+***Attach Metadata Form***: 
+
+- Users must have relevant  permissions for target entity (ATTACH_METADATA_FORM, given by entity admin)
+- Users must have access to view the target metadata form (see paragraph "View Metadata Forms")
+- Target entity must be in target metadata form scope (see paragraph "Metadata Forms Levels")
+
+***Delete Attached Metadata Form***:  Users must have relevant  permissions for target entity (ATTACH_METADATA_FORM, given by entity admin)
