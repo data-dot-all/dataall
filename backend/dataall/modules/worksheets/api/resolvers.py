@@ -76,6 +76,7 @@ def delete_worksheet(context, source, worksheetUri: str = None):
 def text_to_sql(
     context: Context,
     source,
+    groupUri: str = None,
     environmentUri: str = None,
     prompt: str = None,
     datasetUri: str = None,
@@ -85,6 +86,7 @@ def text_to_sql(
         response = WorksheetService.run_nlq(
             session=session,
             uri=environmentUri,
+            group=groupUri,
             prompt=prompt,
             datasetUri=datasetUri,
             table_names=tableNames,
@@ -97,19 +99,18 @@ def text_to_sql(
 def unstruct_query(
     context,
     source,
+    groupUri: str = None,
     environmentUri: str = None,
-    worksheetUri: str = None,
     prompt: str = None,
     datasetUri: str = None,
     key: str = None,
 ):
     with context.engine.scoped_session() as session:
         return WorksheetService.unstruct_query(
-            username=context.username,
             session=session,
-            datasetUri=datasetUri,
             uri=environmentUri,
-            worksheetUri=worksheetUri,
+            group=groupUri,
             prompt=prompt,
+            datasetUri=datasetUri,
             key=key,
         )

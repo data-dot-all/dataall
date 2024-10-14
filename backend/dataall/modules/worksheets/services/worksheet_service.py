@@ -132,44 +132,40 @@ class WorksheetService:
     @staticmethod
     @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
     @ResourceThresholdRepository.check_invocation_count('nlq')
-    def run_nlq(session, uri, prompt, datasetUri, table_names):
+    def run_nlq(session, uri, group, prompt, datasetUri, table_names):
         environment = EnvironmentService.get_environment_by_uri(session, uri)
+        env_group = EnvironmentService.get_environment_group(session, group, uri)
         dataset = DatasetRepository.get_dataset_by_uri(session, datasetUri)
         glue_client = GlueClient(
-            account_id=dataset.AwsAccountId, region=dataset.region, database=dataset.GlueDatabaseName
+            account_id=environment.AwsAccountId, region=environment.region, role=env_group.environmentIAMRoleArn
         )
 
         metadata = []
         for table in table_names:
-            metadata.append(glue_client.get_metadata(table))
+            metadata.append(
+                glue_client.get_metadata(
+                    catalog_id=dataset.AwsAccountId, database=dataset.GlueDatabaseName, table_name=table
+                )
+            )
 
-        bedrock_client = StructuredBedrockClient(account_id=environment.AwsAccountId, region='us-east-1')
-
-        response = bedrock_client.invoke_model(prompt, '\n'.join(metadata))
+        response = StructuredBedrockClient().invoke_model(prompt, '\n'.join(metadata))
 
         return response
-        # {'error': None, 'response': }
 
     @staticmethod
+    @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
     @ResourceThresholdRepository.check_invocation_count('nlq')
-    def unstruct_query(session, uri, worksheetUri, prompt, datasetUri, key):
+    def unstruct_query(session, uri, group, prompt, datasetUri, key):
         environment = EnvironmentService.get_environment_by_uri(session, uri)
-
-        worksheet = WorksheetService.get_worksheet_by_uri(session, worksheetUri)
-
+        env_group = EnvironmentService.get_environment_group(session, group, uri)
         dataset = DatasetRepository.get_dataset_by_uri(session, datasetUri)
 
-        env_group = EnvironmentService.get_environment_group(
-            session, worksheet.SamlAdminGroupName, environment.environmentUri
-        )
         s3_client = S3Client(
             account_id=environment.AwsAccountId,
             region=environment.region,
-            env_group=env_group,
-            aws_account_id=environment.AwsAccountId,
+            role=env_group.environmentIAMRoleArn,
         )
 
         content = s3_client.get_content(dataset.S3BucketName, key)
-        bedrock_client = UnstructuredBedrockClient(account_id=environment.AwsAccountId, region='us-east-1')
-        response = bedrock_client.invoke_model(prompt, content)
+        response = UnstructuredBedrockClient().invoke_model(prompt, content)
         return {'error': None, 'response': response}

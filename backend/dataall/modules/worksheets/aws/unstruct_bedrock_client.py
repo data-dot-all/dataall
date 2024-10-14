@@ -5,11 +5,9 @@ from dataall.base.aws.sts import SessionHelper
 
 
 class UnstructuredBedrockClient:
-    def __init__(self, account_id: str, region: str):
-        self.__account_id = account_id
-        self.__session = SessionHelper.get_session()
-
-        self._client = self.__session.client('bedrock-runtime', region_name=region)
+    def __init__(self):
+        self._session = SessionHelper.get_session()
+        self._client = self._session.client('bedrock-runtime')
         model_id = 'anthropic.claude-3-5-sonnet-20240620-v1:0'
         model_kwargs = {
             'max_tokens': 190_000,

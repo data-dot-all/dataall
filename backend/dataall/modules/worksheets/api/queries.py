@@ -39,6 +39,7 @@ TextToSQL = gql.QueryField(
     name='textToSQL',
     type=gql.String,
     args=[
+        gql.Argument(name='groupUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='prompt', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
@@ -51,6 +52,7 @@ unstructuredQuery = gql.QueryField(
     name='unstructuredQuery',
     type=gql.Ref('UnstructuredQueryResult'),
     args=[
+        gql.Argument(name='groupUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='worksheetUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='prompt', type=gql.NonNullableType(gql.String)),
