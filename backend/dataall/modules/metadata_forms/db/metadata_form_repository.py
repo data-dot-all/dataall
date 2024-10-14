@@ -196,10 +196,12 @@ class MetadataFormRepository:
         return query.order_by(MetadataForm.name)
 
     @staticmethod
-    def get_metadata_form_fields(session, form_uri):
+    def get_metadata_form_fields(session, form_uri, version=None):
+        version = version or MetadataFormRepository.get_metadata_form_version_number_latest(session, form_uri)
         return (
             session.query(MetadataFormField)
             .filter(MetadataFormField.metadataFormUri == form_uri)
+            .filter(MetadataFormField.version == version)
             .order_by(MetadataFormField.displayNumber)
             .all()
         )

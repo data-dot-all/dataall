@@ -21,7 +21,12 @@ MetadataForm = gql.ObjectType(
         gql.Field(name='homeEntity', type=gql.String),
         gql.Field(name='homeEntityName', type=gql.String, resolver=get_home_entity_name),
         gql.Field(name='userRole', type=gql.String, resolver=get_user_role),
-        gql.Field(name='fields', type=gql.ArrayType(gql.Ref('MetadataFormField')), resolver=get_form_fields),
+        gql.Field(
+            name='fields',
+            args=[gql.Argument('version', gql.Integer)],
+            type=gql.ArrayType(gql.Ref('MetadataFormField')),
+            resolver=get_form_fields,
+        ),
     ],
 )
 

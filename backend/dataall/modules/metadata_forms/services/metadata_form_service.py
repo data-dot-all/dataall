@@ -197,9 +197,9 @@ class MetadataFormService:
             return 'Not Found'
 
     @staticmethod
-    def get_metadata_form_fields(uri):
+    def get_metadata_form_fields(uri, version):
         with get_context().db_engine.scoped_session() as session:
-            return MetadataFormRepository.get_metadata_form_fields(session, uri)
+            return MetadataFormRepository.get_metadata_form_fields(session, uri, version)
 
     @staticmethod
     def get_metadata_form_field_by_uri(uri):

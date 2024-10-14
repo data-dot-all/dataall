@@ -48,8 +48,8 @@ def resolve_metadata_form(context: Context, source: AttachedMetadataForm):
     return MetadataFormService.get_metadata_form_by_uri(source.metadataFormUri)
 
 
-def get_form_fields(context: Context, source: MetadataForm):
-    return MetadataFormService.get_metadata_form_fields(uri=source.uri)
+def get_form_fields(context: Context, source: MetadataForm, version):
+    return MetadataFormService.get_metadata_form_fields(uri=source.uri, version=version)
 
 
 def create_metadata_form_fields(context: Context, source, formUri, input):
