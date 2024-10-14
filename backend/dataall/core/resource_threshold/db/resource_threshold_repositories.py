@@ -5,7 +5,7 @@ from dataall.base.config import config
 
 
 class ResourceThresholdRepository(EnvironmentResource):
-    resource_paths = {'nlq':'modules.worksheets.features.max_count_per_day'}
+    resource_paths = {'nlq': 'modules.worksheets.features.max_count_per_day'}
 
     @staticmethod
     def get_count_today(session, username, action_type):
