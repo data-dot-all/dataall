@@ -41,9 +41,6 @@ class MetadataFormEnforcementRule(Base):
 
     __table_args__ = (
         ForeignKeyConstraint(
-            ('metadataFormUri',), ('metadata_form.uri',), name='f_key_enforcement_metadata', ondelete='CASCADE'
-        ),
-        ForeignKeyConstraint(
             ['metadataFormUri', 'version'],
             ['metadata_form_version.metadataFormUri', 'metadata_form_version.version'],
             name='f_key_enforcement_version_metadata',
@@ -67,9 +64,6 @@ class MetadataFormField(Base):
 
     __table_args__ = (
         ForeignKeyConstraint(
-            ('metadataFormUri',), ('metadata_form.uri',), name='fk_mf_filed_form_uri', ondelete='CASCADE'
-        ),
-        ForeignKeyConstraint(
             ['metadataFormUri', 'version'],
             ['metadata_form_version.metadataFormUri', 'metadata_form_version.version'],
             name='fk_version',
@@ -87,9 +81,6 @@ class AttachedMetadataForm(Base):
     entityType = Column(String, nullable=False)
 
     __table_args__ = (
-        ForeignKeyConstraint(
-            ('metadataFormUri',), ('metadata_form.uri',), name='fk_attached_mf_uri', ondelete='CASCADE'
-        ),
         ForeignKeyConstraint(
             ['metadataFormUri', 'version'],
             ['metadata_form_version.metadataFormUri', 'metadata_form_version.version'],

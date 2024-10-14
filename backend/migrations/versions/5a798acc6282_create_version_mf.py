@@ -48,6 +48,7 @@ def upgrade():
         amf.version = 1
         session.commit()
     op.alter_column('attached_metadata_form', 'version', nullable=False)
+    op.drop_constraint('fk_attached_mf_uri', 'attached_metadata_form', type_='foreignkey')
     op.create_foreign_key(
         'fk_attached_mf_version_uri',
         'attached_metadata_form',
@@ -66,12 +67,14 @@ def upgrade():
         ['metadataFormUri', 'version'],
         ondelete='CASCADE',
     )
+    op.drop_constraint('f_key_enforcement_metadata', 'metadata_form_enforcement_rule', type_='foreignkey')
 
     op.add_column('metadata_form_field', sa.Column('version', sa.Integer()))
     for field in session.query(MetadataFormField).all():
         field.version = 1
         session.commit()
     op.alter_column('metadata_form_field', 'version', nullable=False)
+    op.drop_constraint('fk_mf_filed_form_uri', 'metadata_form_field', type_='foreignkey')
     op.create_foreign_key(
         'fk_version',
         'metadata_form_field',
@@ -91,11 +94,32 @@ def downgrade():
     op.drop_column('metadata_form_enforcement_rule', 'version')
     op.drop_constraint('fk_attached_mf_version_uri', 'attached_metadata_form', type_='foreignkey')
     op.drop_column('attached_metadata_form', 'version')
-    op.create_table(
-        'maintenance',
-        sa.Column('status', sa.VARCHAR(), autoincrement=False, nullable=False),
-        sa.Column('mode', sa.VARCHAR(), autoincrement=False, nullable=True),
-        sa.PrimaryKeyConstraint('status', name='maintenance_pkey'),
-    )
     op.drop_table('metadata_form_version')
+
+    op.create_foreign_key(
+        'fk_mf_filed_form_uri',
+        'metadata_form_field',
+        'metadata_form',
+        ['metadataFormUri'],
+        ['uri'],
+        ondelete='CASCADE',
+    )
+
+    op.create_foreign_key(
+        'f_key_enforcement_metadata',
+        'metadata_form_enforcement_rule',
+        'metadata_form',
+        ['metadataFormUri'],
+        ['uri'],
+        ondelete='CASCADE',
+    )
+
+    op.create_foreign_key(
+        'fk_attached_mf_uri',
+        'attached_metadata_form',
+        'metadata_form',
+        ['metadataFormUri'],
+        ['uri'],
+        ondelete='CASCADE',
+    )
     # ### end Alembic commands ###
