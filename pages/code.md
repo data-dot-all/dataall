@@ -846,7 +846,7 @@ when `Datasets` or `Dashboards` modules are disabled.
           "active": true
       },
       "datapipelines": {
-          "active": true
+          "active": false
       },
       "datasets": {
           "active": false
