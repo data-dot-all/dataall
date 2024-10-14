@@ -39,7 +39,7 @@ Metadata forms can be obligatory to fill in on different levels. User can select
 Who can enforce:
 
 * Data.all admins can enforce any form on any level across the platform. They have full control over metadata form enforcement.
-* Owners/admins  of a data.all entity can enforce forms for this levels and levels below in the hierarchy. For example, an org admin can enforce a form for the org, all teams in that org, all environments in the org, all datasets in those environments, etc.
+* Owners/admins  of a data.all entity can enforce forms for these levels and levels below in the hierarchy. For example, an org admin can enforce a form for the org, all teams in that org, all environments in the org, all datasets in those environments, etc.
 * Share approvers and requestors can enforce forms for a specific share they are involved with. However, they can only delete enforcement rules they created themselves - they cannot delete rules created by others
 
 So in summary, enforcement capabilities cascade along with administrative privileges in the hierarchy. Global admins have full control, org/env admins can enforce for their sphere and below, dataset admins for the datasets and items in it, and share requesters and approvers for a specific share.
