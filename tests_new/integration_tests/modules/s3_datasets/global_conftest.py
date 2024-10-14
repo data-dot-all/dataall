@@ -19,7 +19,7 @@ from integration_tests.modules.s3_datasets.queries import (
     create_table_data_filter,
 )
 from tests_new.integration_tests.modules.datasets_base.queries import list_datasets
-
+from integration_tests.aws_clients.s3 import S3Client as S3CommonClient
 from integration_tests.modules.s3_datasets.aws_clients import S3Client, KMSClient, GlueClient, LakeFormationClient
 from integration_tests.core.stack.queries import update_stack
 
@@ -98,10 +98,10 @@ def create_aws_imported_resources(
     return bucket, kms_alias, database, existing_lf_admins
 
 
-def delete_aws_imported_resources(aws_client, env, bucket=None, kms_alias=None, database=None, existing_lf_admins=None):
+def delete_aws_dataset_resources(aws_client, env, bucket=None, kms_alias=None, database=None, existing_lf_admins=None):
     try:
         if bucket:
-            S3Client(session=aws_client, region=env['region']).delete_bucket(bucket)
+            S3CommonClient(session=aws_client, account=env.AwsAccountId, region=env.region).delete_bucket(bucket)
         if kms_alias:
             KMSClient(
                 session=aws_client,
@@ -221,7 +221,7 @@ For this reason they must stay immutable as changes to them will affect the rest
 
 
 @pytest.fixture(scope='session')
-def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata):
+def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata, session_env1_aws_client):
     ds = None
     try:
         ds = create_s3_dataset(
@@ -238,6 +238,7 @@ def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdat
     finally:
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
+            delete_aws_dataset_resources(aws_client=session_env1_aws_client, env=session_env1, bucket=ds.S3BucketName)
 
 
 @pytest.fixture(scope='session')
@@ -279,7 +280,7 @@ def session_imported_sse_s3_dataset1(
     finally:
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
-        delete_aws_imported_resources(aws_client=session_env1_aws_client, env=session_env1, bucket=bucket)
+        delete_aws_dataset_resources(aws_client=session_env1_aws_client, env=session_env1, bucket=bucket)
 
 
 @pytest.fixture(scope='session')
@@ -334,7 +335,7 @@ def session_imported_kms_s3_dataset1(
     finally:
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
-        delete_aws_imported_resources(
+        delete_aws_dataset_resources(
             aws_client=session_env1_aws_client,
             env=session_env1,
             bucket=bucket,
@@ -376,7 +377,7 @@ They are suitable to test env mutations.
 
 
 @pytest.fixture(scope='function')
-def temp_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata):
+def temp_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata, session_env1_aws_client):
     ds = None
     try:
         ds = create_s3_dataset(
@@ -392,6 +393,8 @@ def temp_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata):
     finally:
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
+
+            delete_aws_dataset_resources(aws_client=session_env1_aws_client, env=session_env1, bucket=ds.S3BucketName)
 
 
 """
@@ -490,7 +493,12 @@ def persistent_imported_sse_s3_dataset1(client1, group1, persistent_env1, persis
     except Exception as e:
         raise Exception(f'Error creating {bucket_name=} due to: {e}')
     return get_or_create_persistent_s3_dataset(
-        'persistent_imported_sse_s3_dataset1', client1, group1, persistent_env1, bucket_name
+        'persistent_imported_sse_s3_dataset1',
+        client1,
+        group1,
+        persistent_env1,
+        autoApprovalEnabled=False,
+        bucket=bucket_name,
     )
 
 
@@ -523,7 +531,7 @@ def persistent_imported_kms_s3_dataset1(
         or (not kms_alias and not existing_kms_alias)
         or (not database and not existing_database)
     ):
-        delete_aws_imported_resources(
+        delete_aws_dataset_resources(
             aws_client=persistent_env1_aws_client,
             env=persistent_env1,
             bucket=bucket,
@@ -538,7 +546,8 @@ def persistent_imported_kms_s3_dataset1(
         client1,
         group1,
         persistent_env1,
-        resource_name,
-        resource_name,
-        resource_name,
+        autoApprovalEnabled=False,
+        bucket=resource_name,
+        kms_alias=resource_name,
+        glue_database=resource_name,
     )

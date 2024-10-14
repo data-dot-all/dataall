@@ -17,6 +17,7 @@ class S3PivotRole(PivotRoleStatementSet):
                 effect=iam.Effect.ALLOW,
                 actions=[
                     's3:ListAllMyBuckets',
+                    's3:ListAccessPoints',
                     's3:GetBucketLocation',
                     's3:PutBucketTagging',
                     's3:GetEncryptionConfiguration',
