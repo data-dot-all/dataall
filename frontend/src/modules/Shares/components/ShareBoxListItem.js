@@ -12,8 +12,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { ShareStatus, useCardStyle } from 'design';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
-import { UserModal } from 'design';
-import React, { useState } from 'react';
+import React from 'react';
 
 export const ShareBoxListItem = ({ share }) => {
   const classes = useCardStyle();
@@ -23,18 +22,6 @@ export const ShareBoxListItem = ({ share }) => {
       : share.dataset.datasetType === 'DatasetTypes.Redshift'
       ? '/static/icons/Arch_Amazon-Redshift_64.svg'
       : '-';
-
-  const [modalOpen, setIsModalOpen] = useState(false);
-  const handleOpenModal = () => setIsModalOpen(true);
-  const handleCloseModal = () => setIsModalOpen(false);
-
-  const [dataOwnerModalOpen, setIsDataOwnerModalOpen] = useState(false);
-  const handleDataOwnerOpenModal = () => {
-    setIsDataOwnerModalOpen(true);
-  };
-  const handleCloseDataOwnerModal = () => {
-    setIsDataOwnerModalOpen(false);
-  };
 
   return (
     <Card
@@ -83,14 +70,7 @@ export const ShareBoxListItem = ({ share }) => {
               variant="body1"
               style={{ wordWrap: 'break-word' }}
             >
-              <div sx={{ cursor: 'pointer' }} onClick={handleOpenModal}>
-                {`${share.principal.SamlGroupName}`}
-              </div>
-              <UserModal
-                team={share.principal.SamlGroupName}
-                open={modalOpen}
-                onClose={handleCloseModal}
-              />
+              {`${share.principal.SamlGroupName}`}
             </Typography>
           </Box>
         </Grid>
@@ -149,23 +129,9 @@ export const ShareBoxListItem = ({ share }) => {
             >
               Dataset Owner
             </Typography>
-            <Typography
-              color="textSecondary"
-              variant="body1"
-              style={{ cursor: 'pointer', wordWrap: 'break-word' }}
-            >
-              <div
-                sx={{ cursor: 'pointer' }}
-                onClick={handleDataOwnerOpenModal}
-              >
-                {`${share.dataset.SamlAdminGroupName}`}
-              </div>
+            <Typography color="textSecondary" variant="body1">
+              {`${share.dataset.SamlAdminGroupName}`}
             </Typography>
-            <UserModal
-              team={share.dataset.SamlAdminGroupName}
-              open={dataOwnerModalOpen}
-              onClose={handleCloseDataOwnerModal}
-            />
           </Box>
         </Grid>
         <Grid item justifyContent="flex-end" md={0.7} lg={0.7} xl={0.7}>
