@@ -155,7 +155,9 @@ class LambdaApiStack(pyNestedClass):
                 retention=getattr(logs.RetentionDays, self.log_retention_duration),
             ),
             description='dataall graphql function',
-            role=self.create_function_role(envname, resource_prefix, 'graphql', pivot_role_name, vpc),
+            role=self.create_function_role(
+                envname, resource_prefix, 'graphql', pivot_role_name, vpc, self._get_bedrock_policy_statement()
+            ),
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['api_handler.handler']
             ),
@@ -347,149 +349,153 @@ class LambdaApiStack(pyNestedClass):
         return lambda_sg
 
     @run_if(['modules.worksheets.features.nlq'])
-    def add_bedrock_policy(self, role):
-        stmt = iam.PolicyStatement(
-            actions=[
-                'bedrock:InvokeModel',
-                'bedrock:GetPrompt',
-                'bedrock:CreateFoundationModelAgreement',
-                'bedrock:InvokeFlow',
-            ],
-            resources=['*'],
-        )
-        role.add_to_policy(stmt)
-
-    def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name, vpc):
-        role_name = f'{resource_prefix}-{envname}-{fn_name}-role'
-        statements = [
+    def _get_bedrock_policy_statement(self):
+        return [
             iam.PolicyStatement(
                 actions=[
-                    'secretsmanager:GetSecretValue',
-                    'kms:Decrypt',
-                    'secretsmanager:DescribeSecret',
-                    'ecs:RunTask',
-                    # 'bedrock:InvokeModel',
-                    'kms:Encrypt',
-                    'sqs:ReceiveMessage',
-                    'kms:GenerateDataKey',
-                    'sqs:SendMessage',
-                    'ecs:DescribeClusters',
-                    'ssm:GetParametersByPath',
-                    'ssm:GetParameters',
-                    'ssm:GetParameter',
+                    'bedrock:InvokeModel',
+                    'bedrock:GetPrompt',
+                    'bedrock:CreateFoundationModelAgreement',
+                    'bedrock:InvokeFlow',
                 ],
                 resources=[
-                    f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*{resource_prefix}*',
-                    f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*',
-                    f'arn:aws:ecs:{self.region}:{self.account}:cluster/*{resource_prefix}*',
-                    f'arn:aws:ecs:{self.region}:{self.account}:task-definition/*{resource_prefix}*:*',
-                    f'arn:aws:kms:{self.region}:{self.account}:key/*',
-                    f'arn:aws:sqs:{self.region}:{self.account}:*{resource_prefix}*',
-                    f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
-                    f'arn:aws:ssm:*:{self.account}:parameter/*{resource_prefix}*',
+                    f'arn:aws:bedrock:{self.region}:{self.account}:flow/*',
+                    f'arn:aws:bedrock:{self.region}:{self.account}:prompt/*',
+                    f'arn:aws:bedrock:{self.region}::foundation-model/*',
                 ],
-            ),
-            iam.PolicyStatement(
-                actions=[
-                    'sts:AssumeRole',
-                ],
-                resources=[
-                    f'arn:aws:iam::*:role/{pivot_role_name}*',
-                    'arn:aws:iam::*:role/cdk-hnb659fds-lookup-role-*',
-                ],
-            ),
-            iam.PolicyStatement(
-                actions=[
-                    'ecs:ListTasks',
-                ],
-                resources=['*'],
-                conditions={
-                    'ArnEquals': {
-                        'ecs:cluster': f'arn:aws:ecs:{self.region}:{self.account}:cluster/*{resource_prefix}*'
-                    }
-                },
-            ),
-            iam.PolicyStatement(
-                actions=[
-                    'iam:PassRole',
-                ],
-                resources=[f'arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}*'],
-            ),
-            iam.PolicyStatement(
-                actions=[
-                    's3:GetObject',
-                    's3:ListBucketVersions',
-                    's3:ListBucket',
-                    's3:GetBucketLocation',
-                    's3:GetObjectVersion',
-                    'logs:StartQuery',
-                    'logs:DescribeLogGroups',
-                    'logs:DescribeLogStreams',
-                    'logs:DescribeQueries',
-                    'logs:StopQuery',
-                    'logs:GetQueryResults',
-                    'logs:CreateLogGroup',
-                    'logs:CreateLogStream',
-                    'logs:PutLogEvents',
-                ],
-                resources=[
-                    f'arn:aws:s3:::{resource_prefix}-{envname}-{self.account}-{self.region}-resources/*',
-                    f'arn:aws:s3:::{resource_prefix}-{envname}-{self.account}-{self.region}-resources',
-                    f'arn:aws:logs:{self.region}:{self.account}:log-group:*{resource_prefix}*:log-stream:*',
-                    f'arn:aws:logs:{self.region}:{self.account}:log-group:*{resource_prefix}*',
-                ],
-            ),
-            iam.PolicyStatement(
-                actions=[
-                    'ec2:DescribeNetworkInterfaces',
-                    'xray:PutTraceSegments',
-                    'xray:PutTelemetryRecords',
-                    'xray:GetSamplingRules',
-                    'xray:GetSamplingTargets',
-                    'xray:GetSamplingStatisticSummaries',
-                    'cognito-idp:ListGroups',
-                    'cognito-idp:ListUsersInGroup',
-                ],
-                resources=['*'],
-            ),
-            iam.PolicyStatement(
-                actions=[
-                    'ec2:CreateNetworkInterface',
-                    'ec2:DeleteNetworkInterface',
-                ],
-                resources=[
-                    f'arn:aws:ec2:{self.region}:{self.account}:*/*',
-                ],
-            ),
-            iam.PolicyStatement(
-                actions=[
-                    'ec2:AssignPrivateIpAddresses',
-                    'ec2:UnassignPrivateIpAddresses',
-                ],
-                resources=[
-                    f'arn:aws:ec2:{self.region}:{self.account}:*/*',
-                ],
-                conditions={'StringEquals': {'ec2:VpcID': f'{vpc.vpc_id}'}},
-            ),
-            iam.PolicyStatement(
-                actions=[
-                    'aoss:APIAccessAll',
-                ],
-                resources=[
-                    f'arn:aws:aoss:{self.region}:{self.account}:collection/*',
-                ],
-            ),
-            iam.PolicyStatement(
-                actions=['events:EnableRule', 'events:DisableRule'],
-                resources=[f'arn:aws:events:{self.region}:{self.account}:rule/dataall*'],
-            ),
+            )
         ]
+
+    def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name, vpc, extra_statements=[]):
+        role_name = f'{resource_prefix}-{envname}-{fn_name}-role'
 
         role_inline_policy = iam.Policy(
             self,
             f'{resource_prefix}-{envname}-{fn_name}-policy',
             policy_name=f'{resource_prefix}-{envname}-{fn_name}-policy',
-            statements=statements,
+            statements=[
+                iam.PolicyStatement(
+                    actions=[
+                        'secretsmanager:GetSecretValue',
+                        'kms:Decrypt',
+                        'secretsmanager:DescribeSecret',
+                        'ecs:RunTask',
+                        'kms:Encrypt',
+                        'sqs:ReceiveMessage',
+                        'kms:GenerateDataKey',
+                        'sqs:SendMessage',
+                        'ecs:DescribeClusters',
+                        'ssm:GetParametersByPath',
+                        'ssm:GetParameters',
+                        'ssm:GetParameter',
+                    ],
+                    resources=[
+                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*{resource_prefix}*',
+                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*',
+                        f'arn:aws:ecs:{self.region}:{self.account}:cluster/*{resource_prefix}*',
+                        f'arn:aws:ecs:{self.region}:{self.account}:task-definition/*{resource_prefix}*:*',
+                        f'arn:aws:kms:{self.region}:{self.account}:key/*',
+                        f'arn:aws:sqs:{self.region}:{self.account}:*{resource_prefix}*',
+                        f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
+                        f'arn:aws:ssm:*:{self.account}:parameter/*{resource_prefix}*',
+                    ],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        'sts:AssumeRole',
+                    ],
+                    resources=[
+                        f'arn:aws:iam::*:role/{pivot_role_name}*',
+                        'arn:aws:iam::*:role/cdk-hnb659fds-lookup-role-*',
+                    ],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        'ecs:ListTasks',
+                    ],
+                    resources=['*'],
+                    conditions={
+                        'ArnEquals': {
+                            'ecs:cluster': f'arn:aws:ecs:{self.region}:{self.account}:cluster/*{resource_prefix}*'
+                        }
+                    },
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        'iam:PassRole',
+                    ],
+                    resources=[f'arn:aws:iam::{self.account}:role/{resource_prefix}-{envname}*'],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        's3:GetObject',
+                        's3:ListBucketVersions',
+                        's3:ListBucket',
+                        's3:GetBucketLocation',
+                        's3:GetObjectVersion',
+                        'logs:StartQuery',
+                        'logs:DescribeLogGroups',
+                        'logs:DescribeLogStreams',
+                        'logs:DescribeQueries',
+                        'logs:StopQuery',
+                        'logs:GetQueryResults',
+                        'logs:CreateLogGroup',
+                        'logs:CreateLogStream',
+                        'logs:PutLogEvents',
+                    ],
+                    resources=[
+                        f'arn:aws:s3:::{resource_prefix}-{envname}-{self.account}-{self.region}-resources/*',
+                        f'arn:aws:s3:::{resource_prefix}-{envname}-{self.account}-{self.region}-resources',
+                        f'arn:aws:logs:{self.region}:{self.account}:log-group:*{resource_prefix}*:log-stream:*',
+                        f'arn:aws:logs:{self.region}:{self.account}:log-group:*{resource_prefix}*',
+                    ],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        'ec2:DescribeNetworkInterfaces',
+                        'xray:PutTraceSegments',
+                        'xray:PutTelemetryRecords',
+                        'xray:GetSamplingRules',
+                        'xray:GetSamplingTargets',
+                        'xray:GetSamplingStatisticSummaries',
+                        'cognito-idp:ListGroups',
+                        'cognito-idp:ListUsersInGroup',
+                    ],
+                    resources=['*'],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        'ec2:CreateNetworkInterface',
+                        'ec2:DeleteNetworkInterface',
+                    ],
+                    resources=[
+                        f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                    ],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        'ec2:AssignPrivateIpAddresses',
+                        'ec2:UnassignPrivateIpAddresses',
+                    ],
+                    resources=[
+                        f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                    ],
+                    conditions={'StringEquals': {'ec2:VpcID': f'{vpc.vpc_id}'}},
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        'aoss:APIAccessAll',
+                    ],
+                    resources=[
+                        f'arn:aws:aoss:{self.region}:{self.account}:collection/*',
+                    ],
+                ),
+                iam.PolicyStatement(
+                    actions=['events:EnableRule', 'events:DisableRule'],
+                    resources=[f'arn:aws:events:{self.region}:{self.account}:rule/dataall*'],
+                ),
+            ]
+            + extra_statements,
         )
         role = iam.Role(
             self,
@@ -498,7 +504,6 @@ class LambdaApiStack(pyNestedClass):
             inline_policies={f'{resource_prefix}-{envname}-{fn_name}-inline': role_inline_policy.document},
             assumed_by=iam.ServicePrincipal('lambda.amazonaws.com'),
         )
-        self.add_bedrock_policy(role)
         return role
 
     def create_api_gateway(
