@@ -63,25 +63,7 @@ class S3Client:
             )
             return bucket_name
         except ClientError as e:
-            log.exception(f'Error creating S3 bucket: {e}')
-
-    def delete_bucket(self, bucket_name):
-        """
-        Delete an S3 bucket.
-        :param bucket_name: Name of the S3 bucket to be deleted
-        :return: None
-        """
-        try:
-            # Delete all objects in the bucket before deleting the bucket
-            bucket = self._resource.Bucket(bucket_name)
-            bucket_versioning = self._resource.BucketVersioning(bucket_name)
-            if bucket_versioning.status == 'Enabled':
-                bucket.object_versions.delete()
-            else:
-                bucket.objects.all().delete()
-            self._client.delete_bucket(Bucket=bucket_name)
-        except ClientError as e:
-            log.exception(f'Error deleting S3 bucket: {e}')
+            log.exception('Error creating S3 bucket')
 
     def upload_file_to_prefix(self, local_file_path, s3_path):
         """
@@ -97,6 +79,20 @@ class S3Client:
             self._client.upload_file(local_file_path, bucket_name, object_key)
         except ClientError as e:
             logging.error(f'Error uploading file to S3: {e}')
+            raise
+
+    def list_bucket_objects(self, bucket_name):
+        try:
+            return self._client.list_objects(Bucket=bucket_name)
+        except ClientError as e:
+            logging.error(f'Error listing objects in S3: {e}')
+            raise e
+
+    def list_accesspoint_folder_objects(self, access_point, folder_name):
+        try:
+            return self._client.list_objects(Bucket=access_point, Prefix=folder_name)
+        except ClientError as e:
+            logging.error(f'Error listing objects in S3: {e}')
             raise
 
 
@@ -133,7 +129,7 @@ class KMSClient:
             return key_id, alias_name
 
         except ClientError as e:
-            log.exception(f'Error creating KMS key with alias: {e}')
+            log.exception('Error creating KMS key with alias')
 
     def _put_key_policy(self, key_id):
         response = self._client.get_key_policy(KeyId=key_id, PolicyName='default')
@@ -164,11 +160,7 @@ class KMSClient:
         try:
             self._client.put_key_policy(KeyId=key_id, PolicyName='default', Policy=json.dumps(policy))
         except ClientError as err:
-            log.exception(
-                "Couldn't set policy for key %s. Here's why %s",
-                key_id,
-                err,
-            )
+            log.exception("Couldn't set policy for key.")
 
     def delete_key_by_alias(self, alias_name):
         """
@@ -183,7 +175,7 @@ class KMSClient:
                 self._client.schedule_key_deletion(KeyId=key_id)
             self._client.delete_alias(AliasName=f'alias/{alias_name}')
         except ClientError as e:
-            log.exception(f'Error deleting KMS key by alias: {e}')
+            log.exception('Error deleting KMS key by alias')
 
     def _get_key_by_alias(self, alias_name):
         try:
@@ -197,7 +189,7 @@ class KMSClient:
             return None
 
         except ClientError as e:
-            log.exception(f'Error getting KMS key by alias: {e}')
+            log.exception('Error getting KMS key by alias')
 
 
 class GlueClient:
@@ -214,7 +206,7 @@ class GlueClient:
             database = self._client.get_database(Name=database_name)
             return database
         except ClientError as e:
-            log.exception(f'Database not found, exception: {e}')
+            log.exception('Database not found')
             return False
 
     def create_database(self, database_name, bucket):
@@ -223,7 +215,7 @@ class GlueClient:
             self._client.create_database(DatabaseInput={'Name': database_name, 'LocationUri': f's3://{bucket}/'})
             return database_name
         except ClientError as e:
-            log.exception(f'Error creating Glue database: {e}')
+            log.exception('Error creating Glue database')
 
     def create_table(self, database_name, bucket, table_name):
         try:
@@ -251,7 +243,7 @@ class GlueClient:
                 },
             )
         except ClientError as e:
-            log.exception(f'Error creating Glue table: {e}')
+            log.exception('Error creating Glue table')
 
     def delete_database(self, database_name):
         """
@@ -265,7 +257,7 @@ class GlueClient:
             if e.response['Error']['Code'] == 'EntityNotFoundException':
                 log.exception(f"Glue database '{database_name}' does not exist.")
             else:
-                log.exception(f'Error deleting Glue database: {e}')
+                log.exception('Error deleting Glue database')
 
 
 class LakeFormationClient:
@@ -290,7 +282,7 @@ class LakeFormationClient:
             )
             return existing_admins
         except ClientError as e:
-            log.exception(f'Error granting lake formation permissions: {e}')
+            log.exception('Error granting lake formation permissions')
 
     def remove_role_from_datalake_admin(self, old_existing_principals):
         try:
@@ -303,7 +295,7 @@ class LakeFormationClient:
             )
             return True
         except ClientError as e:
-            log.exception(f'Error granting lake formation permissions: {e}')
+            log.exception('Error granting lake formation permissions')
 
     def grant_create_database(self, role_arn):
         """
@@ -319,4 +311,4 @@ class LakeFormationClient:
             )
             return True
         except ClientError as e:
-            log.exception(f'Error granting permissions to create database: {e}')
+            log.exception('Error granting permissions to create database')

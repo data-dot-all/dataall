@@ -15,7 +15,7 @@ def test_metadata_form_create(metadata_form_1):
 
 
 def test_delete_unauth(client2, metadata_form_1):
-    err_message_part1 = 'An error occurred (UnauthorizedOperation) when calling DELETE operation:'
+    err_message_part1 = 'An error occurred (UnauthorizedOperation) when calling DELETE_METADATA_FORM operation:'
     err_message_part2 = f'is not the owner of the metadata form {metadata_form_1.uri}'
 
     assert_that(delete_metadata_form).raises(Exception).when_called_with(client2, metadata_form_1.uri).contains(
@@ -85,7 +85,7 @@ def test_create_update_field_invalid_value(client1, metadata_form_1, metadata_fo
 
 
 def test_delete_metadata_form_field_unauth(client2, metadata_form_1, metadata_form_field_1):
-    err_message_part1 = 'An error occurred (UnauthorizedOperation) when calling DELETE FIELD operation:'
+    err_message_part1 = 'An error occurred (UnauthorizedOperation) when calling DELETE_METADATA_FORM_FIELD operation:'
     err_message_part2 = f'is not the owner of the metadata form {metadata_form_1.uri}'
 
     assert_that(delete_metadata_form_field).raises(Exception).when_called_with(
@@ -103,7 +103,7 @@ def test_update_metadata_form_fields_unauth(client2, metadata_form_1, metadata_f
         'displayNumber': 1,
     }
 
-    err_message_part1 = 'An error occurred (UnauthorizedOperation) when calling UPDATE FIELDS operation:'
+    err_message_part1 = 'An error occurred (UnauthorizedOperation) when calling UPDATE_METADATA_FORM_FIELD operation:'
     err_message_part2 = f'is not the owner of the metadata form {metadata_form_1.uri}'
 
     assert_that(update_metadata_form_fields).raises(Exception).when_called_with(

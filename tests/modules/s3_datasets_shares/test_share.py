@@ -427,7 +427,7 @@ def share3_processed(
 def share3_item_shared(
     share_item: typing.Callable, share3_processed: ShareObject, table1: DatasetTable
 ) -> ShareObjectItem:
-    # Cleaned up with share3
+    # Cleaned up with share3_happy_path
     yield share_item(share=share3_processed, table=table1, status=ShareItemStatus.Share_Succeeded.value)
 
 
@@ -608,7 +608,7 @@ def share4_draft(
 def share3_item_shared_unhealthy(
     share_item: typing.Callable, share3_processed: ShareObject, table1_1: DatasetTable
 ) -> ShareObjectItem:
-    # Cleaned up with share3
+    # Cleaned up with share3_happy_path
     yield share_item(
         share=share3_processed,
         table=table1_1,

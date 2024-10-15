@@ -5,6 +5,7 @@ from dataall.modules.metadata_forms.api.resolvers import (
     get_metadata_form,
     get_attached_metadata_form,
     list_attached_forms,
+    get_entity_metadata_form_permissions,
 )
 
 listUserMetadataForms = gql.QueryField(
@@ -45,5 +46,13 @@ getAttachedMetadataForm = gql.QueryField(
     args=[gql.Argument('uri', gql.NonNullableType(gql.String))],
     type=gql.Ref('AttachedMetadataForm'),
     resolver=get_attached_metadata_form,
+    test_scope='MetadataForm',
+)
+
+getEntityMetadataFormPermissions = gql.QueryField(
+    name='getEntityMetadataFormPermissions',
+    args=[gql.Argument('entityUri', gql.NonNullableType(gql.String))],
+    type=gql.ArrayType(gql.String),
+    resolver=get_entity_metadata_form_permissions,
     test_scope='MetadataForm',
 )

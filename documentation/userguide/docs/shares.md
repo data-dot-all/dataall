@@ -49,6 +49,7 @@ However, the request cannot contain any shared items. Users must revoke all shar
 
 ## **Create a share request (requester)**
 
+### S3/Glue share request
 On left pane choose **Catalog** then **Search** for the table you want to access. Click on the lock icon of the selected
 data asset.
 
@@ -78,6 +79,34 @@ The share can not be submitted if the list of items is empty.
 When you are happy with the share request form, click **Submit Request** or click **Draft Request** if you want to return to this form later.
 
 The share needs to be submitted for the request to be sent to the approvers.
+
+### Redshift share request
+
+Navigate to the Catalog, on top of other filters, you can use the Redshift dataset and table filters to list only Redshift data items. 
+Once you have found the item you want, click on Request access to open a share request.
+
+![catalog_search](pictures/shares/redshift_catalog.png#zoom#shadow)
+
+**Pre-requisites**
+To be able to open a share request to a Redshift Dataset, a data.all Redshift Connection of type `ADMIN` in
+the namespace of the Redshift Dataset is required. 
+
+Similarly, the namespace that we want to use as target MUST have a data.all `ADMIN` connection that allows data.all 
+to manage datashares in it. In addition, the group that we use as requester MUST have permissions to use that
+connection in a share request.
+
+Taking the request in the picture as example. `rs_Dataset` is stored in `cluster-1` and the requester team `Scientists` wants to access the data from `cluster-2`.
+
+- **Source connection**: the admin team of `cluster-1` has created a connection `connection1` of type `ADMIN` for this cluster. 
+- **Target connection**: the admin team of `cluster-2` has created a connection `connection2` of type `ADMIN` for this cluster. The `Administrators2` team has granted permissions to `Use Connection in share request` to the `Scientists` team.
+
+Check out the Redshift Datasets documentation for more information about `ADMIN` connections and how admins can update Connection permissions.
+
+Once the pre-requisites are fulfilled, you will be able to open a share request specifying the target namespace and
+the Redshift role that will get access to the data.
+
+![catalog_search](pictures/shares/redshift_share_request_form.png#zoom#shadow)
+
 
 ## **Check your sent/received share requests**
 Anyone can go to the Shares menu on the left side pane and look up the share requests that they have received

@@ -2,10 +2,14 @@ import os
 
 import boto3
 import pytest
+from unittest.mock import MagicMock
 
 from dataall.base.context import set_context, dispose_context, RequestContext
+from dataall.core.organizations.services.organization_service import OrganizationService
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.redshift_datasets.services.redshift_connection_service import RedshiftConnectionService
 from dataall.modules.redshift_datasets.services.redshift_dataset_service import RedshiftDatasetService
+from dataall.modules.redshift_datasets.services.redshift_connection_permissions import REDSHIFT_GRANTABLE_PERMISSIONS
 
 ENVNAME = os.environ.get('envname', 'pytest')
 
@@ -110,6 +114,7 @@ def connection1_serverless(db, user, group, env_fixture, mock_redshift_serverles
             'database': 'database_1',
             'redshiftUser': None,
             'secretArn': 'arn:aws:secretsmanager:*:111111111111:secret:secret-1',
+            'connectionType': 'DATA_USER',
         },
     )
     yield connection
@@ -134,11 +139,67 @@ def connection2_cluster(
             'database': 'database_1',
             'redshiftUser': None,
             'secretArn': 'arn:aws:secretsmanager:*:111111111111:secret:secret-2',
+            'connectionType': 'DATA_USER',
         },
     )
     yield connection
     set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
     RedshiftConnectionService.delete_redshift_connection(uri=connection.connectionUri)
+    dispose_context()
+
+
+@pytest.fixture(scope='function')
+def connection3_admin(
+    db, user, group, env_fixture, mock_redshift, mock_redshift_data, mock_redshift_kms, api_context_1
+):
+    connection = RedshiftConnectionService.create_redshift_connection(
+        uri=env_fixture.environmentUri,
+        admin_group=group.name,
+        data={
+            'connectionName': 'connection3',
+            'redshiftType': 'cluster',
+            'clusterId': 'cluster-id',
+            'nameSpaceId': None,
+            'workgroup': None,
+            'database': 'database_1',
+            'redshiftUser': None,
+            'secretArn': 'arn:aws:secretsmanager:*:111111111111:secret:secret-3',
+            'connectionType': 'ADMIN',
+        },
+    )
+    yield connection
+    set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
+    RedshiftConnectionService.delete_redshift_connection(uri=connection.connectionUri)
+    dispose_context()
+
+
+@pytest.fixture(scope='function')
+def invited_group_to_environment(db, user, group, group2, env_fixture, api_context_1, module_mocker):
+    module_mocker.patch('dataall.base.aws.iam.IAM', return_value=MagicMock())
+    OrganizationService.invite_group(
+        uri=env_fixture.organizationUri, data={'groupUri': group2.name, 'permissions': ['LINK_ENVIRONMENT']}
+    )
+    EnvironmentService.invite_group(
+        uri=env_fixture.environmentUri, data={'groupUri': group2.name, 'permissions': ['INVITE_ENVIRONMENT_GROUP']}
+    )
+    yield group2
+    set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
+    EnvironmentService.remove_group(uri=env_fixture.environmentUri, group=group2.name)
+    OrganizationService.remove_group(uri=env_fixture.organizationUri, group=group2.name)
+
+
+@pytest.fixture(scope='function')
+def connection3_admin_permissions(db, connection3_admin, user, group, invited_group_to_environment, api_context_1):
+    RedshiftConnectionService.add_group_permissions(
+        uri=connection3_admin.connectionUri,
+        group=invited_group_to_environment.name,
+        permissions=REDSHIFT_GRANTABLE_PERMISSIONS,
+    )
+    yield RedshiftConnectionService.list_connection_group_permissions(uri=connection3_admin.connectionUri, filter={})
+    set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
+    RedshiftConnectionService.delete_group_permissions(
+        uri=connection3_admin.connectionUri, group=invited_group_to_environment.name
+    )
     dispose_context()
 
 

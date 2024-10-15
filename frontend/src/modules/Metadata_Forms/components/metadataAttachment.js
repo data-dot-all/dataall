@@ -16,6 +16,7 @@ import {
 import {
   deleteAttachedMetadataForm,
   getAttachedMetadataForm,
+  getEntityMetadataFormPermissions,
   getMetadataForm,
   listAttachedMetadataForms,
   listEntityMetadataForms
@@ -30,7 +31,7 @@ import DoNotDisturbAltOutlinedIcon from '@mui/icons-material/DoNotDisturbAltOutl
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 
 export const MetadataAttachment = (props) => {
-  const { entityType, entityUri, canEdit } = props;
+  const { entityType, entityUri } = props;
   const client = useClient();
   const dispatch = useDispatch();
   const [selectedForm, setSelectedForm] = useState(null);
@@ -38,6 +39,7 @@ export const MetadataAttachment = (props) => {
   const [loadingFields, setLoadingFields] = useState(false);
   const [formsList, setFormsList] = useState([]);
   const [fields, setFields] = useState([]);
+  const [canEdit, setCanEdit] = useState(false);
   const [filter] = useState({
     ...Defaults.filter,
     entityType: entityType,
@@ -139,9 +141,25 @@ export const MetadataAttachment = (props) => {
     }
   };
 
+  const getPermissions = async () => {
+    const response = await client.query(
+      getEntityMetadataFormPermissions(entityUri)
+    );
+    if (!response.errors) {
+      setCanEdit(
+        response.data.getEntityMetadataFormPermissions.includes(
+          'ATTACH_METADATA_FORM'
+        )
+      );
+    }
+  };
+
   useEffect(() => {
     if (client) {
       fetchList().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      getPermissions().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
       fetchAvailableForms().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
