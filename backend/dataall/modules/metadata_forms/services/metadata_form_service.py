@@ -115,7 +115,12 @@ class MetadataFormService:
                 )
 
             form = MetadataFormRepository.create_metadata_form(session, data)
-            return form
+            try:
+                MetadataFormRepository.create_metadata_form_version(session, form.uri, 1)
+                return form
+            except Exception as e:
+                session.delete(form)
+                raise e
 
     # toDo: add permission check
     @staticmethod

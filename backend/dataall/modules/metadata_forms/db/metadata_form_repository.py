@@ -1,5 +1,6 @@
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import with_polymorphic
+from sqlalchemy import func
 
 from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility, MetadataFormFieldType
 from dataall.modules.metadata_forms.db.metadata_form_models import (
@@ -11,6 +12,7 @@ from dataall.modules.metadata_forms.db.metadata_form_models import (
     BooleanAttachedMetadataFormField,
     IntegerAttachedMetadataFormField,
     GlossaryTermAttachedMetadataFormField,
+    MetadataFormVersion,
 )
 
 import json
@@ -41,9 +43,38 @@ class MetadataFormRepository:
         return mf
 
     @staticmethod
+    def create_metadata_form_version(session, metadataFormUri, version_num):
+        version = MetadataFormVersion(metadataFormUri=metadataFormUri, version=version_num)
+        session.add(version)
+        session.commit()
+        return version
+
+    @staticmethod
+    def create_metadata_form_version_next(session, metadataFormUri):
+        version_num = MetadataFormRepository.get_metadata_form_version_number_latest(session, metadataFormUri)
+        version = MetadataFormVersion(metadataFormUri=metadataFormUri, version=version_num + 1)
+        session.add(version)
+        session.commit()
+        return version
+
+    @staticmethod
+    def get_metadata_form_version_number_latest(session, metadataFormUri):
+        return (
+            session.query(func.max(MetadataFormVersion.version))
+            .filter(MetadataFormVersion.metadataFormUri == metadataFormUri)
+            .scalar()
+        )
+
+    @staticmethod
+    def get_metadata_form_version_latest(session, metadataFormUri):
+        version_num = MetadataFormRepository.get_metadata_form_version_number_latest(session, metadataFormUri)
+        return session.query(MetadataFormVersion).get((metadataFormUri, version_num))
+
+    @staticmethod
     def create_attached_metadata_form(session, uri, data=None):
+        version_num = MetadataFormRepository.get_metadata_form_version_number_latest(session, uri)
         amf: AttachedMetadataForm = AttachedMetadataForm(
-            metadataFormUri=uri, entityUri=data.get('entityUri'), entityType=data.get('entityType')
+            metadataFormUri=uri, version=version_num, entityUri=data.get('entityUri'), entityType=data.get('entityType')
         )
         session.add(amf)
         session.commit()
@@ -175,8 +206,10 @@ class MetadataFormRepository:
 
     @staticmethod
     def create_metadata_form_field(session, uri, data):
+        version_num = MetadataFormRepository.get_metadata_form_version_number_latest(session, uri)
         field: MetadataFormField = MetadataFormField(
             metadataFormUri=uri,
+            version=version_num,
             name=data.get('name'),
             description=data.get('description'),
             type=data.get('type'),
