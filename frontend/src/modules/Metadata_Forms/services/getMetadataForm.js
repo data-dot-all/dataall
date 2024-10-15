@@ -16,6 +16,7 @@ export const getMetadataForm = (uri, version = null) => ({
         homeEntity
         homeEntityName
         userRole
+        versions
         fields (version: $version) {
           uri
           metadataFormUri

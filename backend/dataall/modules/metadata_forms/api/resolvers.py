@@ -16,12 +16,20 @@ def create_metadata_form(context: Context, source, input):
     return MetadataFormService.create_metadata_form(data=input)
 
 
+def create_metadata_form_version(context: Context, source, formUri, copyVersion):
+    return MetadataFormService.create_metadata_form_version(uri=formUri, copyVersion=copyVersion)
+
+
 def create_attached_metadata_form(context: Context, source, formUri, input):
     return AttachedMetadataFormService.create_attached_metadata_form(uri=formUri, data=input)
 
 
 def delete_metadata_form(context: Context, source, formUri):
     return MetadataFormService.delete_metadata_form_by_uri(uri=formUri)
+
+
+def delete_metadata_form_version(context: Context, source, formUri, version):
+    return MetadataFormService.delete_metadata_form_version(uri=formUri, version=version)
 
 
 def delete_attached_metadata_form(context: Context, source, attachedFormUri):

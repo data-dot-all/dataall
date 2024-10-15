@@ -71,6 +71,10 @@ class MetadataFormRepository:
         return session.query(MetadataFormVersion).get((metadataFormUri, version_num))
 
     @staticmethod
+    def get_metadata_form_version(session, metadataFormUri, version_num):
+        return session.query(MetadataFormVersion).get((metadataFormUri, version_num))
+
+    @staticmethod
     def create_attached_metadata_form(session, uri, data=None):
         version_num = MetadataFormRepository.get_metadata_form_version_number_latest(session, uri)
         amf: AttachedMetadataForm = AttachedMetadataForm(
@@ -207,8 +211,8 @@ class MetadataFormRepository:
         )
 
     @staticmethod
-    def create_metadata_form_field(session, uri, data):
-        version_num = MetadataFormRepository.get_metadata_form_version_number_latest(session, uri)
+    def create_metadata_form_field(session, uri, data, version_num=None):
+        version_num = version_num or MetadataFormRepository.get_metadata_form_version_number_latest(session, uri)
         field: MetadataFormField = MetadataFormField(
             metadataFormUri=uri,
             version=version_num,
@@ -297,3 +301,13 @@ class MetadataFormRepository:
         return session.query(AttachedMetadataForm).filter(
             and_(AttachedMetadataForm.entityType == entityType, AttachedMetadataForm.entityUri == entityUri)
         )
+
+    @staticmethod
+    def get_metadata_form_versions(session, uri):
+        versions = (
+            session.query(MetadataFormVersion)
+            .filter(MetadataFormVersion.metadataFormUri == uri)
+            .order_by(MetadataFormVersion.version.desc())
+            .all()
+        )
+        return [v.version for v in versions]
