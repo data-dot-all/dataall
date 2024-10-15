@@ -1,4 +1,4 @@
-from tests_new.integration_tests.modules.share_base.queries import get_share_object
+from tests_new.integration_tests.modules.shares.queries import get_share_object
 from tests_new.integration_tests.utils import poller
 
 

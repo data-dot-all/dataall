@@ -1,5 +1,4 @@
-from tests_new.integration_tests.modules.share_base.input_types import NewShareObjectInput
-from tests_new.integration_tests.modules.share_base.types import ShareObject
+from tests_new.integration_tests.modules.shares.types import ShareObject
 from typing import List
 
 
@@ -9,18 +8,29 @@ def create_share_object(
     environmentUri,
     groupUri,
     principalId,
+    principalRoleName,
     principalType,
     requestPurpose,
     attachMissingPolicies,
     permissions,
 ):
-    variables = dataset_or_item_params
-    variables['input'] = NewShareObjectInput(
-        environmentUri, groupUri, principalId, principalType, requestPurpose, attachMissingPolicies, permissions
-    )
     query = {
         'operationName': 'createShareObject',
-        'variables': variables,
+        'variables': {
+            'datasetUri': dataset_or_item_params.get('datasetUri'),
+            'itemType': dataset_or_item_params.get('itemType'),
+            'itemUri': dataset_or_item_params.get('itemUri'),
+            'input': {
+                'environmentUri': environmentUri,
+                'groupUri': groupUri,
+                'principalId': principalId,
+                'principalRoleName': principalRoleName,
+                'principalType': principalType,
+                'requestPurpose': requestPurpose,
+                'attachMissingPolicies': attachMissingPolicies,
+                'permissions': permissions,
+            },
+        },
         'query': f"""
                     mutation createShareObject(        $datasetUri: String!
         $itemType: String
