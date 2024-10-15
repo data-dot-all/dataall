@@ -162,6 +162,7 @@ def create_redshift_connection(
                 connectionUri
                 connectionType
                 redshiftType
+                name
               }
             }
         """,

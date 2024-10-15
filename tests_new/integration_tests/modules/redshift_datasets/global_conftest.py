@@ -14,6 +14,7 @@ from integration_tests.modules.redshift_datasets.dataset_queries import (
     import_redshift_dataset,
     delete_redshift_dataset,
     list_redshift_dataset_tables,
+    add_redshift_dataset_tables,
 )
 
 log = logging.getLogger(__name__)
@@ -218,3 +219,14 @@ def session_redshift_dataset_cluster(
     finally:
         if dataset:
             delete_redshift_dataset(client=client5, dataset_uri=dataset.datasetUri)
+
+
+@pytest.fixture(scope='session')
+def session_redshift_dataset_cluster_table(client5, session_redshift_dataset_cluster):
+    add_redshift_dataset_tables(
+        client=client5, dataset_uri=session_redshift_dataset_cluster.datasetUri, tables=[REDSHIFT_TABLE1]
+    )
+    tables = list_redshift_dataset_tables(
+        client=client5, dataset_uri=session_redshift_dataset_cluster.datasetUri, term=REDSHIFT_TABLE1
+    )
+    yield tables.nodes[0]

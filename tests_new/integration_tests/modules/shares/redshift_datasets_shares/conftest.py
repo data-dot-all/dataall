@@ -4,10 +4,12 @@ import pytest
 from integration_tests.modules.shares.queries import (
     create_share_object,
     add_share_item,
-    remove_share_item,
+    revoke_share_items,
     submit_share_object,
     delete_share_object,
+    get_share_object
 )
+from integration_tests.modules.shares.utils import check_share_ready
 
 REDSHIFT_PRINCIPAL_TYPE = 'RedshiftRole'  # Value from backend Enum
 REDSHIFT_ITEM_TYPE = 'RedshiftTable'  # Value from backend Enum
@@ -36,17 +38,17 @@ def create_and_submit_share_request(client, dataset, rs_table, group, env, princ
         attachMissingPolicies=False,
         permissions=['Read'],
     )
-    share_item = add_share_item(
+    share_item_uri = add_share_item(
         client=client, shareUri=share.shareUri, itemUri=rs_table.rsTableUri, itemType=REDSHIFT_ITEM_TYPE
     )
     submit_share_object(
         client=client,
         shareUri=share.shareUri,
     )
-    return share, share_item
+    return share, share_item_uri
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='module')
 def submitted_redshift_share_request_source_serverless(
     client5,
     group5,
@@ -57,9 +59,8 @@ def submitted_redshift_share_request_source_serverless(
     session_cross_acc_env_1,
 ):
     share = None
-    share_item = None
     try:
-        share, share_item = create_and_submit_share_request(
+        share, share_item_uri = create_and_submit_share_request(
             client=client5,
             dataset=session_redshift_dataset_serverless,
             rs_table=session_redshift_dataset_serverless_table,
@@ -67,15 +68,18 @@ def submitted_redshift_share_request_source_serverless(
             env=session_cross_acc_env_1,
             principal_id=session_connection_cluster_admin.connectionUri,
         )
-        yield share, share_item
+        yield share, share_item_uri
     finally:
-        if share_item:
-            remove_share_item(client=client5, shareItemUri=share_item.shareItemUri)
         if share:
+            share = get_share_object(client=client5, shareUri=share.shareUri)
+            items_to_revoke = [item.shareItemUri for item in share['items'].nodes if item.status in ['Share_Succeeded', 'Revoke_Failed']]
+            if items_to_revoke:
+                revoke_share_items(client=client5, shareUri=share.shareUri, shareItemUris=items_to_revoke)
+                check_share_ready(client=client5, shareUri=share.shareUri)
             delete_share_object(client=client5, shareUri=share.shareUri)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='module')
 def submitted_redshift_share_request_source_cluster(
     client1,
     group1,
@@ -83,22 +87,24 @@ def submitted_redshift_share_request_source_cluster(
     session_redshift_dataset_cluster_table,
     session_connection_serverless_admin,
     session_connection_cluster_admin,
-    session_env_1,
+    session_env1,
 ):
     share = None
-    share_item = None
     try:
-        share, share_item = create_and_submit_share_request(
+        share, share_item_uri = create_and_submit_share_request(
             client=client1,
             dataset=session_redshift_dataset_cluster,
             rs_table=session_redshift_dataset_cluster_table,
             group=group1,
-            env=session_env_1,
+            env=session_env1,
             principal_id=session_connection_serverless_admin.connectionUri,
         )
-        yield share, share_item
+        yield share, share_item_uri
     finally:
-        if share_item:
-            remove_share_item(client=client1, shareItemUri=share_item.shareItemUri)
         if share:
+            share = get_share_object(client=client1, shareUri=share.shareUri)
+            items_to_revoke = [item.shareItemUri for item in share['items'].nodes if item.status in ['Share_Succeeded', 'Revoke_Failed']]
+            if items_to_revoke:
+                revoke_share_items(client=client1, shareUri=share.shareUri, shareItemUris=items_to_revoke)
+                check_share_ready(client=client1, shareUri=share.shareUri)
             delete_share_object(client=client1, shareUri=share.shareUri)
