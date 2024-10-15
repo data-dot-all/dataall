@@ -24,6 +24,7 @@ class DataSharingNotificationType(enum.Enum):
     SHARE_OBJECT_EXTENSION_REJECTED = 'SHARE_OBJECT_EXTENSION_REJECTED'
     SHARE_OBJECT_REJECTED = 'SHARE_OBJECT_REJECTED'
     SHARE_OBJECT_PENDING_APPROVAL = 'SHARE_OBJECT_PENDING_APPROVAL'
+    SHARE_OBJECT_FAILED = 'SHARE_OBJECT_FAILED'
     DATASET_VERSION = 'DATASET_VERSION'
 
 
@@ -108,6 +109,38 @@ class ShareNotificationService:
             recipient_groups_list=[self.dataset.SamlAdminGroupName, self.dataset.stewards],
         )
         return notifications
+
+    def notify_managed_policy_limit_exceeded_action(self, email_id: str):
+        share_link_text = ''
+        if os.environ.get('frontend_domain_url'):
+            share_link_text = (
+                f'<br><br>Please visit data.all <a href="{os.environ.get("frontend_domain_url")}'
+                f'/console/shares/{self.share.shareUri}">share link</a> '
+                f'to view more details.'
+            )
+
+        msg_intro = f"""Dear User,
+        
+        We are contacting you because for a share requested by {email_id} failed because no new managed policy can be attached to your IAM role {self.share.principalRoleName}.
+        Please check the service quota for the managed policies that can be attached to a role in your aws account and increase the limit.
+        For reference please take a look at this link - https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-quotas.html#reference_iam-quotas-entities
+    
+        Note - Previously made shares are not affected but all new shares will be failed till the time you increase the IAM quota limit.
+        """
+
+        msg_end = """Your prompt attention in this matter is greatly appreciated.
+        <br><br>Best regards,
+        <br>The Data.all Team
+        """
+
+        subject = 'URGENT: Data.all | Action Required due to failing share'
+        email_notification_msg = msg_intro + share_link_text + msg_end
+
+        self._create_and_send_email_notifications(
+            subject=subject,
+            msg=email_notification_msg,
+            recipient_groups_list=[self.share.groupUri],
+        )
 
     def notify_share_object_approval(self, email_id: str):
         share_link_text = ''

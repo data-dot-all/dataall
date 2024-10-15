@@ -1,5 +1,6 @@
 import logging
 import json
+import time
 from itertools import count
 from typing import List
 from warnings import warn
@@ -38,6 +39,9 @@ from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation
 from dataall.modules.shares_base.services.sharing_service import ShareData
 
 logger = logging.getLogger(__name__)
+ACCESS_POINT_CREATION_TIME = 30
+ACCESS_POINT_CREATION_RETRIES = 10
+ACCESS_POINT_BACKOFF_COEFFICIENT = 1.1  # every time increase retry delay by 10%
 
 
 class S3AccessPointShareManager:
@@ -169,34 +173,45 @@ class S3AccessPointShareManager:
             region=self.target_environment.region,
             role_name=self.target_requester_IAMRoleName,
             resource_prefix=self.target_environment.resourcePrefix,
+            share=self.share,
+            dataset=self.dataset,
         )
         share_policy_service.initialize_statements()
 
         share_resource_policy_name = share_policy_service.generate_indexed_policy_name(index=0)
+        is_managed_policies_exists = share_policy_service.check_if_managed_policies_exists()
 
         # Checking if managed policies without indexes are present. This is used for backward compatibility
         # Check this with AWS team
-        warn(
-            "Convert all your share's requestor policies to managed policies with indexes. Deprecation >= ?? ",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        old_managed_policy_name = share_policy_service.generate_old_policy_name()
-        if not share_policy_service.check_if_policy_exists(policy_name=old_managed_policy_name):
-            logger.info(
-                f'No managed policy exists for the role: {self.target_requester_IAMRoleName}, Reapply share create managed policies.'
+        if not is_managed_policies_exists:
+            warn(
+                "Convert all your share's requestor policies to managed policies with indexes. Deprecation >= ?? ",
+                DeprecationWarning,
+                stacklevel=2,
             )
-            self.folder_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
-            return
+            old_managed_policy_name = share_policy_service.generate_old_policy_name()
+            if not share_policy_service.check_if_policy_exists(policy_name=old_managed_policy_name):
+                logger.info(
+                    f'No managed policy exists for the role: {self.target_requester_IAMRoleName}, Reapply share create managed policies.'
+                )
+                self.folder_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
+                return
 
-        if share_policy_service.check_if_policy_attached(policy_name=old_managed_policy_name):
-            logger.info(
-                f'Older version of managed policy present which is without index. Correct managed policy: {share_resource_policy_name}. Reapply share to correct managed policy'
-            )
-            self.folder_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
-            return
+            if share_policy_service.check_if_policy_exists(policy_name=old_managed_policy_name):
+                logger.info(
+                    f'Old managed policy exists for the role: {self.target_requester_IAMRoleName}. Reapply share create managed policies.'
+                )
+                self.folder_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
+                return
 
-        if not share_policy_service.check_if_managed_policies_exists():
+            if share_policy_service.check_if_policy_attached(policy_name=old_managed_policy_name):
+                logger.info(
+                    f'Older version of managed policy present which is without index. Correct managed policy: {share_resource_policy_name}. Reapply share to correct managed policy'
+                )
+                self.folder_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
+                return
+
+        if not is_managed_policies_exists:
             logger.info(f'IAM Policy {share_resource_policy_name} does not exist')
             self.folder_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
             return
@@ -325,6 +340,8 @@ class S3AccessPointShareManager:
             region=self.target_environment.region,
             role_name=self.target_requester_IAMRoleName,
             resource_prefix=self.target_environment.resourcePrefix,
+            share=self.share,
+            dataset=self.dataset,
         )
         share_policy_service.process_backwards_compatibility_for_target_iam_roles()
         share_policy_service.initialize_statements()
@@ -349,11 +366,12 @@ class S3AccessPointShareManager:
             logger.info('Managed policies do not exist. Creating one')
             # Create a managed policy with naming convention and index
             share_resource_policy_name = share_policy_service.generate_indexed_policy_name(index=0)
+            empty_policy = share_policy_service.generate_empty_policy()
             IAM.create_managed_policy(
                 self.target_account_id,
                 self.target_environment.region,
                 share_resource_policy_name,
-                json.dumps(share_policy_service.generate_empty_policy()),
+                json.dumps(empty_policy),
             )
 
         s3_kms_statement_chunks = []
@@ -469,9 +487,21 @@ class S3AccessPointShareManager:
         """
 
         s3_client = S3ControlClient(self.source_account_id, self.source_environment.region)
-        access_point_arn = s3_client.create_bucket_access_point(self.bucket_name, self.access_point_name)
+        access_point_arn = s3_client.get_bucket_access_point_arn(self.access_point_name)
         if not access_point_arn:
-            raise Exception('Failed to create access point')
+            logger.info(f'Access point {self.access_point_name} does not exists, creating...')
+            access_point_arn = s3_client.create_bucket_access_point(self.bucket_name, self.access_point_name)
+            # Access point creation is slow
+            retries = 1
+            sleep_coeff = 1
+            while (
+                not s3_client.get_bucket_access_point_arn(self.access_point_name)
+                and retries < ACCESS_POINT_CREATION_RETRIES
+            ):
+                logger.info('Waiting 30s for access point creation to complete..')
+                time.sleep(ACCESS_POINT_CREATION_TIME * sleep_coeff)
+                sleep_coeff = sleep_coeff * ACCESS_POINT_BACKOFF_COEFFICIENT
+                retries += 1
         existing_policy = s3_client.get_access_point_policy(self.access_point_name)
         # requester will use this role to access resources
         target_requester_id = SessionHelper.get_role_id(
@@ -516,7 +546,6 @@ class S3AccessPointShareManager:
                 self.s3_prefix,
                 perms_to_actions(self.share.permissions, SidType.BucketPolicy),
             )
-
         s3_client.attach_access_point_policy(
             access_point_name=self.access_point_name, policy=json.dumps(access_point_policy)
         )
@@ -676,6 +705,8 @@ class S3AccessPointShareManager:
             region=self.target_environment.region,
             role_name=self.target_requester_IAMRoleName,
             resource_prefix=self.target_environment.resourcePrefix,
+            share=self.share,
+            dataset=self.dataset,
         )
         share_policy_service.process_backwards_compatibility_for_target_iam_roles()
         share_policy_service.initialize_statements()

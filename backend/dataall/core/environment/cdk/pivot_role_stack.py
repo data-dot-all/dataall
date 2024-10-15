@@ -3,7 +3,7 @@ import os
 from typing import List
 from constructs import Construct
 from aws_cdk import Duration, aws_iam as iam, NestedStack
-from dataall.base.utils.iam_policy_utils import split_policy_statements_in_chunks
+from dataall.base.utils.iam_policy_utils_cdk import split_policy_statements_in_chunks
 
 logger = logging.getLogger(__name__)
 

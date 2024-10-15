@@ -82,32 +82,43 @@ class S3BucketShareManager:
             region=self.target_environment.region,
             role_name=self.target_requester_IAMRoleName,
             resource_prefix=self.target_environment.resourcePrefix,
+            share=self.share,
+            dataset=self.dataset,
         )
         share_policy_service.initialize_statements()
 
         share_resource_policy_name = share_policy_service.generate_indexed_policy_name(index=0)
+        is_managed_policies_exists = share_policy_service.check_if_managed_policies_exists()
 
-        warn(
-            "Convert all your share's requestor policies to managed policies with indexes. Deprecation >= ?? ",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        old_managed_policy_name = share_policy_service.generate_old_policy_name()
-        if not share_policy_service.check_if_policy_exists(policy_name=old_managed_policy_name):
-            logger.info(
-                f'No managed policy exists for the role: {self.target_requester_IAMRoleName}. Reapply share create managed policies.'
+        if not is_managed_policies_exists:
+            warn(
+                "Convert all your share's requestor policies to managed policies with indexes. Deprecation >= ?? ",
+                DeprecationWarning,
+                stacklevel=2,
             )
-            self.bucket_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
-            return
+            old_managed_policy_name = share_policy_service.generate_old_policy_name()
+            if not share_policy_service.check_if_policy_exists(policy_name=old_managed_policy_name):
+                logger.info(
+                    f'No managed policy exists for the role: {self.target_requester_IAMRoleName}. Reapply share create managed policies.'
+                )
+                self.bucket_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
+                return
 
-        if share_policy_service.check_if_policy_attached(policy_name=old_managed_policy_name):
-            logger.info(
-                f'Older version of managed policy present which is without index. Correct managed policy: {share_resource_policy_name}. Reapply share to correct managed policy'
-            )
-            self.bucket_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
-            return
+            if share_policy_service.check_if_policy_exists(policy_name=old_managed_policy_name):
+                logger.info(
+                    f'Old managed policy exists for the role: {self.target_requester_IAMRoleName}. Reapply share create managed policies.'
+                )
+                self.bucket_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
+                return
 
-        if not share_policy_service.check_if_managed_policies_exists():
+            if share_policy_service.check_if_policy_attached(policy_name=old_managed_policy_name):
+                logger.info(
+                    f'Older version of managed policy without index present. Correct managed policy: {share_resource_policy_name}. Reapply share to correct managed policy'
+                )
+                self.bucket_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
+                return
+
+        if not is_managed_policies_exists:
             logger.info(f'IAM Policy {share_resource_policy_name} does not exist')
             self.bucket_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
             return
@@ -233,6 +244,8 @@ class S3BucketShareManager:
             region=self.target_environment.region,
             role_name=self.target_requester_IAMRoleName,
             resource_prefix=self.target_environment.resourcePrefix,
+            share=self.share,
+            dataset=self.dataset,
         )
         share_policy_service.process_backwards_compatibility_for_target_iam_roles()
         share_policy_service.initialize_statements()
@@ -253,11 +266,12 @@ class S3BucketShareManager:
             logger.info('Managed policies do not exist. Creating one')
             # Create a managed policy with naming convention and index
             share_resource_policy_name = share_policy_service.generate_indexed_policy_name(index=0)
+            empty_policy = share_policy_service.generate_empty_policy()
             IAM.create_managed_policy(
                 self.target_account_id,
                 self.target_environment.region,
                 share_resource_policy_name,
-                json.dumps(share_policy_service.generate_empty_policy()),
+                json.dumps(empty_policy),
             )
 
         s3_kms_statement_chunks = []
@@ -542,6 +556,8 @@ class S3BucketShareManager:
             region=self.target_environment.region,
             environmentUri=target_environment.environmentUri,
             resource_prefix=target_environment.resourcePrefix,
+            share=self.share,
+            dataset=self.dataset,
         )
         share_policy_service.process_backwards_compatibility_for_target_iam_roles()
         share_policy_service.initialize_statements()

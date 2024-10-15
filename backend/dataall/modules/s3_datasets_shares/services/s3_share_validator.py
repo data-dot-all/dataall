@@ -157,7 +157,7 @@ class S3ShareValidator(SharesValidatorInterface):
             attached = policy_manager.check_if_policies_attached()
             if not attached and not managed and not attachMissingPolicies:
                 raise Exception(
-                    f'Required customer managed policy {policy_manager.get_policies_unattached_to_role()} is not attached to role {principal_role_name}'
+                    f'Required customer managed policies {policy_manager.get_policies_unattached_to_role()} are not attached to role {principal_role_name}'
                 )
             elif not attached:
                 managed_policy_list = policy_manager.get_policies_unattached_to_role()

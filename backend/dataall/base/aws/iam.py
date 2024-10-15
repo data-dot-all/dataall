@@ -311,3 +311,16 @@ class IAM:
             if 'AROA' in p_id:
                 if p_id not in all_role_ids:
                     principal_list.remove(p_id)
+
+    @staticmethod
+    def get_attached_managed_policies_to_role(account_id: str, region: str, role_name: str):
+        try:
+            client = IAM.client(account_id, region)
+            response = client.list_attached_role_policies(RoleName=role_name)
+            return [policy.get('PolicyName') for policy in response['AttachedPolicies']]
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(
+                    f'Data.all Environment Pivot Role does not have permissions to get attached managed policies for {role_name}: {e}'
+                )
+            raise Exception(f'Failed to get attached managed policies for {role_name}: {e}')

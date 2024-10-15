@@ -1,15 +1,17 @@
 import json
-from typing import Any, List, Set
+from typing import Any, List, Dict
 
 from dataall.base.aws.iam import IAM
+from dataall.base.aws.service_quota import ServiceQuota
 from dataall.base.utils.iam_policy_utils import (
-    split_policy_with_resources_in_statements,
     split_policy_statements_in_chunks,
+    split_policy_with_resources_in_statements,
 )
 from dataall.base.utils.naming_convention import NamingConventionService, NamingConventionPattern
 from dataall.core.environment.services.managed_iam_policies import ManagedPolicy
 import logging
-from aws_cdk import aws_iam as iam
+
+from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
 
 log = logging.getLogger(__name__)
 
@@ -25,15 +27,20 @@ IAM_S3_BUCKETS_STATEMENT_SID = 'BucketStatement'
 EMPTY_STATEMENT_SID = 'EmptyStatement'
 
 S3_ALLOWED_ACTIONS = ['s3:List*', 's3:Describe*', 's3:GetObject']
+IAM_SERVICE_NAME = 'AWS Identity and Access Management (IAM)'
+IAM_SERVICE_QUOTA_NAME = 'Managed policies per role'
+DEFAULT_MAX_ATTACHABLE_MANAGED_POLICIES_ACCOUNT = 10
 
 
 class S3SharePolicyService(ManagedPolicy):
-    def __init__(self, role_name, account, region, environmentUri, resource_prefix):
+    def __init__(self, role_name, account, region, environmentUri, resource_prefix, share=None, dataset=None):
         self.role_name = role_name
         self.account = account
         self.region = region
         self.environmentUri = environmentUri
         self.resource_prefix = resource_prefix
+        self.share = share
+        self.dataset = dataset
         self.policy_version_map = {}
         self.total_s3_stmts: List[Any] = []
         self.total_s3_kms_stmts: List[Any] = []
@@ -75,14 +82,12 @@ class S3SharePolicyService(ManagedPolicy):
         ).build_compliant_name()
 
     def generate_base_policy_name(self) -> str:
-        # In this case it is not possible to build a too long policy because the IAM role can be max 64 chars
-        # However it is good practice to use the standard utility to build the name
         return NamingConventionService(
             target_label=f'env-{self.environmentUri}-share-policy',
             target_uri=self.role_name,
             pattern=NamingConventionPattern.IAM_POLICY,
             resource_prefix=self.resource_prefix,
-        ).build_compliant_name()
+        ).build_compliant_name_with_index()
 
     def generate_indexed_policy_name(self, index: int = 0) -> str:
         return NamingConventionService(
@@ -95,7 +100,7 @@ class S3SharePolicyService(ManagedPolicy):
     def generate_empty_policy(self) -> dict:
         return {
             'Version': '2012-10-17',
-            'Statement': [{'Sid': EMPTY_STATEMENT_SID, 'Effect': 'Allow', 'Action': 'none:null', 'Resource': '*'}],
+            'Statement': [{'Sid': EMPTY_STATEMENT_SID, 'Effect': 'Allow', 'Action': ['none:null'], 'Resource': ['*']}],
         }
 
     @staticmethod
@@ -104,66 +109,6 @@ class S3SharePolicyService(ManagedPolicy):
         if statement_index is not None:
             policy_doc['Statement'].pop(statement_index)
         return policy_doc
-
-    def add_missing_resources_to_policy_statement(
-        self, resource_type: str, target_resources: list, statement_sid: str, policy_document: dict
-    ):
-        """
-        Checks if the resources are in the existing statement. Otherwise, it will add it.
-        :param target_resources: list
-        :param existing_policy_statement: dict
-        :return
-        """
-        policy_name = self.generate_base_policy_name()
-        policy_actions = S3_ALLOWED_ACTIONS if resource_type == 's3' else [f'{resource_type}:*']
-        index = self._get_statement_by_sid(policy_document, statement_sid)
-        if index is None:
-            log.info(f'{statement_sid} does NOT exists for Managed policy {policy_name} ' f'creating statement...')
-            additional_policy = {
-                'Sid': statement_sid,
-                'Effect': 'Allow',
-                'Action': policy_actions,
-                'Resource': target_resources,
-            }
-            policy_document['Statement'].append(additional_policy)
-        else:
-            # Enforce, that actions are valid
-            policy_document['Statement'][index]['Action'] = policy_actions
-            for target_resource in target_resources:
-                if target_resource not in policy_document['Statement'][index]['Resource']:
-                    log.info(
-                        f'{statement_sid} exists for Managed policy {policy_name} '
-                        f'but {target_resource} is not included, updating...'
-                    )
-                    policy_document['Statement'][index]['Resource'].extend([target_resource])
-                else:
-                    log.info(
-                        f'{statement_sid} exists for Managed policy {policy_name} '
-                        f'and {target_resource} is included, skipping...'
-                    )
-
-    def remove_resource_from_statement(self, target_resources: list, statement_sid: str, policy_document: dict):
-        policy_name = self.generate_base_policy_name()
-        index = self._get_statement_by_sid(policy_document, statement_sid)
-        log.info(f'Removing {target_resources} from Statement[{index}] in Managed policy {policy_name} ...')
-        if index is None:
-            log.info(f'{statement_sid} does NOT exists for Managed policy {policy_name} ' f'skipping...')
-        else:
-            policy_statement = policy_document['Statement'][index]
-            for target_resource in target_resources:
-                if target_resource in policy_statement['Resource']:
-                    log.info(
-                        f'{statement_sid} exists for Managed policy {policy_name} '
-                        f'and {target_resource} is included, removing...'
-                    )
-                    policy_statement['Resource'].remove(target_resource)
-                if len(policy_statement['Resource']) == 0:
-                    log.info(f'No more resources in {statement_sid}, removing statement...')
-                    policy_document['Statement'].pop(index)
-                if len(policy_document['Statement']) == 0:
-                    log.info(f'No more statements in {policy_document}, adding empty statement...')
-                    empty_policy_document = self.generate_empty_policy()
-                    policy_document['Statement'] = empty_policy_document['Statement']
 
     @staticmethod
     def check_resource_in_policy_statements(target_resources: list, existing_policy_statements: List[Any]) -> bool:
@@ -216,7 +161,6 @@ class S3SharePolicyService(ManagedPolicy):
         return None
 
     # Backwards compatibility
-
     def create_managed_policy_from_inline_and_delete_inline(self):
         """
         For existing consumption and team roles, the IAM managed policy won't be created.
@@ -236,6 +180,7 @@ class S3SharePolicyService(ManagedPolicy):
             raise Exception(f'Error creating policy from inline policies: {e}')
         return policy_arns
 
+    # Backwards compatibility
     def create_managed_indexed_policy_from_managed_policy(self):
         """
         Previously, only one managed policy was created for a role on which share policy statement were attached.
@@ -289,26 +234,31 @@ class S3SharePolicyService(ManagedPolicy):
     def merge_statements_and_update_policies(
         self, target_sid: str, target_s3_statements: List[Any], target_s3_kms_statements: List[Any]
     ):
+        """
+        Based on target_sid: {}
+        1. This method merges all the S3 statments
+        2. Splits the policy into policy chunks, where each chunk is <= size of the policy ( this is approximately true )
+        3. Check if there are any missing policies and creates them
+        4. Check if extra policies are required and also checks if those policies can be attached to the role (At the time of writing, IAM role has limit of 10 managed policies but can be increased to 20 )
+        5. Once policies are creates, fill the policies with the policy chunks
+        6. Delete ( if any ) extra policies which are remaining
+        """
         share_managed_policies_name_list = self.get_managed_policies()
-        total_s3_iam_policy_stmts: List[iam.PolicyStatement] = []
-        total_s3_iam_policy_kms_stmts: List[iam.PolicyStatement] = []
-        total_s3_iam_policy_access_point_stmts: List[iam.PolicyStatement] = []
-        total_s3_iam_policy_access_point_kms_stmts: List[iam.PolicyStatement] = []
+        total_s3_iam_policy_stmts: List[Dict] = []
+        total_s3_iam_policy_kms_stmts: List[Dict] = []
+        total_s3_iam_policy_access_point_stmts: List[Dict] = []
+        total_s3_iam_policy_access_point_kms_stmts: List[Dict] = []
 
         if target_sid == IAM_S3_BUCKETS_STATEMENT_SID:
             total_s3_iam_policy_stmts = target_s3_statements
             total_s3_iam_policy_kms_stmts = target_s3_kms_statements
-            total_s3_iam_policy_access_point_stmts.extend(
-                self._convert_to_iam_policy_statement(self.total_s3_access_point_stmts)
-            )
-            total_s3_iam_policy_access_point_kms_stmts.extend(
-                self._convert_to_iam_policy_statement(self.total_s3_access_point_kms_stmts)
-            )
+            total_s3_iam_policy_access_point_stmts.extend(self.total_s3_access_point_stmts)
+            total_s3_iam_policy_access_point_kms_stmts.extend(self.total_s3_access_point_kms_stmts)
         else:
             total_s3_iam_policy_access_point_stmts = target_s3_statements
             total_s3_iam_policy_access_point_kms_stmts = target_s3_kms_statements
-            total_s3_iam_policy_stmts.extend(self._convert_to_iam_policy_statement(self.total_s3_stmts))
-            total_s3_iam_policy_kms_stmts.extend(self._convert_to_iam_policy_statement(self.total_s3_kms_stmts))
+            total_s3_iam_policy_stmts.extend(self.total_s3_stmts)
+            total_s3_iam_policy_kms_stmts.extend(self.total_s3_kms_stmts)
 
         aggregated_iam_policy_statements = (
             total_s3_iam_policy_stmts
@@ -319,14 +269,14 @@ class S3SharePolicyService(ManagedPolicy):
         log.info(f'Total number of policy statements after merging: {len(aggregated_iam_policy_statements)}')
 
         if len(aggregated_iam_policy_statements) == 0:
-            aggregated_iam_policy_statements.append(
-                iam.PolicyStatement(
-                    actions=['none:null'], resources=['*'], sid=EMPTY_STATEMENT_SID, effect=iam.Effect.ALLOW
-                )
-            )
+            log.info('Attaching empty policy statement')
+            empty_policy = self.generate_empty_policy()
+            log.info(empty_policy['Statement'])
+            aggregated_iam_policy_statements = empty_policy['Statement']
 
         policy_statement_chunks = split_policy_statements_in_chunks(aggregated_iam_policy_statements)
         log.info(f'Number of policy chunks created: {len(policy_statement_chunks)}')
+        log.debug(policy_statement_chunks)
 
         log.info('Checking if there are any missing policies.')
         # Check if there are policies which do not exist but should have existed
@@ -336,6 +286,10 @@ class S3SharePolicyService(ManagedPolicy):
         if len(missing_policies_indexes) > 0:
             log.info(f'Creating missing policies for indexes: {missing_policies_indexes}')
             self._create_empty_policies_with_indexes(indexes=missing_policies_indexes)
+
+        log.info('Checking service quota limit for number of managed policies which can be attached to role')
+        # Check if managed policies can be attached to target requester role and new service policies do not exceed service quota limit
+        self._check_iam_managed_policy_attachment_limit(policy_statement_chunks)
 
         # Check if the number of policies required are greater than currently present
         if len(policy_statement_chunks) > len(share_managed_policies_name_list):
@@ -356,10 +310,12 @@ class S3SharePolicyService(ManagedPolicy):
             policy_document = self._generate_policy_document_from_statements(statement_chunk)
             # If statement length is greater than 1 then check if has empty statements sid and remove it
             if len(policy_document.get('Statement')) > 1:
+                log.info('Removing empty policy statements')
                 policy_document = S3SharePolicyService.remove_empty_statement(
                     policy_doc=policy_document, statement_sid=EMPTY_STATEMENT_SID
                 )
             policy_name = self.generate_indexed_policy_name(index=index)
+            log.info(f'Policy document before putting is: {policy_document}')
             IAM.update_managed_policy_default_version(
                 account_id=self.account,
                 region=self.region,
@@ -375,19 +331,6 @@ class S3SharePolicyService(ManagedPolicy):
             )
             log.info(f'Found more policies than needed. Deleting policies with indexes: {excess_policies_indexes}')
             self._delete_policies_with_indexes(indexes=excess_policies_indexes)
-
-    def _convert_to_iam_policy_statement(self, statements):
-        iam_policy_statements: List[iam.PolicyStatement] = []
-        for statement in statements:
-            iam_policy_statements.append(
-                iam.PolicyStatement(
-                    sid=statement.get('Sid'),
-                    actions=S3SharePolicyService._convert_to_array(str, statement.get('Action')),
-                    resources=S3SharePolicyService._convert_to_array(str, statement.get('Resource')),
-                    effect=iam.Effect.ALLOW,
-                )
-            )
-        return iam_policy_statements
 
     def _delete_policies_with_indexes(self, indexes):
         for index in indexes:
@@ -414,20 +357,18 @@ class S3SharePolicyService(ManagedPolicy):
             policy_document = self.generate_empty_policy()
             IAM.create_managed_policy(self.account, self.region, policy_name, json.dumps(policy_document))
 
-    def _create_indexed_managed_policies(self, policy_statements: List[iam.PolicyStatement]):
-        # Todo : Call the split in chunks with a maximum number of policy thing
-        # Todo : If the number of policies exceed that send an email to the dataset requester that the IAM role policy limit is going to exceed
-
+    def _create_indexed_managed_policies(self, policy_statements: List[Dict]):
         if not policy_statements:
-            policy_statements.append(
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW, sid=EMPTY_STATEMENT_SID, actions=['none:null'], resources=['*']
-                )
-            )
+            empty_policy = self.generate_empty_policy()
+            policy_statements = empty_policy['Statement']
 
         policy_statement_chunks = split_policy_statements_in_chunks(policy_statements)
-
         log.info(f'Number of Policy chunks made: {len(policy_statement_chunks)}')
+
+        log.info(
+            'Checking service quota limit for number of managed policies which can be attached to role before converting'
+        )
+        self._check_iam_managed_policy_attachment_limit(policy_statement_chunks)
 
         policy_arns = []
         for index, statement_chunk in enumerate(policy_statement_chunks):
@@ -438,6 +379,72 @@ class S3SharePolicyService(ManagedPolicy):
             )
 
         return policy_arns
+
+    def _check_iam_managed_policy_attachment_limit(self, policy_document_chunks):
+        number_of_policies_needed = len(policy_document_chunks)
+        log.info(f'number_of_policies_needed: {number_of_policies_needed}')
+        policies_present = self.get_managed_policies()
+        log.info(f'policies_present: {policies_present}')
+        managed_policies_attached_to_role = IAM.get_attached_managed_policies_to_role(
+            account_id=self.account, region=self.region, role_name=self.role_name
+        )
+        number_of_non_share_managed_policies_attached_to_role = len(
+            [policy for policy in managed_policies_attached_to_role if policy not in policies_present]
+        )
+        log.info(f'number_of_non_share_managed_policies_attached_to_role: {number_of_non_share_managed_policies_attached_to_role}')
+
+        managed_iam_policy_quota = self._get_managed_policy_quota()
+        if number_of_policies_needed + number_of_non_share_managed_policies_attached_to_role > managed_iam_policy_quota:
+            # Send an email notification to the requestors to increase the quota and then try again
+            log.error(
+                f'Number of policies which can be attached to the role is more than the service quota limit: {managed_iam_policy_quota}'
+            )
+            try:
+                ShareNotificationService(
+                    session=None, dataset=self.dataset, share=self.share
+                ).notify_managed_policy_limit_exceeded_action(email_id=self.share.owner)
+            except Exception as e:
+                log.error(f'Error sending email for notifying that managed policy limit exceeded on role due to: {e}')
+            raise Exception(
+                f'Failed to process share as number of needed attached policies to the role is greater than the service quota limit: {managed_iam_policy_quota}'
+            )
+
+        log.info(
+            f'Role: {self.role_name} has capacity to attach managed policies for share with URI: {self.share.shareUri}'
+        )
+
+    def _get_managed_policy_quota(self):
+        # Get the number of managed policies which can be attached to the IAM role
+        service_quota_client = ServiceQuota(account_id=self.account, region=self.region)
+        service_code_list = service_quota_client.list_services()
+        log.info(f'service_code_list: {service_code_list}')
+        service_code = None
+        for service in service_code_list:
+            if service.get('ServiceName') == IAM_SERVICE_NAME:
+                service_code = service.get('ServiceCode')
+                break
+
+        log.info(f'Found service code : {service_code}')
+        service_quota_code = None
+        if service_code:
+            service_quota_codes = service_quota_client.list_service_quota(service_code=service_code)
+            for service_quota_cd in service_quota_codes:
+                if service_quota_cd.get('QuotaName') == IAM_SERVICE_QUOTA_NAME:
+                    service_quota_code = service_quota_cd.get('QuotaCode')
+                    break
+
+        log.info(f'service_quota_code: {service_quota_code}')
+        managed_iam_policy_quota = None
+        if service_quota_code:
+            managed_iam_policy_quota = service_quota_client.get_service_quota_value(
+                service_code=service_code, service_quota_code=service_quota_code
+            )
+
+        if managed_iam_policy_quota is None:
+            log.info('Defaulting to default max values')
+            managed_iam_policy_quota = DEFAULT_MAX_ATTACHABLE_MANAGED_POLICIES_ACCOUNT
+
+        return managed_iam_policy_quota
 
     @staticmethod
     def _get_segregated_policy_statements_from_policy(policy_document):
@@ -467,8 +474,6 @@ class S3SharePolicyService(ManagedPolicy):
 
     def add_resources_and_generate_split_statements(self, statements, target_resources, sid, resource_type):
         # Using _convert_to_array to convert to array if single resource is present and its not in array
-        # This is required while creating iam.PolicyStatement in the split_policy_with_resources_in_statements function.
-        # iam.PolicyStatement throws error if the resource & actions is not an array type
         s3_statements_resources: List[str] = [
             resource
             for statement in statements
@@ -477,9 +482,9 @@ class S3SharePolicyService(ManagedPolicy):
         for target_resource in target_resources:
             if target_resource not in s3_statements_resources:
                 s3_statements_resources.append(target_resource)
-        statement_chunks: List[iam.PolicyStatement] = split_policy_with_resources_in_statements(
+        statement_chunks = split_policy_with_resources_in_statements(
             base_sid=sid,
-            effect=iam.Effect.ALLOW,
+            effect='Allow',
             actions=S3_ALLOWED_ACTIONS if resource_type == 's3' else [f'{resource_type}:*'],
             resources=s3_statements_resources,
         )
@@ -487,8 +492,6 @@ class S3SharePolicyService(ManagedPolicy):
 
     def remove_resources_and_generate_split_statements(self, statements, target_resources, sid, resource_type):
         # Using _convert_to_array to convert to array if single resource is present and its not in array
-        # This is required while creating iam.PolicyStatement in the split_policy_with_resources_in_statements function.
-        # iam.PolicyStatement throws error if the resource & actions is not an array type
         s3_statements_resources = [
             resource
             for statement in statements
@@ -501,7 +504,7 @@ class S3SharePolicyService(ManagedPolicy):
 
         statement_chunks = split_policy_with_resources_in_statements(
             base_sid=sid,
-            effect=iam.Effect.ALLOW,
+            effect='Allow',
             actions=S3_ALLOWED_ACTIONS if resource_type == 's3' else [f'{resource_type}:*'],
             resources=s3_statements_resources,
         )
@@ -515,11 +518,10 @@ class S3SharePolicyService(ManagedPolicy):
             return [item]
         return item
 
-    def _generate_policy_document_from_statements(self, statements: List[iam.PolicyStatement]):
+    def _generate_policy_document_from_statements(self, statements: List[Dict]):
         if statements is None:
-            statements = []
-        policy_doc = iam.PolicyDocument(statements=statements)
-        return policy_doc.to_json()
+            raise Exception('Provide valid statements while generating policy document from statement')
+        return {'Version': '2012-10-17', 'Statement': statements}
 
     def _generate_managed_policy_statements_from_inline_policies(self):
         """
@@ -527,28 +529,39 @@ class S3SharePolicyService(ManagedPolicy):
         If there are already shared resources, add them to the empty policy and remove the fake statement
         return: IAM policy document
         """
-        existing_bucket_s3, existing_bucket_kms = self._get_policy_resources_from_inline_policy(
+        existing_bucket_s3_resources, existing_bucket_kms_resources = self._get_policy_resources_from_inline_policy(
             OLD_IAM_S3BUCKET_ROLE_POLICY
         )
-        existing_access_points_s3, existing_access_points_kms = self._get_policy_resources_from_inline_policy(
-            OLD_IAM_ACCESS_POINT_ROLE_POLICY
+        existing_access_points_s3_resources, existing_access_points_kms_resources = (
+            self._get_policy_resources_from_inline_policy(OLD_IAM_ACCESS_POINT_ROLE_POLICY)
         )
-        log.info(f'Back-filling S3BUCKET sharing resources: S3={existing_bucket_s3}, KMS={existing_bucket_kms}')
         log.info(
-            f'Back-filling S3ACCESS POINTS sharing resources: S3={existing_access_points_s3}, KMS={existing_access_points_kms}'
+            f'Back-filling S3BUCKET sharing resources: S3={existing_bucket_s3_resources}, KMS={existing_bucket_kms_resources}'
         )
+        log.info(
+            f'Back-filling S3ACCESS POINTS sharing resources: S3={existing_access_points_s3_resources}, KMS={existing_access_points_kms_resources}'
+        )
+        bucket_s3_statement, bucket_kms_statement = self._generate_statement_from_inline_resources(
+            existing_bucket_s3_resources, existing_bucket_kms_resources, IAM_S3_BUCKETS_STATEMENT_SID
+        )
+        access_points_s3_statement, access_points_kms_statement = self._generate_statement_from_inline_resources(
+            existing_access_points_s3_resources,
+            existing_access_points_kms_resources,
+            IAM_S3_ACCESS_POINTS_STATEMENT_SID,
+        )
+
         policy_statements = []
-        if len(existing_bucket_s3 + existing_access_points_s3) > 0:
+        if len(existing_bucket_s3_resources + existing_access_points_s3_resources) > 0:
             # Split the statements in chunks
             existing_bucket_s3_statements = self._split_and_generate_statement_chunks(
-                statements_s3=existing_bucket_s3, statements_kms=existing_bucket_kms, sid=IAM_S3_BUCKETS_STATEMENT_SID
+                statements_s3=bucket_s3_statement, statements_kms=bucket_kms_statement, sid=IAM_S3_BUCKETS_STATEMENT_SID
             )
-            existing_bucket_s3_access_point_statement = self._split_and_generate_statement_chunks(
-                statements_s3=existing_access_points_s3,
-                statements_kms=existing_access_points_kms,
+            existing_bucket_s3_access_point_statements = self._split_and_generate_statement_chunks(
+                statements_s3=access_points_s3_statement,
+                statements_kms=access_points_kms_statement,
                 sid=IAM_S3_ACCESS_POINTS_STATEMENT_SID,
             )
-            policy_statements = existing_bucket_s3_statements + existing_bucket_s3_access_point_statement
+            policy_statements = existing_bucket_s3_statements + existing_bucket_s3_access_point_statements
 
         log.debug(f'Created policy statements with length: {len(policy_statements)}')
         return policy_statements
@@ -564,7 +577,7 @@ class S3SharePolicyService(ManagedPolicy):
             aggregate_statements.extend(
                 split_policy_with_resources_in_statements(
                     base_sid=f'{sid}S3',
-                    effect=iam.Effect.ALLOW,
+                    effect='Allow',
                     actions=['s3:List*', 's3:Describe*', 's3:GetObject'],
                     resources=statement_resources,
                 )
@@ -577,10 +590,29 @@ class S3SharePolicyService(ManagedPolicy):
             ]
             aggregate_statements.extend(
                 split_policy_with_resources_in_statements(
-                    base_sid=f'{sid}KMS', effect=iam.Effect.ALLOW, actions=['kms:*'], resources=statement_resources
+                    base_sid=f'{sid}KMS', effect='Allow', actions=['kms:*'], resources=statement_resources
                 )
             )
         return aggregate_statements
+
+    def _generate_statement_from_inline_resources(self, bucket_s3_resources, bucket_kms_resources, base_sid):
+        bucket_s3_statement = []
+        bucket_kms_statement = []
+        if len(bucket_s3_resources) > 0:
+            bucket_s3_statement.append(
+                {
+                    'Sid': f'{base_sid}S3',
+                    'Effect': 'Allow',
+                    'Action': S3_ALLOWED_ACTIONS,
+                    'Resource': bucket_s3_resources,
+                }
+            )
+        if len(bucket_kms_resources) > 0:
+            bucket_kms_statement.append(
+                {'Sid': f'{base_sid}KMS', 'Effect': 'Allow', 'Action': ['kms:*'], 'Resource': bucket_kms_resources}
+            )
+        log.info(f'Generated statement from resources: S3: {bucket_s3_statement}, KMS: {bucket_kms_statement}')
+        return bucket_s3_statement, bucket_kms_statement
 
     def _get_policy_resources_from_inline_policy(self, policy_name):
         # This function can only be used for backwards compatibility where policies had statement[0] for s3
@@ -597,27 +629,6 @@ class S3SharePolicyService(ManagedPolicy):
         except Exception as e:
             log.error(f'Failed to retrieve the existing policy {policy_name}: {e} ')
             return [], []
-
-    def _update_policy_resources_from_inline_policy(self, policy, statement_sid, existing_s3, existing_kms):
-        # This function can only be used for backwards compatibility where policies had statement[0] for s3
-        # and statement[1] for KMS permissions
-        if len(existing_s3) > 0:
-            additional_policy = {
-                'Sid': f'{statement_sid}S3',
-                'Effect': 'Allow',
-                'Action': ['s3:List*', 's3:Describe*', 's3:GetObject'],
-                'Resource': existing_s3,
-            }
-            policy['Statement'].append(additional_policy)
-        if len(existing_kms) > 0:
-            additional_policy = {
-                'Sid': f'{statement_sid}KMS',
-                'Effect': 'Allow',
-                'Action': ['kms:*'],
-                'Resource': existing_kms,
-            }
-            policy['Statement'].append(additional_policy)
-        return policy
 
     def _delete_old_inline_policies(self):
         for policy_name in [OLD_IAM_S3BUCKET_ROLE_POLICY, OLD_IAM_ACCESS_POINT_ROLE_POLICY]:
