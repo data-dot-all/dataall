@@ -3,3 +3,4 @@ boto3==1.35.26
 boto3-stubs==1.35.26
 cdk-nag==2.7.2
 typeguard==4.2.1
+agixt==1.2.3
