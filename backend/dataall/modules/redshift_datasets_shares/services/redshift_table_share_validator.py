@@ -14,7 +14,6 @@ from dataall.modules.redshift_datasets.db.redshift_dataset_repositories import R
 from dataall.modules.redshift_datasets.services.redshift_connection_permissions import (
     CREATE_SHARE_REQUEST_WITH_CONNECTION,
 )
-from dataall.modules.redshift_datasets.services.redshift_enums import RedshiftConnectionTypes
 
 import logging
 
@@ -34,7 +33,7 @@ class RedshiftTableValidator(SharesValidatorInterface):
         attachMissingPolicies,
         permissions,
     ) -> bool:
-        RedshiftTableValidator._validate_target_connection(session=session, uri=principal_id)
+        RedshiftTableValidator._validate_target_connection_permissions(session=session, uri=principal_id)
         rs_dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(
             session=session, dataset_uri=dataset.datasetUri
         )
@@ -116,14 +115,8 @@ class RedshiftTableValidator(SharesValidatorInterface):
             )
 
     @staticmethod
-    def _validate_target_connection(session, uri):
+    def _validate_target_connection_permissions(session, uri):
         context = get_context()
-        connection = RedshiftConnectionRepository.get_redshift_connection(session, uri=uri)
-        if connection.connectionType == RedshiftConnectionTypes.DATA_USER.value:
-            raise InvalidConfiguration(
-                action=CREATE_SHARE_OBJECT,
-                message='Redshift data.all datashares can only be created by an ADMIN connection',
-            )
         return ResourcePolicyService.check_user_resource_permission(
             session=session,
             username=context.username,
