@@ -97,7 +97,7 @@ Currently **we support only Cognito based deployments** but support for any IdP 
                 "cluster_id": "...",
                 "secret_arn": "..."
               },
-              "connection_cluster_data_admin_session_cross_acc_env_1": {
+              "connection_cluster_data_user_session_cross_acc_env_1": {
                 "cluster_id": "...",
                 "secret_arn": "..."
               }
@@ -107,12 +107,13 @@ Currently **we support only Cognito based deployments** but support for any IdP 
 
 - The pipeline will create the users/groups
 - For Redshift testing we require some pre-existing infrastructure:
-  - One Redshift serverless namespace+workgroup and one Redshift provisioned cluster - both MUST be encrypted
-  - Both must host the default `dev` database with the `public` schema.
-  - For each we need to ensure that the admin credentials are stored in Secrets Manager. The secrets MUST be tagged with the tag {key:dataall, value:True}
-  - For each we need to create a Redshift user (see SQL commands below) and store the credentials in Secrets Manager. The secrets MUST be tagged with the tag {key:dataall, value:True}
+  - One Redshift serverless namespace+workgroup deployed in `session_env1` and one Redshift provisioned cluster in `session_cross_acc_env_1` 
+  - The provisioned cluster MUST be encrypted and use RA3 cluster type (Check the [docs](https://docs.aws.amazon.com/redshift/latest/dg/datashare-overview.html) for other data sharing limitations)
+  - Both clusters must host the default `dev` database with the `public` schema.
+  - For each we need to ensure that the admin credentials are stored in Secrets Manager. The secrets MUST be tagged with the tag {key:dataall, value:True}. If you are going to use the Redshift Query Editor, then you will also need the tag {key:Redshift, value:any}
+  - For each we need to create a Redshift user (see SQL commands below) and store the credentials in Secrets Manager. The secrets MUST be tagged with the tag {key:dataall, value:True}. If you are going to use the Redshift Query Editor, then you will also need the tag {key:Redshift, value:any}
   - For each we need to create a set of tables using the commands below
-  - For each we need to create a Redshift role ()
+  - For each we need to create a Redshift role as in the commands below
 
 Create User and grant basic permissions using admin connection
 ```sql
@@ -145,6 +146,18 @@ CREATE TABLE nation (
   N_COMMENT varchar(152))
 diststyle all;
 ```
+
+### Dashboard Tests Pre-Requisities
+
+In order to run the tests on the dashboards module the following steps are required:
+
+- Create Enterprise QuickSight Subscription in `session_env1` AWS Account
+- Update QuickSight Account with a Reader Capacity Pricing Plan (required for generating embed URLs - `GenerateEmbedUrlForAnonymousUser`)
+- Create / Publish a QuickSight Dashboard
+- Create a QuickSight Group named `dataall` and give owner access of the published dashboard to the `dataall` group
+- Provide the `dashboardId` in the `config.json` as shown above
+
+Rather than failing if the above pre-requisites are not completed, if ther eis no QuickSight Account is detected in `session_env1` the dashboard tests will be **skipped**.
 
 ## Run tests
 

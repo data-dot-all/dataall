@@ -13,7 +13,7 @@ from integration_tests.modules.redshift_datasets.connection_queries import (
     list_redshift_connection_group_permissions,
     list_redshift_connection_group_no_permissions,
 )
-from integration_tests.modules.redshift_datasets.global_conftest import REDSHIFT_DATABASE
+from integration_tests.modules.redshift_datasets.global_conftest import REDSHIFT_DATABASE, REDSHIFT_SCHEMA
 
 
 @pytest.mark.parametrize(
@@ -34,7 +34,7 @@ def test_create_connection(connection_fixture_name, connection_type, redshift_ty
 
 def test_create_serverless_connection_namespace_does_not_exist(client1, group1, session_env1, testdata):
     connection_data = testdata.redshift_connections['connection_serverless_data_user_session_env1']
-    ERROR_NAMESPACE_ID = 'doesnotexist'
+    error_namespace_id = 'doesnotexist'
     assert_that(create_redshift_connection).raises(GqlError).when_called_with(
         client=client1,
         connection_name='errorConnection',
@@ -42,17 +42,17 @@ def test_create_serverless_connection_namespace_does_not_exist(client1, group1, 
         group_uri=group1,
         redshift_type='serverless',
         connection_type='DATA_USER',
-        namespace_id=ERROR_NAMESPACE_ID,
+        namespace_id=error_namespace_id,
         workgroup=connection_data.workgroup,
         database=REDSHIFT_DATABASE,
         redshift_user=None,
         secret_arn=connection_data.secret_arn,
-    ).contains('Redshift namespaceId', ERROR_NAMESPACE_ID, 'not exist')
+    ).contains('Redshift namespaceId', error_namespace_id, 'not exist')
 
 
 def test_create_serverless_connection_workgroup_not_found(client1, group1, session_env1, testdata):
     connection_data = testdata.redshift_connections['connection_serverless_data_user_session_env1']
-    ERROR_WORKGROUP = 'doesnotexist'
+    error_workgroup = 'doesnotexist'
     assert_that(create_redshift_connection).raises(GqlError).when_called_with(
         client=client1,
         connection_name='errorConnection',
@@ -61,16 +61,16 @@ def test_create_serverless_connection_workgroup_not_found(client1, group1, sessi
         redshift_type='serverless',
         connection_type='DATA_USER',
         namespace_id=connection_data.namespace_id,
-        workgroup=ERROR_WORKGROUP,
+        workgroup=error_workgroup,
         database=REDSHIFT_DATABASE,
         redshift_user=None,
         secret_arn=connection_data.secret_arn,
-    ).contains('Redshift workgroup', ERROR_WORKGROUP, 'not exist')
+    ).contains('Redshift workgroup', error_workgroup, 'not exist')
 
 
 def test_create_cluster_connection_cluster_not_found(client5, group5, session_cross_acc_env_1, testdata):
     connection_data = testdata.redshift_connections['connection_cluster_data_user_session_cross_acc_env_1']
-    ERROR_CLUSTER_ID = 'doesnotexist'
+    error_cluster_id = 'doesnotexist'
     assert_that(create_redshift_connection).raises(GqlError).when_called_with(
         client=client5,
         connection_name='errorConnection',
@@ -78,11 +78,11 @@ def test_create_cluster_connection_cluster_not_found(client5, group5, session_cr
         group_uri=group5,
         redshift_type='cluster',
         connection_type='DATA_USER',
-        cluster_id=ERROR_CLUSTER_ID,
+        cluster_id=error_cluster_id,
         database=REDSHIFT_DATABASE,
         redshift_user=None,
         secret_arn=connection_data.secret_arn,
-    ).contains('Redshift cluster', ERROR_CLUSTER_ID, 'not exist')
+    ).contains('Redshift cluster', error_cluster_id, 'not exist')
 
 
 def test_create_cluster_connection_cluster_not_encrypted():
@@ -92,7 +92,7 @@ def test_create_cluster_connection_cluster_not_encrypted():
 
 def test_create_connection_database_not_found(client5, group5, session_cross_acc_env_1, testdata):
     connection_data = testdata.redshift_connections['connection_cluster_data_user_session_cross_acc_env_1']
-    ERROR_DATABASE = 'doesnotexist'
+    error_database = 'doesnotexist'
     assert_that(create_redshift_connection).raises(GqlError).when_called_with(
         client=client5,
         connection_name='errorConnection',
@@ -101,10 +101,10 @@ def test_create_connection_database_not_found(client5, group5, session_cross_acc
         redshift_type='cluster',
         connection_type='DATA_USER',
         cluster_id=connection_data.cluster_id,
-        database=ERROR_DATABASE,
+        database=error_database,
         redshift_user=None,
         secret_arn=connection_data.secret_arn,
-    ).contains('Redshift database', ERROR_DATABASE, 'not exist')
+    ).contains('Redshift database', error_database, 'not exist')
 
 
 def test_create_connection_unauthorized(client1, group1, session_cross_acc_env_1, testdata):
@@ -155,49 +155,59 @@ def test_add_connection_group_permissions(client1, group2, session_connection_se
     assert_that(session_connection_serverless_admin_group_with_permissions).is_equal_to(group2)
 
 
-def test_add_connection_group_permissions_unauthorized(client2, group3, session_connection_serverless_admin):
+def test_add_connection_group_permissions_unauthorized(client2, group2, session_connection_serverless_admin):
     assert_that(add_redshift_connection_group_permissions).raises(GqlError).when_called_with(
         client=client2,
         connection_uri=session_connection_serverless_admin.connectionUri,
-        group_uri=group3,
+        group_uri=group2,
         permissions=['CREATE_SHARE_REQUEST_WITH_CONNECTION'],
     ).contains(
         'UnauthorizedOperation',
-        'MANAGE_REDSHIFT_CONNECTION_PERMISSIONS',
+        'EDIT_REDSHIFT_CONNECTION_PERMISSIONS',
         session_connection_serverless_admin.connectionUri,
     )
 
 
 def test_add_connection_group_permissions_invalid_connection_type(
-    client1, group3, session_connection_serverless_data_user
+    client1, group2, session_connection_serverless_data_user
 ):
     assert_that(add_redshift_connection_group_permissions).raises(GqlError).when_called_with(
         client=client1,
         connection_uri=session_connection_serverless_data_user.connectionUri,
-        group_uri=group3,
+        group_uri=group2,
         permissions=['CREATE_SHARE_REQUEST_WITH_CONNECTION'],
     ).contains('InvalidInput', 'ConnectionType', session_connection_serverless_data_user.connectionType)
 
 
-def test_add_connection_group_permissions_invalid_permissions(client1, group3, session_connection_serverless_admin):
+def test_add_connection_group_permissions_invalid_permissions(client1, group2, session_connection_serverless_admin):
     assert_that(add_redshift_connection_group_permissions).raises(GqlError).when_called_with(
         client=client1,
         connection_uri=session_connection_serverless_admin.connectionUri,
-        group_uri=group3,
+        group_uri=group2,
         permissions=['INVALID_PERMISSION'],
     ).contains('InvalidInput', 'INVALID_PERMISSION', 'Permissions')
 
 
-def test_delete_connection_group_permissions(client1, group3, session_connection_serverless_admin):
-    response = add_redshift_connection_group_permissions(
+def test_add_connection_group_permissions_invalid_group(client1, group3, session_connection_serverless_admin):
+    assert_that(add_redshift_connection_group_permissions).raises(GqlError).when_called_with(
         client=client1,
         connection_uri=session_connection_serverless_admin.connectionUri,
         group_uri=group3,
         permissions=['CREATE_SHARE_REQUEST_WITH_CONNECTION'],
+    ).contains('InvalidInput', group3, 'Team')
+
+
+def test_delete_connection_group_permissions(client1, group2, session_connection_serverless_admin):
+    response = delete_redshift_connection_group_permissions(
+        client=client1, connection_uri=session_connection_serverless_admin.connectionUri, group_uri=group2
     )
     assert_that(response).is_true()
-    response = delete_redshift_connection_group_permissions(
-        client=client1, connection_uri=session_connection_serverless_admin.connectionUri, group_uri=group3
+    # Revert changes
+    response = add_redshift_connection_group_permissions(
+        client=client1,
+        connection_uri=session_connection_serverless_admin.connectionUri,
+        group_uri=group2,
+        permissions=['CREATE_SHARE_REQUEST_WITH_CONNECTION'],
     )
     assert_that(response).is_true()
 
@@ -209,7 +219,7 @@ def test_delete_connection_group_permissions_unauthorized(client2, group3, sessi
         group_uri=group3,
     ).contains(
         'UnauthorizedOperation',
-        'MANAGE_REDSHIFT_CONNECTION_PERMISSIONS',
+        'EDIT_REDSHIFT_CONNECTION_PERMISSIONS',
         session_connection_serverless_admin.connectionUri,
     )
 
@@ -276,7 +286,7 @@ def test_list_redshift_connection_schemas(client1, session_connection_serverless
         client=client1, connection_uri=session_connection_serverless_admin.connectionUri
     )
     assert_that(len(response)).is_greater_than_or_equal_to(1)
-    assert_that(response).contains('public')
+    assert_that(response).contains(REDSHIFT_SCHEMA)
 
 
 def test_list_redshift_connection_schemas_unauthorized(client2, session_connection_serverless_admin):
@@ -293,7 +303,7 @@ def test_list_redshift_schema_tables(client1, session_connection_serverless_admi
     response = list_redshift_schema_tables(
         client=client1,
         connection_uri=session_connection_serverless_admin.connectionUri,
-        schema='public',
+        schema=REDSHIFT_SCHEMA,
     )
     assert_that(len(response)).is_greater_than_or_equal_to(1)
     assert_that(response[0]).contains_key('name', 'type')
@@ -301,7 +311,7 @@ def test_list_redshift_schema_tables(client1, session_connection_serverless_admi
 
 def test_list_redshift_schema_tables_unauthorized(client2, session_connection_serverless_admin):
     assert_that(list_redshift_schema_tables).raises(GqlError).when_called_with(
-        client=client2, connection_uri=session_connection_serverless_admin.connectionUri, schema='public'
+        client=client2, connection_uri=session_connection_serverless_admin.connectionUri, schema=REDSHIFT_SCHEMA
     ).contains(
         'UnauthorizedOperation',
         'GET_REDSHIFT_CONNECTION',
@@ -336,7 +346,7 @@ def test_list_redshift_connection_group_permissions_unauthorized(client2, sessio
         client=client2, connection_uri=session_connection_serverless_admin.connectionUri
     ).contains(
         'UnauthorizedOperation',
-        'MANAGE_REDSHIFT_CONNECTION_PERMISSIONS',
+        'EDIT_REDSHIFT_CONNECTION_PERMISSIONS',
         session_connection_serverless_admin.connectionUri,
     )
 
@@ -357,6 +367,6 @@ def test_list_redshift_connection_group_no_permissions_unauthorized(client2, ses
         client=client2, connection_uri=session_connection_serverless_admin.connectionUri
     ).contains(
         'UnauthorizedOperation',
-        'MANAGE_REDSHIFT_CONNECTION_PERMISSIONS',
+        'EDIT_REDSHIFT_CONNECTION_PERMISSIONS',
         session_connection_serverless_admin.connectionUri,
     )
