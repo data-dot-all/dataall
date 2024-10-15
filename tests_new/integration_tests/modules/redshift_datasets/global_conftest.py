@@ -84,20 +84,20 @@ def session_connection_serverless_admin(client1, group1, session_env1, testdata)
 
 
 @pytest.fixture(scope='session')
-def session_connection_serverless_admin_group_with_permissions(client1, group2, session_connection_serverless_admin):
+def session_connection_serverless_admin_group_with_permissions(client1, group5, session_connection_serverless_admin):
     permissions = None
     try:
         permissions = add_redshift_connection_group_permissions(
             client=client1,
             connection_uri=session_connection_serverless_admin.connectionUri,
-            group_uri=group2,
+            group_uri=group5,
             permissions=['CREATE_SHARE_REQUEST_WITH_CONNECTION'],
         )
-        yield group2
+        yield group5
     finally:
         if permissions:
             delete_redshift_connection_group_permissions(
-                client=client1, connection_uri=session_connection_serverless_admin.connectionUri, group_uri=group2
+                client=client1, connection_uri=session_connection_serverless_admin.connectionUri, group_uri=group5
             )
 
 
