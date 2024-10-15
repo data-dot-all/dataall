@@ -2,8 +2,8 @@ import { gql } from 'apollo-boost';
 
 export const getMetadataForm = (uri, version = null) => ({
   variables: {
-    'uri': uri,
-    'version': version
+    uri: uri,
+    version: version
   },
   query: gql`
     query getMetadataForm($uri: String!, $version: Int) {
@@ -17,7 +17,7 @@ export const getMetadataForm = (uri, version = null) => ({
         homeEntityName
         userRole
         versions
-        fields (version: $version) {
+        fields(version: $version) {
           uri
           metadataFormUri
           name

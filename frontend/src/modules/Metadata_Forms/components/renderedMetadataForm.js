@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import {
   Autocomplete,
@@ -7,7 +7,8 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Grid, TextField,
+  Grid,
+  TextField,
   Typography
 } from '@mui/material';
 import {
@@ -23,7 +24,6 @@ import { LoadingButton } from '@mui/lab';
 import SendIcon from '@mui/icons-material/Send';
 import { createAttachedMetadataForm, getMetadataForm } from '../services';
 import { SET_ERROR } from '../../../globalErrors';
-import { useEffect } from 'react';
 
 export const RenderedMetadataForm = (props) => {
   const client = useClient();
@@ -35,12 +35,13 @@ export const RenderedMetadataForm = (props) => {
     entityUri,
     entityType,
     metadataForm,
-    preview,
+    preview
   } = props;
 
   const [localFields, setLocalFields] = useState([...fields]);
-  const [loading, setLoading] = useState(false);
-  const [currentVersion, setCurrentVersion] = useState(metadataForm.versions? metadataForm.versions[0]: 0);
+  const [currentVersion, setCurrentVersion] = useState(
+    metadataForm.versions ? metadataForm.versions[0] : 0
+  );
 
   localFields.forEach((field, index) => {
     if (field.type === 'Boolean' && field.value === undefined) {
@@ -143,8 +144,9 @@ export const RenderedMetadataForm = (props) => {
   };
 
   const fetchItems = async (version = null) => {
-    setLoading(true);
-    const response = await client.query(getMetadataForm(metadataForm.uri, version));
+    const response = await client.query(
+      getMetadataForm(metadataForm.uri, version)
+    );
 
     if (
       !response.errors &&
@@ -158,7 +160,6 @@ export const RenderedMetadataForm = (props) => {
         : 'Metadata Forms not found';
       dispatch({ type: SET_ERROR, error });
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -194,26 +195,31 @@ export const RenderedMetadataForm = (props) => {
                   <CardHeader title={metadataForm.name} />
                 </Grid>
                 <Grid item lg={4} xl={4}>
-                  {preview &&
-                  <Autocomplete
-                    disablePortal
-                    options={metadataForm.versions.map(option => {
-                      return { label: 'version ' + option, value: option };
-                    })}
-                    value={'version ' + currentVersion}
-                    onChange={async (event, value) => {
-                      await fetchItems(value?value.value : metadataForm.versions[0]);
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        sx={{ minWidth: '150px' }}
-                        {...params}
-                        label="Version"
-                        variant="outlined"
-                      />
-                    )}
-                  />
-                  }
+                  {preview && (
+                    <Autocomplete
+                      disablePortal
+                      options={metadataForm.versions.map((option) => {
+                        return { label: 'version ' + option, value: option };
+                      })}
+                      value={'version ' + currentVersion}
+                      onChange={async (event, value) => {
+                        setCurrentVersion(
+                          value ? value.value : metadataForm.versions[0]
+                        );
+                        await fetchItems(
+                          value ? value.value : metadataForm.versions[0]
+                        );
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          sx={{ minWidth: '150px' }}
+                          {...params}
+                          label="Version"
+                          variant="outlined"
+                        />
+                      )}
+                    />
+                  )}
                 </Grid>
                 <Grid item lg={4} xl={4}>
                   <Box

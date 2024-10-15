@@ -13,16 +13,19 @@ import {
   Box,
   Grid,
   TextField,
-  InputAdornment,
   Divider,
   Button,
   Autocomplete,
   Tooltip,
-  Chip, Typography, Dialog, FormControlLabel, Radio, RadioGroup
+  Chip,
+  Typography,
+  Dialog,
+  FormControlLabel,
+  Radio,
+  RadioGroup
 } from '@mui/material';
 import {
   Scrollbar,
-  SearchIcon,
   AsteriskIcon,
   PencilAltIcon,
   SaveIcon,
@@ -31,7 +34,11 @@ import {
 } from '../../../design';
 import { SET_ERROR } from '../../../globalErrors';
 import Checkbox from '@mui/material/Checkbox';
-import { createMetadataFormVersion, deleteMetadataFormVersion, getMetadataForm } from '../services';
+import {
+  createMetadataFormVersion,
+  deleteMetadataFormVersion,
+  getMetadataForm
+} from '../services';
 import { useClient } from '../../../services';
 import { GridActionsCellItem } from '@mui/x-data-grid';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
@@ -384,7 +391,7 @@ const NewVersionModal = (props) => {
   };
 
   return (
-    <Dialog maxWidth="xs" fullWidth onClose={onClose} open={open}>
+    <Dialog maxWidth="xs" fullWidth onClose={onClose} open={() => {}}>
       <Box sx={{ p: 3 }}>
         <Typography
           align="center"
@@ -399,23 +406,33 @@ const NewVersionModal = (props) => {
             value={blankVersion}
             onChange={(event, value) => setBlankVersion(value)}
           >
-            <FormControlLabel sx={{pt:1}} value={false} control={<Radio />} label="As a copy of" />
-            <FormControlLabel sx={{mt:2}} value={true} control={<Radio />} label="Blank version" />
+            <FormControlLabel
+              sx={{ pt: 1 }}
+              value={false}
+              control={<Radio />}
+              label="As a copy of"
+            />
+            <FormControlLabel
+              sx={{ mt: 2 }}
+              value={true}
+              control={<Radio />}
+              label="Blank version"
+            />
           </RadioGroup>
         </FormControl>
         <FormControl>
           <Autocomplete
             disablePortal
-            options={versions.map(option => {
+            options={versions.map((option) => {
               return { label: 'version ' + option, value: option };
             })}
             defaultValue={'version ' + copyVersion}
             onChange={(event, value) => {
-              setCopyVersion(value?value.value : currentVersion[0]);
+              setCopyVersion(value ? value.value : currentVersion[0]);
             }}
             renderInput={(params) => (
               <TextField
-                sx={{ minWidth: '150px'}}
+                sx={{ minWidth: '150px' }}
                 {...params}
                 label="Version"
                 variant="outlined"
@@ -424,9 +441,9 @@ const NewVersionModal = (props) => {
           />
         </FormControl>
       </Box>
-      <Box sx={{ mb: 2, textAlign: 'center'}}>
+      <Box sx={{ mb: 2, textAlign: 'center' }}>
         <Button
-          sx={{ mt: 2, minWidth: '150px'}}
+          sx={{ mt: 2, minWidth: '150px' }}
           onClick={handleCreateNewVersion}
           color="primary"
           variant="contained"
@@ -434,7 +451,7 @@ const NewVersionModal = (props) => {
           Create
         </Button>
         <Button
-          sx={{ mt: 2, ml:2,  minWidth: '150px' }}
+          sx={{ mt: 2, ml: 2, minWidth: '150px' }}
           onClick={onClose}
           color="primary"
           variant="outlined"
@@ -448,24 +465,17 @@ const NewVersionModal = (props) => {
 
 export const MetadataFormFields = (props) => {
   const dispatch = useDispatch();
-  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+  const { enqueueSnackbar } = useSnackbar();
 
   const client = useClient();
   const { metadataForm, fieldTypeOptions, userRolesMF } = props;
   const [loading, setLoading] = useState(false);
   const [editOn, setEditOn] = useState(false);
   const [fields, setFields] = useState(metadataForm.fields);
-  const [inputValue, setInputValue] = useState('');
-  const [filter, setFilter] = useState({});
   const [glossaryNodes, setGlossaryNodes] = useState([]);
   const [currentVersion, setCurrentVersion] = useState(0);
   const [versionOptions, setVersionOptions] = useState([]);
   const [showNewVersionModal, setShowNewVersionModal] = useState(false);
-
-  const handleInputChange = (event) => {
-    setInputValue(event.target.value);
-    setFilter({ ...filter, term: event.target.value });
-  };
 
   const startEdit = () => {
     setEditOn(true);
@@ -497,7 +507,9 @@ export const MetadataFormFields = (props) => {
       response.data &&
       response.data.deleteMetadataFormVersion !== null
     ) {
-      metadataForm.versions = metadataForm.versions.filter((v) => v !== currentVersion);
+      metadataForm.versions = metadataForm.versions.filter(
+        (v) => v !== currentVersion
+      );
       setCurrentVersion(response.data.deleteMetadataFormVersion);
       setVersionOptions(metadataForm.versions);
       await fetchItems(metadataForm.versions[0]);
@@ -518,7 +530,6 @@ export const MetadataFormFields = (props) => {
   };
 
   const createNewVersion = async (copyVersion = null) => {
-
     setLoading(true);
     const response = await client.mutate(
       createMetadataFormVersion(metadataForm.uri, copyVersion)
@@ -529,8 +540,14 @@ export const MetadataFormFields = (props) => {
       response.data.createMetadataFormVersion !== null
     ) {
       setCurrentVersion(response.data.createMetadataFormVersion);
-      metadataForm.versions = [response.data.createMetadataFormVersion, ...metadataForm.versions];
-      setVersionOptions([ response.data.createMetadataFormVersion, ...versionOptions]);
+      metadataForm.versions = [
+        response.data.createMetadataFormVersion,
+        ...metadataForm.versions
+      ];
+      setVersionOptions([
+        response.data.createMetadataFormVersion,
+        ...versionOptions
+      ]);
       fetchItems(response.data.createMetadataFormVersion);
       enqueueSnackbar('Version created', {
         anchorOrigin: {
@@ -546,11 +563,13 @@ export const MetadataFormFields = (props) => {
       dispatch({ type: SET_ERROR, error });
     }
     setLoading(false);
-  }
+  };
 
   const fetchItems = async (version = null) => {
     setLoading(true);
-    const response = await client.query(getMetadataForm(metadataForm.uri, version));
+    const response = await client.query(
+      getMetadataForm(metadataForm.uri, version)
+    );
 
     if (
       !response.errors &&
@@ -610,14 +629,6 @@ export const MetadataFormFields = (props) => {
     setLoading(false);
   };
 
-  const handleInputKeyup = (event) => {
-    if (event.code === 'Enter') {
-      fetchItems().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
-    }
-  };
-
   useEffect(() => {
     if (client) {
       fetchItems().catch((e) =>
@@ -645,17 +656,17 @@ export const MetadataFormFields = (props) => {
             p: 2
           }}
         >
-          <Grid container  spacing={2}>
+          <Grid container spacing={2}>
             <Grid item lg={2} xl={2} xs={6}>
               <Autocomplete
                 disablePortal
-                options={versionOptions.map(option => {
+                options={versionOptions.map((option) => {
                   return { label: 'version ' + option, value: option };
                 })}
-                value={'version ' +currentVersion}
+                value={'version ' + currentVersion}
                 onChange={async (event, value) => {
-                  setCurrentVersion(value?value.value : versionOptions[0]);
-                  await fetchItems(value?value.value : versionOptions[0]);
+                  setCurrentVersion(value ? value.value : versionOptions[0]);
+                  await fetchItems(value ? value.value : versionOptions[0]);
                 }}
                 renderInput={(params) => (
                   <TextField
@@ -666,7 +677,7 @@ export const MetadataFormFields = (props) => {
                   />
                 )}
               />
-          </Grid>
+            </Grid>
             <Grid item lg={2} xl={2} xs={6}>
               <Button
                 color="primary"
@@ -677,17 +688,23 @@ export const MetadataFormFields = (props) => {
               >
                 New Version
               </Button>
-              {showNewVersionModal && <NewVersionModal
-                onClose={() => setShowNewVersionModal(false)}
-                currentVersion={currentVersion}
-                versions={versionOptions}
-                createNewVersion={createNewVersion}
-              >
-              </NewVersionModal>}
+              {showNewVersionModal && (
+                <NewVersionModal
+                  onClose={() => setShowNewVersionModal(false)}
+                  currentVersion={currentVersion}
+                  versions={versionOptions}
+                  createNewVersion={createNewVersion}
+                ></NewVersionModal>
+              )}
             </Grid>
-            <Grid item lg={8} xl={8} xs={12}
-            sx={{
-              textAlign: 'right'}}
+            <Grid
+              item
+              lg={8}
+              xl={8}
+              xs={12}
+              sx={{
+                textAlign: 'right'
+              }}
             >
               <Button
                 color="primary"
@@ -701,8 +718,6 @@ export const MetadataFormFields = (props) => {
               </Button>
             </Grid>
           </Grid>
-
-
         </Box>
         <Divider />
         {loading ? (

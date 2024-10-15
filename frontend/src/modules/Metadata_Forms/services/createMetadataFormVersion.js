@@ -7,7 +7,7 @@ export const createMetadataFormVersion = (formUri, copyVersion) => ({
   },
   mutation: gql`
     mutation createMetadataFormVersion($formUri: String!, $copyVersion: Int) {
-      createMetadataFormVersion(formUri: $formUri, copyVersion: $copyVersion) 
+      createMetadataFormVersion(formUri: $formUri, copyVersion: $copyVersion)
     }
   `
 });
