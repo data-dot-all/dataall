@@ -48,6 +48,10 @@ def get_home_entity_name(context: Context, source: MetadataForm):
     return MetadataFormService.get_home_entity_name(metadata_form=source)
 
 
+def get_entity_name(context: Context, source: AttachedMetadataForm):
+    return MetadataFormService.get_entity_name(attached_metadata_form=source)
+
+
 def get_metadata_form(context: Context, source, uri):
     return MetadataFormService.get_metadata_form_by_uri(uri=uri)
 
@@ -106,3 +110,7 @@ def resolve_metadata_form_field(context: Context, source: AttachedMetadataFormFi
 
 def get_entity_metadata_form_permissions(context: Context, source, entityUri):
     return MetadataFormService.get_mf_permissions(entityUri=entityUri)
+
+
+def list_metadata_form_versions(context: Context, source, uri):
+    return MetadataFormService.list_metadata_form_versions(uri=uri)

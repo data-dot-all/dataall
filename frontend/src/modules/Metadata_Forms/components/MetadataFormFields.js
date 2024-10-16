@@ -37,7 +37,8 @@ import Checkbox from '@mui/material/Checkbox';
 import {
   createMetadataFormVersion,
   deleteMetadataFormVersion,
-  getMetadataForm
+  getMetadataForm,
+  listMetadataFormVersions
 } from '../services';
 import { useClient } from '../../../services';
 import { GridActionsCellItem } from '@mui/x-data-grid';
@@ -463,6 +464,50 @@ const NewVersionModal = (props) => {
   );
 };
 
+export const ConfirmationPopUp = (props) => {
+  const { version, attached, onClose, onDelete } = props;
+  return (
+    <Dialog maxWidth="xs" fullWidth onClose={onClose} open={() => {}}>
+      <Box sx={{ p: 3 }}>
+        <Typography
+          align="center"
+          color="textPrimary"
+          gutterBottom
+          variant="h4"
+        >
+          Delete Version {version}
+        </Typography>
+        <Typography color="textPrimary" align="center" gutterBottom>
+          If you delete this version,
+          <br /> all data associated with it will be lost. <br />
+          Attached entities: {attached}
+        </Typography>
+      </Box>
+      <Box sx={{ mb: 2, textAlign: 'center' }}>
+        <Button
+          sx={{ mt: 2, minWidth: '150px' }}
+          onClick={() => {
+            onDelete();
+            onClose();
+          }}
+          color="primary"
+          variant="contained"
+        >
+          Delete
+        </Button>
+        <Button
+          sx={{ mt: 2, ml: 2, minWidth: '150px' }}
+          onClick={onClose}
+          color="primary"
+          variant="outlined"
+        >
+          Cancel
+        </Button>
+      </Box>
+    </Dialog>
+  );
+};
+
 export const MetadataFormFields = (props) => {
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
@@ -474,8 +519,10 @@ export const MetadataFormFields = (props) => {
   const [fields, setFields] = useState(metadataForm.fields);
   const [glossaryNodes, setGlossaryNodes] = useState([]);
   const [currentVersion, setCurrentVersion] = useState(0);
+  const [attached, setAttached] = useState(0);
   const [versionOptions, setVersionOptions] = useState([]);
   const [showNewVersionModal, setShowNewVersionModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const startEdit = () => {
     setEditOn(true);
@@ -510,9 +557,8 @@ export const MetadataFormFields = (props) => {
       metadataForm.versions = metadataForm.versions.filter(
         (v) => v !== currentVersion
       );
-      setCurrentVersion(response.data.deleteMetadataFormVersion);
-      setVersionOptions(metadataForm.versions);
-      await fetchItems(metadataForm.versions[0]);
+      await fetchVersions();
+      await fetchItems(metadataForm.versions[0].version);
       enqueueSnackbar('Version deleted', {
         anchorOrigin: {
           horizontal: 'right',
@@ -539,16 +585,8 @@ export const MetadataFormFields = (props) => {
       response.data &&
       response.data.createMetadataFormVersion !== null
     ) {
-      setCurrentVersion(response.data.createMetadataFormVersion);
-      metadataForm.versions = [
-        response.data.createMetadataFormVersion,
-        ...metadataForm.versions
-      ];
-      setVersionOptions([
-        response.data.createMetadataFormVersion,
-        ...versionOptions
-      ]);
-      fetchItems(response.data.createMetadataFormVersion);
+      await fetchVersions();
+      await fetchItems(response.data.createMetadataFormVersion);
       enqueueSnackbar('Version created', {
         anchorOrigin: {
           horizontal: 'right',
@@ -565,6 +603,28 @@ export const MetadataFormFields = (props) => {
     setLoading(false);
   };
 
+  const fetchVersions = async () => {
+    const response = await client.query(
+      listMetadataFormVersions(metadataForm.uri)
+    );
+    if (
+      !response.errors &&
+      response.data &&
+      response.data.listMetadataFormVersions !== null
+    ) {
+      metadataForm.versions = response.data.listMetadataFormVersions;
+      setCurrentVersion(response.data.listMetadataFormVersions[0].version);
+      setAttached(
+        response.data.listMetadataFormVersions[0].attached_forms.length
+      );
+      setVersionOptions(response.data.listMetadataFormVersions);
+    } else {
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Versions not found';
+      dispatch({ type: SET_ERROR, error });
+    }
+  };
   const fetchItems = async (version = null) => {
     setLoading(true);
     const response = await client.query(
@@ -634,8 +694,9 @@ export const MetadataFormFields = (props) => {
       fetchItems().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
-      setCurrentVersion(metadataForm.versions[0]);
-      setVersionOptions(metadataForm.versions);
+      fetchVersions().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
       if (glossaryNodes.length === 0) {
         fetchGlossaryNodes().catch((e) =>
           dispatch({ type: SET_ERROR, error: e.message })
@@ -661,11 +722,16 @@ export const MetadataFormFields = (props) => {
               <Autocomplete
                 disablePortal
                 options={versionOptions.map((option) => {
-                  return { label: 'version ' + option, value: option };
+                  return {
+                    label: 'version ' + option.version,
+                    value: option.version,
+                    attached: option.attached_forms.length
+                  };
                 })}
                 value={'version ' + currentVersion}
                 onChange={async (event, value) => {
                   setCurrentVersion(value ? value.value : versionOptions[0]);
+                  setAttached(value ? value.attached : 0);
                   await fetchItems(value ? value.value : versionOptions[0]);
                 }}
                 renderInput={(params) => (
@@ -699,9 +765,26 @@ export const MetadataFormFields = (props) => {
             </Grid>
             <Grid
               item
-              lg={8}
-              xl={8}
-              xs={12}
+              lg={6}
+              xl={6}
+              xs={4}
+              sx={{
+                textAlign: 'right'
+              }}
+            >
+              <Typography
+                sx={{ pt: 2 }}
+                variant="subtitle2"
+                color="textPrimary"
+              >
+                Attached entities : {attached}
+              </Typography>
+            </Grid>
+            <Grid
+              item
+              lg={2}
+              xl={2}
+              xs={4}
               sx={{
                 textAlign: 'right'
               }}
@@ -710,12 +793,20 @@ export const MetadataFormFields = (props) => {
                 color="primary"
                 startIcon={<DeleteIcon size={15} />}
                 sx={{ mt: 1 }}
-                onClick={() => deleteVersion()}
+                onClick={() => setShowDeleteModal(true)}
                 type="button"
                 disabled={versionOptions.length === 1}
               >
                 Delete Version
               </Button>
+              {showDeleteModal && (
+                <ConfirmationPopUp
+                  onClose={() => setShowDeleteModal(false)}
+                  onDelete={deleteVersion}
+                  version={currentVersion}
+                  attached={attached}
+                ></ConfirmationPopUp>
+              )}
             </Grid>
           </Grid>
         </Box>

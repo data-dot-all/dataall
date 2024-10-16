@@ -6,9 +6,11 @@ from dataall.core.environment.db.environment_repositories import EnvironmentRepo
 from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicyRepository
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.metadata_forms.db.enums import (
     MetadataFormVisibility,
     MetadataFormFieldType,
+    MetadataFormEntityTypes,
 )
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
@@ -129,7 +131,7 @@ class MetadataFormService:
         with get_context().db_engine.scoped_session() as session:
             mf = MetadataFormRepository.get_metadata_form(session, uri)
             if mf:
-                mf.versions = MetadataFormRepository.get_metadata_form_versions(session, uri)
+                mf.versions = MetadataFormRepository.get_metadata_form_versions_numbers(session, uri)
             return mf
 
     # toDo: deletion logic
@@ -309,7 +311,7 @@ class MetadataFormService:
     @MetadataFormAccessService.can_perform(UPDATE_METADATA_FORM_FIELD)
     def delete_metadata_form_version(uri, version):
         with get_context().db_engine.scoped_session() as session:
-            all_versions = MetadataFormRepository.get_metadata_form_versions(session, uri)
+            all_versions = MetadataFormRepository.get_metadata_form_versions_numbers(session, uri)
             if len(all_versions) == 1:
                 raise UnauthorizedOperation(
                     action='Delete version', message='Cannot delete the only version of the form'
@@ -317,3 +319,23 @@ class MetadataFormService:
             mf = MetadataFormRepository.get_metadata_form_version(session, uri, version)
             session.delete(mf)
             return MetadataFormRepository.get_metadata_form_version_number_latest(session, uri)
+
+    @staticmethod
+    def list_metadata_form_versions(uri):
+        with get_context().db_engine.scoped_session() as session:
+            all_versions = MetadataFormRepository.get_metadata_form_versions(session, uri)
+            for v in all_versions:
+                v.attached_forms = MetadataFormRepository.get_all_attached_metadata_forms(session, uri, v.version)
+            return all_versions
+
+    @staticmethod
+    def get_entity_name(attached_metadata_form):
+        with get_context().db_engine.scoped_session() as session:
+            if attached_metadata_form.entityType == MetadataFormEntityTypes.Organizations.value:
+                return OrganizationRepository.get_organization_by_uri(session, attached_metadata_form.entityUri).name
+            elif attached_metadata_form.entityType == MetadataFormEntityTypes.Environments.value:
+                return EnvironmentRepository.get_environment_by_uri(session, attached_metadata_form.entityUri).name
+            elif attached_metadata_form.entityType == MetadataFormEntityTypes.Datasets.value:
+                return DatasetBaseRepository.get_dataset_by_uri(session, attached_metadata_form.entityUri).name
+            else:
+                return 'Not Found'
