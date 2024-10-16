@@ -1,5 +1,6 @@
 from dataall.base.context import get_context
 from dataall.base.db import exceptions, paginate
+from dataall.base.db.exceptions import UnauthorizedOperation
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicyRepository
@@ -236,7 +237,7 @@ class MetadataFormService:
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_METADATA_FORMS)
-    @MetadataFormAccessService.can_perform('UPDATE_METADATA_FORM_FIELD')
+    @MetadataFormAccessService.can_perform(UPDATE_METADATA_FORM_FIELD)
     def batch_metadata_form_field_update(uri, data):
         to_delete = []
         to_update = []
@@ -291,7 +292,7 @@ class MetadataFormService:
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_METADATA_FORMS)
-    @MetadataFormAccessService.can_perform('UPDATE_METADATA_FORM_FIELD')
+    @MetadataFormAccessService.can_perform(UPDATE_METADATA_FORM_FIELD)
     def create_metadata_form_version(uri, copyVersion):
         with get_context().db_engine.scoped_session() as session:
             new_version = MetadataFormRepository.create_metadata_form_version_next(session, uri)
@@ -310,7 +311,9 @@ class MetadataFormService:
         with get_context().db_engine.scoped_session() as session:
             all_versions = MetadataFormRepository.get_metadata_form_versions(session, uri)
             if len(all_versions) == 1:
-                raise Exception('Cannot delete the only version of the form')
+                raise UnauthorizedOperation(
+                    action='Delete version', message='Cannot delete the only version of the form'
+                )
             mf = MetadataFormRepository.get_metadata_form_version(session, uri, version)
             session.delete(mf)
             return MetadataFormRepository.get_metadata_form_version_number_latest(session, uri)
