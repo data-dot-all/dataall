@@ -161,14 +161,16 @@ const WorksheetView = () => {
           (d) => ({
             ...d,
             value: d.datasetUri,
-            label: d.GlueDatabaseName
+            label: d.GlueDatabaseName,
+            bucketName: d.S3BucketName
           })
         );
       }
       response = await client.query(
         listS3DatasetsSharedWithEnvGroup({
           environmentUri: environment.environmentUri,
-          groupUri: team
+          groupUri: team,
+          bucketName: null
         })
       );
       if (response.errors) {
@@ -505,7 +507,6 @@ const WorksheetView = () => {
               environmentOptions={environmentOptions}
               currentEnv={currentEnv}
               worksheet={worksheet}
-              handleDatabaseChange={handleDatabaseChange}
               selectedDatabase={selectedDatabase}
               loadingDatabases={loadingDatabases}
               databaseOptions={databaseOptions}

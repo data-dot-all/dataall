@@ -49,10 +49,8 @@ listS3DatasetsOwnedByEnvGroup = gql.QueryField(
 
 listObjectKeys = gql.QueryField(
     name='listObjectKeys',
-    type=gql.Ref('ObjectKeys'),
+    type=gql.ArrayType(gql.String),
     args=[
-        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='worksheetUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
     ],
     resolver=list_object_keys,

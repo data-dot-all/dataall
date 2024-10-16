@@ -12,7 +12,7 @@ import React, { useCallback, useState } from 'react';
 import { Scrollbar } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { listObjectKeys, useClient } from 'services';
-import { unstructuredQuery } from '../services';
+import { analyzeTextDocument } from '../services';
 import PropTypes from 'prop-types';
 
 export const WorksheetDocSummarizer = ({
@@ -21,7 +21,6 @@ export const WorksheetDocSummarizer = ({
   currentEnv,
   environmentOptions,
   worksheet,
-  handleDatabaseChange,
   selectedDatabase,
   loadingDatabases,
   databaseOptions,
@@ -36,7 +35,6 @@ export const WorksheetDocSummarizer = ({
   const [selectedKey, setSelectedKey] = useState('');
 
   function handleBucketChange(event) {
-    handleDatabaseChange(event.target.value);
     fetchKeys(currentEnv, event.target.value).catch((e) =>
       dispatch({ type: SET_ERROR, error: e.message })
     );
@@ -47,13 +45,10 @@ export const WorksheetDocSummarizer = ({
       const response = await client.query(
         listObjectKeys({
           datasetUri: dataset.value,
-          environmentUri: environment.environmentUri,
-          worksheetUri: worksheet.worksheetUri
         })
       );
       if (!response.errors) {
-        const keys = response.data.listObjectKeys.objectKeys.split(' ');
-        setKeyOptions(keys);
+        setKeyOptions(response.data.listObjectKeys);
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -64,7 +59,7 @@ export const WorksheetDocSummarizer = ({
 
   const handleSubmit = async () => {
     setInvoking(true);
-    const queryObject = unstructuredQuery({
+    const queryObject = analyzeTextDocument({
       prompt: prompt,
       key: selectedKey,
       environmentUri: currentEnv.environmentUri,
@@ -72,7 +67,7 @@ export const WorksheetDocSummarizer = ({
       datasetUri: selectedDatabase.value
     });
     const response = await client.query(queryObject);
-    handleTextChange(response.data.unstructuredQuery.response);
+    handleTextChange(response.data.analyzeTextDocument);
     setInvoking(false);
   };
 
@@ -141,7 +136,7 @@ export const WorksheetDocSummarizer = ({
             <Box sx={{ p: 2 }}>
               <TextField
                 fullWidth
-                label="Bucket"
+                label="Owned S3 Bucket(s)"
                 name="database"
                 onChange={(event) => {
                   handleBucketChange(event);
@@ -160,20 +155,20 @@ export const WorksheetDocSummarizer = ({
                 }}
               >
                 {databaseOptions.length > 0 ? (
-                  databaseOptions.map((database) => (
+                  databaseOptions.filter((db) => db.bucketName !== null).map((database) => (
                     <MenuItem key={database.datasetUri} value={database}>
-                      {database.label}
+                      {database.bucketName}
                     </MenuItem>
                   ))
                 ) : (
-                  <MenuItem disabled>No databases found</MenuItem>
+                  <MenuItem disabled>No owned buckets found</MenuItem>
                 )}
               </TextField>
             </Box>
             <Box sx={{ p: 2 }}>
               <TextField
                 fullWidth
-                label="Key"
+                label="S3 Object Key(s)"
                 name="key"
                 onChange={(event) => {
                   handleKeyChange(event);
@@ -198,7 +193,7 @@ export const WorksheetDocSummarizer = ({
                     </MenuItem>
                   ))
                 ) : (
-                  <MenuItem disabled>No keys found</MenuItem>
+                  <MenuItem disabled>No TXT or PDF Keys Found</MenuItem>
                 )}
               </TextField>
             </Box>
@@ -247,7 +242,6 @@ WorksheetDocSummarizer.propTypes = {
   currentEnv: PropTypes.object.isRequired,
   environmentOptions: PropTypes.array.isRequired,
   worksheet: PropTypes.object.isRequired,
-  handleDatabaseChange: PropTypes.func.isRequired,
   selectedDatabase: PropTypes.object.isRequired,
   loadingDatabases: PropTypes.bool.isRequired,
   databaseOptions: PropTypes.array.isRequired,

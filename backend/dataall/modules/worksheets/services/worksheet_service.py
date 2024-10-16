@@ -155,9 +155,14 @@ class WorksheetService:
     @staticmethod
     @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
     @ResourceThresholdRepository.check_invocation_count('nlq')
-    def unstruct_query(session, uri, group, prompt, datasetUri, key):
+    def unstruct_query(session, uri, worksheetUri, prompt, datasetUri, key):
         environment = EnvironmentService.get_environment_by_uri(session, uri)
-        env_group = EnvironmentService.get_environment_group(session, group, uri)
+        worksheet = WorksheetService.get_worksheet_by_uri(session, worksheetUri)
+
+        env_group = EnvironmentService.get_environment_group(
+            session, worksheet.SamlAdminGroupName, environment.environmentUri
+        )
+        
         dataset = DatasetRepository.get_dataset_by_uri(session, datasetUri)
 
         s3_client = S3Client(

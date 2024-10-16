@@ -7,4 +7,4 @@ export * from './runAthenaSqlQuery';
 export * from './updateWorksheet';
 export * from './listSharedDatasetTableColumns';
 export * from './textToSQL';
-export * from './unstructuredQuery';
+export * from './analyzeTextDocument';

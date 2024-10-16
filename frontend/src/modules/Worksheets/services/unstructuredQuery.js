@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-export const unstructuredQuery = ({
+export const analyzeTextDocument = ({
   prompt,
   environmentUri,
   worksheetUri,
@@ -15,22 +15,20 @@ export const unstructuredQuery = ({
     key: key
   },
   query: gql`
-    query unstructuredQuery(
+    query analyzeTextDocument(
       $prompt: String!
       $environmentUri: String!
       $worksheetUri: String!
       $datasetUri: String!
       $key: String!
     ) {
-      unstructuredQuery(
+      analyzeTextDocument(
         prompt: $prompt
         environmentUri: $environmentUri
         worksheetUri: $worksheetUri
         datasetUri: $datasetUri
         key: $key
-      ) {
-        response
-      }
+      )
     }
   `
 });

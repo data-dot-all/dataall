@@ -99,7 +99,7 @@ def text_to_sql(
 def unstruct_query(
     context,
     source,
-    groupUri: str = None,
+    worksheetUri: str = None,
     environmentUri: str = None,
     prompt: str = None,
     datasetUri: str = None,
@@ -109,7 +109,7 @@ def unstruct_query(
         return WorksheetService.unstruct_query(
             session=session,
             uri=environmentUri,
-            group=groupUri,
+            worksheetUri=worksheetUri,
             prompt=prompt,
             datasetUri=datasetUri,
             key=key,

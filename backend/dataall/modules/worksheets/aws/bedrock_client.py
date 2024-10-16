@@ -62,7 +62,7 @@ WHERE a1.address = '900 Somerville Avenue' AND a2.address = '2 Finnigan Street'"
 ]
 
 
-class StructuredBedrockClient:
+class BedrockClient:
     def __init__(self):
         self._session = SessionHelper.get_session()
         self._client = self._session.client('bedrock-runtime')

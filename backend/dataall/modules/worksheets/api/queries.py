@@ -48,11 +48,11 @@ TextToSQL = gql.QueryField(
     resolver=text_to_sql,
 )
 
-unstructuredQuery = gql.QueryField(
-    name='unstructuredQuery',
-    type=gql.Ref('UnstructuredQueryResult'),
+analyzeTextDocument = gql.QueryField(
+    name='analyzeTextDocument',
+    type=gql.String,
     args=[
-        gql.Argument(name='groupUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='worksheetUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='prompt', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
