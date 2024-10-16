@@ -148,14 +148,14 @@ class WorksheetService:
         for table in table_names:
             metadata.append(glue_client.get_table_metadata(database=db_name, table_name=table))
 
-        response = BedrockClient().invoke_model(prompt, '\n'.join(metadata))
+        response = BedrockClient().invoke_model_text_to_sql(prompt, '\n'.join(metadata))
 
         return response
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
     @ResourceThresholdRepository.check_invocation_count('nlq')
-    def unstruct_query(session, uri, worksheetUri, prompt, datasetUri, key):
+    def analyze_text_genai(session, uri, worksheetUri, prompt, datasetUri, key):
         environment = EnvironmentService.get_environment_by_uri(session, uri)
         worksheet = WorksheetService.get_worksheet_by_uri(session, worksheetUri)
 
@@ -172,5 +172,5 @@ class WorksheetService:
         )
 
         content = s3_client.get_content(dataset.S3BucketName, key)
-        response = UnstructuredBedrockClient().invoke_model(prompt, content)
+        response = BedrockClient().invoke_model_process_text(prompt, content)
         return {'error': None, 'response': response}

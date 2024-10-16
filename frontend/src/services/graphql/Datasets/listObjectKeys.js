@@ -1,18 +1,12 @@
 import { gql } from 'apollo-boost';
 
-export const listObjectKeys = ({
-  datasetUri,
-}) => ({
+export const listObjectKeys = ({ datasetUri }) => ({
   variables: {
-    datasetUri,
+    datasetUri
   },
   query: gql`
-    query listObjectKeys(
-      $datasetUri: String!
-    ) {
-      listObjectKeys(
-        datasetUri: $datasetUri
-      ) {
+    query listObjectKeys($datasetUri: String!) {
+      listObjectKeys(datasetUri: $datasetUri) {
         objectKeys
       }
     }

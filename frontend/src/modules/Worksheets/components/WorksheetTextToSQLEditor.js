@@ -47,7 +47,7 @@ export const WorksheetTextToSQLEditor = ({
       environmentUri: currentEnv.environmentUri,
       worksheetUri: worksheet.worksheetUri,
       databaseName: selectedDatabase.label,
-      tableNames: selectedTables,
+      tableNames: selectedTables
     });
     const response = await client.query(queryObject);
     const message = response.data.textToSQL;
@@ -73,7 +73,6 @@ export const WorksheetTextToSQLEditor = ({
     setPrompt('');
     handleDatabaseChange(event);
   }
-
 
   return (
     <Box
@@ -182,7 +181,6 @@ export const WorksheetTextToSQLEditor = ({
                         variant="outlined"
                         label="Select Tables"
                         placeholder="Tables"
-
                       />
                     )}
                   </>
@@ -235,7 +233,6 @@ export const WorksheetTextToSQLEditor = ({
   );
 };
 
-
 WorksheetTextToSQLEditor.propTypes = {
   handleEnvironmentChange: PropTypes.func.isRequired,
   loadingEnvs: PropTypes.bool.isRequired,
@@ -248,5 +245,5 @@ WorksheetTextToSQLEditor.propTypes = {
   databaseOptions: PropTypes.array.isRequired,
   handleTableChange: PropTypes.func.isRequired,
   loadingTables: PropTypes.bool.isRequired,
-  tableOptions: PropTypes.array.isRequired,
+  tableOptions: PropTypes.array.isRequired
 };

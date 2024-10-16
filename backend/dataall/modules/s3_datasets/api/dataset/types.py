@@ -131,7 +131,6 @@ DatasetSearchResult = gql.ObjectType(
     ],
 )
 
-
 GlueCrawler = gql.ObjectType(
     name='GlueCrawler',
     fields=[

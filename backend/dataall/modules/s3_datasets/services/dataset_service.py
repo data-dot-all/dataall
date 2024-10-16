@@ -563,4 +563,4 @@ class DatasetService:
     def list_object_keys(session, uri):
         dataset = DatasetRepository.get_dataset_by_uri(session, uri)
 
-        return {'objectKeys': S3DatasetClient(dataset).list_object_keys(dataset.S3BucketName)}
+        return S3DatasetClient(dataset).list_object_keys(dataset.S3BucketName)

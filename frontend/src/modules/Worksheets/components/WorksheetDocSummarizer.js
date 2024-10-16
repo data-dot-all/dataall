@@ -44,7 +44,7 @@ export const WorksheetDocSummarizer = ({
       setLoadingKeys(true);
       const response = await client.query(
         listObjectKeys({
-          datasetUri: dataset.value,
+          datasetUri: dataset.value
         })
       );
       if (!response.errors) {
@@ -155,11 +155,13 @@ export const WorksheetDocSummarizer = ({
                 }}
               >
                 {databaseOptions.length > 0 ? (
-                  databaseOptions.filter((db) => db.bucketName !== null).map((database) => (
-                    <MenuItem key={database.datasetUri} value={database}>
-                      {database.bucketName}
-                    </MenuItem>
-                  ))
+                  databaseOptions
+                    .filter((db) => db.bucketName !== null)
+                    .map((database) => (
+                      <MenuItem key={database.datasetUri} value={database}>
+                        {database.bucketName}
+                      </MenuItem>
+                    ))
                 ) : (
                   <MenuItem disabled>No owned buckets found</MenuItem>
                 )}
@@ -235,7 +237,6 @@ export const WorksheetDocSummarizer = ({
   );
 };
 
-
 WorksheetDocSummarizer.propTypes = {
   handleEnvironmentChange: PropTypes.func.isRequired,
   loadingEnvs: PropTypes.bool.isRequired,
@@ -245,5 +246,5 @@ WorksheetDocSummarizer.propTypes = {
   selectedDatabase: PropTypes.object.isRequired,
   loadingDatabases: PropTypes.bool.isRequired,
   databaseOptions: PropTypes.array.isRequired,
-  handleTextChange: PropTypes.func.isRequired,
+  handleTextChange: PropTypes.func.isRequired
 };

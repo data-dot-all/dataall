@@ -96,7 +96,7 @@ def text_to_sql(
 
 
 @is_feature_enabled('modules.worksheets.features.nlq')
-def unstruct_query(
+def analyze_text_genai(
     context,
     source,
     worksheetUri: str = None,
@@ -106,7 +106,7 @@ def unstruct_query(
     key: str = None,
 ):
     with context.engine.scoped_session() as session:
-        return WorksheetService.unstruct_query(
+        return WorksheetService.analyze_text_genai(
             session=session,
             uri=environmentUri,
             worksheetUri=worksheetUri,

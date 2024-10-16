@@ -4,7 +4,7 @@ from dataall.modules.worksheets.api.resolvers import (
     list_worksheets,
     run_sql_query,
     text_to_sql,
-    unstruct_query,
+    analyze_text_genai,
 )
 
 
@@ -58,5 +58,5 @@ analyzeTextDocument = gql.QueryField(
         gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='key', type=gql.NonNullableType(gql.String)),
     ],
-    resolver=unstruct_query,
+    resolver=analyze_text_genai,
 )

@@ -42,15 +42,6 @@ AthenaQueryResult = gql.ObjectType(
 )
 
 
-UnstructuredQueryResult = gql.ObjectType(
-    name='UnstructuredQueryResult',
-    fields=[
-        gql.Field(name='error', type=gql.String),
-        gql.Field(name='response', type=gql.String),
-    ],
-)
-
-
 Worksheet = gql.ObjectType(
     name='Worksheet',
     fields=[

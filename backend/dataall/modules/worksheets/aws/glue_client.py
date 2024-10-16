@@ -16,14 +16,18 @@ class GlueClient:
         self._region = region
 
     def get_table_metadata(self, database, table_name):
-        table_metadata = self._client.get_table(DatabaseName=database, Name=table_name)
-        table_name = table_metadata['Table']['Name']
-        column_metadata = table_metadata['Table']['StorageDescriptor']['Columns']
-        partition_metadata = table_metadata['Table']['PartitionKeys']
-        meta_data = f"""
-        Database name: {database}
-        Table name: {table_name} 
-        Column Metadata: {column_metadata}
-        Partition Metadata: {partition_metadata}
-        """
+        try:
+            table_metadata = self._client.get_table(DatabaseName=database, Name=table_name)
+            table_name = table_metadata['Table']['Name']
+            column_metadata = table_metadata['Table']['StorageDescriptor']['Columns']
+            partition_metadata = table_metadata['Table']['PartitionKeys']
+            meta_data = f"""
+            Database name: {database}
+            Table name: {table_name} 
+            Column Metadata: {column_metadata}
+            Partition Metadata: {partition_metadata}
+            """
+        except ClientError as e:
+            log.error(f'Error fetching metadata for {table_name=}: {e}')
+            raise e
         return meta_data
