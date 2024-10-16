@@ -1,4 +1,5 @@
 import logging
+from os import name
 
 from botocore.exceptions import ClientError
 
@@ -14,8 +15,8 @@ class GlueClient:
         self._account_id = account_id
         self._region = region
 
-    def get_metadata(self, catalog_id, database, table_name):
-        table_metadata = self._client.get_table(CatalogId=catalog_id, DatabaseName=database, Name=table_name)
+    def get_table_metadata(self, database, table_name):
+        table_metadata = self._client.get_table(DatabaseName=database, Name=table_name)
         table_name = table_metadata['Table']['Name']
         column_metadata = table_metadata['Table']['StorageDescriptor']['Columns']
         partition_metadata = table_metadata['Table']['PartitionKeys']

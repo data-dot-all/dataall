@@ -45,8 +45,8 @@ export const WorksheetTextToSQLEditor = ({
     const queryObject = textToSQL({
       prompt: prompt,
       environmentUri: currentEnv.environmentUri,
-      groupUri: worksheet.SamlAdminGroupName,
-      datasetUri: selectedDatabase.value,
+      worksheetUri: worksheet.worksheetUri,
+      databaseName: selectedDatabase.label,
       tableNames: selectedTables,
     });
     const response = await client.query(queryObject);

@@ -77,9 +77,9 @@ def text_to_sql(
     context: Context,
     source,
     environmentUri: str = None,
-    groupUri: str = None,
+    worksheetUri: str = None,
     prompt: str = None,
-    datasetUri: str = None,
+    databaseName: str = None,
     tableNames: list = None,
 ):
     with context.engine.scoped_session() as session:
@@ -87,8 +87,8 @@ def text_to_sql(
             session=session,
             uri=environmentUri,
             prompt=prompt,
-            groupUri=groupUri,
-            datasetUri=datasetUri,
+            worksheetUri=worksheetUri,
+            db_name=databaseName,
             table_names=tableNames,
         )
 

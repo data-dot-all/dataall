@@ -3,30 +3,30 @@ import { gql } from 'apollo-boost';
 export const textToSQL = ({
   prompt,
   environmentUri,
-  groupUri,
-  datasetUri,
+  worksheetUri,
+  databaseName,
   tableNames
 }) => ({
   variables: {
     prompt,
     environmentUri,
-    groupUri,
-    datasetUri,
+    worksheetUri,
+    databaseName,
     tableNames
   },
   query: gql`
     query textToSQL(
       $prompt: String!
       $environmentUri: String!
-      $groupUri: String!
-      $datasetUri: String!
+      $worksheetUri: String!
+      $databaseName: String!
       $tableNames: String
     ) {
       textToSQL(
         prompt: $prompt
         environmentUri: $environmentUri
-        groupUri: $groupUri
-        datasetUri: $datasetUri
+        worksheetUri: $worksheetUri
+        databaseName: $databaseName
         tableNames: $tableNames
       )
     }

@@ -39,10 +39,10 @@ TextToSQL = gql.QueryField(
     name='textToSQL',
     type=gql.String,
     args=[
-        gql.Argument(name='groupUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='worksheetUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='prompt', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='databaseName', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='tableNames', type=gql.ArrayType(gql.String)),
     ],
     resolver=text_to_sql,
