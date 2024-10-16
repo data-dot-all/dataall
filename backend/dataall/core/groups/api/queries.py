@@ -1,5 +1,5 @@
 from dataall.base.api import gql
-from dataall.core.groups.api.resolvers import get_group, list_groups, get_groups_for_user
+from dataall.core.groups.api.resolvers import get_group, list_groups, get_groups_for_user, list_user
 
 getGroup = gql.QueryField(
     name='getGroup',
@@ -23,4 +23,12 @@ getGroupsForUser = gql.QueryField(
     args=[gql.Argument(name='userid', type=gql.NonNullableType(gql.String))],
     type=gql.ArrayType(gql.String),
     resolver=get_groups_for_user,
+)
+
+
+listUsersForGroup = gql.QueryField(
+    name='listUsersForGroup',
+    args=[gql.Argument(name='groupUri', type=gql.NonNullableType(gql.String))],
+    type=gql.ArrayType(gql.String),
+    resolver=list_user,
 )
