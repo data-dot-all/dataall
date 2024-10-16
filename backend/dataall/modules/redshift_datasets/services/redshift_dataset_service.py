@@ -112,17 +112,30 @@ class RedshiftDatasetService:
             RedshiftDatasetService._attach_dataset_permissions(session, dataset, environment)
 
             DatasetIndexer.upsert(session=session, dataset_uri=dataset.datasetUri)
-
+            rs_tables = redshift_data_client(
+                account_id=dataset.AwsAccountId, region=dataset.region, connection=connection
+            ).list_redshift_tables(dataset.schema)
+            rs_tables_names = [t['name'] for t in rs_tables]
+            error_tables = []
+            success_tables = []
             for table in data.get('tables', []):
-                rs_table = RedshiftDatasetRepository.create_redshift_table(
-                    session=session,
-                    username=context.username,
-                    dataset_uri=dataset.datasetUri,
-                    data={'name': table},
-                )
-                RedshiftDatasetService._attach_table_permissions(session, dataset, environment, rs_table)
-                DatasetTableIndexer.upsert(session=session, table_uri=rs_table.rsTableUri)
-
+                if table not in rs_tables_names:
+                    log.error(
+                        f'{table=} does not exist in Redshift cluster or is not accessible by connection {connection.connectionUri}'
+                    )
+                    error_tables.append(table)
+                else:
+                    rs_table = RedshiftDatasetRepository.create_redshift_table(
+                        session=session,
+                        username=context.username,
+                        dataset_uri=dataset.datasetUri,
+                        data={'name': table},
+                    )
+                    RedshiftDatasetService._attach_table_permissions(session, dataset, environment, rs_table)
+                    DatasetTableIndexer.upsert(session=session, table_uri=rs_table.rsTableUri)
+                    success_tables.append(table)
+            dataset.successTables = success_tables
+            dataset.errorTables = error_tables
         return dataset
 
     @staticmethod
@@ -212,11 +225,14 @@ class RedshiftDatasetService:
                 account_id=dataset.AwsAccountId, region=dataset.region, connection=connection
             ).list_redshift_tables(dataset.schema)
             rs_tables_names = [t['name'] for t in rs_tables]
+            error_tables = []
+            success_tables = []
             for table in tables:
                 if table not in rs_tables_names:
                     log.error(
                         f'{table=} does not exist in Redshift cluster or is not accessible by connection {connection.connectionUri}'
                     )
+                    error_tables.append(table)
                 else:
                     rs_table = RedshiftDatasetRepository.create_redshift_table(
                         session=session,
@@ -232,7 +248,8 @@ class RedshiftDatasetService:
                         resource_type=RedshiftTable.__name__,
                     )
                     DatasetTableIndexer.upsert(session=session, table_uri=rs_table.rsTableUri)
-        return True
+                    success_tables.append(table)
+        return {'successTables': success_tables, 'errorTables': error_tables}
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)

@@ -222,6 +222,24 @@ const RSDatasetImportForm = (props) => {
           },
           variant: 'success'
         });
+        if (response.data.importRedshiftDataset.successTables.length > 0) {
+          enqueueSnackbar(
+            `Tables added: ${response.data.importRedshiftDataset.successTables}`,
+            {
+              anchorOrigin: {
+                horizontal: 'right',
+                vertical: 'top'
+              },
+              variant: 'success'
+            }
+          );
+        }
+        if (response.data.importRedshiftDataset.errorTables.length > 0) {
+          dispatch({
+            type: SET_ERROR,
+            error: `The following tables could not be imported, either they do not exist or the connection used has no access to them: ${response.data.importRedshiftDataset.errorTables}`
+          });
+        }
         navigate(
           `/console/redshift-datasets/${response.data.importRedshiftDataset.datasetUri}`
         );

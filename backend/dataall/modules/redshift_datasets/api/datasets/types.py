@@ -70,6 +70,8 @@ RedshiftDataset = gql.ObjectType(
             type=gql.Ref('RedshiftConnection'),
             resolver=resolve_dataset_connection,
         ),
+        gql.Field('successTables', gql.ArrayType(gql.String)),
+        gql.Field('errorTables', gql.ArrayType(gql.String)),
     ],
 )
 
@@ -150,4 +152,9 @@ RedshiftDatasetTableColumnSearchResult = gql.ObjectType(
         gql.Field('hasNext', gql.Boolean),
         gql.Field('hasPrevious', gql.Boolean),
     ],
+)
+
+RedshiftAddTableResult = gql.ObjectType(
+    name='RedshiftAddTableResult',
+    fields=[gql.Field('successTables', gql.ArrayType(gql.String)), gql.Field('errorTables', gql.ArrayType(gql.String))],
 )

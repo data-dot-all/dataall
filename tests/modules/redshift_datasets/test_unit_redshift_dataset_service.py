@@ -61,7 +61,7 @@ def test_delete_redshift_dataset_unauthorized(imported_redshift_dataset_1_no_tab
     ).contains('UnauthorizedOperation', 'DELETE_REDSHIFT_DATASET', imported_redshift_dataset_1_no_tables.datasetUri)
 
 
-def test_delete_redshift_dataset(env_fixture, group, connection1_serverless, api_context_1):
+def test_delete_redshift_dataset(env_fixture, group, connection1_serverless, api_context_1, mock_redshift_data):
     dataset = RedshiftDatasetService.import_redshift_dataset(
         uri=env_fixture.environmentUri,
         admin_group=group.name,
@@ -109,10 +109,10 @@ def test_delete_redshift_dataset_table_unauthorized(imported_dataset_2_table_1, 
 def test_delete_redshift_dataset_table(imported_redshift_dataset_1_no_tables, api_context_1):
     # Given`
     response = RedshiftDatasetService.add_redshift_dataset_tables(
-        uri=imported_redshift_dataset_1_no_tables.datasetUri, tables=['table-to-delete']
+        uri=imported_redshift_dataset_1_no_tables.datasetUri, tables=['table4']
     )
     tables = RedshiftDatasetService.list_redshift_dataset_tables(
-        uri=imported_redshift_dataset_1_no_tables.datasetUri, filter={'term': 'table-to-delete'}
+        uri=imported_redshift_dataset_1_no_tables.datasetUri, filter={'term': 'table4'}
     )
     # When
     response = RedshiftDatasetService.delete_redshift_dataset_table(uri=tables['nodes'][0].rsTableUri)

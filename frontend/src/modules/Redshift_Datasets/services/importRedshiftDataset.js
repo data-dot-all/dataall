@@ -10,6 +10,8 @@ export const importRedshiftDataset = (input) => ({
         datasetUri
         label
         userRoleForDataset
+        errorTables
+        successTables
       }
     }
   `
