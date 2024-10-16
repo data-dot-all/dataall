@@ -210,7 +210,6 @@ def import_redshift_dataset(
     description,
     tags,
     owner,
-    topics,
     group_uri,
     confidentiality,
     auto_approval_enabled,
@@ -218,7 +217,7 @@ def import_redshift_dataset(
     schema,
     tables,
 ):
-    mutation = {
+    query = {
         'operationName': 'importRedshiftDataset',
         'variables': {
             'input': {
@@ -228,7 +227,6 @@ def import_redshift_dataset(
                 'description': description,
                 'tags': tags,
                 'owner': owner,
-                'topics': topics,
                 'SamlAdminGroupName': group_uri,
                 'confidentiality': confidentiality,
                 'autoApprovalEnabled': auto_approval_enabled,
@@ -243,16 +241,19 @@ def import_redshift_dataset(
                 datasetUri
                 label
                 userRoleForDataset
+                connection {
+                 connectionUri
+                 } 
               }
             }
         """,
     }
-    response = client.query(mutation=mutation)
+    response = client.query(query=query)
     return response.data.importRedshiftDataset
 
 
 def update_redshift_dataset(client, dataset_uri, description):
-    mutation = {
+    query = {
         'operationName': 'updateRedshiftDataset',
         'variables': {
             'datasetUri': dataset_uri,
@@ -267,16 +268,17 @@ def update_redshift_dataset(client, dataset_uri, description):
                 datasetUri
                 label
                 userRoleForDataset
+                description
               }
             }
         """,
     }
-    response = client.query(mutation=mutation)
+    response = client.query(query=query)
     return response.data.updateRedshiftDataset
 
 
 def delete_redshift_dataset(client, dataset_uri):
-    mutation = {
+    query = {
         'operationName': 'deleteRedshiftDataset',
         'variables': {'datasetUri': dataset_uri},
         'query': """
@@ -285,12 +287,12 @@ def delete_redshift_dataset(client, dataset_uri):
             }
         """,
     }
-    response = client.query(mutation=mutation)
+    response = client.query(query=query)
     return response.data.deleteRedshiftDataset
 
 
 def add_redshift_dataset_tables(client, dataset_uri, tables):
-    mutation = {
+    query = {
         'operationName': 'addRedshiftDatasetTables',
         'variables': {
             'datasetUri': dataset_uri,
@@ -305,12 +307,12 @@ def add_redshift_dataset_tables(client, dataset_uri, tables):
             }
         """,
     }
-    response = client.query(mutation=mutation)
+    response = client.query(query=query)
     return response.data.addRedshiftDatasetTables
 
 
 def delete_redshift_dataset_table(client, rs_table_uri):
-    mutation = {
+    query = {
         'operationName': 'deleteRedshiftDatasetTable',
         'variables': {'rsTableUri': rs_table_uri},
         'query': """
@@ -319,12 +321,12 @@ def delete_redshift_dataset_table(client, rs_table_uri):
             }
         """,
     }
-    response = client.query(mutation=mutation)
+    response = client.query(query=query)
     return response.data.deleteRedshiftDatasetTable
 
 
 def update_redshift_dataset_table(client, rs_table_uri, description):
-    mutation = {
+    query = {
         'operationName': 'updateRedshiftDatasetTable',
         'variables': {
             'rsTableUri': rs_table_uri,
@@ -338,9 +340,10 @@ def update_redshift_dataset_table(client, rs_table_uri, description):
               updateRedshiftDatasetTable(rsTableUri: $rsTableUri, input: $input) {
                 rsTableUri
                 label
+                description
               }
             }
         """,
     }
-    response = client.query(mutation=mutation)
+    response = client.query(query=query)
     return response.data.updateRedshiftDatasetTable
