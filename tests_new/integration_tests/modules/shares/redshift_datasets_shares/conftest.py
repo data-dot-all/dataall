@@ -7,7 +7,7 @@ from integration_tests.modules.shares.queries import (
     revoke_share_items,
     submit_share_object,
     delete_share_object,
-    get_share_object
+    get_share_object,
 )
 from integration_tests.modules.shares.utils import check_share_ready
 
@@ -22,6 +22,10 @@ Tests cover 2 scenarios:
 1. Cross account share from serverless cluster to provisioned cluster
 2. Cross account share from provisioned cluster to serverless cluster
 We have picked the most complex cases that should encapsulate the simpler ones (same account shares).
+
+Some test cases that require extra clusters have been skipped as they are well covered in the unit tests
+# def test_create_redshift_share_invalid_clusters():
+# def test_create_redshift_share_invalid_source_connection():
 """
 
 
@@ -72,7 +76,11 @@ def submitted_redshift_share_request_source_serverless(
     finally:
         if share:
             share = get_share_object(client=client5, shareUri=share.shareUri)
-            items_to_revoke = [item.shareItemUri for item in share['items'].nodes if item.status in ['Share_Succeeded', 'Revoke_Failed']]
+            items_to_revoke = [
+                item.shareItemUri
+                for item in share['items'].nodes
+                if item.status in ['Share_Succeeded', 'Revoke_Failed']
+            ]
             if items_to_revoke:
                 revoke_share_items(client=client5, shareUri=share.shareUri, shareItemUris=items_to_revoke)
                 check_share_ready(client=client5, shareUri=share.shareUri)
@@ -103,7 +111,11 @@ def submitted_redshift_share_request_source_cluster(
     finally:
         if share:
             share = get_share_object(client=client1, shareUri=share.shareUri)
-            items_to_revoke = [item.shareItemUri for item in share['items'].nodes if item.status in ['Share_Succeeded', 'Revoke_Failed']]
+            items_to_revoke = [
+                item.shareItemUri
+                for item in share['items'].nodes
+                if item.status in ['Share_Succeeded', 'Revoke_Failed']
+            ]
             if items_to_revoke:
                 revoke_share_items(client=client1, shareUri=share.shareUri, shareItemUris=items_to_revoke)
                 check_share_ready(client=client1, shareUri=share.shareUri)

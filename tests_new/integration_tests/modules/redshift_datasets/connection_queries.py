@@ -163,6 +163,7 @@ def create_redshift_connection(
                 connectionType
                 redshiftType
                 name
+                nameSpaceId
               }
             }
         """,
