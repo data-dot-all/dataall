@@ -205,23 +205,33 @@ class RedshiftDatasetService:
         datasetUri = uri
         with context.db_engine.scoped_session() as session:
             dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, datasetUri)
+            connection = RedshiftConnectionRepository.get_redshift_connection(session, dataset.connectionUri)
             dataset_tables = RedshiftDatasetRepository.list_redshift_dataset_tables(session, datasetUri)
             tables = [new_t for new_t in tables if new_t not in [t.name for t in dataset_tables]]
+            rs_tables = redshift_data_client(
+                account_id=dataset.AwsAccountId, region=dataset.region, connection=connection
+            ).list_redshift_tables(dataset.schema)
+            rs_tables_names = [t['name'] for t in rs_tables]
             for table in tables:
-                rs_table = RedshiftDatasetRepository.create_redshift_table(
-                    session=session,
-                    username=context.username,
-                    dataset_uri=datasetUri,
-                    data={'name': table},
-                )
-                ResourcePolicyService.attach_resource_policy(
-                    session=session,
-                    group=dataset.SamlAdminGroupName,
-                    permissions=REDSHIFT_DATASET_TABLE_ALL,
-                    resource_uri=rs_table.rsTableUri,
-                    resource_type=RedshiftTable.__name__,
-                )
-                DatasetTableIndexer.upsert(session=session, table_uri=rs_table.rsTableUri)
+                if table not in rs_tables_names:
+                    log.error(
+                        f'{table=} does not exist in Redshift cluster or is not accessible by connection {connection.connectionUri}'
+                    )
+                else:
+                    rs_table = RedshiftDatasetRepository.create_redshift_table(
+                        session=session,
+                        username=context.username,
+                        dataset_uri=datasetUri,
+                        data={'name': table},
+                    )
+                    ResourcePolicyService.attach_resource_policy(
+                        session=session,
+                        group=dataset.SamlAdminGroupName,
+                        permissions=REDSHIFT_DATASET_TABLE_ALL,
+                        resource_uri=rs_table.rsTableUri,
+                        resource_type=RedshiftTable.__name__,
+                    )
+                    DatasetTableIndexer.upsert(session=session, table_uri=rs_table.rsTableUri)
         return True
 
     @staticmethod
