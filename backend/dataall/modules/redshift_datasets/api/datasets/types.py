@@ -1,3 +1,5 @@
+from email.policy import default
+
 from dataall.base.api import gql
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
 
@@ -70,8 +72,7 @@ RedshiftDataset = gql.ObjectType(
             type=gql.Ref('RedshiftConnection'),
             resolver=resolve_dataset_connection,
         ),
-        gql.Field('successTables', gql.ArrayType(gql.String)),
-        gql.Field('errorTables', gql.ArrayType(gql.String)),
+        gql.Field('addedTables', gql.Ref('RedshiftAddTableResult')),
     ],
 )
 

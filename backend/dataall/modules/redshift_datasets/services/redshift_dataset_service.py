@@ -119,8 +119,7 @@ class RedshiftDatasetService:
                 connection=connection,
                 tables=data.get('tables', []),
             )
-            dataset.successTables = success_tables
-            dataset.errorTables = error_tables
+            dataset.addedTables = {'successTables': success_tables, 'errorTables': error_tables}
         return dataset
 
     @staticmethod
@@ -158,6 +157,7 @@ class RedshiftDatasetService:
                 DatasetBaseRepository.update_dataset_activity(session, dataset, username)
 
             DatasetIndexer.upsert(session, dataset_uri=uri)
+            dataset.addedTables = {}
             return dataset
 
     @staticmethod
@@ -251,6 +251,7 @@ class RedshiftDatasetService:
             dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, uri)
             if dataset.SamlAdminGroupName in context.groups:
                 dataset.userRoleForDataset = DatasetRole.Admin.value
+            dataset.addedTables = {}
             return dataset
 
     @staticmethod

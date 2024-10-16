@@ -242,8 +242,12 @@ def import_redshift_dataset(
                 label
                 userRoleForDataset
                 connection {
-                 connectionUri
-                 } 
+                    connectionUri
+                }
+                addedTables {
+                    errorTables
+                    successTables
+                }
               }
             }
         """,

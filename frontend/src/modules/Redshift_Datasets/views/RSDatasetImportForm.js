@@ -222,9 +222,12 @@ const RSDatasetImportForm = (props) => {
           },
           variant: 'success'
         });
-        if (response.data.importRedshiftDataset.successTables.length > 0) {
+        if (
+          response.data.importRedshiftDataset.addedTables.successTables.length >
+          0
+        ) {
           enqueueSnackbar(
-            `Tables added: ${response.data.importRedshiftDataset.successTables}`,
+            `Tables added: ${response.data.importRedshiftDataset.addedTables.successTables}`,
             {
               anchorOrigin: {
                 horizontal: 'right',
@@ -234,10 +237,12 @@ const RSDatasetImportForm = (props) => {
             }
           );
         }
-        if (response.data.importRedshiftDataset.errorTables.length > 0) {
+        if (
+          response.data.importRedshiftDataset.addedTables.errorTables.length > 0
+        ) {
           dispatch({
             type: SET_ERROR,
-            error: `The following tables could not be imported, either they do not exist or the connection used has no access to them: ${response.data.importRedshiftDataset.errorTables}`
+            error: `The following tables could not be imported, either they do not exist or the connection used has no access to them: ${response.data.importRedshiftDataset.addedTables.errorTables}`
           });
         }
         navigate(
