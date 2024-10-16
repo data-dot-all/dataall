@@ -575,12 +575,6 @@ class S3BucketShareManager:
         if kms_key_id:
             kms_target_resources = [f'arn:aws:kms:{target_bucket.region}:{target_bucket.AwsAccountId}:key/{kms_key_id}']
 
-        managed_policy_exists = share_policy_service.check_if_managed_policies_exists()
-
-        if not managed_policy_exists:
-            logger.info(f'Managed policies for share with uri: {share.shareUri} are not found')
-            return
-
         s3_kms_statement_chunks = []
         s3_statements = share_policy_service.total_s3_stmts
 

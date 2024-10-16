@@ -317,11 +317,11 @@ class S3SharePolicyService(ManagedPolicy):
             policy_name = self.generate_indexed_policy_name(index=index)
             log.info(f'Policy document before putting is: {policy_document}')
             IAM.update_managed_policy_default_version(
-                account_id=self.account,
-                region=self.region,
-                policy_name=policy_name,
-                old_version_id=self.policy_version_map.get(policy_name),
-                policy_document=json.dumps(policy_document),
+                self.account,
+                self.region,
+                policy_name,
+                self.policy_version_map.get(policy_name, 'v1'),
+                json.dumps(policy_document),
             )
 
         # Deleting excess policies
@@ -342,12 +342,10 @@ class S3SharePolicyService(ManagedPolicy):
                     IAM.detach_policy_from_role(
                         account_id=self.account, region=self.region, role_name=self.role_name, policy_name=policy_name
                     )
-                    IAM.delete_managed_policy_non_default_versions(
-                        account_id=self.account, region=self.region, policy_name=policy_name
-                    )
-                    IAM.delete_managed_policy_by_name(
-                        account_id=self.account, region=self.region, policy_name=policy_name
-                    )
+                IAM.delete_managed_policy_non_default_versions(
+                    account_id=self.account, region=self.region, policy_name=policy_name
+                )
+                IAM.delete_managed_policy_by_name(account_id=self.account, region=self.region, policy_name=policy_name)
             else:
                 log.info(f'Policy with name {policy_name} does not exist')
 
@@ -391,7 +389,9 @@ class S3SharePolicyService(ManagedPolicy):
         number_of_non_share_managed_policies_attached_to_role = len(
             [policy for policy in managed_policies_attached_to_role if policy not in policies_present]
         )
-        log.info(f'number_of_non_share_managed_policies_attached_to_role: {number_of_non_share_managed_policies_attached_to_role}')
+        log.info(
+            f'number_of_non_share_managed_policies_attached_to_role: {number_of_non_share_managed_policies_attached_to_role}'
+        )
 
         managed_iam_policy_quota = self._get_managed_policy_quota()
         if number_of_policies_needed + number_of_non_share_managed_policies_attached_to_role > managed_iam_policy_quota:

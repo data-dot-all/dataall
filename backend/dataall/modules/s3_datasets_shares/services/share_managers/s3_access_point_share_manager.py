@@ -232,7 +232,7 @@ class S3AccessPointShareManager:
         ]
 
         if not S3SharePolicyService.check_if_sid_exists(
-            f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3', share_policy_service.total_s3_stmts
+            f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3', share_policy_service.total_s3_access_point_stmts
         ):
             logger.info(f'IAM Policy Statement with base Sid: {IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3 does not exist')
             self.folder_errors.append(
@@ -246,7 +246,7 @@ class S3AccessPointShareManager:
             )
         elif not share_policy_service.check_resource_in_policy_statements(
             target_resources=s3_target_resources,
-            existing_policy_statements=share_policy_service.total_s3_stmts,
+            existing_policy_statements=share_policy_service.total_s3_access_point_stmts,
         ):
             logger.info(
                 f'IAM Policy Statement with Sid {IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3-<index> does not contain resources {s3_target_resources}'
@@ -262,7 +262,7 @@ class S3AccessPointShareManager:
             )
         else:
             policy_sid_actions_map = share_policy_service.check_s3_actions_in_policy_statement(
-                existing_policy_statements=share_policy_service.total_s3_stmts
+                existing_policy_statements=share_policy_service.total_s3_access_point_stmts
             )
             for sid in policy_sid_actions_map:
                 policy_check = policy_sid_actions_map[sid].get('policy_check')
@@ -296,7 +296,7 @@ class S3AccessPointShareManager:
             kms_target_resources = [f'arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}']
 
             if not S3SharePolicyService.check_if_sid_exists(
-                f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS', share_policy_service.total_s3_kms_stmts
+                f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS', share_policy_service.total_s3_access_point_kms_stmts
             ):
                 logger.info(
                     f'IAM Policy Statement with base Sid: {IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS-<index> does not exist'
@@ -312,7 +312,7 @@ class S3AccessPointShareManager:
                 )
             elif not share_policy_service.check_resource_in_policy_statements(
                 target_resources=kms_target_resources,
-                existing_policy_statements=share_policy_service.total_s3_kms_stmts,
+                existing_policy_statements=share_policy_service.total_s3_access_point_kms_stmts,
             ):
                 logger.info(
                     f'IAM Policy Statement {IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS-<index> does not contain resources {kms_target_resources}'
