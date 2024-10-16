@@ -1,5 +1,5 @@
 import logging
-import PyPDF2
+import pypdf
 from io import BytesIO
 
 from dataall.base.aws.sts import SessionHelper
@@ -27,7 +27,7 @@ class S3Client:
     def _read_pdf_content(content):
         pdf_content = content['Body'].read()
         pdf_buffer = BytesIO(pdf_content)
-        pdf_reader = PyPDF2.PdfReader(pdf_buffer)
+        pdf_reader = pypdf.PdfReader(pdf_buffer)
         full_text = ''
         for page_num in range(len(pdf_reader.pages)):
             page = pdf_reader.pages[page_num]
