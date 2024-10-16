@@ -10,12 +10,13 @@ import {
   Tooltip,
   Typography
 } from '@mui/material';
+import PropTypes from 'prop-types';
 import React from 'react';
 import { CgHashtag } from 'react-icons/cg';
 import { VscSymbolString } from 'react-icons/vsc';
 import { Scrollbar } from 'design';
 
-const WorksheetHub = ({
+export const WorksheetSQLEditor = ({
   handleEnvironmentChange,
   loadingEnvs,
   currentEnv,
@@ -210,4 +211,20 @@ const WorksheetHub = ({
   );
 };
 
-export default WorksheetHub;
+WorksheetSQLEditor.propTypes = {
+  handleEnvironmentChange: PropTypes.func.isRequired,
+  loadingEnvs: PropTypes.bool.isRequired,
+  currentEnv: PropTypes.object.isRequired,
+  environmentOptions: PropTypes.array.isRequired,
+  worksheet: PropTypes.object.isRequired,
+  handleDatabaseChange: PropTypes.func.isRequired,
+  selectedDatabase: PropTypes.object.isRequired,
+  loadingDatabases: PropTypes.bool.isRequired,
+  databaseOptions: PropTypes.array.isRequired,
+  handleTableChange: PropTypes.func.isRequired,
+  selectedTable: PropTypes.object.isRequired,
+  loadingTables: PropTypes.bool.isRequired,
+  tableOptions: PropTypes.array.isRequired,
+  loadingColumns: PropTypes.bool.isRequired,
+  columns: PropTypes.array.isRequired
+};

@@ -1,20 +1,24 @@
+import { WarningAmber } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Card,
   CircularProgress,
   MenuItem,
   TextField,
-  Typography
+  Typography,
+  Autocomplete,
+  Chip
 } from '@mui/material';
-import { WarningAmber } from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
-import React, { useCallback, useState } from 'react';
+
+import React, { useState } from 'react';
 import { Scrollbar } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { listObjectKeys, useClient } from 'services';
-import { unstructuredQuery } from '../services';
+import { useClient } from 'services';
+import { textToSQL } from '../services';
+import PropTypes from 'prop-types';
 
-const DocumentSummarizer = ({
+export const WorksheetTextToSQLEditor = ({
   handleEnvironmentChange,
   loadingEnvs,
   currentEnv,
@@ -24,60 +28,52 @@ const DocumentSummarizer = ({
   selectedDatabase,
   loadingDatabases,
   databaseOptions,
-  handleTextChange
+  loadingTables,
+  tableOptions,
+  handleSQLChange
 }) => {
   const dispatch = useDispatch();
   const client = useClient();
   const [invoking, setInvoking] = useState(false);
+  const [selectedTables, setSelectedTables] = useState([]);
   const [prompt, setPrompt] = useState('');
-  const [loadingKeys, setLoadingKeys] = useState(false);
-  const [keyOptions, setKeyOptions] = useState([]);
-  const [selectedKey, setSelectedKey] = useState('');
-
-  function handleBucketChange(event) {
-    handleDatabaseChange(event.target.value);
-    fetchKeys(currentEnv, event.target.value).catch((e) =>
-      dispatch({ type: SET_ERROR, error: e.message })
-    );
-  }
-  const fetchKeys = useCallback(
-    async (environment, dataset) => {
-      setLoadingKeys(true);
-      const response = await client.query(
-        listObjectKeys({
-          datasetUri: dataset.value,
-          environmentUri: environment.environmentUri,
-          worksheetUri: worksheet.worksheetUri
-        })
-      );
-      if (!response.errors) {
-        const keys = response.data.listObjectKeys.objectKeys.split(' ');
-        setKeyOptions(keys);
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-      setLoadingKeys(false);
-    },
-    [client, dispatch]
-  );
 
   const handleSubmit = async () => {
     setInvoking(true);
-    const queryObject = unstructuredQuery({
+    handleSQLChange('');
+
+    const queryObject = textToSQL({
       prompt: prompt,
-      key: selectedKey,
       environmentUri: currentEnv.environmentUri,
-      worksheetUri: worksheet.worksheetUri,
-      datasetUri: selectedDatabase.value
+      groupUri: worksheet.SamlAdminGroupName,
+      datasetUri: selectedDatabase.value,
+      tableNames: selectedTables,
     });
     const response = await client.query(queryObject);
-    handleTextChange(response.data.unstructuredQuery.response);
+    const message = response.data.textToSQL;
+    if (message.split(':')[0] === 'Error') {
+      dispatch({ type: SET_ERROR, error: message.split(':')[1] });
+    } else {
+      handleSQLChange(response.data.textToSQL.response);
+    }
     setInvoking(false);
   };
 
-  function handleKeyChange(event) {
-    setSelectedKey(event.target.value);
+  function handlePromptChange(prompt) {
+    setPrompt(prompt);
   }
+
+  function handleTablesChange(newValue) {
+    setSelectedTables(newValue);
+    setPrompt('');
+  }
+
+  function handleDatabaseChanges(event) {
+    setSelectedTables([]);
+    setPrompt('');
+    handleDatabaseChange(event);
+  }
+
 
   return (
     <Box
@@ -140,10 +136,10 @@ const DocumentSummarizer = ({
             <Box sx={{ p: 2 }}>
               <TextField
                 fullWidth
-                label="Bucket"
+                label="Database"
                 name="database"
                 onChange={(event) => {
-                  handleBucketChange(event);
+                  handleDatabaseChanges(event);
                 }}
                 select
                 value={selectedDatabase}
@@ -169,39 +165,42 @@ const DocumentSummarizer = ({
                 )}
               </TextField>
             </Box>
-            <Box sx={{ p: 2 }}>
-              <TextField
-                fullWidth
-                label="Key"
-                name="key"
-                onChange={(event) => {
-                  handleKeyChange(event);
-                }}
-                select
-                value={selectedKey}
-                variant="outlined"
-                InputProps={{
-                  endAdornment: (
-                    <>
-                      {loadingKeys ? (
-                        <CircularProgress color="inherit" size={20} />
-                      ) : null}
-                    </>
-                  )
-                }}
-              >
-                {keyOptions.length > 0 ? (
-                  keyOptions.map((key) => (
-                    <MenuItem key={key} value={key}>
-                      {key}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled>No keys found</MenuItem>
-                )}
-              </TextField>
-            </Box>
 
+            <Box sx={{ p: 2 }}>
+              <Autocomplete
+                multiple
+                options={tableOptions.map((t) => t.GlueTableName)}
+                value={selectedTables}
+                onChange={(_, newValue) => handleTablesChange(newValue)}
+                renderInput={(params) => (
+                  <>
+                    {loadingTables ? (
+                      <CircularProgress color="inherit" size={20} />
+                    ) : (
+                      <TextField
+                        {...params}
+                        variant="outlined"
+                        label="Select Tables"
+                        placeholder="Tables"
+
+                      />
+                    )}
+                  </>
+                )}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip
+                      variant="outlined"
+                      label={option}
+                      {...getTagProps({ index })}
+                    />
+                  ))
+                }
+                disabled={!selectedDatabase}
+                fullWidth
+                margin="normal"
+              />
+            </Box>
             <Box sx={{ p: 2 }}>
               <TextField
                 fullWidth
@@ -209,7 +208,7 @@ const DocumentSummarizer = ({
                 multiline
                 rows={4}
                 value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
+                onChange={(e) => handlePromptChange(e.target.value)}
                 variant="outlined"
               />
             </Box>
@@ -225,11 +224,8 @@ const DocumentSummarizer = ({
                 variant="contained"
                 onClick={handleSubmit}
                 fullWidth
-                disabled={
-                  !currentEnv || !selectedDatabase || !selectedKey || !prompt
-                }
               >
-                Summarize
+                Generate SQL
               </LoadingButton>
             </Box>
           </Card>
@@ -239,4 +235,18 @@ const DocumentSummarizer = ({
   );
 };
 
-export default DocumentSummarizer;
+
+WorksheetTextToSQLEditor.propTypes = {
+  handleEnvironmentChange: PropTypes.func.isRequired,
+  loadingEnvs: PropTypes.bool.isRequired,
+  currentEnv: PropTypes.object.isRequired,
+  environmentOptions: PropTypes.array.isRequired,
+  worksheet: PropTypes.object.isRequired,
+  handleDatabaseChange: PropTypes.func.isRequired,
+  selectedDatabase: PropTypes.object.isRequired,
+  loadingDatabases: PropTypes.bool.isRequired,
+  databaseOptions: PropTypes.array.isRequired,
+  handleTableChange: PropTypes.func.isRequired,
+  loadingTables: PropTypes.bool.isRequired,
+  tableOptions: PropTypes.array.isRequired,
+};

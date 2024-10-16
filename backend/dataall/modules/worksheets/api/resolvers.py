@@ -76,8 +76,8 @@ def delete_worksheet(context, source, worksheetUri: str = None):
 def text_to_sql(
     context: Context,
     source,
-    groupUri: str = None,
     environmentUri: str = None,
+    groupUri: str = None,
     prompt: str = None,
     datasetUri: str = None,
     tableNames: list = None,
@@ -86,8 +86,8 @@ def text_to_sql(
         response = WorksheetService.run_nlq(
             session=session,
             uri=environmentUri,
-            group=groupUri,
             prompt=prompt,
+            groupUri=groupUri,
             datasetUri=datasetUri,
             table_names=tableNames,
         )

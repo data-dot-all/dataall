@@ -40,27 +40,27 @@ import {
 import {
   SQLQueryEditor,
   WorksheetEditFormModal,
-  WorksheetResult
+  WorksheetResult,
+  WorksheetTextToSQLEditor,
+  WorksheetDocSummarizer,
+  WorksheetSQLEditor
 } from '../components';
 import { isFeatureEnabled } from 'utils';
-import AISQLGenerator from './AISQLGen';
-import DocumentSummarizer from './UnstructuredView';
-import WorksheetHub from './WorkSheetHub';
 
 const tabs = [
   {
-    label: 'Structured Data',
-    value: 'Structured',
+    label: 'SQL Editor',
+    value: 'SQLEditor',
     active: true
   },
   {
-    label: 'AI SQL Generator',
-    value: 'AISQLGen',
+    label: 'TextToSQL Editor',
+    value: 'TextToSQL',
     active: isFeatureEnabled('worksheets', 'nlq')
   },
   {
     label: 'Document Summarizer',
-    value: 'Unstructured',
+    value: 'DocSummarizer',
     active: isFeatureEnabled('worksheets', 'nlq')
   }
 ];
@@ -463,8 +463,8 @@ const WorksheetView = () => {
             height: '100%'
           }}
         >
-          {currentTab === 'Structured' && (
-            <WorksheetHub
+          {currentTab === 'SQLEditor' && (
+            <WorksheetSQLEditor
               handleEnvironmentChange={handleEnvironmentChange}
               loadingEnvs={loadingEnvs}
               environmentOptions={environmentOptions}
@@ -482,8 +482,8 @@ const WorksheetView = () => {
               columns={columns}
             />
           )}
-          {currentTab === 'AISQLGen' && (
-            <AISQLGenerator
+          {currentTab === 'TextToSQL' && (
+            <WorksheetTextToSQLEditor
               handleEnvironmentChange={handleEnvironmentChange}
               loadingEnvs={loadingEnvs}
               environmentOptions={environmentOptions}
@@ -498,8 +498,8 @@ const WorksheetView = () => {
               handleSQLChange={handleSQLChange}
             />
           )}
-          {currentTab === 'Unstructured' && (
-            <DocumentSummarizer
+          {currentTab === 'DocSummarizer' && (
+            <WorksheetDocSummarizer
               handleEnvironmentChange={handleEnvironmentChange}
               loadingEnvs={loadingEnvs}
               environmentOptions={environmentOptions}
@@ -547,7 +547,7 @@ const WorksheetView = () => {
               <FaTrash size={16} />
             </IconButton>
           </Box>
-          {currentTab !== 'Unstructured' ? (
+          {currentTab !== 'DocSummarizer' ? (
             <>
               <Divider />
               <Box sx={{ p: 2 }}>

@@ -5,7 +5,7 @@ from dataall.modules.worksheets.aws.glue_client import GlueClient
 from dataall.modules.worksheets.aws.s3_client import S3Client
 from dataall.modules.worksheets.aws.unstruct_bedrock_client import UnstructuredBedrockClient
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.worksheets.aws.structured_bedrock_client import StructuredBedrockClient
+from dataall.modules.worksheets.aws.structured_bedrock_client import BedrockClient
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.db import exceptions
@@ -132,9 +132,9 @@ class WorksheetService:
     @staticmethod
     @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
     @ResourceThresholdRepository.check_invocation_count('nlq')
-    def run_nlq(session, uri, group, prompt, datasetUri, table_names):
+    def run_nlq(session, uri, prompt, groupUri, datasetUri, table_names):
         environment = EnvironmentService.get_environment_by_uri(session, uri)
-        env_group = EnvironmentService.get_environment_group(session, group, uri)
+        env_group = EnvironmentService.get_environment_group(session, groupUri, uri)
         dataset = DatasetRepository.get_dataset_by_uri(session, datasetUri)
         glue_client = GlueClient(
             account_id=environment.AwsAccountId, region=environment.region, role=env_group.environmentIAMRoleArn
@@ -148,7 +148,7 @@ class WorksheetService:
                 )
             )
 
-        response = StructuredBedrockClient().invoke_model(prompt, '\n'.join(metadata))
+        response = BedrockClient().invoke_model(prompt, '\n'.join(metadata))
 
         return response
 
