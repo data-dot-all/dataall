@@ -3,7 +3,6 @@ import logging
 from dataall.core.resource_threshold.db.resource_threshold_repositories import ResourceThresholdRepository
 from dataall.modules.worksheets.aws.glue_client import GlueClient
 from dataall.modules.worksheets.aws.s3_client import S3Client
-from dataall.modules.worksheets.aws.unstruct_bedrock_client import UnstructuredBedrockClient
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.worksheets.aws.bedrock_client import BedrockClient
 from dataall.core.activity.db.activity_models import Activity
