@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import {
+  Autocomplete,
   Box,
   Button,
   Card,
   CardContent,
   CardHeader,
   Grid,
+  TextField,
   Typography
 } from '@mui/material';
 import {
@@ -20,7 +22,7 @@ import { useDispatch } from 'react-redux';
 import { Formik } from 'formik';
 import { LoadingButton } from '@mui/lab';
 import SendIcon from '@mui/icons-material/Send';
-import { createAttachedMetadataForm } from '../services';
+import { createAttachedMetadataForm, getMetadataForm } from '../services';
 import { SET_ERROR } from '../../../globalErrors';
 
 export const RenderedMetadataForm = (props) => {
@@ -37,6 +39,10 @@ export const RenderedMetadataForm = (props) => {
   } = props;
 
   const [localFields, setLocalFields] = useState([...fields]);
+  const [currentVersion, setCurrentVersion] = useState(
+    metadataForm.versions ? metadataForm.versions[0] : 0
+  );
+
   localFields.forEach((field, index) => {
     if (field.type === 'Boolean' && field.value === undefined) {
       field.value = false;
@@ -137,6 +143,33 @@ export const RenderedMetadataForm = (props) => {
     setSubmitting(false);
   };
 
+  const fetchItems = async (version = null) => {
+    const response = await client.query(
+      getMetadataForm(metadataForm.uri, version)
+    );
+
+    if (
+      !response.errors &&
+      response.data &&
+      response.data.getMetadataForm !== null
+    ) {
+      setLocalFields(response.data.getMetadataForm.fields);
+    } else {
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Metadata Forms not found';
+      dispatch({ type: SET_ERROR, error });
+    }
+  };
+
+  useEffect(() => {
+    if (client) {
+      fetchItems().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+    }
+  }, [client, dispatch]);
+
   return (
     <Card sx={{ height: '100%' }}>
       <Formik
@@ -158,8 +191,35 @@ export const RenderedMetadataForm = (props) => {
           <form onSubmit={handleSubmit}>
             <CardContent>
               <Grid container>
-                <Grid item lg={8} xl={8}>
+                <Grid item lg={4} xl={4}>
                   <CardHeader title={metadataForm.name} />
+                </Grid>
+                <Grid item lg={4} xl={4}>
+                  {preview && (
+                    <Autocomplete
+                      disablePortal
+                      options={metadataForm.versions.map((option) => {
+                        return { label: 'version ' + option, value: option };
+                      })}
+                      value={'version ' + currentVersion}
+                      onChange={async (event, value) => {
+                        setCurrentVersion(
+                          value ? value.value : metadataForm.versions[0]
+                        );
+                        await fetchItems(
+                          value ? value.value : metadataForm.versions[0]
+                        );
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          sx={{ minWidth: '150px' }}
+                          {...params}
+                          label="Version"
+                          variant="outlined"
+                        />
+                      )}
+                    />
+                  )}
                 </Grid>
                 <Grid item lg={4} xl={4}>
                   <Box
