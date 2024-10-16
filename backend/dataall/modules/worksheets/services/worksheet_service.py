@@ -162,7 +162,7 @@ class WorksheetService:
         env_group = EnvironmentService.get_environment_group(
             session, worksheet.SamlAdminGroupName, environment.environmentUri
         )
-        
+
         dataset = DatasetRepository.get_dataset_by_uri(session, datasetUri)
 
         s3_client = S3Client(
