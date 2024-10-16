@@ -166,7 +166,7 @@ def session_redshift_dataset_serverless(
     try:
         dataset = import_redshift_dataset(
             client=client1,
-            label='Test-Redshift-Serverless',
+            label='session_redshift_serverless_dataset1',
             org_uri=org1.organizationUri,
             env_uri=session_env1.environmentUri,
             description='Used for integration test',
@@ -201,7 +201,7 @@ def session_redshift_dataset_cluster(
     try:
         dataset = import_redshift_dataset(
             client=client5,
-            label='Test-Redshift-Cluster',
+            label='session_redshift_cluster_dataset1',
             org_uri=org1.organizationUri,
             env_uri=session_cross_acc_env_1.environmentUri,
             description='Used for integration test',

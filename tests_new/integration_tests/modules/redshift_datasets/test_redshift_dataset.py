@@ -76,11 +76,11 @@ def test_import_redshift_dataset_invalid_connection_type(
 
 
 def test_update_redshift_dataset(client1, session_redshift_dataset_serverless):
-    UPDATED_DESC = 'Updated Description'
+    updated_desc = 'Updated Description'
     response = update_redshift_dataset(
-        client=client1, dataset_uri=session_redshift_dataset_serverless.datasetUri, description=UPDATED_DESC
+        client=client1, dataset_uri=session_redshift_dataset_serverless.datasetUri, description=updated_desc
     )
-    assert_that(response.description).is_equal_to(UPDATED_DESC)
+    assert_that(response.description).is_equal_to(updated_desc)
 
 
 def test_update_redshift_dataset_unauthorized(client2, session_redshift_dataset_serverless):
@@ -137,11 +137,11 @@ def test_add_redshift_dataset_tables_unauthorized(client2, session_redshift_data
 
 
 def test_update_redshift_dataset_table(client1, session_redshift_dataset_serverless_table, session_id):
-    NEW_DESC = f'Updated Description {session_id}'
+    new_desc = f'Updated Description {session_id}'
     response = update_redshift_dataset_table(
-        client=client1, rs_table_uri=session_redshift_dataset_serverless_table.rsTableUri, description=NEW_DESC
+        client=client1, rs_table_uri=session_redshift_dataset_serverless_table.rsTableUri, description=new_desc
     )
-    assert_that(response.description).is_equal_to(NEW_DESC)
+    assert_that(response.description).is_equal_to(new_desc)
 
 
 def test_update_redshift_dataset_table_unauthorized(client2, session_redshift_dataset_serverless_table):
@@ -170,7 +170,7 @@ def test_delete_redshift_dataset_table(client1, session_redshift_dataset_serverl
     assert_that(response).is_true()
 
 
-def test_delete_reedshift_dataset_table_unauthorized(client2, session_redshift_dataset_serverless_table):
+def test_delete_redshift_dataset_table_unauthorized(client2, session_redshift_dataset_serverless_table):
     assert_that(delete_redshift_dataset_table).raises(GqlError).when_called_with(
         client=client2, rs_table_uri=session_redshift_dataset_serverless_table.rsTableUri
     ).contains(
