@@ -1,8 +1,12 @@
 from dataall.core.resource_threshold.db.resource_threshold import ResourceThreshold
-from sqlalchemy import and_, func
+from sqlalchemy import and_
+from datetime import date
 from dataall.base.config import config
 from dataall.base.db import exceptions
 from functools import wraps
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class ResourceThresholdRepository:
@@ -16,7 +20,7 @@ class ResourceThresholdRepository:
                 and_(
                     ResourceThreshold.username == username,
                     ResourceThreshold.actionType == action_type,
-                    ResourceThreshold.date == func.current_date(),
+                    ResourceThreshold.date == date.today(),
                 )
             )
             .scalar()
@@ -27,13 +31,17 @@ class ResourceThresholdRepository:
     def _add_entry(session, username, action_type):
         user_entry = ResourceThresholdRepository._get_user_entry(session, username, action_type)
         if user_entry:
-            user_entry.update(
-                {ResourceThreshold.count: 1, ResourceThreshold.date: func.current_date()}, synchronize_session=False
-            )
+            session.query(ResourceThreshold).filter(
+                and_(
+                    ResourceThreshold.username == username,
+                    ResourceThreshold.actionType == action_type,
+                )
+            ).update({ResourceThreshold.count: 1, ResourceThreshold.date: date.today()}, synchronize_session=False)
             session.commit()
         else:
             action_entry = ResourceThreshold(username=username, actionType=action_type)
             session.add(action_entry)
+            session.commit()
 
     @staticmethod
     def _increment_count(session, username, action_type):
@@ -41,15 +49,17 @@ class ResourceThresholdRepository:
             and_(
                 ResourceThreshold.username == username,
                 ResourceThreshold.actionType == action_type,
-                ResourceThreshold.date == func.current_date(),
+                ResourceThreshold.date == date.today(),
             )
         ).update({ResourceThreshold.count: ResourceThreshold.count + 1}, synchronize_session=False)
         session.commit()
 
     @staticmethod
     def _get_user_entry(session, username, action_type):
-        entry = session.query(ResourceThreshold).filter(
-            and_(ResourceThreshold.username == username, ResourceThreshold.actionType == action_type)
+        entry = (
+            session.query(ResourceThreshold)
+            .filter(and_(ResourceThreshold.username == username, ResourceThreshold.actionType == action_type))
+            .first()
         )
         return entry
 
@@ -62,6 +72,7 @@ class ResourceThresholdRepository:
                     session=session, username=username, action_type=action_type
                 )
                 max_count = config.get_property(ResourceThresholdRepository._RESOURCE_PATHS[action_type], 10)
+                log.info(f'User {username} has invoked {action_type} {count} times today of max {max_count}')
                 if count < max_count:
                     if count == 0:
                         ResourceThresholdRepository._add_entry(

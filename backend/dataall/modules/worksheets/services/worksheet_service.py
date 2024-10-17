@@ -134,26 +134,27 @@ class WorksheetService:
     @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
     @ResourceThresholdRepository.check_invocation_count('nlq')
     def run_nlq(session, username, uri, prompt, worksheetUri, db_name, table_names):
-        environment = EnvironmentService.get_environment_by_uri(session, uri)
-        worksheet = WorksheetService.get_worksheet_by_uri(session, worksheetUri)
+        return 'TEST'
+        # environment = EnvironmentService.get_environment_by_uri(session, uri)
+        # worksheet = WorksheetService.get_worksheet_by_uri(session, worksheetUri)
 
-        env_group = EnvironmentService.get_environment_group(
-            session, worksheet.SamlAdminGroupName, environment.environmentUri
-        )
+        # env_group = EnvironmentService.get_environment_group(
+        #     session, worksheet.SamlAdminGroupName, environment.environmentUri
+        # )
 
-        glue_client = GlueClient(
-            account_id=environment.AwsAccountId, region=environment.region, role=env_group.environmentIAMRoleArn
-        )
+        # glue_client = GlueClient(
+        #     account_id=environment.AwsAccountId, region=environment.region, role=env_group.environmentIAMRoleArn
+        # )
 
-        metadata = []
-        for table in table_names:
-            metadata.append(glue_client.get_table_metadata(database=db_name, table_name=table))
+        # metadata = []
+        # for table in table_names:
+        #     metadata.append(glue_client.get_table_metadata(database=db_name, table_name=table))
 
-        response = BedrockClient().invoke_model_text_to_sql(prompt, '\n'.join(metadata))
+        # response = BedrockClient().invoke_model_text_to_sql(prompt, '\n'.join(metadata))
 
-        if response.startswith('Error:'):
-            raise exceptions.ModelGuardrailException(response)
-        return response
+        # if response.startswith('Error:'):
+        #     raise exceptions.ModelGuardrailException(response)
+        # return response
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
