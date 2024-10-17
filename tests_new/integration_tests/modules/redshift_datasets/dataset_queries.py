@@ -241,8 +241,6 @@ def import_redshift_dataset(
                 datasetUri
                 label
                 userRoleForDataset
-                successTables
-                errorTables
                 connection {
                  connectionUri
                  } 
@@ -305,10 +303,7 @@ def add_redshift_dataset_tables(client, dataset_uri, tables):
               $datasetUri: String!
               $tables: [String]!
             ) {
-              addRedshiftDatasetTables(datasetUri: $datasetUri, tables: $tables) {
-                successTables
-                errorTables
-              }
+              addRedshiftDatasetTables(datasetUri: $datasetUri, tables: $tables)
             }
         """,
     }
