@@ -12,6 +12,7 @@ nav:
       - Redshift Datasets: redshift_datasets.md
       - Catalog and Glossaries: catalog.md
       - Shares: shares.md
+      - Metadata Forms: metadata_forms.md
     - Play:
         - Worksheets: worksheets.md
         - Notebooks: notebooks.md
