@@ -42,7 +42,7 @@ class RedshiftShareClient:
             log.info(f'Checking status of datashare {datashare_arn=} for {consumer_id=}')
             response = self.client.describe_data_shares(DataShareArn=datashare_arn)
             all_datashares = response.get('DataShares', [])
-            if len(all_datashares) == 0:
+            if not all_datashares:
                 return RedshiftDatashareStatus.NotFound.value
             consumer_datashares = [
                 d.get('Status')
