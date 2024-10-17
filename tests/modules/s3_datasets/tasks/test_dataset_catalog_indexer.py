@@ -66,8 +66,8 @@ def test_catalog_indexer_with_deletes(db, org, env, sync_dataset, table, mocker)
         'dataall.modules.s3_datasets.indexers.dataset_indexer.DatasetIndexer.upsert', return_value=sync_dataset
     )
     mocker.patch(
-        'dataall.modules.catalog.indexers.base_indexer.BaseIndexer.search',
-        return_value={'hits': {'hits': [{'_id': table.tableUri}]}},
+        'dataall.modules.catalog.indexers.base_indexer.BaseIndexer.search_all',
+        return_value=[{'_id': table.tableUri}],
     )
     delete_doc_path = mocker.patch(
         'dataall.modules.catalog.indexers.base_indexer.BaseIndexer.delete_doc', return_value=True
