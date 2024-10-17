@@ -65,7 +65,7 @@ class ManagedPolicy(ABC):
         ...
 
     @abstractmethod
-    def create_managed_indexed_policy_from_managed_policy(self) -> str:
+    def create_managed_indexed_policy_from_managed_policy_delete_old_policy(self) -> str:
         """
         Returns policy ARNs and needs to be implemented in the ManagedPolicies inherited classes
         It is used for backwards compatibility. It should be deprecated and removed in future releases.
@@ -191,11 +191,8 @@ class PolicyManager(object):
             # Check if policy with old naming format exists
             if not policy_name_list:
                 old_managed_policy_name = policy_manager.generate_old_policy_name()
-                policy_name_list = (
-                    [old_managed_policy_name]
-                    if policy_manager.check_if_policy_exists(policy_name=old_managed_policy_name)
-                    else []
-                )
+                if policy_manager.check_if_policy_exists(policy_name=old_managed_policy_name):
+                    policy_name_list.append(old_managed_policy_name)
 
             for policy_name in policy_name_list:
                 logger.info(f'Deleting policy {policy_name}')
@@ -231,11 +228,8 @@ class PolicyManager(object):
             # Check if policy with old naming format exists
             if not policy_name_list:
                 old_managed_policy_name = policy_manager.generate_old_policy_name()
-                policy_name_list = (
-                    [old_managed_policy_name]
-                    if policy_manager.check_if_policy_exists(policy_name=old_managed_policy_name)
-                    else []
-                )
+                if policy_manager.check_if_policy_exists(policy_name=old_managed_policy_name):
+                    policy_name_list.append(old_managed_policy_name)
 
             for policy_name in policy_name_list:
                 policy_dict = {

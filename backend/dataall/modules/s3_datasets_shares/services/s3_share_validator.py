@@ -151,7 +151,7 @@ class S3ShareValidator(SharesValidatorInterface):
             # If yes, convert it to the indexed format
             old_managed_policy_name = policy_manager.generate_old_policy_name()
             if policy_manager.check_if_policy_exists(old_managed_policy_name):
-                policy_manager.create_managed_indexed_policy_from_managed_policy()
+                policy_manager.create_managed_indexed_policy_from_managed_policy_delete_old_policy()
             # End of backwards compatibility
 
             attached = policy_manager.check_if_policies_attached()

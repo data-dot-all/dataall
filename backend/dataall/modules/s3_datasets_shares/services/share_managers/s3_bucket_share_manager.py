@@ -85,6 +85,8 @@ class S3BucketShareManager:
             share=self.share,
             dataset=self.dataset,
         )
+
+        # Parses all policy documents and extracts s3 and kms statements
         share_policy_service.initialize_statements()
 
         share_resource_policy_name = share_policy_service.generate_indexed_policy_name(index=0)
@@ -118,15 +120,10 @@ class S3BucketShareManager:
                 self.bucket_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
                 return
 
-        if not is_managed_policies_exists:
-            logger.info(f'IAM Policy {share_resource_policy_name} does not exist')
-            self.bucket_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
-            return
-
         unattached_policies: List[str] = share_policy_service.get_policies_unattached_to_role()
         if len(unattached_policies) > 0:
             logger.info(
-                f'IAM Policies {unattached_policies} exists but are not attached to role {self.share.principalRoleName}'
+                f'IAM Policies {unattached_policies} exists but are not attached to role {self.share.principalIAMRoleName}'
             )
             self.bucket_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy attached', unattached_policies))
             return
@@ -247,7 +244,10 @@ class S3BucketShareManager:
             share=self.share,
             dataset=self.dataset,
         )
+        # Process all backwards compatibility tasks and convert to indexed policies
         share_policy_service.process_backwards_compatibility_for_target_iam_roles()
+
+        # Parses all policy documents and extracts s3 and kms statements
         share_policy_service.initialize_statements()
 
         key_alias = f'alias/{self.target_bucket.KmsAlias}'
@@ -259,20 +259,6 @@ class S3BucketShareManager:
         kms_target_resources = []
         if kms_key_id:
             kms_target_resources = [f'arn:aws:kms:{self.bucket_region}:{self.source_account_id}:key/{kms_key_id}']
-
-        managed_policy_exists = share_policy_service.check_if_managed_policies_exists()
-
-        if not managed_policy_exists:
-            logger.info('Managed policies do not exist. Creating one')
-            # Create a managed policy with naming convention and index
-            share_resource_policy_name = share_policy_service.generate_indexed_policy_name(index=0)
-            empty_policy = share_policy_service.generate_empty_policy()
-            IAM.create_managed_policy(
-                self.target_account_id,
-                self.target_environment.region,
-                share_resource_policy_name,
-                json.dumps(empty_policy),
-            )
 
         s3_kms_statement_chunks = []
         s3_statements = share_policy_service.total_s3_stmts
@@ -559,7 +545,10 @@ class S3BucketShareManager:
             share=self.share,
             dataset=self.dataset,
         )
+        # Process all backwards compatibility tasks and convert to indexed policies
         share_policy_service.process_backwards_compatibility_for_target_iam_roles()
+
+        # Parses all policy documents and extracts s3 and kms statements
         share_policy_service.initialize_statements()
 
         key_alias = f'alias/{target_bucket.KmsAlias}'

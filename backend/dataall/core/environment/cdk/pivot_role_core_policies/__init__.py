@@ -10,7 +10,7 @@ from dataall.core.environment.cdk.pivot_role_core_policies import (
     sqs,
     ssm,
     sts,
-    service_quota
+    service_quota,
 )
 
 __all__ = ['cloudformation', 'iam', 'kms', 'logging', 's3', 'sns', 'sqs', 'ssm', 'sts', 'service_quota']

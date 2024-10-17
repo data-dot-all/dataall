@@ -13,7 +13,10 @@ class ServiceQuotaPivotRole(PivotRoleStatementSet):
         statements = [
             # Service Quota - Needed to determine the number of service quotas for managed policies which can be attached
             iam.PolicyStatement(
-                sid='ServiceQuotaListGet', effect=iam.Effect.ALLOW, actions=['servicequotas:List*', 'servicequotas:Get*'], resources=['*']
+                sid='ServiceQuotaListGet',
+                effect=iam.Effect.ALLOW,
+                actions=['servicequotas:List*', 'servicequotas:Get*'],
+                resources=['*'],
             )
         ]
         return statements

@@ -182,10 +182,9 @@ class S3AccessPointShareManager:
         is_managed_policies_exists = share_policy_service.check_if_managed_policies_exists()
 
         # Checking if managed policies without indexes are present. This is used for backward compatibility
-        # Check this with AWS team
         if not is_managed_policies_exists:
             warn(
-                "Convert all your share's requestor policies to managed policies with indexes. Deprecation >= ?? ",
+                "Convert all your share's requestor policies to managed policies with indexes.",
                 DeprecationWarning,
                 stacklevel=2,
             )
@@ -204,22 +203,10 @@ class S3AccessPointShareManager:
                 self.folder_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
                 return
 
-            if share_policy_service.check_if_policy_attached(policy_name=old_managed_policy_name):
-                logger.info(
-                    f'Older version of managed policy present which is without index. Correct managed policy: {share_resource_policy_name}. Reapply share to correct managed policy'
-                )
-                self.folder_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
-                return
-
-        if not is_managed_policies_exists:
-            logger.info(f'IAM Policy {share_resource_policy_name} does not exist')
-            self.folder_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
-            return
-
         unattached_policies: List[str] = share_policy_service.get_policies_unattached_to_role()
         if len(unattached_policies) > 0:
             logger.info(
-                f'IAM Policies {unattached_policies} exists but are not attached to role {self.share.principalRoleName}'
+                f'IAM Policies {unattached_policies} exists but are not attached to role {self.share.principalIAMRoleName}'
             )
             self.folder_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy attached', unattached_policies))
             return
@@ -330,7 +317,7 @@ class S3AccessPointShareManager:
     def grant_target_role_access_policy(self):
         """
         Updates requester IAM role policy to include requested S3 bucket and access point
-        :return:
+        :returns: None or raises exception if something fails
         """
         logger.info(f'Grant target role {self.target_requester_IAMRoleName} access policy')
 
@@ -343,7 +330,10 @@ class S3AccessPointShareManager:
             share=self.share,
             dataset=self.dataset,
         )
+        # Process all backwards compatibility tasks and convert to indexed policies
         share_policy_service.process_backwards_compatibility_for_target_iam_roles()
+
+        # Parses all policy documents and extracts s3 and kms statements
         share_policy_service.initialize_statements()
 
         key_alias = f'alias/{self.dataset.KmsAlias}'
@@ -708,7 +698,10 @@ class S3AccessPointShareManager:
             share=self.share,
             dataset=self.dataset,
         )
+        # Process all backwards compatibility tasks and convert to indexed policies
         share_policy_service.process_backwards_compatibility_for_target_iam_roles()
+
+        # Parses all policy documents and extracts s3 and kms statements
         share_policy_service.initialize_statements()
 
         key_alias = f'alias/{self.dataset.KmsAlias}'
