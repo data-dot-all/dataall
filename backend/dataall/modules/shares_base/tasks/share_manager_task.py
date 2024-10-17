@@ -39,6 +39,10 @@ if __name__ == '__main__':
             log.info(f'Starting re-apply task for share : {share_uri}...')
             SharingService.reapply_share(engine=ENGINE, share_uri=share_uri)
 
+        elif handler == 'cleanup_share':
+            log.info(f'Starting clean-up task for share : {share_uri}...')
+            SharingService.cleanup_share(engine=ENGINE, share_uri=share_uri)
+
         log.info('Sharing task finished successfully')
 
     except Exception as e:

@@ -645,12 +645,20 @@ class ShareObjectService:
                         resource_uri=share.shareUri,
                     )
 
-                # Delete all share items for share
-                ShareStatusRepository.delete_share_item_batch(session=session, share_uri=share.shareUri)
+                # Force clean-up of share AWS resources
+                if force_delete:
+                    cleanup_share_task: Task = Task(
+                        action='ecs.share.cleanup',
+                        targetUri=uri,
+                        payload={'environmentUri': share.environmentUri},
+                    )
+                    session.add(cleanup_share_task)
+                    Worker.queue(engine=get_context().db_engine, task_ids=[cleanup_share_task.taskUri])
 
-                # Delete share
-                session.delete(share)
-
+                else:
+                    # Delete all share items and share
+                    ShareStatusRepository.delete_share_item_batch(session=session, share_uri=share.shareUri)
+                    session.delete(share)
             return True
 
     @staticmethod

@@ -211,3 +211,66 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                     self.session, sharing_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
                 )
         return True
+
+    def cleanup_shares(self) -> bool:
+        """
+        1) try to delete_access_point_policy for folder
+        2) delete all share items and delete share object
+
+        Returns
+        -------
+        True
+        """
+
+        log.info('##### Starting Cleaning-up folders #######')
+        if not self.folders:
+            log.info('No Folders to revoke. Skipping...')
+        for folder in self.folders:
+            log.info(f'Revoking access to folder {folder.locationUri}/{folder.name}')
+            manager = self._initialize_share_manager(folder)
+            if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
+                log.info(f'Principal role {self.share_data.share.principalRoleName} is not found.')
+            try:
+                access_point_policy = manager.revoke_access_in_access_point_policy()
+                if len(access_point_policy['Statement']) > 0:
+                    manager.attach_new_access_point_policy(access_point_policy)
+                else:
+                    log.info('Cleaning up folder share resources...')
+                    try:
+                        manager.delete_access_point()
+                    except Exception:
+                        log.exception('')
+                    try:
+                        manager.revoke_target_role_access_policy()
+                    except Exception:
+                        log.exception('')
+                    if not self.share_data.dataset.imported or self.share_data.dataset.importedKmsKey:
+                        manager.delete_dataset_bucket_key_policy(dataset=self.share_data.dataset)
+            except Exception:
+                log.exception('')
+            try:
+                if (
+                    self.share_data.share.groupUri != self.share_data.dataset.SamlAdminGroupName
+                    and self.share_data.share.groupUri != self.share_data.dataset.stewards
+                ):
+                    log.info(f'Deleting FOLDER READ permissions from {folder.locationUri}...')
+                    S3ShareService.delete_dataset_folder_read_permission(
+                        self.session, manager.share, folder.locationUri
+                    )
+            except Exception:
+                log.exception('')
+            # Delete share item
+            sharing_item = ShareObjectRepository.find_sharable_item(
+                self.session,
+                self.share_data.share.shareUri,
+                folder.locationUri,
+            )
+            self.session.delete(sharing_item)
+            self.session.commit()
+        # Check share items in share and delete share
+        remaining_share_items = ShareObjectRepository.get_all_share_items_in_share(
+            session=self.session, share_uri=self.share_data.share.shareUri
+        )
+        if not remaining_share_items:
+            self.session.delete(self.share_data.share)
+        return True

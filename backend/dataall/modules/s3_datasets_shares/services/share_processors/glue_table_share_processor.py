@@ -434,3 +434,150 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         self.session, share_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
                     )
         return True
+
+    def cleanup_shares(self) -> bool:
+        """
+        0) Check if source account details are properly initialized and initialize the Glue and LF clients
+        1) Try to Grant Pivot Role all database permissions to the shared database
+        2) For each revoked table:
+            b) Check if table exists on glue catalog
+            c) Check if resource link table exists in target account
+            d) Check if the table is shared in other share requests to this target account
+            e) If c is True (resource link table exists), try to revoke permission to principals to resource link table
+            f) If c is True (resource link table exists), try to revoke permission to principals to table (and for QS Group if no other shares present for table)
+            g) If c is True and (old-share or (new-share and d is True, no other shares of this table)) then try to delete resource link table
+            g) If d is True (no other shares of this table with target), try to revoke permissions to target account to the original table
+            h) delete share item
+        3) Check if there are existing_shared_tables for this dataset with target environment
+        4) If no existing_shared_tables, try delete shared database
+        5) delete share
+
+        Returns
+        -------
+        True
+        """
+        log.info('##### Starting Cleaning-up tables #######')
+        manager = self._initialize_share_manager(self.tables)
+        if not self.tables:
+            log.info('No tables to revoke. Skipping...')
+        else:
+            if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
+                log.info(f'Principal role {self.share_data.share.principalRoleName} is not found.')
+            if None in [
+                manager.source_account_id,
+                manager.source_account_region,
+                manager.source_database_name,
+            ]:
+                raise Exception(
+                    'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all'
+                )
+            manager.initialize_clients()
+            try:
+                manager.grant_pivot_role_all_database_permissions_to_shared_database()
+            except Exception:
+                log.exception('')
+
+            for table in self.tables:
+                log.info(f'Revoking access to table {table.tableUri}/{table.GlueTableName}...')
+                share_item = ShareObjectRepository.find_sharable_item(
+                    self.session, self.share_data.share.shareUri, table.tableUri
+                )
+                share_item_filter = None
+                if share_item.attachedDataFilterUri:
+                    share_item_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(
+                        self.session, share_item.attachedDataFilterUri
+                    )
+                try:
+                    log.info(f'Revoking access to table: {table.GlueTableName} ')
+                    manager.check_table_exists_in_source_database(share_item, table)
+                except Exception:
+                    log.exception('')
+                try:
+                    log.info('Check resource link table exists')
+                    resource_link_name = self._build_resource_link_name(table.GlueTableName, share_item_filter)
+
+                    resource_link_table_exists = manager.check_resource_link_table_exists_in_target_database(
+                        resource_link_name
+                    )
+
+                    if resource_link_table_exists:
+                        try:
+                            log.info('Revoking principal permissions from resource link table')
+                            manager.revoke_principals_permissions_to_resource_link_table(resource_link_name)
+                        except Exception:
+                            log.exception('')
+                        try:
+                            log.info('Revoking principal permissions from table in source')
+                            manager.revoke_principals_permissions_to_table_in_source(
+                                table, share_item, share_item_filter
+                            )
+                        except Exception:
+                            log.exception('')
+                        if share_item_filter:
+                            can_delete_resource_link = True
+                        else:
+                            can_delete_resource_link = (
+                                False
+                                if S3ShareObjectRepository.check_other_approved_share_item_table_exists(
+                                    self.session,
+                                    self.share_data.target_environment.environmentUri,
+                                    share_item.itemUri,
+                                    share_item.shareItemUri,
+                                )
+                                else True
+                            )
+
+                        if can_delete_resource_link:
+                            try:
+                                manager.grant_pivot_role_drop_permissions_to_resource_link_table(resource_link_name)
+                            except Exception:
+                                log.exception('')
+                            try:
+                                manager.delete_resource_link_table_in_shared_database(resource_link_name)
+                            except Exception:
+                                log.exception('')
+
+                    if (
+                        self.share_data.share.groupUri != self.share_data.dataset.SamlAdminGroupName
+                        and self.share_data.share.groupUri != self.share_data.dataset.stewards
+                    ):
+                        log.info('Deleting TABLE READ permissions...')
+                        S3ShareService.delete_dataset_table_read_permission(
+                            self.session, self.share_data.share, table.tableUri
+                        )
+                except Exception:
+                    log.exception('')
+
+                # Delete share item
+                self.session.delete(share_item)
+                self.session.commit()
+
+            if self.tables:
+                try:
+                    log.info('Revoking permissions to target shared database...')
+                    manager.revoke_principals_database_permissions_to_shared_database()
+                except Exception:
+                    log.exception('')
+                share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
+                existing_shares_with_shared_tables_in_environment = (
+                    ShareObjectRepository.list_dataset_shares_with_existing_shared_items(
+                        session=self.session,
+                        dataset_uri=self.share_data.dataset.datasetUri,
+                        share_item_shared_states=share_item_shared_states,
+                        environment_uri=self.share_data.target_environment.environmentUri,
+                        item_type=ShareableType.Table.value,
+                    )
+                )
+                if not len(existing_shares_with_shared_tables_in_environment):
+                    try:
+                        log.info('Deleting target shared database...')
+                        manager.delete_shared_database_in_target()
+                    except Exception:
+                        log.exception('')
+            # Check share items in share and delete share
+            remaining_share_items = ShareObjectRepository.get_all_share_items_in_share(
+                session=self.session, share_uri=self.share_data.share.shareUri
+            )
+            if not remaining_share_items:
+                self.session.delete(self.share_data.share)
+            return True

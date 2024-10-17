@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from logging import exception
 from typing import List
 
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
@@ -193,4 +194,61 @@ class ProcessS3BucketShare(SharesProcessorInterface):
                 ShareStatusRepository.update_share_item_health_status(
                     self.session, sharing_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
                 )
+        return True
+
+    def cleanup_shares(self) -> bool:
+        """
+        1) try to remove access from bucket policy
+        2) try to remove access from key policy
+        3) try to remove access from IAM role policy
+        4) delete all share items and delete share object
+
+        Returns
+        -------
+        True
+        """
+
+        log.info('##### Starting Cleaning-up S3 bucket share #######')
+        if not self.buckets:
+            log.info('No Buckets to revoke. Skipping...')
+        for bucket in self.buckets:
+            log.info(f'Revoking access to bucket {bucket.bucketUri}/{bucket.S3BucketName} ')
+            manager = self._initialize_share_manager(bucket)
+            if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
+                log.info(f'Principal role {self.share_data.share.principalRoleName} is not found.')
+            try:
+                manager.delete_target_role_bucket_policy()
+            except Exception:
+                log.exception('')
+            try:
+                manager.delete_target_role_access_policy(
+                    share=self.share_data.share,
+                    target_bucket=bucket,
+                    target_environment=self.share_data.target_environment,
+                )
+            except Exception:
+                log.exception('')
+            try:
+                if not self.share_data.dataset.imported or self.share_data.dataset.importedKmsKey:
+                    manager.delete_target_role_bucket_key_policy(
+                        target_bucket=bucket,
+                    )
+            except Exception:
+                log.exception('')
+
+            # Delete share item
+            sharing_item = ShareObjectRepository.find_sharable_item(
+                self.session,
+                self.share_data.share.shareUri,
+                bucket.bucketUri,
+            )
+            self.session.delete(sharing_item)
+            self.session.commit()
+
+        # Check share items in share and delete share
+        remaining_share_items = ShareObjectRepository.get_all_share_items_in_share(
+            session=self.session, share_uri=self.share_data.share.shareUri
+        )
+        if not remaining_share_items:
+            self.session.delete(self.share_data.share)
         return True
