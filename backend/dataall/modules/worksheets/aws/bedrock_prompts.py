@@ -82,7 +82,7 @@ I want you to follow the following steps when generating the SQL statement:
 Step 1: Determine if the given tables columns are suitable to answer the question.
 If not respond with "Error: The tables provided does not give enough information"
 
-Step 2: Determine if the user wants to perform any mutations, if so return "Error: Only read queries are allowed at the moment"
+Step 2: Determine if the user wants to perform any mutations, if so return "Error: Only READ queries are allowed"
 
 Step 3: Determine if joins will be needed.
 
@@ -94,7 +94,7 @@ Based on the following glue metadata:
 {context}
 </context>
 
-User prompt: {question}
+User prompt: {prompt}
 
 
 """
@@ -112,8 +112,7 @@ You'll be given content to analyze and a prompt from the user based on the infor
 Content to analyze:
 {content}
 
-User prompt:
-{prompt}
+User prompt: {prompt}
 
 Please provide a response that addresses the user's prompt in the context of the given content. Be thorough, accurate, and helpful in your analysis.
 """

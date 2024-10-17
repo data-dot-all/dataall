@@ -6,9 +6,7 @@ export const listObjectKeys = ({ datasetUri }) => ({
   },
   query: gql`
     query listObjectKeys($datasetUri: String!) {
-      listObjectKeys(datasetUri: $datasetUri) {
-        objectKeys
-      }
+      listObjectKeys(datasetUri: $datasetUri)
     }
   `
 });

@@ -3,10 +3,8 @@ import {
   Card,
   CircularProgress,
   MenuItem,
-  TextField,
-  Typography
+  TextField
 } from '@mui/material';
-import { WarningAmber } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import React, { useCallback, useState } from 'react';
 import { Scrollbar } from 'design';
@@ -24,7 +22,8 @@ export const WorksheetDocSummarizer = ({
   selectedDatabase,
   loadingDatabases,
   databaseOptions,
-  handleTextChange
+  handleTextChange,
+  setSelectedDatabase
 }) => {
   const dispatch = useDispatch();
   const client = useClient();
@@ -33,8 +32,10 @@ export const WorksheetDocSummarizer = ({
   const [loadingKeys, setLoadingKeys] = useState(false);
   const [keyOptions, setKeyOptions] = useState([]);
   const [selectedKey, setSelectedKey] = useState('');
+  const filteredDBOptions = databaseOptions.filter((db) => 'bucketName' in db);
 
   function handleBucketChange(event) {
+    setSelectedDatabase(event.target.value);
     fetchKeys(currentEnv, event.target.value).catch((e) =>
       dispatch({ type: SET_ERROR, error: e.message })
     );
@@ -59,15 +60,20 @@ export const WorksheetDocSummarizer = ({
 
   const handleSubmit = async () => {
     setInvoking(true);
-    const queryObject = analyzeTextDocument({
-      prompt: prompt,
-      key: selectedKey,
-      environmentUri: currentEnv.environmentUri,
-      worksheetUri: worksheet.worksheetUri,
-      datasetUri: selectedDatabase.value
-    });
-    const response = await client.query(queryObject);
-    handleTextChange(response.data.analyzeTextDocument);
+    const response = await client.query(
+      analyzeTextDocument({
+        prompt: prompt,
+        key: selectedKey,
+        environmentUri: currentEnv.environmentUri,
+        worksheetUri: worksheet.worksheetUri,
+        datasetUri: selectedDatabase.value
+      })
+    );
+    if (!response.errors) {
+      handleTextChange(response.data.analyzeTextDocument);
+    } else {
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+    }
     setInvoking(false);
   };
 
@@ -154,14 +160,12 @@ export const WorksheetDocSummarizer = ({
                   )
                 }}
               >
-                {databaseOptions.length > 0 ? (
-                  databaseOptions
-                    .filter((db) => db.bucketName !== null)
-                    .map((database) => (
-                      <MenuItem key={database.datasetUri} value={database}>
-                        {database.bucketName}
-                      </MenuItem>
-                    ))
+                {filteredDBOptions.length > 0 ? (
+                  filteredDBOptions.map((database) => (
+                    <MenuItem key={database.datasetUri} value={database}>
+                      {database.bucketName}
+                    </MenuItem>
+                  ))
                 ) : (
                   <MenuItem disabled>No owned buckets found</MenuItem>
                 )}
@@ -212,12 +216,6 @@ export const WorksheetDocSummarizer = ({
               />
             </Box>
             <Box sx={{ p: 2 }}>
-              <Typography variant="body2" color="warning.dark">
-                <WarningAmber color="warning" sx={{ mr: 1 }} />
-                Carefully review this AI-generated response for accuracy
-              </Typography>
-            </Box>
-            <Box sx={{ p: 2 }}>
               <LoadingButton
                 loading={invoking}
                 variant="contained"
@@ -246,5 +244,6 @@ WorksheetDocSummarizer.propTypes = {
   selectedDatabase: PropTypes.object.isRequired,
   loadingDatabases: PropTypes.bool.isRequired,
   databaseOptions: PropTypes.array.isRequired,
-  handleTextChange: PropTypes.func.isRequired
+  handleTextChange: PropTypes.func.isRequired,
+  setSelectedDatabase: PropTypes.func.isRequired
 };

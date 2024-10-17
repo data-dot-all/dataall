@@ -1,4 +1,3 @@
-import { WarningAmber } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
   Box,
@@ -6,7 +5,6 @@ import {
   CircularProgress,
   MenuItem,
   TextField,
-  Typography,
   Autocomplete,
   Chip
 } from '@mui/material';
@@ -42,19 +40,19 @@ export const WorksheetTextToSQLEditor = ({
     setInvoking(true);
     handleSQLChange('');
 
-    const queryObject = textToSQL({
-      prompt: prompt,
-      environmentUri: currentEnv.environmentUri,
-      worksheetUri: worksheet.worksheetUri,
-      databaseName: selectedDatabase.label,
-      tableNames: selectedTables
-    });
-    const response = await client.query(queryObject);
-    const message = response.data.textToSQL;
-    if (message.split(':')[0] === 'Error') {
-      dispatch({ type: SET_ERROR, error: message.split(':')[1] });
+    const response = await client.query(
+      textToSQL({
+        prompt: prompt,
+        environmentUri: currentEnv.environmentUri,
+        worksheetUri: worksheet.worksheetUri,
+        databaseName: selectedDatabase.label,
+        tableNames: selectedTables
+      })
+    );
+    if (!response.errors) {
+      handleSQLChange(response.data.textToSQL);
     } else {
-      handleSQLChange(response.data.textToSQL.response);
+      dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
     setInvoking(false);
   };
@@ -209,12 +207,6 @@ export const WorksheetTextToSQLEditor = ({
                 onChange={(e) => handlePromptChange(e.target.value)}
                 variant="outlined"
               />
-            </Box>
-            <Box sx={{ p: 2 }}>
-              <Typography variant="body2" color="warning.dark">
-                <WarningAmber color="warning" sx={{ mr: 1 }} />
-                Carefully review this AI-generated response for accuracy
-              </Typography>
             </Box>
             <Box sx={{ p: 2 }}>
               <LoadingButton

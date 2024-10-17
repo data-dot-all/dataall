@@ -194,3 +194,13 @@ class ResourceThresholdExceeded(Exception):
 
     def __str__(self):
         return f'{self.message}'
+
+
+class ModelGuardrailException(Exception):
+    def __init__(self, message):
+        self.message = f"""
+                    An error occurred (ModelGuardrailException) when invoking the model: {message}
+                """
+
+    def __str__(self):
+        return f'{self.message}'

@@ -13,6 +13,7 @@ from dataall.core.permissions.services.tenant_policy_service import TenantPolicy
 from dataall.modules.worksheets.aws.athena_client import AthenaClient
 from dataall.modules.worksheets.db.worksheet_models import Worksheet
 from dataall.modules.worksheets.db.worksheet_repositories import WorksheetRepository
+from dataall.base.db import exceptions
 from dataall.modules.worksheets.services.worksheet_permissions import (
     MANAGE_WORKSHEETS,
     UPDATE_WORKSHEET,
@@ -71,6 +72,7 @@ class WorksheetService:
         return worksheet
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_WORKSHEETS)
     @ResourcePolicyService.has_resource_permission(UPDATE_WORKSHEET)
     def update_worksheet(session, username, uri, data=None):
         worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
@@ -96,6 +98,7 @@ class WorksheetService:
         return worksheet
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_WORKSHEETS)
     @ResourcePolicyService.has_resource_permission(DELETE_WORKSHEET)
     def delete_worksheet(session, uri) -> bool:
         worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
@@ -131,7 +134,7 @@ class WorksheetService:
     @staticmethod
     @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
     @ResourceThresholdRepository.check_invocation_count('nlq')
-    def run_nlq(session, uri, prompt, worksheetUri, db_name, table_names):
+    def run_nlq(session, username, uri, prompt, worksheetUri, db_name, table_names):
         environment = EnvironmentService.get_environment_by_uri(session, uri)
         worksheet = WorksheetService.get_worksheet_by_uri(session, worksheetUri)
 
@@ -149,12 +152,14 @@ class WorksheetService:
 
         response = BedrockClient().invoke_model_text_to_sql(prompt, '\n'.join(metadata))
 
+        if response.startswith('Error:'):
+            raise exceptions.ModelGuardrailException(response)
         return response
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
     @ResourceThresholdRepository.check_invocation_count('nlq')
-    def analyze_text_genai(session, uri, worksheetUri, prompt, datasetUri, key):
+    def analyze_text_genai(session, username, uri, worksheetUri, prompt, datasetUri, key):
         environment = EnvironmentService.get_environment_by_uri(session, uri)
         worksheet = WorksheetService.get_worksheet_by_uri(session, worksheetUri)
 
@@ -172,4 +177,7 @@ class WorksheetService:
 
         content = s3_client.get_content(dataset.S3BucketName, key)
         response = BedrockClient().invoke_model_process_text(prompt, content)
-        return {'error': None, 'response': response}
+
+        if response.startswith('Error:'):
+            raise exceptions.ModelGuardrailException(response)
+        return response

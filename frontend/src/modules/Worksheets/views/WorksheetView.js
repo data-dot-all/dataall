@@ -1,4 +1,4 @@
-import { PlayArrowOutlined, SaveOutlined } from '@mui/icons-material';
+import { PlayArrowOutlined } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
   Box,
@@ -7,7 +7,9 @@ import {
   IconButton,
   Typography,
   Tabs,
-  Tab
+  Tab,
+  Alert,
+  Stack
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -18,6 +20,7 @@ import {
   Defaults,
   DeleteObjectWithFrictionModal,
   PencilAltIcon,
+  SaveIcon,
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
@@ -169,8 +172,7 @@ const WorksheetView = () => {
       response = await client.query(
         listS3DatasetsSharedWithEnvGroup({
           environmentUri: environment.environmentUri,
-          groupUri: team,
-          bucketName: null
+          groupUri: team
         })
       );
       if (response.errors) {
@@ -511,6 +513,7 @@ const WorksheetView = () => {
               loadingDatabases={loadingDatabases}
               databaseOptions={databaseOptions}
               handleTextChange={handleTextChange}
+              setSelectedDatabase={setSelectedDatabase}
             />
           )}
         </Box>
@@ -522,32 +525,57 @@ const WorksheetView = () => {
             flexGrow: 1
           }}
         >
-          <Box
-            sx={{
-              alignItems: 'center',
-              backgroundColor: 'background.paper',
-              display: 'flex',
-              flexShrink: 0,
-              height: 68,
-              p: 2
-            }}
-          >
-            <Box>
-              <Typography color="textPrimary" variant="h5">
-                {worksheet.label}
+          <Stack direction="column">
+            <Box
+              sx={{
+                alignItems: 'center',
+                backgroundColor: 'background.paper',
+                display: 'flex',
+                flexShrink: 0,
+                height: 48,
+                p: 1
+              }}
+            >
+              <Box>
+                <Typography color="textPrimary" variant="h5">
+                  {worksheet.label}
+                </Typography>
+              </Box>
+              <Box sx={{ flexGrow: 1 }} />
+              {currentTab !== 'DocSummarizer' && (
+                <IconButton onClick={saveWorksheet}>
+                  <SaveIcon fontSize="small" />
+                </IconButton>
+              )}
+              <IconButton onClick={handleEditWorksheetModalOpen}>
+                <PencilAltIcon fontSize="small" />
+              </IconButton>
+              <IconButton onClick={handleDeleteWorksheetModalOpen}>
+                <FaTrash size={16} />
+              </IconButton>
+              <Divider />
+            </Box>
+          </Stack>
+          {currentTab !== 'SQLEditor' && (
+            <Box
+              sx={{
+                backgroundColor: 'background.paper',
+                display: 'flex',
+                height: 68,
+                p: 1
+              }}
+            >
+              <Typography color="warning.dark" style={{ fontStyle: 'italic' }}>
+                <Alert
+                  severity="warning"
+                  sx={{ xs: '0.7rem', sm: '0.8rem', md: '0.9rem' }}
+                >
+                  Beta Feature: Carefully review this AI-generated response for
+                  accuracy
+                </Alert>
               </Typography>
             </Box>
-            <Box sx={{ flexGrow: 1 }} />
-            <IconButton onClick={handleEditWorksheetModalOpen}>
-              <PencilAltIcon fontSize="small" />
-            </IconButton>
-            <IconButton onClick={saveWorksheet}>
-              <SaveOutlined fontSize="small" />
-            </IconButton>
-            <IconButton onClick={handleDeleteWorksheetModalOpen}>
-              <FaTrash size={16} />
-            </IconButton>
-          </Box>
+          )}
           {currentTab !== 'DocSummarizer' ? (
             <>
               <Divider />
@@ -584,7 +612,12 @@ const WorksheetView = () => {
             </>
           ) : (
             <Box sx={{ p: 2 }}>
-              <SQLQueryEditor sql={textBody} setSqlBody={setTextBody} />
+              <SQLQueryEditor
+                sql={textBody}
+                setSqlBody={setTextBody}
+                height="38rem"
+                language="plaintext"
+              />
             </Box>
           )}
         </Box>

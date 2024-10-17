@@ -15,7 +15,10 @@ class S3Client:
     }
 
     def __init__(self, account_id, region, role=None):
-        aws_session = SessionHelper.remote_session(accountid=account_id, region=region, role=role)
+        pivot_role_session = SessionHelper.remote_session(accountid=account_id, region=region)
+        aws_session = (
+            SessionHelper.get_session(base_session=pivot_role_session, role_arn=role) if role else pivot_role_session
+        )
         self._client = aws_session.client('s3', region_name=region)
 
     @staticmethod
@@ -32,6 +35,7 @@ class S3Client:
         for page_num in range(len(pdf_reader.pages)):
             page = pdf_reader.pages[page_num]
             full_text += page.extract_text()
+        return full_text
 
     def get_content(self, bucket_name, key):
         try:

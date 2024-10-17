@@ -2,6 +2,7 @@ from dataall.core.resource_threshold.db.resource_threshold import ResourceThresh
 from sqlalchemy import and_, func
 from dataall.base.config import config
 from dataall.base.db import exceptions
+from functools import wraps
 
 
 class ResourceThresholdRepository:
@@ -55,6 +56,7 @@ class ResourceThresholdRepository:
     @staticmethod
     def check_invocation_count(action_type):
         def decorator(func):
+            @wraps(func)
             def wrapper(session, username, *args, **kwargs):
                 count = ResourceThresholdRepository._get_count_today(
                     session=session, username=username, action_type=action_type
@@ -69,7 +71,7 @@ class ResourceThresholdRepository:
                         ResourceThresholdRepository._increment_count(
                             session=session, username=username, action_type=action_type
                         )
-                    return func(session, *args, **kwargs)
+                    return func(session, username, *args, **kwargs)
                 else:
                     raise exceptions.ResourceThresholdExceeded(username=username, action=action_type)
 

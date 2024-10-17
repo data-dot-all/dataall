@@ -10,7 +10,10 @@ log = logging.getLogger(__name__)
 
 class GlueClient:
     def __init__(self, account_id, region, role=None):
-        aws_session = SessionHelper.remote_session(accountid=account_id, region=region, role=role)
+        pivot_role_session = SessionHelper.remote_session(accountid=account_id, region=region)
+        aws_session = (
+            SessionHelper.get_session(base_session=pivot_role_session, role_arn=role) if role else pivot_role_session
+        )
         self._client = aws_session.client('glue', region_name=region)
         self._account_id = account_id
         self._region = region

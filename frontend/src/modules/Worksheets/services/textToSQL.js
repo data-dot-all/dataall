@@ -20,7 +20,7 @@ export const textToSQL = ({
       $environmentUri: String!
       $worksheetUri: String!
       $databaseName: String!
-      $tableNames: String
+      $tableNames: [String]
     ) {
       textToSQL(
         prompt: $prompt

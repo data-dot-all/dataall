@@ -85,6 +85,7 @@ def text_to_sql(
     with context.engine.scoped_session() as session:
         response = WorksheetService.run_nlq(
             session=session,
+            username=context.username,
             uri=environmentUri,
             prompt=prompt,
             worksheetUri=worksheetUri,
@@ -108,6 +109,7 @@ def analyze_text_genai(
     with context.engine.scoped_session() as session:
         return WorksheetService.analyze_text_genai(
             session=session,
+            username=context.username,
             uri=environmentUri,
             worksheetUri=worksheetUri,
             prompt=prompt,

@@ -31,12 +31,12 @@ class BedrockClient:
         prompt_template = PromptTemplate.from_template(TEXT_TO_SQL_PROMPT_TEMPLATE)
 
         chain = prompt_template | self.__model | StrOutputParser()
-        response = chain.invoke({'question': prompt, 'context': metadata, 'examples': SQL_EXAMPLES})
+        response = chain.invoke({'prompt': prompt, 'context': metadata, 'examples': SQL_EXAMPLES})
         return response
 
     def invoke_model_process_text(self, prompt: str, content: str):
         prompt_template = PromptTemplate.from_template(PROCESS_TEXT_PROMPT_TEMPLATE)
 
         chain = prompt_template | self.__model | StrOutputParser()
-        response = chain.invoke({'question': prompt, 'content': content})
+        response = chain.invoke({'prompt': prompt, 'content': content})
         return response
