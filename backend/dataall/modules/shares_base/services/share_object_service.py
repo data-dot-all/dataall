@@ -615,50 +615,47 @@ class ShareObjectService:
             share, dataset, states = cls._get_share_data(session, uri)
             shared_share_items_states = [x for x in ShareStatusRepository.get_share_item_shared_states() if x in states]
 
-            new_state = cls._run_transitions(session, share, states, ShareObjectActions.Delete)
             if shared_share_items_states and not force_delete:
                 raise ShareItemsFound(
                     action='Delete share object',
                     message='There are shared items in this request. '
                     'Revoke access to these items before deleting the request.',
                 )
+            # Delete share resource policy permissions
+            # Deleting REQUESTER permissions
+            ResourcePolicyService.delete_resource_policy(
+                session=session,
+                group=share.groupUri,
+                resource_uri=share.shareUri,
+            )
 
-            if new_state == ShareObjectStatus.Deleted.value:
-                # Delete share resource policy permissions
-                # Deleting REQUESTER permissions
+            # Deleting APPROVER permissions
+            ResourcePolicyService.delete_resource_policy(
+                session=session,
+                group=dataset.SamlAdminGroupName,
+                resource_uri=share.shareUri,
+            )
+            if dataset.stewards != dataset.SamlAdminGroupName:
                 ResourcePolicyService.delete_resource_policy(
                     session=session,
-                    group=share.groupUri,
+                    group=dataset.stewards,
                     resource_uri=share.shareUri,
                 )
 
-                # Deleting APPROVER permissions
-                ResourcePolicyService.delete_resource_policy(
-                    session=session,
-                    group=dataset.SamlAdminGroupName,
-                    resource_uri=share.shareUri,
+            # Force clean-up of share AWS resources
+            if force_delete:
+                cleanup_share_task: Task = Task(
+                    action='ecs.share.cleanup',
+                    targetUri=uri,
+                    payload={'environmentUri': share.environmentUri},
                 )
-                if dataset.stewards != dataset.SamlAdminGroupName:
-                    ResourcePolicyService.delete_resource_policy(
-                        session=session,
-                        group=dataset.stewards,
-                        resource_uri=share.shareUri,
-                    )
+                session.add(cleanup_share_task)
+                Worker.queue(engine=get_context().db_engine, task_ids=[cleanup_share_task.taskUri])
 
-                # Force clean-up of share AWS resources
-                if force_delete:
-                    cleanup_share_task: Task = Task(
-                        action='ecs.share.cleanup',
-                        targetUri=uri,
-                        payload={'environmentUri': share.environmentUri},
-                    )
-                    session.add(cleanup_share_task)
-                    Worker.queue(engine=get_context().db_engine, task_ids=[cleanup_share_task.taskUri])
-
-                else:
-                    # Delete all share items and share
-                    ShareStatusRepository.delete_share_item_batch(session=session, share_uri=share.shareUri)
-                    session.delete(share)
+            else:
+                # Delete all share items and share
+                ShareStatusRepository.delete_share_item_batch(session=session, share_uri=share.shareUri)
+                session.delete(share)
             return True
 
     @staticmethod
