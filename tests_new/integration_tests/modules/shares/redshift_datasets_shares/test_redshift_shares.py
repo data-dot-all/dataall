@@ -2,13 +2,18 @@ from assertpy import assert_that
 import pytest
 
 from integration_tests.errors import GqlError
-from integration_tests.modules.shares.utils import check_share_ready, check_share_items_verified
+from integration_tests.modules.shares.utils import (
+    check_share_ready,
+    check_share_items_verified,
+    check_share_items_reapplied,
+)
 from integration_tests.modules.shares.queries import (
     approve_share_object,
     get_share_object,
     create_share_object,
     revoke_share_items,
     verify_share_items,
+    reapply_share_items,
 )
 from integration_tests.modules.shares.redshift_datasets_shares.conftest import (
     REDSHIFT_TEST_ROLE_NAME,
@@ -185,7 +190,16 @@ def test_reapply_redshift_share(client_name, share_object_fixture_name, request)
     client = request.getfixturevalue(client_name)
     share = get_share_object(client=client, shareUri=share.shareUri, filter={'isShared': True})
     ## reapply share item
-    ##TODO
+    reapply_share_items(client=client, shareUri=share.shareUri, shareItemsUris=[share_item_uri])
+    # Wait until reapply task has completed
+    check_share_items_reapplied(client=client, shareUri=share.shareUri)
+    ## Verify again
+    verify_share_items(client=client, shareUri=share.shareUri, shareItemsUris=[share_item_uri])
+    # Wait until verification task has completed
+    check_share_items_verified(client=client, shareUri=share.shareUri)
+    verified_share = get_share_object(client=client, shareUri=share.shareUri, filter={'isShared': True})
+    item = verified_share['items'].nodes[0]
+    assert_that(item.healthStatus).is_equal_to('Healthy')
 
 
 @pytest.mark.parametrize(

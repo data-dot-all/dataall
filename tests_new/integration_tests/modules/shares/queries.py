@@ -219,6 +219,24 @@ def verify_share_items(client, shareUri: str, shareItemsUris: List[str]):
     return response.data.verifyItemsShareObject
 
 
+def reapply_share_items(client, shareUri: str, shareItemsUris: List[str]):
+    query = {
+        'operationName': 'reApplyItemsShareObject',
+        'variables': {'input': {'shareUri': shareUri, 'itemUris': shareItemsUris}},
+        'query': f"""
+                mutation reApplyItemsShareObject($input: ShareItemSelectorInput) {{
+                  reApplyItemsShareObject(input: $input) {{
+                    shareUri
+                    status
+                  }}
+                }}
+                """,
+    }
+
+    response = client.query(query=query)
+    return response.data.reApplyItemsShareObject
+
+
 def revoke_share_items(client, shareUri: str, shareItemUris: List[str]):
     query = {
         'operationName': 'revokeItemsShareObject',
