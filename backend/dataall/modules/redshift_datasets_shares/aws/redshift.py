@@ -41,12 +41,15 @@ class RedshiftShareClient:
         try:
             log.info(f'Checking status of datashare {datashare_arn=} for {consumer_id=}')
             response = self.client.describe_data_shares(DataShareArn=datashare_arn)
-            datashares = [
-                d
-                for d in response.get('DataShares', [])[0].get('DataShareAssociations', [])
+            all_datashares = response.get('DataShares', [])
+            if len(all_datashares) == 0:
+                return RedshiftDatashareStatus.NotFound.value
+            consumer_datashares = [
+                d.get('Status')
+                for d in all_datashares[0].get('DataShareAssociations', [])
                 if d.get('ConsumerIdentifier') == consumer_id
             ]
-            return datashares[0].get('Status') if len(datashares) > 0 else RedshiftDatashareStatus.NotFound.value
+            return next(iter(consumer_datashares), RedshiftDatashareStatus.NotFound.value)
         except ClientError as e:
             log.error(e)
             return RedshiftDatashareStatus.NotFound.value
