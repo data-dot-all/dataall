@@ -13,7 +13,6 @@ from dataall.core.permissions.services.tenant_policy_service import TenantPolicy
 from dataall.modules.worksheets.aws.athena_client import AthenaClient
 from dataall.modules.worksheets.db.worksheet_models import Worksheet
 from dataall.modules.worksheets.db.worksheet_repositories import WorksheetRepository
-from dataall.base.db import exceptions
 from dataall.modules.worksheets.services.worksheet_permissions import (
     MANAGE_WORKSHEETS,
     UPDATE_WORKSHEET,
