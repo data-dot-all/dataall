@@ -38,7 +38,7 @@ const MetadataFormView = () => {
   const tabs = [
     { label: 'Form Info', value: 'info' },
     { label: 'Fields', value: 'fields' },
-    { label: 'Enforcement', value: 'enforcement' },
+   // { label: 'Enforcement', value: 'enforcement' },
     { label: 'Preview', value: 'preview' }
   ];
   const [metadataForm, setMetadataForm] = useState(null);

@@ -231,15 +231,15 @@ export const RenderedMetadataForm = (props) => {
                     <Autocomplete
                       disablePortal
                       options={metadataForm.versions.map((option) => {
-                        return { label: 'version ' + option, value: option };
+                        return { label: 'version ' + option.version, value: option.version };
                       })}
                       value={'version ' + currentVersion}
                       onChange={async (event, value) => {
                         setCurrentVersion(
-                          value ? value.value : metadataForm.versions[0]
+                          value ? value.value : metadataForm.versions[0].version
                         );
                         await fetchItems(
-                          value ? value.value : metadataForm.versions[0]
+                          value ? value.value : metadataForm.versions[0].version
                         );
                       }}
                       renderInput={(params) => (
