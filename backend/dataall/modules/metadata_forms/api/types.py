@@ -97,6 +97,7 @@ AttachedMetadataForm = gql.ObjectType(
     fields=[
         gql.Field(name='uri', type=gql.ID),
         gql.Field(name='metadataForm', type=gql.Ref('MetadataForm'), resolver=resolve_metadata_form),
+        gql.Field(name='version', type=gql.Integer),
         gql.Field(name='entityUri', type=gql.String),
         gql.Field(name='entityType', type=gql.String),
         gql.Field(name='entityName', type=gql.String, resolver=get_entity_name),

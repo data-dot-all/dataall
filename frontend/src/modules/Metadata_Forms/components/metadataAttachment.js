@@ -257,9 +257,12 @@ export const MetadataAttachment = (props) => {
                         maxLines: 1
                       }}
                     >
-                      {attachedForm.metadataForm.name}
+                      {attachedForm.metadataForm.name +
+                        ' v. ' +
+                        attachedForm.version}
                     </Typography>
                   </Grid>
+
                   <Grid item lg={2} xl={2}>
                     {canEdit && (
                       <DeleteIcon

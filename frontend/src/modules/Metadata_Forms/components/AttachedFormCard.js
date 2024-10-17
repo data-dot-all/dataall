@@ -12,7 +12,9 @@ export const AttachedFormCard = (props) => {
 
   return (
     <Card sx={{ maxWidth: '600px' }}>
-      <CardHeader title={attachedForm.metadataForm.name}></CardHeader>
+      <CardHeader
+        title={attachedForm.metadataForm.name + ' v.' + attachedForm.version}
+      ></CardHeader>
       <CardContent>
         <List>
           {fields.map((field) => (
