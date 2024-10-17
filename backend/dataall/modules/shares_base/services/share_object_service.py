@@ -610,13 +610,13 @@ class ShareObjectService:
 
     @classmethod
     @ResourcePolicyService.has_resource_permission(DELETE_SHARE_OBJECT)
-    def delete_share_object(cls, uri: str):
+    def delete_share_object(cls, uri: str, force_delete: bool):
         with get_context().db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
             shared_share_items_states = [x for x in ShareStatusRepository.get_share_item_shared_states() if x in states]
 
             new_state = cls._run_transitions(session, share, states, ShareObjectActions.Delete)
-            if shared_share_items_states:
+            if shared_share_items_states and not force_delete:
                 raise ShareItemsFound(
                     action='Delete share object',
                     message='There are shared items in this request. '
@@ -644,6 +644,9 @@ class ShareObjectService:
                         group=dataset.stewards,
                         resource_uri=share.shareUri,
                     )
+
+                # Delete all share items for share
+                ShareStatusRepository.delete_share_item_batch(session=session, share_uri=share.shareUri)
 
                 # Delete share
                 session.delete(share)
