@@ -101,6 +101,29 @@ export const NotificationsPopover = () => {
     }
   }, [client]);
 
+  const resolve_link = (notification) => {
+    if (notification.type === 'METADATA_FORM_UPDATE') {
+      const entity_type = notification.target_uri.split('|')[1].toLowerCase();
+      const entity_uri = notification.target_uri.split('|')[0];
+      const main_modules = [
+        'environment',
+        'organization',
+        'dataset',
+        'share',
+        'dashboard',
+        'worksheet',
+        'pipeline',
+        'notebook'
+      ];
+      if (main_modules.includes(entity_type)) {
+        return `/console/${entity_type}s/${entity_uri}`;
+      }
+    }
+    if (notification.type.contains('SHARE')) {
+      return `/console/shares/${notification.target_uri.split('|')[0]}`;
+    }
+  };
+
   return (
     <>
       <Tooltip title="Notifications">
@@ -165,9 +188,7 @@ export const NotificationsPopover = () => {
                           sx={{ cursor: 'pointer' }}
                           variant="subtitle2"
                           component={RouterLink}
-                          to={`/console/shares/${
-                            notification.target_uri.split('|')[0]
-                          }`}
+                          to={resolve_link(notification)}
                         >
                           {notification.message}
                         </Link>
