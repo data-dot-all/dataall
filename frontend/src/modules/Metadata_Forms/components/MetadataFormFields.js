@@ -305,7 +305,7 @@ EditTable.propTypes = {
 };
 
 const DisplayTable = (props) => {
-  const { fields, startEdit, userRole, userRolesMF } = props;
+  const { fields, startEdit, userRole, userRolesMF, enableEdit } = props;
   return (
     <Table>
       <TableHead>
@@ -324,6 +324,7 @@ const DisplayTable = (props) => {
                 startIcon={<PencilAltIcon size={15} />}
                 sx={{ mt: 1 }}
                 onClick={startEdit}
+                disabled={!enableEdit}
                 type="button"
                 variant="outlined"
               >
@@ -845,6 +846,7 @@ export const MetadataFormFields = (props) => {
                   startEdit={startEdit}
                   userRole={metadataForm.userRole}
                   userRolesMF={userRolesMF}
+                  enableEdit={attached === 0}
                 />
               )}
             </Box>
