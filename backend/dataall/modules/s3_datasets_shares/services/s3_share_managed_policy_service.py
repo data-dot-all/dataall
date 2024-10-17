@@ -417,9 +417,10 @@ class S3SharePolicyService(ManagedPolicy):
                 f'Number of policies which can be attached to the role is more than the service quota limit: {managed_iam_policy_quota}'
             )
             try:
-                ShareNotificationService(
-                    session=None, dataset=self.dataset, share=self.share
-                ).notify_managed_policy_limit_exceeded_action(email_id=self.share.owner)
+                if self.share is not None and self.dataset is not None:
+                    ShareNotificationService(
+                        session=None, dataset=self.dataset, share=self.share
+                    ).notify_managed_policy_limit_exceeded_action(email_id=self.share.owner)
             except Exception as e:
                 log.error(f'Error sending email for notifying that managed policy limit exceeded on role due to: {e}')
             raise Exception(
@@ -427,7 +428,7 @@ class S3SharePolicyService(ManagedPolicy):
             )
 
         log.info(
-            f'Role: {self.role_name} has capacity to attach managed policies for share with URI: {self.share.shareUri}'
+            f'Role: {self.role_name} has capacity to attach managed policies'
         )
 
     def _get_managed_policy_quota(self):
