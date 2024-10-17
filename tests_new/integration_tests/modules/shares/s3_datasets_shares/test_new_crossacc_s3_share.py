@@ -1,8 +1,8 @@
 import pytest
 from assertpy import assert_that
 
-from tests_new.integration_tests.modules.share_base.conftest import clean_up_share
-from tests_new.integration_tests.modules.share_base.queries import (
+from integration_tests.modules.shares.s3_datasets_shares.conftest import clean_up_share
+from tests_new.integration_tests.modules.shares.queries import (
     create_share_object,
     submit_share_object,
     add_share_item,
@@ -12,11 +12,11 @@ from tests_new.integration_tests.modules.share_base.queries import (
     update_share_request_reason,
     update_share_reject_reason,
 )
-from tests_new.integration_tests.modules.share_base.utils import (
+from tests_new.integration_tests.modules.shares.utils import (
     check_share_ready,
 )
 
-from tests_new.integration_tests.modules.share_base.shared_test_functions import (
+from integration_tests.modules.shares.s3_datasets_shares.shared_test_functions import (
     check_share_items_access,
     check_verify_share_items,
     revoke_and_check_all_shared_items,
