@@ -5,6 +5,7 @@ from typing import List
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers import S3AccessPointShareManager
 from dataall.modules.s3_datasets_shares.services.s3_share_service import S3ShareService
+from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
     ShareItemStatus,
@@ -272,5 +273,8 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
             session=self.session, share_uri=self.share_data.share.shareUri
         )
         if not remaining_share_items:
+            ShareObjectService.deleting_share_permissions(
+                session=self.session, share=self.share_data.share, dataset=self.share_data.dataset
+            )
             self.session.delete(self.share_data.share)
         return True

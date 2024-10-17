@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime
-from logging import exception
 from typing import List
 from dataall.base.utils.naming_convention import NamingConventionService, NamingConventionPattern
 from dataall.modules.shares_base.services.sharing_service import ShareData
@@ -14,6 +13,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
     ShareItemActions,
 )
+from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.shares_base.services.share_manager_utils import ShareErrorFormatter
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftTable
 from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
@@ -751,5 +751,8 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                 session=self.session, share_uri=self.share_data.share.shareUri
             )
             if not remaining_share_items:
+                ShareObjectService.deleting_share_permissions(
+                    session=self.session, share=self.share_data.share, dataset=self.share_data.dataset
+                )
                 self.session.delete(self.share_data.share)
             return True

@@ -18,6 +18,7 @@ from dataall.modules.s3_datasets.db.dataset_models import DatasetBucket
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
 from dataall.modules.shares_base.services.sharing_service import ShareData
 from dataall.modules.shares_base.services.share_processor_manager import SharesProcessorInterface
+from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 
 
 log = logging.getLogger(__name__)
@@ -250,5 +251,8 @@ class ProcessS3BucketShare(SharesProcessorInterface):
             session=self.session, share_uri=self.share_data.share.shareUri
         )
         if not remaining_share_items:
+            ShareObjectService.deleting_share_permissions(
+                session=self.session, share=self.share_data.share, dataset=self.share_data.dataset
+            )
             self.session.delete(self.share_data.share)
         return True
