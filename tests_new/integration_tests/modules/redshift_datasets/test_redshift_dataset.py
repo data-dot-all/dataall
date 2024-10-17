@@ -125,9 +125,23 @@ def test_add_redshift_dataset_tables(client1, session_redshift_dataset_serverles
     response = add_redshift_dataset_tables(
         client=client1, dataset_uri=session_redshift_dataset_serverless.datasetUri, tables=[REDSHIFT_TABLE2]
     )
-    assert_that(response).is_true()
+    assert_that(response.successTables).contains(REDSHIFT_TABLE2)
+    assert_that(response.errorTables).is_empty()
     tables = list_redshift_dataset_tables(client=client1, dataset_uri=session_redshift_dataset_serverless.datasetUri)
     assert_that(tables.count).is_equal_to(initial_number_of_tables + 1)
+
+
+def test_add_redshift_dataset_tables_invalid_table(client1, session_redshift_dataset_serverless):
+    initial_number_of_tables = list_redshift_dataset_tables(
+        client=client1, dataset_uri=session_redshift_dataset_serverless.datasetUri
+    ).count
+    response = add_redshift_dataset_tables(
+        client=client1, dataset_uri=session_redshift_dataset_serverless.datasetUri, tables=['does-not-exist']
+    )
+    assert_that(response.successTables).is_empty()
+    assert_that(response.errorTables).contains('does-not-exist')
+    tables = list_redshift_dataset_tables(client=client1, dataset_uri=session_redshift_dataset_serverless.datasetUri)
+    assert_that(tables.count).is_equal_to(initial_number_of_tables)
 
 
 def test_add_redshift_dataset_tables_unauthorized(client2, session_redshift_dataset_serverless):
@@ -162,7 +176,7 @@ def test_delete_redshift_dataset_table(client1, session_redshift_dataset_serverl
         response = add_redshift_dataset_tables(
             client=client1, dataset_uri=session_redshift_dataset_serverless.datasetUri, tables=[REDSHIFT_TABLE2]
         )
-        assert_that(response).is_true()
+        assert_that(response.successTables).contains(REDSHIFT_TABLE2)
     table_2 = list_redshift_dataset_tables(
         client=client1, dataset_uri=session_redshift_dataset_serverless.datasetUri, term=REDSHIFT_TABLE2
     ).nodes[0]

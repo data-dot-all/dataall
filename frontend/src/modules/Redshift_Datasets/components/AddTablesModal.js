@@ -57,13 +57,24 @@ export const AddTablesModal = (props) => {
       })
     );
     if (!response.errors) {
-      enqueueSnackbar('Tables added', {
-        anchorOrigin: {
-          horizontal: 'right',
-          vertical: 'top'
-        },
-        variant: 'success'
-      });
+      if (response.data.addRedshiftDatasetTables.successTables.length > 0) {
+        enqueueSnackbar(
+          `Tables added: ${response.data.addRedshiftDatasetTables.successTables}`,
+          {
+            anchorOrigin: {
+              horizontal: 'right',
+              vertical: 'top'
+            },
+            variant: 'success'
+          }
+        );
+      }
+      if (response.data.addRedshiftDatasetTables.errorTables.length > 0) {
+        dispatch({
+          type: SET_ERROR,
+          error: `The following tables could not be imported, either they do not exist or the connection used has no access to them: ${response.data.addRedshiftDatasetTables.errorTables}`
+        });
+      }
       fetchItems();
       setSelectedTables(null);
     } else {

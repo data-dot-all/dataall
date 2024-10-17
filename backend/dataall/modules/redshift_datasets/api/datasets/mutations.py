@@ -44,7 +44,7 @@ addRedshiftDatasetTables = gql.MutationField(
         gql.Argument('datasetUri', gql.NonNullableType(gql.String)),
         gql.Argument('tables', gql.NonNullableType(gql.ArrayType(gql.String))),
     ],
-    type=gql.Boolean,
+    type=gql.Ref('RedshiftAddTableResult'),
     resolver=add_redshift_dataset_tables,
 )
 
