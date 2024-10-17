@@ -206,7 +206,7 @@ class S3AccessPointShareManager:
         unattached_policies: List[str] = share_policy_service.get_policies_unattached_to_role()
         if len(unattached_policies) > 0:
             logger.info(
-                f'IAM Policies {unattached_policies} exists but are not attached to role {self.share.principalIAMRoleName}'
+                f'IAM Policies {unattached_policies} exists but are not attached to role {self.share.principalRoleName}'
             )
             self.folder_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy attached', unattached_policies))
             return
