@@ -165,6 +165,7 @@ class NotebookService:
             return NotebookService._get_notebook(session, uri)
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_NOTEBOOKS)
     @ResourcePolicyService.has_resource_permission(UPDATE_NOTEBOOK)
     def start_notebook(*, uri):
         """Starts notebooks instance"""
@@ -172,6 +173,7 @@ class NotebookService:
         client(notebook).start_instance()
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_NOTEBOOKS)
     @ResourcePolicyService.has_resource_permission(UPDATE_NOTEBOOK)
     def stop_notebook(*, uri: str) -> None:
         """Stop notebook instance"""
@@ -193,6 +195,7 @@ class NotebookService:
         return client(notebook).get_notebook_instance_status()
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_NOTEBOOKS)
     @ResourcePolicyService.has_resource_permission(DELETE_NOTEBOOK)
     def delete_notebook(*, uri: str, delete_from_aws: bool):
         """Deletes notebook from the database and if delete_from_aws is True from AWS as well"""
