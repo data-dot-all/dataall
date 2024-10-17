@@ -23,6 +23,7 @@ from dataall.modules.metadata_forms.services.metadata_form_permissions import (
     CREATE_METADATA_FORM,
     ALL_METADATA_FORMS_ENTITY_PERMISSIONS,
 )
+from dataall.modules.notifications.db.notification_repositories import NotificationRepository
 
 
 class MetadataFormParamValidationService:
@@ -297,12 +298,25 @@ class MetadataFormService:
     @MetadataFormAccessService.can_perform(UPDATE_METADATA_FORM_FIELD)
     def create_metadata_form_version(uri, copyVersion):
         with get_context().db_engine.scoped_session() as session:
+            mf = MetadataFormService.get_metadata_form_by_uri(uri)
             new_version = MetadataFormRepository.create_metadata_form_version_next(session, uri)
             if copyVersion:
                 mf_fields = MetadataFormRepository.get_metadata_form_fields(session, uri, copyVersion)
                 for field in mf_fields:
                     new_field = MetadataFormRepository.create_metadata_form_field(
                         session, uri, field.__dict__, new_version.version
+                    )
+
+            all_attached = MetadataFormRepository.get_all_attached_metadata_forms(session, uri)
+            for attached in all_attached:
+                owner = MetadataFormService.get_entity_owner(attached)
+                if owner:
+                    NotificationRepository.create_notification(
+                        session,
+                        recipient=owner,
+                        target_uri=f'{attached.entityUri}|{attached.entityType}',
+                        message=f'New version {new_version.version} is available for metadata form "{mf.name}"',
+                        notification_type='METADATA_FORM_UPDATE',
                     )
         return new_version.version
 
@@ -329,13 +343,25 @@ class MetadataFormService:
             return all_versions
 
     @staticmethod
-    def get_entity_name(attached_metadata_form):
+    def resolve_attached_entity(attached_metadata_form):
         with get_context().db_engine.scoped_session() as session:
             if attached_metadata_form.entityType == MetadataFormEntityTypes.Organizations.value:
-                return OrganizationRepository.get_organization_by_uri(session, attached_metadata_form.entityUri).name
+                return OrganizationRepository.get_organization_by_uri(session, attached_metadata_form.entityUri)
             elif attached_metadata_form.entityType == MetadataFormEntityTypes.Environments.value:
-                return EnvironmentRepository.get_environment_by_uri(session, attached_metadata_form.entityUri).name
+                return EnvironmentRepository.get_environment_by_uri(session, attached_metadata_form.entityUri)
             elif attached_metadata_form.entityType == MetadataFormEntityTypes.Datasets.value:
-                return DatasetBaseRepository.get_dataset_by_uri(session, attached_metadata_form.entityUri).name
+                return DatasetBaseRepository.get_dataset_by_uri(session, attached_metadata_form.entityUri)
             else:
-                return 'Not Found'
+                return None
+
+    @staticmethod
+    def get_entity_name(attached_metadata_form):
+        entity = MetadataFormService.resolve_attached_entity(attached_metadata_form)
+        return entity.name if entity else 'Not Found'
+
+    @staticmethod
+    def get_entity_owner(attached_metadata_form):
+        entity = MetadataFormService.resolve_attached_entity(attached_metadata_form)
+        if entity:
+            return entity.SamlGroupName or entity.SamlAdminGroupName
+        return None
