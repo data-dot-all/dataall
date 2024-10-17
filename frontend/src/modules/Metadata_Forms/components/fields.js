@@ -18,6 +18,7 @@ export const FreeInputField = (props) => {
       label={field.name}
       error={errors[field.name]}
       name={field.name}
+      defaultValue={field.value}
       onKeyUp={(event) => {
         onChange(event.target.value);
       }}
@@ -83,6 +84,7 @@ export const GlossaryTermField = (props) => {
     <Autocomplete
       options={glossaryOptions}
       onChange={(event, value) => onChange(value.nodeUri)}
+      defaultValue={field.value}
       renderInput={(params) => (
         <TextField
           sx={{ width: '100%' }}
@@ -108,6 +110,7 @@ export const DropDownField = (props) => {
     <Autocomplete
       disablePortal
       options={field.possibleValues}
+      defaultValue={field.value}
       onChange={(event, value) => onChange(value)}
       renderInput={(params) => (
         <TextField

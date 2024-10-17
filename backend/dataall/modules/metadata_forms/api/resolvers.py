@@ -21,7 +21,7 @@ def create_metadata_form_version(context: Context, source, formUri, copyVersion)
 
 
 def create_attached_metadata_form(context: Context, source, formUri, input):
-    return AttachedMetadataFormService.create_attached_metadata_form(uri=formUri, data=input)
+    return AttachedMetadataFormService.create_or_update_attached_metadata_form(uri=formUri, data=input)
 
 
 def delete_metadata_form(context: Context, source, formUri):

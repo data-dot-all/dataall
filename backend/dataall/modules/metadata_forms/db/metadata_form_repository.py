@@ -297,7 +297,7 @@ class MetadataFormRepository:
                 query = query.filter(AttachedMetadataForm.metadataFormUri == filter.get('metadataFormUri'))
             if filter.get('version'):
                 query = query.filter(AttachedMetadataForm.version == filter.get('version'))
-        return query
+        return query.order_by(all_mfs.c.name)
 
     @staticmethod
     def query_all_attached_metadata_forms_for_entity(session, entityUri, entityType):
