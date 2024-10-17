@@ -45,7 +45,7 @@ import {
   WorksheetEditFormModal,
   WorksheetResult,
   WorksheetTextToSQLEditor,
-  WorksheetDocSummarizer,
+  WorksheetDocAnalyzer,
   WorksheetSQLEditor
 } from '../components';
 import { isFeatureEnabled } from 'utils';
@@ -62,8 +62,8 @@ const tabs = [
     active: isFeatureEnabled('worksheets', 'nlq')
   },
   {
-    label: 'Document Summarizer',
-    value: 'DocSummarizer',
+    label: 'Document Analyzer',
+    value: 'DocAnalyzer',
     active: isFeatureEnabled('worksheets', 'nlq')
   }
 ];
@@ -502,8 +502,8 @@ const WorksheetView = () => {
               handleSQLChange={handleSQLChange}
             />
           )}
-          {currentTab === 'DocSummarizer' && (
-            <WorksheetDocSummarizer
+          {currentTab === 'DocAnalyzer' && (
+            <WorksheetDocAnalyzer
               handleEnvironmentChange={handleEnvironmentChange}
               loadingEnvs={loadingEnvs}
               environmentOptions={environmentOptions}
@@ -542,7 +542,7 @@ const WorksheetView = () => {
                 </Typography>
               </Box>
               <Box sx={{ flexGrow: 1 }} />
-              {currentTab !== 'DocSummarizer' && (
+              {currentTab !== 'DocAnalyzer' && (
                 <IconButton onClick={saveWorksheet}>
                   <SaveIcon fontSize="small" />
                 </IconButton>
@@ -570,13 +570,13 @@ const WorksheetView = () => {
                   severity="warning"
                   sx={{ xs: '0.7rem', sm: '0.8rem', md: '0.9rem' }}
                 >
-                  Beta Feature: Carefully review this AI-generated response for
-                  accuracy
+                  Experimental Feature: Carefully review this AI-generated
+                  response for accuracy
                 </Alert>
               </Typography>
             </Box>
           )}
-          {currentTab !== 'DocSummarizer' ? (
+          {currentTab !== 'DocAnalyzer' ? (
             <>
               <Divider />
               <Box sx={{ p: 2 }}>

@@ -5,4 +5,4 @@ export * from './WorksheetResult';
 export * from './TextDisplay';
 export * from './WorksheetSQLEditor';
 export * from './WorksheetTextToSQLEditor';
-export * from './WorksheetDocSummarizer';
+export * from './WorksheetDocAnalyzer';

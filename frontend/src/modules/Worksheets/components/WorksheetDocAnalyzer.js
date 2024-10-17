@@ -13,7 +13,7 @@ import { listObjectKeys, useClient } from 'services';
 import { analyzeTextDocument } from '../services';
 import PropTypes from 'prop-types';
 
-export const WorksheetDocSummarizer = ({
+export const WorksheetDocAnalyzer = ({
   handleEnvironmentChange,
   loadingEnvs,
   currentEnv,
@@ -235,7 +235,7 @@ export const WorksheetDocSummarizer = ({
   );
 };
 
-WorksheetDocSummarizer.propTypes = {
+WorksheetDocAnalyzer.propTypes = {
   handleEnvironmentChange: PropTypes.func.isRequired,
   loadingEnvs: PropTypes.bool.isRequired,
   currentEnv: PropTypes.object.isRequired,
