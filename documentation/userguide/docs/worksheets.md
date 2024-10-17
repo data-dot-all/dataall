@@ -45,7 +45,7 @@ coming from Athena will pop-up automatically.
 
 ![worksheets](pictures/worksheets/ws_joins.png#zoom#shadow)
 
-If you want to save the current query for later or for other users, click on the **save** icon (between the edit and the
+If you want to save the current query for later or for other users, click on the **save** icon (next to the edit and the
 delete buttons).
 
 !!! success "More than just SELECT"
@@ -55,4 +55,54 @@ delete buttons).
     for more information on AWS Athena SQL syntax.
 
 
+## :material-new-box: **Experimental Features: GenAI Powered Worksheets**
+
+As part of data.all >= v2.7 we introduced support for generative AI powered worksheet features. These features include both:
+
+1. Natural Language Querying (NLQ) of Structured Data
+2. Text Document Analysis of Unstructured Data
+
+These features are optionally enabled/disabled via feature flags specified in data.all's configuration.
+
+The More details on how to use each of these features are below.
+
+### Natural Language Querying (NLQ) of Structured Data
+
+data.all offers a NLQ feature to significantly redeuce the barrier for non-technical business users who need to quickly and easily query data to make informed decisions, as mastering these technical skills can be time-consuming.
+
+The NLQ feature will take a user prompt and select number of tables and generate a ready to run SQL statement that data.all user's can execute against the data they have access to in data.all's Worksheets module.
+
+To start generating SQL, data.all user's can select the TextToSQL Tab in the Worksheets View:
+
+![worksheets_nlq](pictures/worksheets/ws_text_to_sql.png#zoom#shadow)
+
+
+From their, user's will provide the environment, database, one or more tables to reference, and a user provided prompt. Behind the scenes' data.all will fetch the associated metadata for the table(s) the user selected, enrich the prompt with the additional metadata, and leverage genAI to generate a SQL statement that users can execute against their structured data.
+
+Please note that the table metadata that data.all retrieves and enriches the user prompt to is subject to the same level of data access the user has in the data.all console. There are built in guardrails to ensure no mutating SQL statements (i.e. WRITE, UPSERT, DELETE, etc.) are generated against the data and to reduce hallucinations by ensuring the selected tables contain the correct data to answer the user's prompt.
+
+data.all Admins can additionally limit the number of invocations run against these LLMs by specifying a `max_count_per_day` feature flag in data.all's configuration (please reference data.all's [Deployment Guide](https://data-dot-all.github.io/dataall/deploy-aws/#configjson) for more information)
+
+
+### Text Document Analysis of Unstructured Data
+
+For unstructured text documents, data.all offers a feature to start analyzing your data using natural language.
+
+The Document Analyzer feature will take a user prompt and select S3 Object Key and generate a respwonse displayed in the data.all Worksheet Editor. 
+
+!!! warning "Limitations of Document Analysis"
+    Currently data.all's Worksheet Document Analyzer is limited only to `.txt` and `.pdf` file extensions. Additionally, the feature is limited only to 
+    text documents which are explicitly owned by one of the user's teams (documents that are given access via data.all shares are not yet supported).
+
+
+To start analyzing your text documents, data.all user's can select the Document Analyzer Tab in the Worksheets View:
+
+![worksheets_unstructured](pictures/worksheets/ws_analyze_txt_doc.png#zoom#shadow)
+
+
+From their, user's will provide the environment, S3 dataset bucket, S3 object key (from provided drop down), and a user provided prompt. Behind the scenes' data.all will fetch the content of the S3 Object and leverage genAI to generate a response with respect to the user's prompt about the text document.
+
+There are built in guardrails to reduce hallucinations by ensuring the selected S3 Object contains infromation pertaining to the user's prompt.
+
+data.all Admins can additionally limit the number of invocations run against these LLMs by specifying a `max_count_per_day` feature flag in data.all's configuration (please reference data.all's [Deployment Guide](https://data-dot-all.github.io/dataall/deploy-aws/#configjson) for more information)
 
