@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
-import { ObjectBrief, ObjectMetadata } from 'design';
-import { UserModal } from 'design';
+import { ObjectBrief, ObjectMetadata, UserModal } from 'design';
 import { EnvironmentConsoleAccess } from './EnvironmentConsoleAccess';
 import { EnvironmentFeatures } from './EnvironmentFeatures';
 
