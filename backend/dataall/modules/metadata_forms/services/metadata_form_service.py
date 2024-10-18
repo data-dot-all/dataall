@@ -1,5 +1,6 @@
 from dataall.base.context import get_context
 from dataall.base.db import exceptions, paginate
+from dataall.base.db.exceptions import UnauthorizedOperation
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicyRepository
@@ -115,13 +116,21 @@ class MetadataFormService:
                 )
 
             form = MetadataFormRepository.create_metadata_form(session, data)
-            return form
+            try:
+                MetadataFormRepository.create_metadata_form_version(session, form.uri, 1)
+                return form
+            except Exception as e:
+                session.delete(form)
+                raise e
 
     # toDo: add permission check
     @staticmethod
     def get_metadata_form_by_uri(uri):
         with get_context().db_engine.scoped_session() as session:
-            return MetadataFormRepository.get_metadata_form(session, uri)
+            mf = MetadataFormRepository.get_metadata_form(session, uri)
+            if mf:
+                mf.versions = MetadataFormRepository.get_metadata_form_versions(session, uri)
+            return mf
 
     # toDo: deletion logic
     @staticmethod
@@ -192,9 +201,9 @@ class MetadataFormService:
             return 'Not Found'
 
     @staticmethod
-    def get_metadata_form_fields(uri):
+    def get_metadata_form_fields(uri, version):
         with get_context().db_engine.scoped_session() as session:
-            return MetadataFormRepository.get_metadata_form_fields(session, uri)
+            return MetadataFormRepository.get_metadata_form_fields(session, uri, version)
 
     @staticmethod
     def get_metadata_form_field_by_uri(uri):
@@ -228,7 +237,7 @@ class MetadataFormService:
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_METADATA_FORMS)
-    @MetadataFormAccessService.can_perform('UPDATE_METADATA_FORM_FIELD')
+    @MetadataFormAccessService.can_perform(UPDATE_METADATA_FORM_FIELD)
     def batch_metadata_form_field_update(uri, data):
         to_delete = []
         to_update = []
@@ -256,7 +265,7 @@ class MetadataFormService:
             for item in to_create:
                 MetadataFormRepository.create_metadata_form_field(session, uri, item)
 
-        return MetadataFormService.get_metadata_form_fields(uri)
+        return MetadataFormService.get_metadata_form_fields(uri, None)
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_METADATA_FORMS)
@@ -280,3 +289,31 @@ class MetadataFormService:
                 ):
                     result_permissions.append(permissions)
             return result_permissions
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_METADATA_FORMS)
+    @MetadataFormAccessService.can_perform(UPDATE_METADATA_FORM_FIELD)
+    def create_metadata_form_version(uri, copyVersion):
+        with get_context().db_engine.scoped_session() as session:
+            new_version = MetadataFormRepository.create_metadata_form_version_next(session, uri)
+            if copyVersion:
+                mf_fields = MetadataFormRepository.get_metadata_form_fields(session, uri, copyVersion)
+                for field in mf_fields:
+                    new_field = MetadataFormRepository.create_metadata_form_field(
+                        session, uri, field.__dict__, new_version.version
+                    )
+        return new_version.version
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_METADATA_FORMS)
+    @MetadataFormAccessService.can_perform(UPDATE_METADATA_FORM_FIELD)
+    def delete_metadata_form_version(uri, version):
+        with get_context().db_engine.scoped_session() as session:
+            all_versions = MetadataFormRepository.get_metadata_form_versions(session, uri)
+            if len(all_versions) == 1:
+                raise UnauthorizedOperation(
+                    action='Delete version', message='Cannot delete the only version of the form'
+                )
+            mf = MetadataFormRepository.get_metadata_form_version(session, uri, version)
+            session.delete(mf)
+            return MetadataFormRepository.get_metadata_form_version_number_latest(session, uri)

@@ -54,7 +54,8 @@ import {
   TextAvatar,
   useSettings,
   Label,
-  SanitizedHTML
+  SanitizedHTML,
+  UserModal
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
@@ -796,6 +797,18 @@ const ShareView = () => {
   const [isReApplyShareItemModalOpen, setIsReApplyShareItemModalOpen] =
     useState(false);
 
+  const [modalOpen, setIsModalOpen] = useState(false);
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => setIsModalOpen(false);
+
+  const [requestTeamModalOpen, setIsRequestTeamModalOpen] = useState(false);
+  const handleRequestTeamOpenModal = () => {
+    setIsRequestTeamModalOpen(true);
+  };
+  const handleCloseRequestTeamModal = () => {
+    setIsRequestTeamModalOpen(false);
+  };
+
   const handleAddItemModalClose = () => {
     setIsAddItemModalOpen(false);
   };
@@ -1023,7 +1036,17 @@ const ShareView = () => {
                                 color="textPrimary"
                                 variant="subtitle2"
                               >
-                                {share.dataset.SamlAdminGroupName || '-'}
+                                <Box
+                                  sx={{ cursor: 'pointer' }}
+                                  onClick={handleOpenModal}
+                                >
+                                  {share.dataset.SamlAdminGroupName || '-'}
+                                </Box>
+                                <UserModal
+                                  team={share.dataset.SamlAdminGroupName}
+                                  open={modalOpen}
+                                  onClose={handleCloseModal}
+                                />
                               </Typography>
                             </Box>
                           </Box>
@@ -1370,7 +1393,17 @@ const ShareView = () => {
                               Requester Team
                             </Typography>
                             <Typography color="textPrimary" variant="body2">
-                              {share.principal.SamlGroupName || '-'}
+                              <Box
+                                sx={{ cursor: 'pointer' }}
+                                onClick={handleRequestTeamOpenModal}
+                              >
+                                {share.principal.SamlGroupName || '-'}
+                              </Box>
+                              <UserModal
+                                team={share.principal.SamlGroupName}
+                                open={requestTeamModalOpen}
+                                onClose={handleCloseRequestTeamModal}
+                              />
                             </Typography>
                           </ListItem>
                           <ListItem

@@ -1,5 +1,6 @@
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import with_polymorphic
+from sqlalchemy import func
 
 from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility, MetadataFormFieldType
 from dataall.modules.metadata_forms.db.metadata_form_models import (
@@ -11,6 +12,7 @@ from dataall.modules.metadata_forms.db.metadata_form_models import (
     BooleanAttachedMetadataFormField,
     IntegerAttachedMetadataFormField,
     GlossaryTermAttachedMetadataFormField,
+    MetadataFormVersion,
 )
 
 import json
@@ -41,9 +43,42 @@ class MetadataFormRepository:
         return mf
 
     @staticmethod
+    def create_metadata_form_version(session, metadataFormUri, version_num):
+        version = MetadataFormVersion(metadataFormUri=metadataFormUri, version=version_num)
+        session.add(version)
+        session.commit()
+        return version
+
+    @staticmethod
+    def create_metadata_form_version_next(session, metadataFormUri):
+        version_num = MetadataFormRepository.get_metadata_form_version_number_latest(session, metadataFormUri)
+        version = MetadataFormVersion(metadataFormUri=metadataFormUri, version=version_num + 1)
+        session.add(version)
+        session.commit()
+        return version
+
+    @staticmethod
+    def get_metadata_form_version_number_latest(session, metadataFormUri):
+        return (
+            session.query(func.max(MetadataFormVersion.version))
+            .filter(MetadataFormVersion.metadataFormUri == metadataFormUri)
+            .scalar()
+        )
+
+    @staticmethod
+    def get_metadata_form_version_latest(session, metadataFormUri):
+        version_num = MetadataFormRepository.get_metadata_form_version_number_latest(session, metadataFormUri)
+        return session.query(MetadataFormVersion).get((metadataFormUri, version_num))
+
+    @staticmethod
+    def get_metadata_form_version(session, metadataFormUri, version_num):
+        return session.query(MetadataFormVersion).get((metadataFormUri, version_num))
+
+    @staticmethod
     def create_attached_metadata_form(session, uri, data=None):
+        version_num = MetadataFormRepository.get_metadata_form_version_number_latest(session, uri)
         amf: AttachedMetadataForm = AttachedMetadataForm(
-            metadataFormUri=uri, entityUri=data.get('entityUri'), entityType=data.get('entityType')
+            metadataFormUri=uri, version=version_num, entityUri=data.get('entityUri'), entityType=data.get('entityType')
         )
         session.add(amf)
         session.commit()
@@ -165,18 +200,22 @@ class MetadataFormRepository:
         return query.order_by(MetadataForm.name)
 
     @staticmethod
-    def get_metadata_form_fields(session, form_uri):
+    def get_metadata_form_fields(session, form_uri, version=None):
+        version = version or MetadataFormRepository.get_metadata_form_version_number_latest(session, form_uri)
         return (
             session.query(MetadataFormField)
             .filter(MetadataFormField.metadataFormUri == form_uri)
+            .filter(MetadataFormField.version == version)
             .order_by(MetadataFormField.displayNumber)
             .all()
         )
 
     @staticmethod
-    def create_metadata_form_field(session, uri, data):
+    def create_metadata_form_field(session, uri, data, version_num=None):
+        version_num = version_num or MetadataFormRepository.get_metadata_form_version_number_latest(session, uri)
         field: MetadataFormField = MetadataFormField(
             metadataFormUri=uri,
+            version=version_num,
             name=data.get('name'),
             description=data.get('description'),
             type=data.get('type'),
@@ -262,3 +301,13 @@ class MetadataFormRepository:
         return session.query(AttachedMetadataForm).filter(
             and_(AttachedMetadataForm.entityType == entityType, AttachedMetadataForm.entityUri == entityUri)
         )
+
+    @staticmethod
+    def get_metadata_form_versions(session, uri):
+        versions = (
+            session.query(MetadataFormVersion)
+            .filter(MetadataFormVersion.metadataFormUri == uri)
+            .order_by(MetadataFormVersion.version.desc())
+            .all()
+        )
+        return [v.version for v in versions]
