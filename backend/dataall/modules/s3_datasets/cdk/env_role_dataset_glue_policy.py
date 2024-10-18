@@ -103,7 +103,7 @@ class DatasetGlueEtlServicePolicy(ServicePolicy):
                     'glue:List*',
                     'glue:BatchGet*',
                 ],
-                resources=['*'],
+                resources=[f'arn:aws:*'],
             ),
             iam.PolicyStatement(
                 # sid="GlueCreateS3Bucket",
