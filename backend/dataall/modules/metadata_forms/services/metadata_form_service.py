@@ -339,7 +339,7 @@ class MetadataFormService:
         with get_context().db_engine.scoped_session() as session:
             all_versions = MetadataFormRepository.get_metadata_form_versions(session, uri)
             for v in all_versions:
-                v.attached_forms = MetadataFormRepository.get_all_attached_metadata_forms(session, uri, v.version)
+                v.c = len(MetadataFormRepository.get_all_attached_metadata_forms(session, uri, v.version))
             return all_versions
 
     @staticmethod
