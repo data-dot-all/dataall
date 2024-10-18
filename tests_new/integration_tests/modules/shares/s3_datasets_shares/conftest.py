@@ -6,7 +6,7 @@ from tests_new.integration_tests.core.environment.queries import (
     remove_consumption_role,
     list_environment_consumption_roles,
 )
-from tests_new.integration_tests.modules.share_base.queries import (
+from tests_new.integration_tests.modules.shares.queries import (
     create_share_object,
     delete_share_object,
     get_share_object,
@@ -15,7 +15,7 @@ from tests_new.integration_tests.modules.share_base.queries import (
     approve_share_object,
     add_share_item,
 )
-from tests_new.integration_tests.modules.share_base.utils import check_share_ready
+from tests_new.integration_tests.modules.shares.utils import check_share_ready
 
 test_session_cons_role_name = 'dataall-test-ShareTestConsumptionRole'
 test_persistent_cons_role_name = 'dataall-test-PersistentConsumptionRole'
