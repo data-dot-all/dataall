@@ -631,6 +631,7 @@ class ShareObjectService:
                     payload={'environmentUri': share.environmentUri},
                 )
                 session.add(cleanup_share_task)
+                session.commit()
                 Worker.queue(engine=context.db_engine, task_ids=[cleanup_share_task.taskUri])
 
             else:
