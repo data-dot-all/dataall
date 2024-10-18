@@ -746,15 +746,17 @@ export const MetadataFormFields = (props) => {
               />
             </Grid>
             <Grid item lg={2} xl={2} xs={6}>
-              <Button
-                color="primary"
-                startIcon={<PlusIcon size={15} />}
-                sx={{ mt: 1 }}
-                onClick={() => setShowNewVersionModal(true)}
-                type="button"
-              >
-                New Version
-              </Button>
+              {metadataForm.userRole === userRolesMF.Owner && (
+                <Button
+                  color="primary"
+                  startIcon={<PlusIcon size={15} />}
+                  sx={{ mt: 1 }}
+                  onClick={() => setShowNewVersionModal(true)}
+                  type="button"
+                >
+                  New Version
+                </Button>
+              )}
               {showNewVersionModal && (
                 <NewVersionModal
                   onClose={() => setShowNewVersionModal(false)}
@@ -773,13 +775,15 @@ export const MetadataFormFields = (props) => {
                 textAlign: 'right'
               }}
             >
-              <Typography
-                sx={{ pt: 2 }}
-                variant="subtitle2"
-                color="textPrimary"
-              >
-                Attached entities : {attached}
-              </Typography>
+              {metadataForm.userRole === userRolesMF.Owner && (
+                <Typography
+                  sx={{ pt: 2 }}
+                  variant="subtitle2"
+                  color="textPrimary"
+                >
+                  Attached entities : {attached}
+                </Typography>
+              )}
             </Grid>
             <Grid
               item
@@ -790,16 +794,18 @@ export const MetadataFormFields = (props) => {
                 textAlign: 'right'
               }}
             >
-              <Button
-                color="primary"
-                startIcon={<DeleteIcon size={15} />}
-                sx={{ mt: 1 }}
-                onClick={() => setShowDeleteModal(true)}
-                type="button"
-                disabled={versionOptions.length === 1}
-              >
-                Delete Version
-              </Button>
+              {metadataForm.userRole === userRolesMF.Owner && (
+                <Button
+                  color="primary"
+                  startIcon={<DeleteIcon size={15} />}
+                  sx={{ mt: 1 }}
+                  onClick={() => setShowDeleteModal(true)}
+                  type="button"
+                  disabled={versionOptions.length === 1}
+                >
+                  Delete Version
+                </Button>
+              )}
               {showDeleteModal && (
                 <ConfirmationPopUp
                   onClose={() => setShowDeleteModal(false)}
