@@ -53,14 +53,12 @@ class DatasetLocationService:
         return location
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(LIST_DATASET_FOLDERS)
     def list_dataset_locations(uri: str, filter: dict = None):
         with get_context().db_engine.scoped_session() as session:
             return DatasetLocationRepository.list_dataset_locations(session=session, uri=uri, data=filter)
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(GET_DATASET_FOLDER)
     def get_storage_location(uri):
         with get_context().db_engine.scoped_session() as session:
