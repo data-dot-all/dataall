@@ -64,13 +64,23 @@ class ServicePolicy(object):
                             'events:ListRuleNamesByTarget',
                             'iam:list*',
                             'iam:Get*',
-                            'iam:CreatePolicy',
-                            'iam:CreateServiceLinkedRole',
                             'tag:GetResources',
                             'tag:GetTagValues',
                             'tag:GetTagKeys',
                         ],
                         resources=['*'],
+                    ),
+                    aws_iam.PolicyStatement(
+                        sid='IAMCreatePolicy',
+                        effect=aws_iam.Effect.ALLOW,
+                        actions=[
+                            'iam:CreatePolicy',
+                            'iam:CreateServiceLinkedRole',
+                        ],
+                        resources=[
+                            f'arn:aws:iam::{self.account}:policy/{self.resource_prefix}*',
+                            f'arn:aws;iam::{self.account}:role/aws-service-role/*',
+                        ],
                     ),
                     aws_iam.PolicyStatement(
                         sid='CreateServiceRole',
