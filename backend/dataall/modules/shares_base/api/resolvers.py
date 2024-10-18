@@ -150,8 +150,8 @@ def reapply_items_share_object(context: Context, source, input):
     return ShareItemService.reapply_items_share_object(uri=share_uri, item_uris=reapply_item_uris)
 
 
-def delete_share_object(context: Context, source, shareUri: str = None):
-    return ShareObjectService.delete_share_object(uri=shareUri)
+def delete_share_object(context: Context, source, shareUri: str = None, forceDelete: bool = False):
+    return ShareObjectService.delete_share_object(uri=shareUri, force_delete=forceDelete)
 
 
 def cancel_share_object_extension(context: Context, source, shareUri: str = None):
