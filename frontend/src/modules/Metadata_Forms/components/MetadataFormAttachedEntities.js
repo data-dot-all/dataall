@@ -1,19 +1,22 @@
 import PropTypes from 'prop-types';
-import { Box, Card, CardContent, Grid, Typography } from '@mui/material';
-import { listMetadataFormVersions } from '../services';
+import { Box, Card, CardContent, CardHeader, Divider, Grid, Typography } from '@mui/material';
+import { deleteMetadataFormVersion, listMetadataFormVersions } from '../services';
 import { SET_ERROR } from '../../../globalErrors';
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useClient } from '../../../services';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import DoNotDisturbAltOutlinedIcon from '@mui/icons-material/DoNotDisturbAltOutlined';
+import { useSnackbar } from 'notistack';
 
 export const MetadataFormAttachedEntities = (props) => {
-  const { metadataForm } = props;
+  const { metadataForm, userRolesMF } = props;
+  const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const client = useClient();
   const [versions, setVersions] = useState([]);
   const [selectedVersion, setSelectedVersion] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const fetchVersions = async () => {
     const response = await client.query(
@@ -25,6 +28,7 @@ export const MetadataFormAttachedEntities = (props) => {
       response.data.listMetadataFormVersions !== null
     ) {
       setVersions(response.data.listMetadataFormVersions);
+      setSelectedVersion(response.data.listMetadataFormVersions[0]);
     } else {
       const error = response.errors
         ? response.errors[0].message
@@ -41,8 +45,32 @@ export const MetadataFormAttachedEntities = (props) => {
     }
   }, [client, dispatch]);
 
-  const deleteVersion = async (version) => {};
-
+  const deleteVersion = async (version) => {
+    setLoading(true);
+    const response = await client.mutate(
+      deleteMetadataFormVersion(version.metadataFormUri, version.version)
+    );
+    if (
+      !response.errors &&
+      response.data &&
+      response.data.deleteMetadataFormVersion !== null
+    ) {
+      await fetchVersions();
+      enqueueSnackbar('Version deleted', {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'success'
+      });
+    } else {
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Delete version failed';
+      dispatch({ type: SET_ERROR, error });
+    }
+    setLoading(false);
+  };
   const fetchAttachedEntities = async (version) => {};
 
   return (
@@ -50,6 +78,9 @@ export const MetadataFormAttachedEntities = (props) => {
       <Grid container spacing={2} sx={{ height: 'calc(100vh - 320px)', mb: -5 }}>
         <Grid item lg={2} xl={2}>
           <Card sx={{ height: '100%' }}>
+            <CardHeader title='Versions'/>
+
+            <Divider/>
             {versions.length > 0 ? (
               versions.map((version) => (
                 <CardContent
@@ -64,8 +95,8 @@ export const MetadataFormAttachedEntities = (props) => {
                   <Grid container spacing={2}>
                     <Grid
                       item
-                      lg={10}
-                      xl={10}
+                      lg={7}
+                      xl={7}
                       onClick={async () => {
                         setSelectedVersion(version);
                         await fetchAttachedEntities(version);
@@ -81,12 +112,27 @@ export const MetadataFormAttachedEntities = (props) => {
                           maxLines: 1
                         }}
                       >
-                        {' version ' + version.version}
+                        {' version ' + version.version }
                       </Typography>
                     </Grid>
-
+                    <Grid item lg={3} xl={3}>
+                      <Typography
+                        color="textPrimary"
+                        variant="subtitle2"
+                        sx={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          maxLines: 1
+                        }}
+                      >
+                        { version.attached_forms}
+                      </Typography>
+                    </Grid>
                     <Grid item lg={2} xl={2}>
-                      <DeleteIcon
+                      {metadataForm.userRole === userRolesMF.Owner && (
+
+                        <DeleteIcon
                         sx={{ color: 'primary.main', opacity: 0.5 }}
                         onMouseOver={(e) => {
                           e.currentTarget.style.opacity = 1;
@@ -96,6 +142,7 @@ export const MetadataFormAttachedEntities = (props) => {
                         }}
                         onClick={() => deleteVersion(version)}
                       />
+                        )}
                     </Grid>
                   </Grid>
                 </CardContent>

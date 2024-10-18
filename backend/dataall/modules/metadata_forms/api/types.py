@@ -88,7 +88,7 @@ MetadataFormVersion = gql.ObjectType(
     fields=[
         gql.Field(name='metadataFormUri', type=gql.ID),
         gql.Field(name='version', type=gql.Integer),
-        gql.Field(name='attached_forms', type=gql.ArrayType(gql.Ref('AttachedMetadataForm'))),
+        gql.Field(name='attached_forms', type=gql.Integer),
     ],
 )
 

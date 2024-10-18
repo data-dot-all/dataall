@@ -616,7 +616,7 @@ export const MetadataFormFields = (props) => {
       metadataForm.versions = response.data.listMetadataFormVersions;
       setCurrentVersion(response.data.listMetadataFormVersions[0].version);
       setAttached(
-        response.data.listMetadataFormVersions[0].attached_forms.length
+        response.data.listMetadataFormVersions[0].attached_forms
       );
       setVersionOptions(response.data.listMetadataFormVersions);
     } else {
@@ -726,7 +726,7 @@ export const MetadataFormFields = (props) => {
                   return {
                     label: 'version ' + option.version,
                     value: option.version,
-                    attached: option.attached_forms.length
+                    attached: option.attached_forms
                   };
                 })}
                 value={'version ' + currentVersion}

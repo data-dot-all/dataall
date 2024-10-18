@@ -9,12 +9,7 @@ export const listMetadataFormVersions = (uri) => ({
       listMetadataFormVersions(uri: $uri) {
         metadataFormUri
         version
-        attached_forms {
-          uri
-          entityUri
-          entityType
-          entityName
-        }
+        attached_forms 
       }
     }
   `
