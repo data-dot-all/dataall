@@ -24,7 +24,8 @@ import {
   MetadataFormInfo,
   MetadataFormFields,
   MetadataFormPreview,
-  MetadataFormEnforcement
+  MetadataFormEnforcement,
+  MetadataFormAttachedEntities
 } from '../components';
 import { deleteMetadataForm } from '../services/deleteMetadataForm';
 import { useNavigate } from 'react-router';
@@ -38,6 +39,7 @@ const MetadataFormView = () => {
   const tabs = [
     { label: 'Form Info', value: 'info' },
     { label: 'Fields', value: 'fields' },
+    { label: 'Attached', value: 'attached' },
     // { label: 'Enforcement', value: 'enforcement' },
     { label: 'Preview', value: 'preview' }
   ];
@@ -252,6 +254,9 @@ const MetadataFormView = () => {
             )}
             {currentTab === 'enforcement' && (
               <MetadataFormEnforcement metadataForm={metadataForm} />
+            )}
+            {currentTab === 'attached' && (
+              <MetadataFormAttachedEntities metadataForm={metadataForm} />
             )}
             {currentTab === 'preview' && (
               <MetadataFormPreview metadataForm={metadataForm} />
