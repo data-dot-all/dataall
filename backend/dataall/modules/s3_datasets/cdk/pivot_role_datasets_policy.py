@@ -1,6 +1,6 @@
 import os
 from dataall.base import db
-from dataall.base.utils.iam_policy_utils import (
+from dataall.base.utils.iam_policy_utils_cdk import (
     split_policy_with_resources_in_statements,
     split_policy_with_mutiple_value_condition_in_statements,
 )
