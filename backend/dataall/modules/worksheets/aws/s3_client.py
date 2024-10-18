@@ -1,12 +1,10 @@
-import boto3
-from botocore.config import Config
+import logging
+from typing import TYPE_CHECKING
 
 from botocore.exceptions import ClientError
-import logging
-from dataall.base.db.exceptions import AWSResourceNotFound
-from dataall.base.aws.sts import SessionHelper
 
-from typing import TYPE_CHECKING
+from dataall.base.aws.sts import SessionHelper
+from dataall.base.db.exceptions import AWSResourceNotFound
 
 if TYPE_CHECKING:
     from dataall.core.environment.db.environment_models import Environment

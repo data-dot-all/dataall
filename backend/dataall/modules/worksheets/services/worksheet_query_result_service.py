@@ -8,12 +8,13 @@ from openpyxl import Workbook
 
 from dataall.base.db import exceptions
 from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.worksheets.aws.s3_client import S3Client
 from dataall.modules.worksheets.db.worksheet_models import WorksheetQueryResult
 from dataall.modules.worksheets.db.worksheet_repositories import WorksheetRepository
 from dataall.modules.worksheets.services.worksheet_enums import WorksheetResultsFormat
-from dataall.modules.worksheets.services.worksheet_permissions import RUN_ATHENA_QUERY_TENANT
+from dataall.modules.worksheets.services.worksheet_permissions import DOWNLOAD_ATHENA_QUERY_RESULTS, MANAGE_WORKSHEETS
 from dataall.modules.worksheets.services.worksheet_service import WorksheetService
 
 if TYPE_CHECKING:
@@ -38,7 +39,7 @@ class WorksheetQueryResultService:
             worksheetUri=worksheet_uri,
             AthenaQueryId=data.get('athenaQueryId'),
             fileFormat=data.get('fileFormat'),
-            OutputLocation=f's3://{environment_bucket}/athenaqueries/{athena_workgroup}/',
+            OutputLocation=f's3://{environment_bucket}/{WorksheetQueryResultService._DEFAULT_ATHENA_QUERIES_PATH}/{athena_workgroup}/',
             region=region,
             AwsAccountId=aws_account_id,
         )
@@ -63,10 +64,11 @@ class WorksheetQueryResultService:
         return excel_buffer
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(RUN_ATHENA_QUERY_TENANT)
-    def download_sql_query_result(session: 'Session', env_uri: str, data: dict = None):
+    @TenantPolicyService.has_tenant_permission(MANAGE_WORKSHEETS)
+    @ResourcePolicyService.has_resource_permission(DOWNLOAD_ATHENA_QUERY_RESULTS)
+    def download_sql_query_result(session: 'Session', uri: str, env_uri: str, data: dict = None):
         environment = EnvironmentService.get_environment_by_uri(session, env_uri)
-        worksheet = WorksheetService.get_worksheet_by_uri(session, data.get('worksheetUri'))
+        worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
         env_group = EnvironmentService.get_environment_group(
             session, worksheet.SamlAdminGroupName, environment.environmentUri
         )
