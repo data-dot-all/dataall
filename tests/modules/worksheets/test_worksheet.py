@@ -40,10 +40,10 @@ def mock_s3_client(module_mocker):
         'dataall.modules.worksheets.services.worksheet_query_result_service.S3Client', autospec=True
     )
 
-    s3_client.object_exists.return_value = True
-    s3_client.put_object.return_value = None
-    s3_client.get_object.return_value = '123,123,123'
-    s3_client.get_presigned_url.return_value = 'https://s3.amazonaws.com/file/123.csv'
+    s3_client.return_value.object_exists.return_value = True
+    s3_client.return_value.put_object.return_value = None
+    s3_client.return_value.get_object.return_value = '123,123,123'
+    s3_client.return_value.get_presigned_url.return_value = 'https://s3.amazonaws.com/file/123.csv'
     yield s3_client
 
 
@@ -164,7 +164,7 @@ def test_update_worksheet(client, worksheet, group):
     assert response.data.updateWorksheet.label == 'change label'
 
 
-def test_create_query_download_url(client, worksheet, env_fixture):
+def test_create_query_download_url(client, worksheet, env_fixture, group):
     response = client.query(
         """
         mutation CreateWorksheetQueryResultDownloadUrl($input: WorksheetQueryResultDownloadUrlInput){
@@ -188,6 +188,8 @@ def test_create_query_download_url(client, worksheet, env_fixture):
             'fileFormat': 'csv',
             'environmentUri': env_fixture.environmentUri,
         },
+        username='alice',
+        groups=[group.name],
     )
 
     expires_in = datetime.strptime(response.data.createWorksheetQueryResultDownloadUrl.created, '%Y-%m-%d %H:%M:%S.%f')
