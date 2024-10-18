@@ -1,5 +1,3 @@
-from email.policy import default
-
 from dataall.base.api import gql
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
 
