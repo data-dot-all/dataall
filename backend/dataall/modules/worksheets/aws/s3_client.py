@@ -4,6 +4,7 @@ from io import BytesIO
 
 from dataall.base.aws.sts import SessionHelper
 from botocore.exceptions import ClientError
+from dataall.base.db import exceptions
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,7 @@ class S3Client:
         try:
             file_extension = key.split('.')[-1].lower()
             if file_extension not in self.file_extension_readers.keys():
-                raise Exception('Unsupported file type')
+                raise exceptions.InvalidInput('S3 Object Key', key, '.txt or .pdf file extensions only')
 
             content = self._client.get_object(Bucket=bucket_name, Key=key)
 
