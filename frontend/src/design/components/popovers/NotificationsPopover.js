@@ -119,7 +119,7 @@ export const NotificationsPopover = () => {
         return `/console/${entity_type}s/${entity_uri}`;
       }
     }
-    if (notification.type.contains('SHARE')) {
+    if (notification.type.includes('SHARE')) {
       return `/console/shares/${notification.target_uri.split('|')[0]}`;
     }
   };

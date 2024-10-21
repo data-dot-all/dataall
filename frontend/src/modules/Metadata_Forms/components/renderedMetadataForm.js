@@ -43,7 +43,7 @@ export const RenderedMetadataForm = (props) => {
   } = props;
 
   const [localFields, setLocalFields] = useState([...fields]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [currentVersion, setCurrentVersion] = useState(
     metadataForm.versions ? metadataForm.versions[0] : 0
   );
@@ -164,13 +164,19 @@ export const RenderedMetadataForm = (props) => {
       const local_fields = response.data.getMetadataForm.fields;
       if (values) {
         local_fields.forEach((field) => {
-          if (values[field.name]) {
+          if (field.name in values) {
             field.value = values[field.name];
           }
         });
       }
       setLocalFields([...local_fields]);
-      setCurrentVersion(response.data.getMetadataForm.versions[0]);
+      if (!version && response.data.getMetadataForm.versions.length > 0) {
+        setCurrentVersion(response.data.getMetadataForm.versions[0]);
+      } else {
+        if (version) {
+          setCurrentVersion(version);
+        }
+      }
     } else {
       const error = response.errors
         ? response.errors[0].message

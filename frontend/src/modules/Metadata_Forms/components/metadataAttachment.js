@@ -35,6 +35,7 @@ export const MetadataAttachment = (props) => {
   const client = useClient();
   const dispatch = useDispatch();
   const [selectedForm, setSelectedForm] = useState(null);
+  const [selectedAttachedForm, setSelectedAttachedForm] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingFields, setLoadingFields] = useState(false);
   const [formsList, setFormsList] = useState([]);
@@ -81,9 +82,11 @@ export const MetadataAttachment = (props) => {
       setFormsList(response.data.listAttachedMetadataForms.nodes);
       if (
         response.data.listAttachedMetadataForms.nodes.length > 0 &&
-        !selectedForm
+        !selectedAttachedForm
       ) {
-        setSelectedForm(response.data.listAttachedMetadataForms.nodes[0]);
+        setSelectedAttachedForm(
+          response.data.listAttachedMetadataForms.nodes[0]
+        );
         await fetchAttachedFields(
           response.data.listAttachedMetadataForms.nodes[0].uri
         );
@@ -136,7 +139,7 @@ export const MetadataAttachment = (props) => {
       fetchAvailableForms().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
-      setSelectedForm(null);
+      setSelectedAttachedForm(null);
     } else {
       const error = response.errors
         ? response.errors[0].message
@@ -238,7 +241,8 @@ export const MetadataAttachment = (props) => {
               <CardContent
                 sx={{
                   backgroundColor:
-                    selectedForm && selectedForm.uri === attachedForm.uri
+                    selectedAttachedForm &&
+                    selectedAttachedForm.uri === attachedForm.uri
                       ? '#e6e6e6'
                       : 'white'
                 }}
@@ -249,7 +253,7 @@ export const MetadataAttachment = (props) => {
                     lg={10}
                     xl={10}
                     onClick={async () => {
-                      setSelectedForm(attachedForm);
+                      setSelectedAttachedForm(attachedForm);
                       setEditMode(false);
                       setAddNewForm(false);
                       setValues({});
@@ -267,7 +271,7 @@ export const MetadataAttachment = (props) => {
                       }}
                     >
                       {attachedForm.metadataForm.name +
-                        ' v. ' +
+                        ' v.' +
                         attachedForm.version}
                     </Typography>
                   </Grid>
@@ -332,7 +336,7 @@ export const MetadataAttachment = (props) => {
             entityType={entityType}
             attachedUri={attachedMFUri}
             onSubmit={async (attachedForm) => {
-              setSelectedForm(attachedForm);
+              setSelectedAttachedForm(attachedForm);
               setEditMode(false);
               setValues({});
               setFields(attachedForm.fields);
@@ -347,13 +351,13 @@ export const MetadataAttachment = (props) => {
             }}
           />
         )}
-        {!addNewForm && !loadingFields && selectedForm && (
+        {!addNewForm && !loadingFields && selectedAttachedForm && (
           <AttachedFormCard
             fields={fields}
-            attachedForm={selectedForm}
+            attachedForm={selectedAttachedForm}
             editable={true}
             onEdit={() => {
-              setSelectedForm(selectedForm.metadataForm);
+              setSelectedForm(selectedAttachedForm.metadataForm);
               const tmp_dict = {};
               fields.forEach((f) => {
                 tmp_dict[f.field.name] = f.value;
@@ -361,7 +365,7 @@ export const MetadataAttachment = (props) => {
               setValues(tmp_dict);
               setEditMode(true);
               setAddNewForm(true);
-              setAttachedMFUri(selectedForm.uri);
+              setAttachedMFUri(selectedAttachedForm.uri);
             }}
           />
         )}

@@ -426,7 +426,10 @@ const NewVersionModal = (props) => {
           <Autocomplete
             disablePortal
             options={versions.map((option) => {
-              return { label: 'version ' + option, value: option };
+              return {
+                label: 'version ' + option.version,
+                value: option.version
+              };
             })}
             defaultValue={'version ' + copyVersion}
             onChange={(event, value) => {
@@ -466,7 +469,7 @@ const NewVersionModal = (props) => {
 };
 
 export const ConfirmationPopUp = (props) => {
-  const { version, attached, onClose, onDelete } = props;
+  const { version, attachedFormCount, onClose, onDelete } = props;
   return (
     <Dialog maxWidth="xs" fullWidth onClose={onClose} open={() => {}}>
       <Box sx={{ p: 3 }}>
@@ -481,7 +484,7 @@ export const ConfirmationPopUp = (props) => {
         <Typography color="textPrimary" align="center" gutterBottom>
           If you delete this version,
           <br /> all data associated with it will be lost. <br />
-          Attached entities: {attached}
+          Attached entities: {attachedFormCount}
         </Typography>
       </Box>
       <Box sx={{ mb: 2, textAlign: 'center' }}>
@@ -520,7 +523,7 @@ export const MetadataFormFields = (props) => {
   const [fields, setFields] = useState(metadataForm.fields);
   const [glossaryNodes, setGlossaryNodes] = useState([]);
   const [currentVersion, setCurrentVersion] = useState(0);
-  const [attached, setAttached] = useState(0);
+  const [attachedFormCount, setAttachedFormCount] = useState(0);
   const [versionOptions, setVersionOptions] = useState([]);
   const [showNewVersionModal, setShowNewVersionModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -613,9 +616,8 @@ export const MetadataFormFields = (props) => {
       response.data &&
       response.data.listMetadataFormVersions !== null
     ) {
-      metadataForm.versions = response.data.listMetadataFormVersions;
       setCurrentVersion(response.data.listMetadataFormVersions[0].version);
-      setAttached(
+      setAttachedFormCount(
         response.data.listMetadataFormVersions[0].attached_forms
       );
       setVersionOptions(response.data.listMetadataFormVersions);
@@ -720,30 +722,36 @@ export const MetadataFormFields = (props) => {
         >
           <Grid container spacing={2}>
             <Grid item lg={2} xl={2} xs={6}>
-              <Autocomplete
-                disablePortal
-                options={versionOptions.map((option) => {
-                  return {
-                    label: 'version ' + option.version,
-                    value: option.version,
-                    attached: option.attached_forms
-                  };
-                })}
-                value={'version ' + currentVersion}
-                onChange={async (event, value) => {
-                  setCurrentVersion(value ? value.value : versionOptions[0]);
-                  setAttached(value ? value.attached : 0);
-                  await fetchItems(value ? value.value : versionOptions[0]);
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    sx={{ minWidth: '150px' }}
-                    {...params}
-                    label="Version"
-                    variant="outlined"
-                  />
-                )}
-              />
+              {currentVersion > 0 && (
+                <Autocomplete
+                  disablePortal
+                  options={versionOptions.map((option) => {
+                    return {
+                      label: 'version ' + option.version,
+                      value: option.version,
+                      attached: option.attached_forms
+                    };
+                  })}
+                  value={'version ' + currentVersion}
+                  onChange={async (event, value) => {
+                    setCurrentVersion(
+                      value ? value.value : versionOptions[0].version
+                    );
+                    setAttachedFormCount(value ? value.attached : 0);
+                    await fetchItems(
+                      value ? value.value : versionOptions[0].version
+                    );
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      sx={{ minWidth: '150px' }}
+                      {...params}
+                      label="Version"
+                      variant="outlined"
+                    />
+                  )}
+                />
+              )}
             </Grid>
             <Grid item lg={2} xl={2} xs={6}>
               {metadataForm.userRole === userRolesMF.Owner && (
@@ -781,7 +789,7 @@ export const MetadataFormFields = (props) => {
                   variant="subtitle2"
                   color="textPrimary"
                 >
-                  Attached entities : {attached}
+                  Attached entities : {attachedFormCount}
                 </Typography>
               )}
             </Grid>
@@ -811,7 +819,7 @@ export const MetadataFormFields = (props) => {
                   onClose={() => setShowDeleteModal(false)}
                   onDelete={deleteVersion}
                   version={currentVersion}
-                  attached={attached}
+                  attachedFormCount={attachedFormCount}
                 ></ConfirmationPopUp>
               )}
             </Grid>
@@ -852,7 +860,7 @@ export const MetadataFormFields = (props) => {
                   startEdit={startEdit}
                   userRole={metadataForm.userRole}
                   userRolesMF={userRolesMF}
-                  enableEdit={attached === 0}
+                  enableEdit={attachedFormCount === 0}
                 />
               )}
             </Box>
