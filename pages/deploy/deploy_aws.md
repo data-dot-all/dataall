@@ -497,7 +497,11 @@ the different configuration options.
             "active": true
           },
         "worksheets": {
-            "active": true
+            "active": true,
+            "features": {
+                "nlq":false,
+                "nlq_daily_invocations": 10
+            }
         },
         "dashboards": {
             "active": true
@@ -573,6 +577,7 @@ In the example config.json, the feature that enables file upload from data.all U
 | confidentiality_dropdown | s3_datasets | Disable / Enable use of confidentiality levels for a dataset. Please note - when this drop down is set to false each dataset is treated as if it is Official or Secret                                                                                                                       |
 | topics_dropdown | s3_datasets | Disable / Enable use of topics for a dataset | 
 |auto_approval_for_confidentiality_level | s3_datasets | Specify if auto-approval for share requests should be enabled for each confidentiality level in data.all |
+| nlq | worksheets | Disable / Enable natural language querying powered by genAI in worksheets (experimental feature - default: False) | 
 
 ### Customizing Module Features
 
@@ -595,6 +600,7 @@ In addition to disabling / enabling, some module features allow for additional c
 | **Customization**                  | **Module** | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |   
 |--------------------------------|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | custom_confidentiality_mapping | s3_datasets          | Provides custom confidentiality mapping json which maps your custom confidentiality levels to existing data.all confidentiality <br/> For e.g. ```custom_confidentiality_mapping : { "Public" : "Unclassified", "Private" : "Official", "Confidential" : "Secret", "Very Highly Confidential" : "Secret"}```<br/> This will display confidentiality levels - Public, Private, Confidential & Very Highly Confidential - in the confidentiality drop down and maps it existing confidentiality levels in data.all - Unclassified, Official and Secret |
+| nlq_daily_invocations | worksheets | Set a limit of number of invocations allowed per user per day for the genAI NLQ worksheets feature (default: 10) | 
 
 
 ### Disable and customize core features
@@ -620,6 +626,19 @@ disable or modify the bahavior any other core feature.
 | cdk_pivot_role_multiple_environments_same_account       | environments | If set to True, the CDK-created pivot role as part of the environment stack will be region specific (`dataallPivotRole-cdk-<region>`). This feature allows users to create multiple data.all environments in the same account but multiple regions. |
 | enable_quicksight_monitoring       | environments | If set to **true**, RDS security groups and VPC NACL rules are modified to allow connection of the RDS metadata database with Quicksight in the infrastructure account (default: false)                                                            |
 | log_query_period_days       | global       | Specify the time frame for querying the log history. This log history is used for Stacks view and shared log views.                                                                                                                             |
+
+
+### (Optional) Additional Set Up For Worksheets GenAI Natural Language Query (NLQ) Features
+
+To use these features, your. data.all admin team must enabled access to the Claude 3.5 Sonnet Model hosted in Amazon Bedrock in the Deployment Account of data.all. To do so, the data.all admin team can follow the steps:
+
+1. Navigate to Amazon Bedrock Console and Select Model Access in left navigation pane
+2. Chose Modify Model Access and select the Claude 3.5 Sonnet model
+    1. Be sure to review the End User License Agreement (EULA) for terms and conditions of using the model before requesting access to it
+3. Select Next, Review any additional terms documents, and when ready Submit the request
+4. If the request is successful the Access status changes to Access granted or Available to request (this may take a few minutes)
+
+For more information about enabling foundation model access in Amazon Bedrock, please refer to AWS Documentation (https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html)
 
 
 ## 8. Run CDK synth and check cdk.context.json <a name="context"></a>
