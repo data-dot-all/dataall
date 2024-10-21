@@ -267,7 +267,7 @@ export const MetadataAttachment = (props) => {
                       }}
                     >
                       {attachedForm.metadataForm.name +
-                        ' v. ' +
+                        ' v.' +
                         attachedForm.version}
                     </Typography>
                   </Grid>

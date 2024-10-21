@@ -718,30 +718,36 @@ export const MetadataFormFields = (props) => {
         >
           <Grid container spacing={2}>
             <Grid item lg={2} xl={2} xs={6}>
-              <Autocomplete
-                disablePortal
-                options={versionOptions.map((option) => {
-                  return {
-                    label: 'version ' + option.version,
-                    value: option.version,
-                    attached: option.attached_forms
-                  };
-                })}
-                value={'version ' + currentVersion}
-                onChange={async (event, value) => {
-                  setCurrentVersion(value ? value.value : versionOptions[0]);
-                  setAttached(value ? value.attached : 0);
-                  await fetchItems(value ? value.value : versionOptions[0]);
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    sx={{ minWidth: '150px' }}
-                    {...params}
-                    label="Version"
-                    variant="outlined"
-                  />
-                )}
-              />
+              {currentVersion > 0 && (
+                <Autocomplete
+                  disablePortal
+                  options={versionOptions.map((option) => {
+                    return {
+                      label: 'version ' + option.version,
+                      value: option.version,
+                      attached: option.attached_forms
+                    };
+                  })}
+                  value={'version ' + currentVersion}
+                  onChange={async (event, value) => {
+                    setCurrentVersion(
+                      value ? value.value : versionOptions[0].version
+                    );
+                    setAttached(value ? value.attached : 0);
+                    await fetchItems(
+                      value ? value.value : versionOptions[0].version
+                    );
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      sx={{ minWidth: '150px' }}
+                      {...params}
+                      label="Version"
+                      variant="outlined"
+                    />
+                  )}
+                />
+              )}
             </Grid>
             <Grid item lg={2} xl={2} xs={6}>
               {metadataForm.userRole === userRolesMF.Owner && (

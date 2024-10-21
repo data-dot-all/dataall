@@ -7,7 +7,7 @@ import {
   ListItem,
   Typography
 } from '@mui/material';
-import { PencilAltIcon } from '../../../design';
+import { PencilAltIcon } from 'design';
 import React from 'react';
 
 export const AttachedFormCard = (props) => {
