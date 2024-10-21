@@ -1,6 +1,11 @@
 import PropTypes from 'prop-types';
 import { Box, Card, CardContent, CardHeader, Divider, Grid, Typography } from '@mui/material';
-import { deleteMetadataFormVersion, listAttachedMetadataForms, listMetadataFormVersions } from '../services';
+import {
+  deleteMetadataFormVersion,
+  getAttachedMetadataForm,
+  listAttachedMetadataForms,
+  listMetadataFormVersions
+} from '../services';
 import { SET_ERROR } from '../../../globalErrors';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -10,6 +15,7 @@ import DoNotDisturbAltOutlinedIcon from '@mui/icons-material/DoNotDisturbAltOutl
 import { useSnackbar } from 'notistack';
 import { DataGrid } from '@mui/x-data-grid';
 import { AttachedFormCard } from './AttachedFormCard';
+import CircularProgress from '@mui/material/CircularProgress';
 
 export const MetadataFormAttachedEntities = (props) => {
   const { metadataForm, userRolesMF } = props;
@@ -19,7 +25,9 @@ export const MetadataFormAttachedEntities = (props) => {
   const [versions, setVersions] = useState([]);
   const [selectedVersion, setSelectedVersion] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loadingForm, setLoadingForm] = useState(false);
   const [attachedEntities, setAttachedEntities] = useState({  });
+  const [attachedForm, setAttachedForm] = useState(null);
   const [paginationModel, setPaginationModel] = useState({
     pageSize: 10,
     page: 0
@@ -52,6 +60,23 @@ export const MetadataFormAttachedEntities = (props) => {
     }
   };
 
+  const fetchAttachedForm = async (uri) => {
+    setLoadingForm(true);
+    const response = await client.query(getAttachedMetadataForm(uri));
+    if (
+      !response.errors &&
+      response.data &&
+      response.data.getAttachedMetadataForm !== null
+    ) {
+      setAttachedForm(response.data.getAttachedMetadataForm);
+    } else {
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Attached Metadata Form not found';
+      dispatch({ type: SET_ERROR, error });
+    }
+    setLoadingForm(false);
+  };
 
 
   useEffect(() => {
@@ -107,7 +132,9 @@ export const MetadataFormAttachedEntities = (props) => {
         ...entity
       }));
       setAttachedEntities(response.data.listAttachedMetadataForms);
-      setSelectedEntity(response.data.listAttachedMetadataForms.nodes[0])
+      if (response.data.listAttachedMetadataForms.nodes.length > 0){
+      setSelectedEntity([response.data.listAttachedMetadataForms.nodes[0].uri])
+      await fetchAttachedForm(response.data.listAttachedMetadataForms.nodes[0].uri);}
     } else {
       const error = response.errors
         ? response.errors[0].message
@@ -222,7 +249,12 @@ export const MetadataFormAttachedEntities = (props) => {
                 }}
                 rowCount={attachedEntities.count}
                 autoHeight={true}
-                onSelectionModelChange={(newSelection) => {setSelectedEntity(newSelection);}}
+                onSelectionModelChange={async (newSelection) => {setSelectedEntity(newSelection);
+                  if (newSelection.length > 0)
+                  {
+                    await fetchAttachedForm(newSelection[0]);
+
+                  }}}
                 selectionModel={selectedEntity}
                 hideFooterSelectedRowCount={true}
               /> ) : (
@@ -230,17 +262,29 @@ export const MetadataFormAttachedEntities = (props) => {
                   No entities attached.
                 </Typography>
               )}
+              {loading && (
+                <CardContent sx={{ display: 'flex', justifyContent: 'center' }}>
+                  <CircularProgress />
+                </CardContent>
+              )}
             </CardContent>
           </Card>
         </Grid>
         <Grid item lg={5} xl={5}>
-          <Card sx={{ height: '100%' }}>
-            {!loading && selectedEntity && (
+
+            {!loadingForm && !loading && selectedEntity && attachedForm && (
               <AttachedFormCard
-                attachedForm={selectedEntity.metadataForm}
+                attachedForm={attachedForm}
+                fields={attachedForm.fields}
+                editable={false}
               />
             )}
-          </Card>
+            {loadingForm || loading && (
+              <CardContent sx={{ display: 'flex', justifyContent: 'center' }}>
+                <CircularProgress />
+              </CardContent>
+            )}
+
         </Grid>
       </Grid>
     </Box>

@@ -351,6 +351,7 @@ export const MetadataAttachment = (props) => {
           <AttachedFormCard
             fields={fields}
             attachedForm={selectedForm}
+            editable={true}
             onEdit={() => {
               setSelectedForm(selectedForm.metadataForm);
               const tmp_dict = {};
