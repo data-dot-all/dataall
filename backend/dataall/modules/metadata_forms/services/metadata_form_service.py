@@ -363,5 +363,10 @@ class MetadataFormService:
     def get_entity_owner(attached_metadata_form):
         entity = MetadataFormService.resolve_attached_entity(attached_metadata_form)
         if entity:
-            return entity.SamlGroupName or entity.SamlAdminGroupName
+            if attached_metadata_form.entityType == MetadataFormEntityTypes.Organizations.value:
+                return entity.SamlGroupName
+            elif attached_metadata_form.entityType == MetadataFormEntityTypes.Environments.value:
+                return entity.SamlGroupName
+            elif attached_metadata_form.entityType == MetadataFormEntityTypes.Datasets.value:
+                return entity.SamlAdminGroupName
         return None
