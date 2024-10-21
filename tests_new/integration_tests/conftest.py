@@ -54,8 +54,8 @@ class RedshiftConnection:
 class TestData:
     users: dict[str, User]
     envs: dict[str, Env]
-    dashboards: dict[str, Dashboard]
-    redshift_connections: dict[str, RedshiftConnection]
+    dashboards: dict[str, Dashboard] = None
+    redshift_connections: dict[str, RedshiftConnection] = None
 
 
 @pytest.fixture(scope='session', autouse=True)
