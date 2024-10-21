@@ -749,3 +749,17 @@ def get_table_profiling_run(client, tableUri):
     }
     response = client.query(query=query)
     return response.data.getDatasetTableProfilingRun
+
+
+def list_object_keys(client, datasetUri):
+    query = {
+        'operationName': 'listObjectKeys',
+        'variables': {'datasetUri': datasetUri},
+        'query': """
+            query listObjectKeys($datasetUri: String!) {
+              listObjectKeys(datasetUri: $datasetUri)
+            }
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.listObjectKeys
