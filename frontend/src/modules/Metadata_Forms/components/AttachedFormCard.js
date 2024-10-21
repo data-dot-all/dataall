@@ -30,18 +30,18 @@ export const AttachedFormCard = (props) => {
           xs={4}
           sx={{ textAlign: 'right', pr: 2, mt: 2 }}
         >
-          {editable &&
-          <PencilAltIcon
-            sx={{ color: 'primary.main', opacity: 0.5 }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.opacity = 1;
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.opacity = 0.5;
-            }}
-            onClick={onEdit}
-
-          />  }
+          {editable && (
+            <PencilAltIcon
+              sx={{ color: 'primary.main', opacity: 0.5 }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.opacity = 1;
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.opacity = 0.5;
+              }}
+              onClick={onEdit}
+            />
+          )}
         </Grid>
       </Grid>
 

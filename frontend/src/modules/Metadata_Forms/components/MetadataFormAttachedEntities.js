@@ -1,5 +1,13 @@
 import PropTypes from 'prop-types';
-import { Box, Card, CardContent, CardHeader, Divider, Grid, Typography } from '@mui/material';
+import {
+  Box,
+  Card,
+  CardContent,
+  CardHeader,
+  Divider,
+  Grid,
+  Typography
+} from '@mui/material';
 import {
   deleteMetadataFormVersion,
   getAttachedMetadataForm,
@@ -7,7 +15,7 @@ import {
   listMetadataFormVersions
 } from '../services';
 import { SET_ERROR } from '../../../globalErrors';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useClient } from '../../../services';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
@@ -26,7 +34,7 @@ export const MetadataFormAttachedEntities = (props) => {
   const [selectedVersion, setSelectedVersion] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingForm, setLoadingForm] = useState(false);
-  const [attachedEntities, setAttachedEntities] = useState({  });
+  const [attachedEntities, setAttachedEntities] = useState({});
   const [attachedForm, setAttachedForm] = useState(null);
   const [paginationModel, setPaginationModel] = useState({
     pageSize: 10,
@@ -35,9 +43,9 @@ export const MetadataFormAttachedEntities = (props) => {
   const [selectedEntity, setSelectedEntity] = useState(null);
 
   const header = [
-    { field: 'entityType', width:  200, headerName: 'Type', editable: false },
-    { field: 'entityName', width:  200, headerName: 'Name', editable: false },
-    { field: 'entityOwner', width:  200, headerName: 'Owner', editable: false }
+    { field: 'entityType', width: 200, headerName: 'Type', editable: false },
+    { field: 'entityName', width: 200, headerName: 'Name', editable: false },
+    { field: 'entityOwner', width: 200, headerName: 'Owner', editable: false }
   ];
 
   const fetchVersions = async () => {
@@ -78,7 +86,6 @@ export const MetadataFormAttachedEntities = (props) => {
     setLoadingForm(false);
   };
 
-
   useEffect(() => {
     if (client) {
       fetchVersions().catch((e) =>
@@ -113,28 +120,42 @@ export const MetadataFormAttachedEntities = (props) => {
     }
     setLoading(false);
   };
-  const fetchAttachedEntities = async (version, page = paginationModel.page, pageSize = paginationModel.pageSize) => {
+  const fetchAttachedEntities = async (
+    version,
+    page = paginationModel.page,
+    pageSize = paginationModel.pageSize
+  ) => {
     setLoading(true);
 
-    const response = await client.query(listAttachedMetadataForms({
-      pageSize: pageSize,
-      page: page + 1,
-      metadataFormUri: version.metadataFormUri,
-      version: version.version
-    }));
+    const response = await client.query(
+      listAttachedMetadataForms({
+        pageSize: pageSize,
+        page: page + 1,
+        metadataFormUri: version.metadataFormUri,
+        version: version.version
+      })
+    );
     if (
       !response.errors &&
       response.data &&
       response.data.listAttachedMetadataForms !== null
     ) {
-      response.data.listAttachedMetadataForms.nodes = response.data.listAttachedMetadataForms.nodes.map((entity) => ({
-        id: entity.uri,
-        ...entity
-      }));
+      response.data.listAttachedMetadataForms.nodes =
+        response.data.listAttachedMetadataForms.nodes.map((entity) => ({
+          id: entity.uri,
+          ...entity
+        }));
       setAttachedEntities(response.data.listAttachedMetadataForms);
-      if (response.data.listAttachedMetadataForms.nodes.length > 0){
-      setSelectedEntity([response.data.listAttachedMetadataForms.nodes[0].uri])
-      await fetchAttachedForm(response.data.listAttachedMetadataForms.nodes[0].uri);}
+      if (response.data.listAttachedMetadataForms.nodes.length > 0) {
+        setSelectedEntity([
+          response.data.listAttachedMetadataForms.nodes[0].uri
+        ]);
+        await fetchAttachedForm(
+          response.data.listAttachedMetadataForms.nodes[0].uri
+        );
+      } else {
+        setAttachedForm(null);
+      }
     } else {
       const error = response.errors
         ? response.errors[0].message
@@ -145,13 +166,17 @@ export const MetadataFormAttachedEntities = (props) => {
   };
 
   return (
-    <Box >
-      <Grid container spacing={2} sx={{ height: 'calc(100vh - 320px)', mb: -5 }}>
+    <Box>
+      <Grid
+        container
+        spacing={2}
+        sx={{ height: 'calc(100vh - 320px)', mb: -5 }}
+      >
         <Grid item lg={2} xl={2}>
           <Card sx={{ height: '100%' }}>
-            <CardHeader title='Versions'/>
+            <CardHeader title="Versions" />
 
-            <Divider/>
+            <Divider />
             {versions.length > 0 ? (
               versions.map((version) => (
                 <CardContent
@@ -183,7 +208,7 @@ export const MetadataFormAttachedEntities = (props) => {
                           maxLines: 1
                         }}
                       >
-                        {' version ' + version.version }
+                        {' version ' + version.version}
                       </Typography>
                     </Grid>
                     <Grid item lg={3} xl={3}>
@@ -197,23 +222,22 @@ export const MetadataFormAttachedEntities = (props) => {
                           maxLines: 1
                         }}
                       >
-                        { version.attached_forms}
+                        {version.attached_forms}
                       </Typography>
                     </Grid>
                     <Grid item lg={2} xl={2}>
                       {metadataForm.userRole === userRolesMF.Owner && (
-
                         <DeleteIcon
-                        sx={{ color: 'primary.main', opacity: 0.5 }}
-                        onMouseOver={(e) => {
-                          e.currentTarget.style.opacity = 1;
-                        }}
-                        onMouseOut={(e) => {
-                          e.currentTarget.style.opacity = 0.5;
-                        }}
-                        onClick={() => deleteVersion(version)}
-                      />
-                        )}
+                          sx={{ color: 'primary.main', opacity: 0.5 }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.opacity = 1;
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.opacity = 0.5;
+                          }}
+                          onClick={() => deleteVersion(version)}
+                        />
+                      )}
                     </Grid>
                   </Grid>
                 </CardContent>
@@ -230,34 +254,48 @@ export const MetadataFormAttachedEntities = (props) => {
         </Grid>
         <Grid item lg={5} xl={5}>
           <Card sx={{ height: '100%' }}>
-            <CardHeader title='Attached Entities'/>
+            <CardHeader title="Attached Entities" />
             <CardContent>
-              {!loading && attachedEntities.nodes && attachedEntities.nodes.length > 0 ? (
-              <DataGrid
-                rows={attachedEntities.nodes}
-                columns={header}
-                pageSize={paginationModel.pageSize}
-                rowsPerPageOptions={[5, 10, 20]}
-                onPageSizeChange={async (newPageSize) => {
-                  setPaginationModel({...paginationModel, pageSize:newPageSize});
-                  await fetchAttachedEntities(selectedVersion, paginationModel.page, newPageSize);
-                }}
-                page={paginationModel.page}
-                onPageChange={async (newPage) => {
-                  setPaginationModel({...paginationModel, page:newPage});
-                  await  fetchAttachedEntities(selectedVersion, newPage, paginationModel.pageSize);
-                }}
-                rowCount={attachedEntities.count}
-                autoHeight={true}
-                onSelectionModelChange={async (newSelection) => {setSelectedEntity(newSelection);
-                  if (newSelection.length > 0)
-                  {
-                    await fetchAttachedForm(newSelection[0]);
-
-                  }}}
-                selectionModel={selectedEntity}
-                hideFooterSelectedRowCount={true}
-              /> ) : (
+              {!loading &&
+              attachedEntities.nodes &&
+              attachedEntities.nodes.length > 0 ? (
+                <DataGrid
+                  rows={attachedEntities.nodes}
+                  columns={header}
+                  pageSize={paginationModel.pageSize}
+                  rowsPerPageOptions={[5, 10, 20]}
+                  onPageSizeChange={async (newPageSize) => {
+                    setPaginationModel({
+                      ...paginationModel,
+                      pageSize: newPageSize
+                    });
+                    await fetchAttachedEntities(
+                      selectedVersion,
+                      paginationModel.page,
+                      newPageSize
+                    );
+                  }}
+                  page={paginationModel.page}
+                  onPageChange={async (newPage) => {
+                    setPaginationModel({ ...paginationModel, page: newPage });
+                    await fetchAttachedEntities(
+                      selectedVersion,
+                      newPage,
+                      paginationModel.pageSize
+                    );
+                  }}
+                  rowCount={attachedEntities.count}
+                  autoHeight={true}
+                  onSelectionModelChange={async (newSelection) => {
+                    setSelectedEntity(newSelection);
+                    if (newSelection.length > 0) {
+                      await fetchAttachedForm(newSelection[0]);
+                    }
+                  }}
+                  selectionModel={selectedEntity}
+                  hideFooterSelectedRowCount={true}
+                />
+              ) : (
                 <Typography color="textPrimary" variant="subtitle2">
                   No entities attached.
                 </Typography>
@@ -271,20 +309,19 @@ export const MetadataFormAttachedEntities = (props) => {
           </Card>
         </Grid>
         <Grid item lg={5} xl={5}>
-
-            {!loadingForm && !loading && selectedEntity && attachedForm && (
-              <AttachedFormCard
-                attachedForm={attachedForm}
-                fields={attachedForm.fields}
-                editable={false}
-              />
-            )}
-            {loadingForm || loading && (
+          {!loadingForm && !loading && selectedEntity && attachedForm && (
+            <AttachedFormCard
+              attachedForm={attachedForm}
+              fields={attachedForm.fields}
+              editable={false}
+            />
+          )}
+          {loadingForm ||
+            (loading && (
               <CardContent sx={{ display: 'flex', justifyContent: 'center' }}>
                 <CircularProgress />
               </CardContent>
-            )}
-
+            ))}
         </Grid>
       </Grid>
     </Box>

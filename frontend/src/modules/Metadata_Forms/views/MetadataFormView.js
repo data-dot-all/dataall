@@ -256,7 +256,10 @@ const MetadataFormView = () => {
               <MetadataFormEnforcement metadataForm={metadataForm} />
             )}
             {currentTab === 'attached' && (
-              <MetadataFormAttachedEntities metadataForm={metadataForm} userRolesMF={userRolesMF}/>
+              <MetadataFormAttachedEntities
+                metadataForm={metadataForm}
+                userRolesMF={userRolesMF}
+              />
             )}
             {currentTab === 'preview' && (
               <MetadataFormPreview metadataForm={metadataForm} />
