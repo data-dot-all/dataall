@@ -238,17 +238,17 @@ export const RenderedMetadataForm = (props) => {
                       disablePortal
                       options={metadataForm.versions.map((option) => {
                         return {
-                          label: 'version ' + option.version,
-                          value: option.version
+                          label: 'version ' + option,
+                          value: option
                         };
                       })}
                       value={'version ' + currentVersion}
                       onChange={async (event, value) => {
                         setCurrentVersion(
-                          value ? value.value : metadataForm.versions[0].version
+                          value ? value.value : metadataForm.versions[0]
                         );
                         await fetchItems(
-                          value ? value.value : metadataForm.versions[0].version
+                          value ? value.value : metadataForm.versions[0]
                         );
                       }}
                       renderInput={(params) => (
