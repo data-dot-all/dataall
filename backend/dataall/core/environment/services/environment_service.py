@@ -730,6 +730,11 @@ class EnvironmentService:
         return EnvironmentRepository.query_all_environment_groups(session, uri, filter)
 
     @staticmethod
+    def list_all_environment_groups(uri, data=None) -> [str]:
+        with get_context().db_engine.scoped_session() as session:
+            return [g.groupUri for g in EnvironmentRepository.query_all_environment_groups(session, uri, data).all()]
+
+    @staticmethod
     @ResourcePolicyService.has_resource_permission(environment_permissions.LIST_ENVIRONMENT_GROUPS)
     def paginated_all_environment_groups(uri, data=None) -> dict:
         data = data if data is not None else {}

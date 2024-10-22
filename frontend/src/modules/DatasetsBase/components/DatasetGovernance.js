@@ -11,6 +11,8 @@ import {
 import PropTypes from 'prop-types';
 import { Label } from 'design';
 import { isFeatureEnabled } from 'utils';
+import { UserModal } from 'design';
+import { useState } from 'react';
 
 export const DatasetGovernance = (props) => {
   const { dataset } = props;
@@ -19,6 +21,14 @@ export const DatasetGovernance = (props) => {
       ? dataset.terms.nodes
       : [{ label: '-', nodeUri: '-' }];
   const tags = dataset.tags.length > 0 ? dataset.tags : ['-'];
+
+  const [modalOpen, setIsModalOpen] = useState(false);
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => setIsModalOpen(false);
+
+  const [stewardsModalOpen, setStewardsModalOpen] = useState(false);
+  const handleOpenStewardsModal = () => setStewardsModalOpen(true);
+  const handleCloseStewardsModal = () => setStewardsModalOpen(false);
 
   return (
     <Grid container spacing={2}>
@@ -98,7 +108,14 @@ export const DatasetGovernance = (props) => {
               Owners
             </Typography>
             <Typography color="textPrimary" variant="body2">
-              {dataset.SamlAdminGroupName}
+              <div onClick={handleOpenModal} style={{ cursor: 'pointer' }}>
+                {dataset.SamlAdminGroupName}
+              </div>
+              <UserModal
+                team={dataset.SamlAdminGroupName}
+                open={modalOpen}
+                onClose={handleCloseModal}
+              />
             </Typography>
           </CardContent>
           <CardContent>
@@ -106,7 +123,17 @@ export const DatasetGovernance = (props) => {
               Stewards
             </Typography>
             <Typography color="textPrimary" variant="body2">
-              {dataset.stewards}
+              <div
+                onClick={handleOpenStewardsModal}
+                style={{ cursor: 'pointer' }}
+              >
+                {dataset.stewards}
+              </div>
+              <UserModal
+                team={dataset.stewards}
+                open={stewardsModalOpen}
+                onClose={handleCloseStewardsModal}
+              />
             </Typography>
           </CardContent>
           <CardContent>

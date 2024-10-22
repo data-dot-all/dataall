@@ -2,8 +2,11 @@ import os
 
 import boto3
 import pytest
+from unittest.mock import MagicMock
 
 from dataall.base.context import set_context, dispose_context, RequestContext
+from dataall.core.organizations.services.organization_service import OrganizationService
+from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.redshift_datasets.services.redshift_connection_service import RedshiftConnectionService
 from dataall.modules.redshift_datasets.services.redshift_dataset_service import RedshiftDatasetService
 from dataall.modules.redshift_datasets.services.redshift_connection_permissions import REDSHIFT_GRANTABLE_PERMISSIONS
@@ -171,13 +174,32 @@ def connection3_admin(
 
 
 @pytest.fixture(scope='function')
-def connection3_admin_permissions(db, connection3_admin, user, group, group2, api_context_1):
+def invited_group_to_environment(db, user, group, group2, env_fixture, api_context_1, module_mocker):
+    module_mocker.patch('dataall.base.aws.iam.IAM', return_value=MagicMock())
+    OrganizationService.invite_group(
+        uri=env_fixture.organizationUri, data={'groupUri': group2.name, 'permissions': ['LINK_ENVIRONMENT']}
+    )
+    EnvironmentService.invite_group(
+        uri=env_fixture.environmentUri, data={'groupUri': group2.name, 'permissions': ['INVITE_ENVIRONMENT_GROUP']}
+    )
+    yield group2
+    set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
+    EnvironmentService.remove_group(uri=env_fixture.environmentUri, group=group2.name)
+    OrganizationService.remove_group(uri=env_fixture.organizationUri, group=group2.name)
+
+
+@pytest.fixture(scope='function')
+def connection3_admin_permissions(db, connection3_admin, user, group, invited_group_to_environment, api_context_1):
     RedshiftConnectionService.add_group_permissions(
-        uri=connection3_admin.connectionUri, group=group2.groupUri, permissions=REDSHIFT_GRANTABLE_PERMISSIONS
+        uri=connection3_admin.connectionUri,
+        group=invited_group_to_environment.name,
+        permissions=REDSHIFT_GRANTABLE_PERMISSIONS,
     )
     yield RedshiftConnectionService.list_connection_group_permissions(uri=connection3_admin.connectionUri, filter={})
     set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
-    RedshiftConnectionService.delete_group_permissions(uri=connection3_admin.connectionUri, group=group2.groupUri)
+    RedshiftConnectionService.delete_group_permissions(
+        uri=connection3_admin.connectionUri, group=invited_group_to_environment.name
+    )
     dispose_context()
 
 
@@ -200,7 +222,9 @@ def imported_redshift_dataset_1_no_tables(db, user, group, env_fixture, connecti
 
 
 @pytest.fixture(scope='function')
-def imported_redshift_dataset_2_with_tables(db, user, group, env_fixture, connection1_serverless, api_context_1):
+def imported_redshift_dataset_2_with_tables(
+    db, user, group, env_fixture, connection1_serverless, api_context_1, mock_redshift_data
+):
     dataset = RedshiftDatasetService.import_redshift_dataset(
         uri=env_fixture.environmentUri,
         admin_group=group.name,

@@ -31,3 +31,4 @@ export * from './layout';
 export * from './popovers';
 export * from './SanitizedHTML';
 export * from './NoAccessMaintenanceWindow';
+export * from './UserModal';
