@@ -315,7 +315,7 @@ class MetadataFormService:
                         session,
                         recipient=owner,
                         target_uri=f'{attached.entityUri}|{attached.entityType}',
-                        message=f'New version {new_version.version} is available for metadata form "{mf.name}"',
+                        message=f'New version {new_version.version} is available for metadata form "{mf.name}" for {attached.entityType} {attached.entityUri}',
                         notification_type='METADATA_FORM_UPDATE',
                     )
         return new_version.version
