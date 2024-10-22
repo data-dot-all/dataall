@@ -315,7 +315,7 @@ class MetadataFormService:
                         session,
                         recipient=owner,
                         target_uri=f'{attached.entityUri}|{attached.entityType}',
-                        message=f'New version {new_version.version} is available for metadata form "{mf.name}"',
+                        message=f'New version {new_version.version} is available for metadata form "{mf.name}" for {attached.entityType} {attached.entityUri}',
                         notification_type='METADATA_FORM_UPDATE',
                     )
         return new_version.version
@@ -349,7 +349,10 @@ class MetadataFormService:
                 return OrganizationRepository.get_organization_by_uri(session, attached_metadata_form.entityUri)
             elif attached_metadata_form.entityType == MetadataFormEntityTypes.Environments.value:
                 return EnvironmentRepository.get_environment_by_uri(session, attached_metadata_form.entityUri)
-            elif attached_metadata_form.entityType == MetadataFormEntityTypes.Datasets.value:
+            elif attached_metadata_form.entityType in [
+                MetadataFormEntityTypes.S3Datasets.value,
+                MetadataFormEntityTypes.RDDatasets.value,
+            ]:
                 return DatasetBaseRepository.get_dataset_by_uri(session, attached_metadata_form.entityUri)
             else:
                 return None
@@ -367,6 +370,9 @@ class MetadataFormService:
                 return entity.SamlGroupName
             elif attached_metadata_form.entityType == MetadataFormEntityTypes.Environments.value:
                 return entity.SamlGroupName
-            elif attached_metadata_form.entityType == MetadataFormEntityTypes.Datasets.value:
+            elif attached_metadata_form.entityType in [
+                MetadataFormEntityTypes.S3Datasets.value,
+                MetadataFormEntityTypes.RDDatasets.value,
+            ]:
                 return entity.SamlAdminGroupName
         return None

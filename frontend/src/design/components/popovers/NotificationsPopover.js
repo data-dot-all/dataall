@@ -103,18 +103,20 @@ export const NotificationsPopover = () => {
 
   const resolve_link = (notification) => {
     if (notification.type === 'METADATA_FORM_UPDATE') {
-      const entity_type = notification.target_uri.split('|')[1].toLowerCase();
+      let entity_type = notification.target_uri.split('|')[1].toLowerCase();
       const entity_uri = notification.target_uri.split('|')[0];
       const main_modules = [
         'environment',
         'organization',
-        'dataset',
+        's3-dataset',
+        'rd-dataset',
         'share',
         'dashboard',
         'worksheet',
         'pipeline',
         'notebook'
       ];
+
       if (main_modules.includes(entity_type)) {
         return `/console/${entity_type}s/${entity_uri}`;
       }
