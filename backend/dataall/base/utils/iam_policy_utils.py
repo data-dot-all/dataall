@@ -67,6 +67,44 @@ def split_policy_with_resources_in_statements(base_sid: str, effect: str, action
     return resulting_statements
 
 
+def split_policy_with_mutiple_value_condition_in_statements(
+    base_sid: str, effect: str, actions: List[str], resources: List[str], condition_dict: dict
+):
+    """
+    The variable part of the policy is in the conditions parameter of the PolicyStatement
+    conditions_dict passes the different components of the condition mapping
+    """
+
+    def _build_statement(split, subset):
+        return {
+            'Sid': base_sid + str(split),
+            'Effect': effect,
+            'Action': actions,
+            'Resource': resources,
+            'Condition': {condition_dict.get('key'): {condition_dict.get('resource'): subset}},
+        }
+
+    total_length, base_length = _policy_analyzer(condition_dict.get('values'), _build_statement)
+    extra_chars = len(
+        str(f'"Condition":  {{ "{condition_dict.get("key")}": {{"{condition_dict.get("resource")}": }} }}')
+    )
+
+    if total_length < POLICY_LIMIT - POLICY_HEADERS_BUFFER:
+        logger.info('Not exceeding policy limit, returning statement ...')
+        resulting_statement = _build_statement(1, condition_dict.get('values'))
+        return [resulting_statement]
+    else:
+        logger.info('Exceeding policy limit, splitting values ...')
+        resulting_statements = _policy_splitter(
+            base_length=base_length,
+            resources=condition_dict.get('values'),
+            extra_chars=extra_chars,
+            statement_builder=_build_statement,
+        )
+
+    return resulting_statements
+
+
 def _policy_analyzer(resources: List[str], statement_builder: Callable[[int, List[str]], Dict]):
     """
     Calculates the policy size with the resources (total_length) and without resources (base_length)

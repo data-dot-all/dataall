@@ -427,9 +427,7 @@ class S3SharePolicyService(ManagedPolicy):
                 f'Failed to process share as number of needed attached policies to the role is greater than the service quota limit: {managed_iam_policy_quota}'
             )
 
-        log.info(
-            f'Role: {self.role_name} has capacity to attach managed policies'
-        )
+        log.info(f'Role: {self.role_name} has capacity to attach managed policies')
 
     def _get_managed_policy_quota(self):
         # Get the number of managed policies which can be attached to the IAM role

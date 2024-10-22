@@ -1,6 +1,10 @@
 import os
 from dataall.base import db
-from dataall.base.utils.iam_policy_utils_cdk import (
+from dataall.base.utils.iam_cdk_utils import (
+    convert_from_json_to_iam_policy_statement,
+    convert_from_json_to_iam_policy_statement_with_conditions,
+)
+from dataall.base.utils.iam_policy_utils import (
     split_policy_with_resources_in_statements,
     split_policy_with_mutiple_value_condition_in_statements,
 )
@@ -153,9 +157,9 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                         imported_kms_alias.append(f'alias/{dataset.KmsAlias}')
 
         if imported_buckets:
-            dataset_statement = split_policy_with_resources_in_statements(
+            dataset_statement_json = split_policy_with_resources_in_statements(
                 base_sid='ImportedDatasetBuckets',
-                effect=iam.Effect.ALLOW,
+                effect=iam.Effect.ALLOW.value,
                 actions=[
                     's3:List*',
                     's3:GetBucket*',
@@ -168,11 +172,12 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                 ],
                 resources=imported_buckets,
             )
+            dataset_statement = convert_from_json_to_iam_policy_statement(dataset_statement_json)
             statements.extend(dataset_statement)
         if imported_kms_alias:
-            kms_statement = split_policy_with_mutiple_value_condition_in_statements(
+            kms_statement_json = split_policy_with_mutiple_value_condition_in_statements(
                 base_sid='KMSImportedDataset',
-                effect=iam.Effect.ALLOW,
+                effect=iam.Effect.ALLOW.value,
                 actions=[
                     'kms:Decrypt',
                     'kms:Encrypt',
@@ -190,6 +195,7 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     'values': imported_kms_alias,
                 },
             )
+            kms_statement = convert_from_json_to_iam_policy_statement_with_conditions(kms_statement_json)
             statements.extend(kms_statement)
 
         return statements

@@ -3,7 +3,13 @@ import os
 from typing import List
 from constructs import Construct
 from aws_cdk import Duration, aws_iam as iam, NestedStack
-from dataall.base.utils.iam_policy_utils_cdk import split_policy_statements_in_chunks
+
+from dataall.base.utils.iam_cdk_utils import (
+    process_and,
+    convert_from_json_to_iam_policy_statement_with_conditions,
+    convert_from_json_to_iam_policy_statement,
+)
+from dataall.base.utils.iam_policy_utils import split_policy_statements_in_chunks
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +42,14 @@ class PivotRoleStatementSet(object):
             statements.extend(service.get_statements(self))
             logger.info(f'statements: {str(service.get_statements(self))}')
 
-        statements_chunks = split_policy_statements_in_chunks(statements)
+        statements_json = [statement.to_json() for statement in statements]
+        statement_chunks_json = split_policy_statements_in_chunks(statements_json)
+        statements_chunks = []
+        for statement_js in statement_chunks_json:
+            if not statement_js.get('Condition', None):
+                statements_chunks.append(convert_from_json_to_iam_policy_statement_with_conditions(statement_js))
+            else:
+                statements_chunks.append(convert_from_json_to_iam_policy_statement(statement_js))
 
         for index, chunk in enumerate(statements_chunks):
             policies.append(
