@@ -8,7 +8,7 @@ def convert_from_json_to_iam_policy_statement_with_conditions(iam_policy: Dict[A
         effect=iam_policy.get('Effect'),
         actions=iam_policy.get('Action'),
         resources=iam_policy.get('Resource'),
-        conditions=iam_policy.get('Condition')
+        conditions=iam_policy.get('Condition'),
     )
 
 
