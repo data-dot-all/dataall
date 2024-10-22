@@ -79,7 +79,7 @@ class ManagedPolicy(ABC):
     def check_if_managed_policies_exists(self) -> bool:
         # Fetch the policy name which was created without indexes and filter through all policies
         policy_pattern = self.generate_base_policy_name()
-        share_policies = self._get_share_policy_names(policy_pattern)
+        share_policies = self._get_share_policy_names(policy_pattern) # Todo : remove share name
         return True if share_policies else False
 
     def get_managed_policies(self) -> List[str]:

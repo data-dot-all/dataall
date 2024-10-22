@@ -60,10 +60,11 @@ class NamingConventionService:
         """
         Builds a compliant AWS resource name
         """
+        # Todo : Add comments
         regex = NamingConventionPattern[self.service].value['regex']
         separator = NamingConventionPattern[self.service].value['separator']
         max_length = NamingConventionPattern[self.service].value['max_length']
-        index_string = f'-{index}' if index is not None else '- '
+        index_string = f'-{index}' if index is not None else '- ' # Add a  buffer
         suffix = f'-{self.target_uri}' if len(self.target_uri) else ''
         suffix = suffix + index_string if index is not None else suffix
         return f"{slugify(self.resource_prefix + '-' + self.target_label[:(max_length - len(self.resource_prefix + self.target_uri + index_string))] + suffix, regex_pattern=fr'{regex}', separator=separator, lowercase=True)}"
