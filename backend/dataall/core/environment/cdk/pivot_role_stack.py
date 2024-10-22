@@ -5,7 +5,6 @@ from constructs import Construct
 from aws_cdk import Duration, aws_iam as iam, NestedStack
 
 from dataall.base.utils.iam_cdk_utils import (
-    process_and,
     convert_from_json_to_iam_policy_statement_with_conditions,
     convert_from_json_to_iam_policy_statement,
 )
