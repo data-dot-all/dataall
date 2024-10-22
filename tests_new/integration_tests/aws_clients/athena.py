@@ -29,9 +29,19 @@ class AthenaClient:
         result = self._client.list_work_groups()
         return [x['Name'] for x in result['WorkGroups']]
 
-    def get_env_work_group(self, env_name):
+    def get_work_group(self, env_name, group):
         workgroups = self.list_work_groups()
+        group_snakify = group.lower().replace('-', '_')
+        env_name_snakify = env_name.lower().replace('-', '_')
+        default_workgroup = 'primary'
+        env_workgroup, group_workgroup = None, None
         for workgroup in workgroups:
-            if env_name in workgroup:
-                return workgroup
-        return workgroups[0] if workgroups else None
+            if env_name_snakify in workgroup:
+                env_workgroup = workgroup
+            if group_snakify in workgroup:
+                group_workgroup = workgroup
+        if group_workgroup:
+            return group_workgroup
+        elif env_workgroup:
+            return env_workgroup
+        return default_workgroup
