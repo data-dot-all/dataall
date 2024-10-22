@@ -1667,6 +1667,8 @@ def test_create_share_object_with_non_expiring_share(
         'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policies_attached',
         return_value=True,
     )
+    mocker.patch('dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern', return_value=['policy-0'])
+
     create_share_object_response = create_share_object(
         mocker=mocker,
         client=client,
