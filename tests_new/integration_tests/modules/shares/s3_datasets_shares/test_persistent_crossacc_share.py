@@ -1,5 +1,5 @@
-from tests_new.integration_tests.modules.share_base.utils import check_share_ready
-from tests_new.integration_tests.modules.share_base.shared_test_functions import (
+from tests_new.integration_tests.modules.shares.utils import check_share_ready
+from integration_tests.modules.shares.s3_datasets_shares.shared_test_functions import (
     check_share_items_access,
     check_verify_share_items,
     revoke_and_check_all_shared_items,
