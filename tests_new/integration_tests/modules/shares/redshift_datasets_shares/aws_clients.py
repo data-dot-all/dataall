@@ -19,5 +19,5 @@ class RedshiftClient:
             log.info(f'Datashare deauthorized successfully: {datashare_arn}')
             return response
         except ClientError as e:
-            log.error(f'Error deauthorizing datashare: {e}')
+            log.exception('Error deauthorizing datashare')
             raise e
