@@ -18,6 +18,7 @@ from dataall.modules.shares_base.db.share_state_machines_repositories import Sha
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
 from dataall.modules.shares_base.services.sharing_service import ShareData
 from dataall.modules.shares_base.services.share_processor_manager import SharesProcessorInterface
+from dataall.modules.shares_base.services.share_manager_utils import execute_and_suppress_exception
 
 
 log = logging.getLogger(__name__)
@@ -237,29 +238,22 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                     manager.attach_new_access_point_policy(access_point_policy)
                 else:
                     log.info('Cleaning up folder share resources...')
-                    try:
-                        manager.delete_access_point()
-                    except Exception:
-                        log.exception('')
-                    try:
-                        manager.revoke_target_role_access_policy()
-                    except Exception:
-                        log.exception('')
+                    execute_and_suppress_exception(func=manager.delete_access_point())
+                    execute_and_suppress_exception(func=manager.revoke_target_role_access_policy())
                     if not self.share_data.dataset.imported or self.share_data.dataset.importedKmsKey:
                         manager.delete_dataset_bucket_key_policy(dataset=self.share_data.dataset)
             except Exception:
                 log.exception('')
-            try:
-                if (
-                    self.share_data.share.groupUri != self.share_data.dataset.SamlAdminGroupName
-                    and self.share_data.share.groupUri != self.share_data.dataset.stewards
-                ):
-                    log.info(f'Deleting FOLDER READ permissions from {folder.locationUri}...')
-                    S3ShareService.delete_dataset_folder_read_permission(
+            if (
+                self.share_data.share.groupUri != self.share_data.dataset.SamlAdminGroupName
+                and self.share_data.share.groupUri != self.share_data.dataset.stewards
+            ):
+                log.info(f'Deleting FOLDER READ permissions from {folder.locationUri}...')
+                execute_and_suppress_exception(
+                    func=S3ShareService.delete_dataset_folder_read_permission(
                         self.session, manager.share, folder.locationUri
                     )
-            except Exception:
-                log.exception('')
+                )
             # Delete share item
             sharing_item = ShareObjectRepository.find_sharable_item(
                 self.session,

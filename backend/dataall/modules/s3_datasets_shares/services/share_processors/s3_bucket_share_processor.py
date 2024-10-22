@@ -19,6 +19,7 @@ from dataall.modules.shares_base.db.share_object_state_machines import ShareItem
 from dataall.modules.shares_base.services.sharing_service import ShareData
 from dataall.modules.shares_base.services.share_processor_manager import SharesProcessorInterface
 from dataall.modules.shares_base.services.share_object_service import ShareObjectService
+from dataall.modules.shares_base.services.share_manager_utils import execute_and_suppress_exception
 
 
 log = logging.getLogger(__name__)
@@ -217,25 +218,20 @@ class ProcessS3BucketShare(SharesProcessorInterface):
             manager = self._initialize_share_manager(bucket)
             if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
                 log.info(f'Principal role {self.share_data.share.principalRoleName} is not found.')
-            try:
-                manager.delete_target_role_bucket_policy()
-            except Exception:
-                log.exception('')
-            try:
-                manager.delete_target_role_access_policy(
+            execute_and_suppress_exception(func=manager.delete_target_role_bucket_policy())
+            execute_and_suppress_exception(
+                func=manager.delete_target_role_access_policy(
                     share=self.share_data.share,
                     target_bucket=bucket,
                     target_environment=self.share_data.target_environment,
                 )
-            except Exception:
-                log.exception('')
-            try:
-                if not self.share_data.dataset.imported or self.share_data.dataset.importedKmsKey:
-                    manager.delete_target_role_bucket_key_policy(
+            )
+            if not self.share_data.dataset.imported or self.share_data.dataset.importedKmsKey:
+                execute_and_suppress_exception(
+                    func=manager.delete_target_role_bucket_key_policy(
                         target_bucket=bucket,
                     )
-            except Exception:
-                log.exception('')
+                )
 
             # Delete share item
             sharing_item = ShareObjectRepository.find_sharable_item(

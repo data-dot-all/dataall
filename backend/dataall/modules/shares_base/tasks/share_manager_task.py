@@ -23,25 +23,8 @@ if __name__ == '__main__':
         share_item_uri = os.getenv('shareItemUris')
         handler = os.getenv('handler')
 
-        if handler == 'approve_share':
-            log.info(f'Starting processing task for share : {share_uri}...')
-            SharingService.approve_share(engine=ENGINE, share_uri=share_uri)
-
-        elif handler == 'revoke_share':
-            log.info(f'Starting revoking task for share : {share_uri}...')
-            SharingService.revoke_share(engine=ENGINE, share_uri=share_uri)
-
-        elif handler == 'verify_share':
-            log.info(f'Starting verify task for share : {share_uri}...')
-            SharingService.verify_share(engine=ENGINE, share_uri=share_uri)
-
-        elif handler == 'reapply_share':
-            log.info(f'Starting re-apply task for share : {share_uri}...')
-            SharingService.reapply_share(engine=ENGINE, share_uri=share_uri)
-
-        elif handler == 'cleanup_share':
-            log.info(f'Starting clean-up task for share : {share_uri}...')
-            SharingService.cleanup_share(engine=ENGINE, share_uri=share_uri)
+        log.info(f'Starting {handler} task for share : {share_uri}...')
+        getattr(SharingService, handler)(engine=ENGINE, share_uri=share_uri)
 
         log.info('Sharing task finished successfully')
 

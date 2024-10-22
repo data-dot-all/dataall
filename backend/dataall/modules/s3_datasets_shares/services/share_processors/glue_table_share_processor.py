@@ -21,7 +21,7 @@ from dataall.modules.shares_base.db.share_object_item_repositories import ShareO
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.s3_datasets_shares.db.s3_share_object_repositories import S3ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
-from dataall.modules.shares_base.services.share_manager_utils import ShareErrorFormatter
+from dataall.modules.shares_base.services.share_manager_utils import ShareErrorFormatter, execute_and_suppress_exception
 
 from dataall.modules.shares_base.services.sharing_service import ShareData
 from dataall.modules.shares_base.services.share_processor_manager import SharesProcessorInterface
@@ -473,10 +473,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all'
                 )
             manager.initialize_clients()
-            try:
-                manager.grant_pivot_role_all_database_permissions_to_shared_database()
-            except Exception:
-                log.exception('')
+            execute_and_suppress_exception(func=manager.grant_pivot_role_all_database_permissions_to_shared_database())
 
             for table in self.tables:
                 log.info(f'Revoking access to table {table.tableUri}/{table.GlueTableName}...')
@@ -488,11 +485,8 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     share_item_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(
                         self.session, share_item.attachedDataFilterUri
                     )
-                try:
-                    log.info(f'Revoking access to table: {table.GlueTableName} ')
-                    manager.check_table_exists_in_source_database(share_item, table)
-                except Exception:
-                    log.exception('')
+                log.info(f'Revoking access to table: {table.GlueTableName} ')
+                execute_and_suppress_exception(func=manager.check_table_exists_in_source_database(share_item, table))
                 try:
                     log.info('Check resource link table exists')
                     resource_link_name = self._build_resource_link_name(table.GlueTableName, share_item_filter)
@@ -502,18 +496,16 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     )
 
                     if resource_link_table_exists:
-                        try:
-                            log.info('Revoking principal permissions from resource link table')
-                            manager.revoke_principals_permissions_to_resource_link_table(resource_link_name)
-                        except Exception:
-                            log.exception('')
-                        try:
-                            log.info('Revoking principal permissions from table in source')
-                            manager.revoke_principals_permissions_to_table_in_source(
+                        log.info('Revoking principal permissions from resource link table')
+                        execute_and_suppress_exception(
+                            func=manager.revoke_principals_permissions_to_resource_link_table(resource_link_name)
+                        )
+                        log.info('Revoking principal permissions from table in source')
+                        execute_and_suppress_exception(
+                            func=manager.revoke_principals_permissions_to_table_in_source(
                                 table, share_item, share_item_filter
                             )
-                        except Exception:
-                            log.exception('')
+                        )
                         if share_item_filter:
                             can_delete_resource_link = True
                         else:
@@ -529,14 +521,14 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                             )
 
                         if can_delete_resource_link:
-                            try:
-                                manager.grant_pivot_role_drop_permissions_to_resource_link_table(resource_link_name)
-                            except Exception:
-                                log.exception('')
-                            try:
-                                manager.delete_resource_link_table_in_shared_database(resource_link_name)
-                            except Exception:
-                                log.exception('')
+                            execute_and_suppress_exception(
+                                func=manager.grant_pivot_role_drop_permissions_to_resource_link_table(
+                                    resource_link_name
+                                )
+                            )
+                            execute_and_suppress_exception(
+                                func=manager.delete_resource_link_table_in_shared_database(resource_link_name)
+                            )
 
                     if (
                         self.share_data.share.groupUri != self.share_data.dataset.SamlAdminGroupName
@@ -554,11 +546,8 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                 self.session.commit()
 
             if self.tables:
-                try:
-                    log.info('Revoking permissions to target shared database...')
-                    manager.revoke_principals_database_permissions_to_shared_database()
-                except Exception:
-                    log.exception('')
+                log.info('Revoking permissions to target shared database...')
+                execute_and_suppress_exception(func=manager.revoke_principals_database_permissions_to_shared_database())
                 share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
                 existing_shares_with_shared_tables_in_environment = (
                     ShareObjectRepository.list_dataset_shares_with_existing_shared_items(
@@ -570,11 +559,8 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     )
                 )
                 if not len(existing_shares_with_shared_tables_in_environment):
-                    try:
-                        log.info('Deleting target shared database...')
-                        manager.delete_shared_database_in_target()
-                    except Exception:
-                        log.exception('')
+                    log.info('Deleting target shared database...')
+                    execute_and_suppress_exception(func=manager.delete_shared_database_in_target())
             # Check share items in share and delete share
             remaining_share_items = ShareObjectRepository.get_all_share_items_in_share(
                 session=self.session, share_uri=self.share_data.share.shareUri
