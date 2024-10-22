@@ -46,12 +46,12 @@ class WorksheetQueryResultService:
         return sql_query_result
 
     @staticmethod
-    def build_s3_file_path(workgroup: str, query_id: str, athena_queries_dir: str = None) -> str:
+    def _build_s3_file_path(workgroup: str, query_id: str, athena_queries_dir: str = None) -> str:
         athena_queries_dir = athena_queries_dir or WorksheetQueryResultService._DEFAULT_ATHENA_QUERIES_PATH
         return f'{athena_queries_dir}/{workgroup}/{query_id}'
 
     @staticmethod
-    def convert_csv_to_xlsx(csv_data) -> io.BytesIO:
+    def _convert_csv_to_xlsx(csv_data) -> io.BytesIO:
         wb = Workbook()
         ws: 'Worksheet' = wb.active
         csv_reader = csv.reader(csv_data.splitlines())
@@ -85,7 +85,7 @@ class WorksheetQueryResultService:
                 environment.AwsAccountId,
                 data,
             )
-        output_file_s3_path = WorksheetQueryResultService.build_s3_file_path(
+        output_file_s3_path = WorksheetQueryResultService._build_s3_file_path(
             env_group.environmentAthenaWorkGroup, data.get('athenaQueryId')
         )
         if sql_query_result.fileFormat == WorksheetResultsFormat.XLSX.value:
@@ -94,7 +94,7 @@ class WorksheetQueryResultService:
                     bucket=environment.EnvironmentDefaultBucketName,
                     key=f'{output_file_s3_path}.{WorksheetResultsFormat.CSV.value}',
                 )
-                excel_buffer = WorksheetQueryResultService.convert_csv_to_xlsx(csv_data)
+                excel_buffer = WorksheetQueryResultService._convert_csv_to_xlsx(csv_data)
                 s3_client.put_object(
                     bucket=environment.EnvironmentDefaultBucketName,
                     key=f'{output_file_s3_path}.{WorksheetResultsFormat.XLSX.value}',

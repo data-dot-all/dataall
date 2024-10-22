@@ -1,7 +1,4 @@
 import pytest
-
-from unittest.mock import MagicMock
-
 from future.backports.datetime import datetime
 
 from dataall.modules.worksheets.api.resolvers import WorksheetRole
@@ -196,3 +193,67 @@ def test_create_query_download_url(client, worksheet, env_fixture, group):
     assert response.data.createWorksheetQueryResultDownloadUrl.downloadLink is not None
     assert response.data.createWorksheetQueryResultDownloadUrl.fileFormat == 'csv'
     assert expires_in > datetime.utcnow()
+
+
+def test_tenant_unauthorized__create_query_download_url(client, worksheet, env_fixture, tenant):
+    response = client.query(
+        """
+        mutation CreateWorksheetQueryResultDownloadUrl($input: WorksheetQueryResultDownloadUrlInput){
+            createWorksheetQueryResultDownloadUrl(input: $input){
+                sqlBody
+                AthenaQueryId
+                region
+                AwsAccountId
+                elapsedTimeInMs
+                created
+                downloadLink
+                outputLocation
+                expiresIn
+                fileFormat
+            }
+        }
+        """,
+        input={
+            'worksheetUri': worksheet.worksheetUri,
+            'athenaQueryId': '123',
+            'fileFormat': 'csv',
+            'environmentUri': env_fixture.environmentUri,
+        },
+    )
+
+    assert response.errors is not None
+    assert len(response.errors) > 0
+    assert f'is not authorized to perform: MANAGE_WORKSHEETS on {tenant.name}' in response.errors[0].message
+
+
+def test_resource_unauthorized__create_query_download_url(client, worksheet, env_fixture, group2):
+    response = client.query(
+        """
+        mutation CreateWorksheetQueryResultDownloadUrl($input: WorksheetQueryResultDownloadUrlInput){
+            createWorksheetQueryResultDownloadUrl(input: $input){
+                sqlBody
+                AthenaQueryId
+                region
+                AwsAccountId
+                elapsedTimeInMs
+                created
+                downloadLink
+                outputLocation
+                expiresIn
+                fileFormat
+            }
+        }
+        """,
+        input={
+            'worksheetUri': worksheet.worksheetUri,
+            'athenaQueryId': '123',
+            'fileFormat': 'csv',
+            'environmentUri': env_fixture.environmentUri,
+        },
+        username='bob',
+        groups=[group2.name]
+    )
+
+    assert response.errors is not None
+    assert len(response.errors) > 0
+    assert f'is not authorized to perform: DOWNLOAD_ATHENA_QUERY_RESULTS on resource: {worksheet.worksheetUri}' in response.errors[0].message
