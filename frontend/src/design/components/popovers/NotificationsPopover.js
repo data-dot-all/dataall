@@ -108,7 +108,8 @@ export const NotificationsPopover = () => {
       const main_modules = [
         'environment',
         'organization',
-        'dataset',
+        's3-dataset',
+        'rd-dataset',
         'share',
         'dashboard',
         'worksheet',
