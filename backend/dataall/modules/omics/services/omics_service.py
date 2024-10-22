@@ -102,7 +102,6 @@ class OmicsService:
             return OmicsClient(awsAccountId=environment.AwsAccountId, region=environment.region).get_omics_run(uri)
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_OMICS_RUNS)
     def get_omics_workflow(uri: str) -> dict:
         """Get Omics workflow."""
         with _session() as session:
@@ -117,7 +116,6 @@ class OmicsService:
         return response
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_OMICS_RUNS)
     def list_user_omics_runs(filter: dict) -> dict:
         """List existed user Omics runs. Filters only required omics_runs by the filter param"""
         with _session() as session:
@@ -126,7 +124,6 @@ class OmicsService:
             )
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_OMICS_RUNS)
     def list_omics_workflows(filter: dict) -> dict:
         """List Omics workflows."""
         with _session() as session:

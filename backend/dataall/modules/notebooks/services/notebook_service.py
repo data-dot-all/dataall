@@ -181,6 +181,7 @@ class NotebookService:
         client(notebook).stop_instance()
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_NOTEBOOKS)
     @ResourcePolicyService.has_resource_permission(GET_NOTEBOOK)
     def get_notebook_presigned_url(*, uri: str) -> str:
         """Creates and returns a presigned url for a notebook"""

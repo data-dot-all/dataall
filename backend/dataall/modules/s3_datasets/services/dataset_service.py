@@ -227,6 +227,7 @@ class DatasetService:
         return dataset
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     def import_dataset(uri, admin_group, data):
         data['imported'] = True
         return DatasetService.create_dataset(uri=uri, admin_group=admin_group, data=data)
@@ -433,7 +434,7 @@ class DatasetService:
             DatasetIndexer.delete_doc(doc_id=uri)
 
             DatasetService.execute_on_delete(session, uri, action=DELETE_DATASET)
-            DatasetService.delete_dataset_term_links(session, uri)
+            DatasetService._delete_dataset_term_links(session, uri)
             DatasetTableRepository.delete_dataset_tables(session, dataset.datasetUri)
             DatasetLocationRepository.delete_dataset_locations(session, dataset.datasetUri)
             DatasetBucketRepository.delete_dataset_buckets(session, dataset.datasetUri)
@@ -555,7 +556,7 @@ class DatasetService:
         return dataset
 
     @staticmethod
-    def delete_dataset_term_links(session, dataset_uri):
+    def _delete_dataset_term_links(session, dataset_uri):
         tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, dataset_uri)]
         for table_uri in tables:
             GlossaryRepository.delete_glossary_terms_links(session, table_uri, 'DatasetTable')

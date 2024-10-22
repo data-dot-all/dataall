@@ -248,6 +248,7 @@ class SagemakerStudioService:
             return status
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SGMSTUDIO_USERS)
     @ResourcePolicyService.has_resource_permission(SGMSTUDIO_USER_URL)
     def get_sagemaker_studio_user_presigned_url(*, uri: str):
         with _session() as session:

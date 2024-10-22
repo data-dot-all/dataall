@@ -261,6 +261,7 @@ class DataPipelineService:
             return True
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_PIPELINES)
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_PIPELINE)
     def get_credentials(uri):
         with _session() as session:
