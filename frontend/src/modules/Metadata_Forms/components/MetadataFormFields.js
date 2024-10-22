@@ -11,17 +11,21 @@ import {
   TableBody,
   Card,
   Box,
+  Grid,
   TextField,
-  InputAdornment,
   Divider,
   Button,
   Autocomplete,
   Tooltip,
-  Chip
+  Chip,
+  Typography,
+  Dialog,
+  FormControlLabel,
+  Radio,
+  RadioGroup
 } from '@mui/material';
 import {
   Scrollbar,
-  SearchIcon,
   AsteriskIcon,
   PencilAltIcon,
   SaveIcon,
@@ -30,7 +34,11 @@ import {
 } from '../../../design';
 import { SET_ERROR } from '../../../globalErrors';
 import Checkbox from '@mui/material/Checkbox';
-import { getMetadataForm } from '../services';
+import {
+  createMetadataFormVersion,
+  deleteMetadataFormVersion,
+  getMetadataForm
+} from '../services';
 import { useClient } from '../../../services';
 import { GridActionsCellItem } from '@mui/x-data-grid';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
@@ -39,6 +47,8 @@ import DragIndicatorOutlinedIcon from '@mui/icons-material/DragIndicatorOutlined
 import { batchMetadataFormFieldUpdates } from '../services/batchMetadataFormFieldUpdates';
 import CircularProgress from '@mui/material/CircularProgress';
 import { listGlossaries } from '../../Glossaries/services';
+import FormControl from '@mui/material/FormControl';
+import { useSnackbar } from 'notistack';
 
 const EditTable = (props) => {
   const { fields, fieldTypeOptions, saveChanges, formUri, glossaryNodes } =
@@ -366,21 +376,106 @@ DisplayTable.propTypes = {
   startEdit: PropTypes.func.isRequired
 };
 
+const NewVersionModal = (props) => {
+  const { versions, createNewVersion, currentVersion, onClose } = props;
+  const [blankVersion, setBlankVersion] = useState(false);
+  const [copyVersion, setCopyVersion] = useState(currentVersion);
+
+  const handleCreateNewVersion = () => {
+    if (blankVersion) {
+      createNewVersion();
+    } else {
+      createNewVersion(copyVersion);
+    }
+    onClose();
+  };
+
+  return (
+    <Dialog maxWidth="xs" fullWidth onClose={onClose} open={() => {}}>
+      <Box sx={{ p: 3 }}>
+        <Typography
+          align="center"
+          color="textPrimary"
+          gutterBottom
+          variant="h4"
+        >
+          Create New Version
+        </Typography>
+        <FormControl>
+          <RadioGroup
+            value={blankVersion}
+            onChange={(event, value) => setBlankVersion(value)}
+          >
+            <FormControlLabel
+              sx={{ pt: 1 }}
+              value={false}
+              control={<Radio />}
+              label="As a copy of"
+            />
+            <FormControlLabel
+              sx={{ mt: 2 }}
+              value={true}
+              control={<Radio />}
+              label="Blank version"
+            />
+          </RadioGroup>
+        </FormControl>
+        <FormControl>
+          <Autocomplete
+            disablePortal
+            options={versions.map((option) => {
+              return { label: 'version ' + option, value: option };
+            })}
+            defaultValue={'version ' + copyVersion}
+            onChange={(event, value) => {
+              setCopyVersion(value ? value.value : currentVersion[0]);
+            }}
+            renderInput={(params) => (
+              <TextField
+                sx={{ minWidth: '150px' }}
+                {...params}
+                label="Version"
+                variant="outlined"
+              />
+            )}
+          />
+        </FormControl>
+      </Box>
+      <Box sx={{ mb: 2, textAlign: 'center' }}>
+        <Button
+          sx={{ mt: 2, minWidth: '150px' }}
+          onClick={handleCreateNewVersion}
+          color="primary"
+          variant="contained"
+        >
+          Create
+        </Button>
+        <Button
+          sx={{ mt: 2, ml: 2, minWidth: '150px' }}
+          onClick={onClose}
+          color="primary"
+          variant="outlined"
+        >
+          Cancel
+        </Button>
+      </Box>
+    </Dialog>
+  );
+};
+
 export const MetadataFormFields = (props) => {
   const dispatch = useDispatch();
+  const { enqueueSnackbar } = useSnackbar();
+
   const client = useClient();
   const { metadataForm, fieldTypeOptions, userRolesMF } = props;
   const [loading, setLoading] = useState(false);
   const [editOn, setEditOn] = useState(false);
   const [fields, setFields] = useState(metadataForm.fields);
-  const [inputValue, setInputValue] = useState('');
-  const [filter, setFilter] = useState({});
   const [glossaryNodes, setGlossaryNodes] = useState([]);
-
-  const handleInputChange = (event) => {
-    setInputValue(event.target.value);
-    setFilter({ ...filter, term: event.target.value });
-  };
+  const [currentVersion, setCurrentVersion] = useState(0);
+  const [versionOptions, setVersionOptions] = useState([]);
+  const [showNewVersionModal, setShowNewVersionModal] = useState(false);
 
   const startEdit = () => {
     setEditOn(true);
@@ -402,9 +497,80 @@ export const MetadataFormFields = (props) => {
     }
   };
 
-  const fetchItems = async () => {
+  const deleteVersion = async () => {
     setLoading(true);
-    const response = await client.query(getMetadataForm(metadataForm.uri));
+    const response = await client.mutate(
+      deleteMetadataFormVersion(metadataForm.uri, currentVersion)
+    );
+    if (
+      !response.errors &&
+      response.data &&
+      response.data.deleteMetadataFormVersion !== null
+    ) {
+      metadataForm.versions = metadataForm.versions.filter(
+        (v) => v !== currentVersion
+      );
+      setCurrentVersion(response.data.deleteMetadataFormVersion);
+      setVersionOptions(metadataForm.versions);
+      await fetchItems(metadataForm.versions[0]);
+      enqueueSnackbar('Version deleted', {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'success'
+      });
+    } else {
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Delete version failed';
+      dispatch({ type: SET_ERROR, error });
+    }
+    setLoading(false);
+  };
+
+  const createNewVersion = async (copyVersion = null) => {
+    setLoading(true);
+    const response = await client.mutate(
+      createMetadataFormVersion(metadataForm.uri, copyVersion)
+    );
+    if (
+      !response.errors &&
+      response.data &&
+      response.data.createMetadataFormVersion !== null
+    ) {
+      setCurrentVersion(response.data.createMetadataFormVersion);
+      metadataForm.versions = [
+        response.data.createMetadataFormVersion,
+        ...metadataForm.versions
+      ];
+      setVersionOptions([
+        response.data.createMetadataFormVersion,
+        ...versionOptions
+      ]);
+      fetchItems(response.data.createMetadataFormVersion);
+      enqueueSnackbar('Version created', {
+        anchorOrigin: {
+          horizontal: 'right',
+          vertical: 'top'
+        },
+        variant: 'success'
+      });
+    } else {
+      const error = response.errors
+        ? response.errors[0].message
+        : 'Create version failed';
+      dispatch({ type: SET_ERROR, error });
+    }
+    setLoading(false);
+  };
+
+  const fetchItems = async (version = null) => {
+    setLoading(true);
+    const response = await client.query(
+      getMetadataForm(metadataForm.uri, version)
+    );
+
     if (
       !response.errors &&
       response.data &&
@@ -463,19 +629,13 @@ export const MetadataFormFields = (props) => {
     setLoading(false);
   };
 
-  const handleInputKeyup = (event) => {
-    if (event.code === 'Enter') {
-      fetchItems().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
-    }
-  };
-
   useEffect(() => {
     if (client) {
       fetchItems().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
+      setCurrentVersion(metadataForm.versions[0]);
+      setVersionOptions(metadataForm.versions);
       if (glossaryNodes.length === 0) {
         fetchGlossaryNodes().catch((e) =>
           dispatch({ type: SET_ERROR, error: e.message })
@@ -496,22 +656,68 @@ export const MetadataFormFields = (props) => {
             p: 2
           }}
         >
-          <TextField
-            disabled="true"
-            fullWidth
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              )
-            }}
-            onChange={handleInputChange}
-            onKeyUp={handleInputKeyup}
-            placeholder="Search (temporary deisabled)"
-            value={inputValue}
-            variant="outlined"
-          />
+          <Grid container spacing={2}>
+            <Grid item lg={2} xl={2} xs={6}>
+              <Autocomplete
+                disablePortal
+                options={versionOptions.map((option) => {
+                  return { label: 'version ' + option, value: option };
+                })}
+                value={'version ' + currentVersion}
+                onChange={async (event, value) => {
+                  setCurrentVersion(value ? value.value : versionOptions[0]);
+                  await fetchItems(value ? value.value : versionOptions[0]);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    sx={{ minWidth: '150px' }}
+                    {...params}
+                    label="Version"
+                    variant="outlined"
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item lg={2} xl={2} xs={6}>
+              <Button
+                color="primary"
+                startIcon={<PlusIcon size={15} />}
+                sx={{ mt: 1 }}
+                onClick={() => setShowNewVersionModal(true)}
+                type="button"
+              >
+                New Version
+              </Button>
+              {showNewVersionModal && (
+                <NewVersionModal
+                  onClose={() => setShowNewVersionModal(false)}
+                  currentVersion={currentVersion}
+                  versions={versionOptions}
+                  createNewVersion={createNewVersion}
+                ></NewVersionModal>
+              )}
+            </Grid>
+            <Grid
+              item
+              lg={8}
+              xl={8}
+              xs={12}
+              sx={{
+                textAlign: 'right'
+              }}
+            >
+              <Button
+                color="primary"
+                startIcon={<DeleteIcon size={15} />}
+                sx={{ mt: 1 }}
+                onClick={() => deleteVersion()}
+                type="button"
+                disabled={versionOptions.length === 1}
+              >
+                Delete Version
+              </Button>
+            </Grid>
+          </Grid>
         </Box>
         <Divider />
         {loading ? (

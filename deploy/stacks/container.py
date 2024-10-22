@@ -15,6 +15,7 @@ from aws_cdk.aws_applicationautoscaling import Schedule
 from .pyNestedStack import pyNestedClass
 from .run_if import run_if
 from .deploy_config import deploy_config
+from .iam_utils import get_tooling_account_external_id
 
 
 class ContainerStack(pyNestedClass):
@@ -36,11 +37,13 @@ class ContainerStack(pyNestedClass):
         email_custom_domain=None,
         ses_configuration_set=None,
         custom_domain=None,
+        log_retention_duration=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
         self._envname = envname
         self._resource_prefix = resource_prefix
+        self.log_retention_duration = log_retention_duration
 
         if self.node.try_get_context('image_tag'):
             image_tag = self.node.try_get_context('image_tag')
@@ -101,6 +104,9 @@ class ContainerStack(pyNestedClass):
                         ecs.CfnTaskDefinition.KeyValuePairProperty(name='envname', value=envname),
                         ecs.CfnTaskDefinition.KeyValuePairProperty(name='LOGLEVEL', value='DEBUG'),
                         ecs.CfnTaskDefinition.KeyValuePairProperty(name='config_location', value='/config.json'),
+                        ecs.CfnTaskDefinition.KeyValuePairProperty(
+                            name='LOG_RETENTION', value=self.log_retention_duration
+                        ),
                     ],
                     essential=True,
                     log_configuration=ecs.CfnTaskDefinition.LogConfigurationProperty(
@@ -562,10 +568,15 @@ class ContainerStack(pyNestedClass):
             self,
             id=f'StackUpdaterCBRole{envname}',
             role_name=f'{resource_prefix}-{envname}-cb-stackupdater-role',
-            assumed_by=iam.CompositePrincipal(
-                iam.ServicePrincipal('codebuild.amazonaws.com'),
-                iam.AccountPrincipal(tooling_account_id),
-            ),
+            assumed_by=iam.AccountPrincipal(tooling_account_id),
+            external_ids=[get_tooling_account_external_id(self.account)],
+        )
+        cicd_stacks_updater_role.assume_role_policy.add_statements(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                principals=[iam.ServicePrincipal('codebuild.amazonaws.com')],
+                actions=['sts:AssumeRole'],
+            )
         )
         cicd_stacks_updater_role.add_to_policy(
             iam.PolicyStatement(
@@ -713,8 +724,8 @@ class ContainerStack(pyNestedClass):
             self,
             f'ECSLogGroup{log_group_name}{envname}',
             log_group_name=f'/{resource_prefix}/{envname}/ecs/{log_group_name}',
-            retention=logs.RetentionDays.ONE_MONTH,
             removal_policy=RemovalPolicy.DESTROY,
+            retention=getattr(logs.RetentionDays, self.log_retention_duration),
         )
         return log_group
 

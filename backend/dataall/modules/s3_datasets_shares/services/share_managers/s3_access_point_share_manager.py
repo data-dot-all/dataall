@@ -1,7 +1,7 @@
 import logging
 import json
-import time
 from itertools import count
+
 
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.db import utils
@@ -39,8 +39,6 @@ from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation
 from dataall.modules.shares_base.services.sharing_service import ShareData
 
 logger = logging.getLogger(__name__)
-ACCESS_POINT_CREATION_TIME = 30
-ACCESS_POINT_CREATION_RETRIES = 5
 
 
 class S3AccessPointShareManager:
@@ -441,19 +439,9 @@ class S3AccessPointShareManager:
         """
 
         s3_client = S3ControlClient(self.source_account_id, self.source_environment.region)
-        access_point_arn = s3_client.get_bucket_access_point_arn(self.access_point_name)
+        access_point_arn = s3_client.create_bucket_access_point(self.bucket_name, self.access_point_name)
         if not access_point_arn:
-            logger.info(f'Access point {self.access_point_name} does not exists, creating...')
-            access_point_arn = s3_client.create_bucket_access_point(self.bucket_name, self.access_point_name)
-            # Access point creation is slow
-            retries = 1
-            while (
-                not s3_client.get_bucket_access_point_arn(self.access_point_name)
-                and retries < ACCESS_POINT_CREATION_RETRIES
-            ):
-                logger.info('Waiting 30s for access point creation to complete..')
-                time.sleep(ACCESS_POINT_CREATION_TIME)
-                retries += 1
+            raise Exception('Failed to create access point')
         existing_policy = s3_client.get_access_point_policy(self.access_point_name)
         # requester will use this role to access resources
         target_requester_id = SessionHelper.get_role_id(
@@ -498,6 +486,7 @@ class S3AccessPointShareManager:
                 self.s3_prefix,
                 perms_to_actions(self.share.permissions, SidType.BucketPolicy),
             )
+
         s3_client.attach_access_point_policy(
             access_point_name=self.access_point_name, policy=json.dumps(access_point_policy)
         )

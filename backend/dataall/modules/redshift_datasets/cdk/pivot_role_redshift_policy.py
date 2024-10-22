@@ -76,12 +76,10 @@ class RedshiftDatasetsPivotRole(PivotRoleStatementSet):
                 cluster_arns = [
                     f'arn:aws:redshift:{self.region}:{self.account}:cluster:{conn.clusterId}'
                     for conn in connections
-                    if conn.clusterId != ''
+                    if conn.clusterId
                 ]
                 workgroup_arns = [
-                    rs_client.get_workgroup_arn(workgroup_name=conn.workgroup)
-                    for conn in connections
-                    if conn.workgroup != ''
+                    rs_client.get_workgroup_arn(workgroup_name=conn.workgroup) for conn in connections if conn.workgroup
                 ]
                 additional_statements.extend(
                     split_policy_with_resources_in_statements(

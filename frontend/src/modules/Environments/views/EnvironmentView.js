@@ -275,7 +275,6 @@ const EnvironmentView = () => {
               <MetadataAttachment
                 entityType="Environment"
                 entityUri={env.environmentUri}
-                canEdit={isAdmin}
               />
             )}
             {currentTab === 'teams' && <EnvironmentTeams environment={env} />}

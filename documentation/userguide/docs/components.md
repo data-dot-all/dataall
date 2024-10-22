@@ -41,7 +41,7 @@ belong to multiple teams.
 ## **Discover**
 ### Datasets
 A <a href="datasets.html">dataset</a> is a representation of multiple AWS resources that helps users store data.
-When data owners create a dataset on data.all the following resources are created:
+When data owners create a **S3 dataset** on data.all the following resources are created:
 
 - Amazon S3 Bucket to store the data on AWS.
 - AWS KMS key to encrypt the data on AWS.
@@ -49,6 +49,8 @@ When data owners create a dataset on data.all the following resources are create
 - AWS Glue database that is the representation of the structured data on AWS.
 
 *Inside the dataset we can store structured data as tables or unstructured data in folders.*
+
+Alternatively, when data owners import a **Redshift dataset** on data.all a subset of the tables can be imported from a specific Redshift database schema.
 
 ### Catalog
 data.all centralized <a href="catalog.html">Catalog</a> is an inventory of datasets, tables, folders and dashboards. It contains metadata for each
@@ -84,10 +86,8 @@ Amazon SageMaker instance</a> to access Jupyter notebooks.
 ### ML Studio
 With ML Studio Notebooks we can add users to our SageMaker domain and open Amazon SageMaker Studio
 
-### Pipelines
-In order to distribute data processing, data.all introduces data.all pipelines where:
-- data.all takes care of CI/CD infrastructure
-- data.all offers flexible pipeline blueprints to deploy AWS resources and a Step Function
-
 ### Dashboards
 In the Dashboard window we can start Quicksight sessions, create visual analysis and dashboards.
+
+### Omics
+Provides the capability to view and instantiate HealthOmics Ready2Run workflows against data.all datasets and save omics data from workflow output.

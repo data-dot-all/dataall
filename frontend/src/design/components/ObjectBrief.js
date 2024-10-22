@@ -6,9 +6,12 @@ import {
   CardHeader,
   Chip,
   Typography,
-  Divider
+  Divider,
+  useTheme
 } from '@mui/material';
 import { Label } from './Label';
+import { createLinkMarkup } from 'utils';
+import { SanitizedHTML } from 'design';
 
 export const ObjectBrief = (props) => {
   const {
@@ -23,6 +26,9 @@ export const ObjectBrief = (props) => {
     parameterTemplate,
     ...other
   } = props;
+
+  const theme = useTheme();
+  const linkColor = theme.palette.primary.main;
 
   return (
     <Card {...other}>
@@ -136,7 +142,9 @@ export const ObjectBrief = (props) => {
                 variant="subtitle2"
                 style={{ whiteSpace: 'pre-line' }}
               >
-                {description}
+                <SanitizedHTML
+                  dirtyHTML={createLinkMarkup(description, linkColor)}
+                />
               </Typography>
             </Box>
           )}

@@ -8,3 +8,6 @@ export * from './attachMetadataForm';
 export * from './getAttachedMetadataForm';
 export * from './listAttachedMetadataForms';
 export * from './deleteAttachedMetadataForm';
+export * from './getMetadataFormEntityPermissions';
+export * from './createMetadataFormVersion';
+export * from './deleteMetadataFormVersion';

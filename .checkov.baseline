@@ -365,8 +365,7 @@
                 {
                     "resource": "AWS::S3::Bucket.dataalldevfrontend64065639",
                     "check_ids": [
-                        "CKV_AWS_18",
-                        "CKV_AWS_21"
+                        "CKV_AWS_18"
                     ]
                 },
                 {
@@ -378,8 +377,7 @@
                 {
                     "resource": "AWS::S3::Bucket.dataalldevuserguide5964DC13",
                     "check_ids": [
-                        "CKV_AWS_18",
-                        "CKV_AWS_21"
+                        "CKV_AWS_18"
                     ]
                 }
             ]
@@ -424,28 +422,10 @@
             ]
         },
         {
-            "file": "/cdk.out/cross-region-stack-111111111111:eu-west-1.template.json",
-            "findings": [
-                {
-                    "resource": "AWS::S3::Bucket.CrossRegionCodePipelineReplicationBucketFC3227F2",
-                    "check_ids": [
-                        "CKV_AWS_18",
-                        "CKV_AWS_21"
-                    ]
-                }
-            ]
-        },
-        {
             "file": "/cdk.out/dataall-main-cicd-stack.template.json",
             "findings": [
                 {
                     "resource": "AWS::IAM::Policy.dataallmaincdkpipelineAssetsFileRoleDefaultPolicyFCD7832D",
-                    "check_ids": [
-                        "CKV_AWS_111"
-                    ]
-                },
-                {
-                    "resource": "AWS::IAM::Policy.dataallmaincdkpipelinePipelineRoleDefaultPolicy98FFDB2A",
                     "check_ids": [
                         "CKV_AWS_111"
                     ]
@@ -459,10 +439,9 @@
                     ]
                 },
                 {
-                    "resource": "AWS::S3::Bucket.dataallmaincdkpipelinePipelineArtifactsBucketF1C6C602",
+                    "resource": "AWS::S3::Bucket.pipelineartifactsbucketE44F7DE9",
                     "check_ids": [
-                        "CKV_AWS_18",
-                        "CKV_AWS_21"
+                        "CKV_AWS_18"
                     ]
                 },
                 {
@@ -517,7 +496,7 @@
                     ]
                 },
                 {
-                    "resource": "AWS::IAM::ManagedPolicy.dataallanothergroup111111servicespolicy7BF536CC5",
+                    "resource": "AWS::IAM::ManagedPolicy.dataallanothergroup111111servicespolicy5A19E75CA",
                     "check_ids": [
                         "CKV_AWS_109"
                     ]
@@ -553,7 +532,7 @@
                     ]
                 },
                 {
-                    "resource": "AWS::IAM::ManagedPolicy.dataalltestadmins111111servicespolicy7DCF428B2",
+                    "resource": "AWS::IAM::ManagedPolicy.dataalltestadmins111111servicespolicy56D7DC525",
                     "check_ids": [
                         "CKV_AWS_109"
                     ]
@@ -617,32 +596,6 @@
                     "check_ids": [
                         "CKV2_AWS_68",
                         "CKV_AWS_371"
-                    ]
-                }
-            ]
-        },
-        {
-            "file": "/checkov_pipeline_synth.json",
-            "findings": [
-                {
-                    "resource": "AWS::IAM::Role.PipelineRoleDCFDBB91",
-                    "check_ids": [
-                        "CKV_AWS_107",
-                        "CKV_AWS_108",
-                        "CKV_AWS_111"
-                    ]
-                },
-                {
-                    "resource": "AWS::KMS::Key.thistableArtifactsBucketEncryptionKey127159D3",
-                    "check_ids": [
-                        "CKV_AWS_7"
-                    ]
-                },
-                {
-                    "resource": "AWS::S3::Bucket.thistableArtifactsBucket145BFFDF",
-                    "check_ids": [
-                        "CKV_AWS_18",
-                        "CKV_AWS_21"
                     ]
                 }
             ]

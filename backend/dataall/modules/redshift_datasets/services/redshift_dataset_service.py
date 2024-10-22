@@ -2,6 +2,7 @@ import logging
 from typing import List
 from dataall.base.context import get_context
 from dataall.base.db.paginator import paginate_list
+from dataall.base.db import exceptions
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.permissions.services.group_policy_service import GroupPolicyService
@@ -40,6 +41,7 @@ from dataall.modules.redshift_datasets.services.redshift_constants import (
     GLOSSARY_REDSHIFT_DATASET_TABLE_NAME,
     VOTE_REDSHIFT_DATASET_NAME,
 )
+from dataall.modules.redshift_datasets.services.redshift_enums import RedshiftConnectionTypes
 
 
 log = logging.getLogger(__name__)
@@ -94,6 +96,13 @@ class RedshiftDatasetService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
+            connection = RedshiftConnectionRepository.get_redshift_connection(session, data.get('connectionUri'))
+            if connection.connectionType != RedshiftConnectionTypes.DATA_USER.value:
+                raise exceptions.InvalidInput(
+                    'Connection',
+                    connection.name,
+                    f'Invalid connection. Only DATA_USER connections can be used to import Redshift Datasets and connection {connection.name} is of type {connection.connectionType}',
+                )
 
             dataset = RedshiftDatasetRepository.create_redshift_dataset(
                 session=session, username=context.username, env=environment, data=data
@@ -103,17 +112,14 @@ class RedshiftDatasetService:
             RedshiftDatasetService._attach_dataset_permissions(session, dataset, environment)
 
             DatasetIndexer.upsert(session=session, dataset_uri=dataset.datasetUri)
-
-            for table in data.get('tables', []):
-                rs_table = RedshiftDatasetRepository.create_redshift_table(
-                    session=session,
-                    username=context.username,
-                    dataset_uri=dataset.datasetUri,
-                    data={'name': table},
-                )
-                RedshiftDatasetService._attach_table_permissions(session, dataset, environment, rs_table)
-                DatasetTableIndexer.upsert(session=session, table_uri=rs_table.rsTableUri)
-
+            success_tables, error_tables = RedshiftDatasetService._create_redshift_tables(
+                session=session,
+                username=context.username,
+                dataset=dataset,
+                connection=connection,
+                tables=data.get('tables', []),
+            )
+            dataset.addedTables = {'successTables': success_tables, 'errorTables': error_tables}
         return dataset
 
     @staticmethod
@@ -151,6 +157,7 @@ class RedshiftDatasetService:
                 DatasetBaseRepository.update_dataset_activity(session, dataset, username)
 
             DatasetIndexer.upsert(session, dataset_uri=uri)
+            dataset.addedTables = {}
             return dataset
 
     @staticmethod
@@ -184,6 +191,7 @@ class RedshiftDatasetService:
             RedshiftDatasetService._delete_dataset_term_links(session, uri)
             VoteRepository.delete_votes(session, dataset.datasetUri, VOTE_REDSHIFT_DATASET_NAME)
             session.delete(dataset)
+
             session.commit()
             return True
 
@@ -195,24 +203,13 @@ class RedshiftDatasetService:
         datasetUri = uri
         with context.db_engine.scoped_session() as session:
             dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, datasetUri)
+            connection = RedshiftConnectionRepository.get_redshift_connection(session, dataset.connectionUri)
             dataset_tables = RedshiftDatasetRepository.list_redshift_dataset_tables(session, datasetUri)
             tables = [new_t for new_t in tables if new_t not in [t.name for t in dataset_tables]]
-            for table in tables:
-                rs_table = RedshiftDatasetRepository.create_redshift_table(
-                    session=session,
-                    username=context.username,
-                    dataset_uri=datasetUri,
-                    data={'name': table},
-                )
-                ResourcePolicyService.attach_resource_policy(
-                    session=session,
-                    group=dataset.SamlAdminGroupName,
-                    permissions=REDSHIFT_DATASET_TABLE_ALL,
-                    resource_uri=rs_table.rsTableUri,
-                    resource_type=RedshiftTable.__name__,
-                )
-                DatasetTableIndexer.upsert(session=session, table_uri=rs_table.rsTableUri)
-        return True
+            success_tables, error_tables = RedshiftDatasetService._create_redshift_tables(
+                session=session, username=context.username, dataset=dataset, connection=connection, tables=tables
+            )
+        return {'successTables': success_tables, 'errorTables': error_tables}
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_DATASETS)
@@ -254,6 +251,7 @@ class RedshiftDatasetService:
             dataset = RedshiftDatasetRepository.get_redshift_dataset_by_uri(session, uri)
             if dataset.SamlAdminGroupName in context.groups:
                 dataset.userRoleForDataset = DatasetRole.Admin.value
+            dataset.addedTables = {}
             return dataset
 
     @staticmethod
@@ -413,3 +411,35 @@ class RedshiftDatasetService:
         )
         RedshiftDatasetService._attach_additional_steward_permissions(session, dataset, new_stewards)
         return dataset
+
+    @staticmethod
+    def _create_redshift_tables(session, username, connection, dataset, tables):
+        error_tables = []
+        success_tables = []
+        rs_tables = redshift_data_client(
+            account_id=dataset.AwsAccountId, region=dataset.region, connection=connection
+        ).list_redshift_tables(dataset.schema)
+        rs_tables_names = [t['name'] for t in rs_tables]
+        for table in tables:
+            if table not in rs_tables_names:
+                log.error(
+                    f'{table=} does not exist in Redshift cluster or is not accessible by connection {connection.connectionUri}'
+                )
+                error_tables.append(table)
+            else:
+                rs_table = RedshiftDatasetRepository.create_redshift_table(
+                    session=session,
+                    username=username,
+                    dataset_uri=dataset.datasetUri,
+                    data={'name': table},
+                )
+                ResourcePolicyService.attach_resource_policy(
+                    session=session,
+                    group=dataset.SamlAdminGroupName,
+                    permissions=REDSHIFT_DATASET_TABLE_ALL,
+                    resource_uri=rs_table.rsTableUri,
+                    resource_type=RedshiftTable.__name__,
+                )
+                DatasetTableIndexer.upsert(session=session, table_uri=rs_table.rsTableUri)
+                success_tables.append(table)
+        return success_tables, error_tables

@@ -1,6 +1,7 @@
 import logging
 import json
 import re
+import os
 from botocore.exceptions import ClientError
 
 log = logging.getLogger(__name__)
@@ -12,18 +13,33 @@ class S3Client:
         self._resource = session.resource('s3', region_name=region)
         self._region = region
 
-    def create_bucket(self, bucket_name, kms_key_id=None):
+    def bucket_exists(self, bucket_name):
+        """
+        Check if an S3 bucket exists.
+        :param bucket_name: Name of the S3 bucket to check
+        :return: True if the bucket exists, False otherwise
+        """
+        try:
+            self._client.head_bucket(Bucket=bucket_name)
+            return True
+        except ClientError as e:
+            if e.response['Error']['Code'] in ['400', '403', '404']:
+                return False
+            else:
+                raise Exception(f'Error checking if bucket {bucket_name} exists: {e}')
+
+    def create_bucket(self, bucket_name, kms_key_arn=None):
         """
         Create an S3 bucket.
         :param bucket_name: Name of the S3 bucket to be created
-        :param kms_key_id: KMS key ID to use for encryption if encryption_type is 'aws:kms'
+        :param kms_key_arn: KMS key Arn to use for encryption if encryption_type is 'aws:kms'
         :return: None
         """
         bucket_name = re.sub('[^a-zA-Z0-9-]', '', bucket_name).lower()
 
-        encryption_type = 'aws:kms' if kms_key_id else 'AES256'
+        encryption_type = 'aws:kms' if kms_key_arn else 'AES256'
         encryption_config = (
-            {'SSEAlgorithm': encryption_type, 'KMSMasterKeyID': kms_key_id}
+            {'SSEAlgorithm': encryption_type, 'KMSMasterKeyID': kms_key_arn}
             if encryption_type == 'aws:kms'
             else {'SSEAlgorithm': encryption_type}
         )
@@ -41,37 +57,66 @@ class S3Client:
                 Bucket=bucket_name,
                 ServerSideEncryptionConfiguration={
                     'Rules': [
-                        {'ApplyServerSideEncryptionByDefault': encryption_config, 'BucketKeyEnabled': False},
+                        {'ApplyServerSideEncryptionByDefault': encryption_config, 'BucketKeyEnabled': True},
                     ]
                 },
             )
             return bucket_name
         except ClientError as e:
-            log.exception(f'Error creating S3 bucket: {e}')
+            log.exception('Error creating S3 bucket')
 
-    def delete_bucket(self, bucket_name):
+    def upload_file_to_prefix(self, local_file_path, s3_path):
         """
-        Delete an S3 bucket.
-        :param bucket_name: Name of the S3 bucket to be deleted
+        Upload a file from a local path to an S3 bucket with a specified prefix.
+
+        :param local_file_path: Path to the local file to be uploaded
+        :param s3_path: S3 path where the file should be uploaded, including the bucket name and prefix
         :return: None
         """
         try:
-            # Delete all objects in the bucket before deleting the bucket
-            bucket = self._resource.Bucket(bucket_name)
-            bucket_versioning = self._resource.BucketVersioning(bucket_name)
-            if bucket_versioning.status == 'Enabled':
-                bucket.object_versions.delete()
-            else:
-                bucket.objects.all().delete()
-            self._client.delete_bucket(Bucket=bucket_name)
+            bucket_name, prefix = s3_path.split('/', 1)
+            object_key = f'{prefix}/{os.path.basename(local_file_path)}'
+            self._client.upload_file(local_file_path, bucket_name, object_key)
         except ClientError as e:
-            log.exception(f'Error deleting S3 bucket: {e}')
+            logging.error(f'Error uploading file to S3: {e}')
+            raise
+
+    def list_bucket_objects(self, bucket_name):
+        try:
+            return self._client.list_objects(Bucket=bucket_name)
+        except ClientError as e:
+            logging.error(f'Error listing objects in S3: {e}')
+            raise e
+
+    def list_accesspoint_folder_objects(self, access_point, folder_name):
+        try:
+            return self._client.list_objects(Bucket=access_point, Prefix=folder_name)
+        except ClientError as e:
+            logging.error(f'Error listing objects in S3: {e}')
+            raise
 
 
 class KMSClient:
     def __init__(self, session, account_id, region):
         self._client = session.client('kms', region_name=region)
         self._account_id = account_id
+
+    def get_key_alias(self, alias_name):
+        """
+        Get the key alias name for a given alias.
+        :param alias_name: The alias name to look up
+        :return: alias name if the alias exists, False otherwise
+        """
+        try:
+            alias_name = alias_name.lower()
+            response = self._client.describe_key(KeyId=f'alias/{alias_name}')
+            key_id = response['KeyMetadata']['KeyId']
+            return alias_name
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'NotFoundException':
+                return False
+            else:
+                raise Exception(f'Error getting key alias for {alias_name}: {e}')
 
     def create_key_with_alias(self, alias_name):
         try:
@@ -84,7 +129,7 @@ class KMSClient:
             return key_id, alias_name
 
         except ClientError as e:
-            log.exception(f'Error creating KMS key with alias: {e}')
+            log.exception('Error creating KMS key with alias')
 
     def _put_key_policy(self, key_id):
         response = self._client.get_key_policy(KeyId=key_id, PolicyName='default')
@@ -115,11 +160,7 @@ class KMSClient:
         try:
             self._client.put_key_policy(KeyId=key_id, PolicyName='default', Policy=json.dumps(policy))
         except ClientError as err:
-            log.exception(
-                "Couldn't set policy for key %s. Here's why %s",
-                key_id,
-                err,
-            )
+            log.exception("Couldn't set policy for key.")
 
     def delete_key_by_alias(self, alias_name):
         """
@@ -134,7 +175,7 @@ class KMSClient:
                 self._client.schedule_key_deletion(KeyId=key_id)
             self._client.delete_alias(AliasName=f'alias/{alias_name}')
         except ClientError as e:
-            log.exception(f'Error deleting KMS key by alias: {e}')
+            log.exception('Error deleting KMS key by alias')
 
     def _get_key_by_alias(self, alias_name):
         try:
@@ -148,12 +189,25 @@ class KMSClient:
             return None
 
         except ClientError as e:
-            log.exception(f'Error getting KMS key by alias: {e}')
+            log.exception('Error getting KMS key by alias')
 
 
 class GlueClient:
     def __init__(self, session, region):
         self._client = session.client('glue', region_name=region)
+
+    def get_database(self, database_name):
+        """
+        Check if a Glue database exists.
+        :param database_name: Name of the Glue database to check
+        :return: True if the database exists, False otherwise
+        """
+        try:
+            database = self._client.get_database(Name=database_name)
+            return database
+        except ClientError as e:
+            log.exception('Database not found')
+            return False
 
     def create_database(self, database_name, bucket):
         try:
@@ -161,7 +215,7 @@ class GlueClient:
             self._client.create_database(DatabaseInput={'Name': database_name, 'LocationUri': f's3://{bucket}/'})
             return database_name
         except ClientError as e:
-            log.exception(f'Error creating Glue database: {e}')
+            log.exception('Error creating Glue database')
 
     def create_table(self, database_name, bucket, table_name):
         try:
@@ -172,16 +226,24 @@ class GlueClient:
                     'Description': 'integration tests',
                     'StorageDescriptor': {
                         'Columns': [
-                            {'Name': 'column1', 'Type': 'string'},
+                            {'Name': 'column1', 'Type': 'int'},
                             {'Name': 'column2', 'Type': 'string'},
                             {'Name': 'column3', 'Type': 'string'},
                         ],
-                        'Location': f's3://{bucket}/',
+                        'Location': f's3://{bucket}/{table_name}/',
+                        'InputFormat': 'org.apache.hadoop.mapred.TextInputFormat',
+                        'OutputFormat': 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                        'Compressed': False,
+                        'SerdeInfo': {
+                            'SerializationLibrary': 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                            'Parameters': {'field.delim': ','},
+                        },
                     },
+                    'TableType': 'EXTERNAL_TABLE',
                 },
             )
         except ClientError as e:
-            log.exception(f'Error creating Glue database: {e}')
+            log.exception('Error creating Glue table')
 
     def delete_database(self, database_name):
         """
@@ -195,7 +257,7 @@ class GlueClient:
             if e.response['Error']['Code'] == 'EntityNotFoundException':
                 log.exception(f"Glue database '{database_name}' does not exist.")
             else:
-                log.exception(f'Error deleting Glue database: {e}')
+                log.exception('Error deleting Glue database')
 
 
 class LakeFormationClient:
@@ -220,7 +282,7 @@ class LakeFormationClient:
             )
             return existing_admins
         except ClientError as e:
-            log.exception(f'Error granting lake formation permissions: {e}')
+            log.exception('Error granting lake formation permissions')
 
     def remove_role_from_datalake_admin(self, old_existing_principals):
         try:
@@ -233,7 +295,7 @@ class LakeFormationClient:
             )
             return True
         except ClientError as e:
-            log.exception(f'Error granting lake formation permissions: {e}')
+            log.exception('Error granting lake formation permissions')
 
     def grant_create_database(self, role_arn):
         """
@@ -249,4 +311,4 @@ class LakeFormationClient:
             )
             return True
         except ClientError as e:
-            log.exception(f'Error granting permissions to create database: {e}')
+            log.exception('Error granting permissions to create database')
