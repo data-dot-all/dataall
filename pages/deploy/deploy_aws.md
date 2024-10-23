@@ -8,7 +8,7 @@ permalink: /deploy-aws/
 - [Pre-requisites](#pre-reqs)
 - [1. Clone data.all code](#clone)
 - [2. Setup Python virtualenv](#env)
-- [3. Mirror the code to a CodeCommit or CodeStar Connections repository](#code)
+- [3. Mirror the code to a CodeCommit or CodeConnections repository ](#code)
 - [4. Bootstrap tooling account](#boot)
 - [5. Bootstrap deployment account(s)](#boot2)
 - [6. Configure the deployment options in the cdk.json file](#cdkjson)
@@ -78,27 +78,13 @@ source venv/bin/activate
 pip install -r ./deploy/requirements.txt
 pip install git-remote-codecommit
 ```
-## 3. Mirror the code to a CodeCommit or CodeStar Connections repository <a name="code"></a>
-### Using CodeCommit:
-Assuming AWS tooling account Administrator credentials, create an AWS CodeCommit repository, mirror the data.all code 
-and push your changes:
-Run the following to check your credentials:
-```bash
-aws sts get-caller-identity
-```
-```bash
-aws codecommit create-repository --repository-name dataall
-git remote rm origin
-git remote add origin codecommit::<aws-region>://dataall
-git init
-git add .
-git commit -m "First commit"
-git push --set-upstream origin main
-```
-### Using CodeStar Connection to GitHub, GitHub Enterprise, GitLab or Bitbucket:
-If you choose to use a GitHub, GitLab or Bitbucket repository, it's important to note that you need to set up an AWS CodeStar connection to your repository for seamless integration. 
+## 3. Mirror the code to a CodeCommit or CodeConnections repository <a name="code"></a>
+
+### Using CodeConnections to GitHub, GitHub Enterprise, GitLab or Bitbucket:
+If you choose to use a GitHub, GitLab or Bitbucket repository, it's important to note that you need to set up an AWS CodeConnections connection to your repository for seamless integration. 
+
 This connection allows AWS CodePipeline to interact securely with GitHub, GitHub Enterprise, GitLab or Bitbucket. 
-Before mirroring the data.all code and pushing any changes, make sure to set up the CodeStar connection by following 
+Before mirroring the data.all code and pushing any changes, make sure to set up the CodeConnections by following 
 the steps detailed in the [documentation](https://docs.aws.amazon.com/dtconsole/latest/userguide/connections-create.html):
 1. Log in to the AWS Management Console.
 2. Navigate to the AWS Developer tools > Settings > Connections.
@@ -116,6 +102,29 @@ git add .
 git commit -m "First commit"
 git push --set-upstream origin main
 ```
+
+### Using CodeCommit:
+
+> [!WARNING]
+> CodeCommit is no longer an active service for new AWS Customers. It is recommended to use the above method of CodeConnections when deploying a new instance of data.all. To learn more about CodeCommit's availability, please refer to the documentation [here](https://aws.amazon.com/blogs/devops/how-to-migrate-your-aws-codecommit-repository-to-another-git-provider/).
+
+Assuming AWS tooling account Administrator credentials, create an AWS CodeCommit repository, mirror the data.all code 
+and push your changes:
+Run the following to check your credentials:
+```bash
+aws sts get-caller-identity
+```
+```bash
+aws codecommit create-repository --repository-name dataall
+git remote rm origin
+git remote add origin codecommit::<aws-region>://dataall
+git init
+git add .
+git commit -m "First commit"
+git push --set-upstream origin main
+```
+
+
 ## 4. Bootstrap tooling account <a name="boot"></a>
 The **Tooling** account is where the code repository, and the CI/CD pipeline are deployed.
 It needs to be bootstrapped with CDK in 2 regions, your selected region and us-east-1.
@@ -169,7 +178,7 @@ of our repository. Open it, you should be seen something like:
     "resource_prefix": "string_PREFIX_FOR_ALL_RESOURCES_CREATED_BY_THIS_APP|DEFAULT=dataall",
     "repository_source": "string_VERSION_CONTROL_SERVICE|(codecommit, codestar_connection) DEFAULT=codecommit",
     "repo_string": "string_REPOSITORY_IN_GITHUB_OWNER/REPOSITORY|DEFAULT=awslabs/aws-dataall, REQUIRED if repository_source=codestar_connection",
-    "repo_connection_arn": "string_CODESTAR_SOURCE_CONNECTION_ARN_FOR_GITHUB_arn:aws:codestar-connections:region:account-id:connection/connection-id|DEFAULT=None, REQUIRED if repository_source=codestar_connection",
+    "repo_connection_arn": "string_CODESTAR_SOURCE_CONNECTION_ARN_FOR_GITHUB_arn:aws:codeconnections:region:account-id:connection/connection-id|DEFAULT=None, REQUIRED if repository_source=codestar_connection",
     "log_retention_duration": "string_LOG_RETENTION_DURATION|DEFAULT=TWO_YEARS",
     "DeploymentEnvironments": [
       {
@@ -236,7 +245,7 @@ and find 2 examples of cdk.json files.
 | resource_prefix                               | Optional              | The prefix used for AWS created resources. It must be in lower case without any special character. (default: dataall)                                                                                                                                                                                                                                                                                                |
 | source                                        | Optional              | The version control source for the repository. It can take 2 values 'codecommit' or 'codestar_connection'. (default: 'codecommit')                                                                                                                                                                                                                                                                                   |
 | repo_string                                   | Optional              | The repository path as string. Required if source='codestar_connection' (default: 'awslabs/aws-dataall')                                                                                                                                                                                                                                                                                                             |
-| repo_connection_arn                           | Optional              | The arn of the CodeStar connection connecting with the source repository. Required if source='codestar_connection'(default: None)                                                                                                                                                                                                                                                                                    |
+| repo_connection_arn                           | Optional              | The arn of the CodeConnection connecting with the source repository. Required if source='codestar_connection'(default: None)                                                                                                                                                                                                                                                                                    |
 | log_retention_duration                        | Optional              | The CloudWatch log retention days for all data.all compute log groups (e.g. Lambda and ECS Tasks), VPC flow logs, and API Activity logs - this parameter is specified as a string value of one of the AWS CDK enum RetentionDays members (default: `TWO_YEARS`) |
 
 | **Deployment environments Parameters**        | **Optional/Required** | **Definition**                                                                                                                                                                                                                                                                                                                                                                                                       |
@@ -451,13 +460,22 @@ the different configuration options.
 {
     "modules": {
         "mlstudio": {
-            "active": true
+            "active": true,
+            "features": {
+                 "show_stack_logs": "enabled|disabled|admin-only"
+            }
         },
         "notebooks": {
-            "active": true
+            "active": true,
+            "features": {
+                 "show_stack_logs": "enabled|disabled|admin-only"
+            }
         },
         "datapipelines": {
-            "active": true
+            "active": true,
+            "features": {
+                 "show_stack_logs": "enabled|disabled|admin-only"
+            }
         },
         "omics": {
             "active": false
@@ -482,7 +500,7 @@ the different configuration options.
                 "Secret" : true
               }
             }
-          },
+        },
         "s3_datasets": {
             "active": true,
             "features": {
@@ -490,12 +508,19 @@ the different configuration options.
               "file_actions": true,
               "aws_actions": true,
               "preview_data": true,
-              "glue_crawler": true
+              "glue_crawler": true,
+              "show_stack_logs": "enabled|disabled|admin-only"
             }
-          },
+        },
         "s3_datasets_shares": {
             "active": true
-          },
+        },
+        "shares_base": {
+          "active": true,
+          "features": {
+            "show_share_logs": "enabled|disabled|admin-only"
+          }
+        },
         "worksheets": {
             "active": true,
             "features": {
@@ -514,7 +539,8 @@ the different configuration options.
         "features": {
             "env_aws_actions": true,
             "cdk_pivot_role_multiple_environments_same_account": false,
-            "enable_quicksight_monitoring": false
+            "enable_quicksight_monitoring": false,
+            "show_stack_logs": "enabled|disabled|admin-only"
         },
         "log_query_period_days": 1
     }
@@ -542,7 +568,6 @@ check the [UserGuide](https://github.com/data-dot-all/dataall/blob/main/UserGuid
 | s3_datasets_shares | datasets_base, notifications                        | Sub-module that allows sharing of Datasets through Lake Formation and S3                                                   |
 | datasets_base   | None                                                | Shared code related to Datasets (not exposed on `config.json`).                                                            |
 | worksheets      | datasets                                            | Athena query editor integrated in data.all UI                                                                              |
-| datapipelines   | feed                                                | CICD pipelines that deploy [AWS DDK](https://awslabs.github.io/aws-ddk/) applications                                      |
 | omics           | None                                                | adds the capability to view and instantiate HealthOmics Ready2Run workflows as runs that can output and save omic data as data.all Datasets.|
 | mlstudio        | None                                                | SageMaker Studio users that can open a session directly from data.all UI                                                   |
 | notebooks       | None                                                | SageMaker Notebooks created and accessible from data.all UI                                                                |
@@ -562,22 +587,25 @@ In the example config.json, the feature that enables file upload from data.all U
         "features": {
             "file_uploads": false,
         }
-    },
+    }
 ```
 
 
-| **Feature**         | **Module** | **Description**                                                                                                                                                                                                                                                                              |   
-|---------------------|------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| file_uploads        | s3_datasets   | Upload files in a Dataset in the Upload tab                                                                                                                                                                                                                                                  |
-| file_actions        | s3_datasets   | Create, Read, Update, Delete on Dataset Folders                                                                                                                                                                                                                                              |
-| aws_actions         | s3_datasets   | Get AWS Credentials and assume Dataset IAM role from data.all's UI                                                                                                                                                                                                                           |
-| preview_data        | s3_datasets   | Enable previews of dataset tables for users in data.all UI                                                                                                                                                                                                                                   |
-| glue_crawler        | s3_datasets   | Allow running Glue Crawler to catalog new data for data.all datasets directly from the UI                                                                                                                                                                                                    |
-| share_notifications | s3_datasets   | Allow additional notifications (on top of data.all's built in UI notifications) to be sent to data.all users when a dataset sharing operation occurs (currently only type `email` notifications is supported and requires `custom_domain` hosted zone parameters be specified in `cdk.json`) |
-| confidentiality_dropdown | s3_datasets | Disable / Enable use of confidentiality levels for a dataset. Please note - when this drop down is set to false each dataset is treated as if it is Official or Secret                                                                                                                       |
-| topics_dropdown | s3_datasets | Disable / Enable use of topics for a dataset | 
-|auto_approval_for_confidentiality_level | s3_datasets | Specify if auto-approval for share requests should be enabled for each confidentiality level in data.all |
+| **Feature**                             | **Module**  | **Description**                                                                                                                                                                                                                                                                                                                                 |   
+|-----------------------------------------|-------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| file_uploads                            | s3_datasets | Upload files in a Dataset in the Upload tab                                                                                                                                                                                                                                                                                                     |
+| file_actions                            | s3_datasets | Create, Read, Update, Delete on Dataset Folders                                                                                                                                                                                                                                                                                                 |
+| aws_actions                             | s3_datasets | Get AWS Credentials and assume Dataset IAM role from data.all's UI                                                                                                                                                                                                                                                                              |
+| preview_data                            | s3_datasets | Enable previews of dataset tables for users in data.all UI                                                                                                                                                                                                                                                                                      |
+| glue_crawler                            | s3_datasets | Allow running Glue Crawler to catalog new data for data.all datasets directly from the UI                                                                                                                                                                                                                                                       |
+| share_notifications                     | s3_datasets | Allow additional notifications (on top of data.all's built in UI notifications) to be sent to data.all users when a dataset sharing operation occurs (currently only type `email` notifications is supported and requires `custom_domain` hosted zone parameters be specified in `cdk.json`)                                                    |
+| confidentiality_dropdown                | s3_datasets | Disable / Enable use of confidentiality levels for a dataset. Please note - when this drop down is set to false each dataset is treated as if it is Official or Secret                                                                                                                                                                          |
+| topics_dropdown                         | s3_datasets | Disable / Enable use of topics for a dataset                                                                                                                                                                                                                                                                                                    | 
+| auto_approval_for_confidentiality_level | s3_datasets | Specify if auto-approval for share requests should be enabled for each confidentiality level in data.all                                                                                                                                                                                                                                        |
+| show_stack_logs                         | s3_datasets | Enable / Disable showing stack logs to users or only allow admins to view stack logs. When "Enabled", users who have access to stack can view the logs. With "admin-only", only Data.all admins can view the stack logs and when "Disabled", no user can see the stack logs. Please check out the config.json in step 7 for more details        |
+| show_share_logs                             | shares_base | Enable / Disable showing share logs to users or only allow admins to view share logs. When "Enabled", users who have access to those shares can view the logs. With "admin-only", only Data.all admins can view the share logs and when "Disabled", no user can see the share logs. Please check out the config.json in step 7 for more details |
 | nlq | worksheets | Disable / Enable natural language querying powered by genAI in worksheets (experimental feature - default: False) | 
+
 
 ### Customizing Module Features
 
@@ -620,13 +648,13 @@ a particular feature in the core is to add it to the core section of the `config
 This is the list of core features that can currently be customized. Take it as an example if you need to 
 disable or modify the bahavior any other core feature.
 
-| **Feature**           | **Module**   | **Description**                                                                                                                                                                                                                                    |   
-|-----------------------|--------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| env_aws_actions       | environments | If set to True, users can get AWS Credentials and assume Environment Group IAM roles from data.all's UI                                                                                                                                            |
+| **Feature**           | **Module**   | **Description**                                                                                                                                                                                                                                     |   
+|-----------------------|--------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| env_aws_actions       | environments | If set to True, users can get AWS Credentials and assume Environment Group IAM roles from data.all's UI                                                                                                                                             |
 | cdk_pivot_role_multiple_environments_same_account       | environments | If set to True, the CDK-created pivot role as part of the environment stack will be region specific (`dataallPivotRole-cdk-<region>`). This feature allows users to create multiple data.all environments in the same account but multiple regions. |
-| enable_quicksight_monitoring       | environments | If set to **true**, RDS security groups and VPC NACL rules are modified to allow connection of the RDS metadata database with Quicksight in the infrastructure account (default: false)                                                            |
-| log_query_period_days       | global       | Specify the time frame for querying the log history. This log history is used for Stacks view and shared log views.                                                                                                                             |
-
+| enable_quicksight_monitoring       | environments | If set to **true**, RDS security groups and VPC NACL rules are modified to allow connection of the RDS metadata database with Quicksight in the infrastructure account (default: false)                                                             |
+| log_query_period_days       | global       | Specify the time frame for querying the log history. This log history is used for Stacks view and shared log views.                                                                                                                                 |
+| show_stack_logs | environments | Enable / Disable showing stack logs to users or only allow admins to view stack logs. When "Enabled", users who have access to stack can view the logs. With "admin-only", only Data.all admins can view the stack logs and when "Disabled", no user can see the stack logs. Please check out the config.json in step 7 for more details        |
 
 ### (Optional) Additional Set Up For Worksheets GenAI Natural Language Query (NLQ) Features
 
@@ -638,7 +666,7 @@ To use these features, your. data.all admin team must enabled access to the Clau
 3. Select Next, Review any additional terms documents, and when ready Submit the request
 4. If the request is successful the Access status changes to Access granted or Available to request (this may take a few minutes)
 
-For more information about enabling foundation model access in Amazon Bedrock, please refer to AWS Documentation (https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html)
+For more information about enabling foundation model access in Amazon Bedrock, please refer to [AWS Documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html).
 
 
 ## 8. Run CDK synth and check cdk.context.json <a name="context"></a>
