@@ -2,6 +2,7 @@ from dataall.base.aws.sts import SessionHelper
 from langchain_aws import ChatBedrock as BedrockChat
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
+from dataall.base.db import exceptions
 from dataall.modules.worksheets.aws.bedrock_prompts import (
     SQL_EXAMPLES,
     TEXT_TO_SQL_PROMPT_TEMPLATE,
@@ -32,6 +33,8 @@ class BedrockClient:
 
         chain = prompt_template | self._model | StrOutputParser()
         response = chain.invoke({'prompt': prompt, 'context': metadata, 'examples': SQL_EXAMPLES})
+        if response.startswith('Error:'):
+            raise exceptions.ModelGuardrailException(response)
         return response
 
     def invoke_model_process_text(self, prompt: str, content: str):
@@ -39,4 +42,7 @@ class BedrockClient:
 
         chain = prompt_template | self._model | StrOutputParser()
         response = chain.invoke({'prompt': prompt, 'content': content})
+
+        if response.startswith('Error:'):
+            raise exceptions.ModelGuardrailException(response)
         return response

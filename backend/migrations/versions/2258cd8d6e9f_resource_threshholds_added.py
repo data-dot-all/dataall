@@ -1,4 +1,4 @@
-"""describe_changes_shortly
+"""resource_threshholds_added
 
 Revision ID: 2258cd8d6e9f
 Revises: 5a798acc6282

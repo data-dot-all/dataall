@@ -171,11 +171,7 @@ class WorksheetService:
         for table in table_names:
             metadata.append(glue_client.get_table_metadata(database=db_name, table_name=table))
 
-        response = BedrockClient().invoke_model_text_to_sql(prompt, '\n'.join(metadata))
-
-        if response.startswith('Error:'):
-            raise exceptions.ModelGuardrailException(response)
-        return response
+        return BedrockClient().invoke_model_text_to_sql(prompt, '\n'.join(metadata))
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
@@ -198,8 +194,4 @@ class WorksheetService:
         )
 
         content = s3_client.get_content(dataset.S3BucketName, key)
-        response = BedrockClient().invoke_model_process_text(prompt, content)
-
-        if response.startswith('Error:'):
-            raise exceptions.ModelGuardrailException(response)
-        return response
+        return BedrockClient().invoke_model_process_text(prompt, content)
