@@ -189,7 +189,9 @@ def test_create_query_download_url(client, worksheet, env_fixture, group):
         groups=[group.name],
     )
 
-    expires_in = datetime.strptime(response.data.createWorksheetQueryResultDownloadUrl.created, '%Y-%m-%d %H:%M:%S.%f')
+    expires_in = datetime.strptime(
+        response.data.createWorksheetQueryResultDownloadUrl.expiresIn, '%Y-%m-%d %H:%M:%S.%f'
+    )
     assert response.data.createWorksheetQueryResultDownloadUrl.downloadLink is not None
     assert response.data.createWorksheetQueryResultDownloadUrl.fileFormat == 'csv'
     assert expires_in > datetime.utcnow()
@@ -251,9 +253,12 @@ def test_resource_unauthorized__create_query_download_url(client, worksheet, env
             'environmentUri': env_fixture.environmentUri,
         },
         username='bob',
-        groups=[group2.name]
+        groups=[group2.name],
     )
 
     assert response.errors is not None
     assert len(response.errors) > 0
-    assert f'is not authorized to perform: DOWNLOAD_ATHENA_QUERY_RESULTS on resource: {worksheet.worksheetUri}' in response.errors[0].message
+    assert (
+        f'is not authorized to perform: DOWNLOAD_ATHENA_QUERY_RESULTS on resource: {worksheet.worksheetUri}'
+        in response.errors[0].message
+    )
