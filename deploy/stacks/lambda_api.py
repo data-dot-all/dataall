@@ -348,7 +348,7 @@ class LambdaApiStack(pyNestedClass):
         )
         return lambda_sg
 
-    @run_if(['modules.worksheets.features.nlq'])
+    @run_if(['modules.worksheets.features.nlq.active'])
     def _get_bedrock_policy_statement(self):
         return [
             iam.PolicyStatement(

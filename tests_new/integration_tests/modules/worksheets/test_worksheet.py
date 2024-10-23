@@ -85,7 +85,9 @@ def test_run_athena_sql_query_unauthorized(client2, worksheet1, persistent_env1)
     ).contains('UnauthorizedOperation', 'RUN_ATHENA_QUERY')
 
 
-@pytest.mark.skipif(not config.get_property('modules.worksheets.features.nlq'), reason='Feature Disabled by Config')
+@pytest.mark.skipif(
+    not config.get_property('modules.worksheets.features.nlq.active'), reason='Feature Disabled by Config'
+)
 def test_text_to_sql(client1, worksheet1, persistent_env1):
     prompt = 'Write me a query to list the databases I have access to in Athena'
     response = text_to_sql(
@@ -100,7 +102,9 @@ def test_text_to_sql(client1, worksheet1, persistent_env1):
     assert_that(response).is_not_none()
 
 
-@pytest.mark.skipif(not config.get_property('modules.worksheets.features.nlq'), reason='Feature Disabled by Config')
+@pytest.mark.skipif(
+    not config.get_property('modules.worksheets.features.nlq.active'), reason='Feature Disabled by Config'
+)
 def test_text_to_sql_unauthorized(client2, worksheet1, persistent_env1):
     prompt = 'Write a query to access data in athena'
     assert_that(text_to_sql).raises(GqlError).when_called_with(
@@ -110,7 +114,7 @@ def test_text_to_sql_unauthorized(client2, worksheet1, persistent_env1):
 
 # # todo: Skipping this Test as requires dependency of txt of pdf file in dataset already since key must exist
 # @pytest.mark.skipif(
-#     not config.get_property('modules.worksheets.features.nlq'), reason='Feature Disabled by Config'
+#     not config.get_property('modules.worksheets.features.nlq.active'), reason='Feature Disabled by Config'
 # )
 # def test_analyze_text_doc(client1, worksheet1, persistent_env1, persistent_s3_dataset1):
 #     prompt = "Give me a summary of this text document"
@@ -119,7 +123,9 @@ def test_text_to_sql_unauthorized(client2, worksheet1, persistent_env1):
 #     assert_that(response).is_not_none()
 
 
-@pytest.mark.skipif(not config.get_property('modules.worksheets.features.nlq'), reason='Feature Disabled by Config')
+@pytest.mark.skipif(
+    not config.get_property('modules.worksheets.features.nlq.active'), reason='Feature Disabled by Config'
+)
 def test_analyze_text_doc_invalid_object(client1, worksheet1, persistent_env1, persistent_s3_dataset1):
     prompt = 'Give me a summary of this text document'
     assert_that(analyze_text_document).raises(GqlError).when_called_with(
@@ -132,7 +138,9 @@ def test_analyze_text_doc_invalid_object(client1, worksheet1, persistent_env1, p
     ).contains('S3 Object Key', 'Invalid Input')
 
 
-@pytest.mark.skipif(not config.get_property('modules.worksheets.features.nlq'), reason='Feature Disabled by Config')
+@pytest.mark.skipif(
+    not config.get_property('modules.worksheets.features.nlq.active'), reason='Feature Disabled by Config'
+)
 def test_analyze_text_doc_unauthorized(client2, worksheet1, persistent_env1, persistent_s3_dataset1):
     prompt = 'Give me a summary of this text document'
     assert_that(analyze_text_document).raises(GqlError).when_called_with(

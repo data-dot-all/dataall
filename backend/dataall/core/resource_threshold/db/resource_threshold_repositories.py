@@ -4,8 +4,6 @@ from datetime import date
 
 
 class ResourceThresholdRepository:
-    _RESOURCE_PATHS = {'nlq': 'modules.worksheets.features.max_count_per_day'}
-
     @staticmethod
     def get_count_today(session, username, action_type):
         amount = (

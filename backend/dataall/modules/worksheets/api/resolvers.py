@@ -61,7 +61,7 @@ def delete_worksheet(context, source, worksheetUri: str):
         return WorksheetService.delete_worksheet(session=session, uri=worksheetUri)
 
 
-@is_feature_enabled('modules.worksheets.features.nlq')
+@is_feature_enabled('modules.worksheets.features.nlq.active')
 def text_to_sql(
     context: Context,
     source,
@@ -80,7 +80,7 @@ def text_to_sql(
     )
 
 
-@is_feature_enabled('modules.worksheets.features.nlq')
+@is_feature_enabled('modules.worksheets.features.nlq.active')
 def analyze_text_genai(
     context,
     source,

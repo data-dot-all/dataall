@@ -153,7 +153,7 @@ class WorksheetService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
-    @ResourceThresholdService.check_invocation_count('nlq', 'modules.worksheets.features.max_count_per_day')
+    @ResourceThresholdService.check_invocation_count('nlq', 'modules.worksheets.features.nlq.max_count_per_day')
     def run_nlq(uri, prompt, worksheetUri, db_name, table_names):
         with get_context().db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
@@ -175,7 +175,7 @@ class WorksheetService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
-    @ResourceThresholdService.check_invocation_count('nlq', 'modules.worksheets.features.max_count_per_day')
+    @ResourceThresholdService.check_invocation_count('nlq', 'modules.worksheets.features.nlq.max_count_per_day')
     def analyze_text_genai(uri, worksheetUri, prompt, datasetUri, key):
         with get_context().db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
