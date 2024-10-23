@@ -216,7 +216,7 @@ def test_reapply(client1, share_params_main):
     reapply_items_share_object(client1, share_uri, item_uris)
     share_object = get_share_object(client1, share_uri)
     assert_that(share_object['items'].nodes).extracting('healthStatus').contains_only('PendingReApply')
-    check_share_items_verified(client1, share_uri)
+    check_verify_share_items(client1, share_uri)
 
 
 @pytest.mark.dependency(name='share_revoked', depends=['share_succeeded'])
