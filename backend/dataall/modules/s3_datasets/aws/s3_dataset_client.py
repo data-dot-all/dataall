@@ -81,11 +81,7 @@ class S3DatasetClient:
             )
 
             def txt_or_pdf(s):
-                suffix = s.split('.')[-1]
-                if suffix == 'pdf' or suffix == 'txt':
-                    return True
-                else:
-                    return False
+                return s.split('.')[-1] in ['pdf', 'txt']
 
             return [ob['Key'] for ob in response.get('Contents', []) if txt_or_pdf(ob['Key'])]
         except ClientError as e:

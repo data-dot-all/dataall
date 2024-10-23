@@ -15,27 +15,19 @@ def create_worksheet(context: Context, source, input: dict = None):
     if not input.get('label'):
         raise exceptions.RequiredParameter('label')
 
-    with context.engine.scoped_session() as session:
-        return WorksheetService.create_worksheet(
-            session=session,
-            username=context.username,
-            data=input,
-        )
+    return WorksheetService.create_worksheet(
+        data=input,
+    )
 
 
-def update_worksheet(context: Context, source, worksheetUri: str = None, input: dict = None):
-    with context.engine.scoped_session() as session:
-        return WorksheetService.update_worksheet(
-            session=session, username=context.username, uri=worksheetUri, data=input
-        )
+def update_worksheet(context: Context, source, worksheetUri: str, input: dict = None):
+    return WorksheetService.update_worksheet(uri=worksheetUri, data=input)
 
 
-def get_worksheet(context: Context, source, worksheetUri: str = None):
-    with context.engine.scoped_session() as session:
-        return WorksheetService.get_worksheet(
-            session=session,
-            uri=worksheetUri,
-        )
+def get_worksheet(context: Context, source, worksheetUri: str):
+    return WorksheetService.get_worksheet(
+        uri=worksheetUri,
+    )
 
 
 def resolve_user_role(context: Context, source: Worksheet):
@@ -60,14 +52,11 @@ def list_worksheets(context, source, filter: dict = None):
         )
 
 
-def run_sql_query(context: Context, source, environmentUri: str = None, worksheetUri: str = None, sqlQuery: str = None):
-    with context.engine.scoped_session() as session:
-        return WorksheetService.run_sql_query(
-            session=session, uri=environmentUri, worksheetUri=worksheetUri, sqlQuery=sqlQuery
-        )
+def run_sql_query(context: Context, source, environmentUri: str, worksheetUri: str, sqlQuery: str):
+    return WorksheetService.run_sql_query(uri=environmentUri, worksheetUri=worksheetUri, sqlQuery=sqlQuery)
 
 
-def delete_worksheet(context, source, worksheetUri: str = None):
+def delete_worksheet(context, source, worksheetUri: str):
     with context.engine.scoped_session() as session:
         return WorksheetService.delete_worksheet(session=session, uri=worksheetUri)
 
@@ -76,43 +65,35 @@ def delete_worksheet(context, source, worksheetUri: str = None):
 def text_to_sql(
     context: Context,
     source,
-    environmentUri: str = None,
-    worksheetUri: str = None,
-    prompt: str = None,
-    databaseName: str = None,
-    tableNames: list = None,
+    environmentUri: str,
+    worksheetUri: str,
+    prompt: str,
+    databaseName: str,
+    tableNames: list,
 ):
-    with context.engine.scoped_session() as session:
-        response = WorksheetService.run_nlq(
-            session=session,
-            username=context.username,
-            uri=environmentUri,
-            prompt=prompt,
-            worksheetUri=worksheetUri,
-            db_name=databaseName,
-            table_names=tableNames,
-        )
-
-        return response
+    return WorksheetService.run_nlq(
+        uri=environmentUri,
+        prompt=prompt,
+        worksheetUri=worksheetUri,
+        db_name=databaseName,
+        table_names=tableNames,
+    )
 
 
 @is_feature_enabled('modules.worksheets.features.nlq')
 def analyze_text_genai(
     context,
     source,
-    worksheetUri: str = None,
-    environmentUri: str = None,
-    prompt: str = None,
-    datasetUri: str = None,
-    key: str = None,
+    worksheetUri: str,
+    environmentUri: str,
+    prompt: str,
+    datasetUri: str,
+    key: str,
 ):
-    with context.engine.scoped_session() as session:
-        return WorksheetService.analyze_text_genai(
-            session=session,
-            username=context.username,
-            uri=environmentUri,
-            worksheetUri=worksheetUri,
-            prompt=prompt,
-            datasetUri=datasetUri,
-            key=key,
-        )
+    return WorksheetService.analyze_text_genai(
+        uri=environmentUri,
+        worksheetUri=worksheetUri,
+        prompt=prompt,
+        datasetUri=datasetUri,
+        key=key,
+    )

@@ -157,8 +157,7 @@ def list_datasets_owned_by_env_group(
 
 
 def list_object_keys(context, source, datasetUri: str = None):
-    with context.engine.scoped_session() as session:
-        return DatasetService.list_object_keys(session=session, uri=datasetUri)
+    return DatasetService.list_object_keys(uri=datasetUri)
 
 
 class RequestValidator:
