@@ -218,20 +218,15 @@ class ProcessS3BucketShare(SharesProcessorInterface):
             manager = self._initialize_share_manager(bucket)
             if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
                 log.info(f'Principal role {self.share_data.share.principalRoleName} is not found.')
-            execute_and_suppress_exception(func=manager.delete_target_role_bucket_policy())
+            execute_and_suppress_exception(func=manager.delete_target_role_bucket_policy)
             execute_and_suppress_exception(
-                func=manager.delete_target_role_access_policy(
-                    share=self.share_data.share,
-                    target_bucket=bucket,
-                    target_environment=self.share_data.target_environment,
-                )
+                func=manager.delete_target_role_access_policy,
+                share=self.share_data.share,
+                target_bucket=bucket,
+                target_environment=self.share_data.target_environment,
             )
             if not self.share_data.dataset.imported or self.share_data.dataset.importedKmsKey:
-                execute_and_suppress_exception(
-                    func=manager.delete_target_role_bucket_key_policy(
-                        target_bucket=bucket,
-                    )
-                )
+                execute_and_suppress_exception(func=manager.delete_target_role_bucket_key_policy, target_bucket=bucket)
 
             # Delete share item
             sharing_item = ShareObjectRepository.find_sharable_item(

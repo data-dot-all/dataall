@@ -473,7 +473,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     'Source account details not initialized properly. Please check if the catalog account is properly onboarded on data.all'
                 )
             manager.initialize_clients()
-            execute_and_suppress_exception(func=manager.grant_pivot_role_all_database_permissions_to_shared_database())
+            execute_and_suppress_exception(func=manager.grant_pivot_role_all_database_permissions_to_shared_database)
 
             for table in self.tables:
                 log.info(f'Revoking access to table {table.tableUri}/{table.GlueTableName}...')
@@ -486,7 +486,9 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         self.session, share_item.attachedDataFilterUri
                     )
                 log.info(f'Revoking access to table: {table.GlueTableName} ')
-                execute_and_suppress_exception(func=manager.check_table_exists_in_source_database(share_item, table))
+                execute_and_suppress_exception(
+                    func=manager.check_table_exists_in_source_database, share_item=share_item, table=table
+                )
                 try:
                     log.info('Check resource link table exists')
                     resource_link_name = self._build_resource_link_name(table.GlueTableName, share_item_filter)
@@ -498,13 +500,15 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     if resource_link_table_exists:
                         log.info('Revoking principal permissions from resource link table')
                         execute_and_suppress_exception(
-                            func=manager.revoke_principals_permissions_to_resource_link_table(resource_link_name)
+                            func=manager.revoke_principals_permissions_to_resource_link_table,
+                            resource_link_name=resource_link_name,
                         )
                         log.info('Revoking principal permissions from table in source')
                         execute_and_suppress_exception(
-                            func=manager.revoke_principals_permissions_to_table_in_source(
-                                table, share_item, share_item_filter
-                            )
+                            func=manager.revoke_principals_permissions_to_table_in_source,
+                            table=table,
+                            share_item=share_item,
+                            share_item_filter=share_item_filter,
                         )
                         if share_item_filter:
                             can_delete_resource_link = True
@@ -522,12 +526,12 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
 
                         if can_delete_resource_link:
                             execute_and_suppress_exception(
-                                func=manager.grant_pivot_role_drop_permissions_to_resource_link_table(
-                                    resource_link_name
-                                )
+                                func=manager.grant_pivot_role_drop_permissions_to_resource_link_table,
+                                resource_link_name=resource_link_name,
                             )
                             execute_and_suppress_exception(
-                                func=manager.delete_resource_link_table_in_shared_database(resource_link_name)
+                                func=manager.delete_resource_link_table_in_shared_database,
+                                resource_link_name=resource_link_name,
                             )
 
                     if (
@@ -547,7 +551,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
 
             if self.tables:
                 log.info('Revoking permissions to target shared database...')
-                execute_and_suppress_exception(func=manager.revoke_principals_database_permissions_to_shared_database())
+                execute_and_suppress_exception(func=manager.revoke_principals_database_permissions_to_shared_database)
                 share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
                 existing_shares_with_shared_tables_in_environment = (
                     ShareObjectRepository.list_dataset_shares_with_existing_shared_items(
@@ -560,7 +564,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                 )
                 if not len(existing_shares_with_shared_tables_in_environment):
                     log.info('Deleting target shared database...')
-                    execute_and_suppress_exception(func=manager.delete_shared_database_in_target())
+                    execute_and_suppress_exception(func=manager.delete_shared_database_in_target)
             # Check share items in share and delete share
             remaining_share_items = ShareObjectRepository.get_all_share_items_in_share(
                 session=self.session, share_uri=self.share_data.share.shareUri

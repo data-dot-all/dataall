@@ -643,9 +643,10 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                     schema=self.external_schema, database=self.target_connection.database
                 ):
                     execute_and_suppress_exception(
-                        func=self.redshift_data_client_in_target.revoke_select_table_access_to_redshift_role(
-                            schema=self.external_schema, table=table.name, rs_role=self.redshift_role
-                        )
+                        func=self.redshift_data_client_in_target.revoke_select_table_access_to_redshift_role,
+                        schema=self.external_schema,
+                        table=table.name,
+                        rs_role=self.redshift_role,
                     )
                 else:
                     log.info(
@@ -654,12 +655,11 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                 # 2) (in target namespace) Revoke access to the revoked tables to the redshift role in local_db (if database exists)
                 if local_db_exists:
                     execute_and_suppress_exception(
-                        func=self.redshift_data_client_in_target.revoke_select_table_access_to_redshift_role(
-                            database=self.local_db,
-                            schema=self.dataset.schema,
-                            table=table.name,
-                            rs_role=self.redshift_role,
-                        )
+                        func=self.redshift_data_client_in_target.revoke_select_table_access_to_redshift_role,
+                        database=self.local_db,
+                        schema=self.dataset.schema,
+                        table=table.name,
+                        rs_role=self.redshift_role,
                     )
                 else:
                     log.info('Database does not exist, no permissions need to be revoked')
@@ -678,9 +678,10 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                     )
                     if self.redshift_data_client_in_source.check_datashare_exists(self.datashare_name):
                         execute_and_suppress_exception(
-                            func=self.redshift_data_client_in_source.remove_table_from_datashare(
-                                datashare=self.datashare_name, schema=self.dataset.schema, table_name=table.name
-                            )
+                            func=self.redshift_data_client_in_source.remove_table_from_datashare,
+                            datashare=self.datashare_name,
+                            schema=self.dataset.schema,
+                            table_name=table.name,
                         )
                 # Delete share item
                 share_item = ShareObjectRepository.find_sharable_item(
@@ -703,15 +704,15 @@ class ProcessRedshiftShare(SharesProcessorInterface):
             ):  # In this check, if a table is in Revoke_In_Progress it does not count as shared state
                 log.info(f'No other tables of this dataset are shared with this redshift role {self.redshift_role}')
                 execute_and_suppress_exception(
-                    func=self.redshift_data_client_in_target.revoke_schema_usage_access_to_redshift_role(
-                        schema=self.external_schema, rs_role=self.redshift_role
-                    )
+                    func=self.redshift_data_client_in_target.revoke_schema_usage_access_to_redshift_role,
+                    schema=self.external_schema,
+                    rs_role=self.redshift_role,
                 )
                 if local_db_exists:
                     execute_and_suppress_exception(
-                        func=self.redshift_data_client_in_target.revoke_database_usage_access_to_redshift_role(
-                            database=self.local_db, rs_role=self.redshift_role
-                        )
+                        func=self.redshift_data_client_in_target.revoke_database_usage_access_to_redshift_role,
+                        database=self.local_db,
+                        rs_role=self.redshift_role,
                     )
                 else:
                     log.info('Database does not exist, no permissions need to be revoked')
@@ -730,13 +731,13 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                     f'No other tables of this dataset are shared with this namespace {self.target_connection.nameSpaceId}'
                 )
                 execute_and_suppress_exception(
-                    func=self.redshift_data_client_in_target.drop_schema(schema=self.external_schema)
+                    func=self.redshift_data_client_in_target.drop_schema, schema=self.external_schema
                 )
                 execute_and_suppress_exception(
-                    func=self.redshift_data_client_in_target.drop_database(database=self.local_db)
+                    func=self.redshift_data_client_in_target.drop_database, database=self.local_db
                 )
                 execute_and_suppress_exception(
-                    func=self.redshift_data_client_in_source.drop_datashare(datashare=self.datashare_name)
+                    func=self.redshift_data_client_in_source.drop_datashare, datashare=self.datashare_name
                 )
             # Check share items in share and delete share
             remaining_share_items = ShareObjectRepository.get_all_share_items_in_share(

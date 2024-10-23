@@ -238,8 +238,8 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                     manager.attach_new_access_point_policy(access_point_policy)
                 else:
                     log.info('Cleaning up folder share resources...')
-                    execute_and_suppress_exception(func=manager.delete_access_point())
-                    execute_and_suppress_exception(func=manager.revoke_target_role_access_policy())
+                    execute_and_suppress_exception(func=manager.delete_access_point)
+                    execute_and_suppress_exception(func=manager.revoke_target_role_access_policy)
                     if not self.share_data.dataset.imported or self.share_data.dataset.importedKmsKey:
                         manager.delete_dataset_bucket_key_policy(dataset=self.share_data.dataset)
             except Exception:
@@ -250,9 +250,10 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
             ):
                 log.info(f'Deleting FOLDER READ permissions from {folder.locationUri}...')
                 execute_and_suppress_exception(
-                    func=S3ShareService.delete_dataset_folder_read_permission(
-                        self.session, manager.share, folder.locationUri
-                    )
+                    func=S3ShareService.delete_dataset_folder_read_permission,
+                    session=self.session,
+                    share=manager.share,
+                    locationUri=folder.locationUri,
                 )
             # Delete share item
             sharing_item = ShareObjectRepository.find_sharable_item(
