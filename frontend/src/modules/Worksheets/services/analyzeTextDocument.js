@@ -11,8 +11,8 @@ export const analyzeTextDocument = ({
     prompt,
     environmentUri,
     worksheetUri,
-    datasetUri: datasetUri,
-    key: key
+    datasetUri,
+    key
   },
   query: gql`
     query analyzeTextDocument(
