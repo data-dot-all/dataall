@@ -56,55 +56,25 @@ class ManagedPolicy(ABC):
         """
         ...
 
-    @abstractmethod
-    def create_managed_policy_from_inline_and_delete_inline(self) -> str:
-        """
-        Returns policy arn and needs to be implemented in the ManagedPolicies inherited classes
-        It is used for backwards compatibility. It should be deprecated and removed in future releases.
-        """
-        ...
-
-    @abstractmethod
-    def create_managed_indexed_policy_from_managed_policy_delete_old_policy(self) -> str:
-        """
-        Returns policy ARNs and needs to be implemented in the ManagedPolicies inherited classes
-        It is used for backwards compatibility. It should be deprecated and removed in future releases.
-        """
-        ...
-
     def check_if_policy_exists(self, policy_name) -> bool:
         share_policy = IAM.get_managed_policy_by_name(self.account, self.region, policy_name)
         return share_policy is not None
 
-    def check_if_managed_policies_exists(self) -> bool:
-        # Fetch the policy name which was created without indexes and filter through all policies
-        policy_pattern = self.generate_base_policy_name()
-        share_policies = self._get_share_policy_names(policy_pattern) # Todo : remove share name
-        return True if share_policies else False
-
     def get_managed_policies(self) -> List[str]:
         policy_pattern = self.generate_base_policy_name()
-        share_policies = self._get_share_policy_names(policy_pattern)
+        share_policies = self._get_policy_names(policy_pattern)
         return share_policies
 
     def check_if_policy_attached(self, policy_name):
         is_policy_attached = IAM.is_policy_attached(self.account, self.region, policy_name, self.role_name)
         return is_policy_attached
 
-    def check_if_policies_attached(self):
-        policy_pattern = self.generate_base_policy_name()
-        share_policies = self._get_share_policy_names(policy_pattern)
-        return all(
-            IAM.is_policy_attached(self.account, self.region, share_policy_name, self.role_name)
-            for share_policy_name in share_policies
-        )
-
     def get_policies_unattached_to_role(self):
         policy_pattern = self.generate_base_policy_name()
-        share_policies = self._get_share_policy_names(policy_pattern)
+        share_policies = self._get_policy_names(policy_pattern)
         unattached_policies = []
         for share_policy_name in share_policies:
-            if not IAM.is_policy_attached(self.account, self.region, share_policy_name, self.role_name):
+            if not self.check_if_policy_attached(share_policy_name):
                 unattached_policies.append(share_policy_name)
         return unattached_policies
 
@@ -116,9 +86,9 @@ class ManagedPolicy(ABC):
             except Exception as e:
                 raise Exception(f"Required customer managed policy {policy_arn} can't be attached: {e}")
 
-    def _get_share_policy_names(self, policy_pattern):
+    def _get_policy_names(self, policy_pattern):
         share_policies = IAM.list_policy_names_by_policy_pattern(self.account, self.region, policy_pattern)
-        # Filter through all policies which have the old policy name
+        # Filter through all policies and remove which have the old policy name
         # This is to check that old policies are not included
         old_policy_name = self.generate_old_policy_name()
         return [policy for policy in share_policies if policy != old_policy_name]

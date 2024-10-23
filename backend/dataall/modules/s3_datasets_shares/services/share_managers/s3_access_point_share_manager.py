@@ -4,6 +4,8 @@ import time
 from itertools import count
 from typing import List
 from warnings import warn
+
+from dataall.base.db.exceptions import AWSResourceQuotaExceeded
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.db import utils
 from dataall.base.aws.sts import SessionHelper
@@ -34,6 +36,7 @@ from dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service
     S3SharePolicyService,
     IAM_S3_ACCESS_POINTS_STATEMENT_SID,
 )
+from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
 from dataall.modules.shares_base.services.shares_enums import PrincipalType
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, S3Dataset
 from dataall.modules.shares_base.services.sharing_service import ShareData
@@ -167,19 +170,15 @@ class S3AccessPointShareManager:
         key_alias = f'alias/{self.dataset.KmsAlias}'
         kms_client = KmsClient(self.dataset_account_id, self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
-        share_policy_service = S3SharePolicyService(
-            environmentUri=self.target_environment.environmentUri,
-            account=self.target_environment.AwsAccountId,
-            region=self.target_environment.region,
-            role_name=self.target_requester_IAMRoleName,
-            resource_prefix=self.target_environment.resourcePrefix,
-            share=self.share,
-            dataset=self.dataset,
-        )
+        share_policy_service = S3SharePolicyService(role_name=self.target_requester_IAMRoleName,
+                                                    account=self.target_environment.AwsAccountId,
+                                                    region=self.target_environment.region,
+                                                    environmentUri=self.target_environment.environmentUri,
+                                                    resource_prefix=self.target_environment.resourcePrefix)
         share_policy_service.initialize_statements()
 
         share_resource_policy_name = share_policy_service.generate_indexed_policy_name(index=0)
-        is_managed_policies_exists = share_policy_service.check_if_managed_policies_exists()
+        is_managed_policies_exists = True if share_policy_service.get_managed_policies() else False
 
         # Checking if managed policies without indexes are present. This is used for backward compatibility
         if not is_managed_policies_exists:
@@ -321,15 +320,11 @@ class S3AccessPointShareManager:
         """
         logger.info(f'Grant target role {self.target_requester_IAMRoleName} access policy')
 
-        share_policy_service = S3SharePolicyService(
-            environmentUri=self.target_environment.environmentUri,
-            account=self.target_environment.AwsAccountId,
-            region=self.target_environment.region,
-            role_name=self.target_requester_IAMRoleName,
-            resource_prefix=self.target_environment.resourcePrefix,
-            share=self.share,
-            dataset=self.dataset,
-        )
+        share_policy_service = S3SharePolicyService(role_name=self.target_requester_IAMRoleName,
+                                                    account=self.target_environment.AwsAccountId,
+                                                    region=self.target_environment.region,
+                                                    environmentUri=self.target_environment.environmentUri,
+                                                    resource_prefix=self.target_environment.resourcePrefix)
         # Process all backwards compatibility tasks and convert to indexed policies
         share_policy_service.process_backwards_compatibility_for_target_iam_roles()
 
@@ -350,7 +345,7 @@ class S3AccessPointShareManager:
         if kms_key_id:
             kms_target_resources = [f'arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}']
 
-        managed_policy_exists = share_policy_service.check_if_managed_policies_exists()
+        managed_policy_exists = True if share_policy_service.get_managed_policies() else False
 
         if not managed_policy_exists:
             logger.info('Managed policies do not exist. Creating one')
@@ -385,14 +380,26 @@ class S3AccessPointShareManager:
             )
             logger.info(f'Number of S3 KMS statements created after splitting: {len(s3_kms_statement_chunks)}')
             logger.debug(f'S3 KMS statements after adding resources and splitting: {s3_kms_statement_chunks}')
+        try:
+            share_policy_service.merge_statements_and_update_policies(
+                target_sid=IAM_S3_ACCESS_POINTS_STATEMENT_SID,
+                target_s3_statements=s3_statement_chunks,
+                target_s3_kms_statements=s3_kms_statement_chunks,
+            )
+        except AWSResourceQuotaExceeded as e:
+            error_message = e.message
+            try:
+               ShareNotificationService(
+                   session=None, dataset=self.dataset, share=self.share
+               ).notify_managed_policy_limit_exceeded_action(email_id=self.share.owner)
+            except Exception as e:
+                logger.error(f'Error sending email for notifying that managed policy limit exceeded on role due to: {e}')
+            finally:
+                raise error_message
 
-        share_policy_service.merge_statements_and_update_policies(
-            target_sid=IAM_S3_ACCESS_POINTS_STATEMENT_SID,
-            target_s3_statements=s3_statement_chunks,
-            target_s3_kms_statements=s3_kms_statement_chunks,
-        )
-
-        if not share_policy_service.check_if_policies_attached():
+        share_managed_polices = share_policy_service.get_managed_policies()
+        all_managed_policies_attached = all( share_policy_service.check_if_policy_attached(managed_policy) for managed_policy in share_managed_polices)
+        if not all_managed_policies_attached:
             logger.info(
                 f'Found some policies are not attached to the target IAM role: {self.target_requester_IAMRoleName}. Attaching policies now'
             )
@@ -689,15 +696,11 @@ class S3AccessPointShareManager:
     def revoke_target_role_access_policy(self):
         logger.info('Deleting target role IAM statements...')
 
-        share_policy_service = S3SharePolicyService(
-            environmentUri=self.target_environment.environmentUri,
-            account=self.target_environment.AwsAccountId,
-            region=self.target_environment.region,
-            role_name=self.target_requester_IAMRoleName,
-            resource_prefix=self.target_environment.resourcePrefix,
-            share=self.share,
-            dataset=self.dataset,
-        )
+        share_policy_service = S3SharePolicyService(role_name=self.target_requester_IAMRoleName,
+                                                    account=self.target_environment.AwsAccountId,
+                                                    region=self.target_environment.region,
+                                                    environmentUri=self.target_environment.environmentUri,
+                                                    resource_prefix=self.target_environment.resourcePrefix)
         # Process all backwards compatibility tasks and convert to indexed policies
         share_policy_service.process_backwards_compatibility_for_target_iam_roles()
 
@@ -719,7 +722,7 @@ class S3AccessPointShareManager:
         if kms_key_id:
             kms_target_resources = [f'arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}']
 
-        managed_policy_exists = share_policy_service.check_if_managed_policies_exists()
+        managed_policy_exists = True if share_policy_service.get_managed_policies() else False
 
         if not managed_policy_exists:
             logger.info(f'Managed policies for share with uri: {self.share.shareUri} are not found')

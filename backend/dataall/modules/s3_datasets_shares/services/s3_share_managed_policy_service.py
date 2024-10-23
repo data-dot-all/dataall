@@ -3,6 +3,7 @@ from typing import Any, List, Dict
 
 from dataall.base.aws.iam import IAM
 from dataall.base.aws.service_quota import ServiceQuota
+from dataall.base.db.exceptions import AWSResourceQuotaExceeded
 from dataall.base.utils.iam_policy_utils import (
     split_policy_statements_in_chunks,
     split_policy_with_resources_in_statements,
@@ -33,14 +34,12 @@ DEFAULT_MAX_ATTACHABLE_MANAGED_POLICIES_ACCOUNT = 10
 
 
 class S3SharePolicyService(ManagedPolicy):
-    def __init__(self, role_name, account, region, environmentUri, resource_prefix, share=None, dataset=None):
+    def __init__(self, role_name, account, region, environmentUri, resource_prefix):
         self.role_name = role_name
         self.account = account
         self.region = region
         self.environmentUri = environmentUri
         self.resource_prefix = resource_prefix
-        self.share = share
-        self.dataset = dataset
         self.policy_version_map = {}  # Policy version map helps while updating policies
         self.total_s3_stmts: List[Any] = []
         self.total_s3_kms_stmts: List[Any] = []
@@ -416,16 +415,7 @@ class S3SharePolicyService(ManagedPolicy):
             log.error(
                 f'Number of policies which can be attached to the role is more than the service quota limit: {managed_iam_policy_quota}'
             )
-            try:
-                if self.share is not None and self.dataset is not None:
-                    ShareNotificationService(
-                        session=None, dataset=self.dataset, share=self.share
-                    ).notify_managed_policy_limit_exceeded_action(email_id=self.share.owner)
-            except Exception as e:
-                log.error(f'Error sending email for notifying that managed policy limit exceeded on role due to: {e}')
-            raise Exception(
-                f'Failed to process share as number of needed attached policies to the role is greater than the service quota limit: {managed_iam_policy_quota}'
-            )
+            raise AWSResourceQuotaExceeded(action='_check_iam_managed_policy_attachment_limit', message=f'Number of policies which can be attached to the role is more than the service quota limit: {managed_iam_policy_quota}')
 
         log.info(f'Role: {self.role_name} has capacity to attach managed policies')
 
@@ -681,9 +671,10 @@ class S3SharePolicyService(ManagedPolicy):
         log.info('Checking if inline policies are present')
         old_managed_policy_name = self.generate_old_policy_name()
         old_managed_policy_exists = self.check_if_policy_exists(policy_name=old_managed_policy_name)
+        share_managed_policies_exist = True if self.get_managed_policies() else False
         # If old managed policy doesn't exist and also new managed policies do not exist.
         # Then there might be inline policies, convert them to managed indexed policies
-        if not old_managed_policy_exists and not self.check_if_managed_policies_exists():
+        if not old_managed_policy_exists and not share_managed_policies_exist:
             self.create_managed_policy_from_inline_and_delete_inline()
             managed_policies_list = self.get_managed_policies()
             self.attach_policies(managed_policies_list)

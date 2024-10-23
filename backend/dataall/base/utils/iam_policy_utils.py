@@ -1,4 +1,4 @@
-from typing import List, Callable, Any, Dict
+from typing import List, Callable, Dict
 import logging
 
 logger = logging.getLogger(__name__)
@@ -8,7 +8,7 @@ POLICY_HEADERS_BUFFER = 144  # The policy headers take around 60 chars. An extra
 MAXIMUM_NUMBER_MANAGED_POLICIES = 20  # Soft limit 10, hard limit 20
 
 
-def split_policy_statements_in_chunks(statements: List[Any]):
+def split_policy_statements_in_chunks(statements: List[Dict]):
     """
     Splitter used for IAM policies with an undefined number of statements
     - Ensures that the size of the IAM policy remains below the POLICY LIMIT
