@@ -18,6 +18,7 @@ export const getAttachedMetadataForm = (uri) => ({
           homeEntityName
           userRole
         }
+        version
         entityType
         entityUri
         fields {

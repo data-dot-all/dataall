@@ -11,3 +11,4 @@ export * from './deleteAttachedMetadataForm';
 export * from './getMetadataFormEntityPermissions';
 export * from './createMetadataFormVersion';
 export * from './deleteMetadataFormVersion';
+export * from './listMetadataFormVersions';

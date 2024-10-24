@@ -1,6 +1,7 @@
 from dataall.base.api import gql
 from dataall.modules.metadata_forms.api.resolvers import (
     get_home_entity_name,
+    get_entity_name,
     get_form_fields,
     get_fields_glossary_node_name,
     get_user_role,
@@ -8,6 +9,7 @@ from dataall.modules.metadata_forms.api.resolvers import (
     has_tenant_permissions_for_metadata_forms,
     resolve_metadata_form,
     resolve_metadata_form_field,
+    get_entity_owner,
 )
 
 MetadataForm = gql.ObjectType(
@@ -33,6 +35,7 @@ MetadataForm = gql.ObjectType(
         ),
     ],
 )
+
 
 MetadataFormField = gql.ObjectType(
     name='MetadataFormField',
@@ -81,13 +84,25 @@ AttachedMetadataFormSearchResult = gql.ObjectType(
     ],
 )
 
+MetadataFormVersion = gql.ObjectType(
+    name='MetadataFormVersion',
+    fields=[
+        gql.Field(name='metadataFormUri', type=gql.ID),
+        gql.Field(name='version', type=gql.Integer),
+        gql.Field(name='attached_forms', type=gql.Integer),
+    ],
+)
+
 AttachedMetadataForm = gql.ObjectType(
     name='AttachedMetadataForm',
     fields=[
         gql.Field(name='uri', type=gql.ID),
         gql.Field(name='metadataForm', type=gql.Ref('MetadataForm'), resolver=resolve_metadata_form),
+        gql.Field(name='version', type=gql.Integer),
         gql.Field(name='entityUri', type=gql.String),
         gql.Field(name='entityType', type=gql.String),
+        gql.Field(name='entityName', type=gql.String, resolver=get_entity_name),
+        gql.Field(name='entityOwner', type=gql.String, resolver=get_entity_owner),
         gql.Field(
             name='fields', type=gql.ArrayType(gql.Ref('AttachedMetadataFormField')), resolver=get_attached_form_fields
         ),
