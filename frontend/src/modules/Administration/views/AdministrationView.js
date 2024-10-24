@@ -1,6 +1,10 @@
 import {
+  Alert,
   Box,
   Breadcrumbs,
+  Card,
+  CardHeader,
+  CardContent,
   Container,
   Divider,
   Grid,
@@ -15,8 +19,9 @@ import { Link as RouterLink } from 'react-router-dom';
 import { ChevronRightIcon, useSettings } from 'design';
 import { AdministrationTeams, DashboardViewer } from '../components';
 import { MaintenanceViewer } from '../../Maintenance/components/MaintenanceViewer';
-import { isModuleEnabled, ModuleNames } from 'utils';
+import { isModuleEnabled, ModuleNames, isTenantUser } from 'utils';
 import config from '../../../generated/config.json';
+import { useGroups } from 'services';
 
 const tabs = [{ label: 'Teams', value: 'teams' }];
 
@@ -30,13 +35,37 @@ if (isModuleEnabled(ModuleNames.MAINTENANCE)) {
 
 const AdministrationView = () => {
   const { settings } = useSettings();
+  const groups = useGroups();
   const [currentTab, setCurrentTab] = useState('teams');
 
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);
   };
 
-  return (
+  return !isTenantUser(groups) ? (
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        backgroundColor: 'background.default'
+      }}
+    >
+      <Card sx={{ maxWidth: 400 }}>
+        <CardHeader
+          title="Unauthorized Access"
+          sx={{ bgcolor: 'error.main', color: 'error.contrastText' }}
+        />
+        <CardContent>
+          <Alert severity="error">
+            You do not have permission to view this page. Please contact an
+            administrator if you believe this is an error.
+          </Alert>
+        </CardContent>
+      </Card>
+    </Box>
+  ) : (
     <>
       <Helmet>
         <title>Administration: Settings | data.all</title>
