@@ -25,8 +25,8 @@ class GlueClient:
             column_metadata = table_metadata['Table']['StorageDescriptor']['Columns']
             partition_metadata = table_metadata['Table']['PartitionKeys']
             meta_data = f"""
-            Database name: {database}
-            Table name: {table_name} 
+            Database Name: {database}
+            Table Name: {table_name} 
             Column Metadata: {column_metadata}
             Partition Metadata: {partition_metadata}
             """

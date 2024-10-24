@@ -3,11 +3,11 @@ from langchain_aws import ChatBedrock as BedrockChat
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 from dataall.base.db import exceptions
-from dataall.modules.worksheets.aws.bedrock_prompts import (
-    SQL_EXAMPLES,
-    TEXT_TO_SQL_PROMPT_TEMPLATE,
-    PROCESS_TEXT_PROMPT_TEMPLATE,
-)
+import os
+
+TEXT_TO_SQL_EXAMPLES_PATH = os.path.join(os.path.dirname(__file__), 'bedrock_prompts', 'text_to_sql_examples.txt')
+TEXT_TO_SQL_TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), 'bedrock_prompts', 'test_to_sql_template.txt')
+PROCESS_TEXT_TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), 'bedrock_prompts', 'process_text_template.txt')
 
 
 class BedrockClient:
@@ -29,16 +29,19 @@ class BedrockClient:
         )
 
     def invoke_model_text_to_sql(self, prompt: str, metadata: str):
-        prompt_template = PromptTemplate.from_template(TEXT_TO_SQL_PROMPT_TEMPLATE)
-
+        prompt_template = PromptTemplate.from_file(TEXT_TO_SQL_TEMPLATE_PATH)
         chain = prompt_template | self._model | StrOutputParser()
-        response = chain.invoke({'prompt': prompt, 'context': metadata, 'examples': SQL_EXAMPLES})
+
+        with open(TEXT_TO_SQL_EXAMPLES_PATH, 'r') as f:
+            examples = f.read()
+
+        response = chain.invoke({'prompt': prompt, 'context': metadata, 'examples': examples})
         if response.startswith('Error:'):
             raise exceptions.ModelGuardrailException(response)
         return response
 
     def invoke_model_process_text(self, prompt: str, content: str):
-        prompt_template = PromptTemplate.from_template(PROCESS_TEXT_PROMPT_TEMPLATE)
+        prompt_template = PromptTemplate.from_file(PROCESS_TEXT_TEMPLATE_PATH)
 
         chain = prompt_template | self._model | StrOutputParser()
         response = chain.invoke({'prompt': prompt, 'content': content})

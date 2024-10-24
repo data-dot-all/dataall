@@ -210,6 +210,12 @@ export const WorksheetTextToSQLEditor = ({
             </Box>
             <Box sx={{ p: 2 }}>
               <LoadingButton
+                disabled={
+                  !currentEnv ||
+                  !selectedDatabase ||
+                  !selectedTables.length ||
+                  !prompt
+                }
                 loading={invoking}
                 variant="contained"
                 onClick={handleSubmit}

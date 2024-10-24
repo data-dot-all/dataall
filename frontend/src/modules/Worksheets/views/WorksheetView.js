@@ -57,7 +57,7 @@ const tabs = [
     active: true
   },
   {
-    label: 'TextToSQL Editor',
+    label: 'Text-To-SQL Editor',
     value: 'TextToSQL',
     active: isFeatureEnabled('worksheets', 'nlq')
   },
