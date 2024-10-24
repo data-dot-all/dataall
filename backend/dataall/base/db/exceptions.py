@@ -146,6 +146,7 @@ class AWSResourceNotAvailable(Exception):
     def __str__(self):
         return f'{self.message}'
 
+
 class AWSResourceQuotaExceeded(Exception):
     def __init__(self, action, message):
         self.action = action

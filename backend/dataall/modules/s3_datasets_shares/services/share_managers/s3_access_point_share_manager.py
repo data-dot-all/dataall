@@ -170,11 +170,13 @@ class S3AccessPointShareManager:
         key_alias = f'alias/{self.dataset.KmsAlias}'
         kms_client = KmsClient(self.dataset_account_id, self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
-        share_policy_service = S3SharePolicyService(role_name=self.target_requester_IAMRoleName,
-                                                    account=self.target_environment.AwsAccountId,
-                                                    region=self.target_environment.region,
-                                                    environmentUri=self.target_environment.environmentUri,
-                                                    resource_prefix=self.target_environment.resourcePrefix)
+        share_policy_service = S3SharePolicyService(
+            role_name=self.target_requester_IAMRoleName,
+            account=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
+            environmentUri=self.target_environment.environmentUri,
+            resource_prefix=self.target_environment.resourcePrefix,
+        )
         share_policy_service.initialize_statements()
 
         share_resource_policy_name = share_policy_service.generate_indexed_policy_name(index=0)
@@ -320,11 +322,13 @@ class S3AccessPointShareManager:
         """
         logger.info(f'Grant target role {self.target_requester_IAMRoleName} access policy')
 
-        share_policy_service = S3SharePolicyService(role_name=self.target_requester_IAMRoleName,
-                                                    account=self.target_environment.AwsAccountId,
-                                                    region=self.target_environment.region,
-                                                    environmentUri=self.target_environment.environmentUri,
-                                                    resource_prefix=self.target_environment.resourcePrefix)
+        share_policy_service = S3SharePolicyService(
+            role_name=self.target_requester_IAMRoleName,
+            account=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
+            environmentUri=self.target_environment.environmentUri,
+            resource_prefix=self.target_environment.resourcePrefix,
+        )
         # Process all backwards compatibility tasks and convert to indexed policies
         share_policy_service.process_backwards_compatibility_for_target_iam_roles()
 
@@ -389,16 +393,20 @@ class S3AccessPointShareManager:
         except AWSResourceQuotaExceeded as e:
             error_message = e.message
             try:
-               ShareNotificationService(
-                   session=None, dataset=self.dataset, share=self.share
-               ).notify_managed_policy_limit_exceeded_action(email_id=self.share.owner)
+                ShareNotificationService(
+                    session=None, dataset=self.dataset, share=self.share
+                ).notify_managed_policy_limit_exceeded_action(email_id=self.share.owner)
             except Exception as e:
-                logger.error(f'Error sending email for notifying that managed policy limit exceeded on role due to: {e}')
+                logger.error(
+                    f'Error sending email for notifying that managed policy limit exceeded on role due to: {e}'
+                )
             finally:
                 raise error_message
 
         share_managed_polices = share_policy_service.get_managed_policies()
-        all_managed_policies_attached = all( share_policy_service.check_if_policy_attached(managed_policy) for managed_policy in share_managed_polices)
+        all_managed_policies_attached = all(
+            share_policy_service.check_if_policy_attached(managed_policy) for managed_policy in share_managed_polices
+        )
         if not all_managed_policies_attached:
             logger.info(
                 f'Found some policies are not attached to the target IAM role: {self.target_requester_IAMRoleName}. Attaching policies now'
@@ -696,11 +704,13 @@ class S3AccessPointShareManager:
     def revoke_target_role_access_policy(self):
         logger.info('Deleting target role IAM statements...')
 
-        share_policy_service = S3SharePolicyService(role_name=self.target_requester_IAMRoleName,
-                                                    account=self.target_environment.AwsAccountId,
-                                                    region=self.target_environment.region,
-                                                    environmentUri=self.target_environment.environmentUri,
-                                                    resource_prefix=self.target_environment.resourcePrefix)
+        share_policy_service = S3SharePolicyService(
+            role_name=self.target_requester_IAMRoleName,
+            account=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
+            environmentUri=self.target_environment.environmentUri,
+            resource_prefix=self.target_environment.resourcePrefix,
+        )
         # Process all backwards compatibility tasks and convert to indexed policies
         share_policy_service.process_backwards_compatibility_for_target_iam_roles()
 

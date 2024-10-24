@@ -22,6 +22,7 @@ def convert_from_json_to_iam_policy_statement(iam_policy: Dict[Any, Any]):
         resources=iam_policy.get('Resource'),
     )
 
+
 def process_and_split_statements_in_chunks(statements: List[Dict]):
     statement_chunks_json = split_policy_statements_in_chunks(statements)
     statements_chunks = []

@@ -415,7 +415,10 @@ class S3SharePolicyService(ManagedPolicy):
             log.error(
                 f'Number of policies which can be attached to the role is more than the service quota limit: {managed_iam_policy_quota}'
             )
-            raise AWSResourceQuotaExceeded(action='_check_iam_managed_policy_attachment_limit', message=f'Number of policies which can be attached to the role is more than the service quota limit: {managed_iam_policy_quota}')
+            raise AWSResourceQuotaExceeded(
+                action='_check_iam_managed_policy_attachment_limit',
+                message=f'Number of policies which can be attached to the role is more than the service quota limit: {managed_iam_policy_quota}',
+            )
 
         log.info(f'Role: {self.role_name} has capacity to attach managed policies')
 

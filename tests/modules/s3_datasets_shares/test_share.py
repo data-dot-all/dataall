@@ -1275,14 +1275,13 @@ def test_create_share_object_as_requester(mocker, client, user2, group2, env2gro
     # When a user that belongs to environment and group creates request
     mocker.patch(
         'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
-        side_effect=lambda input: True if input=='policy-0' else False,
+        side_effect=lambda input: True if input == 'policy-0' else False,
     )
     mocker.patch(
         'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
     mocker.patch('dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern', return_value=['policy-0'])
-
 
     create_share_object_response = create_share_object(
         mocker=mocker,
@@ -1311,7 +1310,7 @@ def test_create_share_object_as_approver_and_requester(mocker, client, user, gro
     )
     mocker.patch(
         'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
-        side_effect=lambda input: True if input=='policy-0' else False,
+        side_effect=lambda input: True if input == 'policy-0' else False,
     )
     mocker.patch(
         'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',

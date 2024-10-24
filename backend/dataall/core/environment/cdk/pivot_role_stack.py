@@ -5,7 +5,7 @@ from constructs import Construct
 from aws_cdk import Duration, aws_iam as iam, NestedStack
 
 from dataall.base.utils.iam_cdk_utils import (
-        process_and_split_statements_in_chunks,
+    process_and_split_statements_in_chunks,
 )
 
 
