@@ -242,6 +242,7 @@ export const ReIndexConfirmationPopUp = (props) => {
               control={
                 <Switch
                   color="primary"
+                  checked={withDelete}
                   onChange={() => {
                     setWithDelete(!withDelete);
                   }}
