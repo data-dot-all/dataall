@@ -1,4 +1,4 @@
-from dataall.backend.dataall.core.resource_threshold.db.resource_threshold_models import ResourceThreshold
+from dataall.core.resource_threshold.db.resource_threshold_models import ResourceThreshold
 from sqlalchemy import and_
 from datetime import date
 
