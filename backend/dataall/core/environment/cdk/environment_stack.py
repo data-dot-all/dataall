@@ -688,3 +688,11 @@ class EnvironmentSetup(Stack):
                 resources=[f'arn:aws:quicksight:*:{self.account}:*'],
             ),
         )
+
+        self.test_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=['redshift:DeauthorizeDataShare'],
+                effect=iam.Effect.ALLOW,
+                resources=[f'arn:aws:redshift:{self.region}:{self.account}:datashare:*/dataall*'],
+            ),
+        )

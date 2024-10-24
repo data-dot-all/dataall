@@ -32,8 +32,8 @@ def test_create_connection(connection_fixture_name, connection_type, redshift_ty
     assert_that(connection.redshiftType).is_equal_to(redshift_type)
 
 
-def test_create_serverless_connection_namespace_does_not_exist(client1, group1, session_env1, testdata):
-    connection_data = testdata.redshift_connections['connection_serverless_data_user_session_env1']
+def test_create_serverless_connection_namespace_does_not_exist(client1, group1, session_env1, redshift_connections):
+    connection_data = redshift_connections['connection_serverless_data_user_session_env1']
     error_namespace_id = 'doesnotexist'
     assert_that(create_redshift_connection).raises(GqlError).when_called_with(
         client=client1,
@@ -50,8 +50,8 @@ def test_create_serverless_connection_namespace_does_not_exist(client1, group1, 
     ).contains('Redshift namespaceId', error_namespace_id, 'not exist')
 
 
-def test_create_serverless_connection_workgroup_not_found(client1, group1, session_env1, testdata):
-    connection_data = testdata.redshift_connections['connection_serverless_data_user_session_env1']
+def test_create_serverless_connection_workgroup_not_found(client1, group1, session_env1, redshift_connections):
+    connection_data = redshift_connections['connection_serverless_data_user_session_env1']
     error_workgroup = 'doesnotexist'
     assert_that(create_redshift_connection).raises(GqlError).when_called_with(
         client=client1,
@@ -68,8 +68,8 @@ def test_create_serverless_connection_workgroup_not_found(client1, group1, sessi
     ).contains('Redshift workgroup', error_workgroup, 'not exist')
 
 
-def test_create_cluster_connection_cluster_not_found(client5, group5, session_cross_acc_env_1, testdata):
-    connection_data = testdata.redshift_connections['connection_cluster_data_user_session_cross_acc_env_1']
+def test_create_cluster_connection_cluster_not_found(client5, group5, session_cross_acc_env_1, redshift_connections):
+    connection_data = redshift_connections['connection_cluster_data_user_session_cross_acc_env_1']
     error_cluster_id = 'doesnotexist'
     assert_that(create_redshift_connection).raises(GqlError).when_called_with(
         client=client5,
@@ -90,8 +90,8 @@ def test_create_cluster_connection_cluster_not_encrypted():
     pass
 
 
-def test_create_connection_database_not_found(client5, group5, session_cross_acc_env_1, testdata):
-    connection_data = testdata.redshift_connections['connection_cluster_data_user_session_cross_acc_env_1']
+def test_create_connection_database_not_found(client5, group5, session_cross_acc_env_1, redshift_connections):
+    connection_data = redshift_connections['connection_cluster_data_user_session_cross_acc_env_1']
     error_database = 'doesnotexist'
     assert_that(create_redshift_connection).raises(GqlError).when_called_with(
         client=client5,
@@ -107,8 +107,8 @@ def test_create_connection_database_not_found(client5, group5, session_cross_acc
     ).contains('Redshift database', error_database, 'not exist')
 
 
-def test_create_connection_unauthorized(client1, group1, session_cross_acc_env_1, testdata):
-    connection_data = testdata.redshift_connections['connection_cluster_data_user_session_cross_acc_env_1']
+def test_create_connection_unauthorized(client1, group1, session_cross_acc_env_1, redshift_connections):
+    connection_data = redshift_connections['connection_cluster_data_user_session_cross_acc_env_1']
     assert_that(create_redshift_connection).raises(GqlError).when_called_with(
         client=client1,
         connection_name='errorConnection',
@@ -123,8 +123,8 @@ def test_create_connection_unauthorized(client1, group1, session_cross_acc_env_1
     ).contains('UnauthorizedOperation', 'CREATE_REDSHIFT_CONNECTION', session_cross_acc_env_1.environmentUri)
 
 
-def test_delete_connection(client5, group5, session_cross_acc_env_1, testdata):
-    connection_data = testdata.redshift_connections['connection_cluster_data_user_session_cross_acc_env_1']
+def test_delete_connection(client5, group5, session_cross_acc_env_1, redshift_connections):
+    connection_data = redshift_connections['connection_cluster_data_user_session_cross_acc_env_1']
     connection = create_redshift_connection(
         client=client5,
         connection_name='errorConnection',
