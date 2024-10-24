@@ -128,8 +128,6 @@ class RedshiftConnectionRepository:
             .group_by(ResourcePolicy.principalId)
         )
 
-        if filter and filter.get('groupUri'):
-            query = query.filter(ResourcePolicy.principalId == filter.get('groupUri'))
         if filter and filter.get('term'):
             query = query.filter(
                 ResourcePolicy.principalId.ilike(filter.get('term') + '%%'),

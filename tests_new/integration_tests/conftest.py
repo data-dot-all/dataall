@@ -16,6 +16,7 @@ pytest_plugins = [
     'integration_tests.core.organizations.global_conftest',
     'integration_tests.core.environment.global_conftest',
     'integration_tests.modules.s3_datasets.global_conftest',
+    'integration_tests.modules.redshift_datasets.global_conftest',
 ]
 
 
@@ -41,10 +42,20 @@ class Dashboard:
 
 @dataclass_json
 @dataclass
+class RedshiftConnection:
+    secret_arn: str
+    namespace_id: str = None
+    workgroup: str = None
+    cluster_id: str = None
+
+
+@dataclass_json
+@dataclass
 class TestData:
     users: dict[str, User]
     envs: dict[str, Env]
-    dashboards: dict[str, Dashboard]
+    dashboards: dict[str, Dashboard] = None
+    redshift_connections: dict[str, RedshiftConnection] = None
 
 
 @pytest.fixture(scope='session', autouse=True)

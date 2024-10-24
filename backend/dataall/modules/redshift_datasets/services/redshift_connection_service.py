@@ -113,6 +113,7 @@ class RedshiftConnectionService:
             )
             session.delete(connection)
             session.commit()
+        StackService.deploy_stack(targetUri=connection.environmentUri)
         return True
 
     @staticmethod
