@@ -76,6 +76,8 @@ const WorksheetView = () => {
   const [runningQuery, setRunningQuery] = useState(false);
   const [isEditWorksheetOpen, setIsEditWorksheetOpen] = useState(null);
   const [isDeleteWorksheetOpen, setIsDeleteWorksheetOpen] = useState(null);
+  const [athenaQueryId, setAthenaQueryId] = useState();
+
   const handleEditWorksheetModalOpen = () => {
     setIsEditWorksheetOpen(true);
   };
@@ -291,6 +293,7 @@ const WorksheetView = () => {
       );
       if (!response.errors) {
         const athenaResults = response.data.runAthenaSqlQuery;
+        setAthenaQueryId(response.data.runAthenaSqlQuery.AthenaQueryId);
         setResults({
           rows: athenaResults.rows.map((c, index) => ({ ...c, id: index })),
           columns: athenaResults.columns.map((c, index) => ({
@@ -636,7 +639,13 @@ const WorksheetView = () => {
           </Box>
           <Divider />
           <Box sx={{ p: 2 }}>
-            <WorksheetResult results={results} loading={runningQuery} />
+            <WorksheetResult
+              results={results}
+              loading={runningQuery}
+              currentEnv={currentEnv}
+              athenaQueryId={athenaQueryId}
+              worksheetUri={worksheet.worksheetUri}
+            />
           </Box>
         </Box>
       </Box>

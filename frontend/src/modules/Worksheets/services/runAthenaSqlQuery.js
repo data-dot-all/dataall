@@ -21,6 +21,7 @@ export const runAthenaSqlQuery = ({
         worksheetUri: $worksheetUri
         sqlQuery: $sqlQuery
       ) {
+        AthenaQueryId
         rows {
           cells {
             columnName

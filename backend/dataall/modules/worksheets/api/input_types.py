@@ -75,3 +75,14 @@ WorksheetChartConfigInput = gql.InputType(
         gql.Argument(name='measures', type=gql.ArrayType(gql.Ref('WorksheetMeasureInput'))),
     ],
 )
+
+
+WorksheetQueryResultDownloadUrlInput = gql.InputType(
+    name='WorksheetQueryResultDownloadUrlInput',
+    arguments=[
+        gql.Argument(name='athenaQueryId', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='fileFormat', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='worksheetUri', type=gql.NonNullableType(gql.String)),
+    ],
+)

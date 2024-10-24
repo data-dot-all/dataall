@@ -53,3 +53,17 @@ class WorksheetRepository(EnvironmentResource):
             page=data.get('page', WorksheetRepository._DEFAULT_PAGE),
             page_size=data.get('pageSize', WorksheetRepository._DEFAULT_PAGE_SIZE),
         ).to_dict()
+
+    @staticmethod
+    def find_query_result_by_format(
+        session, worksheet_uri: str, athena_query_id: str, file_format: str
+    ) -> WorksheetQueryResult:
+        return (
+            session.query(WorksheetQueryResult)
+            .filter(
+                WorksheetQueryResult.worksheetUri == worksheet_uri,
+                WorksheetQueryResult.AthenaQueryId == athena_query_id,
+                WorksheetQueryResult.fileFormat == file_format,
+            )
+            .first()
+        )
