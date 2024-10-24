@@ -122,30 +122,3 @@ class S3ShareValidator(SharesValidatorInterface):
                 action=principal_type,
                 message=f'The principal role {principal_role_name} is not found.',
             )
-
-        log.info('Verifying data.all managed share IAM policy is attached to IAM role...')
-        share_policy_manager = PolicyManager(
-            role_name=principal_role_name,
-            environmentUri=environment.environmentUri,
-            account=environment.AwsAccountId,
-            region=environment.region,
-            resource_prefix=environment.resourcePrefix,
-        )
-        for Policy in [
-            Policy for Policy in share_policy_manager.initializedPolicies if Policy.policy_type == 'SharePolicy'
-        ]:
-            # Backwards compatibility
-            # we check if a managed share policy exists. If False, the role was introduced to data.all before this update
-            # We create the policy from the inline statements
-            # In this case it could also happen that the role is the Admin of the environment
-            if not Policy.check_if_policy_exists():
-                Policy.create_managed_policy_from_inline_and_delete_inline()
-            # End of backwards compatibility
-
-            attached = Policy.check_if_policy_attached()
-            if not attached and not managed and not attachMissingPolicies:
-                raise Exception(
-                    f'Required customer managed policy {Policy.generate_policy_name()} is not attached to role {principal_role_name}'
-                )
-            elif not attached:
-                Policy.attach_policy()

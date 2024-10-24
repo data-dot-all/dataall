@@ -3,6 +3,7 @@ from aws_cdk import aws_iam as iam
 
 from dataall.base import db
 from dataall.base.aws.sts import SessionHelper
+from dataall.base.utils.iam_cdk_utils import convert_from_json_to_iam_policy_statement
 from dataall.base.utils.iam_policy_utils import split_policy_with_resources_in_statements
 from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
 from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
@@ -81,18 +82,18 @@ class RedshiftDatasetsPivotRole(PivotRoleStatementSet):
                 workgroup_arns = [
                     rs_client.get_workgroup_arn(workgroup_name=conn.workgroup) for conn in connections if conn.workgroup
                 ]
-                additional_statements.extend(
-                    split_policy_with_resources_in_statements(
-                        base_sid='RedshiftData',
-                        effect=iam.Effect.ALLOW,
-                        actions=[
-                            'redshift-data:ListSchemas',
-                            'redshift-data:ListTables',
-                            'redshift-data:ExecuteStatement',
-                            'redshift-data:DescribeTable',
-                        ],
-                        resources=cluster_arns + workgroup_arns,
-                    )
+                redshift_data_statement_json = split_policy_with_resources_in_statements(
+                    base_sid='RedshiftData',
+                    effect=iam.Effect.ALLOW.value,
+                    actions=[
+                        'redshift-data:ListSchemas',
+                        'redshift-data:ListTables',
+                        'redshift-data:ExecuteStatement',
+                        'redshift-data:DescribeTable',
+                    ],
+                    resources=cluster_arns + workgroup_arns,
                 )
+                redshift_data_statement = convert_from_json_to_iam_policy_statement(redshift_data_statement_json)
+                additional_statements.extend(redshift_data_statement)
 
             return base_statements + additional_statements
