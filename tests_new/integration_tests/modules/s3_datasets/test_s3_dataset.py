@@ -17,7 +17,7 @@ from integration_tests.modules.s3_datasets.queries import (
     start_glue_crawler,
     update_dataset,
     list_s3_datasets_owned_by_env_group,
-    list_object_keys,
+    list_s3_object_keys,
 )
 from integration_tests.core.stack.queries import update_stack
 from integration_tests.core.stack.utils import check_stack_ready
@@ -287,12 +287,12 @@ def test_persistent_import_kms_s3_dataset_update(client1, persistent_imported_km
     assert_that(stack.status).is_in('CREATE_COMPLETE', 'UPDATE_COMPLETE')
 
 
-def test_list_object_keys(client1, persistent_s3_dataset1):
-    response = list_object_keys(client1, persistent_s3_dataset1.datasetUri)
-    assert_that(response).is_empty()
+def test_list_s3_object_keys(client1, persistent_s3_dataset1):
+    response = list_s3_object_keys(client1, persistent_s3_dataset1.datasetUri)
+    assert_that(response).contains('sessionFolderA/txt_sample.txt')
 
 
-def test_list_object_keys_unauthorized(client2, persistent_s3_dataset1):
-    assert_that(list_object_keys).raises(GqlError).when_called_with(
+def test_list_s3_object_keys_unauthorized(client2, persistent_s3_dataset1):
+    assert_that(list_s3_object_keys).raises(GqlError).when_called_with(
         client2, persistent_s3_dataset1.datasetUri
     ).contains('UnauthorizedOperation', 'GET_DATASET', persistent_s3_dataset1.datasetUri)

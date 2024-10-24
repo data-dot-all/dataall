@@ -751,15 +751,15 @@ def get_table_profiling_run(client, tableUri):
     return response.data.getDatasetTableProfilingRun
 
 
-def list_object_keys(client, datasetUri):
+def list_s3_object_keys(client, datasetUri):
     query = {
-        'operationName': 'listObjectKeys',
+        'operationName': 'listS3ObjectKeys',
         'variables': {'datasetUri': datasetUri},
         'query': """
-            query listObjectKeys($datasetUri: String!) {
-              listObjectKeys(datasetUri: $datasetUri)
+            query listS3ObjectKeys($datasetUri: String!) {
+              listS3ObjectKeys(datasetUri: $datasetUri)
             }
                 """,
     }
     response = client.query(query=query)
-    return response.data.listObjectKeys
+    return response.data.listS3ObjectKeys

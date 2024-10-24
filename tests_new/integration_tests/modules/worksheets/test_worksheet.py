@@ -112,15 +112,21 @@ def test_text_to_sql_unauthorized(client2, worksheet1, persistent_env1):
     ).contains('UnauthorizedOperation', 'RUN_ATHENA_QUERY')
 
 
-# # todo: Skipping this Test as requires dependency of txt of pdf file in dataset already since key must exist
-# @pytest.mark.skipif(
-#     not config.get_property('modules.worksheets.features.nlq.active'), reason='Feature Disabled by Config'
-# )
-# def test_analyze_text_doc(client1, worksheet1, persistent_env1, persistent_s3_dataset1):
-#     prompt = "Give me a summary of this text document"
-#     response = analyze_text_document(client=client1, prompt=prompt, environment_uri=persistent_env1.environmentUri, worksheet_uri=worksheet1.worksheetUri, dataset_uri=persistent_s3_dataset1.datasetUri, key="")
-#     # Results are nondeterministic - just asserting the response is not None
-#     assert_that(response).is_not_none()
+@pytest.mark.skipif(
+    not config.get_property('modules.worksheets.features.nlq.active'), reason='Feature Disabled by Config'
+)
+def test_analyze_text_doc(client1, worksheet1, persistent_env1, persistent_s3_dataset1):
+    prompt = 'Give me the first character of the first line of this text document'
+    response = analyze_text_document(
+        client=client1,
+        prompt=prompt,
+        environment_uri=persistent_env1.environmentUri,
+        worksheet_uri=worksheet1.worksheetUri,
+        dataset_uri=persistent_s3_dataset1.datasetUri,
+        key='sessionFolderA/txt_sample.txt',
+    )
+    # Results are nondeterministic - just asserting the response is not None
+    assert_that(response).is_not_none()
 
 
 @pytest.mark.skipif(

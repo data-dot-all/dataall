@@ -9,7 +9,7 @@ import { LoadingButton } from '@mui/lab';
 import React, { useCallback, useState } from 'react';
 import { Scrollbar } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { listObjectKeys, useClient } from 'services';
+import { listS3ObjectKeys, useClient } from 'services';
 import { analyzeTextDocument } from '../services';
 import PropTypes from 'prop-types';
 
@@ -44,12 +44,12 @@ export const WorksheetDocAnalyzer = ({
     async (environment, dataset) => {
       setLoadingKeys(true);
       const response = await client.query(
-        listObjectKeys({
+        listS3ObjectKeys({
           datasetUri: dataset.value
         })
       );
       if (!response.errors) {
-        setKeyOptions(response.data.listObjectKeys);
+        setKeyOptions(response.data.listS3ObjectKeys);
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }

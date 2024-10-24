@@ -560,7 +560,7 @@ class DatasetService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(GET_DATASET)
-    def list_object_keys(uri):
+    def list_s3_object_keys(uri):
         with get_context().db_engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
 
