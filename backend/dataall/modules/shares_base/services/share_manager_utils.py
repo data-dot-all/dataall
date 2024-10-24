@@ -1,4 +1,5 @@
 import logging
+from typing import Callable, Type
 
 logger = logging.getLogger(__name__)
 
@@ -29,3 +30,10 @@ class ShareErrorFormatter:
         requestor = ShareErrorFormatter._stringify(requestor)
         permissions = ShareErrorFormatter._stringify(permissions)
         return f'Requestor {requestor} has not allowed {permission_type} permissions: {permissions} for {resource_type} Target: {target_resource}'
+
+
+def execute_and_suppress_exception(func: Callable, exc: Type[Exception] = Exception, *args, **kwargs):
+    try:
+        func(*args, **kwargs)
+    except exc:
+        logger.exception()
