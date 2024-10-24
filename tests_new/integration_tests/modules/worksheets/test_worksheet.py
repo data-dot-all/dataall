@@ -141,7 +141,7 @@ def test_analyze_text_doc_invalid_object(client1, worksheet1, persistent_env1, p
         worksheet1.worksheetUri,
         persistent_s3_dataset1.datasetUri,
         'some_file.js',
-    ).contains('S3 Object Key', 'Invalid Input')
+    ).contains('S3 Object Key', 'some_file.js', 'InvalidInput')
 
 
 @pytest.mark.skipif(

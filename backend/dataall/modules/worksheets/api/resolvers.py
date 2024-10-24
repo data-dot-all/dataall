@@ -57,8 +57,7 @@ def run_sql_query(context: Context, source, environmentUri: str, worksheetUri: s
 
 
 def delete_worksheet(context, source, worksheetUri: str):
-    with context.engine.scoped_session() as session:
-        return WorksheetService.delete_worksheet(session=session, uri=worksheetUri)
+    return WorksheetService.delete_worksheet(uri=worksheetUri)
 
 
 @is_feature_enabled('modules.worksheets.features.nlq.active')
