@@ -6,9 +6,11 @@ from dataall.core.environment.db.environment_repositories import EnvironmentRepo
 from dataall.core.permissions.db.resource_policy.resource_policy_repositories import ResourcePolicyRepository
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.metadata_forms.db.enums import (
     MetadataFormVisibility,
     MetadataFormFieldType,
+    MetadataFormEntityTypes,
 )
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
@@ -21,6 +23,7 @@ from dataall.modules.metadata_forms.services.metadata_form_permissions import (
     CREATE_METADATA_FORM,
     ALL_METADATA_FORMS_ENTITY_PERMISSIONS,
 )
+from dataall.modules.notifications.db.notification_repositories import NotificationRepository
 
 
 class MetadataFormParamValidationService:
@@ -129,7 +132,7 @@ class MetadataFormService:
         with get_context().db_engine.scoped_session() as session:
             mf = MetadataFormRepository.get_metadata_form(session, uri)
             if mf:
-                mf.versions = MetadataFormRepository.get_metadata_form_versions(session, uri)
+                mf.versions = MetadataFormRepository.get_metadata_form_versions_numbers(session, uri)
             return mf
 
     # toDo: deletion logic
@@ -295,12 +298,25 @@ class MetadataFormService:
     @MetadataFormAccessService.can_perform(UPDATE_METADATA_FORM_FIELD)
     def create_metadata_form_version(uri, copyVersion):
         with get_context().db_engine.scoped_session() as session:
+            mf = MetadataFormService.get_metadata_form_by_uri(uri)
             new_version = MetadataFormRepository.create_metadata_form_version_next(session, uri)
             if copyVersion:
                 mf_fields = MetadataFormRepository.get_metadata_form_fields(session, uri, copyVersion)
                 for field in mf_fields:
                     new_field = MetadataFormRepository.create_metadata_form_field(
                         session, uri, field.__dict__, new_version.version
+                    )
+
+            all_attached = MetadataFormRepository.get_all_attached_metadata_forms(session, uri)
+            for attached in all_attached:
+                owner = MetadataFormService.get_entity_owner(attached)
+                if owner:
+                    NotificationRepository.create_notification(
+                        session,
+                        recipient=owner,
+                        target_uri=f'{attached.entityUri}|{attached.entityType}',
+                        message=f'New version {new_version.version} is available for metadata form "{mf.name}" for {attached.entityType} {attached.entityUri}',
+                        notification_type='METADATA_FORM_UPDATE',
                     )
         return new_version.version
 
@@ -309,7 +325,7 @@ class MetadataFormService:
     @MetadataFormAccessService.can_perform(UPDATE_METADATA_FORM_FIELD)
     def delete_metadata_form_version(uri, version):
         with get_context().db_engine.scoped_session() as session:
-            all_versions = MetadataFormRepository.get_metadata_form_versions(session, uri)
+            all_versions = MetadataFormRepository.get_metadata_form_versions_numbers(session, uri)
             if len(all_versions) == 1:
                 raise UnauthorizedOperation(
                     action='Delete version', message='Cannot delete the only version of the form'
@@ -317,3 +333,46 @@ class MetadataFormService:
             mf = MetadataFormRepository.get_metadata_form_version(session, uri, version)
             session.delete(mf)
             return MetadataFormRepository.get_metadata_form_version_number_latest(session, uri)
+
+    @staticmethod
+    def list_metadata_form_versions(uri):
+        with get_context().db_engine.scoped_session() as session:
+            all_versions = MetadataFormRepository.get_metadata_form_versions(session, uri)
+            for v in all_versions:
+                v.attached_forms = len(MetadataFormRepository.get_all_attached_metadata_forms(session, uri, v.version))
+            return all_versions
+
+    @staticmethod
+    def resolve_attached_entity(attached_metadata_form):
+        with get_context().db_engine.scoped_session() as session:
+            if attached_metadata_form.entityType == MetadataFormEntityTypes.Organizations.value:
+                return OrganizationRepository.get_organization_by_uri(session, attached_metadata_form.entityUri)
+            elif attached_metadata_form.entityType == MetadataFormEntityTypes.Environments.value:
+                return EnvironmentRepository.get_environment_by_uri(session, attached_metadata_form.entityUri)
+            elif attached_metadata_form.entityType in [
+                MetadataFormEntityTypes.S3Datasets.value,
+                MetadataFormEntityTypes.RDDatasets.value,
+            ]:
+                return DatasetBaseRepository.get_dataset_by_uri(session, attached_metadata_form.entityUri)
+            else:
+                return None
+
+    @staticmethod
+    def get_entity_name(attached_metadata_form):
+        entity = MetadataFormService.resolve_attached_entity(attached_metadata_form)
+        return entity.name if entity else 'Not Found'
+
+    @staticmethod
+    def get_entity_owner(attached_metadata_form):
+        entity = MetadataFormService.resolve_attached_entity(attached_metadata_form)
+        if entity:
+            if attached_metadata_form.entityType == MetadataFormEntityTypes.Organizations.value:
+                return entity.SamlGroupName
+            elif attached_metadata_form.entityType == MetadataFormEntityTypes.Environments.value:
+                return entity.SamlGroupName
+            elif attached_metadata_form.entityType in [
+                MetadataFormEntityTypes.S3Datasets.value,
+                MetadataFormEntityTypes.RDDatasets.value,
+            ]:
+                return entity.SamlAdminGroupName
+        return None

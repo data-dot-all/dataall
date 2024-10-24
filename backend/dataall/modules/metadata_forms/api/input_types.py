@@ -71,6 +71,7 @@ NewAttachedMetadataFormInput = gql.InputType(
     arguments=[
         gql.Field(name='entityType', type=gql.NonNullableType(gql.String)),
         gql.Field(name='entityUri', type=gql.NonNullableType(gql.String)),
+        gql.Field(name='attachedUri', type=gql.String),
         gql.Field(name='fields', type=gql.ArrayType(gql.Ref('NewAttachedMetadataFormFieldInput'))),
     ],
 )

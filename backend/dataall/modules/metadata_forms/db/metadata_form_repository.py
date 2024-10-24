@@ -288,19 +288,32 @@ class MetadataFormRepository:
         # The c confuses a lot of people, SQLAlchemy uses this unfortunately odd name
         # as a container for columns in table objects.
         query = session.query(AttachedMetadataForm).join(all_mfs, AttachedMetadataForm.metadataFormUri == all_mfs.c.uri)
-        if filter and filter.get('entityType'):
-            query = query.filter(AttachedMetadataForm.entityType == filter.get('entityType'))
-        if filter and filter.get('entityUri'):
-            query = query.filter(AttachedMetadataForm.entityUri == filter.get('entityUri'))
-        if filter and filter.get('metadataFormUri'):
-            query = query.filter(AttachedMetadataForm.metadataFormUri == filter.get('metadataFormUri'))
-        return query
+        if filter:
+            if filter.get('entityType'):
+                query = query.filter(AttachedMetadataForm.entityType == filter.get('entityType'))
+            if filter.get('entityUri'):
+                query = query.filter(AttachedMetadataForm.entityUri == filter.get('entityUri'))
+            if filter.get('metadataFormUri'):
+                query = query.filter(AttachedMetadataForm.metadataFormUri == filter.get('metadataFormUri'))
+            if filter.get('version'):
+                query = query.filter(AttachedMetadataForm.version == filter.get('version'))
+        return query.order_by(all_mfs.c.name)
 
     @staticmethod
     def query_all_attached_metadata_forms_for_entity(session, entityUri, entityType):
         return session.query(AttachedMetadataForm).filter(
             and_(AttachedMetadataForm.entityType == entityType, AttachedMetadataForm.entityUri == entityUri)
         )
+
+    @staticmethod
+    def get_metadata_form_versions_numbers(session, uri):
+        versions = (
+            session.query(MetadataFormVersion)
+            .filter(MetadataFormVersion.metadataFormUri == uri)
+            .order_by(MetadataFormVersion.version.desc())
+            .all()
+        )
+        return [v.version for v in versions]
 
     @staticmethod
     def get_metadata_form_versions(session, uri):
@@ -310,4 +323,11 @@ class MetadataFormRepository:
             .order_by(MetadataFormVersion.version.desc())
             .all()
         )
-        return [v.version for v in versions]
+        return versions
+
+    @staticmethod
+    def get_all_attached_metadata_forms(session, mf_uri, version=None):
+        all_attached = session.query(AttachedMetadataForm).filter(AttachedMetadataForm.metadataFormUri == mf_uri)
+        if version:
+            all_attached = all_attached.filter(AttachedMetadataForm.version == version)
+        return all_attached.all()
