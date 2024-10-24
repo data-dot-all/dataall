@@ -109,7 +109,7 @@ export const NotificationsPopover = () => {
         'environment',
         'organization',
         's3-dataset',
-        'rd-dataset',
+        'redshift-dataset',
         'share',
         'dashboard',
         'worksheet',
@@ -124,6 +124,7 @@ export const NotificationsPopover = () => {
     if (notification.type.includes('SHARE')) {
       return `/console/shares/${notification.target_uri.split('|')[0]}`;
     }
+    return '/';
   };
 
   return (
