@@ -35,7 +35,10 @@ createShareObject = gql.MutationField(
 
 deleteShareObject = gql.MutationField(
     name='deleteShareObject',
-    args=[gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String))],
+    args=[
+        gql.Argument(name='shareUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='forceDelete', type=gql.Boolean),
+    ],
     resolver=delete_share_object,
     type=gql.Boolean,
 )
