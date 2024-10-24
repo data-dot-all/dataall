@@ -524,8 +524,10 @@ the different configuration options.
         "worksheets": {
             "active": true,
             "features": {
-                "nlq":false,
-                "nlq_daily_invocations": 10
+                "nlq": { 
+                    "active": true, 
+                    "max_count_per_day": 25 
+                }
             }
         },
         "dashboards": {
@@ -604,7 +606,7 @@ In the example config.json, the feature that enables file upload from data.all U
 | auto_approval_for_confidentiality_level | s3_datasets | Specify if auto-approval for share requests should be enabled for each confidentiality level in data.all                                                                                                                                                                                                                                        |
 | show_stack_logs                         | s3_datasets | Enable / Disable showing stack logs to users or only allow admins to view stack logs. When "Enabled", users who have access to stack can view the logs. With "admin-only", only Data.all admins can view the stack logs and when "Disabled", no user can see the stack logs. Please check out the config.json in step 7 for more details        |
 | show_share_logs                             | shares_base | Enable / Disable showing share logs to users or only allow admins to view share logs. When "Enabled", users who have access to those shares can view the logs. With "admin-only", only Data.all admins can view the share logs and when "Disabled", no user can see the share logs. Please check out the config.json in step 7 for more details |
-| nlq | worksheets | Disable / Enable natural language querying powered by genAI in worksheets (experimental feature - default: False) | 
+| nlq.active | worksheets | Disable / Enable natural language querying powered by genAI in worksheets (experimental feature - default: False) | 
 
 
 ### Customizing Module Features
@@ -628,7 +630,7 @@ In addition to disabling / enabling, some module features allow for additional c
 | **Customization**                  | **Module** | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |   
 |--------------------------------|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | custom_confidentiality_mapping | s3_datasets          | Provides custom confidentiality mapping json which maps your custom confidentiality levels to existing data.all confidentiality <br/> For e.g. ```custom_confidentiality_mapping : { "Public" : "Unclassified", "Private" : "Official", "Confidential" : "Secret", "Very Highly Confidential" : "Secret"}```<br/> This will display confidentiality levels - Public, Private, Confidential & Very Highly Confidential - in the confidentiality drop down and maps it existing confidentiality levels in data.all - Unclassified, Official and Secret |
-| nlq_daily_invocations | worksheets | Set a limit of number of invocations allowed per user per day for the genAI NLQ worksheets feature (default: 10) | 
+| nlq.max_count_per_day | worksheets | Set a limit of number of invocations allowed per user per day for the genAI NLQ worksheets feature (default: 10) | 
 
 
 ### Disable and customize core features
