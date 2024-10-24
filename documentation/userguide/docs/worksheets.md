@@ -68,9 +68,9 @@ More details on how to use each of these features are below.
 
 ### Natural Language Querying (NLQ) of Structured Data
 
-data.all offers a NLQ feature to significantly reduce the barrier for non-technical business users who need to quickly and easily query data to make informed decisions.
+data.all offers a NLQ feature to significantly reduce the barrier to entry for non-technical business users who need to quickly and easily query data to make informed decisions.
 
-Given a prompt and a selection of tables, data.all NLQ will generate the corresponding SQL statement that data.all users can execute against the data they have access to in data.all's Worksheets module.
+Given a prompt and a selection of tables, data.all NLQ feature will generate the corresponding SQL statement that data.all users can execute against the data they have access to in data.all's Worksheets module.
 
 To start generating SQL, data.all users can select the TextToSQL Tab in the Worksheets View:
 
@@ -89,7 +89,7 @@ data.all Admins can additionally limit the number of invocations run against the
 
 For unstructured text documents, data.all offers a feature to start analyzing your data using natural language.
 
-The Document Analyzer feature will take a user prompt and select S3 Object Key and generate a response displayed in the data.all Worksheet Editor. 
+Given a prompt and a selected text docuemnt in a S3 Dataset, data.all's Document Analyzer feature will generate a response displayed in the data.all Worksheet Editor. 
 
 !!! warning "Limitations of Document Analysis"
     Currently data.all's Worksheet Document Analyzer is limited only to `.txt` and `.pdf` file extensions. Additionally, the feature is limited only to 
@@ -99,8 +99,6 @@ The Document Analyzer feature will take a user prompt and select S3 Object Key a
 To start analyzing your text documents, data.all users can select the Document Analyzer Tab in the Worksheets View:
 
 ![worksheets_unstructured](pictures/worksheets/ws_analyze_txt_doc.png#zoom#shadow)
-
-
 
 Users select the Worksheet environment, S3 dataset bucket and S3 object key (.txt or .pdf file) where the data of interest is stored. Then they introduce a prompt describing the information they want from the text document. For example, they could type something like "Give me the most prevalent 3 themes across this document". Once they send the request, data.all will invoke Claude 3.5 Sonnet model using Amazon Bedrock to generate a response.
 
