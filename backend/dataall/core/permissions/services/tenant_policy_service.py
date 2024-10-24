@@ -353,6 +353,7 @@ class TenantPolicyService:
             TenantPolicyService.save_tenant(session, name=TenantPolicyService.TENANT_NAME, description='Tenant dataall')
             PermissionService.init_permissions(session)
 
+    @staticmethod
     def has_tenant_permission(permission: str):
         """
         Decorator to check if a user has a permission to do some action.

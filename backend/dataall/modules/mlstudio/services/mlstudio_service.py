@@ -177,6 +177,7 @@ class SagemakerStudioService:
         return sagemaker_studio_user
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SGMSTUDIO_USERS)
     def update_sagemaker_studio_domain(environment, domain, data):
         SagemakerStudioService._update_sagemaker_studio_domain_vpc(environment.AwsAccountId, environment.region, data)
         domain.vpcType = data.get('vpcType')
@@ -205,6 +206,7 @@ class SagemakerStudioService:
                 data['vpcType'] = 'created'
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SGMSTUDIO_USERS)
     def create_sagemaker_studio_domain(session, environment, data: dict = {}):
         SagemakerStudioService._update_sagemaker_studio_domain_vpc(environment.AwsAccountId, environment.region, data)
 
@@ -246,6 +248,7 @@ class SagemakerStudioService:
             return status
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SGMSTUDIO_USERS)
     @ResourcePolicyService.has_resource_permission(SGMSTUDIO_USER_URL)
     def get_sagemaker_studio_user_presigned_url(*, uri: str):
         with _session() as session:
@@ -259,6 +262,7 @@ class SagemakerStudioService:
             return sagemaker_studio_client(user).get_sagemaker_studio_user_applications()
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SGMSTUDIO_USERS)
     @ResourcePolicyService.has_resource_permission(DELETE_SGMSTUDIO_USER)
     def delete_sagemaker_studio_user(*, uri: str, delete_from_aws: bool):
         """Deletes SageMaker Studio user from the database and if delete_from_aws is True from AWS as well"""

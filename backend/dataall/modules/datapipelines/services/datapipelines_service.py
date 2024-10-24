@@ -180,7 +180,6 @@ class DataPipelineService:
             )
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_PIPELINES)
     @ResourcePolicyService.has_resource_permission(GET_PIPELINE)
     def get_pipeline(
         uri: str,
@@ -202,6 +201,7 @@ class DataPipelineService:
             return f'codecommit::{env.region}://{pipeline.repo}'
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_PIPELINES)
     @ResourcePolicyService.has_resource_permission(DELETE_PIPELINE)
     def delete_pipeline(uri: str, deleteFromAWS: bool):
         with _session() as session:
@@ -254,12 +254,14 @@ class DataPipelineService:
         return True
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_PIPELINES)
     def delete_pipeline_environment(envPipelineUri: str):
         with _session() as session:
             DatapipelinesRepository.delete_pipeline_environment(session=session, envPipelineUri=envPipelineUri)
             return True
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_PIPELINES)
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_PIPELINE)
     def get_credentials(uri):
         with _session() as session:
