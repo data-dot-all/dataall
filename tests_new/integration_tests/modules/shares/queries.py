@@ -8,11 +8,11 @@ def create_share_object(
     environmentUri,
     groupUri,
     principalId,
-    principalRoleName,
     principalType,
     requestPurpose,
     attachMissingPolicies,
     permissions,
+    principalRoleName=None,
 ):
     query = {
         'operationName': 'createShareObject',
