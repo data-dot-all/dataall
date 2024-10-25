@@ -7,10 +7,10 @@ import boto3
 from botocore.exceptions import ClientError
 
 root = logging.getLogger()
-root.setLevel(logging.INFO)
 if not root.hasHandlers():
     root.addHandler(logging.StreamHandler(sys.stdout))
 log = logging.getLogger(__name__)
+log.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
 ENVNAME = os.getenv('envname', 'local')
 region = os.getenv('AWS_REGION', 'eu-west-1')
