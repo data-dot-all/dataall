@@ -36,4 +36,4 @@ def execute_and_suppress_exception(func: Callable, exc: Type[Exception] = Except
     try:
         func(*args, **kwargs)
     except exc:
-        logger.exception()
+        logger.exception('')
