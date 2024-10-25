@@ -31,8 +31,11 @@ export const listDatasets = ({ filter }) => ({
           AwsAccountId
           environment {
             label
-            AwsAccountId
             region
+            organization {
+              organizationUri
+              label
+            }
           }
           stack {
             status
