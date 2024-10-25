@@ -27,7 +27,7 @@ export const TableOverview = (props) => {
         <ObjectMetadata
           environment={table.dataset.environment}
           region={table.dataset.region}
-          organization={table.dataset.organization}
+          organization={table.dataset.environment.organization}
           owner={table.dataset.owner}
           admins={table.dataset.SamlAdminGroupName || '-'}
           created={table.created}

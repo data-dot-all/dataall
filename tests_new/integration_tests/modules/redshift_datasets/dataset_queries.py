@@ -24,10 +24,6 @@ def get_redshift_dataset(client, dataset_uri):
                 topics
                 confidentiality
                 autoApprovalEnabled
-                organization {
-                  organizationUri
-                  label
-                }
                 terms {
                   count
                   nodes {

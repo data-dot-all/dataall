@@ -15,17 +15,14 @@ export const getDatasetTable = (tableUri) => ({
           SamlAdminGroupName
           owner
           confidentiality
-          organization {
-            label
-          }
           environment {
+            environmentUri
             label
             region
-            subscriptionsEnabled
-            subscriptionsProducersTopicImported
-            subscriptionsConsumersTopicImported
-            subscriptionsConsumersTopicName
-            subscriptionsProducersTopicName
+            organization {
+              organizationUri
+              label
+            }
           }
         }
         datasetUri
