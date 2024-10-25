@@ -119,10 +119,6 @@ def dataset(client, patch_es, patch_dataset_methods):
                     language
                     confidentiality
                     autoApprovalEnabled
-                    organization{
-                        organizationUri
-                        label
-                    }
                     terms{
                         count
                         nodes{
