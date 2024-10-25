@@ -27,6 +27,7 @@ from tests_new.integration_tests.modules.shares.s3_datasets_shares.shared_test_f
 )
 from tests_new.integration_tests.modules.shares.utils import (
     check_share_ready,
+    check_share_items_reapplied,
 )
 
 
@@ -195,9 +196,18 @@ def test_unhealthy_items(
     db_name = f'dataall_{share.dataset.datasetName}_{share.dataset.datasetUri}_shared'.replace('-', '_')
     lf_client.revoke_db_perms(principal_role.arn, db_name, ['DESCRIBE'])
     # verify all items are `Unhealthy`
-    check_verify_share_items(client5, share.shareUri, expected_health_status=['Unhealthy'])
+    check_verify_share_items(
+        client5,
+        share.shareUri,
+        expected_health_status=['Unhealthy'],
+        expected_health_msg=[
+            'IAM Policy attached Target Resource does not exist',
+            'missing LF permissions: DESCRIBE',
+        ],
+    )
 
 
+@pytest.mark.dependency(depends=['share_approved'])
 def test_reapply_unauthoried(client5, share_params_main):
     share, _ = share_params_main
     share_uri = share.shareUri
@@ -208,6 +218,7 @@ def test_reapply_unauthoried(client5, share_params_main):
     )
 
 
+@pytest.mark.dependency(depends=['share_approved'])
 def test_reapply(client1, share_params_main):
     share, _ = share_params_main
     share_uri = share.shareUri
@@ -216,6 +227,7 @@ def test_reapply(client1, share_params_main):
     reapply_items_share_object(client1, share_uri, item_uris)
     share_object = get_share_object(client1, share_uri)
     assert_that(share_object['items'].nodes).extracting('healthStatus').contains_only('PendingReApply')
+    check_share_items_reapplied(client1, share_uri)
     check_verify_share_items(client1, share_uri)
 
 
