@@ -9,9 +9,9 @@ def create_share_object(
     groupUri,
     principalId,
     principalType,
-    requestPurpose,
-    attachMissingPolicies,
     permissions,
+    requestPurpose=None,
+    attachMissingPolicies=None,
     principalRoleName=None,
 ):
     query = {
