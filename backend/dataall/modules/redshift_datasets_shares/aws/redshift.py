@@ -19,7 +19,9 @@ class RedshiftShareClient:
         """
         try:
             log.info(f'Authorizing datashare {datashare_arn=} to consumer {account}...')
-            self.client.authorize_data_share(DataShareArn=datashare_arn, ConsumerIdentifier=account, AllowWrites=False)
+            self.client.authorize_data_share(
+                DataShareArn=datashare_arn, ConsumerIdentifier=account
+            )  # AllowWrites in preview
         except ClientError as e:
             log.error(e)
             raise e
