@@ -383,9 +383,9 @@ class SharingService:
                     if shareable_items:
                         processor.Processor(session, share_data, shareable_items).cleanup_shares()
                     else:
-                        log.info(f'There are no items to verify of type {type.value}')
+                        log.info(f'There are no items to clean-up of type {type.value}')
                 except Exception as e:
-                    log.error(f'Error occurred during share verifying of {type.value}: {e}')
+                    log.error(f'Error occurred during clean-up of {type.value}: {e}')
 
         return True
 
