@@ -23,10 +23,10 @@ from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.services.share_notification_service import DataSharingNotificationType
 
 root = logging.getLogger()
-root.setLevel(logging.INFO)
 if not root.hasHandlers():
     root.addHandler(logging.StreamHandler(sys.stdout))
 log = logging.getLogger(__name__)
+log.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
 # TODO: review this task usage and remove if not needed
 

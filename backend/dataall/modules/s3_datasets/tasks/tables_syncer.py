@@ -17,10 +17,10 @@ from dataall.modules.s3_datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.s3_datasets.services.dataset_alarm_service import DatasetAlarmService
 
 root = logging.getLogger()
-root.setLevel(logging.INFO)
 if not root.hasHandlers():
     root.addHandler(logging.StreamHandler(sys.stdout))
 log = logging.getLogger(__name__)
+log.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
 
 def sync_tables(engine):
