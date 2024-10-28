@@ -234,6 +234,7 @@ def test_create_redshift_share_invalid_target_connection(
     client5, group5, session_cross_acc_env_1, session_connection_cluster_data_user, session_redshift_dataset_serverless
 ):
     # DATA_USER connections cannot be used as target connection for a share. Even if used by the connection owners.
+    # it checks that there are no CREATE_SHARE_REQUEST_WITH_CONNECTION on the connection
     assert_that(create_share_object).raises(GqlError).when_called_with(
         client=client5,
         dataset_or_item_params={'datasetUri': session_redshift_dataset_serverless.datasetUri},
@@ -249,27 +250,6 @@ def test_create_redshift_share_invalid_target_connection(
         'UnauthorizedOperation',
         'CREATE_SHARE_REQUEST_WITH_CONNECTION',
         session_connection_cluster_data_user.connectionUri,
-    )
-
-
-def test_create_redshift_share_unauthorized_target_connection(
-    client5, group5, session_env1, session_connection_serverless_admin, session_redshift_dataset_cluster
-):
-    assert_that(create_share_object).raises(GqlError).when_called_with(
-        client=client5,
-        dataset_or_item_params={'datasetUri': session_redshift_dataset_cluster.datasetUri},
-        environmentUri=session_env1.environmentUri,
-        groupUri=group5,
-        principalRoleName=REDSHIFT_TEST_ROLE_NAME,
-        principalId=session_connection_serverless_admin.connectionUri,
-        principalType=REDSHIFT_PRINCIPAL_TYPE,
-        requestPurpose='Integration tests - Redshift shares',
-        attachMissingPolicies=False,
-        permissions=['Read'],
-    ).contains(
-        'UnauthorizedOperation',
-        'CREATE_SHARE_REQUEST_WITH_CONNECTION',
-        session_connection_serverless_admin.connectionUri,
     )
 
 
