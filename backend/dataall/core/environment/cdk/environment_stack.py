@@ -176,6 +176,7 @@ class EnvironmentSetup(Stack):
             versioned=True,
             enforce_ssl=True,
         )
+        default_environment_bucket.policy.apply_removal_policy(RemovalPolicy.RETAIN)
         self.default_environment_bucket = default_environment_bucket
 
         default_environment_bucket.add_to_resource_policy(
