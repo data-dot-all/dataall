@@ -16,6 +16,7 @@ import { useGroups } from 'services';
 import { CogIcon } from '../../icons';
 import { TextAvatar } from '../TextAvatar';
 import { useAuth } from 'authentication';
+import { isTenantUser } from 'utils';
 
 export const AccountPopover = () => {
   const anchorRef = useRef(null);
@@ -84,7 +85,7 @@ export const AccountPopover = () => {
         </Box>
         <Divider />
         <Box sx={{ mt: 2 }}>
-          {groups && groups.indexOf('DAAdministrators') !== -1 && (
+          {isTenantUser(groups) && (
             <MenuItem component={RouterLink} to="/console/administration">
               <ListItemIcon>
                 <CogIcon fontSize="small" />
