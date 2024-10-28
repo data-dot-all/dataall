@@ -1,6 +1,6 @@
 import logging
 
-from dataall.backend.dataall.modules.notifications.services.notification_service import NotificationService
+from dataall.modules.notifications.services.notification_service import NotificationService
 from dataall.base.api.context import Context
 from dataall.base.db import exceptions
 
