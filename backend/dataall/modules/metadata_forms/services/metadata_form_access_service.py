@@ -68,7 +68,7 @@ class MetadataFormAccessService:
         elif entityType == MetadataFormEntityTypes.Environments.value:
             with get_context().db_engine.scoped_session() as session:
                 return [EnvironmentRepository.get_environment_by_uri(session, entityUri).organizationUri]
-        elif entityType == MetadataFormEntityTypes.Datasets.value:
+        elif entityType in [MetadataFormEntityTypes.S3Datasets.value, MetadataFormEntityTypes.RDDatasets.value]:
             with get_context().db_engine.scoped_session() as session:
                 return [DatasetBaseRepository.get_dataset_by_uri(session, entityUri).organizationUri]
         else:
@@ -83,7 +83,7 @@ class MetadataFormAccessService:
             return None
         elif entityType == MetadataFormEntityTypes.Environments.value:
             return [entityUri]
-        elif entityType == MetadataFormEntityTypes.Datasets.value:
+        elif entityType in [MetadataFormEntityTypes.S3Datasets.value, MetadataFormEntityTypes.RDDatasets.value]:
             with get_context().db_engine.scoped_session() as session:
                 return [DatasetBaseRepository.get_dataset_by_uri(session, entityUri).environmentUri]
         else:

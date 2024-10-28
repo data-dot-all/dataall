@@ -24,21 +24,26 @@ import { LoadingButton } from '@mui/lab';
 import SendIcon from '@mui/icons-material/Send';
 import { createAttachedMetadataForm, getMetadataForm } from '../services';
 import { SET_ERROR } from '../../../globalErrors';
+import CircularProgress from '@mui/material/CircularProgress';
 
 export const RenderedMetadataForm = (props) => {
   const client = useClient();
   const dispatch = useDispatch();
   const {
     fields,
+    values,
     onSubmit,
     onCancel,
     entityUri,
     entityType,
     metadataForm,
-    preview
+    preview,
+    editMode,
+    attachedUri
   } = props;
 
   const [localFields, setLocalFields] = useState([...fields]);
+  const [loading, setLoading] = useState(true);
   const [currentVersion, setCurrentVersion] = useState(
     metadataForm.versions ? metadataForm.versions[0] : 0
   );
@@ -129,6 +134,8 @@ export const RenderedMetadataForm = (props) => {
         value: JSON.stringify(field.value) || 'null'
       }))
     };
+    if (attachedUri && attachedUri !== -1) input.attachedUri = attachedUri;
+
     const response = await client.mutate(
       createAttachedMetadataForm(metadataForm.uri, input)
     );
@@ -144,6 +151,7 @@ export const RenderedMetadataForm = (props) => {
   };
 
   const fetchItems = async (version = null) => {
+    setLoading(true);
     const response = await client.query(
       getMetadataForm(metadataForm.uri, version)
     );
@@ -153,13 +161,29 @@ export const RenderedMetadataForm = (props) => {
       response.data &&
       response.data.getMetadataForm !== null
     ) {
-      setLocalFields(response.data.getMetadataForm.fields);
+      const local_fields = response.data.getMetadataForm.fields;
+      if (values) {
+        local_fields.forEach((field) => {
+          if (field.name in values) {
+            field.value = values[field.name];
+          }
+        });
+      }
+      setLocalFields([...local_fields]);
+      if (!version && response.data.getMetadataForm.versions.length > 0) {
+        setCurrentVersion(response.data.getMetadataForm.versions[0]);
+      } else {
+        if (version) {
+          setCurrentVersion(version);
+        }
+      }
     } else {
       const error = response.errors
         ? response.errors[0].message
         : 'Metadata Forms not found';
       dispatch({ type: SET_ERROR, error });
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -170,7 +194,19 @@ export const RenderedMetadataForm = (props) => {
     }
   }, [client, dispatch]);
 
-  return (
+  return loading ? (
+    <Box
+      sx={{
+        pt: 10,
+        minHeight: '400px',
+        alignContent: 'center',
+        display: 'flex',
+        justifyContent: 'center'
+      }}
+    >
+      <CircularProgress size={100} />
+    </Box>
+  ) : (
     <Card sx={{ height: '100%' }}>
       <Formik
         initialValues={{}}
@@ -192,14 +228,19 @@ export const RenderedMetadataForm = (props) => {
             <CardContent>
               <Grid container>
                 <Grid item lg={4} xl={4}>
-                  <CardHeader title={metadataForm.name} />
+                  <CardHeader
+                    title={metadataForm.name + ' v.' + currentVersion}
+                  />
                 </Grid>
                 <Grid item lg={4} xl={4}>
                   {preview && (
                     <Autocomplete
                       disablePortal
                       options={metadataForm.versions.map((option) => {
-                        return { label: 'version ' + option, value: option };
+                        return {
+                          label: 'version ' + option,
+                          value: option
+                        };
                       })}
                       value={'version ' + currentVersion}
                       onChange={async (event, value) => {
@@ -236,7 +277,7 @@ export const RenderedMetadataForm = (props) => {
                       type="submit"
                       variant="contained"
                     >
-                      Attach
+                      {editMode ? 'Save' : 'Attach'}
                     </LoadingButton>
 
                     <Button

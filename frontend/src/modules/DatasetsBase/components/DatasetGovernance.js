@@ -9,9 +9,8 @@ import {
   Typography
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import { Label } from 'design';
+import { Label, UserModal } from 'design';
 import { isFeatureEnabled } from 'utils';
-import { UserModal } from 'design';
 import { useState } from 'react';
 
 export const DatasetGovernance = (props) => {
