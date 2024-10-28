@@ -45,6 +45,7 @@ class GroupPolicyService:
                 permission_name=permission_name,
             )
 
+    @staticmethod
     def has_group_permission(permission):
         def decorator(f):
             @wraps(f)
