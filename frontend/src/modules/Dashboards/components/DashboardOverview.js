@@ -31,7 +31,7 @@ export const DashboardOverview = (props) => {
         <ObjectMetadata
           environment={dashboard.environment}
           region={dashboard.environment.region}
-          organization={dashboard.organization}
+          organization={dashboard.environment.organization}
           owner={dashboard.owner}
           admins={dashboard.SamlGroupName || '-'}
           created={dashboard.created}

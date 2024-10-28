@@ -23,10 +23,6 @@ export const getRedshiftDataset = (datasetUri) => ({
         topics
         confidentiality
         autoApprovalEnabled
-        organization {
-          organizationUri
-          label
-        }
         terms {
           count
           nodes {
