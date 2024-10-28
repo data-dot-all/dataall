@@ -54,7 +54,7 @@ def setup_cognito(
     updated_callbacks = existing_callbacks + list(set(config_callbacks) - set(existing_callbacks))
     log.info(f'Updated CallBackUrls: {updated_callbacks}')
 
-    config_logout_urls = [f'https://{signin_singout_link}']
+    config_logout_urls = [f'https://{signin_singout_link}', f'https://{user_guide_link}/']
     existing_logout_urls = user_pool['UserPoolClient'].get('LogoutURLs', [])
     updated_logout_urls = existing_logout_urls + list(set(config_logout_urls) - set(existing_logout_urls))
     log.info(f'Updated LogOutUrls: {updated_logout_urls}')
