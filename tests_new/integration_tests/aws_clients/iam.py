@@ -16,8 +16,12 @@ class IAMClient:
         self._region = region
 
     def get_role(self, role_name):
-        role = self._client.get_role(RoleName=role_name)
-        return role
+        try:
+            role = self._client.get_role(RoleName=role_name)
+            return role
+        except self._client.exceptions.NoSuchEntityException as e:
+            log.info(f'Error occurred: {e}')
+            return None
 
     def delete_role(self, role_name):
         self._client.delete_role(RoleName=role_name)
@@ -28,14 +32,8 @@ class IAMClient:
             'Statement': [
                 {
                     'Effect': 'Allow',
-                    'Principal': {
-                        'AWS': [
-                            f'arn:aws:iam::{account_id}:root',
-                            f'arn:aws:sts::{account_id}:assumed-role/{test_role_name}/{test_role_name}',
-                        ]
-                    },
+                    'Principal': {'AWS': [f'arn:aws:iam::{account_id}:role/{test_role_name}']},
                     'Action': 'sts:AssumeRole',
-                    'Condition': {},
                 }
             ],
         }

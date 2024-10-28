@@ -670,6 +670,7 @@ def test_manage_access_point_and_policy_2(
     access_point_arn = 'existing-access-point-arn'
     s3_client = mock_s3_control_client(mocker)
     s3_client().get_bucket_access_point_arn.return_value = access_point_arn
+    s3_client().create_bucket_access_point.return_value = access_point_arn
 
     # target_env_admin is already in policy but current folder is NOT yet in prefix_list
     existing_ap_policy = _generate_ap_policy_object(
@@ -690,6 +691,7 @@ def test_manage_access_point_and_policy_2(
     # Then
     s3_client().attach_access_point_policy.assert_called()
     policy = s3_client().attach_access_point_policy.call_args.kwargs.get('policy')
+    print(f'{policy=}')
 
     # Assert S3 Prefix of share folder in prefix_list
     new_ap_policy = json.loads(policy)
@@ -700,6 +702,7 @@ def test_manage_access_point_and_policy_2(
 
     # Assert s3 prefix is in resource_list
     resource_list = statements[f'{target_environment.SamlGroupName}1']['Resource']
+    print(f'{resource_list=}')
 
     assert f'{access_point_arn}/object/{location1.S3Prefix}/*' in resource_list
 
@@ -716,6 +719,7 @@ def test_manage_access_point_and_policy_3(
     access_point_arn = 'existing-access-point-arn'
     s3_control_client = mock_s3_control_client(mocker)
     s3_control_client().get_bucket_access_point_arn.return_value = access_point_arn
+    s3_control_client().create_bucket_access_point.return_value = access_point_arn
 
     # New target env admin and prefix are not in existing ap policy
     existing_ap_policy = _generate_ap_policy_object(access_point_arn, [['another-env-admin', ['existing-prefix']]])

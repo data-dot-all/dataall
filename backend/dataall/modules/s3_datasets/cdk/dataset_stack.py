@@ -132,6 +132,7 @@ class DatasetStack(Stack):
                 'DatasetKmsKey',
                 alias=dataset.KmsAlias,
                 enable_key_rotation=True,
+                removal_policy=RemovalPolicy.RETAIN,
                 policy=iam.PolicyDocument(
                     statements=[
                         iam.PolicyStatement(
@@ -184,6 +185,7 @@ class DatasetStack(Stack):
                 bucket_name=dataset.S3BucketName,
                 encryption=s3.BucketEncryption.KMS,
                 encryption_key=dataset_key,
+                removal_policy=RemovalPolicy.RETAIN,
                 cors=[
                     s3.CorsRule(
                         allowed_methods=[
@@ -209,6 +211,7 @@ class DatasetStack(Stack):
                 versioned=True,
                 bucket_key_enabled=True,
             )
+            dataset_bucket.policy.apply_removal_policy(RemovalPolicy.RETAIN)
 
             dataset_bucket.add_lifecycle_rule(
                 abort_incomplete_multipart_upload_after=Duration.days(7),

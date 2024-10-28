@@ -10,7 +10,10 @@ export const addRedshiftDatasetTables = ({ datasetUri, tables }) => ({
       $datasetUri: String!
       $tables: [String]!
     ) {
-      addRedshiftDatasetTables(datasetUri: $datasetUri, tables: $tables)
+      addRedshiftDatasetTables(datasetUri: $datasetUri, tables: $tables) {
+        successTables
+        errorTables
+      }
     }
   `
 });

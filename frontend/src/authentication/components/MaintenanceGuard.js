@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
-import { isModuleEnabled, ModuleNames } from 'utils';
+import { isModuleEnabled, isTenantUser, ModuleNames } from 'utils';
 import { useClient, useGroups } from 'services';
 import { LoadingScreen, NoAccessMaintenanceWindow } from 'design';
 import { getMaintenanceStatus } from '../../modules/Maintenance/services';
@@ -25,7 +25,7 @@ export const MaintenanceGuard = (props) => {
           response.data.getMaintenanceWindowStatus.status
         ) &&
         response.data.getMaintenanceWindowStatus.mode === 'NO-ACCESS' &&
-        !groups.includes('DAAdministrators')
+        !isTenantUser(groups)
       ) {
         setNoAccessMaintenanceFlag(true);
       } else {

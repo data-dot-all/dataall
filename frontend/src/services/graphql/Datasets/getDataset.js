@@ -46,10 +46,6 @@ export const getDataset = (datasetUri) => ({
         expirySetting
         expiryMinDuration
         expiryMaxDuration
-        organization {
-          organizationUri
-          label
-        }
         terms {
           count
           nodes {
@@ -65,11 +61,6 @@ export const getDataset = (datasetUri) => ({
           environmentUri
           label
           region
-          subscriptionsEnabled
-          subscriptionsProducersTopicImported
-          subscriptionsConsumersTopicImported
-          subscriptionsConsumersTopicName
-          subscriptionsProducersTopicName
           organization {
             organizationUri
             label

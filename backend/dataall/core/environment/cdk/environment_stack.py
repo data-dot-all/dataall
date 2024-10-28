@@ -176,6 +176,7 @@ class EnvironmentSetup(Stack):
             versioned=True,
             enforce_ssl=True,
         )
+        default_environment_bucket.policy.apply_removal_policy(RemovalPolicy.RETAIN)
         self.default_environment_bucket = default_environment_bucket
 
         default_environment_bucket.add_to_resource_policy(
@@ -583,9 +584,17 @@ class EnvironmentSetup(Stack):
                     's3:PutEncryptionConfiguration',
                     's3:GetObject*',
                     's3:DeleteObject',
+                    's3:DeleteObjectVersion',
                 ],
                 effect=iam.Effect.ALLOW,
-                resources=['arn:aws:s3:::dataalltesting*', 'arn:aws:s3:::dataalltesting*/*'],
+                resources=[
+                    'arn:aws:s3:::dataalltesting*',
+                    'arn:aws:s3:::dataalltesting*/*',
+                    'arn:aws:s3:::dataall-session*',
+                    'arn:aws:s3:::dataall-session*/*',
+                    'arn:aws:s3:::dataall-temp*',
+                    'arn:aws:s3:::dataall-temp*/*',
+                ],
             )
         )
         self.test_role.add_to_policy(
@@ -618,6 +627,8 @@ class EnvironmentSetup(Stack):
                     'kms:DescribeKey',
                     's3:GetBucketVersioning',
                     's3:List*',
+                    's3:ListAccessPoints',
+                    's3:DeleteAccessPoint',
                 ],
                 effect=iam.Effect.ALLOW,
                 resources=['*'],
@@ -666,5 +677,23 @@ class EnvironmentSetup(Stack):
                 ],
                 effect=iam.Effect.ALLOW,
                 resources=[f'arn:aws:iam::{self.account}:role/dataall-test-*'],
+            ),
+        )
+
+        self.test_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    'quicksight:DescribeAccountSubscription',
+                ],
+                effect=iam.Effect.ALLOW,
+                resources=[f'arn:aws:quicksight:*:{self.account}:*'],
+            ),
+        )
+
+        self.test_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=['redshift:DeauthorizeDataShare'],
+                effect=iam.Effect.ALLOW,
+                resources=[f'arn:aws:redshift:{self.region}:{self.account}:datashare:*/dataall*'],
             ),
         )
