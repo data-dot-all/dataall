@@ -16,17 +16,14 @@ export const getDatasetStorageLocation = (locationUri) => ({
           S3BucketName
           AwsAccountId
           owner
-          organization {
-            label
-          }
           environment {
+            environmentUri
             label
             region
-            subscriptionsEnabled
-            subscriptionsProducersTopicImported
-            subscriptionsConsumersTopicImported
-            subscriptionsConsumersTopicName
-            subscriptionsProducersTopicName
+            organization {
+              organizationUri
+              label
+            }
           }
         }
         owner
