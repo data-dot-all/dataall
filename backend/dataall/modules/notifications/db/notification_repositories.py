@@ -90,7 +90,7 @@ class NotificationRepository:
         )
         return int(count)
 
-    @staticmethod    
+    @staticmethod
     @NotificationAccess.is_recipient
     def read_notification(session, notificationUri):
         notification = session.query(models.Notification).get(notificationUri)
