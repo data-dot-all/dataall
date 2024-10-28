@@ -198,7 +198,6 @@ class RedshiftConnectionService:
         return True
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_CONNECTIONS)
     @ResourcePolicyService.has_resource_permission(EDIT_REDSHIFT_CONNECTION_PERMISSIONS)
     def list_connection_group_permissions(uri, filter):
         context = get_context()
@@ -209,7 +208,6 @@ class RedshiftConnectionService:
             )
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_CONNECTIONS)
     @ResourcePolicyService.has_resource_permission(EDIT_REDSHIFT_CONNECTION_PERMISSIONS)
     def list_connection_group_no_permissions(uri, filter):
         context = get_context()
