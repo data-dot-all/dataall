@@ -180,18 +180,15 @@ def generate_metadata(
             metadataTypes,
             f'a list of allowed values {[item.value for item in MetadataGenerationTypes]}',
         )
-    # TODO validate sampleData and make it generic for S3
     if targetType == MetadataGenerationTargets.S3_Dataset.value:
-        return DatasetService.generate_metadata_for_dataset(
-            resourceUri=resourceUri, version=version, metadataTypes=metadataTypes
-        )
+        return DatasetService.generate_metadata_for_dataset(resource_uri=resourceUri, metadata_types=metadataTypes)
     elif targetType == MetadataGenerationTargets.Table.value:
         return DatasetTableService.generate_metadata_for_table(
-            resourceUri=resourceUri, version=version, metadataTypes=metadataTypes, sampleData=sampleData
+            resource_uri=resourceUri, metadata_types=metadataTypes, sampleData=sampleData
         )
     elif targetType == MetadataGenerationTargets.Folder.value:
         return DatasetLocationService.generate_metadata_for_folder(
-            resourceUri=resourceUri, version=version, metadataTypes=metadataTypes
+            resource_uri=resourceUri, metadata_types=metadataTypes
         )
     else:
         raise Exception('Unsupported target type for metadata generation')

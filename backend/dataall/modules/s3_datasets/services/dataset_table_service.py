@@ -190,20 +190,11 @@ class DatasetTableService:
 
     # TODO ADD PERMISSIONS!
     @staticmethod
-    def generate_metadata_for_table(resourceUri, version, metadataTypes, sampleData):
-        # TODO decide what to do with version
+    def generate_metadata_for_table(resource_uri, metadata_types, sampleData):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            table = DatasetTableRepository.get_dataset_table_by_uri(session, resourceUri)
-            table_column = DatasetColumnRepository.get_table_info_metadata_generation(session, resourceUri)
-            return BedrockClient().generate_metadata(
-                prompt_type=MetadataGenerationTargets.Table.value,
-                label=table.label,
-                columns={','.join(table_column.label)},
-                subitem_descriptions={','.join(table_column.description)},
-                subitem_ids={','.join(table_column.columnUri)},
-                description=table.description,
-                tags=table.tags,
-                metadata_type=metadataTypes,
-                sample_data=sampleData,
+            table = DatasetTableRepository.get_dataset_table_by_uri(session, resource_uri)
+            table_columns = DatasetColumnRepository.get_table_info_metadata_generation(session, table.tableUri)
+            return BedrockClient().invoke_model_table_metadata(
+                table=table, columns=table_columns, metadata_types=metadata_types, sample_data=sampleData
             )

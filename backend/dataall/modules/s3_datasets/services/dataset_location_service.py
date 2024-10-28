@@ -146,20 +146,12 @@ class DatasetLocationService:
             ResourcePolicyService.delete_resource_policy(session=session, group=group, resource_uri=location_uri)
 
     @staticmethod
-    def generate_metadata_for_folder(resourceUri, version, metadataTypes):
+    def generate_metadata_for_folder(resourceUri, metadataTypes):
         context = get_context()
-        # TODO decide what to do with version
         with context.db_engine.scoped_session() as session:
             folder = DatasetLocationRepository.get_location_by_uri(session, resourceUri)
             dataset = DatasetRepository.get_dataset_by_uri(session, folder.datasetUri)
             files = S3DatasetClient(dataset).list_bucket_files(folder.S3BucketName, folder.S3Prefix)
-            file_names = [f['Key'] for f in files]
-            log.info('file names', file_names)
-            return BedrockClient().generate_metadata(
-                prompt_type=MetadataGenerationTargets.Folder.value,
-                label=folder.label,
-                file_names=file_names,
-                description=folder.description,
-                tags=folder.tags,
-                metadata_type=metadataTypes,
+            return BedrockClient().invoke_model_folder_metadata(
+                metadata_types=metadataTypes, folder=folder, files=[f['Key'] for f in files]
             )

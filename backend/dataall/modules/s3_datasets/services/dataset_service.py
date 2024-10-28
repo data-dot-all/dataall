@@ -48,10 +48,6 @@ from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_ALL
 from dataall.modules.datasets_base.services.dataset_service_interface import DatasetServiceInterface
 from dataall.modules.s3_datasets.aws.bedrock_metadata_client import BedrockClient
-from dataall.modules.s3_datasets.services.dataset_metadata_service import (
-    MetadataOutput,
-    DatasetMetadataGenerationService,
-)
 
 log = logging.getLogger(__name__)
 
@@ -570,24 +566,15 @@ class DatasetService:
             return DatasetRepository.paginated_dataset_tables_folders(session, dataset_uri, filter)
 
     @staticmethod
-    def generate_metadata_for_dataset(resourceUri, version, metadataTypes):
-        # TODO decide what to do with version
+    def generate_metadata_for_dataset(resource_uri, metadata_types):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            dataset = DatasetBaseRepository.get_dataset_by_uri(session, resourceUri)
+            dataset = DatasetBaseRepository.get_dataset_by_uri(session, resource_uri)
             tables = DatasetRepository.get_dataset_tables(session, dataset.datasetUri)
-            table_labels = [t.label for t in tables]
-            table_descriptions = [t.description for t in tables]
-            folder_labels = [f.label for f in DatasetLocationRepository.get_dataset_folders(session, resourceUri)]
-            template = DatasetMetadataGenerationService.get_dataset_prompt_template()
-            prompt = DatasetMetadataGenerationService.format_dataset_prompt_template(
-                template=template,
-                metadata_types=metadataTypes,
-                label=dataset.label,
-                description=dataset.description,
-                tags=dataset.tags,
-                table_labels=table_labels,
-                table_descriptions=table_descriptions,
-                folder_labels=folder_labels,
+            folders = DatasetLocationRepository.get_dataset_folders(session, dataset.datasetUri)
+            return BedrockClient().invoke_model_dataset_metadata(
+                metadata_types=metadata_types,
+                dataset=dataset,
+                tables=tables,
+                folders=folders,
             )
-            return BedrockClient().invoke_model(prompt_template=template, prompt=prompt, output_object=MetadataOutput)
