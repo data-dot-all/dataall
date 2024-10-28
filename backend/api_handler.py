@@ -140,8 +140,8 @@ def handler(event, context):
     dispose_context()
     response = json.dumps(response)
 
-    log.info('Lambda Response %s', response)
-
+    log.info('Lambda Response Success: %s', success)
+    log.debug('Lambda Response %s', response)
     return {
         'statusCode': 200 if success else 400,
         'headers': {
