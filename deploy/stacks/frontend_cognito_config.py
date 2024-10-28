@@ -105,6 +105,7 @@ class FrontendCognitoConfig(pyNestedClass):
                 'envname': envname,
                 'deployment_region': backend_region,
                 'custom_domain': str(bool(custom_domain)),
+                'redeploy': 'true',
             },
             environment_encryption=lambda_env_key,
             tracing=_lambda.Tracing.ACTIVE,
