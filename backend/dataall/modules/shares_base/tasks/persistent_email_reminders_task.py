@@ -10,10 +10,10 @@ from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRep
 
 
 root = logging.getLogger()
-root.setLevel(logging.INFO)
 if not root.hasHandlers():
     root.addHandler(logging.StreamHandler(sys.stdout))
 log = logging.getLogger(__name__)
+log.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
 
 def persistent_email_reminders(engine):

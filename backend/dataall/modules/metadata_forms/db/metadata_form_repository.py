@@ -71,6 +71,10 @@ class MetadataFormRepository:
         return session.query(MetadataFormVersion).get((metadataFormUri, version_num))
 
     @staticmethod
+    def get_metadata_form_version(session, metadataFormUri, version_num):
+        return session.query(MetadataFormVersion).get((metadataFormUri, version_num))
+
+    @staticmethod
     def create_attached_metadata_form(session, uri, data=None):
         version_num = MetadataFormRepository.get_metadata_form_version_number_latest(session, uri)
         amf: AttachedMetadataForm = AttachedMetadataForm(
@@ -196,17 +200,19 @@ class MetadataFormRepository:
         return query.order_by(MetadataForm.name)
 
     @staticmethod
-    def get_metadata_form_fields(session, form_uri):
+    def get_metadata_form_fields(session, form_uri, version=None):
+        version = version or MetadataFormRepository.get_metadata_form_version_number_latest(session, form_uri)
         return (
             session.query(MetadataFormField)
             .filter(MetadataFormField.metadataFormUri == form_uri)
+            .filter(MetadataFormField.version == version)
             .order_by(MetadataFormField.displayNumber)
             .all()
         )
 
     @staticmethod
-    def create_metadata_form_field(session, uri, data):
-        version_num = MetadataFormRepository.get_metadata_form_version_number_latest(session, uri)
+    def create_metadata_form_field(session, uri, data, version_num=None):
+        version_num = version_num or MetadataFormRepository.get_metadata_form_version_number_latest(session, uri)
         field: MetadataFormField = MetadataFormField(
             metadataFormUri=uri,
             version=version_num,
@@ -282,16 +288,46 @@ class MetadataFormRepository:
         # The c confuses a lot of people, SQLAlchemy uses this unfortunately odd name
         # as a container for columns in table objects.
         query = session.query(AttachedMetadataForm).join(all_mfs, AttachedMetadataForm.metadataFormUri == all_mfs.c.uri)
-        if filter and filter.get('entityType'):
-            query = query.filter(AttachedMetadataForm.entityType == filter.get('entityType'))
-        if filter and filter.get('entityUri'):
-            query = query.filter(AttachedMetadataForm.entityUri == filter.get('entityUri'))
-        if filter and filter.get('metadataFormUri'):
-            query = query.filter(AttachedMetadataForm.metadataFormUri == filter.get('metadataFormUri'))
-        return query
+        if filter:
+            if filter.get('entityType'):
+                query = query.filter(AttachedMetadataForm.entityType == filter.get('entityType'))
+            if filter.get('entityUri'):
+                query = query.filter(AttachedMetadataForm.entityUri == filter.get('entityUri'))
+            if filter.get('metadataFormUri'):
+                query = query.filter(AttachedMetadataForm.metadataFormUri == filter.get('metadataFormUri'))
+            if filter.get('version'):
+                query = query.filter(AttachedMetadataForm.version == filter.get('version'))
+        return query.order_by(all_mfs.c.name)
 
     @staticmethod
     def query_all_attached_metadata_forms_for_entity(session, entityUri, entityType):
         return session.query(AttachedMetadataForm).filter(
             and_(AttachedMetadataForm.entityType == entityType, AttachedMetadataForm.entityUri == entityUri)
         )
+
+    @staticmethod
+    def get_metadata_form_versions_numbers(session, uri):
+        versions = (
+            session.query(MetadataFormVersion)
+            .filter(MetadataFormVersion.metadataFormUri == uri)
+            .order_by(MetadataFormVersion.version.desc())
+            .all()
+        )
+        return [v.version for v in versions]
+
+    @staticmethod
+    def get_metadata_form_versions(session, uri):
+        versions = (
+            session.query(MetadataFormVersion)
+            .filter(MetadataFormVersion.metadataFormUri == uri)
+            .order_by(MetadataFormVersion.version.desc())
+            .all()
+        )
+        return versions
+
+    @staticmethod
+    def get_all_attached_metadata_forms(session, mf_uri, version=None):
+        all_attached = session.query(AttachedMetadataForm).filter(AttachedMetadataForm.metadataFormUri == mf_uri)
+        if version:
+            all_attached = all_attached.filter(AttachedMetadataForm.version == version)
+        return all_attached.all()

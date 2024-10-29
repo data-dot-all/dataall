@@ -222,7 +222,9 @@ def imported_redshift_dataset_1_no_tables(db, user, group, env_fixture, connecti
 
 
 @pytest.fixture(scope='function')
-def imported_redshift_dataset_2_with_tables(db, user, group, env_fixture, connection1_serverless, api_context_1):
+def imported_redshift_dataset_2_with_tables(
+    db, user, group, env_fixture, connection1_serverless, api_context_1, mock_redshift_data
+):
     dataset = RedshiftDatasetService.import_redshift_dataset(
         uri=env_fixture.environmentUri,
         admin_group=group.name,

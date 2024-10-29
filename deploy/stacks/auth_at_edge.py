@@ -23,7 +23,7 @@ class AuthAtEdge(pyNestedClass):
             f'{resource_prefix}-{envname}-authatedge',
             location={
                 'applicationId': 'arn:aws:serverlessrepo:us-east-1:520945424137:applications/cloudfront-authorization-at-edge',
-                'semanticVersion': '2.3.0',
+                'semanticVersion': '2.3.2',
             },
             parameters={
                 'UserPoolArn': userpool_arn,

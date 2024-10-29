@@ -2727,7 +2727,7 @@ def test_delete_share_object_remaining_items_error(
         client=client, user=user2, group=group2, shareUri=share3_processed.shareUri
     )
     # Then we get an error of the type
-    assert 'UnauthorizedOperation' in delete_share_object_response.errors[0].message
+    assert 'ShareItemsFound' in delete_share_object_response.errors[0].message
 
 
 def test_cancel_share_extension_request(

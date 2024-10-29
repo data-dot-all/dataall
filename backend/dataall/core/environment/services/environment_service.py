@@ -851,6 +851,7 @@ class EnvironmentService:
         return environments
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
     @ResourcePolicyService.has_resource_permission(environment_permissions.DELETE_ENVIRONMENT)
     def delete_environment(uri):
         with get_context().db_engine.scoped_session() as session:
@@ -932,6 +933,7 @@ class EnvironmentService:
         return EnvironmentPermission.NotInvited.value
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
     def enable_subscriptions(environmentUri: str = None, input: dict = None):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -967,6 +969,7 @@ class EnvironmentService:
             return True
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
     def disable_subscriptions(environment_uri: str = None):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -1028,6 +1031,7 @@ class EnvironmentService:
         return aws_session
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
     def get_environment_assume_role_url(
         environmentUri: str = None,
         groupUri: str = None,
@@ -1055,6 +1059,7 @@ class EnvironmentService:
             return url
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
     def generate_environment_access_token(environmentUri: str = None, groupUri: str = None):
         context = get_context()
         with context.db_engine.scoped_session() as session:

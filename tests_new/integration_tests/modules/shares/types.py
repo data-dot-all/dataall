@@ -70,11 +70,9 @@ items(filter: $filter){{
     {SharedItemSearchResult}
 }},
 environment{{
-        environmentUri,
-        AwsAccountId,
+        environmentUri
+        label
         region
-        resourcePrefix    
-        name
 }}
 canViewLogs,
 userRoleForShareObject,

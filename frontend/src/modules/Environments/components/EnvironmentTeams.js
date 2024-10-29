@@ -39,7 +39,8 @@ import {
   Pager,
   RefreshTableMenu,
   Scrollbar,
-  SearchIcon
+  SearchIcon,
+  UserModal
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { isFeatureEnabled } from 'utils';
@@ -79,6 +80,19 @@ function TeamRow({
   const { enqueueSnackbar } = useSnackbar();
   const [accessingConsole, setAccessingConsole] = useState(false);
   const [loadingCreds, setLoadingCreds] = useState(false);
+
+  const [openUserModal, setIsModalOpen] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState(null);
+
+  const handleOpenModal = (team) => {
+    setSelectedTeam(team.groupUri);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedTeam(null);
+  };
 
   const removeGroup = async (groupUri) => {
     try {
@@ -152,12 +166,24 @@ function TeamRow({
   };
   return (
     <TableRow hover>
-      <TableCell>
+      <TableCell
+        onClick={() => handleOpenModal(team)}
+        style={{ cursor: 'pointer' }}
+      >
         {team.groupUri}{' '}
         {team.groupUri === environment.SamlGroupName && (
           <Label color="primary">Admins</Label>
         )}
       </TableCell>
+
+      {openUserModal && (
+        <UserModal
+          team={selectedTeam}
+          open={openUserModal}
+          onClose={handleCloseModal}
+        />
+      )}
+
       <TableCell>{team.environmentIAMRoleArn}</TableCell>
       <TableCell>{team.environmentAthenaWorkGroup}</TableCell>
       <TableCell>

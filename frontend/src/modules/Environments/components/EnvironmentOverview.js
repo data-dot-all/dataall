@@ -1,11 +1,16 @@
+import React, { useState } from 'react';
 import { Box, Grid } from '@mui/material';
 import PropTypes from 'prop-types';
-import { ObjectBrief, ObjectMetadata } from 'design';
+import { ObjectBrief, ObjectMetadata, UserModal } from 'design';
 import { EnvironmentConsoleAccess } from './EnvironmentConsoleAccess';
 import { EnvironmentFeatures } from './EnvironmentFeatures';
 
 export const EnvironmentOverview = (props) => {
   const { environment, ...other } = props;
+
+  const [modalOpen, setIsModalOpen] = useState(false);
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => setIsModalOpen(false);
 
   return (
     <Grid container spacing={3} {...other}>
@@ -28,9 +33,18 @@ export const EnvironmentOverview = (props) => {
           region={environment.region}
           organization={environment.organization}
           owner={environment.owner}
-          admins={environment.SamlGroupName || '-'}
+          admins={
+            <div onClick={handleOpenModal} style={{ cursor: 'pointer' }}>
+              {environment.SamlGroupName || '-'}
+            </div>
+          }
           created={environment.created}
           status={environment.stack?.status}
+        />
+        <UserModal
+          team={environment.SamlGroupName}
+          open={modalOpen}
+          onClose={handleCloseModal}
         />
         <Box sx={{ mt: 3 }}>
           <EnvironmentFeatures environment={environment} />

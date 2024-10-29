@@ -17,6 +17,7 @@ class BaseIndexer(ABC):
 
     _INDEX = 'dataall-index'
     _es = None
+    _QUERY_SIZE = 1000
 
     @classmethod
     def es(cls):
@@ -53,11 +54,31 @@ class BaseIndexer(ABC):
             return False
 
     @classmethod
-    def search(cls, query):
+    def search_all(cls, query, sort):
+        all_results = []
+        search_after = None
+        while True:
+            if search_after:
+                query['search_after'] = search_after
+
+            response = BaseIndexer.search(query=query, sort=sort)
+            hits = response['hits']['hits']
+            if not hits:
+                break  # No more results
+
+            all_results.extend(hits)
+
+            # Update search_after for the next iteration
+            search_after = hits[-1]['sort']
+
+        return all_results
+
+    @classmethod
+    def search(cls, query, sort=None):
         es = cls.es()
         if es:
-            res = es.search(index=cls._INDEX, body=query)
-            log.info(f'Search query {query} returned {res["hits"]["total"]["value"]} records')
+            res = es.search(index=cls._INDEX, body=query, sort=sort, size=cls._QUERY_SIZE)
+            log.info(f'Search query {query} found {res["hits"]["total"]["value"]} total records')
             return res
         else:
             log.error(f'ES config is missing, search query {query} failed')
