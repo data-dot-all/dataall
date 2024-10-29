@@ -66,6 +66,7 @@ class WorksheetService:
         return worksheet
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_WORKSHEETS)
     @ResourcePolicyService.has_resource_permission(UPDATE_WORKSHEET)
     def update_worksheet(session, username, uri, data=None):
         worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
@@ -91,6 +92,7 @@ class WorksheetService:
         return worksheet
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_WORKSHEETS)
     @ResourcePolicyService.has_resource_permission(DELETE_WORKSHEET)
     def delete_worksheet(session, uri) -> bool:
         worksheet = WorksheetService.get_worksheet_by_uri(session, uri)

@@ -21,7 +21,7 @@ class MetadataFormEntityTypes(GraphQLEnumMapper):
     Environments = 'Environment'
     EnvironmentTeams = 'Environment Team'
     S3Datasets = 'S3-Dataset'
-    RDDatasets = 'RD-Dataset'
+    RDDatasets = 'Redshift-Dataset'
     Worksheets = 'Worksheets'
     Dashboards = 'Dashboard'
     ConsumptionRoles = 'Consumption Role'

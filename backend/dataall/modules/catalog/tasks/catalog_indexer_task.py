@@ -10,10 +10,10 @@ from dataall.base.loader import load_modules, ImportMode
 from dataall.base.utils.alarm_service import AlarmService
 
 root = logging.getLogger()
-root.setLevel(logging.INFO)
 if not root.hasHandlers():
     root.addHandler(logging.StreamHandler(sys.stdout))
 log = logging.getLogger(__name__)
+log.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
 
 class CatalogIndexerTask:

@@ -13,10 +13,10 @@ from dataall.modules.shares_base.services.shares_enums import ShareObjectActions
 from dataall.modules.shares_base.services.sharing_service import SharingService
 
 root = logging.getLogger()
-root.setLevel(logging.INFO)
 if not root.hasHandlers():
     root.addHandler(logging.StreamHandler(sys.stdout))
 log = logging.getLogger(__name__)
+log.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
 
 def share_expiration_checker(engine):

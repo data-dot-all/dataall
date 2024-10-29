@@ -60,13 +60,8 @@ Dataset = gql.ObjectType(
         gql.Field(name='imported', type=gql.Boolean),
         gql.Field(
             name='environment',
-            type=gql.Ref('Environment'),
+            type=gql.Ref('EnvironmentSimplified'),
             resolver=get_dataset_environment,
-        ),
-        gql.Field(
-            name='organization',
-            type=gql.Ref('Organization'),
-            resolver=get_dataset_organization,
         ),
         gql.Field(
             name='owners',

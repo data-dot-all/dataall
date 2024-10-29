@@ -11,7 +11,9 @@ NewShareObjectInput = gql.InputType(
         gql.Argument(name='principalType', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='requestPurpose', type=gql.String),
         gql.Argument(name='attachMissingPolicies', type=gql.Boolean),
-        gql.Argument(name='permissions', type=gql.ArrayType(ShareObjectDataPermission.toGraphQLEnum())),
+        gql.Argument(
+            name='permissions', type=gql.NonNullableType(gql.ArrayType(ShareObjectDataPermission.toGraphQLEnum()))
+        ),
         gql.Argument(name='shareExpirationPeriod', type=gql.Integer),
         gql.Argument(name='nonExpirable', type=gql.Boolean),
     ],
