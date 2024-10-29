@@ -13,7 +13,8 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
     ShareItemActions,
 )
-from dataall.modules.shares_base.services.share_manager_utils import ShareErrorFormatter
+from dataall.modules.shares_base.services.share_object_service import ShareObjectService
+from dataall.modules.shares_base.services.share_manager_utils import ShareErrorFormatter, execute_and_suppress_exception
 from dataall.modules.redshift_datasets.db.redshift_models import RedshiftTable
 from dataall.modules.redshift_datasets.db.redshift_connection_repositories import RedshiftConnectionRepository
 from dataall.modules.redshift_datasets.services.redshift_enums import RedshiftType
@@ -603,3 +604,148 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                         self.session, share_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
                     )
         return True
+
+    def cleanup_shares(self) -> bool:
+        """
+        For each table:
+            Update table status with Start Action (Revoke_Approved ---> Revoke_In_Progress)
+            try:
+                1) (in target namespace) Revoke access to the revoked tables to the redshift role in external schema (if schema exists)
+                2) (in target namespace) Revoke access to the revoked tables to the redshift role in self.local_db (if database exists)
+                3) (in source namespace) If that table is not shared in this namespace, remove table from datashare (if datashare exists)
+            except:
+                Update table status with Failure Action (Revoke_In_Progress ---> Revoke_Failed)
+        If the previous is successful, we proceed to clean-up shared resources across datashares:
+        try:
+            4) (in target namespace) If no more tables are shared with the redshift role, revoke usage access to the external schema to the redshift role
+            5) (in target namespace) If no more tables are shared with the redshift role, revoke usage access to the self.local_db to the redshift role
+            6) (in target namespace) If no more tables are shared with any role in this namespace, drop external schema
+            7) (in target namespace) If no more tables are shared with any role in this namespace, drop local database
+            8) (in source namespace) If no more tables are shared with any role in this namespace, drop datashare
+            # Drop datashare deletes it from source and target, alongside its permissions (for both same and cross account)
+            Update NON-FAILED tables with Success Action (Revoke_In_Progress ---> Revoke_Succeeded)
+        except:
+            Update tables with Failure Action (Revoke_In_Progress ---> Revoke_Failed)
+        Returns
+        -------
+        True if share is revoked successfully
+        """
+        log.info('##### Starting Cleaning up Redshift tables #######')
+        if not self.tables:
+            log.info('No Redshift tables to revoke. Skipping...')
+        else:
+            self._initialize_clients()
+            for table in self.tables:
+                log.info(f'Revoking access to table {table}...')
+                local_db_exists = self.redshift_data_client_in_target.check_database_exists(database=self.local_db)
+                # 1) (in target namespace) Revoke access to the revoked tables to the redshift role in external schema (if schema exists)
+                if local_db_exists and self.redshift_data_client_in_target.check_schema_exists(
+                    schema=self.external_schema, database=self.target_connection.database
+                ):
+                    execute_and_suppress_exception(
+                        func=self.redshift_data_client_in_target.revoke_select_table_access_to_redshift_role,
+                        schema=self.external_schema,
+                        table=table.name,
+                        rs_role=self.redshift_role,
+                    )
+                else:
+                    log.info(
+                        'External schema does not exist or local database does not exist, permissions cannot be revoked'
+                    )
+                # 2) (in target namespace) Revoke access to the revoked tables to the redshift role in local_db (if database exists)
+                if local_db_exists:
+                    execute_and_suppress_exception(
+                        func=self.redshift_data_client_in_target.revoke_select_table_access_to_redshift_role,
+                        database=self.local_db,
+                        schema=self.dataset.schema,
+                        table=table.name,
+                        rs_role=self.redshift_role,
+                    )
+                else:
+                    log.info('Database does not exist, no permissions need to be revoked')
+                # 3) (in source namespace) If that table is not shared in this namespace, remove table from datashare (if datashare exists)
+                if (
+                    RedshiftShareRepository.count_other_shared_items_redshift_table_with_connection(
+                        session=self.session,
+                        share_uri=self.share.shareUri,
+                        table_uri=table.rsTableUri,
+                        connection_uri=self.share.principalId,
+                    )
+                    == 0
+                ):
+                    log.info(
+                        f'No other share items are sharing this table {table.name} with this namespace {self.target_connection.nameSpaceId}'
+                    )
+                    if self.redshift_data_client_in_source.check_datashare_exists(self.datashare_name):
+                        execute_and_suppress_exception(
+                            func=self.redshift_data_client_in_source.remove_table_from_datashare,
+                            datashare=self.datashare_name,
+                            schema=self.dataset.schema,
+                            table_name=table.name,
+                        )
+                # Delete share item
+                share_item = ShareObjectRepository.find_sharable_item(
+                    self.session, self.share.shareUri, table.rsTableUri
+                )
+                self.session.delete(share_item)
+            self.session.commit()
+
+            log.info('Cleaning up shared resources in redshift datashares...')
+            # 4) (in target namespace) If no more tables are shared with the redshift role, revoke usage access to the external schema to the redshift role
+            # 5) (in target namespace) If no more tables are shared with the redshift role, revoke usage access to the local_db to the redshift role
+            if (
+                RedshiftShareRepository.count_dataset_shared_items_with_redshift_role(
+                    session=self.session,
+                    dataset_uri=self.dataset.datasetUri,
+                    rs_role=self.redshift_role,
+                    connection_uri=self.share.principalId,
+                )
+                == 0
+            ):  # In this check, if a table is in Revoke_In_Progress it does not count as shared state
+                log.info(f'No other tables of this dataset are shared with this redshift role {self.redshift_role}')
+                execute_and_suppress_exception(
+                    func=self.redshift_data_client_in_target.revoke_schema_usage_access_to_redshift_role,
+                    schema=self.external_schema,
+                    rs_role=self.redshift_role,
+                )
+                if local_db_exists:
+                    execute_and_suppress_exception(
+                        func=self.redshift_data_client_in_target.revoke_database_usage_access_to_redshift_role,
+                        database=self.local_db,
+                        rs_role=self.redshift_role,
+                    )
+                else:
+                    log.info('Database does not exist, no permissions need to be revoked')
+            # 6) (in target namespace) If no more tables are shared with any role in this namespace, drop external schema
+            # 7) (in target namespace) If no more tables are shared with any role in this namespace, drop local database
+            # 8) (in source namespace) If no more tables are shared with any role in this namespace, drop datashare
+            if (
+                RedshiftShareRepository.count_dataset_shared_items_with_namespace(
+                    session=self.session,
+                    dataset_uri=self.dataset.datasetUri,
+                    connection_uri=self.share.principalId,
+                )
+                == 0
+            ):
+                log.info(
+                    f'No other tables of this dataset are shared with this namespace {self.target_connection.nameSpaceId}'
+                )
+                execute_and_suppress_exception(
+                    func=self.redshift_data_client_in_target.drop_schema, schema=self.external_schema
+                )
+                execute_and_suppress_exception(
+                    func=self.redshift_data_client_in_target.drop_database, database=self.local_db
+                )
+                execute_and_suppress_exception(
+                    func=self.redshift_data_client_in_source.drop_datashare, datashare=self.datashare_name
+                )
+            # Check share items in share and delete share
+            remaining_share_items = ShareObjectRepository.get_all_share_items_in_share(
+                session=self.session, share_uri=self.share_data.share.shareUri
+            )
+            if not remaining_share_items:
+                ShareObjectService.deleting_share_permissions(
+                    session=self.session, share=self.share_data.share, dataset=self.share_data.dataset
+                )
+                self.session.delete(self.share_data.share)
+            return True

@@ -3,7 +3,7 @@ from botocore.exceptions import ClientError
 import boto3
 
 from tests_new.integration_tests.core.environment.queries import get_environment_access_token
-from tests_new.integration_tests.modules.share_base.queries import (
+from tests_new.integration_tests.modules.shares.queries import (
     get_share_object,
     get_s3_consumption_data,
     verify_share_items,
@@ -13,7 +13,7 @@ from tests_new.integration_tests.modules.share_base.queries import (
     approve_share_object,
     remove_share_item,
 )
-from tests_new.integration_tests.modules.share_base.utils import (
+from tests_new.integration_tests.modules.shares.utils import (
     check_share_items_verified,
     check_share_ready,
 )
@@ -166,7 +166,7 @@ def check_share_items_access(
         f'arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{consumption_data.s3AccessPointName}'
     )
     if principal_type == 'Group':
-        workgroup = athena_client.get_env_work_group(share.environment.name)
+        workgroup = athena_client.get_env_work_group(share.environment.label)
         athena_workgroup_output_location = None
     else:
         workgroup = 'primary'

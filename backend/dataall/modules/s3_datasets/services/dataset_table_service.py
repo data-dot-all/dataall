@@ -40,7 +40,6 @@ class DatasetTableService:
         return table.datasetUri
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     def get_table(uri: str):
         with get_context().db_engine.scoped_session() as session:
             return DatasetTableRepository.get_dataset_table_by_uri(session, uri)
@@ -116,6 +115,7 @@ class DatasetTableService:
             return json_utils.to_string(table.GlueTableProperties).replace('\\', ' ')
 
     @classmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(SYNC_DATASET)
     def sync_tables_for_dataset(cls, uri):
         context = get_context()

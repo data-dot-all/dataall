@@ -24,10 +24,6 @@ def get_redshift_dataset(client, dataset_uri):
                 topics
                 confidentiality
                 autoApprovalEnabled
-                organization {
-                  organizationUri
-                  label
-                }
                 terms {
                   count
                   nodes {
@@ -134,11 +130,13 @@ def get_redshift_dataset_table(client, rs_table_uri):
                   name
                   label
                   userRoleForDataset
-                  organization {
-                    label
-                  }
                   environment {
+                    environmentUri
                     label
+                    organization {
+                      organizationUri
+                      label
+                    }
                   }
                   region
                 }
@@ -242,8 +240,12 @@ def import_redshift_dataset(
                 label
                 userRoleForDataset
                 connection {
-                 connectionUri
-                 } 
+                    connectionUri
+                }
+                addedTables {
+                    errorTables
+                    successTables
+                }
               }
             }
         """,
@@ -303,7 +305,10 @@ def add_redshift_dataset_tables(client, dataset_uri, tables):
               $datasetUri: String!
               $tables: [String]!
             ) {
-              addRedshiftDatasetTables(datasetUri: $datasetUri, tables: $tables)
+              addRedshiftDatasetTables(datasetUri: $datasetUri, tables: $tables) {
+                successTables
+                errorTables
+              }
             }
         """,
     }

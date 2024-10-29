@@ -610,45 +610,60 @@ class ShareObjectService:
 
     @classmethod
     @ResourcePolicyService.has_resource_permission(DELETE_SHARE_OBJECT)
-    def delete_share_object(cls, uri: str):
-        with get_context().db_engine.scoped_session() as session:
+    def delete_share_object(cls, uri: str, force_delete: bool):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
             shared_share_items_states = [x for x in ShareStatusRepository.get_share_item_shared_states() if x in states]
-
-            new_state = cls._run_transitions(session, share, states, ShareObjectActions.Delete)
-            if shared_share_items_states:
+            if shared_share_items_states and not force_delete:
                 raise ShareItemsFound(
                     action='Delete share object',
                     message='There are shared items in this request. '
                     'Revoke access to these items before deleting the request.',
                 )
 
-            if new_state == ShareObjectStatus.Deleted.value:
-                # Delete share resource policy permissions
-                # Deleting REQUESTER permissions
-                ResourcePolicyService.delete_resource_policy(
-                    session=session,
-                    group=share.groupUri,
-                    resource_uri=share.shareUri,
+            # Force clean-up of share AWS resources
+            if force_delete:
+                log.info('Triggering force clean-up task to revoke all share items')
+                cleanup_share_task: Task = Task(
+                    action='ecs.share.cleanup',
+                    targetUri=uri,
+                    payload={'environmentUri': share.environmentUri},
                 )
+                session.add(cleanup_share_task)
+                session.commit()
+                Worker.queue(engine=context.db_engine, task_ids=[cleanup_share_task.taskUri])
 
-                # Deleting APPROVER permissions
-                ResourcePolicyService.delete_resource_policy(
-                    session=session,
-                    group=dataset.SamlAdminGroupName,
-                    resource_uri=share.shareUri,
-                )
-                if dataset.stewards != dataset.SamlAdminGroupName:
-                    ResourcePolicyService.delete_resource_policy(
-                        session=session,
-                        group=dataset.stewards,
-                        resource_uri=share.shareUri,
-                    )
-
-                # Delete share
+            else:
+                ShareObjectService.deleting_share_permissions(session=session, share=share, dataset=dataset)
+                # Delete all share items and share
+                ShareStatusRepository.delete_share_item_batch(session=session, share_uri=share.shareUri)
                 session.delete(share)
-
             return True
+
+    @staticmethod
+    def deleting_share_permissions(session, share, dataset):
+        # Delete share resource policy permissions
+        # Deleting REQUESTER permissions
+        ResourcePolicyService.delete_resource_policy(
+            session=session,
+            group=share.groupUri,
+            resource_uri=share.shareUri,
+        )
+
+        # Deleting APPROVER permissions
+        ResourcePolicyService.delete_resource_policy(
+            session=session,
+            group=dataset.SamlAdminGroupName,
+            resource_uri=share.shareUri,
+        )
+        if dataset.stewards != dataset.SamlAdminGroupName:
+            ResourcePolicyService.delete_resource_policy(
+                session=session,
+                group=dataset.stewards,
+                resource_uri=share.shareUri,
+            )
+        return True
 
     @staticmethod
     def resolve_share_object_statistics(uri):

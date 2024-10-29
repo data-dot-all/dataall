@@ -21,7 +21,7 @@ def create_metadata_form_version(context: Context, source, formUri, copyVersion)
 
 
 def create_attached_metadata_form(context: Context, source, formUri, input):
-    return AttachedMetadataFormService.create_attached_metadata_form(uri=formUri, data=input)
+    return AttachedMetadataFormService.create_or_update_attached_metadata_form(uri=formUri, data=input)
 
 
 def delete_metadata_form(context: Context, source, formUri):
@@ -46,6 +46,10 @@ def list_entity_metadata_forms(context: Context, source, filter=None):
 
 def get_home_entity_name(context: Context, source: MetadataForm):
     return MetadataFormService.get_home_entity_name(metadata_form=source)
+
+
+def get_entity_name(context: Context, source: AttachedMetadataForm):
+    return MetadataFormService.get_entity_name(attached_metadata_form=source)
 
 
 def get_metadata_form(context: Context, source, uri):
@@ -106,3 +110,7 @@ def resolve_metadata_form_field(context: Context, source: AttachedMetadataFormFi
 
 def get_entity_metadata_form_permissions(context: Context, source, entityUri):
     return MetadataFormService.get_mf_permissions(entityUri=entityUri)
+
+
+def list_metadata_form_versions(context: Context, source, uri):
+    return MetadataFormService.list_metadata_form_versions(uri=uri)
