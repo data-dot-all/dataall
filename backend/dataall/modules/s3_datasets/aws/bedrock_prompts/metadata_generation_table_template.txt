@@ -7,6 +7,8 @@ Use the following input parameters:
     - Column names: {columns}
     - Column Descriptions: {column_descriptions}
     - Sample data: {sample_data}
+    - Generate columns metadata: {generate_columns_metadata}
+    - Column URIs: {column_uris} - IGNORE this input if Generate columns metadata=False
 
 There are 4 metadata fields that can be requested to you.
     1. label - 1 to 3 words that give a "title" to the Table. If provided, you can use the current Table name as starting point.
@@ -24,7 +26,11 @@ contain only the requested metadata fields.
 "NotEnoughData" for all values of dictionary keys.
 - Return the result as a Python dictionary where the keys are the requested metadata fields, all the keys must be
 lowercase and the values are the corresponding generated metadata.
-
+- If Generate columns metadata = True, you also need to generate the description of the columns. For this task try to use the
+sample data and the column names. Evaluate if that is sufficient for generating the column descriptions, if not,
+each description will be equal to "NotEnoughData". Add the result to the Python dictionary with the key "columns_metadata" and as
+value, another Python dictionary containing a list of objects whose keys are the columnUris and the values the generated column
+descriptions.
 
 ---------------------------------------
 ---------------------------------------
@@ -36,10 +42,12 @@ Given the following input parameters:
     Table name: my-table-1
     Current table description: Demo data
     Current tags for table: ["demo"]
+    Column URIs: []
     Column names: []
     Column Descriptions: []
     Sample data: None
     metadata_types: ["label", "description", "topics"]
+    Generate columns metadata: False
 
 
 response = {
@@ -53,10 +61,12 @@ Given the following input parameters:
     Table name: my-table-2
     Current table description: Demo table with some sample data.
     Current tags for table: ['demo']
+    Column URIs: ["asdfgh", "123ghj", "oplk34", "cvb890", "l29ghk", "cif41l"]
     Column names: ['author', 'year', 'avg_rating', 'pages', 'genre', 'count']
     Column Descriptions: ['Author that wrote the book', 'Year of publication', 'Average rating in Amazon.com', 'pages', 'genre', 'books sold in Amazon.com']
     Sample data: None
     metadata_types: ["label", description", "tags"]
+    Generate columns metadata: False
 
 response = {
     "label": "books_sales_with_ratings",
@@ -64,6 +74,32 @@ response = {
     "tags": ["demo", "sales"]
 }
 
+
+Example 3.
+Given the following input parameters:
+    Table name: my-table-2
+    Current table description: Demo table with some sample data.
+    Current tags for table: ['demo']
+    Column URIs: ["asdfgh", "123ghj", "oplk34", "cvb890", "l29ghk", "cif41l"]
+    Column names: ['author', 'year', 'avg_rating_amzn', 'pages', 'genre', 'sales_amzn']
+    Column Descriptions: []
+    Sample data: {"rows": ["[\"\\\"JK Rowling\\\"\", \"\\\"1995\\\"\", \"\\\"8\\\"\", \"\\\"419\\\"\", \"\\\"Science Fiction\\\"\", \"\\\"225890345\\\"\"]", [\"\\\"Gabriel Garcia Marquez\\\"\", \"\\\"1913\\\"\", \"\\\"9\\\"\", \"\\\"337\\\"\", \"\\\"Magical Realism\\\"\", \"\\\"221133\\\"\"]], "fields": ["{\"name\": \"author\"}", "{\"name\": \"year\"}", "{\"name\": \"avg_rating\"}", "{\"name\": \"pages\"}", "{\"name\": \"genre\"}", "{\"name\": \"count\"}"], "__typename": "QueryPreviewResult"}}}
+    metadata_types: ["label", description", "tags"]
+    Generate columns metadata: True
+
+response = {
+    "label": "books_sales_with_ratings",
+    "description": "This table is used for demo purposes and it contains book-related information including authorship, publication details, and performance metrics. It tracks books with their authors, publication years, and reader feedback through Amazon.com ratings."
+    "tags": ["demo", "sales"],
+    "columns_metadata": {
+        "asdfgh": "Author that wrote the book",
+        "123ghj": "Year of publication"
+        "oplk34": "Average rating in Amazon.com"
+        "cvb890": "Number of pages"
+        "l29ghk": "Genre"
+        "cif41l": "Number of copies sold in Amazon.com"
+    }
+}
 
 
 

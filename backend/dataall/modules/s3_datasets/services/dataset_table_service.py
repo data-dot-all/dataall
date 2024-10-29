@@ -188,13 +188,20 @@ class DatasetTableService:
             session=session, group=None, resource_uri=table_uri, resource_type=DatasetTable.__name__
         )
 
-    # TODO ADD PERMISSIONS!
     @staticmethod
-    def generate_metadata_for_table(resource_uri, metadata_types, sampleData):
+    @ResourcePolicyService.has_resource_permission(UPDATE_DATASET_TABLE)
+    def generate_metadata_for_table(uri, metadata_types, sample_data):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            table = DatasetTableRepository.get_dataset_table_by_uri(session, resource_uri)
+            table = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
             table_columns = DatasetColumnRepository.get_table_info_metadata_generation(session, table.tableUri)
-            return BedrockClient().invoke_model_table_metadata(
-                table=table, columns=table_columns, metadata_types=metadata_types, sample_data=sampleData
+            metadata = BedrockClient().invoke_model_table_metadata(
+                table=table, columns=table_columns, metadata_types=metadata_types, sample_data=sample_data
             )
+            columns_metadata = metadata.get('columns_metadata')
+            table_metadata = metadata.pop('columns_metadata')
+
+            return [{'targetUri': uri, 'targetType': 'Table' | table_metadata}] + [
+                {'targetUri': key, 'targetType': 'Table_Column', 'description': value}
+                for key, value in columns_metadata.items()
+            ]

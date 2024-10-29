@@ -27,6 +27,7 @@ class MetadataOutput(BaseModel):
     description: Optional[str] = None
     label: Optional[str] = None
     topics: Optional[List[str]] = None
+    columns_metadata: Optional[List[dict]] = None
 
 
 class BedrockClient:
@@ -61,12 +62,13 @@ class BedrockClient:
             raise exceptions.ModelGuardrailException(response)
         return response
 
-    def invoke_model_table_metadata(self, metadata_types, table, columns, sample_data):
+    def invoke_model_table_metadata(self, metadata_types, table, columns, sample_data, generate_columns_metadata=False):
         prompt_template = PromptTemplate.from_file(METADATA_GENERATION_TABLE_TEMPLATE_PATH)
         parser = JsonOutputParser(pydantic_object=MetadataOutput)
         chain = prompt_template | self._model | parser
         context = {
             'metadata_types': metadata_types,
+            'generate_columns_metadata': generate_columns_metadata,
             'label': table.label,
             'description': table.description,
             'tags': table.tags,

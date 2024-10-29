@@ -169,9 +169,8 @@ def generate_metadata(
     source: S3Dataset,
     resourceUri: str,
     targetType: str,
-    version: int,
     metadataTypes: list,
-    sampleData: dict = {},
+    tableSampleData: dict = {},
 ):
     RequestValidator.validate_uri(param_name='resourceUri', param_value=resourceUri)
     if metadataTypes not in [item.value for item in MetadataGenerationTypes]:
@@ -181,15 +180,13 @@ def generate_metadata(
             f'a list of allowed values {[item.value for item in MetadataGenerationTypes]}',
         )
     if targetType == MetadataGenerationTargets.S3_Dataset.value:
-        return DatasetService.generate_metadata_for_dataset(resource_uri=resourceUri, metadata_types=metadataTypes)
+        return DatasetService.generate_metadata_for_dataset(uri=resourceUri, metadata_types=metadataTypes)
     elif targetType == MetadataGenerationTargets.Table.value:
         return DatasetTableService.generate_metadata_for_table(
-            resource_uri=resourceUri, metadata_types=metadataTypes, sampleData=sampleData
+            uri=resourceUri, metadata_types=metadataTypes, sample_data=tableSampleData
         )
     elif targetType == MetadataGenerationTargets.Folder.value:
-        return DatasetLocationService.generate_metadata_for_folder(
-            resource_uri=resourceUri, metadata_types=metadataTypes
-        )
+        return DatasetLocationService.generate_metadata_for_folder(uri=resourceUri, metadata_types=metadataTypes)
     else:
         raise Exception('Unsupported target type for metadata generation')
 
@@ -206,7 +203,7 @@ def update_dataset_metadata(context: Context, source: S3Dataset, resourceUri: st
 def list_dataset_tables_folders(context: Context, source: S3Dataset, datasetUri: str, filter: dict = None):
     if not filter:
         filter = {}
-    return DatasetService.list_dataset_tables_folders(dataset_uri=datasetUri, filter=filter)
+    return DatasetService.list_dataset_tables_folders(uri=datasetUri, filter=filter)
 
 
 class RequestValidator:

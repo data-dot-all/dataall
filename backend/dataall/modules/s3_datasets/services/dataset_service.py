@@ -30,6 +30,7 @@ from dataall.modules.s3_datasets.db.dataset_location_repositories import Dataset
 from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.s3_datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.s3_datasets.services.dataset_permissions import (
+    GET_DATASET,
     CREDENTIALS_DATASET,
     CRAWL_DATASET,
     DELETE_DATASET,
@@ -560,21 +561,24 @@ class DatasetService:
         GlossaryRepository.delete_glossary_terms_links(session, dataset_uri, 'Dataset')
 
     @staticmethod
-    def list_dataset_tables_folders(dataset_uri, filter):
+    @ResourcePolicyService.has_resource_permission(GET_DATASET)
+    def list_dataset_tables_folders(uri, filter):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            return DatasetRepository.paginated_dataset_tables_folders(session, dataset_uri, filter)
+            return DatasetRepository.paginated_dataset_tables_folders(session, uri, filter)
 
     @staticmethod
-    def generate_metadata_for_dataset(resource_uri, metadata_types):
+    @ResourcePolicyService.has_resource_permission(UPDATE_DATASET)
+    def generate_metadata_for_dataset(uri, metadata_types):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            dataset = DatasetBaseRepository.get_dataset_by_uri(session, resource_uri)
+            dataset = DatasetBaseRepository.get_dataset_by_uri(session, uri)
             tables = DatasetRepository.get_dataset_tables(session, dataset.datasetUri)
             folders = DatasetLocationRepository.get_dataset_folders(session, dataset.datasetUri)
-            return BedrockClient().invoke_model_dataset_metadata(
+            metadata = BedrockClient().invoke_model_dataset_metadata(
                 metadata_types=metadata_types,
                 dataset=dataset,
                 tables=tables,
                 folders=folders,
             )
+            return [{'targetUri': uri, 'targetType': 'S3_Dataset'} | metadata]
