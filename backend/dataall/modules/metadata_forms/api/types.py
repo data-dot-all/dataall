@@ -35,7 +35,6 @@ MetadataForm = gql.ObjectType(
     ],
 )
 
-
 MetadataFormField = gql.ObjectType(
     name='MetadataFormField',
     fields=[
@@ -114,5 +113,17 @@ AttachedMetadataFormField = gql.ObjectType(
         gql.Field(name='field', type=gql.Ref('MetadataFormField'), resolver=resolve_metadata_form_field),
         gql.Field(name='value', type=gql.String),
         gql.Field(name='hasTenantPermissions', type=gql.Boolean, resolver=has_tenant_permissions_for_metadata_forms),
+    ],
+)
+
+MetadataFormEnforcementRule = gql.ObjectType(
+    name='MetadataFormEnforcementRule',
+    fields=[
+        gql.Field(name='uri', type=gql.String),
+        gql.Field(name='level', type=gql.String),
+        gql.Field(name='homeEntity', type=gql.String),
+        gql.Field(name='homeEntityName', type=gql.String, resolver=get_home_entity_name),
+        gql.Field(name='metadataForm', type=gql.Ref('MetadataForm'), resolver=resolve_metadata_form),
+        gql.Field(name='entityTypes', type=gql.ArrayType(gql.String)),
     ],
 )

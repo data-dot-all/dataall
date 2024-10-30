@@ -4,7 +4,11 @@ from dataall.core.environment.db.environment_repositories import EnvironmentRepo
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository, DatasetListRepository
-from dataall.modules.metadata_forms.db.enums import MetadataFormEnforcementScope, MetadataFormEntityTypes
+from dataall.modules.metadata_forms.db.enums import (
+    MetadataFormEnforcementScope,
+    MetadataFormEntityTypes,
+    MetadataFormEnforcementSeverity,
+)
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
 from dataall.modules.metadata_forms.services.metadata_form_access_service import MetadataFormAccessService
 from dataall.modules.metadata_forms.services.metadata_form_permissions import (
@@ -17,8 +21,14 @@ from dataall.modules.notifications.db.notification_repositories import Notificat
 class MetadataFormEnforcementRequestValidationService:
     @staticmethod
     def validate_create_request(data):
+        if 'metadataFormUri' not in data:
+            raise exceptions.RequiredParameter('metadataFormUri')
+
         if 'level' not in data:
             raise exceptions.RequiredParameter('level')
+
+        if 'severity' not in data:
+            raise exceptions.RequiredParameter('severity')
 
         if data.get('level') != MetadataFormEnforcementScope.Global.value:
             if 'homeEntity' not in data:
@@ -26,6 +36,10 @@ class MetadataFormEnforcementRequestValidationService:
 
         if 'entityTypes' not in data:
             raise exceptions.RequiredParameter('entityTypes')
+
+        # check that values are valid for the enums
+        MetadataFormEnforcementScope(data.get('level'))
+        MetadataFormEnforcementSeverity(data.get('severity'))
 
 
 class MetadataFormEnforcementService:

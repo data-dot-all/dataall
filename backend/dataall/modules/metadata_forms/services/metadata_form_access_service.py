@@ -108,40 +108,21 @@ class MetadataFormAccessService:
     @staticmethod
     def check_enforcement_access(entityUri, level):
         context = get_context()
-        if TenantPolicyValidationService.is_tenant_admin(context.groups):
-            return True
+        is_admin = TenantPolicyValidationService.is_tenant_admin(context.groups)
 
         if level == MetadataFormEnforcementScope.Global.value:
+            if is_admin:
+                return True
             raise exceptions.UnauthorizedOperation(
                 action=ENFORCE_METADATA_FORM, message='Only data.all admins can enforce metadata forms on global level'
             )
 
         with context.db_engine.scoped_session() as session:
-            entities_to_check = [entityUri]
-            if level == MetadataFormEnforcementScope.Environment.value:
-                env = EnvironmentRepository.get_environment_by_uri(session, entityUri)
-                entities_to_check.append(env.organizationUri)
-            if level == MetadataFormEnforcementScope.Dataset.value:
-                dataset = DatasetBaseRepository.get_dataset_by_uri(session, entityUri)
-                entities_to_check.append(dataset.organizationUri)
-                entities_to_check.append(dataset.environmentUri)
-
-            failed_checks = []
-            for entity in entities_to_check:
-                try:
-                    ResourcePolicyService.check_user_resource_permission(
-                        session=session,
-                        username=context.username,
-                        groups=context.groups,
-                        resource_uri=entity,
-                        permission_name=ENFORCE_METADATA_FORM,
-                    )
-                except exceptions.ResourceUnauthorized:
-                    failed_checks.append(entity)
-
-            if failed_checks:
-                raise exceptions.UnauthorizedOperation(
-                    action=ENFORCE_METADATA_FORM,
-                    message=f'User {context.username} is not allowed to enforce metadata forms on resource {entityUri}',
-                )
+            ResourcePolicyService.check_user_resource_permission(
+                session=session,
+                username=context.username,
+                groups=context.groups,
+                resource_uri=entityUri,
+                permission_name=ENFORCE_METADATA_FORM,
+            )
         return True
