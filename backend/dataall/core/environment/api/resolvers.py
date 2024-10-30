@@ -177,6 +177,7 @@ def get_parent_organization(context: Context, source, **kwargs):
     org = get_organization_simplified(context, source, organizationUri=source.organizationUri)
     return org
 
+
 # used from getConsumptionRolePolicies query -- query resolver
 def get_consumption_role_policies(context: Context, source, environmentUri, IAMRoleName):
     return EnvironmentService.resolve_consumption_role_policies(uri=environmentUri, IAMRoleName=IAMRoleName)
