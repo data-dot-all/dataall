@@ -124,7 +124,9 @@ class S3BucketShareManager:
         if not S3SharePolicyService.check_if_sid_exists(
             f'{IAM_S3_BUCKETS_STATEMENT_SID}S3', share_policy_service.total_s3_stmts
         ):
-            logger.info(f'IAM Policy Statement with Sid: {IAM_S3_BUCKETS_STATEMENT_SID}S3<index> - where <index> can be 0,1,2.. - does not exist')
+            logger.info(
+                f'IAM Policy Statement with Sid: {IAM_S3_BUCKETS_STATEMENT_SID}S3<index> - where <index> can be 0,1,2.. - does not exist'
+            )
             self.bucket_errors.append(
                 ShareErrorFormatter.missing_permission_error_msg(
                     self.target_requester_IAMRoleName,
@@ -277,11 +279,8 @@ class S3BucketShareManager:
             target_s3_kms_statements=s3_kms_statement_chunks,
         )
 
-        share_managed_polices = share_policy_service.get_managed_policies()
-        all_managed_policies_attached = all(
-            share_policy_service.check_if_policy_attached(managed_policy) for managed_policy in share_managed_polices
-        )
-        if not all_managed_policies_attached:
+        is_unattached_policies = share_policy_service.get_policies_unattached_to_role()
+        if is_unattached_policies:
             logger.info(
                 f'Found some policies are not attached to the target IAM role: {self.target_requester_IAMRoleName}. Attaching policies now'
             )

@@ -21,9 +21,7 @@ class ServiceQuota:
             return services_list
         except ClientError as e:
             if e.response['Error']['Code'] == 'AccessDenied':
-                raise Exception(
-                    f'Data.all Environment Pivot Role does not have permissions to do list_services : {e}'
-                )
+                raise Exception(f'Data.all Environment Pivot Role does not have permissions to do list_services : {e}')
             log.error(f'Failed list services and service codes due to: {e}')
             return []
 
@@ -38,7 +36,9 @@ class ServiceQuota:
             return service_quota_code_list
         except ClientError as e:
             if e.response['Error']['Code'] == 'AccessDenied':
-                raise Exception(f'Data.all Environment Pivot Role does not have permissions to do list_service_quota : {e}')
+                raise Exception(
+                    f'Data.all Environment Pivot Role does not have permissions to do list_service_quota : {e}'
+                )
             log.error(f'Failed list quota codes to: {e}')
             return []
 
@@ -51,6 +51,8 @@ class ServiceQuota:
             return response['Quota']['Value']
         except ClientError as e:
             if e.response['Error']['Code'] == 'AccessDenied':
-                raise Exception(f'Data.all Environment Pivot Role does not have permissions to do get_service_quota: {e}')
+                raise Exception(
+                    f'Data.all Environment Pivot Role does not have permissions to do get_service_quota: {e}'
+                )
             log.error(f'Failed list quota codes to: {e}')
             return None

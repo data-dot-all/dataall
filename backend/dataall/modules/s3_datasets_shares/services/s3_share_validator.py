@@ -162,4 +162,3 @@ class S3ShareValidator(SharesValidatorInterface):
             elif not attached:
                 managed_policy_list = policy_manager.get_policies_unattached_to_role()
                 policy_manager.attach_policies(managed_policy_list)
-

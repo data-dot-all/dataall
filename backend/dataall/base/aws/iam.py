@@ -1,5 +1,6 @@
 import logging
 from botocore.exceptions import ClientError
+import re
 
 from .sts import SessionHelper
 
@@ -67,7 +68,7 @@ class IAM:
             return None
 
     @staticmethod
-    def list_policy_names_by_policy_pattern(account_id: str, region: str, policy_name: str):
+    def list_policy_names_by_policy_pattern(account_id: str, region: str, policy_filter_pattern: str):
         try:
             client = IAM.client(account_id, region)
             # Setting Scope to 'Local' to fetch all the policies created in this account
@@ -76,11 +77,11 @@ class IAM:
             for page in paginator.paginate(Scope='Local'):
                 policies.extend(page['Policies'])
             policy_names = [policy.get('PolicyName') for policy in policies]
-            return [policy_nm for policy_nm in policy_names if policy_name in policy_nm]
+            return [policy_nm for policy_nm in policy_names if re.search(policy_filter_pattern, policy_nm)]
         except ClientError as e:
             if e.response['Error']['Code'] == 'AccessDenied':
                 raise Exception(
-                    f'Data.all Environment Pivot Role does not have permissions to get policies with pattern {policy_name} due to: {e}'
+                    f'Data.all Environment Pivot Role does not have permissions to get policies with pattern {policy_filter_pattern} due to: {e}'
                 )
             log.error(f'Failed to get policies for policy pattern due to: {e}')
             return []

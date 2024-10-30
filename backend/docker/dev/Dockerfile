@@ -57,6 +57,8 @@ RUN echo export PATH="\
     /root/.nvm/versions/node/${NODE_VERSION}/bin:\
     $(${PYTHON_VERSION} -m site --user-base)/bin:\
     $(python3 -m site --user-base)/bin:\
+    $(python -m site --user-base)/bin:\
+    /home/${CONTAINER_USER}/.local/bin:\
     $PATH" >> ~/.bashrc && \
      echo "nvm use ${NODE_VERSION} 1> /dev/null" >> ~/.bashrc
 

@@ -57,13 +57,13 @@ class ManagedPolicy(ABC):
         ...
 
     def check_if_policy_exists(self, policy_name) -> bool:
-        share_policy = IAM.get_managed_policy_by_name(self.account, self.region, policy_name)
-        return share_policy is not None
+        policy = IAM.get_managed_policy_by_name(self.account, self.region, policy_name)
+        return policy is not None
 
     def get_managed_policies(self) -> List[str]:
         policy_pattern = self.generate_base_policy_name()
-        share_policies = self._get_policy_names(policy_pattern)
-        return share_policies
+        policies = self._get_policy_names(policy_pattern)
+        return policies
 
     def check_if_policy_attached(self, policy_name):
         is_policy_attached = IAM.is_policy_attached(self.account, self.region, policy_name, self.role_name)
@@ -71,11 +71,11 @@ class ManagedPolicy(ABC):
 
     def get_policies_unattached_to_role(self):
         policy_pattern = self.generate_base_policy_name()
-        share_policies = self._get_policy_names(policy_pattern)
+        policies = self._get_policy_names(policy_pattern)
         unattached_policies = []
-        for share_policy_name in share_policies:
-            if not self.check_if_policy_attached(share_policy_name):
-                unattached_policies.append(share_policy_name)
+        for policy_name in policies:
+            if not self.check_if_policy_attached(policy_name):
+                unattached_policies.append(policy_name)
         return unattached_policies
 
     def attach_policies(self, managed_policies_list: List[str]):
@@ -86,12 +86,10 @@ class ManagedPolicy(ABC):
             except Exception as e:
                 raise Exception(f"Required customer managed policy {policy_arn} can't be attached: {e}")
 
-    def _get_policy_names(self, policy_pattern):
-        share_policies = IAM.list_policy_names_by_policy_pattern(self.account, self.region, policy_pattern)
-        # Filter through all policies and remove which have the old policy name
-        # This is to check that old policies are not included
-        old_policy_name = self.generate_old_policy_name()
-        return [policy for policy in share_policies if policy != old_policy_name]
+    def _get_policy_names(self, base_policy_name):
+        filter_pattern = r'{base_policy_name}-\d'.format(base_policy_name=base_policy_name)
+        policies = IAM.list_policy_names_by_policy_pattern(self.account, self.region, filter_pattern)
+        return policies
 
 
 class PolicyManager(object):
