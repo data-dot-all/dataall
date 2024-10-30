@@ -2,7 +2,11 @@ from sqlalchemy import or_, and_
 from sqlalchemy.orm import with_polymorphic
 from sqlalchemy import func
 
-from dataall.modules.metadata_forms.db.enums import MetadataFormVisibility, MetadataFormFieldType
+from dataall.modules.metadata_forms.db.enums import (
+    MetadataFormVisibility,
+    MetadataFormFieldType,
+    MetadataFormEnforcementSeverity,
+)
 from dataall.modules.metadata_forms.db.metadata_form_models import (
     MetadataForm,
     MetadataFormField,
@@ -13,6 +17,7 @@ from dataall.modules.metadata_forms.db.metadata_form_models import (
     IntegerAttachedMetadataFormField,
     GlossaryTermAttachedMetadataFormField,
     MetadataFormVersion,
+    MetadataFormEnforcementRule,
 )
 
 import json
@@ -300,10 +305,17 @@ class MetadataFormRepository:
         return query.order_by(all_mfs.c.name)
 
     @staticmethod
-    def query_all_attached_metadata_forms_for_entity(session, entityUri, entityType):
-        return session.query(AttachedMetadataForm).filter(
-            and_(AttachedMetadataForm.entityType == entityType, AttachedMetadataForm.entityUri == entityUri)
-        )
+    def query_all_attached_metadata_forms_for_entity(
+        session, entityUri, entityType=None, metadataFormUri=None, version=None
+    ):
+        amfs = session.query(AttachedMetadataForm).filter(AttachedMetadataForm.entityUri == entityUri)
+        if entityType:
+            amfs = amfs.filter(AttachedMetadataForm.entityType == entityType)
+        if metadataFormUri:
+            amfs = amfs.filter(AttachedMetadataForm.metadataFormUri == metadataFormUri)
+        if version:
+            amfs = amfs.filter(AttachedMetadataForm.version == version)
+        return amfs
 
     @staticmethod
     def get_metadata_form_versions_numbers(session, uri):
@@ -331,3 +343,19 @@ class MetadataFormRepository:
         if version:
             all_attached = all_attached.filter(AttachedMetadataForm.version == version)
         return all_attached.all()
+
+    @staticmethod
+    def create_mf_enforcement_rule(session, uri, data, version):
+        rule = MetadataFormEnforcementRule(
+            metadataFormUri=uri,
+            version=version,
+            level=data.get('level'),
+            homeEntity=data.get('homeEntity'),
+            entityTypes=data.get('entityTypes'),
+            severity=data.get('severity', MetadataFormEnforcementSeverity.Recommended.value),
+        )
+        return rule
+
+    @staticmethod
+    def get_mf_enforcement_rule_by_uri(session, uri):
+        return session.query(MetadataFormEnforcementRule).get(uri)
