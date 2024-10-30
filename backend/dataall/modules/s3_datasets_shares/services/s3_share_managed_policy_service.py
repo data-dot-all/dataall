@@ -12,8 +12,6 @@ from dataall.base.utils.naming_convention import NamingConventionService, Naming
 from dataall.core.environment.services.managed_iam_policies import ManagedPolicy
 import logging
 
-from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
-
 log = logging.getLogger(__name__)
 
 logging.basicConfig(
@@ -131,7 +129,7 @@ class S3SharePolicyService(ManagedPolicy):
         return True
 
     @staticmethod
-    def check_s3_actions_in_policy_statement(existing_policy_statements: List[Any]) -> (bool, str, str):
+    def check_s3_actions_in_policy_statements(existing_policy_statements: List[Any]) -> (bool, str, str):
         """
         Checks if all required s3 actions are allowed in the existing policy and there is no disallowed actions
         :param existing_policy_statements:

@@ -190,16 +190,16 @@ class S3AccessPointShareManager:
                 stacklevel=2,
             )
             old_managed_policy_name = share_policy_service.generate_old_policy_name()
-            if not share_policy_service.check_if_policy_exists(policy_name=old_managed_policy_name):
+            old_policy_exist = share_policy_service.check_if_policy_exists(policy_name=old_managed_policy_name)
+            if not old_policy_exist:
                 logger.info(
-                    f'No managed policy exists for the role: {self.target_requester_IAMRoleName}, Reapply share create managed policies.'
+                    f'No managed policy exists for the role: {self.target_requester_IAMRoleName}, Reapply share to create indexed managed policies.'
                 )
                 self.folder_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
                 return
-
-            if share_policy_service.check_if_policy_exists(policy_name=old_managed_policy_name):
+            else:
                 logger.info(
-                    f'Old managed policy exists for the role: {self.target_requester_IAMRoleName}. Reapply share create managed policies.'
+                    f'Old managed policy exists for the role: {self.target_requester_IAMRoleName}. Reapply share to create indexed managed policies.'
                 )
                 self.folder_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
                 return
@@ -222,12 +222,12 @@ class S3AccessPointShareManager:
         if not S3SharePolicyService.check_if_sid_exists(
             f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3', share_policy_service.total_s3_access_point_stmts
         ):
-            logger.info(f'IAM Policy Statement with base Sid: {IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3 does not exist')
+            logger.info(f'IAM Policy Statement with Sid: {IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3<index> - where <index> can be 0,1,2.. -  does not exist')
             self.folder_errors.append(
                 ShareErrorFormatter.missing_permission_error_msg(
                     self.target_requester_IAMRoleName,
                     'IAM Policy Statement Sid',
-                    f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3-<index>',
+                    f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3<index>',
                     'S3 Bucket',
                     f'{self.bucket_name}',
                 )
@@ -237,19 +237,19 @@ class S3AccessPointShareManager:
             existing_policy_statements=share_policy_service.total_s3_access_point_stmts,
         ):
             logger.info(
-                f'IAM Policy Statement with Sid {IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3-<index> does not contain resources {s3_target_resources}'
+                f'IAM Policy Statement with Sid {IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3<index> - where <index> can be 0,1,2.. - does not contain resources {s3_target_resources}'
             )
             self.folder_errors.append(
                 ShareErrorFormatter.missing_permission_error_msg(
                     self.target_requester_IAMRoleName,
                     'IAM Policy Resource(s)',
-                    f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3-<index>',
+                    f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3<index>',
                     'S3 Bucket',
                     f'{self.bucket_name}',
                 )
             )
         else:
-            policy_sid_actions_map = share_policy_service.check_s3_actions_in_policy_statement(
+            policy_sid_actions_map = share_policy_service.check_s3_actions_in_policy_statements(
                 existing_policy_statements=share_policy_service.total_s3_access_point_stmts
             )
             for sid in policy_sid_actions_map:
@@ -287,13 +287,13 @@ class S3AccessPointShareManager:
                 f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS', share_policy_service.total_s3_access_point_kms_stmts
             ):
                 logger.info(
-                    f'IAM Policy Statement with base Sid: {IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS-<index> does not exist'
+                    f'IAM Policy Statement with Sid: {IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS<index> - where <index> can be 0,1,2.. - does not exist'
                 )
                 self.folder_errors.append(
                     ShareErrorFormatter.missing_permission_error_msg(
                         self.target_requester_IAMRoleName,
                         'IAM Policy Statement',
-                        f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS-<index>',
+                        f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS<index>',
                         'KMS Key',
                         f'{kms_key_id}',
                     )
@@ -303,13 +303,13 @@ class S3AccessPointShareManager:
                 existing_policy_statements=share_policy_service.total_s3_access_point_kms_stmts,
             ):
                 logger.info(
-                    f'IAM Policy Statement {IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS-<index> does not contain resources {kms_target_resources}'
+                    f'IAM Policy Statement {IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS<index> - where <index> can be 0,1,2.. - does not contain resources {kms_target_resources}'
                 )
                 self.folder_errors.append(
                     ShareErrorFormatter.missing_permission_error_msg(
                         self.target_requester_IAMRoleName,
                         'IAM Policy Resource',
-                        f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS-<index>',
+                        f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS<index>',
                         'KMS Key',
                         f'{kms_key_id}',
                     )
