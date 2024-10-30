@@ -79,7 +79,7 @@ class ServicePolicy(object):
                         ],
                         resources=[
                             f'arn:aws:iam::{self.account}:policy/{self.resource_prefix}*',
-                            f'arn:aws;iam::{self.account}:role/aws-service-role/*',
+                            f'arn:aws:iam::{self.account}:role/aws-service-role/*',
                         ],
                     ),
                     aws_iam.PolicyStatement(
