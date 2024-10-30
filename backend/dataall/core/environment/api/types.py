@@ -180,9 +180,6 @@ ConsumptionRole = gql.ObjectType(
         gql.Field(name='created', type=gql.String),
         gql.Field(name='updated', type=gql.String),
         gql.Field(name='deleted', type=gql.String),
-        gql.Field(
-            name='managedPolicies', type=gql.ArrayType(RoleManagedPolicy), resolver=resolve_consumption_role_policies
-        ),
     ],
 )
 
