@@ -3,7 +3,6 @@ from dataall.base.api import gql
 from dataall.core.environment.api.resolvers import (
     get_environment_stack,
     get_parent_organization,
-    resolve_consumption_role_policies,
     resolve_environment_networks,
     resolve_parameters,
     resolve_user_role,
