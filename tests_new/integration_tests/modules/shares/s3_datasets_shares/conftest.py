@@ -79,24 +79,18 @@ def session_consumption_role_1(client5, group5, session_cross_acc_env_1, session
 
 
 @pytest.fixture(scope='session')
-def session_consumption_role_2(
-    client6, group6, updated_persistent_cross_acc_env_1, persistent_cross_acc_env_1_aws_client
-):
+def session_consumption_role_2(client6, group6, persistent_cross_acc_env_1, persistent_cross_acc_env_1_aws_client):
     consumption_role = create_consumption_role(
         client6,
         group6,
-        updated_persistent_cross_acc_env_1,
+        persistent_cross_acc_env_1,
         persistent_cross_acc_env_1_aws_client,
         test_session_cons_role_name_2,
         'SessionConsRole2',
     )
     yield consumption_role
-    remove_consumption_role(
-        client6, updated_persistent_cross_acc_env_1.environmentUri, consumption_role.consumptionRoleUri
-    )
-    iam_client = IAMClient(
-        session=persistent_cross_acc_env_1_aws_client, region=updated_persistent_cross_acc_env_1['region']
-    )
+    remove_consumption_role(client6, persistent_cross_acc_env_1.environmentUri, consumption_role.consumptionRoleUri)
+    iam_client = IAMClient(session=persistent_cross_acc_env_1_aws_client, region=persistent_cross_acc_env_1['region'])
     iam_client.delete_consumption_role(test_session_cons_role_name_2)
 
 
@@ -157,15 +151,15 @@ def session_share_2(
 def session_share_3(
     client6,
     client1,
-    updated_persistent_env1,
-    updated_persistent_cross_acc_env_1,
+    persistent_env1,
+    persistent_cross_acc_env_1,
     updated_persistent_s3_dataset1,
     group6,
 ):
     share3 = create_share_object(
         client=client6,
         dataset_or_item_params={'datasetUri': updated_persistent_s3_dataset1.datasetUri},
-        environmentUri=updated_persistent_cross_acc_env_1.environmentUri,
+        environmentUri=persistent_cross_acc_env_1.environmentUri,
         groupUri=group6,
         principalId=group6,
         principalType='Group',
@@ -173,7 +167,7 @@ def session_share_3(
         attachMissingPolicies=True,
         permissions=['Read'],
     )
-    share1 = get_share_object(client6, share3.shareUri)
+    share3 = get_share_object(client6, share3.shareUri)
     yield share3
     clean_up_share(client6, share3.shareUri)
 
@@ -237,8 +231,8 @@ def session_share_consrole_2(
 def session_share_consrole_3(
     client6,
     client1,
-    updated_persistent_env1,
-    updated_persistent_cross_acc_env_1,
+    persistent_env1,
+    persistent_cross_acc_env_1,
     updated_persistent_s3_dataset1,
     group6,
     session_consumption_role_2,
@@ -246,7 +240,7 @@ def session_share_consrole_3(
     share3cr = create_share_object(
         client=client6,
         dataset_or_item_params={'datasetUri': updated_persistent_s3_dataset1.datasetUri},
-        environmentUri=updated_persistent_cross_acc_env_1.environmentUri,
+        environmentUri=persistent_cross_acc_env_1.environmentUri,
         groupUri=group6,
         principalId=session_consumption_role_2.consumptionRoleUri,
         principalType='ConsumptionRole',
@@ -279,7 +273,7 @@ def new_share_param(
     session_s3_dataset1,
     updated_persistent_s3_dataset1,
     session_cross_acc_env_1,
-    updated_persistent_cross_acc_env_1,
+    persistent_cross_acc_env_1,
 ):  # return: client, group, dataset, env, principal_id, principal_type
     share_type, principal_type = request.param
     if principal_type == 'Group':
@@ -290,7 +284,7 @@ def new_share_param(
                 client6,
                 group6,
                 updated_persistent_s3_dataset1,
-                updated_persistent_cross_acc_env_1,
+                persistent_cross_acc_env_1,
                 group6,
                 principal_type,
             )
@@ -309,7 +303,7 @@ def new_share_param(
                 client6,
                 group6,
                 updated_persistent_s3_dataset1,
-                updated_persistent_cross_acc_env_1,
+                persistent_cross_acc_env_1,
                 session_consumption_role_2.consumptionRoleUri,
                 principal_type,
             )
