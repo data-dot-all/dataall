@@ -116,10 +116,6 @@ def dataset(client, patch_es, patch_dataset_methods):
                     language
                     confidentiality
                     autoApprovalEnabled
-                    organization{
-                        organizationUri
-                        label
-                    }
                     terms{
                         count
                         nodes{
@@ -131,19 +127,14 @@ def dataset(client, patch_es, patch_dataset_methods):
                             }
                         }
                     }
-                    environment{
-                        environmentUri
+                    environment {
+                      environmentUri
+                      label
+                      region
+                      organization {
+                        organizationUri
                         label
-                        region
-                        subscriptionsEnabled
-                        subscriptionsProducersTopicImported
-                        subscriptionsConsumersTopicImported
-                        subscriptionsConsumersTopicName
-                        subscriptionsProducersTopicName
-                        organization{
-                            organizationUri
-                            label
-                        }
+                      }
                     }
                     statistics{
                         tables

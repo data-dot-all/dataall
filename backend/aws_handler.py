@@ -7,7 +7,7 @@ from dataall.base.db import get_engine
 from dataall.base.loader import load_modules, ImportMode
 
 logger = logging.getLogger()
-logger.setLevel(os.environ.get('LOG_LEVEL'))
+logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 log = logging.getLogger(__name__)
 
 ENVNAME = os.getenv('envname', 'local')

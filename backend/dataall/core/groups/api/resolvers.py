@@ -50,3 +50,11 @@ def get_groups_for_user(context, source, userid):
         raise Exception("User Id doesn't match user id from context")
 
     return GroupService.get_groups_for_user(userid)
+
+
+def list_user(context, source, groupUri):
+    if not groupUri:
+        raise exceptions.RequiredParameter('groupUri')
+
+    user_list = GroupService.get_user_list_for_group(groupUri)
+    return user_list

@@ -5,6 +5,7 @@ import pytest
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, EnvironmentParameter
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.services.environment_permissions import ENVIRONMENT_ALL
+from dataall.core.permissions.services.organization_permissions import ORGANIZATION_ALL
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.core.stacks.db.stack_models import KeyValueTag
@@ -127,6 +128,14 @@ def org(db):
                 SamlGroupName=group.name,
             )
             session.add(org)
+            session.commit()
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                resource_uri=org.organizationUri,
+                group=group.name,
+                permissions=ORGANIZATION_ALL,
+                resource_type=Organization.__name__,
+            )
             session.commit()
             return org
 

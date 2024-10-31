@@ -30,12 +30,12 @@ def list_user_metadata_forms(client, filter):
     return response.data.listUserMetadataForms
 
 
-def get_metadata_form_full_info(client, uri):
+def get_metadata_form_full_info(client, uri, version=None):
     query = {
         'operationName': 'getMetadataForm',
-        'variables': {'uri': uri},
+        'variables': {'uri': uri, 'version': version},
         'query': f"""
-                   query getMetadataForm($uri: String!) {{
+                   query getMetadataForm($uri: String!, $version: Int) {{
                         getMetadataForm(uri: $uri) {{
                             uri
                             name
@@ -44,7 +44,7 @@ def get_metadata_form_full_info(client, uri):
                             visibility
                             homeEntity
                             homeEntityName
-                            fields {{
+                            fields (version: $version) {{
                                 uri
                                 metadataFormUri
                                 name

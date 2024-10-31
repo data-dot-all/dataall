@@ -19,17 +19,13 @@ Dashboard = gql.ObjectType(
         gql.Field('DashboardId', type=gql.String),
         gql.Field('tags', type=gql.ArrayType(gql.String)),
         gql.Field('created', type=gql.String),
+        gql.Field('AwsAccountId', type=gql.String),
         gql.Field('updated', type=gql.String),
         gql.Field('owner', type=gql.String),
         gql.Field('SamlGroupName', type=gql.String),
         gql.Field(
-            'organization',
-            type=gql.Ref('Organization'),
-            resolver=get_dashboard_organization,
-        ),
-        gql.Field(
             'environment',
-            type=gql.Ref('Environment'),
+            type=gql.Ref('EnvironmentSimplified'),
             resolver=resolve_environment,
         ),
         gql.Field(

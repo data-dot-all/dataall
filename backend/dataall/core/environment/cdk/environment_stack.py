@@ -176,6 +176,7 @@ class EnvironmentSetup(Stack):
             versioned=True,
             enforce_ssl=True,
         )
+        default_environment_bucket.policy.apply_removal_policy(RemovalPolicy.RETAIN)
         self.default_environment_bucket = default_environment_bucket
 
         default_environment_bucket.add_to_resource_policy(
@@ -676,5 +677,23 @@ class EnvironmentSetup(Stack):
                 ],
                 effect=iam.Effect.ALLOW,
                 resources=[f'arn:aws:iam::{self.account}:role/dataall-test-*'],
+            ),
+        )
+
+        self.test_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    'quicksight:DescribeAccountSubscription',
+                ],
+                effect=iam.Effect.ALLOW,
+                resources=[f'arn:aws:quicksight:*:{self.account}:*'],
+            ),
+        )
+
+        self.test_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=['redshift:DeauthorizeDataShare'],
+                effect=iam.Effect.ALLOW,
+                resources=[f'arn:aws:redshift:{self.region}:{self.account}:datashare:*/dataall*'],
             ),
         )

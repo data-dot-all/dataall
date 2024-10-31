@@ -46,13 +46,14 @@ For this reason they must stay immutable as changes to them will affect the rest
 
 
 @pytest.fixture(scope='session')
-def session_env1(client1, group1, org1, session_id, testdata):
+def session_env1(client1, group1, group5, org1, session_id, testdata):
     envdata = testdata.envs['session_env1']
     env = None
     try:
         env = create_env(
             client1, 'session_env1', group1, org1.organizationUri, envdata.accountId, envdata.region, tags=[session_id]
         )
+        invite_group_on_env(client1, env.environmentUri, group5, ['CREATE_DATASET', 'CREATE_SHARE_OBJECT'])
         yield env
     finally:
         if env:

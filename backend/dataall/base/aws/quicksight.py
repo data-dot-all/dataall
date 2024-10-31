@@ -3,8 +3,7 @@ import re
 
 from .sts import SessionHelper
 
-logger = logging.getLogger('QuicksightHandler')
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 class QuicksightClient:

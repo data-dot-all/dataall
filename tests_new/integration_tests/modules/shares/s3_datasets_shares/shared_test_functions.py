@@ -3,7 +3,7 @@ from botocore.exceptions import ClientError
 import boto3
 
 from tests_new.integration_tests.core.environment.queries import get_environment_access_token
-from tests_new.integration_tests.modules.share_base.queries import (
+from tests_new.integration_tests.modules.shares.queries import (
     get_share_object,
     get_s3_consumption_data,
     verify_share_items,
@@ -13,7 +13,7 @@ from tests_new.integration_tests.modules.share_base.queries import (
     approve_share_object,
     remove_share_item,
 )
-from tests_new.integration_tests.modules.share_base.utils import (
+from tests_new.integration_tests.modules.shares.utils import (
     check_share_items_verified,
     check_share_ready,
 )
@@ -21,6 +21,8 @@ from tests_new.integration_tests.aws_clients.sts import STSClient
 from tests_new.integration_tests.aws_clients.athena import AthenaClient
 from tests_new.integration_tests.modules.s3_datasets.aws_clients import S3Client
 from tests_new.integration_tests.modules.s3_datasets.queries import get_folder
+
+import json
 
 ALL_S3_SHARABLE_TYPES_NAMES = [
     'Table',
@@ -139,7 +141,8 @@ def check_share_items_access(
     dataset = share.dataset
     principal_type = share.principal.principalType
     if principal_type == 'Group':
-        credentials = get_environment_access_token(client, share.environment.environmentUri, group)
+        credentials_str = get_environment_access_token(client, share.environment.environmentUri, group)
+        credentials = json.loads(credentials_str)
         session = boto3.Session(
             aws_access_key_id=credentials['AccessKey'],
             aws_secret_access_key=credentials['SessionKey'],

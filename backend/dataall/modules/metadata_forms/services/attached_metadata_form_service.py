@@ -40,6 +40,19 @@ class AttachedMetadataFormService:
     @ResourcePolicyService.has_resource_permission(
         ATTACH_METADATA_FORM, parent_resource=_get_entity_uri, param_name='data'
     )
+    def create_or_update_attached_metadata_form(uri, data):
+        new_form = AttachedMetadataFormService.create_attached_metadata_form(uri=uri, data=data)
+        if data.get('attachedUri'):
+            with get_context().db_engine.scoped_session() as session:
+                existingAMF = MetadataFormRepository.get_attached_metadata_form(session, data.get('attachedUri'))
+                if existingAMF and new_form:
+                    session.delete(existingAMF)
+        return new_form
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(
+        ATTACH_METADATA_FORM, parent_resource=_get_entity_uri, param_name='data'
+    )
     def create_attached_metadata_form(uri, data):
         AttachedMetadataFormValidationService.validate_filled_form_params(uri, data)
         context = get_context()

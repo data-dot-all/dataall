@@ -354,8 +354,43 @@ class SharingService:
                 log.exception('Error occurred during share approval')
                 return False
 
+    @classmethod
+    def cleanup_share(
+        cls,
+        engine: Engine,
+        share_uri: str,
+    ) -> bool:
+        """
+        1) Retrieves share data and items in share
+        2) Calls corresponding SharesInterface.cleanup_shares
+
+        Parameters
+        ----------
+        engine : db.engine
+        share_uri : share uri
+
+        Returns True when completed
+        -------
+        """
+        with engine.scoped_session() as session:
+            share_data, share_items = cls._get_share_data_and_items(session, share_uri)
+            for type, processor in ShareProcessorManager.SHARING_PROCESSORS.items():
+                try:
+                    log.info(f'Cleaning up permissions with {type.value}')
+                    shareable_items = ShareObjectRepository.get_share_data_items_by_type(
+                        session, share_data.share, processor.shareable_type, processor.shareable_uri
+                    )
+                    if shareable_items:
+                        processor.Processor(session, share_data, shareable_items).cleanup_shares()
+                    else:
+                        log.info(f'There are no items to clean-up of type {type.value}')
+                except Exception as e:
+                    log.error(f'Error occurred during clean-up of {type.value}: {e}')
+
+        return True
+
     @staticmethod
-    def _get_share_data_and_items(session, share_uri, status, healthStatus=None):
+    def _get_share_data_and_items(session, share_uri, status=None, healthStatus=None):
         data = ShareObjectRepository.get_share_data(session, share_uri)
         share_data = ShareData(
             share=data[0],
