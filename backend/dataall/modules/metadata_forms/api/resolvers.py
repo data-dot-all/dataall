@@ -16,12 +16,20 @@ def create_metadata_form(context: Context, source, input):
     return MetadataFormService.create_metadata_form(data=input)
 
 
+def create_metadata_form_version(context: Context, source, formUri, copyVersion):
+    return MetadataFormService.create_metadata_form_version(uri=formUri, copyVersion=copyVersion)
+
+
 def create_attached_metadata_form(context: Context, source, formUri, input):
-    return AttachedMetadataFormService.create_attached_metadata_form(uri=formUri, data=input)
+    return AttachedMetadataFormService.create_or_update_attached_metadata_form(uri=formUri, data=input)
 
 
 def delete_metadata_form(context: Context, source, formUri):
     return MetadataFormService.delete_metadata_form_by_uri(uri=formUri)
+
+
+def delete_metadata_form_version(context: Context, source, formUri, version):
+    return MetadataFormService.delete_metadata_form_version(uri=formUri, version=version)
 
 
 def delete_attached_metadata_form(context: Context, source, attachedFormUri):
@@ -40,6 +48,10 @@ def get_home_entity_name(context: Context, source: MetadataForm):
     return MetadataFormService.get_home_entity_name(metadata_form=source)
 
 
+def get_entity_name(context: Context, source: AttachedMetadataForm):
+    return MetadataFormService.get_entity_name(attached_metadata_form=source)
+
+
 def get_metadata_form(context: Context, source, uri):
     return MetadataFormService.get_metadata_form_by_uri(uri=uri)
 
@@ -48,8 +60,8 @@ def resolve_metadata_form(context: Context, source: AttachedMetadataForm):
     return MetadataFormService.get_metadata_form_by_uri(source.metadataFormUri)
 
 
-def get_form_fields(context: Context, source: MetadataForm):
-    return MetadataFormService.get_metadata_form_fields(uri=source.uri)
+def get_form_fields(context: Context, source: MetadataForm, version):
+    return MetadataFormService.get_metadata_form_fields(uri=source.uri, version=version)
 
 
 def create_metadata_form_fields(context: Context, source, formUri, input):
@@ -94,3 +106,11 @@ def has_tenant_permissions_for_metadata_forms(context: Context, source: Metadata
 
 def resolve_metadata_form_field(context: Context, source: AttachedMetadataFormField):
     return MetadataFormService.get_metadata_form_field_by_uri(uri=source.fieldUri)
+
+
+def get_entity_metadata_form_permissions(context: Context, source, entityUri):
+    return MetadataFormService.get_mf_permissions(entityUri=entityUri)
+
+
+def list_metadata_form_versions(context: Context, source, uri):
+    return MetadataFormService.list_metadata_form_versions(uri=uri)

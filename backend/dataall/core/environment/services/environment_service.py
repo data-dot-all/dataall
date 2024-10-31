@@ -730,6 +730,11 @@ class EnvironmentService:
         return EnvironmentRepository.query_all_environment_groups(session, uri, filter)
 
     @staticmethod
+    def list_all_environment_groups(uri, data=None) -> [str]:
+        with get_context().db_engine.scoped_session() as session:
+            return [g.groupUri for g in EnvironmentRepository.query_all_environment_groups(session, uri, data).all()]
+
+    @staticmethod
     @ResourcePolicyService.has_resource_permission(environment_permissions.LIST_ENVIRONMENT_GROUPS)
     def paginated_all_environment_groups(uri, data=None) -> dict:
         data = data if data is not None else {}
@@ -846,6 +851,7 @@ class EnvironmentService:
         return environments
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
     @ResourcePolicyService.has_resource_permission(environment_permissions.DELETE_ENVIRONMENT)
     def delete_environment(uri):
         with get_context().db_engine.scoped_session() as session:
@@ -927,6 +933,7 @@ class EnvironmentService:
         return EnvironmentPermission.NotInvited.value
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
     def enable_subscriptions(environmentUri: str = None, input: dict = None):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -962,6 +969,7 @@ class EnvironmentService:
             return True
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
     def disable_subscriptions(environment_uri: str = None):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -1023,6 +1031,7 @@ class EnvironmentService:
         return aws_session
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
     def get_environment_assume_role_url(
         environmentUri: str = None,
         groupUri: str = None,
@@ -1050,6 +1059,7 @@ class EnvironmentService:
             return url
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
     def generate_environment_access_token(environmentUri: str = None, groupUri: str = None):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -1147,3 +1157,9 @@ class EnvironmentService:
             region=environment.region,
             resource_prefix=environment.resourcePrefix,
         ).get_all_policies()
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(environment_permissions.GET_ENVIRONMENT)
+    def get_consumption_role_by_name(uri, IAMRoleName):
+        with get_context().db_engine.scoped_session() as session:
+            return EnvironmentRepository.get_environment_consumption_role_by_name(session, uri, IAMRoleName)

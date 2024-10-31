@@ -16,6 +16,7 @@ import {
 import {
   deleteAttachedMetadataForm,
   getAttachedMetadataForm,
+  getEntityMetadataFormPermissions,
   getMetadataForm,
   listAttachedMetadataForms,
   listEntityMetadataForms
@@ -30,16 +31,22 @@ import DoNotDisturbAltOutlinedIcon from '@mui/icons-material/DoNotDisturbAltOutl
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 
 export const MetadataAttachment = (props) => {
-  const { entityType, entityUri, canEdit } = props;
+  const { entityType, entityUri } = props;
   const client = useClient();
   const dispatch = useDispatch();
   const [selectedForm, setSelectedForm] = useState(null);
+  const [selectedAttachedForm, setSelectedAttachedForm] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingFields, setLoadingFields] = useState(false);
   const [formsList, setFormsList] = useState([]);
   const [fields, setFields] = useState([]);
+  const [canEdit, setCanEdit] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [values, setValues] = useState({});
+  const [attachedMFUri, setAttachedMFUri] = useState(-1);
   const [filter] = useState({
     ...Defaults.filter,
+    pageSize: 20,
     entityType: entityType,
     entityUri: entityUri
   });
@@ -75,9 +82,11 @@ export const MetadataAttachment = (props) => {
       setFormsList(response.data.listAttachedMetadataForms.nodes);
       if (
         response.data.listAttachedMetadataForms.nodes.length > 0 &&
-        !selectedForm
+        !selectedAttachedForm
       ) {
-        setSelectedForm(response.data.listAttachedMetadataForms.nodes[0]);
+        setSelectedAttachedForm(
+          response.data.listAttachedMetadataForms.nodes[0]
+        );
         await fetchAttachedFields(
           response.data.listAttachedMetadataForms.nodes[0].uri
         );
@@ -130,7 +139,7 @@ export const MetadataAttachment = (props) => {
       fetchAvailableForms().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
-      setSelectedForm(null);
+      setSelectedAttachedForm(null);
     } else {
       const error = response.errors
         ? response.errors[0].message
@@ -139,9 +148,25 @@ export const MetadataAttachment = (props) => {
     }
   };
 
+  const getPermissions = async () => {
+    const response = await client.query(
+      getEntityMetadataFormPermissions(entityUri)
+    );
+    if (!response.errors) {
+      setCanEdit(
+        response.data.getEntityMetadataFormPermissions.includes(
+          'ATTACH_METADATA_FORM'
+        )
+      );
+    }
+  };
+
   useEffect(() => {
     if (client) {
       fetchList().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      getPermissions().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
       fetchAvailableForms().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
@@ -187,7 +212,7 @@ export const MetadataAttachment = (props) => {
               <Divider />
             </>
           )}
-          {addNewForm && (
+          {addNewForm && !editMode && (
             <CardContent>
               <Autocomplete
                 disablePortal
@@ -195,6 +220,8 @@ export const MetadataAttachment = (props) => {
                 onChange={async (event, value) => {
                   if (value) {
                     setSelectedForm(value.form);
+                    setEditMode(false);
+                    setValues({});
                     await fetchFields(value.value);
                   } else setSelectedForm(null);
                 }}
@@ -214,7 +241,8 @@ export const MetadataAttachment = (props) => {
               <CardContent
                 sx={{
                   backgroundColor:
-                    selectedForm && selectedForm.uri === attachedForm.uri
+                    selectedAttachedForm &&
+                    selectedAttachedForm.uri === attachedForm.uri
                       ? '#e6e6e6'
                       : 'white'
                 }}
@@ -225,7 +253,10 @@ export const MetadataAttachment = (props) => {
                     lg={10}
                     xl={10}
                     onClick={async () => {
-                      setSelectedForm(attachedForm);
+                      setSelectedAttachedForm(attachedForm);
+                      setEditMode(false);
+                      setAddNewForm(false);
+                      setValues({});
                       await fetchAttachedFields(attachedForm.uri);
                     }}
                   >
@@ -239,9 +270,12 @@ export const MetadataAttachment = (props) => {
                         maxLines: 1
                       }}
                     >
-                      {attachedForm.metadataForm.name}
+                      {attachedForm.metadataForm.name +
+                        ' v.' +
+                        attachedForm.version}
                     </Typography>
                   </Grid>
+
                   <Grid item lg={2} xl={2}>
                     {canEdit && (
                       <DeleteIcon
@@ -286,17 +320,25 @@ export const MetadataAttachment = (props) => {
         {addNewForm && selectedForm && !loadingFields && (
           <RenderedMetadataForm
             fields={fields}
+            values={values}
+            editMode={editMode}
             metadataForm={selectedForm}
             preview={false}
             onCancel={() => {
               setAddNewForm(false);
               setSelectedForm(null);
               setFields([]);
+              setEditMode(false);
+              setValues({});
+              setAttachedMFUri(-1);
             }}
             entityUri={entityUri}
             entityType={entityType}
+            attachedUri={attachedMFUri}
             onSubmit={async (attachedForm) => {
-              setSelectedForm(attachedForm);
+              setSelectedAttachedForm(attachedForm);
+              setEditMode(false);
+              setValues({});
               setFields(attachedForm.fields);
               fetchList().catch((e) =>
                 dispatch({ type: SET_ERROR, error: e.message })
@@ -305,11 +347,26 @@ export const MetadataAttachment = (props) => {
                 dispatch({ type: SET_ERROR, error: e.message })
               );
               setAddNewForm(false);
+              setAttachedMFUri(-1);
             }}
           />
         )}
-        {!addNewForm && !loadingFields && selectedForm && (
-          <AttachedFormCard fields={fields} attachedForm={selectedForm} />
+        {!addNewForm && !loadingFields && selectedAttachedForm && (
+          <AttachedFormCard
+            fields={fields}
+            attachedForm={selectedAttachedForm}
+            onEdit={() => {
+              setSelectedForm(selectedAttachedForm.metadataForm);
+              const tmp_dict = {};
+              fields.forEach((f) => {
+                tmp_dict[f.field.name] = f.value;
+              });
+              setValues(tmp_dict);
+              setEditMode(true);
+              setAddNewForm(true);
+              setAttachedMFUri(selectedAttachedForm.uri);
+            }}
+          />
         )}
       </Grid>
     </Grid>

@@ -32,13 +32,8 @@ RedshiftDataset = gql.ObjectType(
         gql.Field('imported', gql.Boolean),
         gql.Field(
             name='environment',
-            type=gql.Ref('Environment'),
+            type=gql.Ref('EnvironmentSimplified'),
             resolver=resolve_dataset_environment,
-        ),
-        gql.Field(
-            name='organization',
-            type=gql.Ref('Organization'),
-            resolver=resolve_dataset_organization,
         ),
         gql.Field(
             name='owners',
@@ -70,6 +65,7 @@ RedshiftDataset = gql.ObjectType(
             type=gql.Ref('RedshiftConnection'),
             resolver=resolve_dataset_connection,
         ),
+        gql.Field('addedTables', gql.Ref('RedshiftAddTableResult')),
     ],
 )
 
@@ -150,4 +146,9 @@ RedshiftDatasetTableColumnSearchResult = gql.ObjectType(
         gql.Field('hasNext', gql.Boolean),
         gql.Field('hasPrevious', gql.Boolean),
     ],
+)
+
+RedshiftAddTableResult = gql.ObjectType(
+    name='RedshiftAddTableResult',
+    fields=[gql.Field('successTables', gql.ArrayType(gql.String)), gql.Field('errorTables', gql.ArrayType(gql.String))],
 )

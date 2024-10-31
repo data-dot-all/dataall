@@ -12,10 +12,10 @@ from dataall.modules.omics.db.omics_repository import OmicsRepository
 
 
 root = logging.getLogger()
-root.setLevel(logging.INFO)
 if not root.hasHandlers():
     root.addHandler(logging.StreamHandler(sys.stdout))
 log = logging.getLogger(__name__)
+log.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
 
 def fetch_omics_workflows(engine):

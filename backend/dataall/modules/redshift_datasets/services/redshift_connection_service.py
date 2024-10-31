@@ -11,8 +11,10 @@ from dataall.modules.redshift_datasets.db.redshift_connection_repositories impor
 from dataall.modules.redshift_datasets.services.redshift_connection_permissions import (
     MANAGE_REDSHIFT_CONNECTIONS,
     REDSHIFT_CONNECTION_ALL,
+    REDSHIFT_GRANTABLE_PERMISSIONS,
     DELETE_REDSHIFT_CONNECTION,
     GET_REDSHIFT_CONNECTION,
+    EDIT_REDSHIFT_CONNECTION_PERMISSIONS,
     CREATE_REDSHIFT_CONNECTION,
     LIST_ENVIRONMENT_REDSHIFT_CONNECTIONS,
 )
@@ -73,6 +75,14 @@ class RedshiftConnectionService:
                 resource_uri=connection.connectionUri,
                 resource_type=RedshiftConnection.__name__,
             )
+            if connection.connectionType == RedshiftConnectionTypes.ADMIN.value:
+                ResourcePolicyService.attach_resource_policy(
+                    session=session,
+                    group=connection.SamlGroupName,
+                    permissions=REDSHIFT_GRANTABLE_PERMISSIONS,
+                    resource_uri=connection.connectionUri,
+                    resource_type=RedshiftConnection.__name__,
+                )
             StackService.deploy_stack(targetUri=environment.environmentUri)
             return connection
 
@@ -103,6 +113,7 @@ class RedshiftConnectionService:
             )
             session.delete(connection)
             session.commit()
+        StackService.deploy_stack(targetUri=connection.environmentUri)
         return True
 
     @staticmethod
@@ -137,6 +148,75 @@ class RedshiftConnectionService:
                 account_id=environment.AwsAccountId, region=environment.region, connection=connection
             ).list_redshift_tables(schema)
             return response
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_CONNECTIONS)
+    @ResourcePolicyService.has_resource_permission(EDIT_REDSHIFT_CONNECTION_PERMISSIONS)
+    def add_group_permissions(uri, group, permissions) -> bool:
+        context = get_context()
+        connection = RedshiftConnectionService.get_redshift_connection_by_uri(uri=uri)
+        RedshiftConnectionService._check_redshift_connection_has_grantable_permissions(connection)
+        if any(permission not in REDSHIFT_GRANTABLE_PERMISSIONS for permission in permissions):
+            raise exceptions.InvalidInput(
+                param_name='Permissions',
+                param_value=permissions,
+                constraint=f'one of the possible grantable permissions {REDSHIFT_GRANTABLE_PERMISSIONS}',
+            )
+        env_groups = EnvironmentService.list_all_environment_groups(uri=connection.environmentUri)
+        with context.db_engine.scoped_session() as session:
+            if group not in env_groups:
+                raise exceptions.InvalidInput(
+                    param_name='Team', param_value=group, constraint='a team invited to the Environment.'
+                )
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                group=group,
+                permissions=permissions,
+                resource_uri=uri,
+                resource_type=RedshiftConnection.__name__,
+            )
+        return True
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_CONNECTIONS)
+    @ResourcePolicyService.has_resource_permission(EDIT_REDSHIFT_CONNECTION_PERMISSIONS)
+    def delete_group_permissions(uri, group) -> bool:
+        context = get_context()
+        connection = RedshiftConnectionService.get_redshift_connection_by_uri(uri=uri)
+        RedshiftConnectionService._check_redshift_connection_has_grantable_permissions(connection)
+        if connection.SamlGroupName == group:
+            raise exceptions.InvalidInput(
+                param_name='Team', param_value=group, constraint='any team EXCEPT the connection owners team.'
+            )
+        with context.db_engine.scoped_session() as session:
+            ResourcePolicyService.delete_resource_policy(
+                session=session,
+                group=group,
+                resource_uri=uri,
+                resource_type=RedshiftConnection.__name__,
+            )
+        return True
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(EDIT_REDSHIFT_CONNECTION_PERMISSIONS)
+    def list_connection_group_permissions(uri, filter):
+        context = get_context()
+        permissions = REDSHIFT_GRANTABLE_PERMISSIONS
+        with context.db_engine.scoped_session() as session:
+            return RedshiftConnectionRepository.paginated_redshift_connection_group_permissions(
+                session, uri, permissions, filter
+            )
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(EDIT_REDSHIFT_CONNECTION_PERMISSIONS)
+    def list_connection_group_no_permissions(uri, filter):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            connection = RedshiftConnectionService.get_redshift_connection_by_uri(uri=uri)
+            RedshiftConnectionService._check_redshift_connection_has_grantable_permissions(connection)
+            return RedshiftConnectionRepository.list_redshift_connection_group_no_permissions(
+                session, uri, connection.environmentUri, filter
+            )
 
     @staticmethod
     def _check_redshift_connection(account_id: str, region: str, connection: RedshiftConnection):
@@ -205,3 +285,13 @@ class RedshiftConnectionService:
             if cluster.get('HsmStatus', None):
                 return RedshiftEncryptionType.HSM
         raise Exception
+
+    @staticmethod
+    def _check_redshift_connection_has_grantable_permissions(connection: RedshiftConnection):
+        if connection.connectionType != RedshiftConnectionTypes.ADMIN.value:
+            raise exceptions.InvalidInput(
+                param_name='ConnectionType',
+                param_value=connection.connectionType,
+                constraint=f'of type {RedshiftConnectionTypes.ADMIN.value}. Only ADMIN connections support granting additional permissions.',
+            )
+        return True

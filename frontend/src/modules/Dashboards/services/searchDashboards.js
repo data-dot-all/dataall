@@ -17,22 +17,16 @@ export const searchDashboards = (filter) => ({
           name
           owner
           SamlGroupName
+          AwsAccountId
           description
           label
           created
           tags
           userRoleForDashboard
           upvotes
-          organization {
-            organizationUri
-            label
-            name
-          }
           environment {
             environmentUri
-            name
             label
-            AwsAccountId
             region
           }
         }

@@ -23,7 +23,6 @@ from dataall.core.resource_threshold.services.resource_threshold_service import 
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.s3_datasets.db.dataset_bucket_repositories import DatasetBucketRepository
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
-from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.modules.s3_datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.s3_datasets.aws.s3_dataset_client import S3DatasetClient
@@ -231,12 +230,12 @@ class DatasetService:
         return dataset
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     def import_dataset(uri, admin_group, data):
         data['imported'] = True
         return DatasetService.create_dataset(uri=uri, admin_group=admin_group, data=data)
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     def get_dataset(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -246,6 +245,7 @@ class DatasetService:
             return dataset
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def get_file_upload_presigned_url(uri: str, data: dict):
         with get_context().db_engine.scoped_session() as session:
@@ -341,6 +341,7 @@ class DatasetService:
         }
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def get_dataset_assume_role_url(uri):
         context = get_context()
@@ -366,6 +367,7 @@ class DatasetService:
         return url
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CRAWL_DATASET)
     def start_crawler(uri: str, data: dict = None):
         engine = get_context().db_engine
@@ -397,6 +399,7 @@ class DatasetService:
             }
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def generate_dataset_access_token(uri):
         with get_context().db_engine.scoped_session() as session:
@@ -414,6 +417,7 @@ class DatasetService:
         return json.dumps(credentials)
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(DELETE_DATASET)
     def delete_dataset(uri: str, delete_from_aws: bool = False):
         context = get_context()
@@ -433,7 +437,7 @@ class DatasetService:
             DatasetIndexer.delete_doc(doc_id=uri)
 
             DatasetService.execute_on_delete(session, uri, action=DELETE_DATASET)
-            DatasetService.delete_dataset_term_links(session, uri)
+            DatasetService._delete_dataset_term_links(session, uri)
             DatasetTableRepository.delete_dataset_tables(session, dataset.datasetUri)
             DatasetLocationRepository.delete_dataset_locations(session, dataset.datasetUri)
             DatasetBucketRepository.delete_dataset_buckets(session, dataset.datasetUri)
@@ -555,7 +559,7 @@ class DatasetService:
         return dataset
 
     @staticmethod
-    def delete_dataset_term_links(session, dataset_uri):
+    def _delete_dataset_term_links(session, dataset_uri):
         tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, dataset_uri)]
         for table_uri in tables:
             GlossaryRepository.delete_glossary_terms_links(session, table_uri, 'DatasetTable')

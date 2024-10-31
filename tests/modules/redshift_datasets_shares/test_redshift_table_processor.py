@@ -7,7 +7,7 @@ from dataall.modules.shares_base.services.shares_enums import ShareItemHealthSta
 def test_approve_redshift_cross_account_share_all_mocked(
     dataset_1,
     table1,
-    target_connection,
+    target_connection_admin,
     approved_share_data_cross_account,
     redshift_processor_cross_account,
     mock_redshift_data_shares,
@@ -34,7 +34,7 @@ def test_approve_redshift_cross_account_share_all_mocked(
     )
     mock_redshift_shares.return_value.associate_datashare.assert_called_with(
         datashare_arn=redshift_processor_cross_account.datashare_arn,
-        consumer_arn=f'arn:aws:redshift-serverless:{approved_share_data_cross_account.target_environment.region}:{approved_share_data_cross_account.target_environment.AwsAccountId}:namespace/{target_connection.nameSpaceId}',
+        consumer_arn=f'arn:aws:redshift-serverless:{approved_share_data_cross_account.target_environment.region}:{approved_share_data_cross_account.target_environment.AwsAccountId}:namespace/{target_connection_admin.nameSpaceId}',
     )
     mock_redshift_data_shares.return_value.drop_database.assert_called_with(
         database=redshift_processor_cross_account._build_local_db_name()
@@ -220,7 +220,7 @@ def test_revoke_redshift_cross_account_share_all_mocked(
 def test_verify_redshift_cross_account_share_all_successful(
     dataset_1,
     table1,
-    target_connection,
+    target_connection_admin,
     redshift_processor_cross_account,
     mock_redshift_data_shares,
     mock_redshift_shares,
@@ -243,7 +243,7 @@ def test_verify_redshift_cross_account_share_all_successful(
             ),
             call(
                 datashare_arn=redshift_processor_cross_account.datashare_arn,
-                consumer_id=f'arn:aws:redshift-serverless:{redshift_processor_cross_account.share_data.target_environment.region}:{redshift_processor_cross_account.share_data.target_environment.AwsAccountId}:namespace/{target_connection.nameSpaceId}',
+                consumer_id=f'arn:aws:redshift-serverless:{redshift_processor_cross_account.share_data.target_environment.region}:{redshift_processor_cross_account.share_data.target_environment.AwsAccountId}:namespace/{target_connection_admin.nameSpaceId}',
             ),
         ]
     )

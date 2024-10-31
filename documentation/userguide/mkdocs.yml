@@ -12,11 +12,11 @@ nav:
       - Redshift Datasets: redshift_datasets.md
       - Catalog and Glossaries: catalog.md
       - Shares: shares.md
+      - Metadata Forms: metadata_forms.md
     - Play:
         - Worksheets: worksheets.md
         - Notebooks: notebooks.md
         - ML Studio: mlstudio.md
-        - Pipelines: pipelines.md
         - Dashboards: dashboards.md
     - Security: security.md
     - Monitoring: monitoring.md
@@ -69,3 +69,6 @@ markdown_extensions:
 
 extra_css:
   - assets/extra.css
+
+extra_javascript:
+  - js/extra.js

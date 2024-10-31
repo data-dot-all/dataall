@@ -4,6 +4,7 @@ Data producers can import their Redshift tables into data.all and make them disc
 and secure manner.
 
 In data.all we will work with 2 main constructs:
+
 - **Redshift Connections**, which store the necessary metadata to connect to a Redshift namespace
 - **Redshift Datasets**, group of tables imported into data.all Catalog using a data.all Redshift Connection.
 
@@ -11,18 +12,74 @@ In data.all we will work with 2 main constructs:
 ## **Redshift Connections**
 
 Data.all Redshift Connections are metadata used by data.all and by data.all users to connect to Redshift namespaces.
+
 1) Both Redshift Serverless and Provisioned clusters are supported
 2) Connections use AWS Secrets Manager secrets or Redshift users to connect to the namespace. Check the [documentation](https://docs.aws.amazon.com/redshift/latest/mgmt/query-editor-v2-using.html#query-editor-v2-connecting) to understand each mechanism. Additional connection mechanisms might be considered in the future.
-3) There are 2 types of Redshift Connections, `ADMIN` and `DATA_USER`
-    - `ADMIN` - the user whose credentials are provided has permissions to all namespace tables that can be managed in data.all and can create and manage Redshift datashares and redshift role permissions. In data.all it will be used to process share requests.
-    - `DATA_USER` - the user whose credentials are provided has permissions to read the tables that the data user wants to import. In data.all it will be used to import datasets.
+
+### Connection Types
+
+Here is a table to summarize the 2 different types of connections, keep reading to understand each type in depth.
+
+| Connection type | Purpose in data.all             | Redshift permissions required | Grantable permissions 
+|-----------------|---------------------------------|-------------------------------|--------------------
+| `DATA_USER`     | Import Redshift Datasets        | READ Redshift tables          | None                          
+| `ADMIN`         | Process Redshift share requests | MANAGE Redshift datashares    | `Use Connection in share request`
 
 
-**Pre-requisites**
+#### DATA USER Connections
+
+`DATA_USER` connections are used to IMPORT Redshift dataset into data.all. The Redshift user used in the connection should have READ 
+permissions to the tables to be imported. 
+
+**Recommendations**
+
+In the following example there are 2 teams, `ClusterAdminTeam` and `MarketingTeam`. Both have been onboarded to data.all
+and can log in to the UI. The `ClusterAdminTeamA` is a team that administrates a Redshift cluster `RedshiftClusterA` in
+the AWS Account of a data.all environment `EnvironmentA`. The `MarketingTeam` works in this cluster creating some tables `marketingTables`
+
+It has been agreed that `marketingTables` should be imported to data.all. **Which type of connection should we use?** We need
+to create a `DATA_USER` connection with a user that can read `marketingTables`. 
+
+**And, which team should own the connection?** This depends on the data ownership requirements of your teams. The connection
+owners will be able to import the Redshift dataset, becoming the dataset owners. The Redshift dataset
+owners are in charge of managing the metadata of the dataset, editing/deleting and approving/revoking share requests.
+If in your organization the `ClusterAdminTeamA` is in charge of managing all operations on the datasets then they should be 
+the owners of the connection. If on the contrary, your organization has more distributed control over the operations on the 
+data.all dataset, then the `MarketingTeam` should own the connection.
+
+#### ADMIN Connections
+
+`ADMIN` connections are used by data.all to process Redshift data share requests. The Redshift user used in the connection 
+should have enough permissions to MANAGE DATASHARES in the cluster. 
+
+**Recommendations**
+
+We will continue the example of DATA_USER connections. Let's imagine that the `MarketingTeam` has happily imported the 
+`marketingTables` Dataset and it is now published in the data.all Catalog. In another AWS Account `AccountB`, linked to
+data.all as `EnvironmentB`, the `ResearchTeam` works in a Redshift cluster `RedshiftClusterB` managed by `ClusterAdminTeamB`. The 
+`ResearchTeam` wants to request access to `marketingTables`. 
+
+**Which type of connection should we use?** We need to create an `ADMIN` connection with a user that can manage Redshift 
+datashares in both the `RedshiftClusterA` and `RedshiftClusterB`. 
+
+**And, which team should own the connection?** The Connection owners should be teams with administrative
+rights over the clusters. In this case the `ClusterAdminTeamA`
+and `ClusterAdminTeamB` should own the `AdminConnectionA` and `AdminConnectionB` respectively.
+
+**How can the `ResearchTeam` use the `AdminConnectionB`?** The `ClusterAdminTeamB` needs to grant "Use Connection in share request"
+permissions for the connection `AdminConnectionB` to the `ResearchTeam`. After that the `ResearchTeam` will be able to
+open share requests, but they won't be able to edit/delete the `AdminConnectionB`. The steps to grant these permissions
+are explained in the Update Connection permissions subsection.
+
+
+
+### Create a Redshift Connection
+
 data.all requires Redshift clusters and users to be managed by a dedicated team and infrastructure created outside of data.all. 
 For this reason, data.all will work "importing" existing infrastructure and users, requiring the following information on import:
+
 - Redshift Serverless namespace/workgroup or Provisioned cluster: the user creating the connection must know the `namespace ID` and the `workgroup` for Redshift Serverless or the `cluster ID` for the case of Redshift Provisioned clusters. 
-- Redshift user: Redshift administrators manage Redshift users outside of data.all. Our recommendation is to create a dedicated `ADMIN` user for data.all in each onboarded cluster. Data users can be reused.
+- Redshift user: Redshift administrators manage Redshift users outside of data.all. 
 - Connection details:
    - Redshift user (only valid for Provisioned clusters): data.all will generate a temporary password to connect to the database. In this case no password or secret needs to be provided to data.all.
    - AWS Secrets Manager Secret (recommended): the username and password for the Redshift user can be stored in a Secret that **MUST** be tagged with 2 tags. Check the pictures below to see how it should look in the AWS Console.
@@ -60,7 +117,24 @@ Then, fill in the following form:
 Data.all will verify the connection upon creation. If the database does not exist or if the connection details are not accessible or do not 
 correspond to cluster it will notify the user in the error banner.
 
-**Delete a Connection**
+### Update Connection permissions
+The owners of an `ADMIN` connection can grant other teams permissions to use the Connection in a share request. At the 
+moment this is the only type of permission that can be granted and it is only available for `ADMIN` connections. 
+Check the section on Connection types to understand the usage of this permission.
+
+To update the permissions, select your environment and navigate to the Connections tab. You will see that the `ADMIN` 
+connections have a button in the Permissions tab called `View and Edit` (it is disabled for `DATA_USER` connections).
+
+![](pictures/redshift_datasets/redshift_connection_menu.png#zoom#shadow)
+
+If you click on the button the following window will open. Here you can press the `Add group` and select a group
+that will get "Use Connection in share request" permissions to the connection. Do not forget to click on the save
+icon to save the permissions.
+
+![](pictures/redshift_datasets/redshift_connection_permissions.png#zoom#shadow)
+
+
+### Delete a Connection
 To delete a connection, click on the trash icon next to the item in the Actions column. If the Connection has been used 
 to import datasets it cannot be removed until all associated datasets are deleted.
 
@@ -71,7 +145,8 @@ Redshift Dataset option.
 
 ![](pictures/redshift_datasets/redshift_dataset_creation.png#zoom#shadow)
 
-Next, fill in the creation form with the Dataset details. Data.all will list the Redshift connections owned by the selected team in the environment
+Next, fill in the creation form with the Dataset details. To import Redshift Datasets, only connections of the type `DATA_USER` 
+can be used. Therefore, data.all will list the Redshift `DATA_USER` connections owned by the selected team in the environment
 and fetch the schemas and tables from Redshift. It is possible to select all tables or a subset of tables as appears in the picture.
 
 ![](pictures/redshift_datasets/redshift_dataset_creation_form.png#zoom#shadow)
@@ -94,11 +169,11 @@ and fetch the schemas and tables from Redshift. It is possible to select all tab
 
 **Redshift Dataset fields**
 
-| Field                      | Description                                                       | Required | Editable |Example
-|----------------------------|-------------------------------------------------------------------|----------|----------|-------------
-| Redshift Connection        | Name of the Redshift connection used to read the Redshift tables  | Yes      | No       | main-cluster-userA
-| Redshift database schema   | Name of the Redshift schema where the tables are stored           | Yes      | No       | public
-| Redshift tables            | List of tables to be imported. They can be added at a later stage | No       | Yes      | customer, orders
+| Field                      | Description                                                                                                                    | Required | Editable |Example
+|----------------------------|--------------------------------------------------------------------------------------------------------------------------------|----------|----------|-------------
+| Redshift Connection        | Name of the Redshift connection used to read the Redshift tables. Only `DATA_USER` connections can be used to import Datasets. | Yes      | No       | main-cluster-userA
+| Redshift database schema   | Name of the Redshift schema where the tables are stored                                                                        | Yes      | No       | public
+| Redshift tables            | List of tables to be imported. They can be added at a later stage                                                              | No       | Yes      | customer, orders
 
 Once a Redshift dataset has been imported, the dataset and its imported tables can be searched by any user in the Catalog. 
 

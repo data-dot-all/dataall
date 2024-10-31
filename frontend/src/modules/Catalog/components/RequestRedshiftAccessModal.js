@@ -170,7 +170,8 @@ export const RequestRedshiftAccessModal = (props) => {
       principalId: values.connection,
       principalRoleName: values.rsRole,
       principalType: 'RedshiftRole',
-      requestPurpose: values.comment
+      requestPurpose: values.comment,
+      permissions: ['Read']
     };
 
     if (hit.resourceKind === 'redshiftdataset') {

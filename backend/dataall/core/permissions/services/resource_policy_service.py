@@ -217,6 +217,7 @@ class ResourcePolicyService:
             raise exceptions.RequiredParameter(param_name='group_uri')
         if not resource_uri:
             raise exceptions.RequiredParameter(param_name='resource_uri')
+
         policy = ResourcePolicyRepository.find_resource_policy(
             session=session,
             group_uri=group_uri,
