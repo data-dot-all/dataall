@@ -32,8 +32,9 @@ export const MetadataFormAttachedEntities = (props) => {
   const client = useClient();
   const [versions, setVersions] = useState([]);
   const [selectedVersion, setSelectedVersion] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [loadingForm, setLoadingForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadingVersions, setLoadingVersions] = useState(true);
+  const [loadingForm, setLoadingForm] = useState(true);
   const [attachedEntities, setAttachedEntities] = useState({});
   const [attachedForm, setAttachedForm] = useState(null);
   const [paginationModel, setPaginationModel] = useState({
@@ -49,6 +50,7 @@ export const MetadataFormAttachedEntities = (props) => {
   ];
 
   const fetchVersions = async () => {
+    setLoadingVersions(true);
     const response = await client.query(
       listMetadataFormVersions(metadataForm.uri)
     );
@@ -66,6 +68,7 @@ export const MetadataFormAttachedEntities = (props) => {
         : 'Versions not found';
       dispatch({ type: SET_ERROR, error });
     }
+    setLoadingVersions(false);
   };
 
   const fetchAttachedForm = async (uri) => {
@@ -177,7 +180,7 @@ export const MetadataFormAttachedEntities = (props) => {
             <CardHeader title="Versions" />
 
             <Divider />
-            {versions.length > 0 ? (
+            {versions.length > 0 && !loadingVersions ? (
               versions.map((version) => (
                 <CardContent
                   sx={{
@@ -191,8 +194,8 @@ export const MetadataFormAttachedEntities = (props) => {
                   <Grid container spacing={2}>
                     <Grid
                       item
-                      lg={7}
-                      xl={7}
+                      lg={5}
+                      xl={5}
                       onClick={async () => {
                         setSelectedVersion(version);
                         await fetchAttachedEntities(version);
@@ -211,9 +214,13 @@ export const MetadataFormAttachedEntities = (props) => {
                         {' version ' + version.version}
                       </Typography>
                     </Grid>
-                    <Grid item lg={3} xl={3}>
+                    <Grid item lg={5} xl={5}>
                       <Typography
                         color="textPrimary"
+                        onClick={async () => {
+                          setSelectedVersion(version);
+                          await fetchAttachedEntities(version);
+                        }}
                         variant="subtitle2"
                         sx={{
                           overflow: 'hidden',
@@ -222,7 +229,7 @@ export const MetadataFormAttachedEntities = (props) => {
                           maxLines: 1
                         }}
                       >
-                        {version.attached_forms}
+                        {'Count: ' + version.attached_forms}
                       </Typography>
                     </Grid>
                     <Grid item lg={2} xl={2}>
@@ -244,10 +251,19 @@ export const MetadataFormAttachedEntities = (props) => {
               ))
             ) : (
               <CardContent sx={{ display: 'flex', justifyContent: 'center' }}>
-                <DoNotDisturbAltOutlinedIcon sx={{ mr: 1 }} />
-                <Typography variant="subtitle2" color="textPrimary">
-                  No Metadata Forms Attached
-                </Typography>
+                {!loadingVersions && (
+                  <>
+                    <DoNotDisturbAltOutlinedIcon sx={{ mr: 1 }} />
+                    <Typography variant="subtitle2" color="textPrimary">
+                      No Metadata Form Versions
+                    </Typography>
+                  </>
+                )}
+              </CardContent>
+            )}
+            {loadingVersions && (
+              <CardContent sx={{ display: 'flex', justifyContent: 'center' }}>
+                <CircularProgress />
               </CardContent>
             )}
           </Card>
@@ -297,7 +313,7 @@ export const MetadataFormAttachedEntities = (props) => {
                 />
               ) : (
                 <Typography color="textPrimary" variant="subtitle2">
-                  No entities attached.
+                  {loading ? '' : 'No entities attached.'}
                 </Typography>
               )}
               {loading && (

@@ -39,7 +39,7 @@ const MetadataFormView = () => {
   const tabs = [
     { label: 'Form Info', value: 'info' },
     { label: 'Fields', value: 'fields' },
-    { label: 'Attached', value: 'attached' },
+    { label: 'Attached Entities', value: 'attached' },
     // { label: 'Enforcement', value: 'enforcement' },
     { label: 'Preview', value: 'preview' }
   ];
