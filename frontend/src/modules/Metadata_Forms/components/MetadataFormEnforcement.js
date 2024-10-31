@@ -5,47 +5,152 @@ import {
   Button,
   Card,
   CardContent,
-  CardHeader, Checkbox,
-  Dialog, FormControlLabel,
+  CardHeader,
+  Checkbox,
+  Dialog,
+  FormControlLabel,
   Grid,
   TextField,
   Typography
 } from '@mui/material';
-import { PlusIcon } from 'design';
+import { Defaults, PlusIcon } from 'design';
 import React, { useEffect, useState } from 'react';
-import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import DoNotDisturbAltOutlinedIcon from '@mui/icons-material/DoNotDisturbAltOutlined';
-import { fetchEnums, useClient } from 'services';
+import { fetchEnums, listValidEnvironments, useClient } from 'services';
 import { useDispatch } from 'react-redux';
 import { SET_ERROR } from 'globalErrors';
-import { createMetadataFormEnforcementRule, listMetadataFormEnforcementRules } from '../services';
-import * as Yup from 'yup';
+import {
+  createMetadataFormEnforcementRule,
+  listMetadataFormEnforcementRules
+} from '../services';
 import { Formik } from 'formik';
-import FormControl from '@mui/material/FormControl';
 import { LoadingButton } from '@mui/lab';
 import SendIcon from '@mui/icons-material/Send';
-
+import { listOrganizations } from '../../Organizations/services';
+import { listDatasets } from '../../DatasetsBase/services';
 
 const CreateEnforcementRuleModal = (props) => {
-  const { onClose, open, metadataForm,severityOptions,entityTypesOptions,enforcementScopeOptions, ...other } = props;
+  const {
+    onClose,
+    open,
+    metadataForm,
+    severityOptions,
+    entityTypesOptions,
+    enforcementScopeOptions,
+    ...other
+  } = props;
 
   const client = useClient();
+  const dispatch = useDispatch();
 
-  const enforcementScopeDict = {}
+  const [environmentOptions, setEnvironmentOptions] = useState([]);
+  const [organizationOptions, setOrganizationOptions] = useState([]);
+  const [datasetOptions, setDatasetOptions] = useState([]);
+
+  const enforcementScopeDict = {};
   for (const option of enforcementScopeOptions) {
     enforcementScopeDict[option.name] = option.value;
   }
 
+  const fetchOrganizations = async () => {
+    try {
+      const response = await client.query(
+        listOrganizations({
+          filter: Defaults.selectListFilter
+        })
+      );
+      if (!response.errors) {
+        setOrganizationOptions(
+          response.data.listOrganizations.nodes.map((e) => ({
+            ...e,
+            value: e.organizationUri,
+            label: e.label
+          }))
+        );
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    }
+  };
+  const fetchEnvironments = async () => {
+    try {
+      const response = await client.query(
+        listValidEnvironments({
+          filter: Defaults.selectListFilter
+        })
+      );
+      if (!response.errors) {
+        setEnvironmentOptions(
+          response.data.listValidEnvironments.nodes.map((e) => ({
+            ...e,
+            value: e.environmentUri,
+            label: e.label
+          }))
+        );
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    }
+  };
+
+  const fetchDatasets = async () => {
+    try {
+      const response = await client.query(
+        listDatasets({
+          filter: Defaults.selectListFilter
+        })
+      );
+      if (!response.errors) {
+        setDatasetOptions(
+          response.data.listDatasets.nodes.map((e) => ({
+            ...e,
+            value: e.datasetUri,
+            label: e.label
+          }))
+        );
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    }
+  };
+
+  useEffect(async () => {
+    if (client) {
+      await fetchEnvironments();
+      await fetchOrganizations();
+      await fetchDatasets();
+    }
+  }, [client, open, dispatch]);
+
   async function submit(values, setStatus, setSubmitting, setErrors) {
+    let homeEntity = null;
+    if (values.scope === enforcementScopeDict['Organization']) {
+      homeEntity = values.organization;
+    }
+    if (values.scope === enforcementScopeDict['Environment']) {
+      homeEntity = values.environment;
+    }
+    if (values.scope === enforcementScopeDict['Dataset']) {
+      homeEntity = values.dataset;
+    }
+
     const input = {
       metadataFormUri: metadataForm.uri,
       version: values.version,
       level: values.scope,
       severity: values.severity,
-      homeEntity: '9hj226qv',
+      homeEntity: homeEntity,
       entityTypes: values.entityTypes
-    }
-    const response = await client.mutate(createMetadataFormEnforcementRule(input));
+    };
+    const response = await client.mutate(
+      createMetadataFormEnforcementRule(input)
+    );
     if (response.errors) {
       setStatus({ success: false });
       setErrors({ submit: response.errors[0].message });
@@ -70,25 +175,26 @@ const CreateEnforcementRuleModal = (props) => {
           Enforce {metadataForm.name}
         </Typography>
         <Formik
-         initialValues={{
-           version: metadataForm.versions[0],
-           scope: enforcementScopeDict['Global'],
-           severity: severityOptions[0].value,
-           entityTypes: []
-
-         }} onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
-          await submit(values, setStatus, setSubmitting, setErrors);
-        }}>
+          initialValues={{
+            version: metadataForm.versions[0],
+            scope: enforcementScopeDict['Global'],
+            severity: severityOptions[0].value,
+            entityTypes: []
+          }}
+          onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+            await submit(values, setStatus, setSubmitting, setErrors);
+          }}
+        >
           {({
-              errors,
-              handleBlur,
-              handleChange,
-              handleSubmit,
-              isSubmitting,
-              setFieldValue,
-              touched,
-              values
-            }) => (
+            errors,
+            handleBlur,
+            handleChange,
+            handleSubmit,
+            isSubmitting,
+            setFieldValue,
+            touched,
+            values
+          }) => (
             <form onSubmit={handleSubmit}>
               <Box>
                 <CardContent>
@@ -125,7 +231,7 @@ const CreateEnforcementRuleModal = (props) => {
                     options={enforcementScopeOptions.map((option) => {
                       return {
                         label: option.name,
-                        value: option.value,
+                        value: option.value
                       };
                     })}
                     defaultValue={enforcementScopeDict['Global']}
@@ -145,6 +251,81 @@ const CreateEnforcementRuleModal = (props) => {
                     )}
                   />
                 </CardContent>
+                {values.scope === enforcementScopeDict['Organization'] && (
+                  <CardContent>
+                    <Autocomplete
+                      id="organization"
+                      disablePortal
+                      onChange={(event, value) => {
+                        setFieldValue('organization', value.value);
+                      }}
+                      options={organizationOptions}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          fullWidth
+                          error={Boolean(
+                            touched.organization && errors.organization
+                          )}
+                          helperText={
+                            touched.organization && errors.organization
+                          }
+                          label="Organization"
+                          onChange={handleChange}
+                          variant="outlined"
+                        />
+                      )}
+                    />
+                  </CardContent>
+                )}
+                {values.scope === enforcementScopeDict['Environment'] && (
+                  <CardContent>
+                    <Autocomplete
+                      id="environment"
+                      disablePortal
+                      options={environmentOptions}
+                      onChange={(event, value) => {
+                        setFieldValue('environment', value.value);
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          fullWidth
+                          error={Boolean(
+                            touched.environment && errors.environment
+                          )}
+                          helperText={touched.environment && errors.environment}
+                          label="Environment"
+                          onChange={handleChange}
+                          variant="outlined"
+                        />
+                      )}
+                    />
+                  </CardContent>
+                )}
+                {values.scope === enforcementScopeDict['Dataset'] && (
+                  <CardContent>
+                    <Autocomplete
+                      id="dataset"
+                      disablePortal
+                      options={datasetOptions}
+                      onChange={(event, value) => {
+                        setFieldValue('dataset', value.value);
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          fullWidth
+                          error={Boolean(touched.dataset && errors.dataset)}
+                          helperText={touched.dataset && errors.dataset}
+                          label="Dataset"
+                          onChange={handleChange}
+                          variant="outlined"
+                        />
+                      )}
+                    />
+                  </CardContent>
+                )}
                 <CardContent>
                   <Autocomplete
                     id="severity"
@@ -173,26 +354,36 @@ const CreateEnforcementRuleModal = (props) => {
                   />
                 </CardContent>
                 <CardContent>
-                  <Grid
-                    container
-                    spacing={2}
-                  >
-
-                {entityTypesOptions.map((entityType) => (
-                  <Grid item lg={4} xl={4}>
-                    <FormControlLabel control={<Checkbox id={entityType.name}  onChange={(event, value) => {
-                      if(value){
-
-                        setFieldValue('entityTypes', [...values.entityTypes, entityType.value]);
-                      }
-                      else{
-                        setFieldValue('entityTypes', values.entityTypes.filter((item) => item !== entityType.value));
-                      }
-                    }}/>} label={entityType.value} />
+                  <Grid container spacing={2}>
+                    {entityTypesOptions.map((entityType) => (
+                      <Grid item lg={4} xl={4}>
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              id={entityType.name}
+                              onChange={(event, value) => {
+                                if (value) {
+                                  setFieldValue('entityTypes', [
+                                    ...values.entityTypes,
+                                    entityType.value
+                                  ]);
+                                } else {
+                                  setFieldValue(
+                                    'entityTypes',
+                                    values.entityTypes.filter(
+                                      (item) => item !== entityType.value
+                                    )
+                                  );
+                                }
+                              }}
+                            />
+                          }
+                          label={entityType.value}
+                        />
+                      </Grid>
+                    ))}
                   </Grid>
-                ))}
-                  </Grid>
-              </CardContent>
+                </CardContent>
                 <CardContent>
                   <LoadingButton
                     fullWidth
@@ -226,19 +417,24 @@ const CreateEnforcementRuleModal = (props) => {
 };
 
 export const MetadataFormEnforcement = (props) => {
-  const {canEdit, metadataForm} = props;
+  const { canEdit, metadataForm } = props;
   const client = useClient();
   const dispatch = useDispatch();
   const [showCreateRuleModal, setShowCreateRuleModal] = useState(false);
   const [rules, setRules] = useState([]);
   const [severityOptions, setSeverityOptions] = useState({});
-  const [entityTypesOptions, setEntityTypesOptions] = useState({})
-  const [enforcementScopeOptions, setEnforcementScopeOptions] = useState({})
-
+  const [entityTypesOptions, setEntityTypesOptions] = useState({});
+  const [enforcementScopeOptions, setEnforcementScopeOptions] = useState({});
 
   const fetchEnforcementRules = async () => {
-    const response =  await client.query(listMetadataFormEnforcementRules(metadataForm.uri));
-    if (!response.errors && response.data && response.data.listMetadataFormEnforcementRules) {
+    const response = await client.query(
+      listMetadataFormEnforcementRules(metadataForm.uri)
+    );
+    if (
+      !response.errors &&
+      response.data &&
+      response.data.listMetadataFormEnforcementRules
+    ) {
       setRules(response.data.listMetadataFormEnforcementRules);
     }
   };
@@ -271,8 +467,12 @@ export const MetadataFormEnforcement = (props) => {
 
   useEffect(() => {
     if (client) {
-      fetchEnforcementRules().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
-      fetchEnforcementEnums().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchEnforcementRules().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+      fetchEnforcementEnums().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client]);
 
@@ -285,27 +485,29 @@ export const MetadataFormEnforcement = (props) => {
       >
         <Grid item lg={5} xl={5}>
           <Card sx={{ height: '100%' }}>
-            <Grid
-              container
-              spacing={2}
-            >
+            <Grid container spacing={2}>
               <Grid item lg={8} xl={8}>
-                <CardHeader title = 'Enforcement rules'></CardHeader>
+                <CardHeader title="Enforcement rules"></CardHeader>
               </Grid>
-              <Grid item lg={4} xl={4}  sx={{
-                textAlign: 'right'
-              }}>
+              <Grid
+                item
+                lg={4}
+                xl={4}
+                sx={{
+                  textAlign: 'right'
+                }}
+              >
                 {canEdit && (
-                    <CardContent>
-                      <Button
-                        color="primary"
-                        startIcon={<PlusIcon size={15} />}
-                        type="button"
-                        onClick={() => setShowCreateRuleModal(true)}
-                      >
-                        Add rule
-                      </Button>
-                    </CardContent>
+                  <CardContent>
+                    <Button
+                      color="primary"
+                      startIcon={<PlusIcon size={15} />}
+                      type="button"
+                      onClick={() => setShowCreateRuleModal(true)}
+                    >
+                      Add rule
+                    </Button>
+                  </CardContent>
                 )}
               </Grid>
             </Grid>

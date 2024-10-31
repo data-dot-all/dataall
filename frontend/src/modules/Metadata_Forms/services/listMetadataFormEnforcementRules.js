@@ -10,7 +10,6 @@ export const listMetadataFormEnforcementRules = (uri) => ({
         uri
         level
         homeEntity
-        homeEntityName
         entityTypes
         metadataFormUri
         version

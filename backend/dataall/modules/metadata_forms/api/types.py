@@ -122,9 +122,14 @@ MetadataFormEnforcementRule = gql.ObjectType(
         gql.Field(name='uri', type=gql.String),
         gql.Field(name='level', type=gql.String),
         gql.Field(name='homeEntity', type=gql.String),
-        gql.Field(name='homeEntityName', type=gql.String, resolver=get_home_entity_name),
-        gql.Field(name='version', type=gql.Integer,),
-        gql.Field(name='metadataFormUri', type=gql.String,),
+        gql.Field(
+            name='version',
+            type=gql.Integer,
+        ),
+        gql.Field(
+            name='metadataFormUri',
+            type=gql.String,
+        ),
         gql.Field(name='entityTypes', type=gql.ArrayType(gql.String)),
     ],
 )

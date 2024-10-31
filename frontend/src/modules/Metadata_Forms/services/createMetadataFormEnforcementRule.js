@@ -5,7 +5,9 @@ export const createMetadataFormEnforcementRule = (input) => ({
     input
   },
   mutation: gql`
-    mutation createMetadataFormEnforcementRule($input: NewMetadataFormEnforcementInput!) {
+    mutation createMetadataFormEnforcementRule(
+      $input: NewMetadataFormEnforcementInput!
+    ) {
       createMetadataFormEnforcementRule(input: $input) {
         uri
         level

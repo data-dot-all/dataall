@@ -251,7 +251,10 @@ const MetadataFormView = () => {
               />
             )}
             {currentTab === 'enforcement' && (
-              <MetadataFormEnforcement metadataForm={metadataForm} canEdit = {metadataForm.userRole === userRolesMF.Owner}/>
+              <MetadataFormEnforcement
+                metadataForm={metadataForm}
+                canEdit={metadataForm.userRole === userRolesMF.Owner}
+              />
             )}
             {currentTab === 'preview' && (
               <MetadataFormPreview metadataForm={metadataForm} />

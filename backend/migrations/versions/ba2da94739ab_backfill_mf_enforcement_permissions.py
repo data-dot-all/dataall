@@ -7,6 +7,7 @@ Create Date: 2024-10-29 12:56:06.523524
 """
 
 from alembic import op
+import sqlalchemy as sa
 from sqlalchemy import orm
 
 from dataall.core.environment.db.environment_models import Environment
@@ -32,6 +33,11 @@ def get_session():
 
 
 def upgrade():
+    op.add_column('metadata_form_enforcement_rule', sa.Column('homeEntity', sa.String(), nullable=True))
+    op.create_foreign_key(
+        'fk_enforcement_version', 'metadata_form_version', 'metadata_form', ['metadataFormUri'], ['uri']
+    )
+
     session = get_session()
 
     PermissionService.save_permission(
@@ -73,6 +79,8 @@ def upgrade():
 
 
 def downgrade():
+    op.drop_constraint('fk_enforcement_version', 'metadata_form_version', type_='foreignkey')
+    op.drop_column('metadata_form_enforcement_rule', 'homeEntity')
     bind = op.get_bind()
     session = orm.Session(bind=bind)
     all_environments = session.query(Environment).all()

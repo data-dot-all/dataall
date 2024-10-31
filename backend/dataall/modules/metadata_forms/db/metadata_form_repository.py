@@ -354,6 +354,8 @@ class MetadataFormRepository:
             entityTypes=data.get('entityTypes'),
             severity=data.get('severity', MetadataFormEnforcementSeverity.Recommended.value),
         )
+        session.add(rule)
+        session.commit()
         return rule
 
     @staticmethod
@@ -362,4 +364,6 @@ class MetadataFormRepository:
 
     @staticmethod
     def list_mf_enforcement_rules(session, uri):
-        return session.query(MetadataFormEnforcementRule).filter(MetadataFormEnforcementRule.metadataFormUri == uri).all()
+        return (
+            session.query(MetadataFormEnforcementRule).filter(MetadataFormEnforcementRule.metadataFormUri == uri).all()
+        )
