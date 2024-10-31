@@ -19,8 +19,9 @@ import SampleDataPopup from './SampleDataPopup';
 import SubitemDescriptionsGrid from './SubitemDescriptionsGrid';
 
 export const ReviewMetadataComponent = (props) => {
-  const { dataset, targets, setTargets, selectedMetadataTypes, version } =
-    props;
+  const { dataset, targets, setTargets, selectedMetadataTypes } = props;
+  /* eslint-disable no-console */
+  console.log(targets);
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const client = useClient();
@@ -42,7 +43,6 @@ export const ReviewMetadataComponent = (props) => {
     setSampleData(data);
     setPopupOpen(true);
   };
-
   const closeSampleDataPopup = () => {
     setPopupOpen(false);
     setSampleData(null);
@@ -102,7 +102,6 @@ export const ReviewMetadataComponent = (props) => {
             metadataTypes: Object.entries(selectedMetadataTypes)
               .filter(([key, value]) => value === true)
               .map(([key]) => key),
-            version: version,
             sampleData: sampleDataWithoutTypename
           })
         );
@@ -279,7 +278,7 @@ export const ReviewMetadataComponent = (props) => {
                     renderCell: (params) =>
                       params.value === undefined ? (
                         <CircularProgress color="primary" />
-                      ) : params.value === 'NotEnoughData' ? (
+                      ) : ['NotEnoughData', 'Error'].includes(params.value) ? (
                         <Chip label={params.value} color="error" />
                       ) : (
                         <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
@@ -295,7 +294,7 @@ export const ReviewMetadataComponent = (props) => {
                     renderCell: (params) =>
                       params.value === undefined ? (
                         <CircularProgress color="primary" />
-                      ) : params.value === 'NotEnoughData' ? (
+                      ) : ['NotEnoughData', 'Error'].includes(params.value) ? (
                         <Chip label={params.value} color="error" />
                       ) : (
                         <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
@@ -309,17 +308,17 @@ export const ReviewMetadataComponent = (props) => {
                     flex: 2,
                     editable: true,
                     valueSetter: (params) => {
-                      const { id, row, newValue } = params;
+                      const { row, newValue } = params;
                       const tags =
                         typeof newValue === 'string'
                           ? newValue.split(',')
                           : newValue;
-                      return { ...row, targetUri: id, tags };
+                      return { ...row, tags };
                     },
                     renderCell: (params) =>
                       params.value === undefined ? (
                         <CircularProgress color="primary" />
-                      ) : params.value[0] === 'NotEnoughData' ? (
+                      ) : ['NotEnoughData', 'Error'].includes(params.value) ? (
                         <Chip label={params.value} color="error" />
                       ) : (
                         <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
@@ -337,7 +336,7 @@ export const ReviewMetadataComponent = (props) => {
                     renderCell: (params) =>
                       params.value === undefined ? (
                         <CircularProgress color="primary" />
-                      ) : params.value[0] === 'NotEnoughData' ? (
+                      ) : ['NotEnoughData', 'Error'].includes(params.value) ? (
                         <Chip label={params.value} color="error" />
                       ) : (
                         <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
@@ -459,6 +458,11 @@ export const ReviewMetadataComponent = (props) => {
         onClick={() => saveMetadata(targets)}
         type="button"
         variant="contained"
+        // disabled={targets
+        //   .filter((target) =>
+        //     ['label', 'description', 'tags', 'topics'].includes(target.key)
+        //   )
+        //   .every((target) => ['Error', 'NotEnoughData'].includes(target.value))}
       >
         Save
       </Button>
@@ -477,7 +481,5 @@ ReviewMetadataComponent.propTypes = {
   targetType: PropTypes.string.isRequired,
   targets: PropTypes.array.isRequired,
   setTargets: PropTypes.func.isRequired,
-  selectedMetadataTypes: PropTypes.object.isRequired,
-  version: PropTypes.number.isRequired,
-  setVersion: PropTypes.func.isRequired
+  selectedMetadataTypes: PropTypes.object.isRequired
 };

@@ -4,6 +4,7 @@ Use the following input parameters:
     - Table name: {label}
     - Current table description: {description}
     - Current tags for table: {tags}
+    - Current topics for table: {topics}
     - Column names: {columns}
     - Column Descriptions: {column_descriptions}
     - Sample data: {sample_data}
@@ -14,7 +15,7 @@ There are 4 metadata fields that can be requested to you.
     1. label - 1 to 3 words that give a "title" to the Table. If provided, you can use the current Table name as starting point.
     2. description - less than 30 words that summarize the content of the table. If provided, take the current Table description as starting point but mainly use the sample data (if provided), and then the column names and descriptions to generate the table description.
     3. tags - list of strings (less than 3), where each string can take any value. Tags should highlight the most important field or thematic of the Table. If there are current tags that represent additional information, add them to the list of tags.
-    4. topics -  list of strings (1 or 2), where each string must be one of the following topics that represent company departments ['Finance', 'Marketing', 'Engineering', 'HR', 'Operations', 'Sales', 'Other'] Choose a topic according to the Table description.
+    4. topics -  list of strings (1 or 2), where each string must be one of the following topics that represent company departments ['Finance', 'Marketing', 'Engineering', 'HR', 'Operations', 'Sales', 'Other'] Choose a topic according to the Table description. If there are current topics that represent additional information, add them to the list of topics.
 
 
 There are some rules that you MUST follow:

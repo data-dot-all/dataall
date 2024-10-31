@@ -142,9 +142,9 @@ DatasetMetadata = gql.ObjectType(
         gql.Field(name='targetUri', type=gql.String),
         gql.Field(name='targetType', type=gql.String),
         gql.Field(name='label', type=gql.String),
-        gql.Field(name='topics', type=gql.ArrayType(gql.String)),
-        gql.Field(name='tags', type=gql.ArrayType(gql.String)),
         gql.Field(name='description', type=gql.String),
+        gql.Field(name='tags', type=gql.ArrayType(gql.String)),
+        gql.Field(name='topics', type=gql.ArrayType(gql.String)),
     ],
 )
 

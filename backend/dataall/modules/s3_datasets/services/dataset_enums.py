@@ -12,7 +12,7 @@ class MetadataGenerationTargets(Enum):
 class MetadataGenerationTypes(Enum):
     """Describes the s3_datasets metadata generation types"""
 
-    Description = 'Description'
-    Label = 'Label'
-    Tag = 'Tag'
-    Topic = 'Topic'
+    Description = 'description'
+    Label = 'label'
+    Tag = 'tags'
+    Topic = 'topics'

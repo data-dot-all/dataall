@@ -3,7 +3,9 @@ import logging
 from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
-from dataall.core.resource_threshold.services.resource_threshold_service import ResourceThresholdService
+
+##TODO
+##from dataall.core.resource_threshold.services.resource_threshold_service import ResourceThresholdService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.s3_datasets.aws.athena_table_client import AthenaTableClient
@@ -190,9 +192,9 @@ class DatasetTableService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(UPDATE_DATASET_TABLE)
-    @ResourceThresholdService.check_invocation_count(
-        'metadata', 'modules.s3_datasets.features.generate_metadata_ai.max_count_per_day'
-    )
+    # @ResourceThresholdService.check_invocation_count(
+    #     'metadata', 'modules.s3_datasets.features.generate_metadata_ai.max_count_per_day'
+    # )
     def generate_metadata_for_table(uri, metadata_types, sample_data):
         context = get_context()
         with context.db_engine.scoped_session() as session:

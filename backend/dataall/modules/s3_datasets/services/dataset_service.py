@@ -19,7 +19,9 @@ from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTagRepositor
 from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.tasks.db.task_models import Task
-from dataall.core.resource_threshold.services.resource_threshold_service import ResourceThresholdService
+
+##TODO
+##from dataall.core.resource_threshold.services.resource_threshold_service import ResourceThresholdService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.s3_datasets.db.dataset_bucket_repositories import DatasetBucketRepository
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
@@ -574,9 +576,9 @@ class DatasetService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(UPDATE_DATASET)
-    @ResourceThresholdService.check_invocation_count(
-        'metadata', 'modules.s3_datasets.features.generate_metadata_ai.max_count_per_day'
-    )
+    # @ResourceThresholdService.check_invocation_count(
+    #     'metadata', 'modules.s3_datasets.features.generate_metadata_ai.max_count_per_day'
+    # )
     def generate_metadata_for_dataset(uri, metadata_types):
         context = get_context()
         with context.db_engine.scoped_session() as session:

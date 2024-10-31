@@ -169,7 +169,7 @@ def generate_metadata(
     tableSampleData: dict = {},
 ):
     RequestValidator.validate_uri(param_name='resourceUri', param_value=resourceUri)
-    if metadataTypes not in [item.value for item in MetadataGenerationTypes]:
+    if any(metadata_type not in [item.value for item in MetadataGenerationTypes] for metadata_type in metadataTypes):
         raise InvalidInput(
             'metadataType',
             metadataTypes,

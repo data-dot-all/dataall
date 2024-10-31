@@ -41,8 +41,6 @@ export const GenerateMetadataComponent = (props) => {
     setCurrentView,
     loadingMetadata,
     setLoadingMetadata,
-    version,
-    setVersion,
     ...other
   } = props;
   const { enqueueSnackbar } = useSnackbar();
@@ -58,7 +56,8 @@ export const GenerateMetadataComponent = (props) => {
         setTargets([
           {
             targetUri: dataset.datasetUri,
-            targetType: 'S3_Dataset'
+            targetType: 'S3_Dataset',
+            name: dataset.name
           }
         ]);
       } else {
@@ -99,7 +98,6 @@ export const GenerateMetadataComponent = (props) => {
   };
 
   const generateMetadata = async () => {
-    setCurrentView('REVIEW_METADATA');
     for (let target of targets) {
       let response = await client.mutate(
         generateMetadataBedrock({
@@ -108,30 +106,27 @@ export const GenerateMetadataComponent = (props) => {
           metadataTypes: Object.entries(selectedMetadataTypes)
             .filter(([key, value]) => value === true)
             .map(([key]) => key),
-          version: version,
-          sampleData: {}
+          tableSampleData: {}
         })
       );
       if (!response.errors) {
-        target.description = response.data.generateMetadata.description;
-        target.label = response.data.generateMetadata.label;
-        target.name = response.data.generateMetadata.name;
-        target.tags = response.data.generateMetadata.tags;
-        target.topics = response.data.generateMetadata.topics;
-        target.subitem_descriptions = (
-          response.data.generateMetadata.subitem_descriptions || []
-        ).map((item) => ({
-          description: item.description,
-          label: item.label,
-          subitem_id: item.subitem_id
-        }));
+        const matchingResponse = response.data.generateMetadata.find(
+          (item) =>
+            item.targetUri === target.targetUri &&
+            item.targetType === target.targetType
+        );
+
+        if (matchingResponse) {
+          target.description = matchingResponse.description;
+          target.label = matchingResponse.label;
+          target.tags = matchingResponse.tags;
+          target.topics = matchingResponse.topics;
+        }
         const hasNotEnoughData = [
           target.description,
           target.label,
-          target.name,
           target.tags,
-          target.topics,
-          target.subitem_descriptions
+          target.topics
         ].some((value) => value === 'NotEnoughData');
 
         if (hasNotEnoughData) {
@@ -157,9 +152,18 @@ export const GenerateMetadataComponent = (props) => {
             }
           );
         }
-        setVersion(version + 1);
+      } else {
+        target.description = 'Error';
+        target.label = 'Error';
+        target.tags = 'Error';
+        target.topics = 'Error';
+        dispatch({
+          type: SET_ERROR,
+          error: response.errors[0].message + dataset.datasetUri
+        });
       }
     }
+    setCurrentView('REVIEW_METADATA');
   };
   return (
     <>
@@ -409,7 +413,5 @@ GenerateMetadataComponent.propTypes = {
   selectedMetadataTypes: PropTypes.object.isRequired,
   setSelectedMetadataTypes: PropTypes.func.isRequired,
   currentView: PropTypes.string.isRequired,
-  setCurrentView: PropTypes.func.isRequired,
-  version: PropTypes.number.isRequired,
-  setVersion: PropTypes.func.isRequired
+  setCurrentView: PropTypes.func.isRequired
 };

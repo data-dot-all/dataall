@@ -11,7 +11,6 @@ export const MetadataMainModal = (props) => {
   const [targetType, setTargetType] = useState('');
   const [targets, setTargets] = useState([]);
   const [targetOptions, setTargetOptions] = useState([]);
-  const [version, setVersion] = useState(0); //TODO: use version and add previous response in backend
   const [selectedMetadataTypes, setSelectedMetadataTypes] = useState({
     label: false,
     description: false,
@@ -27,7 +26,6 @@ export const MetadataMainModal = (props) => {
       setTargets([]);
       setTargetOptions(Defaults.pagedResponse);
       setSelectedMetadataTypes({});
-      setVersion(0);
     }
   }, [open]);
 
@@ -50,8 +48,6 @@ export const MetadataMainModal = (props) => {
           setSelectedMetadataTypes={setSelectedMetadataTypes}
           currentView={currentView}
           setCurrentView={setCurrentView}
-          version={version}
-          setVersion={setVersion}
         />
       )}
       {currentView === 'REVIEW_METADATA' && (
@@ -61,8 +57,6 @@ export const MetadataMainModal = (props) => {
           targets={targets}
           setTargets={setTargets}
           selectedMetadataTypes={selectedMetadataTypes}
-          version={version}
-          setVersion={setVersion}
         />
       )}
     </Dialog>

@@ -4,42 +4,33 @@ export const generateMetadataBedrock = ({
   resourceUri,
   targetType,
   metadataTypes,
-  version,
-  sampleData
+  tableSampleData
 }) => ({
   variables: {
     resourceUri,
     targetType,
     metadataTypes,
-    version,
-    sampleData
+    tableSampleData
   },
   mutation: gql`
     mutation generateMetadata(
       $resourceUri: String!
-      $targetType: MetadataGenerationTargets
-      $metadataTypes: [String]
-      $version: Int
-      $sampleData: SampleDataInput
+      $targetType: MetadataGenerationTargets!
+      $metadataTypes: [String]!
+      $tableSampleData: TableSampleData
     ) {
       generateMetadata(
         resourceUri: $resourceUri
         targetType: $targetType
         metadataTypes: $metadataTypes
-        version: $version
-        sampleData: $sampleData
+        tableSampleData: $tableSampleData
       ) {
-        type
+        targetUri
+        targetType
         label
         description
         tags
         topics
-        name
-        subitem_descriptions {
-          description
-          label
-          subitem_id
-        }
       }
     }
   `
