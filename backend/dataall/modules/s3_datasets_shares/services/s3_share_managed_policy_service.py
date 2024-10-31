@@ -3,7 +3,7 @@ from typing import Any, List, Dict
 
 from dataall.base.aws.iam import IAM
 from dataall.base.aws.service_quota import ServiceQuota
-from dataall.base.db.exceptions import AWSResourceQuotaExceeded
+from dataall.base.db.exceptions import AWSServiceQuotaExceeded
 from dataall.base.utils.iam_policy_utils import (
     split_policy_statements_in_chunks,
     split_policy_with_resources_in_statements,
@@ -413,7 +413,7 @@ class S3SharePolicyService(ManagedPolicy):
             log.error(
                 f'Number of policies which can be attached to the role is more than the service quota limit: {managed_iam_policy_quota}'
             )
-            raise AWSResourceQuotaExceeded(
+            raise AWSServiceQuotaExceeded(
                 action='_check_iam_managed_policy_attachment_limit',
                 message=f'Number of policies which can be attached to the role is more than the service quota limit: {managed_iam_policy_quota}',
             )

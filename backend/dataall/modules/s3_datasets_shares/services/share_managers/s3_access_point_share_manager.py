@@ -5,7 +5,7 @@ from itertools import count
 from typing import List
 from warnings import warn
 
-from dataall.base.db.exceptions import AWSResourceQuotaExceeded
+from dataall.base.db.exceptions import AWSServiceQuotaExceeded
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.db import utils
 from dataall.base.aws.sts import SessionHelper
@@ -392,7 +392,7 @@ class S3AccessPointShareManager:
                 target_s3_statements=s3_statement_chunks,
                 target_s3_kms_statements=s3_kms_statement_chunks,
             )
-        except AWSResourceQuotaExceeded as e:
+        except AWSServiceQuotaExceeded as e:
             error_message = e.message
             try:
                 ShareNotificationService(
