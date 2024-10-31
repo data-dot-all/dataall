@@ -61,7 +61,7 @@
                 "show_stack_logs": "enabled",
                 "generate_metadata_ai": {
                     "active": true,
-                    "model_id": "anthropic.claude-3-sonnet-20240229-v1:0"
+                    "max_count_per_day": 25
                 }
             }
         },
