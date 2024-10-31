@@ -359,3 +359,7 @@ class MetadataFormRepository:
     @staticmethod
     def get_mf_enforcement_rule_by_uri(session, uri):
         return session.query(MetadataFormEnforcementRule).get(uri)
+
+    @staticmethod
+    def list_mf_enforcement_rules(session, uri):
+        return session.query(MetadataFormEnforcementRule).filter(MetadataFormEnforcementRule.metadataFormUri == uri).all()

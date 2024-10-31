@@ -186,3 +186,8 @@ class MetadataFormEnforcementService:
                     ]
                 )
             return affected_entities
+
+    @staticmethod
+    def list_mf_enforcement_rules(uri):
+        with get_context().db_engine.scoped_session() as session:
+            return MetadataFormRepository.list_mf_enforcement_rules(session, uri)

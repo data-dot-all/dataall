@@ -6,12 +6,13 @@ from dataall.modules.metadata_forms.db.metadata_form_models import (
     MetadataFormField,
     AttachedMetadataForm,
     AttachedMetadataFormField,
-    MetadataFormEnforcementRule,
 )
 from dataall.modules.metadata_forms.services.attached_metadata_form_service import AttachedMetadataFormService
 from dataall.modules.metadata_forms.services.metadata_form_enforcement_service import MetadataFormEnforcementService
 from dataall.modules.metadata_forms.services.metadata_form_permissions import MANAGE_METADATA_FORMS
 from dataall.modules.metadata_forms.services.metadata_form_service import MetadataFormService, MetadataFormAccessService
+
+from typing import Protocol
 
 
 def create_metadata_form(context: Context, source, input):
@@ -58,7 +59,11 @@ def get_metadata_form(context: Context, source, uri):
     return MetadataFormService.get_metadata_form_by_uri(uri=uri)
 
 
-def resolve_metadata_form(context: Context, source: AttachedMetadataForm | MetadataFormEnforcementRule):
+class HasMetadataFormUri(Protocol):
+    metadataFormUri: str
+
+
+def resolve_metadata_form(context: Context, source: HasMetadataFormUri):
     return MetadataFormService.get_metadata_form_by_uri(source.metadataFormUri)
 
 
@@ -120,3 +125,7 @@ def list_metadata_form_versions(context: Context, source, uri):
 
 def create_mf_enforcement_rule(context: Context, source, input):
     return MetadataFormEnforcementService.create_mf_enforcement_rule(uri=input.get('metadataFormUri'), data=input)
+
+
+def list_mf_enforcement_rules(context: Context, source, uri):
+    return MetadataFormEnforcementService.list_mf_enforcement_rules(uri=uri)

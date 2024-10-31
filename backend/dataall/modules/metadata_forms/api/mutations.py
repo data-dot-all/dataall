@@ -109,7 +109,7 @@ batchMetadataFormFieldUpdates = gql.MutationField(
 
 
 createMetadataFormEnforcementRule = gql.MutationField(
-    name='createMetadataForm',
+    name='createMetadataFormEnforcementRule',
     args=[gql.Argument(name='input', type=gql.NonNullableType(gql.Ref('NewMetadataFormEnforcementInput')))],
     type=gql.Ref('MetadataFormEnforcementRule'),
     resolver=create_mf_enforcement_rule,

@@ -12,3 +12,5 @@ export * from './getMetadataFormEntityPermissions';
 export * from './createMetadataFormVersion';
 export * from './deleteMetadataFormVersion';
 export * from './listMetadataFormVersions';
+export * from './createMetadataFormEnforcementRule';
+export * from './listMetadataFormEnforcementRules';
