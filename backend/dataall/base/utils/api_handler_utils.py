@@ -25,6 +25,14 @@ MAINTENANCE_ALLOWED_OPERATIONS_WHEN_NO_ACCESS = [
 ENGINE = get_engine(envname=ENVNAME)
 
 
+def redact_creds(event):
+    if 'headers' in event and 'Authorization' in event['headers']:
+        event['headers']['Authorization'] = 'XXXXXXXXXXXX'
+    if 'multiValueHeaders' in event and 'Authorization' in event['multiValueHeaders']:
+        event['multiValueHeaders']['Authorization'] = 'XXXXXXXXXXXX'
+    return event
+
+
 def get_cognito_groups(claims):
     if not claims:
         raise ValueError(
