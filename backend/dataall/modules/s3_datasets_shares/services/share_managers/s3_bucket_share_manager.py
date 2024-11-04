@@ -5,6 +5,7 @@ from typing import List
 from warnings import warn
 from dataall.base.aws.iam import IAM
 from dataall.base.aws.sts import SessionHelper
+from dataall.base.db.exceptions import AWSServiceQuotaExceeded
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.s3_datasets.db.dataset_models import DatasetBucket
@@ -29,6 +30,7 @@ from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.shares_base.services.share_manager_utils import ShareErrorFormatter
+from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
 from dataall.modules.shares_base.services.shares_enums import PrincipalType
 from dataall.modules.shares_base.services.sharing_service import ShareData
 
@@ -251,7 +253,6 @@ class S3BucketShareManager:
         if kms_key_id:
             kms_target_resources = [f'arn:aws:kms:{self.bucket_region}:{self.source_account_id}:key/{kms_key_id}']
 
-        s3_kms_statement_chunks = []
         s3_statements = share_policy_service.total_s3_stmts
         s3_statement_chunks = share_policy_service.add_resources_and_generate_split_statements(
             statements=s3_statements,
@@ -262,22 +263,34 @@ class S3BucketShareManager:
         logger.info(f'Number of S3 statements created after splitting: {len(s3_statement_chunks)}')
         logger.debug(f'S3 statements after adding resources and splitting: {s3_statement_chunks}')
 
-        if kms_target_resources:
-            s3_kms_statements = share_policy_service.total_s3_kms_stmts
-            s3_kms_statement_chunks = share_policy_service.add_resources_and_generate_split_statements(
-                statements=s3_kms_statements,
-                target_resources=kms_target_resources,
-                sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS',
-                resource_type='kms',
-            )
-            logger.info(f'Number of S3 KMS statements created after splitting: {len(s3_kms_statement_chunks)}')
-            logger.debug(f'S3 KMS statements after adding resources and splitting: {s3_kms_statement_chunks}')
-
-        share_policy_service.merge_statements_and_update_policies(
-            target_sid=IAM_S3_BUCKETS_STATEMENT_SID,
-            target_s3_statements=s3_statement_chunks,
-            target_s3_kms_statements=s3_kms_statement_chunks,
+        s3_kms_statements = share_policy_service.total_s3_kms_stmts
+        s3_kms_statement_chunks = share_policy_service.add_resources_and_generate_split_statements(
+            statements=s3_kms_statements,
+            target_resources=kms_target_resources,
+            sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS',
+            resource_type='kms',
         )
+        logger.info(f'Number of S3 KMS statements created after splitting: {len(s3_kms_statement_chunks)}')
+        logger.debug(f'S3 KMS statements after adding resources and splitting: {s3_kms_statement_chunks}')
+
+        try:
+            share_policy_service.merge_statements_and_update_policies(
+                target_sid=IAM_S3_BUCKETS_STATEMENT_SID,
+                target_s3_statements=s3_statement_chunks,
+                target_s3_kms_statements=s3_kms_statement_chunks,
+            )
+        except AWSServiceQuotaExceeded as e:
+            error_message = e.message
+            try:
+                ShareNotificationService(
+                    session=None, dataset=self.dataset, share=self.share
+                ).notify_managed_policy_limit_exceeded_action(email_id=self.share.owner)
+            except Exception as e:
+                logger.error(
+                    f'Error sending email for notifying that managed policy limit exceeded on role due to: {e}'
+                )
+            finally:
+                raise Exception(error_message)
 
         is_unattached_policies = share_policy_service.get_policies_unattached_to_role()
         if is_unattached_policies:
@@ -554,9 +567,7 @@ class S3BucketShareManager:
         if kms_key_id:
             kms_target_resources = [f'arn:aws:kms:{target_bucket.region}:{target_bucket.AwsAccountId}:key/{kms_key_id}']
 
-        s3_kms_statement_chunks = []
         s3_statements = share_policy_service.total_s3_stmts
-
         s3_statement_chunks = share_policy_service.remove_resources_and_generate_split_statements(
             statements=s3_statements,
             target_resources=s3_target_resources,
@@ -566,16 +577,15 @@ class S3BucketShareManager:
         logger.info(f'Number of S3 statements created after splitting: {len(s3_statement_chunks)}')
         logger.debug(f'S3 statements after adding resources and splitting: {s3_statement_chunks}')
 
-        if kms_target_resources:
-            s3_kms_statements = share_policy_service.total_s3_kms_stmts
-            s3_kms_statement_chunks = share_policy_service.remove_resources_and_generate_split_statements(
-                statements=s3_kms_statements,
-                target_resources=kms_target_resources,
-                sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS',
-                resource_type='kms',
-            )
-            logger.info(f'Number of S3 KMS statements created after splitting: {len(s3_kms_statement_chunks)}')
-            logger.debug(f'S3 KMS statements after adding resources and splitting: {s3_kms_statement_chunks}')
+        s3_kms_statements = share_policy_service.total_s3_kms_stmts
+        s3_kms_statement_chunks = share_policy_service.remove_resources_and_generate_split_statements(
+            statements=s3_kms_statements,
+            target_resources=kms_target_resources,
+            sid=f'{IAM_S3_BUCKETS_STATEMENT_SID}KMS',
+            resource_type='kms',
+        )
+        logger.info(f'Number of S3 KMS statements created after splitting: {len(s3_kms_statement_chunks)}')
+        logger.debug(f'S3 KMS statements after adding resources and splitting: {s3_kms_statement_chunks}')
 
         share_policy_service.merge_statements_and_update_policies(
             target_sid=IAM_S3_BUCKETS_STATEMENT_SID,

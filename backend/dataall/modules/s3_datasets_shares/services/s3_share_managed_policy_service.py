@@ -245,8 +245,8 @@ class S3SharePolicyService(ManagedPolicy):
         self, target_sid: str, target_s3_statements: List[Any], target_s3_kms_statements: List[Any]
     ):
         """
-        This method is responsible for merging policy statement, re-generating chunks comprizing of statements.
-        Creates policies if needed and then updates policies with statement chunks.
+        This method is responsible for merging policy statements, re-generating chunks consisting of statements.
+        Creates new policies (if needed) and then updates existing policies with statement chunks.
         Based on target_sid:
         1. This method merges all the S3 statments
         2. Splits the policy into policy chunks, where each chunk is <= size of the policy ( this is approximately true )
@@ -493,6 +493,10 @@ class S3SharePolicyService(ManagedPolicy):
         for target_resource in target_resources:
             if target_resource not in s3_statements_resources:
                 s3_statements_resources.append(target_resource)
+
+        if len(s3_statements_resources) == 0:
+            return []
+
         statement_chunks = split_policy_with_resources_in_statements(
             base_sid=sid,
             effect='Allow',

@@ -351,21 +351,6 @@ class S3AccessPointShareManager:
         if kms_key_id:
             kms_target_resources = [f'arn:aws:kms:{self.dataset_region}:{self.dataset_account_id}:key/{kms_key_id}']
 
-        managed_policy_exists = True if share_policy_service.get_managed_policies() else False
-
-        if not managed_policy_exists:
-            logger.info('Managed policies do not exist. Creating one')
-            # Create a managed policy with naming convention and index
-            share_resource_policy_name = share_policy_service.generate_indexed_policy_name(index=0)
-            empty_policy = share_policy_service.generate_empty_policy()
-            IAM.create_managed_policy(
-                self.target_account_id,
-                self.target_environment.region,
-                share_resource_policy_name,
-                json.dumps(empty_policy),
-            )
-
-        s3_kms_statement_chunks = []
         s3_statements = share_policy_service.total_s3_access_point_stmts
         s3_statement_chunks = share_policy_service.add_resources_and_generate_split_statements(
             statements=s3_statements,
@@ -376,16 +361,16 @@ class S3AccessPointShareManager:
         logger.info(f'Number of S3 statements created after splitting: {len(s3_statement_chunks)}')
         logger.debug(f'S3 statements after adding resources and splitting: {s3_statement_chunks}')
 
-        if kms_target_resources:
-            s3_kms_statements = share_policy_service.total_s3_access_point_kms_stmts
-            s3_kms_statement_chunks = share_policy_service.add_resources_and_generate_split_statements(
-                statements=s3_kms_statements,
-                target_resources=kms_target_resources,
-                sid=f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS',
-                resource_type='kms',
-            )
-            logger.info(f'Number of S3 KMS statements created after splitting: {len(s3_kms_statement_chunks)}')
-            logger.debug(f'S3 KMS statements after adding resources and splitting: {s3_kms_statement_chunks}')
+        s3_kms_statements = share_policy_service.total_s3_access_point_kms_stmts
+        s3_kms_statement_chunks = share_policy_service.add_resources_and_generate_split_statements(
+            statements=s3_kms_statements,
+            target_resources=kms_target_resources,
+            sid=f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS',
+            resource_type='kms',
+        )
+        logger.info(f'Number of S3 KMS statements created after splitting: {len(s3_kms_statement_chunks)}')
+        logger.debug(f'S3 KMS statements after adding resources and splitting: {s3_kms_statement_chunks}')
+
         try:
             share_policy_service.merge_statements_and_update_policies(
                 target_sid=IAM_S3_ACCESS_POINTS_STATEMENT_SID,
@@ -737,9 +722,7 @@ class S3AccessPointShareManager:
             logger.info(f'Managed policies for share with uri: {self.share.shareUri} are not found')
             return
 
-        s3_kms_statement_chunks = []
         s3_statements = share_policy_service.total_s3_access_point_stmts
-
         s3_statement_chunks = share_policy_service.remove_resources_and_generate_split_statements(
             statements=s3_statements,
             target_resources=s3_target_resources,
@@ -749,17 +732,15 @@ class S3AccessPointShareManager:
         logger.info(f'Number of S3 statements created after splitting: {len(s3_statement_chunks)}')
         logger.debug(f'S3 statements after adding resources and splitting: {s3_statement_chunks}')
 
-        if kms_target_resources:
-            s3_kms_statements = share_policy_service.total_s3_access_point_kms_stmts
-
-            s3_kms_statement_chunks = share_policy_service.remove_resources_and_generate_split_statements(
-                statements=s3_kms_statements,
-                target_resources=kms_target_resources,
-                sid=f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS',
-                resource_type='kms',
-            )
-            logger.info(f'Number of S3 KMS statements created after splitting: {len(s3_kms_statement_chunks)}')
-            logger.debug(f'S3 KMS statements after adding resources and splitting: {s3_kms_statement_chunks}')
+        s3_kms_statements = share_policy_service.total_s3_access_point_kms_stmts
+        s3_kms_statement_chunks = share_policy_service.remove_resources_and_generate_split_statements(
+            statements=s3_kms_statements,
+            target_resources=kms_target_resources,
+            sid=f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS',
+            resource_type='kms',
+        )
+        logger.info(f'Number of S3 KMS statements created after splitting: {len(s3_kms_statement_chunks)}')
+        logger.debug(f'S3 KMS statements after adding resources and splitting: {s3_kms_statement_chunks}')
 
         share_policy_service.merge_statements_and_update_policies(
             target_sid=IAM_S3_ACCESS_POINTS_STATEMENT_SID,

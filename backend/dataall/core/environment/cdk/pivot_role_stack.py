@@ -41,7 +41,7 @@ class PivotRoleStatementSet(object):
             logger.info(f'statements: {str(service.get_statements(self))}')
 
         statements_json = [statement.to_json() for statement in statements]
-        statements_chunks = process_and_split_statements_in_chunks(statements_json)
+        statements_chunks: List[List[iam.PolicyStatement]] = process_and_split_statements_in_chunks(statements_json)
 
         for index, chunk in enumerate(statements_chunks):
             policies.append(
