@@ -975,7 +975,6 @@ def test_delete_target_role_access_policy_no_remaining_statement(
         return_value=[],
     )
 
-
     mocker.patch('dataall.base.aws.iam.IAM.create_managed_policy', return_value=True)
 
     mocker.patch(

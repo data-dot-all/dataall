@@ -1,7 +1,8 @@
 import os
 from dataall.base import db
 from dataall.base.utils.iam_cdk_utils import (
-    convert_from_json_to_iam_policy_statement_with_conditions, process_and_split_policy_with_resources_in_statements,
+    convert_from_json_to_iam_policy_statement_with_conditions,
+    process_and_split_policy_with_resources_in_statements,
 )
 from dataall.base.utils.iam_policy_utils import (
     split_policy_with_mutiple_value_condition_in_statements,

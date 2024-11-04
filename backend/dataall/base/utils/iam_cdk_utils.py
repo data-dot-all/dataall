@@ -1,8 +1,11 @@
 from typing import Dict, Any, List
 from aws_cdk import aws_iam as iam
 
-from dataall.base.utils.iam_policy_utils import split_policy_statements_in_chunks, \
-    split_policy_with_resources_in_statements, split_policy_with_mutiple_value_condition_in_statements
+from dataall.base.utils.iam_policy_utils import (
+    split_policy_statements_in_chunks,
+    split_policy_with_resources_in_statements,
+    split_policy_with_mutiple_value_condition_in_statements,
+)
 
 
 def convert_from_json_to_iam_policy_statement_with_conditions(iam_policy: Dict[Any, Any]):
@@ -38,17 +41,18 @@ def process_and_split_statements_in_chunks(statements: List[Dict]):
     return statements_chunks
 
 
-def process_and_split_policy_with_resources_in_statements(base_sid: str, effect: str, actions: List[str],
-                                                          resources: List[str], condition_dict: Dict = None):
+def process_and_split_policy_with_resources_in_statements(
+    base_sid: str, effect: str, actions: List[str], resources: List[str], condition_dict: Dict = None
+):
     if condition_dict is not None:
-        print(f"Condition dictionary is: {condition_dict}")
-        json_statements = split_policy_with_mutiple_value_condition_in_statements(base_sid=base_sid, effect=effect,
-                                                                                  actions=actions,
-                                                                                  resources=resources,
-                                                                                  condition_dict=condition_dict)
+        print(f'Condition dictionary is: {condition_dict}')
+        json_statements = split_policy_with_mutiple_value_condition_in_statements(
+            base_sid=base_sid, effect=effect, actions=actions, resources=resources, condition_dict=condition_dict
+        )
     else:
-        json_statements = split_policy_with_resources_in_statements(base_sid=base_sid, effect=effect, actions=actions,
-                                                                    resources=resources)
+        json_statements = split_policy_with_resources_in_statements(
+            base_sid=base_sid, effect=effect, actions=actions, resources=resources
+        )
     iam_statements: [iam.PolicyStatement] = []
     for json_statement in json_statements:
         if json_statement.get('Condition', None):

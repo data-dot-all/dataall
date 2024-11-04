@@ -456,7 +456,9 @@ def test_grant_s3_iam_access_with_no_policy(mocker, dataset2, share2_manager):
     # Return [] when first called, indicating that managed indexed policies don't exist, Once share_policy_service_mock_1.called is called then return some indexed managed policy
     mocker.patch(
         'dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern',
-         side_effect=lambda account_id, region, policy_filter_pattern : [] if not share_policy_service_mock_1.called else ['policy-0']
+        side_effect=lambda account_id, region, policy_filter_pattern: []
+        if not share_policy_service_mock_1.called
+        else ['policy-0'],
     )
 
     share_policy_service_mock_2 = mocker.patch(
@@ -1040,7 +1042,9 @@ def test_delete_target_role_access_no_policy_no_other_resources_shared(
     # Return [] when first called, indicating that managed indexed policies don't exist, Once share_policy_service_mock_1.called is called then return some indexed managed policy
     mocker.patch(
         'dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern',
-         side_effect=lambda account_id, region, policy_filter_pattern : [] if not share_policy_service_mock_1.called else ['policy-0']
+        side_effect=lambda account_id, region, policy_filter_pattern: []
+        if not share_policy_service_mock_1.called
+        else ['policy-0'],
     )
 
     share_policy_service_mock_2 = mocker.patch(
@@ -1122,7 +1126,6 @@ def test_delete_target_role_access_policy_no_resource_of_datasets_s3_bucket(
         return_value=False,
     )
 
-
     kms_client = mock_kms_client(mocker)
     kms_client().get_key_id.return_value = 'kms-key'
 
@@ -1202,7 +1205,6 @@ def test_delete_target_role_access_policy_with_multiple_s3_buckets_in_policy(
         'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService._get_managed_policy_quota',
         return_value=10,
     )
-
 
     mocker.patch(
         'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
