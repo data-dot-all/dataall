@@ -3,7 +3,7 @@ import logging
 import os
 from argparse import Namespace
 from time import perf_counter
-
+import requests
 from ariadne import (
     gql,
     graphql_sync,
@@ -16,6 +16,7 @@ from dataall.base.utils.api_handler_utils import (
     check_reauth,
     validate_and_block_if_maintenance_window,
     redact_creds,
+    get_user_info,
 )
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sqs import SqsQueue
@@ -84,7 +85,20 @@ def handler(event, context):
 
         Return doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
     """
-
+    try:
+        r = get_user_info(event=event)
+    except Exception as e:
+        log.error(f'Error occured while getting user info due to - {e}')
+        return {
+            'statusCode': 400,
+            'headers': {
+                'content-type': 'application/json',
+                'Access-Control-Allow-Origin': ALLOWED_ORIGINS,
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Methods': '*',
+            },
+            'body': str(e),
+        }
     event = redact_creds(event)
     log.info('Lambda Event %s', event)
     log.debug('Env name %s', ENVNAME)

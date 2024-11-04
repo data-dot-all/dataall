@@ -2,6 +2,7 @@ import datetime
 import json
 import os
 import logging
+import requests
 
 from graphql import parse, utilities, OperationType, GraphQLSyntaxError
 from dataall.base.aws.parameter_store import ParameterStoreManager
@@ -24,6 +25,26 @@ MAINTENANCE_ALLOWED_OPERATIONS_WHEN_NO_ACCESS = [
 ]
 ENGINE = get_engine(envname=ENVNAME)
 ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', '*')
+AWS_REGION = os.getenv('AWS_REGION')
+
+
+def get_user_info(event):
+    idp_domain = ParameterStoreManager.get_parameter_value(
+        region=AWS_REGION, parameter_path=f'/dataall/{ENVNAME}/cognito/domain'
+    )
+
+    accessToken = None
+    if event.get('headers', {}).get('accesskeyid'):
+        accessToken = event['headers']['accesskeyid']
+    else:
+        raise Exception('AccessKeyId not found in headers')
+
+    url = f'https://{idp_domain}.auth.{AWS_REGION}.amazoncognito.com/oauth2/userInfo'
+    r = requests.get(url, headers={'Authorization': accessToken})
+
+    r.raise_for_status()
+    # if r.status_code != 200:
+    #     raise Exception(r.json().get('error_description'))
 
 
 def redact_creds(event):
@@ -115,7 +136,7 @@ def check_reauth(query, auth_time, username):
     # Determine if there are any Operations that Require ReAuth From SSM Parameter
     try:
         reauth_apis = ParameterStoreManager.get_parameter_value(
-            region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f'/dataall/{ENVNAME}/reauth/apis'
+            region=AWS_REGION, parameter_path=f'/dataall/{ENVNAME}/reauth/apis'
         ).split(',')
     except Exception:
         log.info('No ReAuth APIs Found in SSM')

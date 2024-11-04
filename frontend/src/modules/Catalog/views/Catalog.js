@@ -167,7 +167,7 @@ GlossaryFilter.propTypes = {
 };
 
 const Catalog = () => {
-  const token = useToken();
+  const { token, accessToken } = useToken();
   const { settings } = useSettings();
   const theme = useTheme();
   const classes = useStyles();
@@ -235,7 +235,7 @@ const Catalog = () => {
       credentials: { token },
       headers: {
         Authorization: token,
-        AccessKeyId: 'None',
+        AccessKeyId: accessToken ? `Bearer ${accessToken}` : '',
         SecretKey: 'None'
       }
     };
@@ -247,7 +247,7 @@ const Catalog = () => {
         : classes.darkListSearch
     );
   }, [settings.theme, classes]);
-  if (!token) {
+  if (!token || !accessToken) {
     return <CircularProgress />;
   }
 
