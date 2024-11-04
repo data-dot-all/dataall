@@ -228,7 +228,6 @@ class LambdaApiStack(pyNestedClass):
                 )
             )
 
-        # if custom_auth is not None:
         # Create the custom authorizer lambda
         custom_authorizer_assets = os.path.realpath(
             os.path.join(
@@ -243,25 +242,31 @@ class LambdaApiStack(pyNestedClass):
         if not os.path.isdir(custom_authorizer_assets):
             raise Exception(f'Custom Authorizer Folder not found at {custom_authorizer_assets}')
 
-        custom_lambda_env = {
-            'envname': envname,
-            'LOG_LEVEL': 'DEBUG',
-            'user_info_url': custom_auth.get('user_info_url')
-            or f'https://{user_pool_domain.domain_name}.auth.{self.region}.amazoncognito.com/oauth2/userInfo',
-            'custom_auth_provider': custom_auth.get('provider') or 'Cognito',
-            'custom_auth_url': custom_auth.get('url')
-            or f'https://cognito-idp.{self.region}.amazonaws.com/{user_pool.user_pool_id}',
-            'custom_auth_client': custom_auth.get('client_id') or user_pool_client.user_pool_client_id,
-            'custom_auth_jwks_url': custom_auth.get('jwks_url')
-            or f'https://cognito-idp.{self.region}.amazonaws.com/{user_pool.user_pool_id}/.well-known/jwks.json',
-        }
+        if custom_auth:
+            custom_lambda_env = {
+                'envname': envname,
+                'LOG_LEVEL': 'DEBUG',
+                'user_info_url': custom_auth.get('user_info_url'),
+                'custom_auth_provider': custom_auth.get('provider'),
+                'custom_auth_url': custom_auth.get('url'),
+                'custom_auth_client': custom_auth.get('client_id'),
+                'custom_auth_jwks_url': custom_auth.get('jwks_url'),
+            }
 
-        if custom_auth.get('claims_mapping', {}):
             for claims_map in custom_auth.get('claims_mapping', {}):
                 custom_lambda_env[claims_map] = custom_auth.get('claims_mapping', '').get(claims_map, '')
         else:
-            custom_lambda_env['email'] = 'email'
-            custom_lambda_env['user_id'] = 'email'
+            custom_lambda_env = {
+                'envname': envname,
+                'LOG_LEVEL': 'DEBUG',
+                'user_info_url': f'https://{user_pool_domain.domain_name}.auth.{self.region}.amazoncognito.com/oauth2/userInfo',
+                'custom_auth_provider': 'Cognito',
+                'custom_auth_url': f'https://cognito-idp.{self.region}.amazonaws.com/{user_pool.user_pool_id}',
+                'custom_auth_client': user_pool_client.user_pool_client_id,
+                'custom_auth_jwks_url': f'https://cognito-idp.{self.region}.amazonaws.com/{user_pool.user_pool_id}/.well-known/jwks.json',
+                'email': 'email',
+                'user_id': 'email',
+            }
 
         authorizer_fn_sg = self.create_lambda_sgs(envname, 'customauthorizer', resource_prefix, vpc)
         self.authorizer_fn = _lambda.Function(
@@ -613,16 +618,6 @@ class LambdaApiStack(pyNestedClass):
         user_pool,
         custom_auth,
     ):
-        # if custom_auth is None:
-        #     cognito_authorizer = apigw.CognitoUserPoolsAuthorizer(
-        #         self,
-        #         'CognitoAuthorizer',
-        #         cognito_user_pools=[user_pool],
-        #         authorizer_name=f'{resource_prefix}-{envname}-cognito-authorizer',
-        #         identity_source='method.request.header.Authorization',
-        #         results_cache_ttl=Duration.minutes(60),
-        #     )
-        # else:
         # Create a custom Authorizer
         custom_authorizer_role = iam.Role(
             self,
@@ -755,9 +750,7 @@ class LambdaApiStack(pyNestedClass):
         graphql_proxy.add_method(
             'POST',
             authorizer=custom_authorizer,
-            authorization_type=apigw.AuthorizationType.COGNITO
-            if custom_auth is None
-            else apigw.AuthorizationType.CUSTOM,
+            authorization_type=apigw.AuthorizationType.CUSTOM,
             request_validator=request_validator,
             request_models={'application/json': graphql_validation_model},
         )
@@ -797,9 +790,7 @@ class LambdaApiStack(pyNestedClass):
         search_proxy.add_method(
             'POST',
             authorizer=custom_authorizer,
-            authorization_type=apigw.AuthorizationType.COGNITO
-            if custom_auth is None
-            else apigw.AuthorizationType.CUSTOM,
+            authorization_type=apigw.AuthorizationType.CUSTOM,
             request_validator=request_validator,
             request_models={'application/json': search_validation_model},
         )
