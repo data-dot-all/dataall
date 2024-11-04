@@ -247,10 +247,12 @@ class LambdaApiStack(pyNestedClass):
             'envname': envname,
             'LOG_LEVEL': 'DEBUG',
             'auth_domain_name': user_pool_domain.domain_name if user_pool_domain else '',
-            'custom_auth_provider': custom_auth.get('provider') or "Cognito",
-            'custom_auth_url': custom_auth.get('url') or f"https://cognito-idp.{self.region}.amazonaws.com/{user_pool.user_pool_id}",
+            'custom_auth_provider': custom_auth.get('provider') or 'Cognito',
+            'custom_auth_url': custom_auth.get('url')
+            or f'https://cognito-idp.{self.region}.amazonaws.com/{user_pool.user_pool_id}',
             'custom_auth_client': custom_auth.get('client_id') or user_pool_client.user_pool_client_id,
-            'custom_auth_jwks_url': custom_auth.get('jwks_url') or f"https://cognito-idp.{self.region}.amazonaws.com/{user_pool.user_pool_id}/.well-known/jwks.json",
+            'custom_auth_jwks_url': custom_auth.get('jwks_url')
+            or f'https://cognito-idp.{self.region}.amazonaws.com/{user_pool.user_pool_id}/.well-known/jwks.json',
         }
 
         if custom_auth.get('claims_mapping', {}):
@@ -751,7 +753,7 @@ class LambdaApiStack(pyNestedClass):
         )
         graphql_proxy.add_method(
             'POST',
-            authorizer=cognito_authorizer if custom_auth is None else custom_authorizer,
+            authorizer=custom_authorizer,
             authorization_type=apigw.AuthorizationType.COGNITO
             if custom_auth is None
             else apigw.AuthorizationType.CUSTOM,
@@ -793,7 +795,7 @@ class LambdaApiStack(pyNestedClass):
         )
         search_proxy.add_method(
             'POST',
-            authorizer=cognito_authorizer if custom_auth is None else custom_authorizer,
+            authorizer=custom_authorizer,
             authorization_type=apigw.AuthorizationType.COGNITO
             if custom_auth is None
             else apigw.AuthorizationType.CUSTOM,
