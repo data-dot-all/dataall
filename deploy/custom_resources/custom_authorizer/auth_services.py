@@ -28,6 +28,8 @@ class AuthServices:
 
         for claim_name, claim_value in verified_claims.items():
             if isinstance(claim_value, list):
+                if claim_name == 'cognito:groups':
+                    verified_claims.update({'groups': ','.join(claim_value)})
                 verified_claims.update({claim_name: json.dumps(claim_value)})
 
         context = {**verified_claims}
