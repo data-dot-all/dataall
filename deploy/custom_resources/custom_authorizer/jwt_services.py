@@ -105,9 +105,8 @@ class JWTServices:
     @staticmethod
     def validate_access_token(access_token):
         try:
-            idp_domain = os.getenv('auth_domain_name')
-            url = f'https://{idp_domain}.auth.{AWS_REGION}.amazoncognito.com/oauth2/userInfo'
-            r = requests.get(url, headers={'Authorization': access_token})
+            user_info_url = os.getenv('user_info_url', '')
+            r = requests.get(user_info_url, headers={'Authorization': access_token})
             r.raise_for_status()
         except Exception as e:
             logger.error(f'Failed to validate access token - {str(e)}')
