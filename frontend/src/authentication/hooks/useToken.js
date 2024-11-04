@@ -23,8 +23,9 @@ export const useToken = () => {
               await auth.signinSilent();
             }
             const t = auth.user.id_token;
+            const at = auth.user.access_token;
             setToken(t);
-            setAccessToken(t);
+            setAccessToken(at);
           } catch (error) {
             if (!auth) throw Error('User Token Not Found !');
           }
