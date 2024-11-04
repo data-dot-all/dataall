@@ -191,7 +191,7 @@ export const GenericAuthProvider = (props) => {
       return {
         email: user.attributes.email,
         id_token: user.signInUserSession.idToken.jwtToken,
-        access_token: user.signInUserSession.access_token.jwtToken,
+        access_token: user.signInUserSession.accessToken.jwtToken,
         short_id: 'none'
       };
     }

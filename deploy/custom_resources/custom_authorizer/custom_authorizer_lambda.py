@@ -28,6 +28,10 @@ def lambda_handler(incoming_event, context):
     if not verified_claims:
         raise Exception('Unauthorized. Token is not valid')
 
+    if os.getenv('provider') == 'Cognito':
+        access_token = incoming_event['headers']['AccessKeyId']
+        JWTServices.validate_access_token(access_token)
+
     effect = 'Allow'
     policy = AuthServices.generate_policy(verified_claims, effect, incoming_event['methodArn'])
     logger.debug('Generated policy is ', policy)
@@ -39,12 +43,13 @@ def lambda_handler(incoming_event, context):
 # AWS Lambda and any other local environments
 if __name__ == '__main__':
     # for testing locally you can enter the JWT ID Token here
-    token = ''
+    id_token = ''
+    access_token = ''
     account_id = ''
     api_gw_id = ''
     event = {
+        'headers': {'Authorization': id_token, 'AccessKeyId': access_token},
         'type': 'TOKEN',
-        'Authorization': token,
         'methodArn': f'arn:aws:execute-api:us-east-1:{account_id}:{api_gw_id}/prod/POST/graphql/api',
     }
     lambda_handler(event, None)

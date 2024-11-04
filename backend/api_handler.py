@@ -85,20 +85,7 @@ def handler(event, context):
 
         Return doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
     """
-    try:
-        r = get_user_info(event=event)
-    except Exception as e:
-        log.error(f'Error occured while getting user info due to - {e}')
-        return {
-            'statusCode': 400,
-            'headers': {
-                'content-type': 'application/json',
-                'Access-Control-Allow-Origin': ALLOWED_ORIGINS,
-                'Access-Control-Allow-Headers': '*',
-                'Access-Control-Allow-Methods': '*',
-            },
-            'body': str(e),
-        }
+
     event = redact_creds(event)
     log.info('Lambda Event %s', event)
     log.debug('Env name %s', ENVNAME)

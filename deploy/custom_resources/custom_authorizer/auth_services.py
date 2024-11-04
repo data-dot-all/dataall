@@ -24,7 +24,7 @@ class AuthServices:
         principal_id = verified_claims['sub']
 
         # Attach a claim called 'email'. This is needed by Api Handler
-        verified_claims['email'] = verified_claims[os.getenv('email')]
+        verified_claims['email'] = verified_claims[os.getenv('email', 'email')]
 
         for claim_name, claim_value in verified_claims.items():
             if isinstance(claim_value, list):
@@ -34,7 +34,7 @@ class AuthServices:
 
         context.update(
             {
-                'user_id': verified_claims[os.getenv('user_id')],
+                'user_id': verified_claims[os.getenv('user_id', 'email')],
                 'custom_authorizer': 'true',
             }
         )

@@ -30,6 +30,7 @@ from aws_cdk.aws_ec2 import (
 from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling
 from .waf_rules import get_waf_rules
+from .run_if import run_if
 
 
 class LambdaApiStack(pyNestedClass):
@@ -50,6 +51,8 @@ class LambdaApiStack(pyNestedClass):
         apig_vpce=None,
         prod_sizing=False,
         user_pool=None,
+        user_pool_client=None,
+        user_pool_domain=None,
         pivot_role_name=None,
         reauth_ttl=5,
         email_notification_sender_email_id=None,
@@ -155,7 +158,9 @@ class LambdaApiStack(pyNestedClass):
                 retention=getattr(logs.RetentionDays, self.log_retention_duration),
             ),
             description='dataall graphql function',
-            role=self.create_function_role(envname, resource_prefix, 'graphql', pivot_role_name, vpc),
+            role=self.create_function_role(
+                envname, resource_prefix, 'graphql', pivot_role_name, vpc, self._get_bedrock_policy_statement() or []
+            ),
             code=_lambda.DockerImageCode.from_ecr(
                 repository=ecr_repository, tag=image_tag, cmd=['api_handler.handler']
             ),
@@ -223,73 +228,79 @@ class LambdaApiStack(pyNestedClass):
                 )
             )
 
-        if custom_auth is not None:
-            # Create the custom authorizer lambda
-            custom_authorizer_assets = os.path.realpath(
-                os.path.join(
-                    os.path.dirname(__file__),
-                    '..',
-                    'custom_resources',
-                    'custom_authorizer',
-                )
+        # if custom_auth is not None:
+        # Create the custom authorizer lambda
+        custom_authorizer_assets = os.path.realpath(
+            os.path.join(
+                os.path.dirname(__file__),
+                '..',
+                'custom_resources',
+                'custom_authorizer',
             )
+        )
+        ## GET CONGITO USERL POOL ID and APP CLIENT ID
 
-            if not os.path.isdir(custom_authorizer_assets):
-                raise Exception(f'Custom Authorizer Folder not found at {custom_authorizer_assets}')
+        if not os.path.isdir(custom_authorizer_assets):
+            raise Exception(f'Custom Authorizer Folder not found at {custom_authorizer_assets}')
 
-            custom_lambda_env = {
-                'envname': envname,
-                'LOG_LEVEL': 'DEBUG',
-                'custom_auth_provider': custom_auth.get('provider'),
-                'custom_auth_url': custom_auth.get('url'),
-                'custom_auth_client': custom_auth.get('client_id'),
-                'custom_auth_jwks_url': custom_auth.get('jwks_url'),
-            }
+        custom_lambda_env = {
+            'envname': envname,
+            'LOG_LEVEL': 'DEBUG',
+            'auth_domain_name': user_pool_domain.domain_name if user_pool_domain else '',
+            'custom_auth_provider': custom_auth.get('provider') or "Cognito",
+            'custom_auth_url': custom_auth.get('url') or f"https://cognito-idp.{self.region}.amazonaws.com/{user_pool.user_pool_id}",
+            'custom_auth_client': custom_auth.get('client_id') or user_pool_client.user_pool_client_id,
+            'custom_auth_jwks_url': custom_auth.get('jwks_url') or f"https://cognito-idp.{self.region}.amazonaws.com/{user_pool.user_pool_id}/.well-known/jwks.json",
+        }
 
+        if custom_auth.get('claims_mapping', {}):
             for claims_map in custom_auth.get('claims_mapping', {}):
                 custom_lambda_env[claims_map] = custom_auth.get('claims_mapping', '').get(claims_map, '')
+        else:
+            custom_lambda_env['email'] = 'email'
+            custom_lambda_env['user_id'] = 'email'
 
-            authorizer_fn_sg = self.create_lambda_sgs(envname, 'customauthorizer', resource_prefix, vpc)
-            self.authorizer_fn = _lambda.Function(
+        authorizer_fn_sg = self.create_lambda_sgs(envname, 'customauthorizer', resource_prefix, vpc)
+        self.authorizer_fn = _lambda.Function(
+            self,
+            f'CustomAuthorizerFunction-{envname}',
+            function_name=f'{resource_prefix}-{envname}-custom-authorizer',
+            log_group=logs.LogGroup(
                 self,
-                f'CustomAuthorizerFunction-{envname}',
-                function_name=f'{resource_prefix}-{envname}-custom-authorizer',
-                log_group=logs.LogGroup(
-                    self,
-                    'customauthorizerloggroup',
-                    log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-custom-authorizer',
-                    retention=getattr(logs.RetentionDays, self.log_retention_duration),
+                'customauthorizerloggroup',
+                log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-custom-authorizer',
+                retention=getattr(logs.RetentionDays, self.log_retention_duration),
+            ),
+            handler='custom_authorizer_lambda.lambda_handler',
+            code=_lambda.Code.from_asset(
+                path=custom_authorizer_assets,
+                bundling=BundlingOptions(
+                    image=_lambda.Runtime.PYTHON_3_9.bundling_image,
+                    local=SolutionBundling(source_path=custom_authorizer_assets),
                 ),
-                handler='custom_authorizer_lambda.lambda_handler',
-                code=_lambda.Code.from_asset(
-                    path=custom_authorizer_assets,
-                    bundling=BundlingOptions(
-                        image=_lambda.Runtime.PYTHON_3_9.bundling_image,
-                        local=SolutionBundling(source_path=custom_authorizer_assets),
-                    ),
-                ),
-                memory_size=512 if prod_sizing else 256,
-                description='dataall Custom authorizer replacing cognito authorizer',
-                timeout=Duration.seconds(20),
-                environment=custom_lambda_env,
-                environment_encryption=lambda_env_key,
-                vpc=vpc,
-                security_groups=[authorizer_fn_sg],
-                runtime=_lambda.Runtime.PYTHON_3_9,
-            )
+            ),
+            memory_size=512 if prod_sizing else 256,
+            description='dataall Custom authorizer replacing cognito authorizer',
+            timeout=Duration.seconds(20),
+            environment=custom_lambda_env,
+            environment_encryption=lambda_env_key,
+            vpc=vpc,
+            security_groups=[authorizer_fn_sg],
+            runtime=_lambda.Runtime.PYTHON_3_9,
+        )
 
-            # Add NAT Connectivity For Custom Authorizer Lambda
-            self.authorizer_fn.connections.allow_to(
-                ec2.Peer.any_ipv4(), ec2.Port.tcp(443), 'Allow NAT Internet Access SG Egress'
-            )
+        # Add NAT Connectivity For Custom Authorizer Lambda
+        self.authorizer_fn.connections.allow_to(
+            ec2.Peer.any_ipv4(), ec2.Port.tcp(443), 'Allow NAT Internet Access SG Egress'
+        )
 
-            # Store custom authorizer's ARN in ssm
-            ssm.StringParameter(
-                self,
-                f'{resource_prefix}-{envname}-custom-authorizer-arn',
-                parameter_name=f'/dataall/{envname}/customauth/customauthorizerarn',
-                string_value=self.authorizer_fn.function_arn,
-            )
+        # Store custom authorizer's ARN in ssm
+        ssm.StringParameter(
+            self,
+            f'{resource_prefix}-{envname}-custom-authorizer-arn',
+            parameter_name=f'/dataall/{envname}/customauth/customauthorizerarn',
+            string_value=self.authorizer_fn.function_arn,
+        )
 
         # Add VPC Endpoint Connectivity
         if vpce_connection:
@@ -346,7 +357,25 @@ class LambdaApiStack(pyNestedClass):
         )
         return lambda_sg
 
-    def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name, vpc):
+    @run_if(['modules.worksheets.features.nlq.active'])
+    def _get_bedrock_policy_statement(self):
+        return [
+            iam.PolicyStatement(
+                actions=[
+                    'bedrock:InvokeModel',
+                    'bedrock:GetPrompt',
+                    'bedrock:CreateFoundationModelAgreement',
+                    'bedrock:InvokeFlow',
+                ],
+                resources=[
+                    f'arn:aws:bedrock:{self.region}:{self.account}:flow/*',
+                    f'arn:aws:bedrock:{self.region}:{self.account}:prompt/*',
+                    f'arn:aws:bedrock:{self.region}::foundation-model/*',
+                ],
+            )
+        ]
+
+    def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name, vpc, extra_statements=[]):
         role_name = f'{resource_prefix}-{envname}-{fn_name}-role'
 
         role_inline_policy = iam.Policy(
@@ -474,7 +503,8 @@ class LambdaApiStack(pyNestedClass):
                     actions=['events:EnableRule', 'events:DisableRule'],
                     resources=[f'arn:aws:events:{self.region}:{self.account}:rule/dataall*'],
                 ),
-            ],
+            ]
+            + extra_statements,
         )
         role = iam.Role(
             self,
@@ -580,41 +610,41 @@ class LambdaApiStack(pyNestedClass):
         user_pool,
         custom_auth,
     ):
-        if custom_auth is None:
-            cognito_authorizer = apigw.CognitoUserPoolsAuthorizer(
-                self,
-                'CognitoAuthorizer',
-                cognito_user_pools=[user_pool],
-                authorizer_name=f'{resource_prefix}-{envname}-cognito-authorizer',
-                identity_source='method.request.header.Authorization',
-                results_cache_ttl=Duration.minutes(60),
+        # if custom_auth is None:
+        #     cognito_authorizer = apigw.CognitoUserPoolsAuthorizer(
+        #         self,
+        #         'CognitoAuthorizer',
+        #         cognito_user_pools=[user_pool],
+        #         authorizer_name=f'{resource_prefix}-{envname}-cognito-authorizer',
+        #         identity_source='method.request.header.Authorization',
+        #         results_cache_ttl=Duration.minutes(60),
+        #     )
+        # else:
+        # Create a custom Authorizer
+        custom_authorizer_role = iam.Role(
+            self,
+            f'{resource_prefix}-{envname}-custom-authorizer-role',
+            role_name=f'{resource_prefix}-{envname}-custom-authorizer-role',
+            assumed_by=iam.ServicePrincipal('apigateway.amazonaws.com'),
+            description='Allow Custom Authorizer to call custom auth lambda',
+        )
+        custom_authorizer_role.add_to_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=['lambda:InvokeFunction'],
+                resources=[self.authorizer_fn.function_arn],
             )
-        else:
-            # Create a custom Authorizer
-            custom_authorizer_role = iam.Role(
-                self,
-                f'{resource_prefix}-{envname}-custom-authorizer-role',
-                role_name=f'{resource_prefix}-{envname}-custom-authorizer-role',
-                assumed_by=iam.ServicePrincipal('apigateway.amazonaws.com'),
-                description='Allow Custom Authorizer to call custom auth lambda',
-            )
-            custom_authorizer_role.add_to_policy(
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW,
-                    actions=['lambda:InvokeFunction'],
-                    resources=[self.authorizer_fn.function_arn],
-                )
-            )
+        )
 
-            custom_authorizer = apigw.RequestAuthorizer(
-                self,
-                'CustomAuthorizer',
-                handler=self.authorizer_fn,
-                identity_sources=[apigw.IdentitySource.header('Authorization')],
-                authorizer_name=f'{resource_prefix}-{envname}-custom-authorizer',
-                assume_role=custom_authorizer_role,
-                results_cache_ttl=Duration.minutes(60),
-            )
+        custom_authorizer = apigw.RequestAuthorizer(
+            self,
+            'CustomAuthorizer',
+            handler=self.authorizer_fn,
+            identity_sources=[apigw.IdentitySource.header('Authorization')],
+            authorizer_name=f'{resource_prefix}-{envname}-custom-authorizer',
+            assume_role=custom_authorizer_role,
+            results_cache_ttl=Duration.minutes(60),
+        )
         if not internet_facing:
             if apig_vpce:
                 api_vpc_endpoint = InterfaceVpcEndpoint.from_interface_vpc_endpoint_attributes(
