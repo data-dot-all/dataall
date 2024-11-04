@@ -15,8 +15,6 @@ ISSUER_CONFIGS = {
         'allowed_audiences': f'{os.environ.get("custom_auth_client")}',
     },
 }
-AWS_REGION = os.getenv('AWS_REGION')
-
 
 issuer_keys = {}
 

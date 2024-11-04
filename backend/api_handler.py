@@ -3,7 +3,6 @@ import logging
 import os
 from argparse import Namespace
 from time import perf_counter
-import requests
 from ariadne import (
     gql,
     graphql_sync,

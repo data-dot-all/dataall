@@ -365,25 +365,7 @@ class LambdaApiStack(pyNestedClass):
         )
         return lambda_sg
 
-    @run_if(['modules.worksheets.features.nlq.active'])
-    def _get_bedrock_policy_statement(self):
-        return [
-            iam.PolicyStatement(
-                actions=[
-                    'bedrock:InvokeModel',
-                    'bedrock:GetPrompt',
-                    'bedrock:CreateFoundationModelAgreement',
-                    'bedrock:InvokeFlow',
-                ],
-                resources=[
-                    f'arn:aws:bedrock:{self.region}:{self.account}:flow/*',
-                    f'arn:aws:bedrock:{self.region}:{self.account}:prompt/*',
-                    f'arn:aws:bedrock:{self.region}::foundation-model/*',
-                ],
-            )
-        ]
-
-    def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name, vpc, extra_statements=[]):
+    def create_function_role(self, envname, resource_prefix, fn_name, pivot_role_name, vpc):
         role_name = f'{resource_prefix}-{envname}-{fn_name}-role'
 
         role_inline_policy = iam.Policy(
@@ -511,8 +493,7 @@ class LambdaApiStack(pyNestedClass):
                     actions=['events:EnableRule', 'events:DisableRule'],
                     resources=[f'arn:aws:events:{self.region}:{self.account}:rule/dataall*'],
                 ),
-            ]
-            + extra_statements,
+            ],
         )
         role = iam.Role(
             self,

@@ -2,7 +2,6 @@ import datetime
 import json
 import os
 import logging
-import requests
 
 from graphql import parse, utilities, OperationType, GraphQLSyntaxError
 from dataall.base.aws.parameter_store import ParameterStoreManager
@@ -35,11 +34,11 @@ def redact_creds(event):
     if event.get('multiValueHeaders', {}).get('Authorization'):
         event['multiValueHeaders']['Authorization'] = 'XXXXXXXXXXXX'
 
-    if event.get('multiValueHeaders', {}).get('AccessKeyId'):
-        event['multiValueHeaders']['AccessKeyId'] = 'XXXXXXXXXXXX'
+    if event.get('multiValueHeaders', {}).get('accesskeyid'):
+        event['multiValueHeaders']['accesskeyid'] = 'XXXXXXXXXXXX'
 
-    if event.get('headers', {}).get('AccessKeyId'):
-        event['headers']['AccessKeyId'] = 'XXXXXXXXXXXX'
+    if event.get('headers', {}).get('accesskeyid'):
+        event['headers']['accesskeyid'] = 'XXXXXXXXXXXX'
 
     return event
 

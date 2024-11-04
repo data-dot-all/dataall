@@ -244,7 +244,7 @@ export const GenericAuthProvider = (props) => {
           }
         });
       } else {
-        await Auth.signOut();
+        await Auth.signOut({ global: true });
         dispatch({
           type: 'LOGOUT',
           payload: {
@@ -275,7 +275,7 @@ export const GenericAuthProvider = (props) => {
         console.error('Failed to ReAuth', error);
       }
     } else {
-      await Auth.signOut();
+      await Auth.signOut({ global: true });
       dispatch({
         type: 'REAUTH',
         payload: {
