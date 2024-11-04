@@ -16,7 +16,6 @@ from dataall.base.utils.api_handler_utils import (
     check_reauth,
     validate_and_block_if_maintenance_window,
     redact_creds,
-    get_user_info,
 )
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sqs import SqsQueue
