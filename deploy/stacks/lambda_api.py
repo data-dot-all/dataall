@@ -641,7 +641,7 @@ class LambdaApiStack(pyNestedClass):
             identity_sources=[apigw.IdentitySource.header('Authorization')],
             authorizer_name=f'{resource_prefix}-{envname}-custom-authorizer',
             assume_role=custom_authorizer_role,
-            results_cache_ttl=Duration.minutes(60),
+            results_cache_ttl=Duration.minutes(1),
         )
         if not internet_facing:
             if apig_vpce:

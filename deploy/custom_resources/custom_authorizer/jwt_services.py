@@ -104,4 +104,5 @@ class JWTServices:
     def validate_access_token(access_token):
         user_info_url = os.getenv('user_info_url', '')
         r = requests.get(user_info_url, headers={'Authorization': access_token})
+        logger.debug(r.json())
         r.raise_for_status()

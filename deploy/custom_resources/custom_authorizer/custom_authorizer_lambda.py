@@ -19,6 +19,7 @@ Custom Lambda Authorizer is attached to the API Gateway. Check the deploy/stacks
 
 def lambda_handler(incoming_event, context):
     # Get the Token which is sent in the Authorization Header
+    logger.debug(incoming_event)
     auth_token = incoming_event['headers']['Authorization']
     if not auth_token:
         raise Exception('Unauthorized . Token not found')
@@ -28,9 +29,8 @@ def lambda_handler(incoming_event, context):
     if not verified_claims:
         raise Exception('Unauthorized. Token is not valid')
 
-    if os.getenv('provider') == 'Cognito':
-        access_token = incoming_event['headers']['AccessKeyId']
-        JWTServices.validate_access_token(access_token)
+    access_token = incoming_event['headers']['accesskeyid']
+    JWTServices.validate_access_token(access_token)
 
     effect = 'Allow'
     policy = AuthServices.generate_policy(verified_claims, effect, incoming_event['methodArn'])
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     account_id = ''
     api_gw_id = ''
     event = {
-        'headers': {'Authorization': id_token, 'AccessKeyId': access_token},
+        'headers': {'Authorization': id_token, 'accesskeyid': access_token},
         'type': 'TOKEN',
         'methodArn': f'arn:aws:execute-api:us-east-1:{account_id}:{api_gw_id}/prod/POST/graphql/api',
     }
