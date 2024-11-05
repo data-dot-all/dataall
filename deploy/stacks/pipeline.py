@@ -635,6 +635,7 @@ class PipelineStack(Stack):
                 vpc_restricted_nacls=target_env.get('vpc_restricted_nacl', False),
                 internet_facing=target_env.get('internet_facing', True),
                 custom_domain=target_env.get('custom_domain'),
+                apigw_custom_domain=target_env.get('apigw_custom_domain'),
                 ip_ranges=target_env.get('ip_ranges'),
                 apig_vpce=target_env.get('apig_vpce'),
                 prod_sizing=target_env.get('prod_sizing', True),
