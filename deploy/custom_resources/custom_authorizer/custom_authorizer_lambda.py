@@ -21,17 +21,20 @@ def lambda_handler(incoming_event, context):
     # Get the Token which is sent in the Authorization Header
     logger.debug(incoming_event)
     auth_token = incoming_event['headers']['Authorization']
-    if not auth_token:
-        raise Exception('Unauthorized . Token not found')
+    access_token = incoming_event['headers']['accesskeyid']
+    if not auth_token or not access_token:
+        raise Exception('Unauthorized. Missing identity or access JWT')
 
+    # Validate User is Active with Proper Access Token
+    JWTServices.validate_access_token(access_token)
+
+    # Validate JWT
     verified_claims = JWTServices.validate_jwt_token(auth_token)
     logger.debug(verified_claims)
     if not verified_claims:
         raise Exception('Unauthorized. Token is not valid')
 
-    access_token = incoming_event['headers']['accesskeyid']
-    JWTServices.validate_access_token(access_token)
-
+    # Generate Allow Policy w/ Context
     effect = 'Allow'
     policy = AuthServices.generate_policy(verified_claims, effect, incoming_event['methodArn'])
     logger.debug('Generated policy is ', policy)
