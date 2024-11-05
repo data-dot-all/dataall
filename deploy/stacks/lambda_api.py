@@ -243,7 +243,6 @@ class LambdaApiStack(pyNestedClass):
             custom_lambda_env = {
                 'envname': envname,
                 'LOG_LEVEL': 'DEBUG',
-                'user_info_url': custom_auth.get('user_info_url'),
                 'custom_auth_provider': custom_auth.get('provider'),
                 'custom_auth_url': custom_auth.get('url'),
                 'custom_auth_client': custom_auth.get('client_id'),
@@ -256,7 +255,6 @@ class LambdaApiStack(pyNestedClass):
             custom_lambda_env = {
                 'envname': envname,
                 'LOG_LEVEL': 'DEBUG',
-                'user_info_url': f'https://{user_pool_domain.domain_name}.auth.{self.region}.amazoncognito.com/oauth2/userInfo',
                 'custom_auth_provider': 'Cognito',
                 'custom_auth_url': f'https://cognito-idp.{self.region}.amazonaws.com/{user_pool.user_pool_id}',
                 'custom_auth_client': user_pool_client.user_pool_client_id,

@@ -68,6 +68,12 @@ jwt_options = {
 
 class JWTServices:
     @staticmethod
+    def _fetch_openid_url(key):
+        response = requests.get(f'{os.environ.get("custom_auth_url")}/.well-known/openid-configuration')
+        response.raise_for_status()
+        return response.json().get(key)
+
+    @staticmethod
     def validate_jwt_token(jwt_token):
         try:
             # Decode and verify the JWT token
@@ -102,7 +108,7 @@ class JWTServices:
 
     @staticmethod
     def validate_access_token(access_token):
-        user_info_url = os.getenv('user_info_url', '')
+        user_info_url = JWTServices._fetch_openid_url('userinfo_endpoint')
         r = requests.get(user_info_url, headers={'Authorization': access_token})
         logger.debug(r.json())
         r.raise_for_status()
