@@ -30,7 +30,6 @@ from aws_cdk.aws_ec2 import (
 from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling
 from .waf_rules import get_waf_rules
-from .run_if import run_if
 
 
 class LambdaApiStack(pyNestedClass):
