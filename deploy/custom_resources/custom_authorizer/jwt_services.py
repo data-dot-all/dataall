@@ -102,10 +102,6 @@ class JWTServices:
 
     @staticmethod
     def validate_access_token(access_token):
-        try:
-            user_info_url = os.getenv('user_info_url', '')
-            r = requests.get(user_info_url, headers={'Authorization': access_token})
-            r.raise_for_status()
-        except Exception as e:
-            logger.error(f'Failed to validate access token - {str(e)}')
-            return None
+        user_info_url = os.getenv('user_info_url', '')
+        r = requests.get(user_info_url, headers={'Authorization': access_token})
+        r.raise_for_status()
