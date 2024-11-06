@@ -41,7 +41,7 @@ def lambda_handler(incoming_event, context):
     # Generate Allow Policy w/ Context
     effect = 'Allow'
     policy = AuthServices.generate_policy(verified_claims, effect, incoming_event['methodArn'])
-    logger.debug('Generated policy is ', json.dumps(policy))
+    logger.debug(f'Generated policy is {json.dumps(policy)}')
     return policy
 
 
