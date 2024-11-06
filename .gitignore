@@ -11,3 +11,4 @@ vendor
 *__pytest_cache__*
 /frontend/
 /backend/
+/.idea/
