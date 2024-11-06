@@ -14,6 +14,8 @@ from aws_cdk import (
     aws_kms as kms,
     aws_sqs as sqs,
     aws_logs as logs,
+    aws_route53 as r53,
+    aws_route53_targets as r53_targets,
     Duration,
     CfnOutput,
     Fn,
@@ -21,6 +23,8 @@ from aws_cdk import (
     BundlingOptions,
 )
 from cdk_klayers import Klayers
+from aws_cdk.aws_apigateway import DomainNameOptions, EndpointType, SecurityPolicy
+from aws_cdk.aws_certificatemanager import Certificate
 from aws_cdk.aws_ec2 import (
     InterfaceVpcEndpoint,
     InterfaceVpcEndpointAwsService,
@@ -58,13 +62,14 @@ class LambdaApiStack(pyNestedClass):
         email_custom_domain=None,
         ses_configuration_set=None,
         custom_domain=None,
+        apigw_custom_domain=None,
         custom_auth=None,
         allowed_origins='*',
         log_retention_duration=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
-
+        self.apigw_custom_domain = apigw_custom_domain
         self.log_retention_duration = log_retention_duration
         log_level = 'INFO' if prod_sizing else 'DEBUG'
 
@@ -676,6 +681,7 @@ class LambdaApiStack(pyNestedClass):
                     types=[apigw.EndpointType.PRIVATE], vpc_endpoints=[api_vpc_endpoint]
                 ),
                 policy=api_policy,
+                disable_execute_api_endpoint=bool(self.apigw_custom_domain),
             )
         else:
             gw = apigw.RestApi(
@@ -683,8 +689,35 @@ class LambdaApiStack(pyNestedClass):
                 backend_api_name,
                 rest_api_name=backend_api_name,
                 deploy_options=api_deploy_options,
+                disable_execute_api_endpoint=bool(self.apigw_custom_domain),
             )
-        api_url = gw.url
+
+        if self.apigw_custom_domain:
+            certificate = Certificate.from_certificate_arn(
+                self, 'CustomDomainCertificate', self.apigw_custom_domain['certificate_arn']
+            )
+            gw.add_domain_name(
+                'ApiGwCustomDomainName',
+                certificate=certificate,
+                domain_name=self.apigw_custom_domain['hosted_zone_name'],
+                endpoint_type=EndpointType.EDGE if internet_facing else EndpointType.PRIVATE,
+                security_policy=SecurityPolicy.TLS_1_2,
+            )
+            r53.ARecord(
+                self,
+                'ApiGwARecordId',
+                zone=r53.HostedZone.from_hosted_zone_attributes(
+                    self,
+                    'ApiGwHostedZoneId',
+                    hosted_zone_id=self.apigw_custom_domain['hosted_zone_id'],
+                    zone_name=self.apigw_custom_domain['hosted_zone_name'],
+                ),
+                target=r53.RecordTarget.from_alias(r53_targets.ApiGateway(gw)),
+            )
+            api_url = f'https://{gw.domain_name.domain_name}/'
+        else:
+            api_url = gw.url
+
         integration = apigw.LambdaIntegration(api_handler)
         request_validator = apigw.RequestValidator(
             self,
