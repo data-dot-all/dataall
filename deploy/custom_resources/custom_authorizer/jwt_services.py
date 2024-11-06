@@ -54,15 +54,15 @@ class JWTServices:
                 options=jwt_options,
             )
             return payload
-        except jwt.exceptions.ExpiredSignatureError:
+        except jwt.exceptions.ExpiredSignatureError as e:
             logger.error('JWT token has expired.')
-            return None
+            raise e
         except jwt.exceptions.PyJWTError as e:
             logger.error(f'JWT token validation failed: {str(e)}')
-            return None
+            raise e
         except Exception as e:
             logger.error(f'Failed to validate token - {str(e)}')
-            return None
+            raise e
 
     def validate_access_token(self, access_token):
         # get UserInfo URI from OpenId Configuration
