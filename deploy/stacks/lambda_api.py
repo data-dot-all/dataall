@@ -263,6 +263,12 @@ class LambdaApiStack(pyNestedClass):
                 'user_id': 'email',
             }
 
+        layer = _lambda.LayerVersion.from_layer_version_arn(
+            self,
+            'CryptographyLayerPy39',
+            f'arn:aws:lambda:{self.region}:770693421928:layer:Klayers-p39-cryptography:19',
+        )
+
         authorizer_fn_sg = self.create_lambda_sgs(envname, 'customauthorizer', resource_prefix, vpc)
         self.authorizer_fn = _lambda.Function(
             self,
@@ -290,6 +296,7 @@ class LambdaApiStack(pyNestedClass):
             vpc=vpc,
             security_groups=[authorizer_fn_sg],
             runtime=_lambda.Runtime.PYTHON_3_9,
+            layers=[layer],
         )
 
         # Add NAT Connectivity For Custom Authorizer Lambda
