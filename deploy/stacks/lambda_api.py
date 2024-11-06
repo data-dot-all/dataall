@@ -20,6 +20,7 @@ from aws_cdk import (
     RemovalPolicy,
     BundlingOptions,
 )
+from cdk_klayers import Klayers
 from aws_cdk.aws_ec2 import (
     InterfaceVpcEndpoint,
     InterfaceVpcEndpointAwsService,
@@ -264,11 +265,12 @@ class LambdaApiStack(pyNestedClass):
                 }
             )
 
-        layer = _lambda.LayerVersion.from_layer_version_arn(
-            self,
-            'CryptographyLayerPy39',
-            f'arn:aws:lambda:{self.region}:770693421928:layer:Klayers-p39-cryptography:19',
-        )
+        # Initialize Klayers
+        runtime = _lambda.Runtime.PYTHON_3_9
+        klayers = Klayers(self, python_version=runtime, region=self.region)
+
+        # get the latest layer version for the cryptography package
+        cryptography_layer = klayers.layer_version(self, 'cryptography')
 
         authorizer_fn_sg = self.create_lambda_sgs(envname, 'customauthorizer', resource_prefix, vpc)
         self.authorizer_fn = _lambda.Function(
@@ -296,8 +298,8 @@ class LambdaApiStack(pyNestedClass):
             environment_encryption=lambda_env_key,
             vpc=vpc,
             security_groups=[authorizer_fn_sg],
-            runtime=_lambda.Runtime.PYTHON_3_9,
-            layers=[layer],
+            runtime=runtime,
+            layers=[cryptography_layer],
         )
 
         # Add NAT Connectivity For Custom Authorizer Lambda
