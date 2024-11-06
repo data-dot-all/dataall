@@ -26,7 +26,7 @@ def lambda_handler(incoming_event, context):
     logger.debug(incoming_event)
     auth_token = incoming_event['headers']['Authorization']
     if not auth_token:
-        raise Exception('Unauthorized. Missing identity or access JWT')
+        raise Exception('Unauthorized. Missing JWT')
 
     # Validate User is Active with Proper Access Token
     user_info = jwt_service.validate_access_token(auth_token)
@@ -52,7 +52,7 @@ def lambda_handler(incoming_event, context):
 if __name__ == '__main__':
     # for testing locally you can enter the JWT ID Token here
     #
-    access_token = 'Bearer eyJraWQiOiJtYTJ6SUxrbVMtQW1qZzZwVGtqZjhkN3JxY1FaNWE2eWtLS3dGQkFZckJBIiwidHlwIjoiYXBwbGljYXRpb25cL29rdGEtaW50ZXJuYWwtYXQrand0IiwiYWxnIjoiUlMyNTYifQ.eyJ2ZXIiOjEsImp0aSI6IkFULm9DSERGSHpVdGFUeTFDQXBENWF3amZRMEdyUzNPcEpyNE93czdnM3JKUXciLCJpc3MiOiJodHRwczovL2Rldi0zNzAxMTAxMC5va3RhLmNvbSIsImF1ZCI6Imh0dHBzOi8vZGV2LTM3MDExMDEwLm9rdGEuY29tIiwic3ViIjoibm9haHBhaWdAYW1hem9uLmNvbSIsImlhdCI6MTczMDkyNTQ1MiwiZXhwIjoxNzMwOTI5MDUyLCJjaWQiOiIwb2FkcndpcmVxcldoanFYaTVkNyIsInVpZCI6IjAwdWRydTNtNTZWS3hnWEtKNWQ3Iiwic2NwIjpbIm9wZW5pZCIsImVtYWlsIiwicHJvZmlsZSJdLCJhdXRoX3RpbWUiOjE3MzA5MjU0NTF9.uFZ123U7nbu6rN0L9WB2EZQTEZCnMcYOV_6uS4XRb8TAREcat-Kk88rLXONLwNWSaLaqGXOsr1tC1bd9FdTXyWG9WmVkihep8un_tmy1V410vEBtzXes6nqsr4-QZsx7csrWWtDetm4T7Smtl621z4isL8ePdYtkWe_2SELJjiOpr8qQ8pXMVEwMY8kiu-VuZHUXNnFGvrIRtNytsNzFVunbQxOX58uCq_J5eU7MRbj0tBAYqLXgXrj1iskb17uGHL4IqIWl1Te6qk05bLMZ9RrySEpyuCmYDPIgFpUZNiewLUNgPTNb4I8wrKycTpNfEEhTiLNxjo7QA5y2stTrFg'
+    access_token = ''
     account_id = ''
     api_gw_id = ''
     event = {
