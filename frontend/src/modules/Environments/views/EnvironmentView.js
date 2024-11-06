@@ -17,8 +17,10 @@ import {
   Divider,
   Grid,
   Link,
+  Stack as MuiStack,
   Tab,
   Tabs,
+  Tooltip,
   Typography
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
@@ -321,13 +323,31 @@ const EnvironmentView = () => {
           open={isArchiveObjectModalOpen}
           deleteFunction={archiveEnv}
           isAWSResource
+          confirmMessage="acknowledge and delete"
           deleteMessage={
             <Card variant="outlined" sx={{ mb: 2 }}>
               <CardContent>
-                <Typography variant="subtitle2" color="error">
-                  <Warning sx={{ mr: 1 }} /> Remove all environment related
-                  objects before proceeding with the deletion !
-                </Typography>
+                <MuiStack
+                  spacing={3}
+                  alignItems="center"
+                  direction="row"
+                  sx={{ mb: 1 }}
+                >
+                  <Warning sx={{ mr: 1 }} />
+                  <Typography variant="subtitle2" color="error">
+                    Remove all environment related objects before proceeding
+                    with the deletion!
+                  </Typography>
+                </MuiStack>
+                <Tooltip title="Untrusting can be achieved by running `cdk bootstrap` without the `--trust` flag or by deleting the CDKToolkit stack if it's not needed">
+                  <MuiStack spacing={3} alignItems="center" direction="row">
+                    <Warning sx={{ mr: 1 }} />
+                    <Typography variant="subtitle2" color="error">
+                      After removal users must untrust the data.all account
+                      manually from env account CDKToolkit stack!
+                    </Typography>
+                  </MuiStack>
+                </Tooltip>
               </CardContent>
             </Card>
           }
