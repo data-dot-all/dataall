@@ -32,6 +32,7 @@ def lambda_handler(incoming_event, context):
     user_info = jwt_service.validate_access_token(auth_token)
 
     # Validate JWT
+    # Note: Removing the 7 Prefix Chars for 'Bearer ' from JWT
     verified_claims = jwt_service.validate_jwt_token(auth_token[7:])
     if not verified_claims:
         raise Exception('Unauthorized. Token is not valid')

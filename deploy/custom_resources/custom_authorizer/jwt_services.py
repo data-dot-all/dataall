@@ -54,9 +54,11 @@ class JWTServices:
             )
 
             # verify client_id if Cognito JWT
-            if os.environ['custom_auth_provider'] == 'Cognito' and payload['client_id'] != os.environ.get(
-                'custom_auth_client'
-            ):
+            if 'client_id' in payload and payload['client_id'] != os.environ.get('custom_auth_client'):
+                raise Exception('Invalid Client ID in JWT Token')
+
+            # verify cid for other IdPs
+            if 'cid' in payload and payload['cid'] != os.environ.get('custom_auth_client'):
                 raise Exception('Invalid Client ID in JWT Token')
 
             return payload

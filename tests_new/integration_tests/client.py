@@ -70,7 +70,6 @@ class Client:
             headers=headers,
             allow_redirects=False,
         )
-        print(r)
 
         r.raise_for_status()
 
@@ -84,6 +83,5 @@ class Client:
             code=code,
             include_client_id=True,
         )
-        print(token)
 
         return token.get('access_token')
