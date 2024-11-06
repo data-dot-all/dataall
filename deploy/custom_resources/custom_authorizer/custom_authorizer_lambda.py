@@ -1,5 +1,6 @@
 import logging
 import os
+import json
 
 from auth_services import AuthServices
 from jwt_services import JWTServices
@@ -30,14 +31,14 @@ def lambda_handler(incoming_event, context):
 
     # Validate JWT
     verified_claims = JWTServices.validate_jwt_token(auth_token)
-    logger.debug(verified_claims)
     if not verified_claims:
         raise Exception('Unauthorized. Token is not valid')
+    logger.debug(verified_claims)
 
     # Generate Allow Policy w/ Context
     effect = 'Allow'
     policy = AuthServices.generate_policy(verified_claims, effect, incoming_event['methodArn'])
-    logger.debug('Generated policy is ', policy)
+    logger.debug('Generated policy is ', json.dumps(policy))
     return policy
 
 

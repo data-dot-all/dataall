@@ -70,5 +70,5 @@ class JWTServices:
         # get JWK UserInfo URI from OpenId Configuration
         user_info_url = JWTServices._fetch_openid_url('userinfo_endpoint')
         r = requests.get(user_info_url, headers={'Authorization': access_token})
-        logger.debug(r.json())
         r.raise_for_status()
+        logger.debug(r.json())
