@@ -51,7 +51,6 @@ class LambdaApiStack(pyNestedClass):
         prod_sizing=False,
         user_pool=None,
         user_pool_client=None,
-        user_pool_domain=None,
         pivot_role_name=None,
         reauth_ttl=5,
         email_notification_sender_email_id=None,
@@ -239,29 +238,31 @@ class LambdaApiStack(pyNestedClass):
         if not os.path.isdir(custom_authorizer_assets):
             raise Exception(f'Custom Authorizer Folder not found at {custom_authorizer_assets}')
 
+        custom_lambda_env = {
+            'envname': envname,
+            'LOG_LEVEL': log_level,
+        }
         if custom_auth:
-            custom_lambda_env = {
-                'envname': envname,
-                'LOG_LEVEL': 'DEBUG',
-                'custom_auth_provider': custom_auth.get('provider'),
-                'custom_auth_url': custom_auth.get('url'),
-                'custom_auth_client': custom_auth.get('client_id'),
-                'custom_auth_jwks_url': custom_auth.get('jwks_url'),
-            }
+            custom_lambda_env.update(
+                {
+                    'custom_auth_provider': custom_auth.get('provider'),
+                    'custom_auth_url': custom_auth.get('url'),
+                    'custom_auth_client': custom_auth.get('client_id'),
+                }
+            )
 
             for claims_map in custom_auth.get('claims_mapping', {}):
                 custom_lambda_env[claims_map] = custom_auth.get('claims_mapping', '').get(claims_map, '')
         else:
-            custom_lambda_env = {
-                'envname': envname,
-                'LOG_LEVEL': 'DEBUG',
-                'custom_auth_provider': 'Cognito',
-                'custom_auth_url': f'https://cognito-idp.{self.region}.amazonaws.com/{user_pool.user_pool_id}',
-                'custom_auth_client': user_pool_client.user_pool_client_id,
-                'custom_auth_jwks_url': f'https://cognito-idp.{self.region}.amazonaws.com/{user_pool.user_pool_id}/.well-known/jwks.json',
-                'email': 'email',
-                'user_id': 'email',
-            }
+            custom_lambda_env.update(
+                {
+                    'custom_auth_provider': 'Cognito',
+                    'custom_auth_url': f'https://cognito-idp.{self.region}.amazonaws.com/{user_pool.user_pool_id}',
+                    'custom_auth_client': user_pool_client.user_pool_client_id,
+                    'email': 'email',
+                    'user_id': 'email',
+                }
+            )
 
         layer = _lambda.LayerVersion.from_layer_version_arn(
             self,

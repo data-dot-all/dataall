@@ -28,7 +28,9 @@ jwt_options = {
 class JWTServices:
     @staticmethod
     def _fetch_openid_url(key):
-        response = requests.get(f'{os.environ.get("custom_auth_url")}/.well-known/openid-configuration')
+        response = requests.get(
+            os.path.join(os.environ.get('custom_auth_url', ''), '.well-known', 'openid-configuration')
+        )
         response.raise_for_status()
         return response.json().get(key)
 
