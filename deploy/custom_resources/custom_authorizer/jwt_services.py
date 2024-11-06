@@ -26,25 +26,22 @@ jwt_options = {
 
 
 class JWTServices:
-    @staticmethod
-    def _fetch_openid_url(key):
-        response = requests.get(
-            os.path.join(os.environ.get('custom_auth_url', ''), '.well-known', 'openid-configuration')
-        )
+    def __init__(self, openid_config_path):
+        # Get OpenID Config JSON
+        self.openid_config = self._fetch_openid_config(openid_config_path)
+
+        # Init pyJWT.JWKClient with JWK URI
+        self.jwks_client = jwt.PyJWKClient(self.openid_config.get('jwks_uri'))
+
+    def _fetch_openid_config(self, openid_config_path):
+        response = requests.get(openid_config_path)
         response.raise_for_status()
-        return response.json().get(key)
+        return response.json()
 
-    @staticmethod
-    def validate_jwt_token(jwt_token):
+    def validate_jwt_token(self, jwt_token):
         try:
-            # get JWK URI from OpenId Configuration
-            jwks_url = JWTServices._fetch_openid_url('jwks_uri')
-
-            # Init pyJWT.JWKClient with JWK URI
-            jwks_client = jwt.PyJWKClient(jwks_url)
-
             # get signing_key from JWT
-            signing_key = jwks_client.get_signing_key_from_jwt(jwt_token)
+            signing_key = self.jwks_client.get_signing_key_from_jwt(jwt_token)
 
             # Decode and Verify JWT
             payload = jwt.decode(
@@ -67,10 +64,9 @@ class JWTServices:
             logger.error(f'Failed to validate token - {str(e)}')
             return None
 
-    @staticmethod
-    def validate_access_token(access_token):
-        # get JWK UserInfo URI from OpenId Configuration
-        user_info_url = JWTServices._fetch_openid_url('userinfo_endpoint')
+    def validate_access_token(self, access_token):
+        # get UserInfo URI from OpenId Configuration
+        user_info_url = self.openid_config.get('userinfo_endpoint')
         r = requests.get(user_info_url, headers={'Authorization': access_token})
         r.raise_for_status()
         logger.debug(r.json())

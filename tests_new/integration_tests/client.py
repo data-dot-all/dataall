@@ -5,7 +5,6 @@ from urllib.parse import parse_qs, urlparse
 from munch import DefaultMunch
 from retrying import retry
 from integration_tests.errors import GqlError
-import requests
 from oauthlib.oauth2 import WebApplicationClient
 from requests_oauthlib import OAuth2Session
 
