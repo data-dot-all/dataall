@@ -10,18 +10,17 @@ logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
 
 # Options to validate the JWT token
-# Only modification from default is to turn off verify_at_hash as we don't provide the access token for this validation
+# Only modification from default is to turn off verify_aud as Cognito Access Token does not provide this claim
 jwt_options = {
     'verify_signature': True,
-    'verify_aud': True,
+    'verify_aud': False,
     'verify_iat': True,
     'verify_exp': True,
     'verify_nbf': True,
     'verify_iss': True,
     'verify_sub': True,
     'verify_jti': True,
-    'verify_at_hash': True,
-    'require': ['aud', 'iat', 'exp', 'iss', 'sub', 'jti'],  # "nbf", "at_hash"
+    'require': ['iat', 'exp', 'iss', 'sub', 'jti'],
 }
 
 
@@ -38,7 +37,7 @@ class JWTServices:
         response.raise_for_status()
         return response.json()
 
-    def validate_jwt_token(self, jwt_token):
+    def validate_jwt_token(self, jwt_token) -> dict:
         try:
             # get signing_key from JWT
             signing_key = self.jwks_client.get_signing_key_from_jwt(jwt_token)
@@ -53,6 +52,13 @@ class JWTServices:
                 leeway=0,
                 options=jwt_options,
             )
+
+            # verify client_id if Cognito JWT
+            if os.environ['custom_auth_provider'] == 'Cognito' and payload['client_id'] != os.environ.get(
+                'custom_auth_client'
+            ):
+                raise Exception('Invalid Client ID in JWT Token')
+
             return payload
         except jwt.exceptions.ExpiredSignatureError as e:
             logger.error('JWT token has expired.')
@@ -64,9 +70,10 @@ class JWTServices:
             logger.error(f'Failed to validate token - {str(e)}')
             raise e
 
-    def validate_access_token(self, access_token):
+    def validate_access_token(self, access_token) -> dict:
         # get UserInfo URI from OpenId Configuration
         user_info_url = self.openid_config.get('userinfo_endpoint')
         r = requests.get(user_info_url, headers={'Authorization': access_token})
         r.raise_for_status()
         logger.debug(r.json())
+        return r.json()

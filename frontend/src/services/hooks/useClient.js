@@ -28,7 +28,7 @@ const defaultOptions = {
 export const useClient = () => {
   const dispatch = useDispatch();
   const [client, setClient] = useState(null);
-  const { token, accessToken } = useToken();
+  const token = useToken();
   const auth = useAuth();
 
   const setReAuth = useCallback(
@@ -47,7 +47,6 @@ export const useClient = () => {
   useEffect(() => {
     const initClient = async () => {
       const t = token;
-      const at = accessToken;
       const httpLink = new HttpLink({
         uri: process.env.REACT_APP_GRAPHQL_API
       });
@@ -55,8 +54,8 @@ export const useClient = () => {
       const authLink = new ApolloLink((operation, forward) => {
         operation.setContext({
           headers: {
-            Authorization: t ? `${t}` : '',
-            AccessKeyId: at ? `Bearer ${at}` : '',
+            Authorization: t ? `Bearer ${t}` : '',
+            AccessKeyId: 'none',
             SecretKey: 'none'
           }
         });
@@ -95,9 +94,9 @@ export const useClient = () => {
       });
       setClient(apolloClient);
     };
-    if (token && accessToken) {
+    if (token) {
       initClient().catch((e) => console.error(e));
     }
-  }, [token, accessToken, dispatch]);
+  }, [token, dispatch]);
   return client;
 };

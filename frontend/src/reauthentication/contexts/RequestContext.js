@@ -53,7 +53,7 @@ export const RequestContextProvider = (props) => {
   const [requestInfo, setRequestInfo] = useState(null);
   const navigate = useNavigate();
   const client = useClient();
-  const { token } = useToken();
+  const token = useToken();
   const auth = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const storeRequestInfo = (info) => {

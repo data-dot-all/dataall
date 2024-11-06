@@ -20,7 +20,7 @@ class Client:
     def __init__(self, username, password):
         self.username = username
         self.password = password
-        self.id_token, self.access_token = self._get_jwt_tokens()
+        self.access_token = self._get_jwt_tokens()
 
     @retry(
         retry_on_exception=_retry_if_connection_error,
@@ -30,7 +30,7 @@ class Client:
     )
     def query(self, query: str):
         graphql_endpoint = os.path.join(os.environ['API_ENDPOINT'], 'graphql', 'api')
-        headers = {'accesskeyid': f'Bearer {self.access_token}', 'SecretKey': 'none', 'Authorization': self.id_token}
+        headers = {'accesskeyid': 'none', 'SecretKey': 'none', 'Authorization': f'Bearer {self.access_token}'}
         r = requests.post(graphql_endpoint, json=query, headers=headers)
         if errors := r.json().get('errors'):
             raise GqlError(errors)
@@ -86,4 +86,4 @@ class Client:
         )
         print(token)
 
-        return token.get('id_token'), token.get('access_token')
+        return token.get('access_token')

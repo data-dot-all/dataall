@@ -25,23 +25,24 @@ def lambda_handler(incoming_event, context):
     # Get the Token which is sent in the Authorization Header
     logger.debug(incoming_event)
     auth_token = incoming_event['headers']['Authorization']
-    access_token = incoming_event['headers']['accesskeyid']
-    if not auth_token or not access_token:
+    if not auth_token:
         raise Exception('Unauthorized. Missing identity or access JWT')
 
     # Validate User is Active with Proper Access Token
-    jwt_service.validate_access_token(access_token)
+    user_info = jwt_service.validate_access_token(auth_token)
 
     # Validate JWT
-    verified_claims = jwt_service.validate_jwt_token(auth_token)
+    verified_claims = jwt_service.validate_jwt_token(auth_token[7:])
     if not verified_claims:
         raise Exception('Unauthorized. Token is not valid')
     logger.debug(verified_claims)
 
     # Generate Allow Policy w/ Context
     effect = 'Allow'
+    verified_claims.update(user_info)
     policy = AuthServices.generate_policy(verified_claims, effect, incoming_event['methodArn'])
     logger.debug(f'Generated policy is {json.dumps(policy)}')
+    print(f'Generated policy is {json.dumps(policy)}')
     return policy
 
 
@@ -50,12 +51,12 @@ def lambda_handler(incoming_event, context):
 # AWS Lambda and any other local environments
 if __name__ == '__main__':
     # for testing locally you can enter the JWT ID Token here
-    id_token = ''
-    access_token = ''
+    #
+    access_token = 'Bearer eyJraWQiOiJtYTJ6SUxrbVMtQW1qZzZwVGtqZjhkN3JxY1FaNWE2eWtLS3dGQkFZckJBIiwidHlwIjoiYXBwbGljYXRpb25cL29rdGEtaW50ZXJuYWwtYXQrand0IiwiYWxnIjoiUlMyNTYifQ.eyJ2ZXIiOjEsImp0aSI6IkFULm9DSERGSHpVdGFUeTFDQXBENWF3amZRMEdyUzNPcEpyNE93czdnM3JKUXciLCJpc3MiOiJodHRwczovL2Rldi0zNzAxMTAxMC5va3RhLmNvbSIsImF1ZCI6Imh0dHBzOi8vZGV2LTM3MDExMDEwLm9rdGEuY29tIiwic3ViIjoibm9haHBhaWdAYW1hem9uLmNvbSIsImlhdCI6MTczMDkyNTQ1MiwiZXhwIjoxNzMwOTI5MDUyLCJjaWQiOiIwb2FkcndpcmVxcldoanFYaTVkNyIsInVpZCI6IjAwdWRydTNtNTZWS3hnWEtKNWQ3Iiwic2NwIjpbIm9wZW5pZCIsImVtYWlsIiwicHJvZmlsZSJdLCJhdXRoX3RpbWUiOjE3MzA5MjU0NTF9.uFZ123U7nbu6rN0L9WB2EZQTEZCnMcYOV_6uS4XRb8TAREcat-Kk88rLXONLwNWSaLaqGXOsr1tC1bd9FdTXyWG9WmVkihep8un_tmy1V410vEBtzXes6nqsr4-QZsx7csrWWtDetm4T7Smtl621z4isL8ePdYtkWe_2SELJjiOpr8qQ8pXMVEwMY8kiu-VuZHUXNnFGvrIRtNytsNzFVunbQxOX58uCq_J5eU7MRbj0tBAYqLXgXrj1iskb17uGHL4IqIWl1Te6qk05bLMZ9RrySEpyuCmYDPIgFpUZNiewLUNgPTNb4I8wrKycTpNfEEhTiLNxjo7QA5y2stTrFg'
     account_id = ''
     api_gw_id = ''
     event = {
-        'headers': {'Authorization': id_token, 'accesskeyid': access_token},
+        'headers': {'Authorization': access_token},
         'type': 'TOKEN',
         'methodArn': f'arn:aws:execute-api:us-east-1:{account_id}:{api_gw_id}/prod/POST/graphql/api',
     }
