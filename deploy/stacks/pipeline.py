@@ -716,7 +716,7 @@ class PipelineStack(Stack):
                                     'aws sts get-caller-identity --profile buildprofile',
                                     f'export COGNITO_CLIENT=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/cognito/appclient --profile buildprofile --output text --query "Parameter.Value")',
                                     f'export API_ENDPOINT=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/apiGateway/backendUrl --profile buildprofile --output text --query "Parameter.Value")',
-                                    f'export IDP_DOMAIN_URL=https://$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/cognito/domain --profile buildprofile --output text --query "Parameter.Value").auth.us-east-1.amazoncognito.com',
+                                    f'export IDP_DOMAIN_URL=https://$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/cognito/domain --profile buildprofile --output text --query "Parameter.Value").auth.{target_env["region"]}.amazoncognito.com',
                                     f'export DATAALL_DOMAIN_URL=https://$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/CloudfrontDistributionDomainName --profile buildprofile --output text --query "Parameter.Value")',
                                     f'export TESTDATA=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/testdata --profile buildprofile --output text --query "Parameter.Value")',
                                     f'export ENVNAME={target_env["envname"]}',
