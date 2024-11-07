@@ -193,6 +193,13 @@
                     ]
                 },
                 {
+                    "resource": "AWS::Lambda::Function.CustomAuthorizerFunctiondevB38B5CCB",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116"
+                    ]
+                },
+                {
                     "resource": "AWS::Lambda::Function.ElasticSearchProxyHandlerDBDE7574",
                     "check_ids": [
                         "CKV_AWS_115"
@@ -206,6 +213,12 @@
                 },
                 {
                     "resource": "AWS::Logs::LogGroup.awsworkerloggroupF395EFD3",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
+                },
+                {
+                    "resource": "AWS::Logs::LogGroup.customauthorizerloggroup8F3B5B9D",
                     "check_ids": [
                         "CKV_AWS_158"
                     ]
