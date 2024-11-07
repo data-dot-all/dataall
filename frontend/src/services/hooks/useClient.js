@@ -57,7 +57,7 @@ export const useClient = () => {
             AccessControlAllowOrigin: '*',
             AccessControlAllowHeaders: '*',
             'access-control-allow-origin': '*',
-            Authorization: t ? `${t}` : '',
+            Authorization: t ? `Bearer ${t}` : '',
             AccessKeyId: 'none',
             SecretKey: 'none'
           }

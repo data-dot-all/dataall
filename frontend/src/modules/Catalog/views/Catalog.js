@@ -237,7 +237,7 @@ const Catalog = () => {
         AccessControlAllowOrigin: '*',
         AccessControlAllowHeaders: '*',
         'access-control-allow-origin': '*',
-        Authorization: token,
+        Authorization: token ? `Bearer ${token}` : '',
         AccessKeyId: 'None',
         SecretKey: 'None'
       }
