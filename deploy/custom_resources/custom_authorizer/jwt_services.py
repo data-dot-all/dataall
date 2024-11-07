@@ -47,7 +47,7 @@ class JWTServices:
                 jwt_token,
                 signing_key.key,
                 algorithms=['RS256', 'HS256'],
-                issuer=os.environ.get('custom_auth_url'),
+                issuer=os.environ['custom_auth_url'],
                 audience=os.environ.get('custom_auth_client'),
                 leeway=0,
                 options=jwt_options,

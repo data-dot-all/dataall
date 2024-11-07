@@ -17,8 +17,8 @@ Custom Lambda Authorizer Code Performs following,
 Custom Lambda Authorizer is attached to the API Gateway. Check the deploy/stacks/lambda_api.py for more details on deployment
 """
 
-OPENID_CONFIG_PATH = os.path.join(os.environ.get('custom_auth_url', ''), '.well-known', 'openid-configuration')
-jwt_service = JWTServices(OPENID_CONFIG_PATH)
+OPENID_CONFIG_PATH = os.path.join(os.environ['custom_auth_url'], '.well-known', 'openid-configuration')
+JWT_SERVICE = JWTServices(OPENID_CONFIG_PATH)
 
 
 def lambda_handler(incoming_event, context):
@@ -29,11 +29,11 @@ def lambda_handler(incoming_event, context):
         raise Exception('Unauthorized. Missing JWT')
 
     # Validate User is Active with Proper Access Token
-    user_info = jwt_service.validate_access_token(auth_token)
+    user_info = JWT_SERVICE.validate_access_token(auth_token)
 
     # Validate JWT
     # Note: Removing the 7 Prefix Chars for 'Bearer ' from JWT
-    verified_claims = jwt_service.validate_jwt_token(auth_token[7:])
+    verified_claims = JWT_SERVICE.validate_jwt_token(auth_token[7:])
     if not verified_claims:
         raise Exception('Unauthorized. Token is not valid')
     logger.debug(verified_claims)
