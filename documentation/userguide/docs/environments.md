@@ -45,6 +45,9 @@ cdk bootstrap --trust DATA.ALL_AWS_ACCOUNT_NUMBER  -c @aws-cdk/core:newStyleStac
     ````bash
     cdk bootstrap --trust 222222222222  -c @aws-cdk/core:newStyleStackSynthesis=true --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess aws://333333333333/eu-west-1
     ````
+
+!!! danger "After deleting an environment it is strongly recommended to untrust data.all infrastructure account. Read more [here](#delete-an-environment)" 
+
 #### Restricted CDK Execution role
 In the above command we define the `--cloudformation-execution-policies` to use the AdministratorAccess policy `arn:aws:iam::aws:policy/AdministratorAccess`. 
 This is the default policy that CDK uses to deploy resources, nevertheless it is possible to restrict it to any IAM policy created in the account.
@@ -234,6 +237,16 @@ In the chosen environment, next to the Edit button, click on the **Delete** butt
     A message like this one: *"Remove all environment related objects before proceeding with the deletion!"* appears in
     the delete display. Don't ignore it! Before deleting an environment, clean it up: delete its datasets and other
     resources.
+
+!!! danger "Untrust <span style="color:grey">*data.all*</span> infrastructure account"
+    A message like this one: *"After removal users must untrust the data.all account manually from env account CDKToolkit stack!"* appears in
+    the delete display. Don't ignore it!
+    When you [boostrapped](#1-cdk-bootstrap) the environment account you explicitly "trusted" (using the `--trust <account id>` flag) the infrastructure
+    account to make deployments to your account.
+        
+    * If you don't want to make CDK deployments (not necesserily related to data.all) to that account/region you can completely remove the CDKToolkit stack from CFN
+        
+    * If you want to continue using the account/region for other CDK deployments you must untrust the data.all account by rerunning `cdk bootstrap --trust <TRUSTED_NON_DATAALL_ACC1> --trust <TRUSTED_NON_DATAALL_ACC2> ...`
 
 Note that we can keep the environment CloudFormation stack. What is this for? This is useful in case you want to keep
 using the environment resources (IAM roles, etc) created by <span style="color:grey">*data.all*</span> but outside of <span style="color:grey">*data.all*</span>

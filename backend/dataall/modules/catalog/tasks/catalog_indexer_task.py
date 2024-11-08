@@ -10,10 +10,10 @@ from dataall.base.loader import load_modules, ImportMode
 from dataall.base.utils.alarm_service import AlarmService
 
 root = logging.getLogger()
-root.setLevel(logging.INFO)
 if not root.hasHandlers():
     root.addHandler(logging.StreamHandler(sys.stdout))
 log = logging.getLogger(__name__)
+log.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
 
 class CatalogIndexerTask:
@@ -43,12 +43,10 @@ class CatalogIndexerTask:
         # Search for documents in opensearch without an ID in the indexed_object_uris list
         query = {'query': {'bool': {'must_not': {'terms': {'_id': indexed_object_uris}}}}}
         # Delete All "Outdated" Objects from Index
-        docs = BaseIndexer.search(query)
-        for doc in docs.get('hits', {}).get('hits', []):
-            log.info(f'Deleting document {doc["_id"]}...')
+        docs = BaseIndexer.search_all(query, sort='_id')
+        for doc in docs:
             BaseIndexer.delete_doc(doc_id=doc['_id'])
-
-        log.info(f'Deleted {len(docs.get("hits", {}).get("hits", []))} records')
+        log.info(f'Deleted {len(docs)} records')
 
 
 if __name__ == '__main__':

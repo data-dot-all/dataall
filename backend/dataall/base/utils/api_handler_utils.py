@@ -23,6 +23,16 @@ MAINTENANCE_ALLOWED_OPERATIONS_WHEN_NO_ACCESS = [
     item.casefold() for item in ['getGroupsForUser', 'getMaintenanceWindowStatus']
 ]
 ENGINE = get_engine(envname=ENVNAME)
+AWS_REGION = os.getenv('AWS_REGION')
+
+
+def redact_creds(event):
+    if event.get('headers', {}).get('Authorization'):
+        event['headers']['Authorization'] = 'XXXXXXXXXXXX'
+
+    if event.get('multiValueHeaders', {}).get('Authorization'):
+        event['multiValueHeaders']['Authorization'] = 'XXXXXXXXXXXX'
+    return event
 
 
 def get_cognito_groups(claims):
@@ -106,7 +116,7 @@ def check_reauth(query, auth_time, username):
     # Determine if there are any Operations that Require ReAuth From SSM Parameter
     try:
         reauth_apis = ParameterStoreManager.get_parameter_value(
-            region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f'/dataall/{ENVNAME}/reauth/apis'
+            region=AWS_REGION, parameter_path=f'/dataall/{ENVNAME}/reauth/apis'
         ).split(',')
     except Exception:
         log.info('No ReAuth APIs Found in SSM')

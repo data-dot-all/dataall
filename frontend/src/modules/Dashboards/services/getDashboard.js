@@ -19,13 +19,13 @@ export const getDashboard = (dashboardUri) => ({
         DashboardId
         upvotes
         environment {
+          environmentUri
           label
           region
-        }
-        organization {
-          organizationUri
-          label
-          name
+          organization {
+            organizationUri
+            label
+          }
         }
         terms {
           count

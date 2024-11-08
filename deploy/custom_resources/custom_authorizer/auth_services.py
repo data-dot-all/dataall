@@ -28,7 +28,7 @@ class AuthServices:
 
         for claim_name, claim_value in verified_claims.items():
             if isinstance(claim_value, list):
-                verified_claims.update({claim_name: json.dumps(claim_value)})
+                verified_claims.update({claim_name: ','.join(claim_value)})
 
         context = {**verified_claims}
 

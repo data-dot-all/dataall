@@ -15,6 +15,7 @@ from dataall.base.utils.api_handler_utils import (
     attach_tenant_policy_for_groups,
     check_reauth,
     validate_and_block_if_maintenance_window,
+    redact_creds,
 )
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sqs import SqsQueue
@@ -83,6 +84,7 @@ def handler(event, context):
         Return doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
     """
 
+    event = redact_creds(event)
     log.info('Lambda Event %s', event)
     log.debug('Env name %s', ENVNAME)
     log.debug('Engine %s', ENGINE.engine.url)
@@ -140,8 +142,8 @@ def handler(event, context):
     dispose_context()
     response = json.dumps(response)
 
-    log.info('Lambda Response %s', response)
-
+    log.info('Lambda Response Success: %s', success)
+    log.debug('Lambda Response %s', response)
     return {
         'statusCode': 200 if success else 400,
         'headers': {

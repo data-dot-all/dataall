@@ -70,6 +70,7 @@ class OrganizationService:
             return org
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_ORGANIZATIONS)
     @ResourcePolicyService.has_resource_permission(UPDATE_ORGANIZATION)
     def update_organization(uri, data):
         context = get_context()

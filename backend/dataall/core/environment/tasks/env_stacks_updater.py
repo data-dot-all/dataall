@@ -13,10 +13,10 @@ from dataall.base.db import get_engine
 from dataall.base.utils import Parameter
 
 root = logging.getLogger()
-root.setLevel(logging.INFO)
 if not root.hasHandlers():
     root.addHandler(logging.StreamHandler(sys.stdout))
 log = logging.getLogger(__name__)
+log.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
 RETRIES = 30
 SLEEP_TIME = 30

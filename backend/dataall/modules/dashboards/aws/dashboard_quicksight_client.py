@@ -9,7 +9,6 @@ from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.aws.secrets_manager import SecretsManager
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class DashboardQuicksightClient:

@@ -1,12 +1,17 @@
 import json
 import os
+import logging
 
 from dataall.base.context import RequestContext, set_context
 from dataall.base.db import get_engine
 from dataall.base.searchproxy import connect, run_query
-from dataall.base.utils.api_handler_utils import validate_and_block_if_maintenance_window, extract_groups
+from dataall.base.utils.api_handler_utils import validate_and_block_if_maintenance_window, extract_groups, redact_creds
 from dataall.modules.maintenance.api.enums import MaintenanceModes
 
+
+logger = logging.getLogger()
+logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
+log = logging.getLogger(__name__)
 
 ENVNAME = os.getenv('envname', 'local')
 es = connect(envname=ENVNAME)
@@ -14,8 +19,9 @@ ENGINE = get_engine(envname=ENVNAME)
 
 
 def handler(event, context):
-    print('Received event')
-    print(event)
+    event = redact_creds(event)
+    logger.info('Received event')
+    logger.info(event)
     if event['httpMethod'] == 'OPTIONS':
         return {
             'statusCode': 200,
@@ -54,7 +60,7 @@ def handler(event, context):
                 return maintenance_window_validation_response
 
             body = event.get('body')
-            print(body)
+            logger.info(body)
             success = True
             try:
                 response = run_query(es, 'dataall-index', body)

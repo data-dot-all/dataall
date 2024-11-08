@@ -24,15 +24,14 @@ export const listDatasets = ({ filter }) => ({
           userRoleInEnvironment
           tags
           topics
-          organization {
-            organizationUri
-            label
-          }
           AwsAccountId
           environment {
             label
-            AwsAccountId
             region
+            organization {
+              organizationUri
+              label
+            }
           }
           stack {
             status

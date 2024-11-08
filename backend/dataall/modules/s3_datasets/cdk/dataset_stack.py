@@ -120,6 +120,7 @@ class DatasetStack(Stack):
                 'DatasetKmsKey',
                 alias=dataset.KmsAlias,
                 enable_key_rotation=True,
+                removal_policy=RemovalPolicy.RETAIN,
                 policy=iam.PolicyDocument(
                     statements=[
                         iam.PolicyStatement(
@@ -172,6 +173,7 @@ class DatasetStack(Stack):
                 bucket_name=dataset.S3BucketName,
                 encryption=s3.BucketEncryption.KMS,
                 encryption_key=dataset_key,
+                removal_policy=RemovalPolicy.RETAIN,
                 cors=[
                     s3.CorsRule(
                         allowed_methods=[
@@ -197,6 +199,7 @@ class DatasetStack(Stack):
                 versioned=True,
                 bucket_key_enabled=True,
             )
+            dataset_bucket.policy.apply_removal_policy(RemovalPolicy.RETAIN)
 
             dataset_bucket.add_lifecycle_rule(
                 abort_incomplete_multipart_upload_after=Duration.days(7),
@@ -464,12 +467,12 @@ class DatasetStack(Stack):
             '--apiUrl': 'None',
             '--snsTopicArn': 'None',
             '--extra-jars': (
-                f's3://{env.EnvironmentDefaultBucketName}' f'/profiling/code/jars/deequ-2.0.0-spark-3.1.jar'
+                f's3://{env.EnvironmentDefaultBucketName}' f'/profiling/code/jars/deequ-2.0.7-spark-3.3.jar'
             ),
             '--enable-metrics': 'true',
             '--enable-continuous-cloudwatch-log': 'true',
             '--enable-glue-datacatalog': 'true',
-            '--SPARK_VERSION': '3.1',
+            '--SPARK_VERSION': '3.3',
         }
 
         job = glue.CfnJob(
@@ -486,7 +489,7 @@ class DatasetStack(Stack):
                 script_location=(f's3://{env.EnvironmentDefaultBucketName}' f'/profiling/code/glue_script.py'),
             ),
             default_arguments=job_args,
-            glue_version='3.0',
+            glue_version='4.0',
             tags={'Application': 'dataall'},
         )
         if dataset.GlueProfilingTriggerSchedule:
