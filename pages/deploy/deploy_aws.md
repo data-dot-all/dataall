@@ -65,7 +65,7 @@ which means that AWS services used by this construct need to be available in the
 
 Clone the GitHub repository from:
 ```bash
-git clone https://github.com/data-dot-all/dataall.git --branch v2.6.0
+git clone https://github.com/data-dot-all/dataall.git --branch v2.6.1
 cd dataall
 ```
 ## 2. Setup Python virtualenv <a name="env"></a>
@@ -207,7 +207,6 @@ of our repository. Open it, you should be seen something like:
           "client_id": "string_EXTERNAL_IDP_CLIENT_ID|DEFAULT=None",
           "response_types": "string_EXTERNAL_RESPONSE_TYPES_USED_IN_OIDC_FLOW|DEFAULT=None",
           "scopes": "string_EXTERNAL_IDP_SCOPES_SPACE_SEPARATED|DEFAULT=None",
-          "jwks_url" : "string_EXTERNAL_IDP_JWKS_URL|DEFAULT=None",
           "claims_mapping": {
             "user_id": "string_USER_ID_CLAIM_NAME_MAPPING_FOR_EXTERNAL_IDP|DEFAULT=None",
             "email": "string_EMAIL_ID_CLAIM_NAME_MAPPING_FOR_EXTERNAL_IDP|DEFAULT=None"
@@ -258,7 +257,7 @@ and find 2 examples of cdk.json files.
 | enable_opensearch_serverless                  | Optional                               | If set to **true** Amazon OpenSearch Serverless collection is created and used instead of Amazon OpenSearch Service domain (default: false)                                                                                                                                                                                                                                                                          |
 | cognito_user_session_timeout_inmins           | Optional                               | The number of minutes to set the refresh token validity time for user session's in Cognito before a user must re-login to the data.all UI (default: 43200 - i.e. 30 days)                                                                                                                                                                                                                                            |
 | reauth_config                                 | Optional                               | A dictionary containing a list of API operations that require a user to re-authenticate before proceedind (`reauth_apis`) and a time to live (`ttl`) for how long a user's re-auth session is valid to perform re-auth APIs before having to re-authenticate again                                                                                                                                                   |
-| custom_auth                                   | Optional                               | A dictionary containing set of parameters to setup external IDP ( Authentication and Authorization) in data.all. Custom Auth Configuration : `provider`, `url`, `redirect_url`, `client_id`, `response_types`, `scopes`, `jwks_url`, `claims_mapping` (Nested dictionary containing configuration : `user_id`, `email`). All the configurations are required if setting data.all with an external OIDC supported IDP |
+| custom_auth                                   | Optional                               | A dictionary containing set of parameters to setup external IDP ( Authentication and Authorization) in data.all. Custom Auth Configuration : `provider`, `url`, `redirect_url`, `client_id`, `response_types`, `scopes`, `claims_mapping` (Nested dictionary containing configuration : `user_id`, `email`). All the configurations are required if setting data.all with an external OIDC supported IDP |
 
 **Example 1**: Basic deployment: this is an example of a minimum configured cdk.json file.
 
@@ -380,7 +379,6 @@ deploy to 2 deployments accounts.
                "client_id": "091sdz02308042",
                "response_types": "code",
                "scopes": "openid profile",
-               "jwks_url": "https://JWKSURL",
                "claims_mapping": {
                  "user_id": "id",
                  "email": "user_email"
