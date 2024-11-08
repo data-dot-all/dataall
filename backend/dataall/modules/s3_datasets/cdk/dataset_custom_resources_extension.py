@@ -93,6 +93,7 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
             setup,
             f'{_environment.resourcePrefix}LakeformationDefaultSettingsProvider',
             on_event_handler=lf_default_settings_custom_resource,
+            provider_function_env_encryption=lambda_env_key,
         )
 
         default_lf_settings = CustomResource(
@@ -160,6 +161,7 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
             setup,
             f'{_environment.resourcePrefix}GlueDbCustomResourceProvider',
             on_event_handler=gluedb_lf_custom_resource,
+            provider_function_env_encryption=lambda_env_key,
         )
         ssm.StringParameter(
             setup,
