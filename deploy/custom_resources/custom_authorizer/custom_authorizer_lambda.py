@@ -57,7 +57,7 @@ if __name__ == '__main__':
     account_id = ''
     api_gw_id = ''
     event = {
-        'headers': {'Authorization': access_token},
+        'headers': {'Authorization': f'Bearer {access_token}'},
         'type': 'TOKEN',
         'methodArn': f'arn:aws:execute-api:us-east-1:{account_id}:{api_gw_id}/prod/POST/graphql/api',
     }

@@ -75,7 +75,7 @@ class JWTServices:
     def validate_access_token(self, access_token) -> dict:
         # get UserInfo URI from OpenId Configuration
         user_info_url = self.openid_config.get('userinfo_endpoint')
-        r = requests.get(user_info_url, headers={'Authorization': access_token})
+        r = requests.get(user_info_url, headers={'Authorization': f'Bearer {access_token}'})
         r.raise_for_status()
         logger.debug(r.json())
         return r.json()
