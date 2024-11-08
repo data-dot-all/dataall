@@ -30,7 +30,7 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
         )
 
         lambda_env_key = kms.Key(
-            _environment,
+            setup,
             f'{_environment.resourcePrefix}-ds-cst-lambda-env-var-key',
             removal_policy=RemovalPolicy.DESTROY,
             alias=f'{_environment.resourcePrefix}-ds-cst-lambda-env-var-key',
