@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from aws_cdk import (
     aws_lambda as _lambda,
     aws_iam as iam,
@@ -105,7 +107,7 @@ class FrontendCognitoConfig(pyNestedClass):
                 'envname': envname,
                 'deployment_region': backend_region,
                 'custom_domain': str(bool(custom_domain)),
-                'redeploy': 'true',
+                'timestamp': datetime.utcnow().isoformat(),
             },
             environment_encryption=lambda_env_key,
             tracing=_lambda.Tracing.ACTIVE,

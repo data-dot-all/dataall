@@ -1,9 +1,12 @@
 import requests
-import boto3
 import os
+import uuid
+from urllib.parse import parse_qs, urlparse
 from munch import DefaultMunch
 from retrying import retry
 from integration_tests.errors import GqlError
+from oauthlib.oauth2 import WebApplicationClient
+from requests_oauthlib import OAuth2Session
 
 ENVNAME = os.getenv('ENVNAME', 'dev')
 
@@ -17,7 +20,7 @@ class Client:
     def __init__(self, username, password):
         self.username = username
         self.password = password
-        self.token = self._get_jwt_token()
+        self.access_token = self._get_jwt_tokens()
 
     @retry(
         retry_on_exception=_retry_if_connection_error,
@@ -27,7 +30,7 @@ class Client:
     )
     def query(self, query: str):
         graphql_endpoint = os.path.join(os.environ['API_ENDPOINT'], 'graphql', 'api')
-        headers = {'AccessKeyId': 'none', 'SecretKey': 'none', 'authorization': self.token}
+        headers = {'accesskeyid': 'none', 'SecretKey': 'none', 'Authorization': f'Bearer {self.access_token}'}
         r = requests.post(graphql_endpoint, json=query, headers=headers)
         if errors := r.json().get('errors'):
             raise GqlError(errors)
@@ -35,16 +38,50 @@ class Client:
 
         return DefaultMunch.fromDict(r.json())
 
-    def _get_jwt_token(self):
-        cognito_client = boto3.client('cognito-idp', region_name=os.getenv('AWS_REGION', 'eu-west-1'))
-        kwargs = {
-            'ClientId': os.environ['COGNITO_CLIENT'],
-            'AuthFlow': 'USER_PASSWORD_AUTH',
-            'AuthParameters': {
-                'USERNAME': self.username,
-                'PASSWORD': self.password,
-            },
-        }
-        resp = cognito_client.initiate_auth(**kwargs)
+    def _get_jwt_tokens(self):
+        token = uuid.uuid4()
+        scope = 'aws.cognito.signin.user.admin openid'
 
-        return resp['AuthenticationResult']['IdToken']
+        idp_domain_url = os.environ['IDP_DOMAIN_URL']
+
+        token_url = os.path.join(idp_domain_url, 'oauth2', 'token')
+        login_url = os.path.join(idp_domain_url, 'login')
+
+        client_id = os.environ['COGNITO_CLIENT']
+        redirect_uri = os.environ['DATAALL_DOMAIN_URL']
+
+        data = {
+            '_csrf': token,
+            'username': self.username,
+            'password': self.password,
+        }
+        params = {
+            'client_id': client_id,
+            'scope': scope,
+            'redirect_uri': redirect_uri,
+            'response_type': 'code',
+        }
+
+        headers = {'cookie': f'XSRF-TOKEN={token}; csrf-state=""; csrf-state-legacy=""'}
+        r = requests.post(
+            login_url,
+            params=params,
+            data=data,
+            headers=headers,
+            allow_redirects=False,
+        )
+
+        r.raise_for_status()
+
+        code = parse_qs(urlparse(r.headers['location']).query)['code'][0]
+
+        client = WebApplicationClient(client_id=client_id)
+        oauth = OAuth2Session(client=client, redirect_uri=redirect_uri)
+        token = oauth.fetch_token(
+            token_url=token_url,
+            client_id=client_id,
+            code=code,
+            include_client_id=True,
+        )
+
+        return token.get('access_token')

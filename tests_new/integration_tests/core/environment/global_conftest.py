@@ -1,7 +1,8 @@
 import logging
+from contextlib import contextmanager
 
 import pytest
-import boto3
+from assertpy import assert_that
 
 from integration_tests.aws_clients.sts import STSClient
 from integration_tests.client import GqlError
@@ -14,18 +15,41 @@ from integration_tests.core.environment.queries import (
 )
 from integration_tests.core.organizations.queries import create_organization
 from integration_tests.core.stack.utils import check_stack_ready
-from tests_new.integration_tests.core.environment.utils import update_env_stack
 from tests_new.integration_tests.aws_clients.s3 import S3Client
+from tests_new.integration_tests.core.environment.utils import update_env_stack
 
 log = logging.getLogger(__name__)
 
 
-def create_env(client, env_name, group, org_uri, account_id, region, tags=[]):
-    env = create_environment(
-        client, name=env_name, group=group, organizationUri=org_uri, awsAccountId=account_id, region=region, tags=tags
-    )
-    check_stack_ready(client, env.environmentUri, env.stack.stackUri)
-    return get_environment(client, env.environmentUri)
+@contextmanager
+def create_env(client, env_name, group, org_uri, account_id, region, tags=[], retain=False):
+    env = None
+    errors = False
+    try:
+        env = create_environment(
+            client,
+            name=env_name,
+            group=group,
+            organizationUri=org_uri,
+            awsAccountId=account_id,
+            region=region,
+            tags=tags,
+        )
+        check_stack_ready(client, env.environmentUri, env.stack.stackUri)
+        env = get_environment(client, env.environmentUri)
+        assert_that(env.stack.status).is_in('CREATE_COMPLETE', 'UPDATE_COMPLETE')
+        yield env
+    except Exception as e:
+        errors = True
+        raise e
+    finally:
+        if env and (not retain or errors):
+            role = f'arn:aws:iam::{env.AwsAccountId}:role/dataall-integration-tests-role-{env.region}'
+            session = STSClient(role_arn=role, region=env.region, session_name='Session_1').get_refreshable_session()
+            S3Client(session=session, account=env.AwsAccountId, region=env.region).delete_bucket(
+                env.EnvironmentDefaultBucketName
+            )
+            delete_env(client, env)
 
 
 def delete_env(client, env):
@@ -46,21 +70,11 @@ For this reason they must stay immutable as changes to them will affect the rest
 @pytest.fixture(scope='session')
 def session_env1(client1, group1, group5, org1, session_id, testdata):
     envdata = testdata.envs['session_env1']
-    env = None
-    try:
-        env = create_env(
-            client1, 'session_env1', group1, org1.organizationUri, envdata.accountId, envdata.region, tags=[session_id]
-        )
+    with create_env(
+        client1, 'session_env1', group1, org1.organizationUri, envdata.accountId, envdata.region, tags=[session_id]
+    ) as env:
         invite_group_on_env(client1, env.environmentUri, group5, ['CREATE_DATASET', 'CREATE_SHARE_OBJECT'])
         yield env
-    finally:
-        if env:
-            role = f'arn:aws:iam::{env.AwsAccountId}:role/dataall-integration-tests-role-{env.region}'
-            session = STSClient(role_arn=role, region=env.region, session_name='Session_1').get_refreshable_session()
-            S3Client(session=session, account=env.AwsAccountId, region=env.region).delete_bucket(
-                env.EnvironmentDefaultBucketName
-            )
-            delete_env(client1, env)
 
 
 @pytest.fixture(scope='session')
@@ -78,21 +92,16 @@ def session_env1_aws_client(session_env1, session_env1_integration_role_arn):
 @pytest.fixture(scope='session')
 def session_cross_acc_env_1(client5, group5, testdata, org1, session_id):
     envdata = testdata.envs['session_cross_acc_env_1']
-    env = None
-    try:
-        env = create_env(
-            client5,
-            'session_cross_acc_env_1',
-            group5,
-            org1.organizationUri,
-            envdata.accountId,
-            envdata.region,
-            tags=[session_id],
-        )
+    with create_env(
+        client5,
+        'session_cross_acc_env_1',
+        group5,
+        org1.organizationUri,
+        envdata.accountId,
+        envdata.region,
+        tags=[session_id],
+    ) as env:
         yield env
-    finally:
-        if env:
-            delete_env(client5, env)
 
 
 @pytest.fixture(scope='session')
@@ -124,16 +133,11 @@ def persistent_env1_aws_client(persistent_env1, persistent_env1_integration_role
 @pytest.fixture(scope='session')
 def session_env2(client1, group1, group2, org2, session_id, testdata):
     envdata = testdata.envs['session_env2']
-    env = None
-    try:
-        env = create_env(
-            client1, 'session_env2', group1, org2.organizationUri, envdata.accountId, envdata.region, tags=[session_id]
-        )
+    with create_env(
+        client1, 'session_env2', group1, org2.organizationUri, envdata.accountId, envdata.region, tags=[session_id]
+    ) as env:
         invite_group_on_env(client1, env.environmentUri, group2, ['CREATE_DATASET'])
         yield env
-    finally:
-        if env:
-            delete_env(client1, env)
 
 
 """
@@ -145,13 +149,8 @@ They are suitable to test env mutations.
 @pytest.fixture(scope='function')
 def temp_env1(client1, group1, org1, testdata):
     envdata = testdata.envs['temp_env1']
-    env = None
-    try:
-        env = create_env(client1, 'temp_env1', group1, org1.organizationUri, envdata.accountId, envdata.region)
+    with create_env(client1, 'temp_env1', group1, org1.organizationUri, envdata.accountId, envdata.region) as env:
         yield env
-    finally:
-        if env:
-            delete_env(client1, env)
 
 
 """
@@ -160,43 +159,39 @@ They are suitable for testing backwards compatibility.
 """
 
 
+@contextmanager
 def get_or_create_persistent_env(env_name, client, group, testdata):
     envs = list_environments(client, term=env_name).nodes
     if envs:
-        return envs[0]
+        env = envs[0]
+        update_env_stack(client, env)
+        yield get_environment(client, env.environmentUri)
     else:
         envdata = testdata.envs[env_name]
         org = create_organization(client, f'org_{env_name}', group)
-        env = create_env(
-            client, env_name, group, org.organizationUri, envdata.accountId, envdata.region, tags=[env_name]
-        )
-        if env.stack.status in ['CREATE_COMPLETE', 'UPDATE_COMPLETE']:
-            return env
-        else:
-            delete_env(client, env)
-            raise RuntimeError(f'failed to create {env_name=} {env=}')
+        with create_env(
+            client,
+            env_name,
+            group,
+            org.organizationUri,
+            envdata.accountId,
+            envdata.region,
+            tags=[env_name],
+            retain=True,
+        ) as env:
+            yield env
 
 
 @pytest.fixture(scope='session')
 def persistent_env1(client1, group1, testdata):
-    return get_or_create_persistent_env('persistent_env1', client1, group1, testdata)
-
-
-@pytest.fixture(scope='session')
-def updated_persistent_env1(client1, group1, persistent_env1):
-    update_env_stack(client1, persistent_env1)
-    return get_environment(client1, persistent_env1.environmentUri)
+    with get_or_create_persistent_env('persistent_env1', client1, group1, testdata) as env:
+        yield env
 
 
 @pytest.fixture(scope='session')
 def persistent_cross_acc_env_1(client5, group5, testdata):
-    return get_or_create_persistent_env('persistent_cross_acc_env_1', client5, group5, testdata)
-
-
-@pytest.fixture(scope='session')
-def updated_persistent_cross_acc_env_1(client5, group5, persistent_cross_acc_env_1):
-    update_env_stack(client5, persistent_cross_acc_env_1)
-    return get_environment(client5, persistent_cross_acc_env_1.environmentUri)
+    with get_or_create_persistent_env('persistent_cross_acc_env_1', client5, group5, testdata) as env:
+        yield env
 
 
 @pytest.fixture(scope='session')
