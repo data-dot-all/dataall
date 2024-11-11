@@ -100,7 +100,7 @@ class IdpStack(pyNestedClass):
                 domain_prefix=f"{resource_prefix.replace('-', '')}{envname}{self.region.replace('-', '')}{self.account}"
             ),
         )
-        id_token_duration = 120 if with_approval_tests else 60
+        id_token_duration = 180 if with_approval_tests else 60
         self.client = cognito.UserPoolClient(
             self,
             f'AppClient-{envname}',
