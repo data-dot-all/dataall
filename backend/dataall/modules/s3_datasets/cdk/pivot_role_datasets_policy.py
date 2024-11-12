@@ -1,11 +1,8 @@
 import os
 from dataall.base import db
 from dataall.base.utils.iam_cdk_utils import (
-    convert_from_json_to_iam_policy_statement_with_conditions,
     process_and_split_policy_with_resources_in_statements,
-)
-from dataall.base.utils.iam_policy_utils import (
-    split_policy_with_mutiple_value_condition_in_statements,
+    process_and_split_policy_with_conditions_in_statements,
 )
 from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
@@ -173,7 +170,7 @@ class DatasetsPivotRole(PivotRoleStatementSet):
             )
             statements.extend(dataset_statements)
         if imported_kms_alias:
-            kms_statements = process_and_split_policy_with_resources_in_statements(
+            kms_statements = process_and_split_policy_with_conditions_in_statements(
                 base_sid='KMSImportedDataset',
                 effect=iam.Effect.ALLOW.value,
                 actions=[

@@ -18,7 +18,7 @@ def convert_from_json_to_iam_policy_statement_with_conditions(iam_policy: Dict[A
     )
 
 
-def convert_from_json_to_iam_policy_statement(iam_policy: Dict[Any, Any]):
+def convert_from_json_to_iam_policy_statement_with_resources(iam_policy: Dict[Any, Any]):
     return iam.PolicyStatement(
         sid=iam_policy.get('Sid'),
         effect=iam.Effect.ALLOW if iam_policy.get('Effect').casefold() == 'Allow'.casefold() else iam.Effect.DENY,
@@ -36,29 +36,34 @@ def process_and_split_statements_in_chunks(statements: List[Dict]):
             if statement.get('Condition', None):
                 statements.append(convert_from_json_to_iam_policy_statement_with_conditions(statement))
             else:
-                statements.append(convert_from_json_to_iam_policy_statement(statement))
+                statements.append(convert_from_json_to_iam_policy_statement_with_resources(statement))
         statements_chunks.append(statements)
     return statements_chunks
 
 
-def process_and_split_policy_with_resources_in_statements(
+def process_and_split_policy_with_conditions_in_statements(
     base_sid: str, effect: str, actions: List[str], resources: List[str], condition_dict: Dict = None
 ):
-    if condition_dict is not None:
-        print(f'Condition dictionary is: {condition_dict}')
-        json_statements = split_policy_with_mutiple_value_condition_in_statements(
-            base_sid=base_sid, effect=effect, actions=actions, resources=resources, condition_dict=condition_dict
-        )
-    else:
-        json_statements = split_policy_with_resources_in_statements(
-            base_sid=base_sid, effect=effect, actions=actions, resources=resources
-        )
+    json_statements = split_policy_with_mutiple_value_condition_in_statements(
+        base_sid=base_sid, effect=effect, actions=actions, resources=resources, condition_dict=condition_dict
+    )
+
     iam_statements: [iam.PolicyStatement] = []
     for json_statement in json_statements:
-        if json_statement.get('Condition', None):
-            iam_policy_statement = convert_from_json_to_iam_policy_statement_with_conditions(json_statement)
-        else:
-            iam_policy_statement = convert_from_json_to_iam_policy_statement(json_statement)
+        iam_policy_statement = convert_from_json_to_iam_policy_statement_with_conditions(json_statement)
+        iam_statements.append(iam_policy_statement)
+    return iam_statements
+
+
+def process_and_split_policy_with_resources_in_statements(
+    base_sid: str, effect: str, actions: List[str], resources: List[str]
+):
+    json_statements = split_policy_with_resources_in_statements(
+        base_sid=base_sid, effect=effect, actions=actions, resources=resources
+    )
+    iam_statements: [iam.PolicyStatement] = []
+    for json_statement in json_statements:
+        iam_policy_statement = convert_from_json_to_iam_policy_statement_with_resources(json_statement)
         iam_statements.append(iam_policy_statement)
     return iam_statements
 
