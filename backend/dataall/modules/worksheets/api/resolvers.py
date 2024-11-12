@@ -11,6 +11,9 @@ def create_worksheet(context: Context, source, input: dict = None):
         raise exceptions.RequiredParameter(input)
     if not input.get('SamlAdminGroupName'):
         raise exceptions.RequiredParameter('groupUri')
+    if input.get('SamlAdminGroupName') not in context.groups:
+        raise exceptions.InvalidInput('groupUri', input.get('SamlAdminGroupName'), " a user's groups")
+
     if not input.get('label'):
         raise exceptions.RequiredParameter('label')
 

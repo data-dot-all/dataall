@@ -11,6 +11,7 @@ from aws_cdk import (
     Duration,
     CfnResource,
     CustomResource,
+    RemovalPolicy,
     Tags,
 )
 from aws_cdk.aws_glue import CfnCrawler
