@@ -4,6 +4,7 @@ from dataall.modules.worksheets.db.worksheet_models import Worksheet
 from dataall.modules.worksheets.db.worksheet_repositories import WorksheetRepository
 from dataall.modules.worksheets.services.worksheet_service import WorksheetService
 from dataall.base.api.context import Context
+from dataall.base.utils.naming_convention import NamingConventionService
 
 
 def create_worksheet(context: Context, source, input: dict = None):
@@ -11,6 +12,9 @@ def create_worksheet(context: Context, source, input: dict = None):
         raise exceptions.RequiredParameter(input)
     if not input.get('SamlAdminGroupName'):
         raise exceptions.RequiredParameter('groupUri')
+    if input.get('SamlAdminGroupName') not in context.groups:
+        raise exceptions.InvalidInput('groupUri', input.get('SamlAdminGroupName'), " a user's groups")
+
     if not input.get('label'):
         raise exceptions.RequiredParameter('label')
 

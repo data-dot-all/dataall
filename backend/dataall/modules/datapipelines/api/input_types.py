@@ -45,16 +45,6 @@ DataPipelineFilter = gql.InputType(
     ],
 )
 
-DataPipelineEnvironmentFilter = gql.InputType(
-    name='DataPipelineEnvironmentFilter',
-    arguments=[
-        gql.Argument(name='term', type=gql.String),
-        gql.Argument(name='page', type=gql.Integer),
-        gql.Argument(name='pageSize', type=gql.Integer),
-        gql.Argument(name='pipelineUri', type=gql.String),
-    ],
-)
-
 DataPipelineBrowseInput = gql.InputType(
     name='DataPipelineBrowseInput',
     arguments=[

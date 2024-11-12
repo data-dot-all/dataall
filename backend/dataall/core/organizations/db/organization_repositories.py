@@ -7,6 +7,8 @@ from dataall.base.db import exceptions, paginate
 from dataall.core.organizations.db import organization_models as models
 from dataall.core.environment.db.environment_models import Environment
 from dataall.base.context import get_context
+from dataall.base.utils.naming_convention import NamingConventionPattern, NamingConventionService
+
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +47,9 @@ class OrganizationRepository:
                 or_(
                     models.Organization.label.ilike('%' + filter.get('term') + '%'),
                     models.Organization.description.ilike('%' + filter.get('term') + '%'),
-                    models.Organization.tags.contains(f"{{{filter.get('term')}}}"),
+                    models.Organization.tags.contains(
+                        f"{{{NamingConventionService(NamingConventionPattern.DEFAULT_SEARCH).sanitize(filter.get('term'))}}}"
+                    ),
                 )
             )
         return query.order_by(models.Organization.label).distinct()

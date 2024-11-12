@@ -10,6 +10,10 @@ from sqlalchemy.orm import Query
 from dataall.base.db import paginate
 from dataall.modules.notebooks.db.notebook_models import SagemakerNotebook
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
+from dataall.base.utils.naming_convention import (
+    NamingConventionService,
+    NamingConventionPattern,
+)
 
 
 class NotebookRepository(EnvironmentResource):
@@ -51,7 +55,9 @@ class NotebookRepository(EnvironmentResource):
                 or_(
                     SagemakerNotebook.description.ilike(term + '%%'),
                     SagemakerNotebook.label.ilike(term + '%%'),
-                    SagemakerNotebook.tags.contains(f'{{{term}}}'),
+                    SagemakerNotebook.tags.contains(
+                        f'{{{NamingConventionService(NamingConventionPattern.DEFAULT_SEARCH).sanitize(term)}}}'
+                    ),
                 )
             )
         return query.order_by(SagemakerNotebook.label)

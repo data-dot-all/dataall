@@ -6,6 +6,10 @@ from dataall.base.db import paginate
 from dataall.base.db.exceptions import ObjectNotFound
 from dataall.core.activity.db.activity_models import Activity
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
+from dataall.base.utils.naming_convention import (
+    NamingConventionService,
+    NamingConventionPattern,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +71,9 @@ class DatasetListRepository:
                 or_(
                     DatasetBase.label.ilike('%' + term + '%'),
                     DatasetBase.description.ilike('%' + term + '%'),
-                    DatasetBase.tags.contains(f'{{{term}}}'),
+                    DatasetBase.tags.contains(
+                        f'{{{NamingConventionService(NamingConventionPattern.DEFAULT_SEARCH).sanitize(term)}}}'
+                    ),
                 )
             )
         return query.order_by(DatasetBase.label).distinct(DatasetBase.datasetUri, DatasetBase.label)
@@ -95,7 +101,9 @@ class DatasetListRepository:
                 or_(
                     DatasetBase.label.ilike('%' + term + '%'),
                     DatasetBase.description.ilike('%' + term + '%'),
-                    DatasetBase.tags.contains(f'{{{term}}}'),
+                    DatasetBase.tags.contains(
+                        f'{{{NamingConventionService(NamingConventionPattern.DEFAULT_SEARCH).sanitize(term)}}}'
+                    ),
                 )
             )
         return query.order_by(DatasetBase.label).distinct(DatasetBase.datasetUri, DatasetBase.label)
@@ -126,7 +134,9 @@ class DatasetListRepository:
                 or_(
                     DatasetBase.label.ilike('%' + term + '%'),
                     DatasetBase.description.ilike('%' + term + '%'),
-                    DatasetBase.tags.contains(f'{{{term}}}'),
+                    DatasetBase.tags.contains(
+                        f'{{{NamingConventionService(NamingConventionPattern.DEFAULT_SEARCH).sanitize(term)}}}'
+                    ),
                 )
             )
         return query.order_by(DatasetBase.label)
