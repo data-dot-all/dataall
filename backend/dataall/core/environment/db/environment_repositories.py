@@ -283,7 +283,7 @@ class EnvironmentRepository:
                     Environment.label.ilike('%' + term + '%'),
                     Environment.description.ilike('%' + term + '%'),
                     Environment.tags.contains(
-                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, term=term).sanitize()}}}'
+                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, target_label=term).sanitize()}}}'
                     ),
                     Environment.region.ilike('%' + term + '%'),
                 )

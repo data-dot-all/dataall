@@ -56,7 +56,7 @@ class NotebookRepository(EnvironmentResource):
                     SagemakerNotebook.description.ilike(term + '%%'),
                     SagemakerNotebook.label.ilike(term + '%%'),
                     SagemakerNotebook.tags.contains(
-                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, term=term).sanitize()}}}'
+                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, target_label=term).sanitize()}}}'
                     ),
                 )
             )

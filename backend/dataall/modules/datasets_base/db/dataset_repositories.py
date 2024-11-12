@@ -72,7 +72,7 @@ class DatasetListRepository:
                     DatasetBase.label.ilike('%' + term + '%'),
                     DatasetBase.description.ilike('%' + term + '%'),
                     DatasetBase.tags.contains(
-                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, term=term).sanitize()}}}'
+                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, target_label=term).sanitize()}}}'
                     ),
                 )
             )
@@ -102,7 +102,7 @@ class DatasetListRepository:
                     DatasetBase.label.ilike('%' + term + '%'),
                     DatasetBase.description.ilike('%' + term + '%'),
                     DatasetBase.tags.contains(
-                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, term=term).sanitize()}}}'
+                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, target_label=term).sanitize()}}}'
                     ),
                 )
             )
@@ -135,7 +135,7 @@ class DatasetListRepository:
                     DatasetBase.label.ilike('%' + term + '%'),
                     DatasetBase.description.ilike('%' + term + '%'),
                     DatasetBase.tags.contains(
-                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, term=term).sanitize()}}}'
+                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, target_label=term).sanitize()}}}'
                     ),
                 )
             )
