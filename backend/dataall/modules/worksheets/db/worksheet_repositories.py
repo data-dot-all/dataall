@@ -8,7 +8,7 @@ from sqlalchemy.orm import Query
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.base.db import paginate
 from dataall.modules.worksheets.db.worksheet_models import Worksheet, WorksheetQueryResult
-from dataall.base.utils.naming_convention_util import (
+from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
