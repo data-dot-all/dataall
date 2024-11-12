@@ -50,7 +50,7 @@ class VpcRepository:
                     Vpc.label.ilike('%' + term + '%'),
                     Vpc.VpcId.ilike('%' + term + '%'),
                     Vpc.tags.contains(
-                        f'{{{NamingConventionService(NamingConventionPattern.DEFAULT_SEARCH).sanitize(term)}}}'
+                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, term=term).sanitize()}}}'
                     ),
                 )
             )

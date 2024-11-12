@@ -46,7 +46,7 @@ class WorksheetRepository(EnvironmentResource):
                     Worksheet.label.ilike('%' + filter.get('term') + '%'),
                     Worksheet.description.ilike('%' + filter.get('term') + '%'),
                     Worksheet.tags.contains(
-                        f"{{{NamingConventionService(NamingConventionPattern.DEFAULT_SEARCH).sanitize(filter.get('term'))}}}"
+                        f"{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, target_label=filter.get('term')).sanitize()}}}"
                     ),
                 )
             )
