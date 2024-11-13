@@ -23,7 +23,7 @@ class NamingConventionPattern(Enum):
     NOTEBOOK = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 63}
     MLSTUDIO_DOMAIN = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 63}
     DEFAULT = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 63}
-    DEFAULT_SEARCH = {'regex': '[^a-zA-Z0-9-_ ]'}
+    DEFAULT_SEARCH = {'regex': '[^a-zA-Z0-9-_:. ]'}
     OPENSEARCH = {'regex': '[^a-z0-9-]', 'separator': '-', 'max_length': 27}
     OPENSEARCH_SERVERLESS = {'regex': '[^a-z0-9-]', 'separator': '-', 'max_length': 31}
 
