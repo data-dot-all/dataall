@@ -35,6 +35,11 @@ def env_prod(env, org2, user2, group2, tenant):
     yield env2
 
 
+def test_create_organization_no_tenant_permissions():
+    # TODO
+    pass
+
+
 def test_get_org(client, org1, group):
     response = client.query(
         """
@@ -63,6 +68,11 @@ def test_get_org(client, org1, group):
     assert response.data.getOrganization.SamlGroupName == group.name
     assert response.data.getOrganization.userRoleInOrganization == 'Owner'
     assert response.data.getOrganization.stats.groups == 0
+
+
+def test_update_organization_no_tenant_permissions():
+    # TODO
+    pass
 
 
 def test_update_org(client, org1, group):
@@ -300,6 +310,36 @@ def test_group_invitation(db, client, org1, group2, user, group3, group, env):
     )
 
     assert response.data.listOrganizationGroups.count == 1
+
+
+def test_archive_organization_no_tenant_permissions(client, org1, groupNoTenantPermissions, userNoTenantPermissions):
+    response = client.query(
+        """
+        mutation archiveOrganization($organizationUri:String!){
+            archiveOrganization(organizationUri:$organizationUri)
+        }
+        """,
+        username=userNoTenantPermissions.username,
+        groups=[groupNoTenantPermissions.name],
+        organizationUri=org1.organizationUri,
+    )
+    assert 'UnauthorizedOperation' in response.errors[0].message
+    assert 'MANAGE_ORGANIZATIONS' in response.errors[0].message
+
+
+def test_invite_group_to_organization_no_tenant_permissions():
+    # TODO
+    pass
+
+
+def test_update_organization_group_no_tenant_permissions():
+    # TODO
+    pass
+
+
+def test_remove_group_from_organization_no_tenant_permissions():
+    # TODO
+    pass
 
 
 def test_archive_org(client, org1, group, group2):
