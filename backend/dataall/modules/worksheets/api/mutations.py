@@ -1,5 +1,10 @@
 from dataall.base.api import gql
-from dataall.modules.worksheets.api.resolvers import create_worksheet, delete_worksheet, update_worksheet
+from dataall.modules.worksheets.api.resolvers import (
+    create_worksheet,
+    delete_worksheet,
+    update_worksheet,
+    create_athena_query_result_download_url,
+)
 
 
 createWorksheet = gql.MutationField(
@@ -26,4 +31,13 @@ deleteWorksheet = gql.MutationField(
         gql.Argument(name='worksheetUri', type=gql.NonNullableType(gql.String)),
     ],
     type=gql.Boolean,
+)
+
+createWorksheetQueryResultDownloadUrl = gql.MutationField(
+    name='createWorksheetQueryResultDownloadUrl',
+    resolver=create_athena_query_result_download_url,
+    args=[
+        gql.Argument(name='input', type=gql.Ref('WorksheetQueryResultDownloadUrlInput')),
+    ],
+    type=gql.Ref('WorksheetQueryResult'),
 )
