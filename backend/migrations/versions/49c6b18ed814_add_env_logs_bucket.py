@@ -36,7 +36,7 @@ def upgrade():
     op.add_column('environment', sa.Column('EnvironmentLogsBucketName', sa.String(), nullable=True))
     bind = op.get_bind()
     session = orm.Session(bind=bind)
-    environments: [Environment] = session.query(Environment).all()
+    environments = session.query(Environment).all()
     for env in environments:
         env.EnvironmentLogsBucketName = NamingConventionService(
             target_uri=env.environmentUri,
@@ -44,7 +44,7 @@ def upgrade():
             pattern=NamingConventionPattern.S3,
             resource_prefix=env.resourcePrefix,
         ).build_compliant_name()
-    session.commit()
+        session.commit()
     # ### end Alembic commands ###
 
 
