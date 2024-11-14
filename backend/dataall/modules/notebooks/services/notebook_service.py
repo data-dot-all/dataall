@@ -42,10 +42,10 @@ logger = logging.getLogger(__name__)
 class NotebookCreationRequest:
     """A request dataclass for notebook creation. Adds default values for missed parameters"""
 
-    label: str
-    VpcId: str
-    SubnetId: str
-    SamlAdminGroupName: str
+    label: str = None
+    VpcId: str = None
+    SubnetId: str = None
+    SamlAdminGroupName: str = None
     environment: Dict = field(default_factory=dict)
     description: str = 'No description provided'
     VolumeSizeInGB: int = 32

@@ -40,8 +40,8 @@ logger = logging.getLogger(__name__)
 class SagemakerStudioCreationRequest:
     """A request dataclass for ml studio user profile creation. Adds default values for missed parameters"""
 
-    label: str
-    SamlAdminGroupName: str
+    label: str = None
+    SamlAdminGroupName: str = None
     environment: Dict = field(default_factory=dict)
     description: str = 'No description provided'
     tags: List[str] = field(default_factory=list)
