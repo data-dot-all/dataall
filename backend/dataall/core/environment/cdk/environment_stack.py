@@ -516,9 +516,9 @@ class EnvironmentSetup(Stack):
     def create_default_athena_workgroup(self, output_bucket, workgroup_name):
         return self.create_athena_workgroup(output_bucket, workgroup_name)
 
-    def create_athena_workgroups(self, environment_groups, default_environment_athena_bucket):
+    def create_athena_workgroups(self, environment_groups, default_environment_bucket):
         for group in environment_groups:
-            self.create_athena_workgroup(default_environment_athena_bucket, group.environmentAthenaWorkGroup)
+            self.create_athena_workgroup(default_environment_bucket, group.environmentAthenaWorkGroup)
 
     def create_athena_workgroup(self, output_bucket, workgroup_name):
         athena_workgroup_output_location = ''.join(
