@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 class WorksheetService:
     @staticmethod
-    def get_worksheet_by_uri(session, uri: str) -> Worksheet:
+    def _get_worksheet_by_uri(session, uri: str) -> Worksheet:
         if not uri:
             raise exceptions.RequiredParameter(param_name='worksheetUri')
         worksheet = WorksheetRepository.find_worksheet_by_uri(session, uri)
@@ -74,7 +74,7 @@ class WorksheetService:
     def update_worksheet(uri, data=None):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
+            worksheet = WorksheetService._get_worksheet_by_uri(session, uri)
             for field in data.keys():
                 setattr(worksheet, field, data.get(field))
             session.commit()
@@ -94,7 +94,7 @@ class WorksheetService:
     @ResourcePolicyService.has_resource_permission(GET_WORKSHEET)
     def get_worksheet(uri):
         with get_context().db_engine.scoped_session() as session:
-            worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
+            worksheet = WorksheetService._get_worksheet_by_uri(session, uri)
             return worksheet
 
     @staticmethod
@@ -115,7 +115,7 @@ class WorksheetService:
     @ResourcePolicyService.has_resource_permission(DELETE_WORKSHEET)
     def delete_worksheet(uri) -> bool:
         with get_context().db_engine.scoped_session() as session:
-            worksheet = WorksheetService.get_worksheet_by_uri(session, uri)
+            worksheet = WorksheetService._get_worksheet_by_uri(session, uri)
             session.delete(worksheet)
             ResourcePolicyService.delete_resource_policy(
                 session=session,
@@ -130,7 +130,7 @@ class WorksheetService:
     def run_sql_query(uri, worksheetUri, sqlQuery):
         with get_context().db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
-            worksheet = WorksheetService.get_worksheet_by_uri(session, worksheetUri)
+            worksheet = WorksheetService._get_worksheet_by_uri(session, worksheetUri)
 
             env_group = EnvironmentService.get_environment_group(
                 session, worksheet.SamlAdminGroupName, environment.environmentUri
