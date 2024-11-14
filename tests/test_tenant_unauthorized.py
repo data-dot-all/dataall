@@ -3,9 +3,10 @@ import pytest
 from assertpy import assert_that
 from dataall.base.api import bootstrap
 from dataall.base.loader import load_modules, ImportMode
-from dataall.base.context import RequestContext, get_context
+from dataall.base.context import RequestContext
 from threading import local
 from dataall.base.db.exceptions import TenantUnauthorized
+import inspect
 
 from pytest import fixture
 
@@ -33,5 +34,5 @@ def patch_context(mocker, db, userNoTenantPermissions, groupNoTenantPermissions)
     ],
 )
 def test_unauthorized_tenant_permissions(name, field_resolver, patch_context):
-    iargs = {arg: MagicMock() for arg in field_resolver.__code__.co_varnames}
+    iargs = {arg: MagicMock() for arg in inspect.signature(field_resolver).parameters.keys()}
     assert_that(field_resolver).raises(TenantUnauthorized).when_called_with(**iargs).contains('UnauthorizedOperation')
