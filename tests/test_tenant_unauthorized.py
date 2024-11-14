@@ -116,18 +116,18 @@ CHECK_PERMS = [
     # 'Mutation.addRedshiftDatasetTables',
     # 'Mutation.deleteRedshiftDatasetTable',
     # 'Mutation.updateRedshiftDatasetTable',
-    # 'Mutation.importDashboard',
-    # 'Mutation.updateDashboard',
-    # 'Mutation.deleteDashboard',
-    # 'Mutation.requestDashboardShare',
-    # 'Mutation.approveDashboardShare',
-    # 'Mutation.rejectDashboardShare',
+    'Mutation.importDashboard',
+    'Mutation.updateDashboard',
+    'Mutation.deleteDashboard',
+    'Mutation.requestDashboardShare',
+    'Mutation.approveDashboardShare',
+    'Mutation.rejectDashboardShare',
     # 'Mutation.createQuicksightDataSourceSet',
     # 'Mutation.verifyDatasetShareObjects',
     # 'Mutation.reApplyShareObjectItemsOnDataset',
-    # 'Mutation.createWorksheet',
-    # 'Mutation.updateWorksheet',
-    # 'Mutation.deleteWorksheet'
+    'Mutation.createWorksheet',
+    'Mutation.updateWorksheet',
+    'Mutation.deleteWorksheet',
 ]
 
 ALL_RESOLVERS = {
@@ -136,6 +136,7 @@ ALL_RESOLVERS = {
     for field in _type.fields
     if field.resolver
 }
+
 
 @pytest.mark.parametrize('name,field_resolver', [(name, ALL_RESOLVERS.get(name, None)) for name in CHECK_PERMS])
 def test_unauthorized_tenant_permissions(
@@ -147,6 +148,7 @@ def test_unauthorized_tenant_permissions(
         db, userNoTenantPermissions.username, [groupNoTenantPermissions.groupUri], userNoTenantPermissions
     )
     with mocker.patch('dataall.base.context._request_storage', mock_local):
+        print(inspect.signature(field_resolver).parameters.keys())
         iargs = {arg: MagicMock() for arg in inspect.signature(field_resolver).parameters.keys()}
         assert_that(field_resolver).raises(TenantUnauthorized).when_called_with(**iargs).contains(
             'UnauthorizedOperation'

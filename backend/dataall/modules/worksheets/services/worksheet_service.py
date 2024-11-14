@@ -36,6 +36,10 @@ class WorksheetService:
     @TenantPolicyService.has_tenant_permission(MANAGE_WORKSHEETS)
     def create_worksheet(data=None) -> Worksheet:
         context = get_context()
+        if data['SamlAdminGroupName'] not in context.groups:
+            raise exceptions.UnauthorizedOperation(
+                'CREATE_WORKSHEET', f"user {context.username} does not belong to group {data['SamlAdminGroupName']}"
+            )
         with context.db_engine.scoped_session() as session:
             worksheet = Worksheet(
                 owner=context.username,
