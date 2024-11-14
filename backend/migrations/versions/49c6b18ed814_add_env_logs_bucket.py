@@ -30,6 +30,7 @@ class Environment(Resource, Base):
     __tablename__ = 'environment'
     environmentUri = Column(String, primary_key=True, default=utils.uuid('environment'))
     resourcePrefix = Column(String, nullable=False, default='dataall')
+    EnvironmentLogsBucketName = Column(String, nullable=True)
 
 
 def upgrade():
