@@ -93,24 +93,18 @@ def user3():
     yield User('david')
 
 
-@pytest.fixture(scope='module', autouse=True)
-def userNoTenantPermissions():
-    yield User('noPermissionsUser')
-
-
-def _create_group(db, tenant, name, user, attach_permissions=True):
+def _create_group(db, tenant, name, user):
     with db.scoped_session() as session:
         group = Group(name=name, label=name, owner=user.username)
         session.add(group)
         session.commit()
 
-        if attach_permissions:
-            TenantPolicyService.attach_group_tenant_policy(
-                session=session,
-                group=name,
-                permissions=TENANT_ALL,
-                tenant_name=tenant.name,
-            )
+        TenantPolicyService.attach_group_tenant_policy(
+            session=session,
+            group=name,
+            permissions=TENANT_ALL,
+            tenant_name=tenant.name,
+        )
         return group
 
 
@@ -137,11 +131,6 @@ def group4(db, tenant, user3):
 @pytest.fixture(scope='module')
 def not_in_org_group(db, tenant, user):
     yield _create_group(db, tenant, 'NotInOrgGroup', user)
-
-
-@pytest.fixture(scope='module')
-def groupNoTenantPermissions(db, tenant, userNoTenantPermissions):
-    yield _create_group(db, tenant, 'groupNoTenantPermissions', userNoTenantPermissions, attach_permissions=False)
 
 
 @pytest.fixture(scope='module', autouse=True)
