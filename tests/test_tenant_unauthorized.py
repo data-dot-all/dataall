@@ -35,8 +35,8 @@ CHECK_PERMS = [
     'Mutation.enableDataSubscriptions',
     'Mutation.DisableDataSubscriptions',
     'Mutation.updateConsumptionRole',
-    # 'Query.generateEnvironmentAccessToken',
-    # 'Query.getEnvironmentAssumeRoleUrl',
+    'Query.generateEnvironmentAccessToken',
+    'Query.getEnvironmentAssumeRoleUrl',
     # 'Mutation.updateStack', ---> permission needs to be added inside the service
     # 'Mutation.updateKeyValueTags', ---> permission needs to be added inside the service
     'Mutation.createSagemakerStudioUser',
@@ -157,6 +157,7 @@ def test_unauthorized_tenant_permissions(
         db, userNoTenantPermissions.username, [groupNoTenantPermissions.groupUri], userNoTenantPermissions
     )
     with mocker.patch('dataall.base.context._request_storage', mock_local):
+        print(inspect.signature(field_resolver))
         print(inspect.signature(field_resolver).parameters.keys())
         iargs = {arg: MagicMock() for arg in inspect.signature(field_resolver).parameters.keys()}
         assert_that(field_resolver).raises(TenantUnauthorized).when_called_with(**iargs).contains(

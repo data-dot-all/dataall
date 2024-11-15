@@ -2,6 +2,7 @@
 Contains decorators that check if a feature has been enabled or not
 """
 
+import functools
 from typing import List, Any, Optional, Callable
 
 from dataall.base.config import config
@@ -12,6 +13,7 @@ def is_feature_enabled(config_property: str):
     def decorator(f):
         fn, fn_decorator = process_func(f)
 
+        @functools.wraps(fn)
         def decorated(*args, **kwargs):
             value = config.get_property(config_property)
             if not value:
@@ -33,6 +35,7 @@ def is_feature_enabled_for_allowed_values(
     def decorator(f):
         fn, fn_decorator = process_func(f)
 
+        @functools.wraps(fn)
         def decorated(*args, **kwargs):
             config_property_value = None
             if config_property is None and resolve_property is None:
