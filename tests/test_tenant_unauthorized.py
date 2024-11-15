@@ -46,13 +46,13 @@ CHECK_PERMS = [
     'Mutation.startSagemakerNotebook',
     'Mutation.stopSagemakerNotebook',
     'Mutation.deleteSagemakerNotebook',
-    # 'Query.getSagemakerNotebookPresignedUrl'
+    'Query.getSagemakerNotebookPresignedUrl',
     'Mutation.createMetadataForm',
     'Mutation.createMetadataFormVersion',
-    # 'Mutation.createAttachedMetadataForm',
+    # 'Mutation.createAttachedMetadataForm', ---> outside of this PR to be able to backport to v2.6.2
     'Mutation.deleteMetadataForm',
     'Mutation.deleteMetadataFormVersion',
-    # 'Mutation.deleteAttachedMetadataForm',
+    # 'Mutation.deleteAttachedMetadataForm', ---> outside of this PR to be able to backport to v2.6.2
     'Mutation.createMetadataFormFields',
     'Mutation.deleteMetadataFormField',
     'Mutation.batchMetadataFormFieldUpdates',
@@ -110,12 +110,12 @@ CHECK_PERMS = [
     'Mutation.syncTables',
     # 'Mutation.createTableDataFilter',
     # 'Mutation.deleteTableDataFilter',
-    # 'Query.getDatasetAssumeRoleUrl',
-    # 'Query.getDatasetPresignedUrl',
-    # 'Mutation.createRedshiftConnection',
-    # 'Mutation.deleteRedshiftConnection',
-    # 'Mutation.addConnectionGroupPermission',
-    # 'Mutation.deleteConnectionGroupPermission',
+    'Query.getDatasetAssumeRoleUrl',
+    'Query.getDatasetPresignedUrl',
+    # 'Mutation.createRedshiftConnection', ---> outside of this PR to be able to backport to v2.6.2
+    # 'Mutation.deleteRedshiftConnection', ---> outside of this PR to be able to backport to v2.6.2
+    # 'Mutation.addConnectionGroupPermission', ---> outside of this PR to be able to backport to v2.6.2
+    # 'Mutation.deleteConnectionGroupPermission', ---> outside of this PR to be able to backport to v2.6.2
     'Mutation.importRedshiftDataset',
     'Mutation.updateRedshiftDataset',
     'Mutation.deleteRedshiftDataset',
