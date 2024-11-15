@@ -12,7 +12,7 @@ from dataall.modules.redshift_datasets.api.connections.types import (
 createRedshiftConnection = gql.MutationField(
     name='createRedshiftConnection',
     args=[gql.Argument('input', gql.Ref('CreateRedshiftConnectionInput'))],
-    type=RedshiftConnection,
+    type=gql.Ref('RedshiftConnection'),
     resolver=create_redshift_connection,
 )
 

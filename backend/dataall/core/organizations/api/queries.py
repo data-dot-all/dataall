@@ -15,7 +15,7 @@ from .types import (
 getOrganization = gql.QueryField(
     name='getOrganization',
     args=[gql.Argument(name='organizationUri', type=gql.NonNullableType(gql.String))],
-    type=gql.Thunk(lambda: Organization),
+    type=gql.Ref('Organization'),
     resolver=get_organization,
     test_scope='Organization',
 )
@@ -23,7 +23,7 @@ getOrganization = gql.QueryField(
 listOrganizations = gql.QueryField(
     name='listOrganizations',
     args=[gql.Argument('filter', OrganizationFilter)],
-    type=OrganizationSearchResult,
+    type=gql.Ref('OrganizationSearchResult'),
     resolver=list_organizations,
     test_scope='Organization',
 )

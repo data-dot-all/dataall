@@ -17,7 +17,7 @@ from .types import Organization
 createOrganization = gql.MutationField(
     name='createOrganization',
     args=[gql.Argument(name='input', type=NewOrganizationInput)],
-    type=gql.Thunk(lambda: Organization),
+    type=gql.Ref('Organization'),
     resolver=create_organization,
     test_scope='Organization',
 )
@@ -28,7 +28,7 @@ updateOrganization = gql.MutationField(
         gql.Argument(name='organizationUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='input', type=gql.NonNullableType(ModifyOrganizationInput)),
     ],
-    type=gql.Thunk(lambda: Organization),
+    type=gql.Ref('Organization'),
     resolver=update_organization,
     test_scope='Organization',
 )

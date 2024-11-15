@@ -16,7 +16,7 @@ createDatasetStorageLocation = gql.MutationField(
         gql.Argument(name='datasetUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='input', type=NewDatasetStorageLocationInput),
     ],
-    type=gql.Thunk(lambda: DatasetStorageLocation),
+    type=gql.Ref('DatasetStorageLocation'),
     resolver=create_storage_location,
 )
 
@@ -26,7 +26,7 @@ updateDatasetStorageLocation = gql.MutationField(
         gql.Argument(name='locationUri', type=gql.String),
         gql.Argument(name='input', type=ModifyDatasetFolderInput),
     ],
-    type=gql.Thunk(lambda: DatasetStorageLocation),
+    type=gql.Ref('DatasetStorageLocation'),
     resolver=update_storage_location,
 )
 

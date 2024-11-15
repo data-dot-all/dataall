@@ -10,7 +10,7 @@ from dataall.modules.s3_datasets.api.table.types import (
 getDatasetTable = gql.QueryField(
     name='getDatasetTable',
     args=[gql.Argument(name='tableUri', type=gql.NonNullableType(gql.String))],
-    type=gql.Thunk(lambda: DatasetTable),
+    type=gql.Ref('DatasetTable'),
     resolver=get_table,
 )
 
@@ -18,7 +18,7 @@ getDatasetTable = gql.QueryField(
 listDatasetTables = gql.QueryField(
     name='listDatasetTables',
     args=[gql.Argument(name='filter', type=DatasetTableFilter)],
-    type=DatasetTableSearchResult,
+    type=gql.Ref('DatasetTableSearchResult'),
     resolver=lambda *_, **__: None,
 )
 
@@ -44,6 +44,6 @@ listTableDataFilters = gql.QueryField(
         gql.Argument(name='tableUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='filter', type=DatasetTableFilter),
     ],
-    type=DatasetTableDataFilterSearchResult,
+    type=gql.Ref('DatasetTableDataFilterSearchResult'),
     resolver=list_table_data_filters,
 )

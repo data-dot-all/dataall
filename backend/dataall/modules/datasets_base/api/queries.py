@@ -10,20 +10,20 @@ from dataall.modules.datasets_base.api.types import DatasetBaseSearchResult
 listDatasets = gql.QueryField(
     name='listDatasets',
     args=[gql.Argument('filter', DatasetFilter)],
-    type=DatasetBaseSearchResult,
+    type=gql.Ref('DatasetBaseSearchResult'),
     resolver=list_all_user_datasets,
 )
 
 listOwnedDatasets = gql.QueryField(
     name='listOwnedDatasets',
     args=[gql.Argument('filter', DatasetFilter)],
-    type=DatasetBaseSearchResult,
+    type=gql.Ref('DatasetBaseSearchResult'),
     resolver=list_owned_datasets,
 )
 
 listDatasetsCreatedInEnvironment = gql.QueryField(
     name='listDatasetsCreatedInEnvironment',
-    type=DatasetBaseSearchResult,
+    type=gql.Ref('DatasetBaseSearchResult'),
     args=[
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
         gql.Argument('filter', DatasetFilter),

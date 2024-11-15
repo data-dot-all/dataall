@@ -40,7 +40,7 @@ getTrustAccount = gql.QueryField(
 getEnvironment = gql.QueryField(
     name='getEnvironment',
     args=[gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String))],
-    type=gql.Thunk(lambda: Environment),
+    type=gql.Ref('Environment'),
     resolver=get_environment,
     test_scope='Environment',
 )
@@ -49,7 +49,7 @@ getEnvironment = gql.QueryField(
 listEnvironments = gql.QueryField(
     name='listEnvironments',
     args=[gql.Argument('filter', EnvironmentFilter)],
-    type=EnvironmentSearchResult,
+    type=gql.Ref('EnvironmentSearchResult'),
     resolver=list_environments,
     test_scope='Environment',
 )
@@ -58,7 +58,7 @@ listEnvironments = gql.QueryField(
 listValidEnvironments = gql.QueryField(
     name='listValidEnvironments',
     args=[gql.Argument('filter', EnvironmentFilter)],
-    type=EnvironmentSimplifiedSearchResult,
+    type=gql.Ref('EnvironmentSimplifiedSearchResult'),
     resolver=list_valid_environments,
     test_scope='Environment',
 )
