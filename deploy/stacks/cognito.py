@@ -99,6 +99,7 @@ class IdpStack(pyNestedClass):
                 domain_prefix=f"{resource_prefix.replace('-', '')}{envname}{self.region.replace('-', '')}{self.account}"
             ),
         )
+        jwt_token_duration = 180 if with_approval_tests else 60
         self.client = cognito.UserPoolClient(
             self,
             f'AppClient-{envname}',
@@ -106,6 +107,8 @@ class IdpStack(pyNestedClass):
             auth_flows=AuthFlow(user_password=with_approval_tests, user_srp=True, custom=True),
             prevent_user_existence_errors=True,
             refresh_token_validity=Duration.minutes(cognito_user_session_timeout_inmins),
+            id_token_validity=Duration.minutes(jwt_token_duration),
+            access_token_validity=Duration.minutes(jwt_token_duration),
         )
 
         if enable_cw_rum:
