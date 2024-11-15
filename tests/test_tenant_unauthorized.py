@@ -136,7 +136,7 @@ CHECK_PERMS = [
     'Mutation.createWorksheet',
     'Mutation.updateWorksheet',
     'Mutation.deleteWorksheet',
-    # 'Query.runAthenaSqlQuery'
+    'Query.runAthenaSqlQuery'
 ]
 
 ALL_RESOLVERS = {

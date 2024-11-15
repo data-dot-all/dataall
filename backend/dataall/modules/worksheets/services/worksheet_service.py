@@ -130,6 +130,7 @@ class WorksheetService:
             return True
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_WORKSHEETS)
     @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
     def run_sql_query(uri, worksheetUri, sqlQuery):
         with get_context().db_engine.scoped_session() as session:
