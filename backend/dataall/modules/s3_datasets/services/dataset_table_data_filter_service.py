@@ -2,6 +2,7 @@ import logging
 import re
 from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.s3_datasets.db.dataset_table_data_filter_repositories import DatasetTableDataFilterRepository
 from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
@@ -11,6 +12,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     CREATE_TABLE_DATA_FILTER,
     DELETE_TABLE_DATA_FILTER,
     LIST_TABLE_DATA_FILTERS,
+    MANAGE_DATASETS
 )
 from dataall.base.db import exceptions
 from dataall.modules.s3_datasets.aws.lf_data_filter_client import LakeFormationDataFilterClient
@@ -70,6 +72,7 @@ class DatasetTableDataFilterService:
         return data_filter.tableUri
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CREATE_TABLE_DATA_FILTER)
     def create_table_data_filter(uri: str, data: dict):
         DatasetTableDataFilterRequestValidationService.validate_creation_data_filter_params(uri, data)
@@ -93,6 +96,7 @@ class DatasetTableDataFilterService:
         return data_filter
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(DELETE_TABLE_DATA_FILTER, parent_resource=_get_table_uri_from_filter)
     def delete_table_data_filter(uri: str):
         with get_context().db_engine.scoped_session() as session:

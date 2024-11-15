@@ -108,8 +108,8 @@ CHECK_PERMS = [
     'Mutation.updateDatasetTable',
     'Mutation.deleteDatasetTable',
     'Mutation.syncTables',
-    # 'Mutation.createTableDataFilter',
-    # 'Mutation.deleteTableDataFilter',
+    'Mutation.createTableDataFilter',
+    'Mutation.deleteTableDataFilter',
     'Query.getDatasetAssumeRoleUrl',
     'Query.getDatasetPresignedUrl',
     # 'Mutation.createRedshiftConnection', ---> outside of this PR to be able to backport to v2.6.2
