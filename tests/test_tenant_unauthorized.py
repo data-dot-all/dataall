@@ -132,7 +132,7 @@ CHECK_PERMS = [
     # 'Query.getAuthorSession',
     'Mutation.verifyDatasetShareObjects',
     'Mutation.reApplyShareObjectItemsOnDataset',
-    # 'Query.getDatasetSharedAssumeRoleUrl'
+    'Query.getDatasetSharedAssumeRoleUrl',
     'Mutation.createWorksheet',
     'Mutation.updateWorksheet',
     'Mutation.deleteWorksheet',
