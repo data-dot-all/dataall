@@ -610,6 +610,7 @@ class EnvironmentSetup(Stack):
                     'arn:aws:s3:::dataall-test-session*/*',
                     'arn:aws:s3:::dataall-temp*',
                     'arn:aws:s3:::dataall-temp*/*',
+                    'arn:aws:s3:::dataall-env-access-logs*',
                 ],
             )
         )
