@@ -601,7 +601,10 @@ class EnvironmentSetup(Stack):
                     's3:DeleteObject',
                 ],
                 effect=iam.Effect.ALLOW,
-                resources=['arn:aws:s3:::dataalltesting*'],
+                resources=[
+                    'arn:aws:s3:::dataalltesting*',
+                    'arn:aws:s3:::dataall-env-access-logs*',
+                ],
             )
         )
         self.test_role.add_to_policy(
