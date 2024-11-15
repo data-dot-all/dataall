@@ -37,8 +37,8 @@ CHECK_PERMS = [
     'Mutation.updateConsumptionRole',
     'Query.generateEnvironmentAccessToken',
     'Query.getEnvironmentAssumeRoleUrl',
-    # 'Mutation.updateStack', ---> fix for nested fields
-    # 'Mutation.updateKeyValueTags', ---> fix for nested fields
+    # 'Mutation.updateStack', ---> fix for nested fields. PR PART 2
+    # 'Mutation.updateKeyValueTags', ---> fix for nested fields. PR PART 2
     'Mutation.createSagemakerStudioUser',
     'Mutation.deleteSagemakerStudioUser',
     'Query.getSagemakerStudioUserPresignedUrl',
@@ -58,8 +58,8 @@ CHECK_PERMS = [
     'Mutation.batchMetadataFormFieldUpdates',
     # 'Mutation.startMaintenanceWindow',  ---> admin action. No need for tenant permission check
     # 'Mutation.stopMaintenanceWindow',  ---> admin action. No need for tenant permission check
-    # 'Mutation.markNotificationAsRead',
-    # 'Mutation.deleteNotification',
+    # 'Mutation.markNotificationAsRead', ---> TO CONFIRM. tenant permissions do not apply to user personal notifications.
+    # 'Mutation.deleteNotification', ---> TO CONFIRM. tenant permissions do not apply to user personal notifications.
     'Mutation.createGlossary',
     'Mutation.updateGlossary',
     'Mutation.deleteGlossary',
@@ -72,8 +72,8 @@ CHECK_PERMS = [
     'Mutation.approveTermAssociation',
     'Mutation.dismissTermAssociation',
     # 'Mutation.startReindexCatalog',  ---> admin action. No need for tenant permission check
-    # 'Mutation.postFeedMessage',
-    # 'Mutation.createShareObject',
+    # 'Mutation.postFeedMessage', ---> TO CONFIRM. tenant permissions do not apply to user personal feed comments.
+    # 'Mutation.createShareObject', ---> TO DECIDE. Share permissions (all below). Do we need MANAGE_SHARES permission
     # 'Mutation.deleteShareObject',
     # 'Mutation.cancelShareExtension',
     # 'Mutation.addSharedItem',
@@ -92,19 +92,19 @@ CHECK_PERMS = [
     # 'Mutation.updateShareRequestReason',
     # 'Mutation.updateShareItemFilters',
     # 'Mutation.removeShareItemFilter',
-    # 'Mutation.upVote',
-    # 'Mutation.syncDatasetTableColumns',
-    # 'Mutation.updateDatasetTableColumn',
-    # 'Mutation.startDatasetProfilingRun',
-    # 'Mutation.createDatasetStorageLocation',
-    # 'Mutation.updateDatasetStorageLocation',
-    # 'Mutation.deleteDatasetStorageLocation',
-    # 'Mutation.createDataset',
-    # 'Mutation.updateDataset',
-    # 'Mutation.generateDatasetAccessToken',
+    # 'Mutation.upVote', ---> TO CONFIRM. tenant permissions do not apply to user personal up votes.
+    'Mutation.syncDatasetTableColumns',
+    'Mutation.updateDatasetTableColumn',
+    # 'Mutation.startDatasetProfilingRun', ---> fix for nested fields. PR PART 2
+    # 'Mutation.createDatasetStorageLocation', ---> fix for nested fields. PR PART 2
+    'Mutation.updateDatasetStorageLocation',
+    'Mutation.deleteDatasetStorageLocation',
+    # 'Mutation.createDataset', ---> fix for nested fields. PR PART 2
+    # 'Mutation.updateDataset', ---> fix for nested fields. PR PART 2
+    'Mutation.generateDatasetAccessToken',
     'Mutation.deleteDataset',
-    # 'Mutation.importDataset',
-    # 'Mutation.startGlueCrawler',
+    # 'Mutation.importDataset', ---> fix for nested fields. PR PART 2
+    'Mutation.startGlueCrawler',
     'Mutation.updateDatasetTable',
     'Mutation.deleteDatasetTable',
     'Mutation.syncTables',
