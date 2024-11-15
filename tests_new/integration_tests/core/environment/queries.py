@@ -11,6 +11,7 @@ owner
 tags
 SamlGroupName
 EnvironmentDefaultBucketName
+EnvironmentLogsBucketName
 EnvironmentDefaultIAMRoleArn
 EnvironmentDefaultIAMRoleName
 EnvironmentDefaultIAMRoleImported
