@@ -129,7 +129,7 @@ CHECK_PERMS = [
     'Mutation.approveDashboardShare',
     'Mutation.rejectDashboardShare',
     # 'Mutation.createQuicksightDataSourceSet',  ---> admin action. No need for tenant permission check
-    # 'Query.getAuthorSession',
+    'Query.getAuthorSession',
     'Mutation.verifyDatasetShareObjects',
     'Mutation.reApplyShareObjectItemsOnDataset',
     'Query.getDatasetSharedAssumeRoleUrl',
