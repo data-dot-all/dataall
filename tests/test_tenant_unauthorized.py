@@ -136,7 +136,7 @@ CHECK_PERMS = [
     'Mutation.createWorksheet',
     'Mutation.updateWorksheet',
     'Mutation.deleteWorksheet',
-    'Query.runAthenaSqlQuery'
+    'Query.runAthenaSqlQuery',
 ]
 
 ALL_RESOLVERS = {
@@ -157,7 +157,6 @@ def test_unauthorized_tenant_permissions(
         db, userNoTenantPermissions.username, [groupNoTenantPermissions.groupUri], userNoTenantPermissions
     )
     with mocker.patch('dataall.base.context._request_storage', mock_local):
-        print(inspect.signature(field_resolver).parameters.keys())
         iargs = {arg: MagicMock() for arg in inspect.signature(field_resolver).parameters.keys()}
         assert_that(field_resolver).raises(TenantUnauthorized).when_called_with(**iargs).contains(
             'UnauthorizedOperation'

@@ -12,7 +12,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     CREATE_TABLE_DATA_FILTER,
     DELETE_TABLE_DATA_FILTER,
     LIST_TABLE_DATA_FILTERS,
-    MANAGE_DATASETS
+    MANAGE_DATASETS,
 )
 from dataall.base.db import exceptions
 from dataall.modules.s3_datasets.aws.lf_data_filter_client import LakeFormationDataFilterClient
