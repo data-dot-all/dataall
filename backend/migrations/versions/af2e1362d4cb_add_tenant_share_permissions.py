@@ -52,7 +52,15 @@ def upgrade():
             group_uri=group.groupUri,
             tenant_name=TENANT_NAME,
         )
-        TenantPolicyService.associate_permission_to_tenant_policy(session, policy, MANAGE_SHARES)
+        already_associated = TenantPolicyRepository.has_group_tenant_permission(
+            session,
+            group_uri=group.groupUri,
+            permission_name=MANAGE_SHARES,
+            tenant_name=TENANT_NAME,
+        )
+
+        if not already_associated:
+            TenantPolicyService.associate_permission_to_tenant_policy(session, policy, MANAGE_SHARES)
 
 
 def downgrade():
