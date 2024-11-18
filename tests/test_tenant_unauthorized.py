@@ -37,8 +37,8 @@ CHECK_PERMS = [
     'Mutation.updateConsumptionRole',
     'Query.generateEnvironmentAccessToken',
     'Query.getEnvironmentAssumeRoleUrl',
-    # 'Mutation.updateStack', ---> fix for nested fields. PR PART 2
-    # 'Mutation.updateKeyValueTags', ---> fix for nested fields. PR PART 2
+    'Mutation.updateStack',
+    'Mutation.updateKeyValueTags',
     'Mutation.createSagemakerStudioUser',
     'Mutation.deleteSagemakerStudioUser',
     'Query.getSagemakerStudioUserPresignedUrl',
@@ -58,8 +58,8 @@ CHECK_PERMS = [
     'Mutation.batchMetadataFormFieldUpdates',
     # 'Mutation.startMaintenanceWindow',  ---> admin action. No need for tenant permission check
     # 'Mutation.stopMaintenanceWindow',  ---> admin action. No need for tenant permission check
-    # 'Mutation.markNotificationAsRead', ---> TO CONFIRM. tenant permissions do not apply to user personal notifications.
-    # 'Mutation.deleteNotification', ---> TO CONFIRM. tenant permissions do not apply to user personal notifications.
+    # 'Mutation.markNotificationAsRead', ---> tenant permissions do not apply to user personal notifications.
+    # 'Mutation.deleteNotification', ---> tenant permissions do not apply to user personal notifications.
     'Mutation.createGlossary',
     'Mutation.updateGlossary',
     'Mutation.deleteGlossary',
@@ -72,8 +72,8 @@ CHECK_PERMS = [
     'Mutation.approveTermAssociation',
     'Mutation.dismissTermAssociation',
     # 'Mutation.startReindexCatalog',  ---> admin action. No need for tenant permission check
-    # 'Mutation.postFeedMessage', ---> TO CONFIRM. tenant permissions do not apply to user personal feed comments.
-    # 'Mutation.createShareObject', ---> TO DECIDE. Share permissions (all below). Do we need MANAGE_SHARES permission
+    # 'Mutation.postFeedMessage', ---> tenant permissions do not apply to user personal feed comments.
+    # 'Mutation.createShareObject', ---> follow-up PR. ADD MANAGE_SHARE permission
     # 'Mutation.deleteShareObject',
     # 'Mutation.cancelShareExtension',
     # 'Mutation.addSharedItem',
@@ -92,18 +92,18 @@ CHECK_PERMS = [
     # 'Mutation.updateShareRequestReason',
     # 'Mutation.updateShareItemFilters',
     # 'Mutation.removeShareItemFilter',
-    # 'Mutation.upVote', ---> TO CONFIRM. tenant permissions do not apply to user personal up votes.
+    # 'Mutation.upVote', ---> tenant permissions do not apply to user personal up votes.
     'Mutation.syncDatasetTableColumns',
     'Mutation.updateDatasetTableColumn',
-    # 'Mutation.startDatasetProfilingRun', ---> fix for nested fields. PR PART 2
-    # 'Mutation.createDatasetStorageLocation', ---> fix for nested fields. PR PART 2
+    'Mutation.startDatasetProfilingRun',
+    'Mutation.createDatasetStorageLocation',
     'Mutation.updateDatasetStorageLocation',
     'Mutation.deleteDatasetStorageLocation',
-    # 'Mutation.createDataset', ---> fix for nested fields. PR PART 2
-    # 'Mutation.updateDataset', ---> fix for nested fields. PR PART 2
+    'Mutation.createDataset',
+    'Mutation.updateDataset',
     'Mutation.generateDatasetAccessToken',
     'Mutation.deleteDataset',
-    # 'Mutation.importDataset', ---> fix for nested fields. PR PART 2
+    'Mutation.importDataset',
     'Mutation.startGlueCrawler',
     'Mutation.updateDatasetTable',
     'Mutation.deleteDatasetTable',
@@ -157,7 +157,25 @@ def test_unauthorized_tenant_permissions(
         db, userNoTenantPermissions.username, [groupNoTenantPermissions.groupUri], userNoTenantPermissions
     )
     with mocker.patch('dataall.base.context._request_storage', mock_local):
+        ## Creation mocks
+        mocker.patch('dataall.modules.mlstudio.api.resolvers.RequestValidator', MagicMock())
+        mocker.patch(
+            'dataall.modules.mlstudio.services.mlstudio_service.SagemakerStudioCreationRequest.from_dict', MagicMock()
+        )
+        mocker.patch('dataall.modules.notebooks.api.resolvers.RequestValidator', MagicMock())
+        mocker.patch(
+            'dataall.modules.notebooks.services.notebook_service.NotebookCreationRequest.from_dict', MagicMock()
+        )
+        mocker.patch('dataall.modules.s3_datasets.api.profiling.resolvers._validate_uri', MagicMock())
+        mocker.patch('dataall.modules.s3_datasets.api.storage_location.resolvers._validate_input', MagicMock())
+        mocker.patch('dataall.modules.s3_datasets.api.dataset.resolvers.RequestValidator', MagicMock())
+        mocker.patch(
+            'dataall.core.stacks.db.target_type_repositories.TargetType.get_resource_tenant_permission_name',
+            return_value='MANAGE_ENVIRONMENTS',
+        )
+        # Mocking arguments
         iargs = {arg: MagicMock() for arg in inspect.signature(field_resolver).parameters.keys()}
+        # Assert Unauthorized exception is raised
         assert_that(field_resolver).raises(TenantUnauthorized).when_called_with(**iargs).contains(
             'UnauthorizedOperation'
         )
