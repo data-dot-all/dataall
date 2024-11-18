@@ -255,6 +255,13 @@ class EnvironmentService:
                 resource_prefix=env.resourcePrefix,
             ).build_compliant_name()
 
+            env.EnvironmentLogsBucketName = NamingConventionService(
+                target_uri=env.environmentUri,
+                target_label='env-access-logs',
+                pattern=NamingConventionPattern.S3,
+                resource_prefix=env.resourcePrefix,
+            ).build_compliant_name()
+
             env.EnvironmentDefaultAthenaWorkGroup = NamingConventionService(
                 target_uri=env.environmentUri,
                 target_label=env.label,

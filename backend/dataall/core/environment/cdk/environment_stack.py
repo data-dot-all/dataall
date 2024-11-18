@@ -165,6 +165,28 @@ class EnvironmentSetup(Stack):
                 f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}',
             )
 
+        # Environment Logging S3 Bucket
+        default_environment_log_bucket = s3.Bucket(
+            self,
+            'EnvironmentDefaultLogBucket',
+            bucket_name=self._environment.EnvironmentLogsBucketName,
+            encryption=s3.BucketEncryption.S3_MANAGED,
+            removal_policy=RemovalPolicy.RETAIN,
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            versioned=True,
+            enforce_ssl=True,
+        )
+        default_environment_log_bucket.policy.apply_removal_policy(RemovalPolicy.RETAIN)
+        default_environment_log_bucket.add_to_resource_policy(
+            iam.PolicyStatement(
+                sid='AWSLogDeliveryWrite',
+                effect=iam.Effect.ALLOW,
+                principals=[iam.ServicePrincipal('logging.s3.amazonaws.com')],
+                actions=['s3:PutObject', 's3:PutObjectAcl'],
+                resources=[f'{default_environment_log_bucket.bucket_arn}/*'],
+            )
+        )
+
         # Environment S3 Bucket
         default_environment_bucket = s3.Bucket(
             self,
@@ -175,19 +197,11 @@ class EnvironmentSetup(Stack):
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             versioned=True,
             enforce_ssl=True,
+            server_access_logs_bucket=default_environment_log_bucket,
+            server_access_logs_prefix=f'access_logs/{self._environment.EnvironmentDefaultBucketName}/',
         )
         default_environment_bucket.policy.apply_removal_policy(RemovalPolicy.RETAIN)
         self.default_environment_bucket = default_environment_bucket
-
-        default_environment_bucket.add_to_resource_policy(
-            iam.PolicyStatement(
-                sid='AWSLogDeliveryWrite',
-                effect=iam.Effect.ALLOW,
-                principals=[iam.ServicePrincipal('logging.s3.amazonaws.com')],
-                actions=['s3:PutObject', 's3:PutObjectAcl'],
-                resources=[f'{default_environment_bucket.bucket_arn}/*'],
-            )
-        )
 
         default_environment_bucket.add_lifecycle_rule(
             abort_incomplete_multipart_upload_after=Duration.days(7),
@@ -596,6 +610,7 @@ class EnvironmentSetup(Stack):
                     'arn:aws:s3:::dataall-test-session*/*',
                     'arn:aws:s3:::dataall-temp*',
                     'arn:aws:s3:::dataall-temp*/*',
+                    'arn:aws:s3:::dataall-env-access-logs*',
                 ],
             )
         )

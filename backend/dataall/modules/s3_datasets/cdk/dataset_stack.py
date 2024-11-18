@@ -204,7 +204,7 @@ class DatasetStack(Stack):
                 server_access_logs_bucket=s3.Bucket.from_bucket_name(
                     self,
                     'EnvAccessLogsBucket',
-                    f'{env.EnvironmentDefaultBucketName}',
+                    f'{env.EnvironmentLogsBucketName}',
                 ),
                 server_access_logs_prefix=f'access_logs/{dataset.S3BucketName}/',
                 enforce_ssl=True,
