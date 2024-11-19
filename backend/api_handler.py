@@ -33,9 +33,9 @@ start = perf_counter()
 for name in ['boto3', 's3transfer', 'botocore', 'boto']:
     logging.getLogger(name).setLevel(logging.ERROR)
 
-SCHEMA_EXPLORATION = True if os.getenv('SCHEMA_EXPLORATION') == 'True' else False
+ALLOW_INTROSPECTION = True if os.getenv('ALLOW_INTROSPECTION') == 'True' else False
 
-if SCHEMA_EXPLORATION:
+if not ALLOW_INTROSPECTION:
     did_you_mean.__globals__['MAX_LENGTH'] = 0
 
 load_modules(modes={ImportMode.API})
@@ -145,7 +145,7 @@ def handler(event, context):
         raise Exception(f'Could not initialize user context from event {event}')
 
     success, response = graphql_sync(
-        schema=executable_schema, data=query, context_value=app_context, introspection=SCHEMA_EXPLORATION
+        schema=executable_schema, data=query, context_value=app_context, introspection=ALLOW_INTROSPECTION
     )
 
     dispose_context()
