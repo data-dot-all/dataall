@@ -202,6 +202,17 @@ class DatasetRepository(EnvironmentResource):
     def list_all_active_datasets(session) -> [S3Dataset]:
         return session.query(S3Dataset).filter(S3Dataset.deleted.is_(None)).all()
 
+    # Here all dataset with the same db name are fetched irrespective of their environment
+    # Irresepective of environments because the same db name can be used in any requestors account
+    @staticmethod
+    def list_all_active_datasets_with_glue_db(session, dataset_uri) -> [S3Dataset]:
+        s3_dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session=session, dataset_uri=dataset_uri)
+        return (
+            session.query(S3Dataset)
+            .filter(and_(S3Dataset.deleted.is_(None), S3Dataset.GlueDatabaseName == s3_dataset.GlueDatabaseName))
+            .all()
+        )
+
     @staticmethod
     def get_dataset_by_bucket_name(session, bucket) -> [S3Dataset]:
         return session.query(S3Dataset).filter(S3Dataset.S3BucketName == bucket).first()
