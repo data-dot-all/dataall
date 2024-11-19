@@ -23,6 +23,7 @@ from dataall.base.context import set_context, dispose_context, RequestContext
 from dataall.base.db import get_engine
 from dataall.base.loader import load_modules, ImportMode
 
+from graphql.pyutils import did_you_mean
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
@@ -31,6 +32,11 @@ log = logging.getLogger(__name__)
 start = perf_counter()
 for name in ['boto3', 's3transfer', 'botocore', 'boto']:
     logging.getLogger(name).setLevel(logging.ERROR)
+
+SCHEMA_EXPLORATION = True if os.getenv('SCHEMA_EXPLORATION') == 'True' else False
+
+if SCHEMA_EXPLORATION:
+    did_you_mean.__globals__['MAX_LENGTH'] = 0
 
 load_modules(modes={ImportMode.API})
 SCHEMA = bootstrap_schema()
@@ -138,7 +144,9 @@ def handler(event, context):
     else:
         raise Exception(f'Could not initialize user context from event {event}')
 
-    success, response = graphql_sync(schema=executable_schema, data=query, context_value=app_context)
+    success, response = graphql_sync(
+        schema=executable_schema, data=query, context_value=app_context, introspection=SCHEMA_EXPLORATION
+    )
 
     dispose_context()
     response = json.dumps(response)
