@@ -4,6 +4,7 @@ from dataall.core.permissions.services.resource_policy_service import ResourcePo
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.activity.db.activity_models import Activity
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.services.managed_iam_policies import PolicyManager
@@ -34,6 +35,7 @@ from dataall.modules.shares_base.services.share_permissions import (
     CREATE_SHARE_OBJECT,
     DELETE_SHARE_OBJECT,
     GET_SHARE_OBJECT,
+    MANAGE_SHARES,
 )
 from dataall.modules.shares_base.services.share_processor_manager import ShareProcessorManager
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
@@ -61,6 +63,7 @@ class ShareObjectService:
             return ShareObjectRepository.get_share_by_uri(session, uri)
 
     @classmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(CREATE_SHARE_OBJECT)
     def create_share_object(
         cls,
@@ -213,6 +216,7 @@ class ShareObjectService:
             return share
 
     @classmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(SUBMIT_SHARE_OBJECT)
     def submit_share_object(cls, uri: str):
         context = get_context()
@@ -254,6 +258,7 @@ class ShareObjectService:
             return share
 
     @classmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(APPROVE_SHARE_OBJECT)
     def approve_share_object(cls, uri: str):
         context = get_context()
@@ -286,6 +291,7 @@ class ShareObjectService:
         return share
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(SUBMIT_SHARE_OBJECT)
     def update_share_request_purpose(uri: str, request_purpose) -> bool:
         with get_context().db_engine.scoped_session() as session:
@@ -295,6 +301,7 @@ class ShareObjectService:
             return True
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(REJECT_SHARE_OBJECT)
     def update_share_reject_purpose(uri: str, reject_purpose) -> bool:
         with get_context().db_engine.scoped_session() as session:
@@ -304,6 +311,7 @@ class ShareObjectService:
             return True
 
     @classmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(REJECT_SHARE_OBJECT)
     def reject_share_object(cls, uri: str, reject_purpose: str):
         context = get_context()
@@ -322,6 +330,7 @@ class ShareObjectService:
             return share
 
     @classmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(DELETE_SHARE_OBJECT)
     def delete_share_object(cls, uri: str):
         with get_context().db_engine.scoped_session() as session:
