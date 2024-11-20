@@ -2,6 +2,7 @@ import json
 
 from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.base.db import exceptions
@@ -13,7 +14,7 @@ from dataall.modules.s3_datasets.aws.glue_profiler_client import GlueDatasetProf
 from dataall.modules.s3_datasets.aws.s3_profiler_client import S3ProfilerClient
 from dataall.modules.s3_datasets.db.dataset_profiling_repositories import DatasetProfilingRepository
 from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
-from dataall.modules.s3_datasets.services.dataset_permissions import PROFILE_DATASET_TABLE, GET_DATASET
+from dataall.modules.s3_datasets.services.dataset_permissions import PROFILE_DATASET_TABLE, GET_DATASET, MANAGE_DATASETS
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
 from dataall.modules.s3_datasets.db.dataset_models import DatasetProfilingRun, DatasetTable
@@ -22,6 +23,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import PREVIEW_DAT
 
 class DatasetProfilingService:
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(PROFILE_DATASET_TABLE)
     @is_feature_enabled('modules.s3_datasets.features.metrics_data')
     def start_profiling_run(uri, table_uri, glue_table_name):

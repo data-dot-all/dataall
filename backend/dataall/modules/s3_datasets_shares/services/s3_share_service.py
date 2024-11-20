@@ -193,6 +193,7 @@ class S3ShareService:
             ]
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def get_dataset_shared_assume_role_url(uri):
         context = get_context()
