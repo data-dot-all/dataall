@@ -272,7 +272,7 @@ class LambdaApiStack(pyNestedClass):
             )
 
         # Initialize Klayers
-        runtime = _lambda.Runtime.PYTHON_3_9
+        runtime = _lambda.Runtime.PYTHON_3_12
         klayers = Klayers(self, python_version=runtime, region=self.region)
 
         # get the latest layer version for the cryptography package
