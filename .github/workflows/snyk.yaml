@@ -20,4 +20,4 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --severity-threshold=high
+          args: --all-projects --detection-depth=4 --severity-threshold=high
