@@ -10,6 +10,11 @@ from dataall.modules.s3_datasets.db.dataset_models import DatasetProfilingRun
 log = logging.getLogger(__name__)
 
 
+def _validate_uri(uri):
+    if not uri:
+        raise RequiredParameter('URI')
+
+
 def resolve_dataset(context, source: DatasetProfilingRun):
     if not source:
         return None
@@ -17,8 +22,7 @@ def resolve_dataset(context, source: DatasetProfilingRun):
 
 
 def start_profiling_run(context: Context, source, input: dict = None):
-    if 'datasetUri' not in input:
-        raise RequiredParameter('datasetUri')
+    _validate_uri(input.get('datasetUri'))
 
     return DatasetProfilingService.start_profiling_run(
         uri=input['datasetUri'], table_uri=input.get('tableUri'), glue_table_name=input.get('GlueTableName')
