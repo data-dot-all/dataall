@@ -135,7 +135,12 @@ class LambdaApiStack(pyNestedClass):
 
         self.api_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-graphql-dlq')
         api_handler_sg = self.create_lambda_sgs(envname, 'apihandler', resource_prefix, vpc)
-        api_handler_env = {'envname': envname, 'LOG_LEVEL': log_level, 'REAUTH_TTL': str(reauth_ttl)}
+        api_handler_env = {
+            'envname': envname,
+            'LOG_LEVEL': log_level,
+            'REAUTH_TTL': str(reauth_ttl),
+            'ALLOW_INTROSPECTION': str(not prod_sizing),
+        }
         # Check if custom domain exists and if it exists email notifications could be enabled. Create a env variable which stores the domain url. This is used for sending data.all share weblinks in the email notifications.
         if custom_domain and custom_domain.get('hosted_zone_name', None):
             api_handler_env['frontend_domain_url'] = f'https://{custom_domain.get("hosted_zone_name", None)}'
