@@ -1,5 +1,6 @@
 import inspect
 import logging
+from enum import Enum
 from unittest.mock import MagicMock, patch, ANY
 
 import pytest
@@ -14,35 +15,53 @@ from dataall.core.permissions.services.organization_permissions import GET_ORGAN
 from dataall.modules.datapipelines.services.datapipelines_permissions import GET_PIPELINE
 from dataall.modules.s3_datasets.services.dataset_permissions import GET_DATASET, GET_DATASET_TABLE
 
+
+def resolver_id(type_name, field_name):
+    return f'{type_name}_{field_name}'
+
+
+class IgnoreReason(Enum):
+    ADMIN = 'admin action. No need for tenant permission check'
+    SUPPORT = 'tenant permissions do not apply to support notifications'
+    FEED = 'tenant permissions do not apply to support feed messages'
+    VOTES = 'tenant permissions do not apply to support votes'
+    BACKPORT = 'outside of this PR to be able to backport to v2.6.2'
+
+
+def get_resid(type_name: str, field_name: str) -> str:
+    return f'{type_name}_{field_name}'
+
+
 OPT_OUT_MUTATIONS = {
-    'Mutation.updateGroupTenantPermissions': 'admin action. No need for tenant permission check',
-    'Mutation.updateSSMParameter': 'admin action. No need for tenant permission check',
-    'Mutation.createQuicksightDataSourceSet': 'admin action. No need for tenant permission check',
-    'Mutation.startMaintenanceWindow': 'admin action. No need for tenant permission check',
-    'Mutation.stopMaintenanceWindow': 'admin action. No need for tenant permission check',
-    'Mutation.startReindexCatalog': 'admin action. No need for tenant permission check',
-    'Mutation.markNotificationAsRead': 'tenant permissions do not apply to support notifications',
-    'Mutation.deleteNotification': 'tenant permissions do not apply to support notifications',
-    'Mutation.postFeedMessage': 'tenant permissions do not apply to support feed messages',
-    'Mutation.upVote': 'tenant permissions do not apply to support votes',
-    'Mutation.createAttachedMetadataForm': 'outside of this PR to be able to backport to v2.6.2',
-    'Mutation.deleteAttachedMetadataForm': 'outside of this PR to be able to backport to v2.6.2',
-    'Mutation.createRedshiftConnection': 'outside of this PR to be able to backport to v2.6.2',
-    'Mutation.deleteRedshiftConnection': 'outside of this PR to be able to backport to v2.6.2',
-    'Mutation.addConnectionGroupPermission': 'outside of this PR to be able to backport to v2.6.2',
-    'Mutation.deleteConnectionGroupPermission': 'outside of this PR to be able to backport to v2.6.2',
+    # Admin actions
+    get_resid('Mutation', 'updateGroupTenantPermissions'): IgnoreReason.ADMIN.value,
+    get_resid('Mutation', 'updateSSMParameter'): IgnoreReason.ADMIN.value,
+    get_resid('Mutation', 'createQuicksightDataSourceSet'): IgnoreReason.ADMIN.value,
+    get_resid('Mutation', 'startMaintenanceWindow'): IgnoreReason.ADMIN.value,
+    get_resid('Mutation', 'stopMaintenanceWindow'): IgnoreReason.ADMIN.value,
+    get_resid('Mutation', 'startReindexCatalog'): IgnoreReason.ADMIN.value,
+
+    # Support-related actions
+    get_resid('Mutation', 'markNotificationAsRead'): IgnoreReason.SUPPORT.value,
+    get_resid('Mutation', 'deleteNotification'): IgnoreReason.SUPPORT.value,
+    get_resid('Mutation', 'postFeedMessage'): IgnoreReason.FEED.value,
+    get_resid('Mutation', 'upVote'): IgnoreReason.VOTES.value,
+
+    # Backport-related actions
+    get_resid('Mutation', 'createAttachedMetadataForm'): IgnoreReason.BACKPORT.value,
+    get_resid('Mutation', 'deleteAttachedMetadataForm'): IgnoreReason.BACKPORT.value,
+    get_resid('Mutation', 'createRedshiftConnection'): IgnoreReason.BACKPORT.value,
+    get_resid('Mutation', 'deleteRedshiftConnection'): IgnoreReason.BACKPORT.value,
+    get_resid('Mutation', 'addConnectionGroupPermission'): IgnoreReason.BACKPORT.value,
+    get_resid('Mutation', 'deleteConnectionGroupPermission'): IgnoreReason.BACKPORT.value,
 }
 
 OPT_IN_QUERIES = [
-    'Query.generateEnvironmentAccessToken',
-    'Query.getEnvironmentAssumeRoleUrl',
-    'Query.getSagemakerStudioUserPresignedUrl',
-    'Query.getSagemakerNotebookPresignedUrl',
-    'Query.getDatasetAssumeRoleUrl',
-    'Query.getDatasetPresignedUrl',
-    'Query.getAuthorSession',
-    'Query.getDatasetSharedAssumeRoleUrl',
-    'Query.runAthenaSqlQuery',
+    get_resid('Query', 'generateEnvironmentAccessToken'),
+    get_resid('Query', 'getEnvironmentAssumeRoleUrl'),
+    get_resid('Query', 'getSagemakerStudioUserPresignedUrl'),
+    get_resid('Query', 'getSagemakerNotebookPresignedUrl'),
+    get_resid('Query', 'getDatasetAssumeRoleUrl'),
 ]
 
 ALL_RESOLVERS = {(_type, field) for _type in bootstrap().types for field in _type.fields if field.resolver}
@@ -69,19 +88,27 @@ def mock_input_validation(mocker):
 @pytest.mark.parametrize(
     '_type,field',
     [
-        pytest.param(_type, field, id=f'{_type.name}.{field.name}')
+        pytest.param(_type, field, id=get_resid(_type.name, field.name))
         for _type, field in ALL_RESOLVERS
         if _type.name in ['Query', 'Mutation']
     ],
 )
 @patch('dataall.base.context._request_storage')
 def test_unauthorized_tenant_permissions(
-    mock_local, _type, field, mock_input_validation, db, userNoTenantPermissions, groupNoTenantPermissions
+    mock_local,
+    _type,
+    field,
+    request,
+    mock_input_validation,
+    db,
+    userNoTenantPermissions,
+    groupNoTenantPermissions,
 ):
-    if _type.name == 'Mutation' and f'{_type.name}.{field.name}' in OPT_OUT_MUTATIONS.keys():
-        pytest.skip(f'Skipping test for {field.name}: {OPT_OUT_MUTATIONS[f"{_type.name}.{field.name}"]}')
-    if _type.name == 'Query' and f'{_type.name}.{field.name}' not in OPT_IN_QUERIES:
-        pytest.skip(f'Skipping test for {field.name}: This Query does not require a tenant permission check.')
+    res_id = request.node.callspec.id
+    if _type.name == 'Mutation' and res_id in OPT_OUT_MUTATIONS.keys():
+        pytest.skip(f'Skipping test for {res_id}: {OPT_OUT_MUTATIONS[res_id]}')
+    if _type.name == 'Query' and res_id not in OPT_IN_QUERIES:
+        pytest.skip(f'Skipping test for {res_id}: This Query does not require a tenant permission check.')
     assert_that(field.resolver).is_not_none()
     mock_local.context = RequestContext(
         db, userNoTenantPermissions.username, [groupNoTenantPermissions.groupUri], userNoTenantPermissions
@@ -92,61 +119,110 @@ def test_unauthorized_tenant_permissions(
     assert_that(field.resolver).raises(TenantUnauthorized).when_called_with(**iargs).contains('UnauthorizedOperation')
 
 
-IGNORE_NESTED_RESOLVERS = [
-    'AttachedMetadataForm_entityName',
-    'AttachedMetadataForm_fields',
-    'AttachedMetadataForm_metadataForm',
-    'AttachedMetadataFormField_field',
-    'AttachedMetadataFormField_hasTenantPermissions',
-    'Category_associations',
-    'Category_categories',
-    'Category_children',
-    'Category_stats',
-    'Category_terms',
-    'Dashboard_terms',
-    'Dashboard_upvotes',
-    'Dashboard_userRoleForDashboard',
-    'DataPipeline_cloneUrlHttp',
-    'DataPipeline_developmentEnvironments',
-    'DataPipeline_userRoleForPipeline',
-    'Dataset_locations',
-    'Dataset_owners',
-    'Dataset_statistics',
-    'Dataset_stewards',
-    'Dataset_tables',
-    'Dataset_terms',
-    'Dataset_userRoleForDataset',
-    'DatasetBase_owners',
-    'DatasetBase_stewards',
-    'DatasetBase_userRoleForDataset',
-    'DatasetProfilingRun_results',
-    'DatasetProfilingRun_status',
-    'DatasetStorageLocation_terms',
-    'DatasetTable_columns',
-    'DatasetTable_terms',
-    'DatasetTableColumn_terms',
-    'Environment_organization',
-    'Environment_parameters',
-    'Environment_userRoleInEnvironment',
-    'EnvironmentSimplified_organization',
-]
+SKIP_MARK = 'SKIP_MARK'
 
-EXPECTED_PERMS = {
-    'ConsumptionRole_managedPolicies': GET_ENVIRONMENT,
-    'Dashboard_environment': GET_ENVIRONMENT,
-    'DataPipeline_environment': GET_ENVIRONMENT,
-    'DataPipeline_organization': GET_ORGANIZATION,
-    'DataPipeline_stack': GET_PIPELINE,
-    'Dataset_environment': GET_ENVIRONMENT,
-    'Dataset_stack': GET_DATASET,
-    'DatasetBase_environment': GET_ENVIRONMENT,
-    'DatasetBase_stack': GET_DATASET,
-    'DatasetProfilingRun_dataset': GET_DATASET,
-    'DatasetTable_dataset': GET_DATASET,
-    'DatasetTable_GlueTableProperties': GET_DATASET_TABLE,
-    'Environment_networks': GET_NETWORK,
-    'Environment_stack': GET_ENVIRONMENT,
-    'EnvironmentSimplified_networks': GET_NETWORK,
+NESTED_RESOLVERS_EXPECTED_PERMS = {
+    # AttachedMetadataForm related
+    get_resid('AttachedMetadataFormField', 'field'): SKIP_MARK,
+    get_resid('AttachedMetadataFormField', 'hasTenantPermissions'): SKIP_MARK,
+    get_resid('AttachedMetadataForm', 'entityName'): SKIP_MARK,
+    get_resid('AttachedMetadataForm', 'fields'): SKIP_MARK,
+    get_resid('AttachedMetadataForm', 'metadataForm'): SKIP_MARK,
+
+    # Category related
+    get_resid('Category', 'associations'): SKIP_MARK,
+    get_resid('Category', 'categories'): SKIP_MARK,
+    get_resid('Category', 'children'): SKIP_MARK,
+    get_resid('Category', 'stats'): SKIP_MARK,
+    get_resid('Category', 'terms'): SKIP_MARK,
+
+    # ConsumptionRole related
+    get_resid('ConsumptionRole', 'managedPolicies'): GET_ENVIRONMENT,
+
+    # Dashboard related
+    get_resid('Dashboard', 'environment'): GET_ENVIRONMENT,
+    get_resid('Dashboard', 'terms'): SKIP_MARK,
+    get_resid('Dashboard', 'upvotes'): SKIP_MARK,
+    get_resid('Dashboard', 'userRoleForDashboard'): SKIP_MARK,
+
+    # DataPipeline related
+    get_resid('DataPipeline', 'cloneUrlHttp'): SKIP_MARK,
+    get_resid('DataPipeline', 'developmentEnvironments'): SKIP_MARK,
+    get_resid('DataPipeline', 'environment'): GET_ENVIRONMENT,
+    get_resid('DataPipeline', 'organization'): GET_ORGANIZATION,
+    get_resid('DataPipeline', 'stack'): GET_PIPELINE,
+    get_resid('DataPipeline', 'userRoleForPipeline'): SKIP_MARK,
+
+    # Dataset related
+    get_resid('DatasetBase', 'environment'): GET_ENVIRONMENT,
+    get_resid('DatasetBase', 'owners'): SKIP_MARK,
+    get_resid('DatasetBase', 'stack'): GET_DATASET,
+    get_resid('DatasetBase', 'stewards'): SKIP_MARK,
+    get_resid('DatasetBase', 'userRoleForDataset'): SKIP_MARK,
+
+    # Dataset Profiling related
+    get_resid('DatasetProfilingRun', 'dataset'): GET_DATASET,
+    get_resid('DatasetProfilingRun', 'results'): SKIP_MARK,
+    get_resid('DatasetProfilingRun', 'status'): SKIP_MARK,
+
+    # Dataset Storage and Table related
+    get_resid('DatasetStorageLocation', 'terms'): SKIP_MARK,
+    get_resid('DatasetTableColumn', 'terms'): SKIP_MARK,
+    get_resid('DatasetTable', 'GlueTableProperties'): GET_DATASET_TABLE,
+    get_resid('DatasetTable', 'columns'): SKIP_MARK,
+    get_resid('DatasetTable', 'dataset'): GET_DATASET,
+    get_resid('DatasetTable', 'terms'): SKIP_MARK,
+
+    # Dataset specific
+    get_resid('Dataset', 'environment'): GET_ENVIRONMENT,
+    get_resid('Dataset', 'locations'): SKIP_MARK,
+    get_resid('Dataset', 'owners'): SKIP_MARK,
+    get_resid('Dataset', 'stack'): GET_DATASET,
+    get_resid('Dataset', 'statistics'): SKIP_MARK,
+    get_resid('Dataset', 'stewards'): SKIP_MARK,
+    get_resid('Dataset', 'tables'): SKIP_MARK,
+    get_resid('Dataset', 'terms'): SKIP_MARK,
+    get_resid('Dataset', 'userRoleForDataset'): SKIP_MARK,
+
+    # Environment related
+    get_resid('EnvironmentSimplified', 'networks'): GET_NETWORK,
+    get_resid('EnvironmentSimplified', 'organization'): SKIP_MARK,
+    get_resid('Environment', 'networks'): GET_NETWORK,
+    get_resid('Environment', 'organization'): SKIP_MARK,
+    get_resid('Environment', 'parameters'): SKIP_MARK,
+    get_resid('Environment', 'stack'): GET_ENVIRONMENT,
+    get_resid('Environment', 'userRoleInEnvironment'): SKIP_MARK,
+
+    # Feed and Glossary related
+    get_resid('Feed', 'messages'): SKIP_MARK,
+    get_resid('GlossaryTermLink', 'target'): SKIP_MARK,
+    get_resid('GlossaryTermLink', 'term'): SKIP_MARK,
+    get_resid('Glossary', 'associations'): SKIP_MARK,
+    get_resid('Glossary', 'categories'): SKIP_MARK,
+    get_resid('Glossary', 'children'): SKIP_MARK,
+    get_resid('Glossary', 'stats'): SKIP_MARK,
+    get_resid('Glossary', 'tree'): SKIP_MARK,
+    get_resid('Glossary', 'userRoleForGlossary'): SKIP_MARK,
+
+    # Group and Metadata related
+    get_resid('Group', 'environmentPermissions'): SKIP_MARK,
+    get_resid('Group', 'tenantPermissions'): SKIP_MARK,
+    get_resid('MetadataFormField', 'glossaryNodeName'): SKIP_MARK,
+    get_resid('MetadataFormSearchResult', 'hasTenantPermissions'): SKIP_MARK,
+    get_resid('MetadataForm', 'fields'): SKIP_MARK,
+    get_resid('MetadataForm', 'homeEntityName'): SKIP_MARK,
+    get_resid('MetadataForm', 'userRole'): SKIP_MARK,
+
+    # Omics related
+    get_resid('OmicsRun', 'environment'): GET_ENVIRONMENT,
+    get_resid('OmicsRun', 'organization'): GET_ORGANIZATION,
+    get_resid('OmicsRun', 'status'): SKIP_MARK,
+    get_resid('OmicsRun', 'workflow'): SKIP_MARK,
+
+    # Organization related
+    get_resid('Organization', 'environments'): GET_ORGANIZATION,
+    get_resid('Organization', 'stats'): SKIP_MARK,
+    get_resid('Organization', 'userRoleInOrganization'): SKIP_MARK,
 }
 
 
@@ -156,7 +232,7 @@ EXPECTED_PERMS = {
 @pytest.mark.parametrize(
     'field',
     [
-        pytest.param(field, id=f'{_type.name}_{field.name}')
+        pytest.param(field, id=get_resid(_type.name, field.name))
         for _type, field in ALL_RESOLVERS
         if _type.name not in ['Query', 'Mutation']  # filter out top-level queries (don't print skip)
     ],
@@ -168,9 +244,10 @@ def test_unauthorized_resource_permissions(
     field,
     request,
 ):
-    test_id = request.node.callspec.id
-    msg = f'{test_id} -> {field.resolver.__code__.co_filename}:{field.resolver.__code__.co_firstlineno}'
-    if test_id in IGNORE_NESTED_RESOLVERS:
+    res_id = request.node.callspec.id
+    expected_perm = NESTED_RESOLVERS_EXPECTED_PERMS.get(res_id, 'FOO_TEST_PERM')
+    msg = f'{res_id} -> {field.resolver.__code__.co_filename}:{field.resolver.__code__.co_firstlineno}'
+    if expected_perm in SKIP_MARK:
         pytest.skip(msg)
     logging.info(msg)
 
@@ -188,5 +265,5 @@ def test_unauthorized_resource_permissions(
         resource_uri=ANY,
         username=username,
         groups=groups,
-        permission_name=EXPECTED_PERMS.get(test_id, 'FOO_TEST_PERM'),
+        permission_name=expected_perm,
     )
