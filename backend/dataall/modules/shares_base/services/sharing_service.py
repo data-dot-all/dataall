@@ -5,6 +5,10 @@ from typing import Any
 from dataall.core.resource_lock.db.resource_lock_repositories import ResourceLockRepository
 from dataall.base.db import Engine
 from dataall.core.environment.db.environment_models import ConsumptionRole, Environment, EnvironmentGroup
+from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
+from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
     ShareItemSM,
@@ -14,7 +18,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
     ShareItemActions,
     ShareItemStatus,
-    PrincipalType,
+    PrincipalType, ShareableType,
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
@@ -173,6 +177,29 @@ class SharingService:
                     EnvironmentGroup.__tablename__,
                 )
             )
+
+            # If any share item is a table, get the additional dataset which have to be locked
+            is_table_item = any([share_item.itemType == ShareableType.Table.value for share_item in share_items])
+            log.info(f'Found dataset table item in the share with uri={share_data.share.shareUri} : {is_table_item}')
+            if is_table_item:
+                # Find out all the datasets where the same db is used and lock all those datasets
+                # With this any possible override from other share will be avoided. See the https://github.com/data-dot-all/dataall/issues/1633 for more details on this.
+                s3_datasets_with_common_db: [S3Dataset] = DatasetRepository.list_all_active_datasets_with_glue_db(
+                    session=session, dataset_uri=share_data.dataset.datasetUri
+                )
+                dataset_base_with_common_db: [DatasetBase] = [
+                    DatasetBaseRepository.get_dataset_by_uri(session=session, dataset_uri=s3_dataset.datasetUri)
+                    for s3_dataset in s3_datasets_with_common_db
+                ]
+
+                log.info(f'Found {len(dataset_base_with_common_db)} datasets where same glue database is used')
+                additional_resources_to_lock = [
+                    (dataset.datasetUri, dataset.__tablename__)
+                    for dataset in dataset_base_with_common_db
+                    if dataset.datasetUri != share_data.dataset.datasetUri
+                ]
+                resources.extend(additional_resources_to_lock)
+                log.info(f'Resources to be locked while revoking: {resources}')
 
             revoke_successful = True
             try:
@@ -400,7 +427,10 @@ class SharingService:
             source_env_group=data[4],
             env_group=data[5],
         )
+        status_list = [status] if status is not None else []
+        healthStatus_list = [healthStatus] if healthStatus is not None else []
+
         share_items = ShareObjectRepository.get_all_share_items_in_share(
-            session=session, share_uri=share_uri, status=[status], healthStatus=[healthStatus]
+            session=session, share_uri=share_uri, status=status_list, healthStatus=healthStatus_list
         )
         return share_data, share_items

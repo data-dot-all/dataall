@@ -327,73 +327,39 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     manager.handle_revoke_failure(table=table, error=e)
 
             try:
-                # Find out all the datasets where the same db is used and lock all those datasets
-                # With this any possible override from other share will be avoided. See the https://github.com/data-dot-all/dataall/issues/1633 for more details on this.
-                s3_datasets_with_common_db: [S3Dataset] = DatasetRepository.list_all_active_datasets_with_glue_db(
-                    session=self.session, dataset_uri=self.share_data.dataset.datasetUri
-                )
-                dataset_base_with_common_db: [Dataset] = [
-                    DatasetBaseRepository.get_dataset_by_uri(session=self.session, dataset_uri=s3_dataset.datasetUri)
-                    for s3_dataset in s3_datasets_with_common_db
-                ]
+                if self.tables:
+                    s3_dataset = DatasetRepository.get_dataset_by_uri(session=self.session, dataset_uri=self.share_data.dataset.datasetUri)
 
-                log.info(f'Found {len(dataset_base_with_common_db)} datasets where same glue database is used')
-                additional_resources_to_lock = [
-                    (dataset.datasetUri, dataset.__tablename__)
-                    for dataset in dataset_base_with_common_db
-                    if dataset.datasetUri != self.share_data.dataset.datasetUri
-                ]
+                    # Find any share items which exist between the principal and the dataset db.
+                    # Please note - a single db can be used across various dataset. This not only finds share items related to the current share under process but also any other share where the gluedb and the principal is used.
+                    existing_shared_tables_in_shares = S3ShareObjectRepository.check_existing_shares_on_items_for_principal(
+                        session=self.session, item_type=ShareableType.Table.value, principal=self.share_data.share.principalRoleName, database=s3_dataset.GlueDatabaseName
+                    )
+                    log.info(f'Remaining tables shared on the database: {s3_dataset.GlueDatabaseName} and principal: {self.share_data.share.principalRoleName} = {existing_shared_tables_in_shares}')
 
-                with ResourceLockRepository.acquire_lock_with_retry(
-                    resources=additional_resources_to_lock,
-                    session=self.session,
-                    acquired_by_uri=self.share_data.share.shareUri,
-                    acquired_by_type=self.share_data.share.__tablename__,
-                ):
-                    if self.tables:
-                        s3_dataset = DatasetRepository.get_dataset_by_uri(
-                            session=self.session, dataset_uri=self.share_data.dataset.datasetUri
+                    if not existing_shared_tables_in_shares:
+                        log.info('Revoking permissions to target shared database...')
+                        manager.revoke_principals_database_permissions_to_shared_database()
+
+                    share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
+
+                    # Find all the shares where the database name is used
+                    # Please note - a single db can be used across various dataset ( and also the same db can be used in different environment ). This will fetch all the dataset shares where the glueDB name is used.
+                    existing_shares_with_shared_tables_for_database = (
+                        ShareObjectRepository.list_dataset_shares_on_database(
+                            session=self.session,
+                            dataset_uri=self.share_data.dataset.datasetUri,
+                            share_item_shared_states=share_item_shared_states,
+                            item_type=ShareableType.Table.value,
+                            database=s3_dataset.GlueDatabaseName
                         )
+                    )
 
-                        # Find any share items which exist between the principal and the dataset db.
-                        # Please note - a single db can be used across various dataset. This not only finds share items related to the current share under process but also any other share where the gluedb and the principal is used.
-                        existing_shared_tables_in_shares = (
-                            S3ShareObjectRepository.check_existing_shares_on_items_for_principal(
-                                session=self.session,
-                                item_type=ShareableType.Table.value,
-                                principal=self.share_data.share.principalRoleName,
-                                database=s3_dataset.GlueDatabaseName,
-                            )
-                        )
-                        log.info(
-                            f'Remaining tables shared on the database: {s3_dataset.GlueDatabaseName} and principal: {self.share_data.share.principalRoleName} = {existing_shared_tables_in_shares}'
-                        )
+                    log.info(f'Existing shares with database: {s3_dataset.GlueDatabaseName} = {existing_shares_with_shared_tables_for_database}. Skipping deleting shared database')
 
-                        if not existing_shared_tables_in_shares:
-                            log.info('Revoking permissions to target shared database...')
-                            manager.revoke_principals_database_permissions_to_shared_database()
-
-                        share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
-
-                        # Find all the shares where the database name is used
-                        # Please note - a single db can be used across various dataset ( and also the same db can be used in different environment ). This will fetch all the dataset shares where the glueDB name is used.
-                        existing_shares_with_shared_tables_for_database = (
-                            ShareObjectRepository.list_dataset_shares_on_database(
-                                session=self.session,
-                                dataset_uri=self.share_data.dataset.datasetUri,
-                                share_item_shared_states=share_item_shared_states,
-                                item_type=ShareableType.Table.value,
-                                database=s3_dataset.GlueDatabaseName,
-                            )
-                        )
-
-                        log.info(
-                            f'Existing shares with database: {s3_dataset.GlueDatabaseName} = {existing_shares_with_shared_tables_for_database}. Skipping deleting shared database'
-                        )
-
-                        if not len(existing_shares_with_shared_tables_for_database):
-                            log.info('Deleting target shared database...')
-                            manager.delete_shared_database_in_target()
+                    if not len(existing_shares_with_shared_tables_for_database):
+                        log.info('Deleting target shared database...')
+                        manager.delete_shared_database_in_target()
             except Exception as e:
                 log.error(
                     f'Failed to clean-up database permissions or delete shared database {manager.shared_db_name} '
@@ -602,18 +568,16 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                 log.info('Revoking permissions to target shared database...')
                 execute_and_suppress_exception(func=manager.revoke_principals_database_permissions_to_shared_database)
                 share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
-                s3_dataset = DatasetRepository.get_dataset_by_uri(
-                    session=self.session, dataset_uri=self.share_data.dataset.datasetUri
-                )
+                s3_dataset = DatasetRepository.get_dataset_by_uri(session=self.session,
+                                                                  dataset_uri=self.share_data.dataset.datasetUri)
 
                 existing_shares_with_shared_tables_in_environment = (
                     ShareObjectRepository.list_dataset_shares_on_database(
                         session=self.session,
                         dataset_uri=self.share_data.dataset.datasetUri,
                         share_item_shared_states=share_item_shared_states,
-                        environment_uri=self.share_data.target_environment.environmentUri,
                         item_type=ShareableType.Table.value,
-                        database=s3_dataset.GlueDatabaseName,
+                        database=s3_dataset.GlueDatabaseName
                     )
                 )
                 if not len(existing_shares_with_shared_tables_in_environment):
