@@ -30,7 +30,7 @@ def test_read_notification_unauth(client1, client2, persistent_group_share_1):
 
     response = list_notifications(client1)
     assert_that(mark_notification_read).raises(GqlError).when_called_with(
-        client1, response.nodes[0].notificationUri
+        client2, response.nodes[0].notificationUri
     ).contains('UnauthorizedOperation', 'UPDATE NOTIFICATION')
 
     assert_that(count_unread_notifications(client1)).is_equal_to(count_unread)
