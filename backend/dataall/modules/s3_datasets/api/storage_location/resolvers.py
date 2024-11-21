@@ -6,13 +6,16 @@ from dataall.modules.s3_datasets.services.dataset_location_service import Datase
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, S3Dataset
 
 
-@is_feature_enabled('modules.s3_datasets.features.file_actions')
-def create_storage_location(context, source, datasetUri: str = None, input: dict = None):
-    if 'prefix' not in input:
-        raise RequiredParameter('prefix')
+def _validate_input(input: dict):
     if 'label' not in input:
         raise RequiredParameter('label')
+    if 'prefix' not in input:
+        raise RequiredParameter('prefix')
 
+
+@is_feature_enabled('modules.s3_datasets.features.file_actions')
+def create_storage_location(context, source, datasetUri: str = None, input: dict = None):
+    _validate_input(input)
     return DatasetLocationService.create_storage_location(uri=datasetUri, data=input)
 
 

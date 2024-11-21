@@ -17,9 +17,13 @@ class NotebookApiModuleInterface(ModuleInterface):
     def __init__(self):
         import dataall.modules.notebooks.api
         from dataall.core.stacks.db.target_type_repositories import TargetType
-        from dataall.modules.notebooks.services.notebook_permissions import GET_NOTEBOOK, UPDATE_NOTEBOOK
+        from dataall.modules.notebooks.services.notebook_permissions import (
+            GET_NOTEBOOK,
+            UPDATE_NOTEBOOK,
+            MANAGE_NOTEBOOKS,
+        )
 
-        TargetType('notebook', GET_NOTEBOOK, UPDATE_NOTEBOOK)
+        TargetType('notebook', GET_NOTEBOOK, UPDATE_NOTEBOOK, MANAGE_NOTEBOOKS)
 
         log.info('API of sagemaker notebooks has been imported')
 

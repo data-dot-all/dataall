@@ -84,7 +84,7 @@ def check_share_succeeded(client, shareUri, check_contains_all_item_types=False)
         assert_that(items).extracting('itemType').contains(*ALL_S3_SHARABLE_TYPES_NAMES)
 
 
-def check_verify_share_items(client, shareUri):
+def check_verify_share_items(client, shareUri, expected_health_status=['Healthy'], expected_health_msg=[]):
     share = get_share_object(client, shareUri, {'isShared': True})
     items = share['items'].nodes
     times = [item.lastVerificationTime for item in items]
@@ -93,8 +93,11 @@ def check_verify_share_items(client, shareUri):
     updated_share = get_share_object(client, shareUri, {'isShared': True})
     items = updated_share['items'].nodes
     assert_that(items).extracting('status').contains_only('Share_Succeeded')
-    assert_that(items).extracting('healthStatus').contains_only('Healthy')
+    assert_that(items).extracting('healthStatus').contains_only(*expected_health_status)
     assert_that(items).extracting('lastVerificationTime').does_not_contain(*times)
+    if expected_health_msg:
+        health_msgs = ' '.join([i.healthMessage for i in items])
+        assert_that(health_msgs).contains(*expected_health_msg)
 
 
 def check_table_access(

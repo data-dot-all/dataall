@@ -23,9 +23,10 @@ class NamingConventionPattern(Enum):
     NOTEBOOK = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 63}
     MLSTUDIO_DOMAIN = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 63}
     DEFAULT = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 63}
+    DEFAULT_SEARCH = {'regex': '[^a-zA-Z0-9-_:. ]'}
     OPENSEARCH = {'regex': '[^a-z0-9-]', 'separator': '-', 'max_length': 27}
     OPENSEARCH_SERVERLESS = {'regex': '[^a-z0-9-]', 'separator': '-', 'max_length': 31}
-    DATA_FILTERS = {'regex': '^[a-z0-9_]*$', 'separator': '_', 'max_length': 31}
+    DATA_FILTERS = {'regex': '[^a-z0-9_]', 'separator': '_', 'max_length': 31}
     REDSHIFT_DATASHARE = {
         'regex': '[^a-zA-Z0-9_]',
         'separator': '_',
@@ -59,9 +60,7 @@ class NamingConventionService:
     def validate_name(self):
         regex = NamingConventionPattern[self.service].value['regex']
         max_length = NamingConventionPattern[self.service].value['max_length']
-        if 'arn:aws:' in self.target_label:
-            raise Exception(f'An error occurred (InvalidInput): name expected, arn-like string received: {regex}')
-        if not re.search(regex, self.target_label):
+        if re.search(regex, self.target_label):
             raise Exception(
                 f'An error occurred (InvalidInput): label value {self.target_label} must match the pattern {regex}'
             )
@@ -69,6 +68,10 @@ class NamingConventionService:
             raise Exception(
                 f'An error occurred (InvalidInput): label value {self.target_label} must be less than {max_length} characters'
             )
+
+    def sanitize(self):
+        regex = NamingConventionPattern[self.service].value['regex']
+        return re.sub(regex, '', self.target_label)
 
     def validate_imported_name(self):
         max_length = NamingConventionPattern[self.service].value['max_length']

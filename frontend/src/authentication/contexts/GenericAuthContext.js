@@ -84,7 +84,8 @@ export const GenericAuthProvider = (props) => {
               email: user.email,
               name: user.email,
               id_token: user.id_token,
-              short_id: user.short_id
+              short_id: user.short_id,
+              access_token: user.access_token
             }
           }
         });
@@ -129,7 +130,8 @@ export const GenericAuthProvider = (props) => {
               email: user.email,
               name: user.email,
               id_token: user.id_token,
-              short_id: user.short_id
+              short_id: user.short_id,
+              access_token: user.access_token
             }
           }
         });
@@ -178,6 +180,7 @@ export const GenericAuthProvider = (props) => {
             process.env.REACT_APP_CUSTOM_AUTH_EMAIL_CLAIM_MAPPING
           ],
         id_token: auth.user.id_token,
+        access_token: auth.user.access_token,
         short_id:
           auth.user.profile[
             process.env.REACT_APP_CUSTOM_AUTH_USERID_CLAIM_MAPPING
@@ -188,6 +191,7 @@ export const GenericAuthProvider = (props) => {
       return {
         email: user.attributes.email,
         id_token: user.signInUserSession.idToken.jwtToken,
+        access_token: user.signInUserSession.accessToken.jwtToken,
         short_id: 'none'
       };
     }
@@ -240,7 +244,7 @@ export const GenericAuthProvider = (props) => {
           }
         });
       } else {
-        await Auth.signOut();
+        await Auth.signOut({ global: true });
         dispatch({
           type: 'LOGOUT',
           payload: {
@@ -271,7 +275,7 @@ export const GenericAuthProvider = (props) => {
         console.error('Failed to ReAuth', error);
       }
     } else {
-      await Auth.signOut();
+      await Auth.signOut({ global: true });
       dispatch({
         type: 'REAUTH',
         payload: {

@@ -14,27 +14,15 @@ def create_worksheet(context: Context, source, input: dict = None):
     if not input.get('label'):
         raise exceptions.RequiredParameter('label')
 
-    with context.engine.scoped_session() as session:
-        return WorksheetService.create_worksheet(
-            session=session,
-            username=context.username,
-            data=input,
-        )
+    return WorksheetService.create_worksheet(data=input)
 
 
 def update_worksheet(context: Context, source, worksheetUri: str = None, input: dict = None):
-    with context.engine.scoped_session() as session:
-        return WorksheetService.update_worksheet(
-            session=session, username=context.username, uri=worksheetUri, data=input
-        )
+    return WorksheetService.update_worksheet(uri=worksheetUri, data=input)
 
 
 def get_worksheet(context: Context, source, worksheetUri: str = None):
-    with context.engine.scoped_session() as session:
-        return WorksheetService.get_worksheet(
-            session=session,
-            uri=worksheetUri,
-        )
+    return WorksheetService.get_worksheet(uri=worksheetUri)
 
 
 def resolve_user_role(context: Context, source: Worksheet):
@@ -48,24 +36,12 @@ def resolve_user_role(context: Context, source: Worksheet):
 def list_worksheets(context, source, filter: dict = None):
     if not filter:
         filter = {}
-    with context.engine.scoped_session() as session:
-        return WorksheetRepository.paginated_user_worksheets(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=None,
-            data=filter,
-            check_perm=True,
-        )
+    return WorksheetService.list_user_worksheets(filter)
 
 
 def run_sql_query(context: Context, source, environmentUri: str = None, worksheetUri: str = None, sqlQuery: str = None):
-    with context.engine.scoped_session() as session:
-        return WorksheetService.run_sql_query(
-            session=session, uri=environmentUri, worksheetUri=worksheetUri, sqlQuery=sqlQuery
-        )
+    return WorksheetService.run_sql_query(uri=environmentUri, worksheetUri=worksheetUri, sqlQuery=sqlQuery)
 
 
 def delete_worksheet(context, source, worksheetUri: str = None):
-    with context.engine.scoped_session() as session:
-        return WorksheetService.delete_worksheet(session=session, uri=worksheetUri)
+    return WorksheetService.delete_worksheet(uri=worksheetUri)
