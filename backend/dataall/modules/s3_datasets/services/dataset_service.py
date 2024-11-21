@@ -38,6 +38,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     DATASET_ALL,
     DATASET_READ,
     IMPORT_DATASET,
+    GET_DATASET,
     DATASET_TABLE_ALL,
 )
 from dataall.modules.datasets_base.services.dataset_list_permissions import LIST_ENVIRONMENT_DATASETS
@@ -234,6 +235,7 @@ class DatasetService:
         return DatasetService.create_dataset(uri=uri, admin_group=admin_group, data=data)
 
     @staticmethod
+    @ResourcePolicyService.has_resource_permission(GET_DATASET)
     def get_dataset(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:

@@ -7,7 +7,7 @@ from dataall.core.permissions.services.resource_policy_service import ResourcePo
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.vpc.db.vpc_repositories import VpcRepository
 from dataall.core.vpc.db.vpc_models import Vpc
-from dataall.core.permissions.services.network_permissions import NETWORK_ALL, DELETE_NETWORK
+from dataall.core.permissions.services.network_permissions import NETWORK_ALL, DELETE_NETWORK, GET_NETWORK
 from dataall.core.permissions.services.environment_permissions import CREATE_NETWORK
 from dataall.core.permissions.services.tenant_permissions import MANAGE_ENVIRONMENTS
 
@@ -90,4 +90,12 @@ class VpcService:
     @staticmethod
     def get_environment_networks(environment_uri):
         with _session() as session:
-            return VpcRepository.get_environment_networks(session=session, environment_uri=environment_uri)
+            vpc = VpcRepository.get_environment_networks(session=session, environment_uri=environment_uri)
+            ResourcePolicyService.check_user_resource_permission(
+                session=session,
+                username=get_context().username,
+                groups=get_context().groups,
+                resource_uri=vpc.vpcUri,
+                permission_name=GET_NETWORK,
+            )
+            return vpc

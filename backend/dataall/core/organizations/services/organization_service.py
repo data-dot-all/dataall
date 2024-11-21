@@ -305,6 +305,13 @@ class OrganizationService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             env = EnvironmentRepository.get_environment_by_uri(session, uri)
+            ResourcePolicyService.check_user_resource_permission(
+                session=session,
+                username=get_context().username,
+                groups=get_context().groups,
+                resource_uri=env.organizationUri,
+                permission_name=GET_ORGANIZATION,
+            )
             return OrganizationRepository.find_organization_by_uri(session, env.organizationUri)
 
     @staticmethod

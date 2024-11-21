@@ -88,7 +88,7 @@ def resolve_dataset_environment(
     if not source:
         return None
     with context.engine.scoped_session() as session:
-        return EnvironmentService.get_environment_by_uri(session, source.environmentUri)
+        return EnvironmentService.find_environment_by_uri(session, uri=source.environmentUri)
 
 
 def resolve_dataset_owners_group(
