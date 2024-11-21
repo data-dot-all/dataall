@@ -168,10 +168,9 @@ def test_unauthorized_resource_permissions(
     field,
     request,
 ):
-    msg = (
-        f'{request.node.callspec.id} -> {field.resolver.__code__.co_filename}:{field.resolver.__code__.co_firstlineno}'
-    )
-    if request.node.callspec.id in IGNORE_NESTED_RESOLVERS:
+    test_id = request.node.callspec.id
+    msg = f'{test_id} -> {field.resolver.__code__.co_filename}:{field.resolver.__code__.co_firstlineno}'
+    if test_id in IGNORE_NESTED_RESOLVERS:
         pytest.skip(msg)
     logging.info(msg)
 
@@ -189,5 +188,5 @@ def test_unauthorized_resource_permissions(
         resource_uri=ANY,
         username=username,
         groups=groups,
-        permission_name=EXPECTED_PERMS.get(request.node.callspec.id, 'FOO_TEST_PERM'),
+        permission_name=EXPECTED_PERMS.get(test_id, 'FOO_TEST_PERM'),
     )
