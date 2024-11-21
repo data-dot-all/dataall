@@ -1,20 +1,18 @@
+import inspect
 import logging
 from unittest.mock import MagicMock, patch, ANY
+
 import pytest
 from assertpy import assert_that
+
 from dataall.base.api import bootstrap
-from dataall.base.loader import load_modules, ImportMode
 from dataall.base.context import RequestContext
 from dataall.base.db.exceptions import TenantUnauthorized, ResourceUnauthorized
-import inspect
-
 from dataall.core.permissions.services.environment_permissions import GET_ENVIRONMENT
 from dataall.core.permissions.services.network_permissions import GET_NETWORK
 from dataall.core.permissions.services.organization_permissions import GET_ORGANIZATION
 from dataall.modules.datapipelines.services.datapipelines_permissions import GET_PIPELINE
 from dataall.modules.s3_datasets.services.dataset_permissions import GET_DATASET, GET_DATASET_TABLE
-
-load_modules(modes={ImportMode.API})
 
 OPT_OUT_MUTATIONS = {
     'Mutation.updateGroupTenantPermissions': 'admin action. No need for tenant permission check',
@@ -173,9 +171,9 @@ def test_unauthorized_resource_permissions(
     msg = (
         f'{request.node.callspec.id} -> {field.resolver.__code__.co_filename}:{field.resolver.__code__.co_firstlineno}'
     )
-    logging.info(msg)
     if request.node.callspec.id in IGNORE_NESTED_RESOLVERS:
         pytest.skip(msg)
+    logging.info(msg)
 
     assert_that(field.resolver).is_not_none()
     username = 'ausername'
