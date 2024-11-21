@@ -255,21 +255,6 @@ def revoke_share_items(client, shareUri: str, shareItemUris: List[str]):
     return response.data.revokeItemsShareObject
 
 
-def remove_shared_item(client, shareItemUri):
-    query = {
-        'operationName': 'RemoveSharedItem',
-        'variables': {'shareItemUri': shareItemUri},
-        'query': """
-              mutation RemoveSharedItem($shareItemUri: String!) {
-                removeSharedItem(shareItemUri: $shareItemUri)
-              }
-                """,
-    }
-
-    response = client.query(query=query)
-    return response.data.removeSharedItem
-
-
 def get_s3_consumption_data(client, shareUri: str):
     query = {
         'operationName': 'getS3ConsumptionData',
