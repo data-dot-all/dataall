@@ -153,7 +153,7 @@ def list_datasets_owned_by_env_group(
 ):
     if not filter:
         filter = {}
-    return DatasetService.list_datasets_owned_by_env_group(environmentUri, groupUri, filter)
+    return DatasetService.list_datasets_owned_by_env_group(uri=environmentUri, group_uri=groupUri, data=filter)
 
 
 class RequestValidator:
