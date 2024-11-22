@@ -8,11 +8,16 @@ from dataall.base.context import get_context
 from dataall.core.permissions.db.tenant.tenant_repositories import TenantRepository
 from dataall.core.permissions.services.permission_service import PermissionService
 from dataall.core.permissions.db.tenant.tenant_models import Tenant
+from dataall.base.services.service_provider_factory import ServiceProviderFactory
 import logging
+import os
 from functools import wraps
 
 
 log = logging.getLogger('Permissions')
+
+ENVNAME = os.getenv('envname', 'local')
+REGION = os.getenv('AWS_REGION', 'eu-west-1')
 
 
 class RequestValidationService:
@@ -69,6 +74,9 @@ class RequestValidationService:
             raise exceptions.RequiredParameter('permissions')
         if not data.get('groupUri'):
             raise exceptions.RequiredParameter('groupUri')
+        groups = ServiceProviderFactory.get_service_provider_instance().list_groups(envname=ENVNAME, region=REGION)
+        if data.get('groupUri') not in groups:
+            raise exceptions.InvalidInput('groupUri', data.get('groupUri'), ' a valid group')
 
 
 class TenantPolicyValidationService:

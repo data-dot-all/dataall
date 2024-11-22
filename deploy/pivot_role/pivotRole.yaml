@@ -447,6 +447,16 @@ Resources:
               - !Sub 'arn:aws:iam::${AWS::AccountId}:policy/${EnvironmentResourcePrefix}*'
               - !Sub 'arn:aws:iam::${AWS::AccountId}:policy/targetDatasetAccessControlPolicy'
               - !Sub 'arn:aws:iam::${AWS::AccountId}:policy/dataall-targetDatasetS3Bucket-AccessControlPolicy'
+          - Sid: IAMRolePolicyDeny
+            Action:
+              - 'iam:Update*'
+              - 'iam:Delete*'
+              - 'iam:Put*'
+              - 'iam:AttachRolePolicy'
+              - 'iam:DetachRolePolicy'
+            Effect: Deny
+            Resource:
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/${PivotRoleName}'
           - Sid: IAMPassRole
             Action:
               - 'iam:PassRole'

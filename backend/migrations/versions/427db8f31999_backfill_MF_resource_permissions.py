@@ -7,9 +7,10 @@ Create Date: 2024-09-11 15:55:51.444403
 """
 
 from alembic import op
-from sqlalchemy import orm
+from sqlalchemy import orm, Column, String
+from sqlalchemy.ext.declarative import declarative_base
 
-from dataall.core.environment.db.environment_models import Environment
+from dataall.base.db import utils, Resource
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.api.enums import PermissionType
 from dataall.core.permissions.services.permission_service import PermissionService
@@ -27,6 +28,15 @@ revision = '427db8f31999'
 down_revision = 'f87aecc36d39'
 branch_labels = None
 depends_on = None
+
+Base = declarative_base()
+
+
+class Environment(Resource, Base):
+    __tablename__ = 'environment'
+    organizationUri = Column(String, nullable=False)
+    environmentUri = Column(String, primary_key=True, default=utils.uuid('environment'))
+    SamlGroupName = Column(String, nullable=False)
 
 
 def get_session():
