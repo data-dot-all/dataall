@@ -135,7 +135,7 @@ class WorksheetService:
     def run_sql_query(uri, worksheetUri, sqlQuery):
         with get_context().db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
-            worksheet = WorksheetService._get_worksheet_by_uri(session, worksheetUri)
+            worksheet = WorksheetService.get_worksheet(uri=worksheetUri)
 
             env_group = EnvironmentService.get_environment_group(
                 session, worksheet.SamlAdminGroupName, environment.environmentUri
