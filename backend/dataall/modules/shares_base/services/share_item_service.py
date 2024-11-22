@@ -258,6 +258,9 @@ class ShareItemService:
             raise ObjectNotFound('ShareObjectItem', uri)
 
     @staticmethod
+    @ResourcePolicyService.has_resource_permission(
+        GET_SHARE_OBJECT, parent_resource=_get_share_uri_from_item_filter_uri
+    )
     def get_share_item_data_filters(uri: str):
         with get_context().db_engine.scoped_session() as session:
             return ShareObjectItemRepository.get_share_item_filter_by_uri(session, uri)
