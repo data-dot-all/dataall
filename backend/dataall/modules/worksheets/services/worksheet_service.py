@@ -132,10 +132,11 @@ class WorksheetService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_WORKSHEETS)
     @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
+    @ResourcePolicyService.has_resource_permission(GET_WORKSHEET, param_name='worksheetUri')
     def run_sql_query(uri, worksheetUri, sqlQuery):
         with get_context().db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
-            worksheet = WorksheetService.get_worksheet(uri=worksheetUri)
+            worksheet = WorksheetService._get_worksheet_by_uri(session, worksheetUri)
 
             env_group = EnvironmentService.get_environment_group(
                 session, worksheet.SamlAdminGroupName, environment.environmentUri
