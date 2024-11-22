@@ -40,11 +40,6 @@ class DatasetTableService:
         return table.datasetUri
 
     @staticmethod
-    def get_table(uri: str):
-        with get_context().db_engine.scoped_session() as session:
-            return DatasetTableRepository.get_dataset_table_by_uri(session, uri)
-
-    @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(UPDATE_DATASET_TABLE, parent_resource=_get_dataset_uri)
     def update_table(uri: str, table_data: dict = None):
