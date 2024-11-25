@@ -124,7 +124,6 @@ def test_list_s3_datasets_owned_by_env_group(
 
 
 def test_list_s3_datasets_owned_by_env_group_unauthorized(
-    client1,
     client2,
     session_env1,
     group2,
@@ -137,6 +136,17 @@ def test_list_s3_datasets_owned_by_env_group_unauthorized(
     assert_that(list_s3_datasets_owned_by_env_group).raises(GqlError).when_called_with(
         client2, environment_uri=session_env1.environmentUri, group_uri=group2, term=session_id
     ).contains('UnauthorizedOperation', 'LIST_ENVIRONMENT_DATASETS', session_env1.environmentUri)
+
+
+def test_list_s3_datasets_owned_by_env_group_unauthorized_not_member(
+    client1,
+    session_env1,
+    group2,
+    session_s3_dataset1,
+    session_imported_sse_s3_dataset1,
+    session_imported_kms_s3_dataset1,
+    session_id,
+):
     # Client that tries to call API without being a member of the group
     assert_that(list_s3_datasets_owned_by_env_group).raises(GqlError).when_called_with(
         client1, environment_uri=session_env1.environmentUri, group_uri=group2, term=session_id
