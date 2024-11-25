@@ -13,6 +13,8 @@ from dataall.core.permissions.services.environment_permissions import GET_ENVIRO
 from dataall.core.permissions.services.network_permissions import GET_NETWORK
 from dataall.core.permissions.services.organization_permissions import GET_ORGANIZATION
 from dataall.modules.datapipelines.services.datapipelines_permissions import GET_PIPELINE
+from dataall.modules.mlstudio.services.mlstudio_permissions import GET_SGMSTUDIO_USER
+from dataall.modules.notebooks.services.notebook_permissions import GET_NOTEBOOK
 from dataall.modules.s3_datasets.services.dataset_permissions import GET_DATASET, GET_DATASET_TABLE
 
 
@@ -20,48 +22,53 @@ def resolver_id(type_name, field_name):
     return f'{type_name}_{field_name}'
 
 
+SKIP_MARK = '@SKIP@'
+
+
 class IgnoreReason(Enum):
-    ADMIN = 'admin action. No need for tenant permission check'
-    SUPPORT = 'tenant permissions do not apply to support notifications'
-    FEED = 'tenant permissions do not apply to support feed messages'
-    VOTES = 'tenant permissions do not apply to support votes'
-    BACKPORT = 'outside of this PR to be able to backport to v2.6.2'
+    ADMIN = f'{SKIP_MARK} admin action. No need for tenant permission check'
+    SUPPORT = f'{SKIP_MARK} permissions do not apply to support notifications'
+    FEED = f'{SKIP_MARK} permissions do not apply to support feed messages'
+    VOTES = f'{SKIP_MARK} permissions do not apply to support votes'
+    BACKPORT = f'{SKIP_MARK} outside of this PR to be able to backport to v2.6.2'
+    INTRAMODULE = f'{SKIP_MARK} returns intra-module data'
+    PERMCHECK = f'{SKIP_MARK} checks user permissions for a particular feature'
+    CATALOG = f'{SKIP_MARK} catalog resources are public by design'
+    SIMPLIFIED = f'{SKIP_MARK} simplified response'
 
 
-def get_resid(type_name: str, field_name: str) -> str:
+def field_id(type_name: str, field_name: str) -> str:
     return f'{type_name}_{field_name}'
 
 
 OPT_OUT_MUTATIONS = {
     # Admin actions
-    get_resid('Mutation', 'updateGroupTenantPermissions'): IgnoreReason.ADMIN.value,
-    get_resid('Mutation', 'updateSSMParameter'): IgnoreReason.ADMIN.value,
-    get_resid('Mutation', 'createQuicksightDataSourceSet'): IgnoreReason.ADMIN.value,
-    get_resid('Mutation', 'startMaintenanceWindow'): IgnoreReason.ADMIN.value,
-    get_resid('Mutation', 'stopMaintenanceWindow'): IgnoreReason.ADMIN.value,
-    get_resid('Mutation', 'startReindexCatalog'): IgnoreReason.ADMIN.value,
-
+    field_id('Mutation', 'updateGroupTenantPermissions'): IgnoreReason.ADMIN.value,
+    field_id('Mutation', 'updateSSMParameter'): IgnoreReason.ADMIN.value,
+    field_id('Mutation', 'createQuicksightDataSourceSet'): IgnoreReason.ADMIN.value,
+    field_id('Mutation', 'startMaintenanceWindow'): IgnoreReason.ADMIN.value,
+    field_id('Mutation', 'stopMaintenanceWindow'): IgnoreReason.ADMIN.value,
+    field_id('Mutation', 'startReindexCatalog'): IgnoreReason.ADMIN.value,
     # Support-related actions
-    get_resid('Mutation', 'markNotificationAsRead'): IgnoreReason.SUPPORT.value,
-    get_resid('Mutation', 'deleteNotification'): IgnoreReason.SUPPORT.value,
-    get_resid('Mutation', 'postFeedMessage'): IgnoreReason.FEED.value,
-    get_resid('Mutation', 'upVote'): IgnoreReason.VOTES.value,
-
+    field_id('Mutation', 'markNotificationAsRead'): IgnoreReason.SUPPORT.value,
+    field_id('Mutation', 'deleteNotification'): IgnoreReason.SUPPORT.value,
+    field_id('Mutation', 'postFeedMessage'): IgnoreReason.FEED.value,
+    field_id('Mutation', 'upVote'): IgnoreReason.VOTES.value,
     # Backport-related actions
-    get_resid('Mutation', 'createAttachedMetadataForm'): IgnoreReason.BACKPORT.value,
-    get_resid('Mutation', 'deleteAttachedMetadataForm'): IgnoreReason.BACKPORT.value,
-    get_resid('Mutation', 'createRedshiftConnection'): IgnoreReason.BACKPORT.value,
-    get_resid('Mutation', 'deleteRedshiftConnection'): IgnoreReason.BACKPORT.value,
-    get_resid('Mutation', 'addConnectionGroupPermission'): IgnoreReason.BACKPORT.value,
-    get_resid('Mutation', 'deleteConnectionGroupPermission'): IgnoreReason.BACKPORT.value,
+    field_id('Mutation', 'createAttachedMetadataForm'): IgnoreReason.BACKPORT.value,
+    field_id('Mutation', 'deleteAttachedMetadataForm'): IgnoreReason.BACKPORT.value,
+    field_id('Mutation', 'createRedshiftConnection'): IgnoreReason.BACKPORT.value,
+    field_id('Mutation', 'deleteRedshiftConnection'): IgnoreReason.BACKPORT.value,
+    field_id('Mutation', 'addConnectionGroupPermission'): IgnoreReason.BACKPORT.value,
+    field_id('Mutation', 'deleteConnectionGroupPermission'): IgnoreReason.BACKPORT.value,
 }
 
 OPT_IN_QUERIES = [
-    get_resid('Query', 'generateEnvironmentAccessToken'),
-    get_resid('Query', 'getEnvironmentAssumeRoleUrl'),
-    get_resid('Query', 'getSagemakerStudioUserPresignedUrl'),
-    get_resid('Query', 'getSagemakerNotebookPresignedUrl'),
-    get_resid('Query', 'getDatasetAssumeRoleUrl'),
+    field_id('Query', 'generateEnvironmentAccessToken'),
+    field_id('Query', 'getEnvironmentAssumeRoleUrl'),
+    field_id('Query', 'getSagemakerStudioUserPresignedUrl'),
+    field_id('Query', 'getSagemakerNotebookPresignedUrl'),
+    field_id('Query', 'getDatasetAssumeRoleUrl'),
 ]
 
 ALL_RESOLVERS = {(_type, field) for _type in bootstrap().types for field in _type.fields if field.resolver}
@@ -88,7 +95,7 @@ def mock_input_validation(mocker):
 @pytest.mark.parametrize(
     '_type,field',
     [
-        pytest.param(_type, field, id=get_resid(_type.name, field.name))
+        pytest.param(_type, field, id=field_id(_type.name, field.name))
         for _type, field in ALL_RESOLVERS
         if _type.name in ['Query', 'Mutation']
     ],
@@ -104,11 +111,11 @@ def test_unauthorized_tenant_permissions(
     userNoTenantPermissions,
     groupNoTenantPermissions,
 ):
-    res_id = request.node.callspec.id
-    if _type.name == 'Mutation' and res_id in OPT_OUT_MUTATIONS.keys():
-        pytest.skip(f'Skipping test for {res_id}: {OPT_OUT_MUTATIONS[res_id]}')
-    if _type.name == 'Query' and res_id not in OPT_IN_QUERIES:
-        pytest.skip(f'Skipping test for {res_id}: This Query does not require a tenant permission check.')
+    fid = request.node.callspec.id
+    if _type.name == 'Mutation' and fid in OPT_OUT_MUTATIONS.keys():
+        pytest.skip(f'Skipping test for {fid}: {OPT_OUT_MUTATIONS[fid]}')
+    if _type.name == 'Query' and fid not in OPT_IN_QUERIES:
+        pytest.skip(f'Skipping test for {fid}: This Query does not require a tenant permission check.')
     assert_that(field.resolver).is_not_none()
     mock_local.context = RequestContext(
         db, userNoTenantPermissions.username, [groupNoTenantPermissions.groupUri], userNoTenantPermissions
@@ -119,124 +126,143 @@ def test_unauthorized_tenant_permissions(
     assert_that(field.resolver).raises(TenantUnauthorized).when_called_with(**iargs).contains('UnauthorizedOperation')
 
 
-SKIP_MARK = 'SKIP_MARK'
-
-NESTED_RESOLVERS_EXPECTED_PERMS = {
-    # AttachedMetadataForm related
-    get_resid('AttachedMetadataFormField', 'field'): SKIP_MARK,
-    get_resid('AttachedMetadataFormField', 'hasTenantPermissions'): SKIP_MARK,
-    get_resid('AttachedMetadataForm', 'entityName'): SKIP_MARK,
-    get_resid('AttachedMetadataForm', 'fields'): SKIP_MARK,
-    get_resid('AttachedMetadataForm', 'metadataForm'): SKIP_MARK,
-
-    # Category related
-    get_resid('Category', 'associations'): SKIP_MARK,
-    get_resid('Category', 'categories'): SKIP_MARK,
-    get_resid('Category', 'children'): SKIP_MARK,
-    get_resid('Category', 'stats'): SKIP_MARK,
-    get_resid('Category', 'terms'): SKIP_MARK,
-
-    # ConsumptionRole related
-    get_resid('ConsumptionRole', 'managedPolicies'): GET_ENVIRONMENT,
-
-    # Dashboard related
-    get_resid('Dashboard', 'environment'): GET_ENVIRONMENT,
-    get_resid('Dashboard', 'terms'): SKIP_MARK,
-    get_resid('Dashboard', 'upvotes'): SKIP_MARK,
-    get_resid('Dashboard', 'userRoleForDashboard'): SKIP_MARK,
-
-    # DataPipeline related
-    get_resid('DataPipeline', 'cloneUrlHttp'): SKIP_MARK,
-    get_resid('DataPipeline', 'developmentEnvironments'): SKIP_MARK,
-    get_resid('DataPipeline', 'environment'): GET_ENVIRONMENT,
-    get_resid('DataPipeline', 'organization'): GET_ORGANIZATION,
-    get_resid('DataPipeline', 'stack'): GET_PIPELINE,
-    get_resid('DataPipeline', 'userRoleForPipeline'): SKIP_MARK,
-
-    # Dataset related
-    get_resid('DatasetBase', 'environment'): GET_ENVIRONMENT,
-    get_resid('DatasetBase', 'owners'): SKIP_MARK,
-    get_resid('DatasetBase', 'stack'): GET_DATASET,
-    get_resid('DatasetBase', 'stewards'): SKIP_MARK,
-    get_resid('DatasetBase', 'userRoleForDataset'): SKIP_MARK,
-
-    # Dataset Profiling related
-    get_resid('DatasetProfilingRun', 'dataset'): GET_DATASET,
-    get_resid('DatasetProfilingRun', 'results'): SKIP_MARK,
-    get_resid('DatasetProfilingRun', 'status'): SKIP_MARK,
-
-    # Dataset Storage and Table related
-    get_resid('DatasetStorageLocation', 'terms'): SKIP_MARK,
-    get_resid('DatasetTableColumn', 'terms'): SKIP_MARK,
-    get_resid('DatasetTable', 'GlueTableProperties'): GET_DATASET_TABLE,
-    get_resid('DatasetTable', 'columns'): SKIP_MARK,
-    get_resid('DatasetTable', 'dataset'): GET_DATASET,
-    get_resid('DatasetTable', 'terms'): SKIP_MARK,
-
-    # Dataset specific
-    get_resid('Dataset', 'environment'): GET_ENVIRONMENT,
-    get_resid('Dataset', 'locations'): SKIP_MARK,
-    get_resid('Dataset', 'owners'): SKIP_MARK,
-    get_resid('Dataset', 'stack'): GET_DATASET,
-    get_resid('Dataset', 'statistics'): SKIP_MARK,
-    get_resid('Dataset', 'stewards'): SKIP_MARK,
-    get_resid('Dataset', 'tables'): SKIP_MARK,
-    get_resid('Dataset', 'terms'): SKIP_MARK,
-    get_resid('Dataset', 'userRoleForDataset'): SKIP_MARK,
-
-    # Environment related
-    get_resid('EnvironmentSimplified', 'networks'): GET_NETWORK,
-    get_resid('EnvironmentSimplified', 'organization'): SKIP_MARK,
-    get_resid('Environment', 'networks'): GET_NETWORK,
-    get_resid('Environment', 'organization'): SKIP_MARK,
-    get_resid('Environment', 'parameters'): SKIP_MARK,
-    get_resid('Environment', 'stack'): GET_ENVIRONMENT,
-    get_resid('Environment', 'userRoleInEnvironment'): SKIP_MARK,
-
-    # Feed and Glossary related
-    get_resid('Feed', 'messages'): SKIP_MARK,
-    get_resid('GlossaryTermLink', 'target'): SKIP_MARK,
-    get_resid('GlossaryTermLink', 'term'): SKIP_MARK,
-    get_resid('Glossary', 'associations'): SKIP_MARK,
-    get_resid('Glossary', 'categories'): SKIP_MARK,
-    get_resid('Glossary', 'children'): SKIP_MARK,
-    get_resid('Glossary', 'stats'): SKIP_MARK,
-    get_resid('Glossary', 'tree'): SKIP_MARK,
-    get_resid('Glossary', 'userRoleForGlossary'): SKIP_MARK,
-
-    # Group and Metadata related
-    get_resid('Group', 'environmentPermissions'): SKIP_MARK,
-    get_resid('Group', 'tenantPermissions'): SKIP_MARK,
-    get_resid('MetadataFormField', 'glossaryNodeName'): SKIP_MARK,
-    get_resid('MetadataFormSearchResult', 'hasTenantPermissions'): SKIP_MARK,
-    get_resid('MetadataForm', 'fields'): SKIP_MARK,
-    get_resid('MetadataForm', 'homeEntityName'): SKIP_MARK,
-    get_resid('MetadataForm', 'userRole'): SKIP_MARK,
-
-    # Omics related
-    get_resid('OmicsRun', 'environment'): GET_ENVIRONMENT,
-    get_resid('OmicsRun', 'organization'): GET_ORGANIZATION,
-    get_resid('OmicsRun', 'status'): SKIP_MARK,
-    get_resid('OmicsRun', 'workflow'): SKIP_MARK,
-
-    # Organization related
-    get_resid('Organization', 'environments'): GET_ORGANIZATION,
-    get_resid('Organization', 'stats'): SKIP_MARK,
-    get_resid('Organization', 'userRoleInOrganization'): SKIP_MARK,
+EXPECTED_RESOURCE_PERMS = {
+    field_id('AttachedMetadataFormField', 'field'): IgnoreReason.INTRAMODULE.value,
+    field_id('AttachedMetadataFormField', 'hasTenantPermissions'): IgnoreReason.PERMCHECK.value,
+    field_id('AttachedMetadataForm', 'entityName'): IgnoreReason.INTRAMODULE.value,
+    field_id('AttachedMetadataForm', 'fields'): IgnoreReason.INTRAMODULE.value,
+    field_id('AttachedMetadataForm', 'metadataForm'): IgnoreReason.INTRAMODULE.value,
+    field_id('Category', 'associations'): IgnoreReason.INTRAMODULE.value,
+    field_id('Category', 'categories'): IgnoreReason.INTRAMODULE.value,
+    field_id('Category', 'children'): IgnoreReason.INTRAMODULE.value,
+    field_id('Category', 'stats'): IgnoreReason.INTRAMODULE.value,
+    field_id('Category', 'terms'): IgnoreReason.INTRAMODULE.value,
+    field_id('ConsumptionRole', 'managedPolicies'): GET_ENVIRONMENT,
+    field_id('Dashboard', 'environment'): GET_ENVIRONMENT,
+    field_id('Dashboard', 'terms'): IgnoreReason.CATALOG.value,
+    field_id('Dashboard', 'upvotes'): IgnoreReason.VOTES.value,
+    field_id('Dashboard', 'userRoleForDashboard'): IgnoreReason.INTRAMODULE.value,
+    field_id('DataPipeline', 'cloneUrlHttp'): IgnoreReason.INTRAMODULE.value,
+    field_id('DataPipeline', 'developmentEnvironments'): IgnoreReason.INTRAMODULE.value,
+    field_id('DataPipeline', 'environment'): GET_ENVIRONMENT,
+    field_id('DataPipeline', 'organization'): GET_ORGANIZATION,
+    field_id('DataPipeline', 'stack'): GET_PIPELINE,
+    field_id('DataPipeline', 'userRoleForPipeline'): IgnoreReason.INTRAMODULE.value,
+    field_id('DatasetBase', 'environment'): GET_ENVIRONMENT,
+    field_id('DatasetBase', 'owners'): IgnoreReason.INTRAMODULE.value,
+    field_id('DatasetBase', 'stack'): GET_DATASET,
+    field_id('DatasetBase', 'stewards'): IgnoreReason.INTRAMODULE.value,
+    field_id('DatasetBase', 'userRoleForDataset'): IgnoreReason.INTRAMODULE.value,
+    field_id('DatasetProfilingRun', 'dataset'): GET_DATASET,
+    field_id('DatasetProfilingRun', 'results'): IgnoreReason.INTRAMODULE.value,
+    field_id('DatasetProfilingRun', 'status'): IgnoreReason.INTRAMODULE.value,
+    field_id('DatasetStorageLocation', 'dataset'): GET_DATASET,
+    field_id('DatasetStorageLocation', 'terms'): IgnoreReason.CATALOG.value,
+    field_id('DatasetTableColumn', 'terms'): IgnoreReason.CATALOG.value,
+    field_id('DatasetTable', 'GlueTableProperties'): GET_DATASET_TABLE,
+    field_id('DatasetTable', 'columns'): IgnoreReason.INTRAMODULE.value,
+    field_id('DatasetTable', 'dataset'): GET_DATASET,
+    field_id('DatasetTable', 'terms'): IgnoreReason.CATALOG.value,
+    field_id('Dataset', 'environment'): GET_ENVIRONMENT,
+    field_id('Dataset', 'locations'): IgnoreReason.INTRAMODULE.value,
+    field_id('Dataset', 'owners'): IgnoreReason.INTRAMODULE.value,
+    field_id('Dataset', 'stack'): GET_DATASET,
+    field_id('Dataset', 'statistics'): IgnoreReason.INTRAMODULE.value,
+    field_id('Dataset', 'stewards'): IgnoreReason.INTRAMODULE.value,
+    field_id('Dataset', 'tables'): IgnoreReason.INTRAMODULE.value,
+    field_id('Dataset', 'terms'): IgnoreReason.CATALOG.value,
+    field_id('Dataset', 'userRoleForDataset'): IgnoreReason.INTRAMODULE.value,
+    field_id('EnvironmentSimplified', 'networks'): GET_NETWORK,
+    field_id('EnvironmentSimplified', 'organization'): IgnoreReason.SIMPLIFIED.value,
+    field_id('Environment', 'networks'): GET_NETWORK,
+    field_id('Environment', 'organization'): IgnoreReason.SIMPLIFIED.value,
+    field_id('Environment', 'parameters'): IgnoreReason.INTRAMODULE.value,
+    field_id('Environment', 'stack'): GET_ENVIRONMENT,
+    field_id('Environment', 'userRoleInEnvironment'): IgnoreReason.INTRAMODULE.value,
+    field_id('Feed', 'messages'): IgnoreReason.FEED.value,
+    field_id('GlossaryTermLink', 'target'): IgnoreReason.CATALOG.value,
+    field_id('GlossaryTermLink', 'term'): IgnoreReason.CATALOG.value,
+    field_id('Glossary', 'associations'): IgnoreReason.CATALOG.value,
+    field_id('Glossary', 'categories'): IgnoreReason.CATALOG.value,
+    field_id('Glossary', 'children'): IgnoreReason.CATALOG.value,
+    field_id('Glossary', 'stats'): IgnoreReason.CATALOG.value,
+    field_id('Glossary', 'tree'): IgnoreReason.CATALOG.value,
+    field_id('Glossary', 'userRoleForGlossary'): IgnoreReason.CATALOG.value,
+    field_id('Group', 'environmentPermissions'): IgnoreReason.PERMCHECK.value,
+    field_id('Group', 'tenantPermissions'): IgnoreReason.PERMCHECK.value,
+    field_id('MetadataFormField', 'glossaryNodeName'): IgnoreReason.CATALOG.value,
+    field_id('MetadataFormSearchResult', 'hasTenantPermissions'): IgnoreReason.PERMCHECK.value,
+    field_id('MetadataForm', 'fields'): IgnoreReason.INTRAMODULE.value,
+    field_id('MetadataForm', 'homeEntityName'): IgnoreReason.INTRAMODULE.value,
+    field_id('MetadataForm', 'userRole'): IgnoreReason.INTRAMODULE.value,
+    field_id('OmicsRun', 'environment'): GET_ENVIRONMENT,
+    field_id('OmicsRun', 'organization'): GET_ORGANIZATION,
+    field_id('OmicsRun', 'status'): IgnoreReason.INTRAMODULE.value,
+    field_id('OmicsRun', 'workflow'): IgnoreReason.INTRAMODULE.value,
+    field_id('Organization', 'environments'): GET_ORGANIZATION,
+    field_id('Organization', 'stats'): IgnoreReason.INTRAMODULE.value,
+    field_id('Organization', 'userRoleInOrganization'): IgnoreReason.INTRAMODULE.value,
+    field_id('Permission', 'type'): IgnoreReason.INTRAMODULE.value,
+    field_id('RedshiftDataset', 'connection'): IgnoreReason.INTRAMODULE.value,
+    field_id('RedshiftDataset', 'environment'): GET_ENVIRONMENT,
+    field_id('RedshiftDataset', 'owners'): IgnoreReason.INTRAMODULE.value,
+    field_id('RedshiftDataset', 'stewards'): IgnoreReason.INTRAMODULE.value,
+    field_id('RedshiftDataset', 'terms'): IgnoreReason.CATALOG.value,
+    field_id('RedshiftDataset', 'upvotes'): IgnoreReason.VOTES.value,
+    field_id('RedshiftDataset', 'userRoleForDataset'): IgnoreReason.INTRAMODULE.value,
+    field_id('RedshiftDatasetTable', 'dataset'): IgnoreReason.INTRAMODULE.value,
+    field_id('RedshiftDatasetTable', 'terms'): IgnoreReason.CATALOG.value,
+    field_id('SagemakerNotebook', 'environment'): GET_ENVIRONMENT,
+    field_id('SagemakerNotebook', 'NotebookInstanceStatus'): IgnoreReason.INTRAMODULE.value,
+    field_id('SagemakerNotebook', 'organization'): GET_ORGANIZATION,
+    field_id('SagemakerNotebook', 'stack'): GET_NOTEBOOK,
+    field_id('SagemakerNotebook', 'userRoleForNotebook'): IgnoreReason.INTRAMODULE.value,
+    field_id('SagemakerStudioDomain', 'environment'): GET_ENVIRONMENT,
+    field_id('SagemakerStudioUser', 'environment'): GET_ENVIRONMENT,
+    field_id('SagemakerStudioUser', 'organization'): GET_ORGANIZATION,
+    field_id('SagemakerStudioUser', 'sagemakerStudioUserApps'): IgnoreReason.INTRAMODULE.value,
+    field_id('SagemakerStudioUser', 'sagemakerStudioUserStatus'): IgnoreReason.INTRAMODULE.value,
+    field_id('SagemakerStudioUser', 'stack'): GET_SGMSTUDIO_USER,
+    field_id('SagemakerStudioUser', 'userRoleForSagemakerStudioUser'): IgnoreReason.INTRAMODULE.value,
+    field_id('SharedDatabaseTableItem', 'sharedGlueDatabaseName'): IgnoreReason.INTRAMODULE.value,
+    field_id('ShareObject', 'canViewLogs'): IgnoreReason.INTRAMODULE.value,
+    field_id('ShareObject', 'dataset'): IgnoreReason.SIMPLIFIED.value,
+    field_id('ShareObject', 'environment'): GET_ENVIRONMENT,
+    field_id('ShareObject', 'existingSharedItems'): IgnoreReason.INTRAMODULE.value,
+    field_id('ShareObject', 'group'): IgnoreReason.INTRAMODULE.value,
+    field_id('ShareObject', 'items'): IgnoreReason.INTRAMODULE.value,
+    field_id('ShareObject', 'principal'): IgnoreReason.INTRAMODULE.value,
+    field_id('ShareObject', 'statistics'): IgnoreReason.INTRAMODULE.value,
+    field_id('ShareObject', 'userRoleForShareObject'): IgnoreReason.PERMCHECK.value,
+    field_id('Stack', 'canViewLogs'): IgnoreReason.INTRAMODULE.value,
+    field_id('Stack', 'EcsTaskId'): IgnoreReason.INTRAMODULE.value,
+    field_id('Stack', 'error'): IgnoreReason.INTRAMODULE.value,
+    field_id('Stack', 'events'): IgnoreReason.INTRAMODULE.value,
+    field_id('Stack', 'link'): IgnoreReason.INTRAMODULE.value,
+    field_id('Stack', 'outputs'): IgnoreReason.INTRAMODULE.value,
+    field_id('Stack', 'resources'): IgnoreReason.INTRAMODULE.value,
+    field_id('Term', 'associations'): IgnoreReason.INTRAMODULE.value,
+    field_id('Term', 'children'): IgnoreReason.INTRAMODULE.value,
+    field_id('Term', 'glossary'): IgnoreReason.INTRAMODULE.value,
+    field_id('Term', 'stats'): IgnoreReason.INTRAMODULE.value,
+    field_id('Worksheet', 'userRoleForWorksheet'): IgnoreReason.INTRAMODULE.value,
 }
+
+PARAMS = [
+    pytest.param(field, id=field_id(_type.name, field.name))
+    for _type, field in ALL_RESOLVERS
+    if _type.name not in ['Query', 'Mutation']  # filter out top-level queries (don't print skip)
+]
+# ensure that all EXPECTED_RESOURCES_PERMS have a corresponding query (to avoid stale entries) and vice versa
+assert_that(PARAMS).described_as('stale or missing EXPECTED_RESOURCE_PERMS detected').extracting(2).contains_only(
+    *EXPECTED_RESOURCE_PERMS.keys()
+)
 
 
 @patch('dataall.base.aws.sts.SessionHelper.remote_session')
 @patch('dataall.core.permissions.services.resource_policy_service.ResourcePolicyService.check_user_resource_permission')
 @patch('dataall.base.context._request_storage')
-@pytest.mark.parametrize(
-    'field',
-    [
-        pytest.param(field, id=get_resid(_type.name, field.name))
-        for _type, field in ALL_RESOLVERS
-        if _type.name not in ['Query', 'Mutation']  # filter out top-level queries (don't print skip)
-    ],
-)
+@pytest.mark.parametrize('field', PARAMS)
 def test_unauthorized_resource_permissions(
     mock_local,
     mock_check,
@@ -244,11 +270,11 @@ def test_unauthorized_resource_permissions(
     field,
     request,
 ):
-    res_id = request.node.callspec.id
-    expected_perm = NESTED_RESOLVERS_EXPECTED_PERMS.get(res_id, 'FOO_TEST_PERM')
-    msg = f'{res_id} -> {field.resolver.__code__.co_filename}:{field.resolver.__code__.co_firstlineno}'
-    if expected_perm in SKIP_MARK:
-        pytest.skip(msg)
+    fid = request.node.callspec.id
+    expected_perm = EXPECTED_RESOURCE_PERMS.get(fid, 'NON_EXISTENT_PERM')
+    msg = f'{fid} -> {field.resolver.__code__.co_filename}:{field.resolver.__code__.co_firstlineno}'
+    if SKIP_MARK in expected_perm:
+        pytest.skip(msg + f' Reason: {expected_perm}')
     logging.info(msg)
 
     assert_that(field.resolver).is_not_none()

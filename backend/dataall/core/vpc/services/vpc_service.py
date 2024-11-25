@@ -90,12 +90,13 @@ class VpcService:
     @staticmethod
     def get_environment_networks(environment_uri):
         with _session() as session:
-            vpc = VpcRepository.get_environment_networks(session=session, environment_uri=environment_uri)
-            ResourcePolicyService.check_user_resource_permission(
-                session=session,
-                username=get_context().username,
-                groups=get_context().groups,
-                resource_uri=vpc.vpcUri,
-                permission_name=GET_NETWORK,
-            )
-            return vpc
+            vpcs = VpcRepository.get_environment_networks(session=session, environment_uri=environment_uri)
+            for vpc in vpcs:
+                ResourcePolicyService.check_user_resource_permission(
+                    session=session,
+                    username=get_context().username,
+                    groups=get_context().groups,
+                    resource_uri=vpc.vpcUri,
+                    permission_name=GET_NETWORK,
+                )
+            return vpcs
