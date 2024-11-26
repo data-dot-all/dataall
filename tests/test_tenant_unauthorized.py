@@ -281,6 +281,7 @@ def test_unauthorized_resource_permissions(
     username = 'ausername'
     groups = ['agroup']
     mock_local.context = RequestContext(MagicMock(), username, groups, 'auserid')
+    mock_local.context.db_engine.scoped_session().__enter__().query().filter().all.return_value = [MagicMock()]
     mock_check.side_effect = ResourceUnauthorized(groups, 'test_action', 'test_uri')
     iargs = {arg: MagicMock() for arg in inspect.signature(field.resolver).parameters.keys()}
     assert_that(field.resolver).described_as(
