@@ -113,8 +113,8 @@ def test_unauthorized_tenant_permissions(
     groupNoTenantPermissions,
 ):
     fid = request.node.callspec.id
-    if _type.name == 'Mutation' and fid in OPT_OUT_MUTATIONS.keys():
-        pytest.skip(f'Skipping test for {fid}: {OPT_OUT_MUTATIONS[fid]}')
+    if _type.name == 'Mutation' and (reason := OPT_OUT_MUTATIONS.get(fid)):
+        pytest.skip(f'Skipping test for {fid}: {reason}')
     if _type.name == 'Query' and fid not in OPT_IN_QUERIES:
         pytest.skip(f'Skipping test for {fid}: This Query does not require a tenant permission check.')
     assert_that(field.resolver).is_not_none()
