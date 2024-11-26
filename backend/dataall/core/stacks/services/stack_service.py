@@ -68,7 +68,6 @@ class StackService:
     def resolve_parent_obj_stack(targetUri: str, targetType: str, environmentUri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            env: Environment = EnvironmentRepository.get_environment_by_uri(session, environmentUri)
             ResourcePolicyService.check_user_resource_permission(
                 session=session,
                 username=context.username,
@@ -76,6 +75,7 @@ class StackService:
                 resource_uri=targetUri,
                 permission_name=TargetType.get_resource_read_permission_name(targetType),
             )
+            env: Environment = EnvironmentRepository.get_environment_by_uri(session, environmentUri)
             stack: Stack = StackRepository.find_stack_by_target_uri(session, target_uri=targetUri)
             if not stack:
                 stack = Stack(
