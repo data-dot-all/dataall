@@ -71,6 +71,7 @@ class DashboardQuicksightService:
 
     @staticmethod
     def get_monitoring_dashboard_id():
+        DashboardQuicksightService._check_user_must_be_admin()
         current_account = SessionHelper.get_account()
         dashboard_id = ParameterStoreManager.get_parameter_value(
             AwsAccountId=current_account,
@@ -87,6 +88,7 @@ class DashboardQuicksightService:
 
     @staticmethod
     def get_monitoring_vpc_connection_id():
+        DashboardQuicksightService._check_user_must_be_admin()
         current_account = SessionHelper.get_account()
         vpc_connection_id = ParameterStoreManager.get_parameter_value(
             AwsAccountId=current_account,
@@ -103,6 +105,7 @@ class DashboardQuicksightService:
 
     @classmethod
     def create_quicksight_data_source_set(cls, vpc_connection_id):
+        cls._check_user_must_be_admin()
         client = cls._client()
         client.register_user_in_group(group_name='dataall', user_role='AUTHOR')
 
