@@ -9,11 +9,7 @@ from dataall.base.db import get_engine
 
 from dataall.base.loader import load_modules, ImportMode
 
-root = logging.getLogger()
-if not root.hasHandlers():
-    root.addHandler(logging.StreamHandler(sys.stdout))
 log = logging.getLogger(__name__)
-log.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
 
 def verify_shares(engine):
