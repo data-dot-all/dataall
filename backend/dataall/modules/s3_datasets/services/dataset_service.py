@@ -235,7 +235,6 @@ class DatasetService:
         return DatasetService.create_dataset(uri=uri, admin_group=admin_group, data=data)
 
     @staticmethod
-    @ResourcePolicyService.has_resource_permission(GET_DATASET)
     def get_dataset(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
