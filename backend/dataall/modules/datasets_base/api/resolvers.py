@@ -58,8 +58,7 @@ def get_dataset_organization(context, source: DatasetBase, **kwargs):
 def get_dataset_environment(context, source: DatasetBase, **kwargs):
     if not source:
         return None
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.find_environment_by_uri(session, uri=source.environmentUri)
+    return EnvironmentService.find_environment_by_uri(uri=source.environmentUri)
 
 
 def get_dataset_owners_group(context, source: DatasetBase, **kwargs):
