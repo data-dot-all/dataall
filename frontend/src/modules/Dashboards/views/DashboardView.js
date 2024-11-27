@@ -222,13 +222,12 @@ const DashboardView = () => {
             </Grid>
             <Grid item>
               <Box sx={{ m: -1 }}>
-                {isAdmin && (
-                  <UpVoteButton
-                    upVoted={isUpVoted}
-                    onClick={() => upVoteDashboard(dashboard.dashboardUri)}
-                    upVotes={upVotes || 0}
-                  />
-                )}
+                <UpVoteButton
+                  upVoted={isUpVoted}
+                  disabled={!isAdmin}
+                  onClick={() => upVoteDashboard(dashboard.dashboardUri)}
+                  upVotes={upVotes || 0}
+                />
                 <Button
                   color="primary"
                   startIcon={<ForumOutlined fontSize="small" />}

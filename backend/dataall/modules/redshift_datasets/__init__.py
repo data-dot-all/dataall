@@ -53,6 +53,7 @@ class RedshiftDatasetApiModuleInterface(ModuleInterface):
         )
 
         import dataall.modules.redshift_datasets.api
+        from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import GET_REDSHIFT_DATASET
 
         FeedRegistry.register(FeedDefinition(FEED_REDSHIFT_DATASET_TABLE_NAME, RedshiftTable))
         FeedRegistry.register(FeedDefinition(FEED_REDSHIFT_DATASET_NAME, RedshiftDataset))
@@ -75,7 +76,7 @@ class RedshiftDatasetApiModuleInterface(ModuleInterface):
             )
         )
 
-        add_vote_type(VOTE_REDSHIFT_DATASET_NAME, DatasetIndexer)
+        add_vote_type(VOTE_REDSHIFT_DATASET_NAME, DatasetIndexer, GET_REDSHIFT_DATASET)
 
         EnvironmentResourceManager.register(RedshiftDatasetEnvironmentResource())
         EnvironmentResourceManager.register(RedshiftConnectionEnvironmentResource())
