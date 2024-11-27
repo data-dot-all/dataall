@@ -1,4 +1,6 @@
 import pytest
+
+from integration_tests.core.environment.utils import set_env_params
 from integration_tests.modules.dashboards.mutations import (
     import_dashboard,
     delete_dashboard,
@@ -6,16 +8,13 @@ from integration_tests.modules.dashboards.mutations import (
     reject_dashboard_share,
 )
 from integration_tests.modules.dashboards.queries import get_dashboard
-from integration_tests.core.environment.utils import set_env_params
-from integration_tests.modules.dashboards.aws_clients import QuickSightClient
 
 
 @pytest.fixture(scope='session')
-def quicksight_account_exists(session_env1, session_env1_aws_client):
-    if not QuickSightClient(
-        session_env1_aws_client, session_env1.AwsAccountId, session_env1.region
-    ).check_enterprise_account_exists():
-        pytest.skip('Skipping QuickSight tests because QuickSight account does not exist')
+def dashboards(testdata):
+    if testdata.dashboards:
+        return testdata.dashboards
+    pytest.skip('dashboards config is missing')
 
 
 def create_dataall_dashboard(client, session_id, dashboard_id, env):
@@ -33,9 +32,9 @@ def create_dataall_dashboard(client, session_id, dashboard_id, env):
 
 
 @pytest.fixture(scope='session')
-def dashboard1(session_id, client1, session_env1, testdata):
+def dashboard1(session_id, client1, session_env1, dashboards):
     set_env_params(client1, session_env1, dashboardsEnabled='true')
-    dashboardId = testdata.dashboards['session_env1'].dashboardId
+    dashboardId = dashboards['session_env1'].dashboardId
     ds = None
     try:
         ds = create_dataall_dashboard(client1, session_id, dashboardId, session_env1)
