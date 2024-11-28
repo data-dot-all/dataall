@@ -267,7 +267,7 @@ class S3ShareService:
         if group_uri not in context.groups:
             raise exceptions.UnauthorizedOperation(
                 action='LIST_ENVIRONMENT_GROUP_DATASETS',
-                message=f'User: {context.username} is not a member of the team {group_uri}',
+                message=f'User: {context.username} is not a member of the owner team',
             )
         with context.db_engine.scoped_session() as session:
             return S3ShareObjectRepository.query_shared_glue_databases(
