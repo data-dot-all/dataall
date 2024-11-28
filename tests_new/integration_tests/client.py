@@ -37,9 +37,8 @@ class Client:
         headers = {'accesskeyid': 'none', 'SecretKey': 'none', 'Authorization': f'Bearer {self.access_token}'}
         r = requests.post(graphql_endpoint, json=query, headers=headers)
         response = r.json()
-        have_data = any([bool(value) for key, value in response.get('data', {}).items()])
         if errors := response.get('errors'):
-            if have_data:
+            if any((response.get('data', {}) or {}).values()):  # check if there are data
                 logging.warning(f'{query=} returned both data and errors:\n {pformat(response)}')
             else:
                 raise GqlError(errors)
