@@ -4,7 +4,6 @@
 # # IF MONITORING ON (TODO)
 # getMonitoringDashboardId
 # getMonitoringVpcConnectionId
-# getPlatformAuthorSession
 # getPlatformReaderSession
 
 

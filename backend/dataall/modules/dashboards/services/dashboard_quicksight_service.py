@@ -117,11 +117,6 @@ class DashboardQuicksightService:
         return datasource_id
 
     @classmethod
-    def get_quicksight_author_session(cls, aws_account):
-        DashboardQuicksightService._check_user_must_be_admin()
-        return cls._client(aws_account).get_author_session()
-
-    @classmethod
     def get_quicksight_reader_session(cls, dashboard_uri):
         cls._check_user_must_be_admin()
         client = cls._client()
