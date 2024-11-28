@@ -51,17 +51,6 @@ class DatasetProfilingRepository:
         return run
 
     @staticmethod
-    def list_profiling_runs(session, dataset_uri):
-        # TODO filter is always default
-        filter = {}
-        q = (
-            session.query(DatasetProfilingRun)
-            .filter(DatasetProfilingRun.datasetUri == dataset_uri)
-            .order_by(DatasetProfilingRun.created.desc())
-        )
-        return paginate(q, page=filter.get('page', 1), page_size=filter.get('pageSize', 20)).to_dict()
-
-    @staticmethod
     def list_table_profiling_runs(session, table_uri):
         # TODO filter is always default
         filter = {}
