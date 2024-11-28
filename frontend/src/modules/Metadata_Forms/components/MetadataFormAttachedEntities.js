@@ -24,12 +24,14 @@ import { useSnackbar } from 'notistack';
 import { DataGrid } from '@mui/x-data-grid';
 import { AttachedFormCard } from './AttachedFormCard';
 import CircularProgress from '@mui/material/CircularProgress';
+import { useTheme } from '@mui/styles';
 
 export const MetadataFormAttachedEntities = (props) => {
   const { metadataForm, userRolesMF } = props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const client = useClient();
+  const theme = useTheme();
   const [versions, setVersions] = useState([]);
   const [selectedVersion, setSelectedVersion] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -186,9 +188,8 @@ export const MetadataFormAttachedEntities = (props) => {
                   sx={{
                     backgroundColor:
                       selectedVersion &&
-                      selectedVersion.version === version.version
-                        ? '#e6e6e6'
-                        : 'white'
+                      selectedVersion.version === version.version &&
+                      theme.palette.action.selected
                   }}
                 >
                   <Grid container spacing={2}>

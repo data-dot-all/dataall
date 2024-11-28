@@ -29,10 +29,12 @@ import { SET_ERROR } from '../../../globalErrors';
 import { AttachedFormCard } from './AttachedFormCard';
 import DoNotDisturbAltOutlinedIcon from '@mui/icons-material/DoNotDisturbAltOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import { useTheme } from '@mui/styles';
 
 export const MetadataAttachment = (props) => {
   const { entityType, entityUri } = props;
   const client = useClient();
+  const theme = useTheme();
   const dispatch = useDispatch();
   const [selectedForm, setSelectedForm] = useState(null);
   const [selectedAttachedForm, setSelectedAttachedForm] = useState(null);
@@ -242,9 +244,8 @@ export const MetadataAttachment = (props) => {
                 sx={{
                   backgroundColor:
                     selectedAttachedForm &&
-                    selectedAttachedForm.uri === attachedForm.uri
-                      ? '#e6e6e6'
-                      : 'white'
+                    selectedAttachedForm.uri === attachedForm.uri &&
+                    theme.palette.action.selected
                 }}
               >
                 <Grid container spacing={2}>
