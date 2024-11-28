@@ -65,10 +65,8 @@ def get_s3_consumption_data(context: Context, source, shareUri: str):
 
 
 def list_shared_databases_tables_with_env_group(context: Context, source, environmentUri: str, groupUri: str):
-    return S3ShareService.list_shared_databases_tables_with_env_group(environmentUri=environmentUri, groupUri=groupUri)
+    return S3ShareService.list_shared_databases_tables_with_env_group(uri=environmentUri, group_uri=groupUri)
 
 
 def resolve_shared_db_name(context: Context, source, **kwargs):
-    return S3ShareService.resolve_shared_db_name(
-        source.GlueDatabaseName, source.shareUri, source.targetEnvAwsAccountId, source.targetEnvRegion
-    )
+    return S3ShareService.resolve_shared_db_name(source.GlueDatabaseName, source.shareUri)

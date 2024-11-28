@@ -63,12 +63,6 @@ class DatasetProfilingService:
             session.add(task)
         Worker.queue(engine=context.db_engine, task_ids=[task.taskUri])
 
-    @staticmethod
-    @ResourcePolicyService.has_resource_permission(GET_DATASET)
-    def list_profiling_runs(uri):
-        with get_context().db_engine.scoped_session() as session:
-            return DatasetProfilingRepository.list_profiling_runs(session, uri)
-
     @classmethod
     def get_dataset_table_profiling_run(cls, uri: str):
         with get_context().db_engine.scoped_session() as session:
