@@ -52,6 +52,9 @@ export const RenderedMetadataForm = (props) => {
     if (field.type === 'Boolean' && field.value === undefined) {
       field.value = false;
     }
+    if (field.type === 'Boolean' || field.type === 'Integer') {
+      field.value = JSON.parse(field.value);
+    }
   });
 
   const updateFields = (index, value) => {
