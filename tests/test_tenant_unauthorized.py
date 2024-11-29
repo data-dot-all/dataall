@@ -13,10 +13,19 @@ from dataall.base.db.exceptions import TenantUnauthorized, ResourceUnauthorized
 from dataall.core.permissions.services.environment_permissions import GET_ENVIRONMENT
 from dataall.core.permissions.services.network_permissions import GET_NETWORK
 from dataall.core.permissions.services.organization_permissions import GET_ORGANIZATION
-from dataall.modules.datapipelines.services.datapipelines_permissions import GET_PIPELINE
-from dataall.modules.mlstudio.services.mlstudio_permissions import GET_SGMSTUDIO_USER
-from dataall.modules.notebooks.services.notebook_permissions import GET_NOTEBOOK
-from dataall.modules.s3_datasets.services.dataset_permissions import GET_DATASET, GET_DATASET_TABLE
+from dataall.core.permissions.services.tenant_permissions import MANAGE_ENVIRONMENTS, MANAGE_ORGANIZATIONS
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
+from dataall.modules.catalog.services.glossaries_permissions import MANAGE_GLOSSARIES
+from dataall.modules.dashboards.services.dashboard_permissions import MANAGE_DASHBOARDS
+from dataall.modules.datapipelines.services.datapipelines_permissions import GET_PIPELINE, MANAGE_PIPELINES
+from dataall.modules.metadata_forms.services.metadata_form_permissions import MANAGE_METADATA_FORMS
+from dataall.modules.mlstudio.services.mlstudio_permissions import GET_SGMSTUDIO_USER, MANAGE_SGMSTUDIO_USERS
+from dataall.modules.notebooks.services.notebook_permissions import GET_NOTEBOOK, MANAGE_NOTEBOOKS
+from dataall.modules.omics.services.omics_permissions import MANAGE_OMICS_RUNS
+from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import MANAGE_REDSHIFT_DATASETS
+from dataall.modules.s3_datasets.services.dataset_permissions import GET_DATASET, GET_DATASET_TABLE, MANAGE_DATASETS
+from dataall.modules.shares_base.services.share_permissions import MANAGE_SHARES
+from dataall.modules.worksheets.services.worksheet_permissions import MANAGE_WORKSHEETS
 
 
 def resolver_id(type_name, field_name):
@@ -36,13 +45,237 @@ class IgnoreReason(Enum):
     PERMCHECK = f'{SKIP_MARK} checks user permissions for a particular feature'
     CATALOG = f'{SKIP_MARK} catalog resources are public by design'
     SIMPLIFIED = f'{SKIP_MARK} simplified response'
+    NOTIMPLEMENTED = f'{SKIP_MARK} not implemented'
 
 
 def field_id(type_name: str, field_name: str) -> str:
     return f'{type_name}_{field_name}'
 
 
-OPT_OUT_MUTATIONS = {
+ALL_RESOLVERS = {(_type, field) for _type in bootstrap().types for field in _type.fields if field.resolver}
+
+TOP_LEVEL_QUERIES = {
+    field_id('Mutation', 'DisableDataSubscriptions'): MANAGE_ENVIRONMENTS,
+    field_id('Mutation', 'addConsumptionRoleToEnvironment'): MANAGE_ENVIRONMENTS,
+    field_id('Mutation', 'addRedshiftDatasetTables'): MANAGE_REDSHIFT_DATASETS,
+    field_id('Mutation', 'addSharedItem'): MANAGE_SHARES,
+    field_id('Mutation', 'approveDashboardShare'): MANAGE_DASHBOARDS,
+    field_id('Mutation', 'approveShareExtension'): MANAGE_SHARES,
+    field_id('Mutation', 'approveShareObject'): MANAGE_SHARES,
+    field_id('Mutation', 'approveTermAssociation'): MANAGE_GLOSSARIES,
+    field_id('Mutation', 'archiveOrganization'): MANAGE_ORGANIZATIONS,
+    field_id('Mutation', 'batchMetadataFormFieldUpdates'): MANAGE_METADATA_FORMS,
+    field_id('Mutation', 'cancelShareExtension'): MANAGE_SHARES,
+    field_id('Mutation', 'createCategory'): MANAGE_GLOSSARIES,
+    field_id('Mutation', 'createDataPipeline'): MANAGE_PIPELINES,
+    field_id('Mutation', 'createDataPipelineEnvironment'): MANAGE_PIPELINES,
+    field_id('Mutation', 'createDataset'): MANAGE_DATASETS,
+    field_id('Mutation', 'createDatasetStorageLocation'): MANAGE_DATASETS,
+    field_id('Mutation', 'createEnvironment'): MANAGE_ENVIRONMENTS,
+    field_id('Mutation', 'createGlossary'): MANAGE_GLOSSARIES,
+    field_id('Mutation', 'createMetadataForm'): MANAGE_METADATA_FORMS,
+    field_id('Mutation', 'createMetadataFormFields'): MANAGE_METADATA_FORMS,
+    field_id('Mutation', 'createMetadataFormVersion'): MANAGE_METADATA_FORMS,
+    field_id('Mutation', 'createNetwork'): MANAGE_ENVIRONMENTS,
+    field_id('Mutation', 'createOmicsRun'): MANAGE_OMICS_RUNS,
+    field_id('Mutation', 'createOrganization'): MANAGE_ORGANIZATIONS,
+    field_id('Mutation', 'createSagemakerNotebook'): MANAGE_NOTEBOOKS,
+    field_id('Mutation', 'createSagemakerStudioUser'): MANAGE_SGMSTUDIO_USERS,
+    field_id('Mutation', 'createShareObject'): MANAGE_SHARES,
+    field_id('Mutation', 'createTableDataFilter'): MANAGE_DATASETS,
+    field_id('Mutation', 'createTerm'): MANAGE_GLOSSARIES,
+    field_id('Mutation', 'createWorksheet'): MANAGE_WORKSHEETS,
+    field_id('Mutation', 'deleteCategory'): MANAGE_GLOSSARIES,
+    field_id('Mutation', 'deleteDashboard'): MANAGE_DASHBOARDS,
+    field_id('Mutation', 'deleteDataPipeline'): MANAGE_PIPELINES,
+    field_id('Mutation', 'deleteDataPipelineEnvironment'): MANAGE_PIPELINES,
+    field_id('Mutation', 'deleteDataset'): MANAGE_DATASETS,
+    field_id('Mutation', 'deleteDatasetStorageLocation'): MANAGE_DATASETS,
+    field_id('Mutation', 'deleteDatasetTable'): MANAGE_DATASETS,
+    field_id('Mutation', 'deleteEnvironment'): MANAGE_ENVIRONMENTS,
+    field_id('Mutation', 'deleteGlossary'): MANAGE_GLOSSARIES,
+    field_id('Mutation', 'deleteMetadataForm'): MANAGE_METADATA_FORMS,
+    field_id('Mutation', 'deleteMetadataFormField'): MANAGE_METADATA_FORMS,
+    field_id('Mutation', 'deleteMetadataFormVersion'): MANAGE_METADATA_FORMS,
+    field_id('Mutation', 'deleteNetwork'): MANAGE_ENVIRONMENTS,
+    field_id('Mutation', 'deleteOmicsRun'): MANAGE_OMICS_RUNS,
+    field_id('Mutation', 'deleteRedshiftDataset'): MANAGE_REDSHIFT_DATASETS,
+    field_id('Mutation', 'deleteRedshiftDatasetTable'): MANAGE_REDSHIFT_DATASETS,
+    field_id('Mutation', 'deleteSagemakerNotebook'): MANAGE_NOTEBOOKS,
+    field_id('Mutation', 'deleteSagemakerStudioUser'): MANAGE_SGMSTUDIO_USERS,
+    field_id('Mutation', 'deleteShareObject'): MANAGE_SHARES,
+    field_id('Mutation', 'deleteTableDataFilter'): MANAGE_DATASETS,
+    field_id('Mutation', 'deleteTerm'): MANAGE_GLOSSARIES,
+    field_id('Mutation', 'deleteWorksheet'): MANAGE_WORKSHEETS,
+    field_id('Mutation', 'dismissTermAssociation'): MANAGE_GLOSSARIES,
+    field_id('Mutation', 'enableDataSubscriptions'): MANAGE_ENVIRONMENTS,
+    field_id('Mutation', 'generateDatasetAccessToken'): MANAGE_DATASETS,
+    field_id('Mutation', 'importDashboard'): MANAGE_DASHBOARDS,
+    field_id('Mutation', 'importDataset'): MANAGE_DATASETS,
+    field_id('Mutation', 'importRedshiftDataset'): MANAGE_REDSHIFT_DATASETS,
+    field_id('Mutation', 'inviteGroupOnEnvironment'): MANAGE_ENVIRONMENTS,
+    field_id('Mutation', 'inviteGroupToOrganization'): MANAGE_ORGANIZATIONS,
+    field_id('Mutation', 'reApplyItemsShareObject'): MANAGE_SHARES,
+    field_id('Mutation', 'reApplyShareObjectItemsOnDataset'): MANAGE_DATASETS,
+    field_id('Mutation', 'rejectDashboardShare'): MANAGE_DASHBOARDS,
+    field_id('Mutation', 'rejectShareObject'): MANAGE_SHARES,
+    field_id('Mutation', 'removeConsumptionRoleFromEnvironment'): MANAGE_ENVIRONMENTS,
+    field_id('Mutation', 'removeGroupFromEnvironment'): MANAGE_ENVIRONMENTS,
+    field_id('Mutation', 'removeGroupFromOrganization'): MANAGE_ORGANIZATIONS,
+    field_id('Mutation', 'removeShareItemFilter'): MANAGE_SHARES,
+    field_id('Mutation', 'removeSharedItem'): MANAGE_SHARES,
+    field_id('Mutation', 'requestDashboardShare'): MANAGE_DASHBOARDS,
+    field_id('Mutation', 'revokeItemsShareObject'): MANAGE_SHARES,
+    field_id('Mutation', 'startDatasetProfilingRun'): MANAGE_DATASETS,
+    field_id('Mutation', 'startGlueCrawler'): MANAGE_DATASETS,
+    field_id('Mutation', 'startSagemakerNotebook'): MANAGE_NOTEBOOKS,
+    field_id('Mutation', 'stopSagemakerNotebook'): MANAGE_NOTEBOOKS,
+    field_id('Mutation', 'submitShareExtension'): MANAGE_SHARES,
+    field_id('Mutation', 'submitShareObject'): MANAGE_SHARES,
+    field_id('Mutation', 'syncDatasetTableColumns'): MANAGE_DATASETS,
+    field_id('Mutation', 'syncTables'): MANAGE_DATASETS,
+    field_id('Mutation', 'updateCategory'): MANAGE_GLOSSARIES,
+    field_id('Mutation', 'updateConsumptionRole'): MANAGE_ENVIRONMENTS,
+    field_id('Mutation', 'updateDashboard'): MANAGE_DASHBOARDS,
+    field_id('Mutation', 'updateDataPipeline'): MANAGE_PIPELINES,
+    field_id('Mutation', 'updateDataPipelineEnvironment'): MANAGE_PIPELINES,
+    field_id('Mutation', 'updateDataset'): MANAGE_DATASETS,
+    field_id('Mutation', 'updateDatasetStorageLocation'): MANAGE_DATASETS,
+    field_id('Mutation', 'updateDatasetTable'): MANAGE_DATASETS,
+    field_id('Mutation', 'updateDatasetTableColumn'): MANAGE_DATASETS,
+    field_id('Mutation', 'updateEnvironment'): MANAGE_ENVIRONMENTS,
+    field_id('Mutation', 'updateGlossary'): MANAGE_GLOSSARIES,
+    field_id('Mutation', 'updateGroupEnvironmentPermissions'): MANAGE_ENVIRONMENTS,
+    field_id('Mutation', 'updateKeyValueTags'): MANAGE_ENVIRONMENTS,
+    field_id('Mutation', 'updateOrganization'): MANAGE_ORGANIZATIONS,
+    field_id('Mutation', 'updateOrganizationGroup'): MANAGE_ORGANIZATIONS,
+    field_id('Mutation', 'updateRedshiftDataset'): MANAGE_REDSHIFT_DATASETS,
+    field_id('Mutation', 'updateRedshiftDatasetTable'): MANAGE_REDSHIFT_DATASETS,
+    field_id('Mutation', 'updateShareExpirationPeriod'): MANAGE_SHARES,
+    field_id('Mutation', 'updateShareExtensionReason'): MANAGE_SHARES,
+    field_id('Mutation', 'updateShareItemFilters'): MANAGE_SHARES,
+    field_id('Mutation', 'updateShareRejectReason'): MANAGE_SHARES,
+    field_id('Mutation', 'updateShareRequestReason'): MANAGE_SHARES,
+    field_id('Mutation', 'updateStack'): MANAGE_ENVIRONMENTS,
+    field_id('Mutation', 'updateTerm'): MANAGE_GLOSSARIES,
+    field_id('Mutation', 'updateWorksheet'): MANAGE_WORKSHEETS,
+    field_id('Mutation', 'verifyDatasetShareObjects'): MANAGE_DATASETS,
+    field_id('Mutation', 'verifyItemsShareObject'): MANAGE_SHARES,
+    field_id('Query', 'countDeletedNotifications'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'countReadNotifications'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'countUnreadNotifications'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'countUpVotes'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'generateEnvironmentAccessToken'): MANAGE_ENVIRONMENTS,
+    field_id('Query', 'getAttachedMetadataForm'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getAuthorSession'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getCDKExecPolicyPresignedUrl'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getConsumptionRolePolicies'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getDashboard'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getDataPipeline'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getDataPipelineCredsLinux'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getDataset'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getDatasetAssumeRoleUrl'): MANAGE_DATASETS,
+    field_id('Query', 'getDatasetPresignedUrl'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getDatasetSharedAssumeRoleUrl'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getDatasetStorageLocation'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getDatasetTable'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getDatasetTableProfilingRun'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getEntityMetadataFormPermissions'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getEnvironment'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getEnvironmentAssumeRoleUrl'): MANAGE_ENVIRONMENTS,
+    field_id('Query', 'getEnvironmentMLStudioDomain'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getFeed'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getGlossary'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getGroup'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getGroupsForUser'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getMaintenanceWindowStatus'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getMetadataForm'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getMonitoringDashboardId'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getMonitoringVPCConnectionId'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getOmicsWorkflow'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getOrganization'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getPivotRoleExternalId'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getPivotRoleName'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getPivotRolePresignedUrl'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getPlatformAuthorSession'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getPlatformReaderSession'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getReaderSession'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getRedshiftDataset'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getRedshiftDatasetTable'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getRedshiftDatasetTableColumns'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getS3ConsumptionData'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getSagemakerNotebook'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getSagemakerNotebookPresignedUrl'): MANAGE_NOTEBOOKS,
+    field_id('Query', 'getSagemakerStudioUser'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getSagemakerStudioUserPresignedUrl'): MANAGE_SGMSTUDIO_USERS,
+    field_id('Query', 'getShareItemDataFilters'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getShareLogs'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getShareObject'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getShareRequestsFromMe'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getShareRequestsToMe'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getSharedDatasetTables'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getStack'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getStackLogs'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getTrustAccount'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getVote'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'getWorksheet'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listAllConsumptionRoles'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listAllEnvironmentConsumptionRoles'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listAllEnvironmentGroups'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listAllGroups'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listAttachedMetadataForms'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listConnectionGroupNoPermissions'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listConnectionGroupPermissions'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listDashboardShares'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listDataPipelines'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listDatasetTableColumns'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listDatasetTableProfilingRuns'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listDatasetTables'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listDatasets'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listDatasetsCreatedInEnvironment'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listEntityMetadataForms'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listEnvironmentConsumptionRoles'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listEnvironmentGroupInvitationPermissions'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listEnvironmentGroups'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listEnvironmentInvitedGroups'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listEnvironmentNetworks'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listEnvironmentRedshiftConnections'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listEnvironments'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listGlossaries'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listGroups'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listInviteOrganizationPermissionsWithDescriptions'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listKeyValueTags'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listMetadataFormVersions'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listNotifications'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listOmicsRuns'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listOmicsWorkflows'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listOrganizationGroupPermissions'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listOrganizationGroups'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listOrganizations'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listOwnedDatasets'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listRedshiftConnectionSchemas'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listRedshiftDatasetTables'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listRedshiftSchemaDatasetTables'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listRedshiftSchemaTables'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listS3DatasetsOwnedByEnvGroup'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listS3DatasetsSharedWithEnvGroup'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listSagemakerNotebooks'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listSagemakerStudioUsers'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listSharedDatasetTableColumns'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listTableDataFilters'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listTableDataFiltersByAttached'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listTenantGroups'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listTenantPermissions'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listUserMetadataForms'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listUsersForGroup'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listValidEnvironments'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'listWorksheets'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'previewTable'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'queryEnums'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'runAthenaSqlQuery'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'searchDashboards'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'searchEnvironmentDataItems'): IgnoreReason.NOTIMPLEMENTED.value,
+    field_id('Query', 'searchGlossary'): IgnoreReason.NOTIMPLEMENTED.value,
     # Admin actions
     field_id('Mutation', 'updateGroupTenantPermissions'): IgnoreReason.ADMIN.value,
     field_id('Mutation', 'updateSSMParameter'): IgnoreReason.ADMIN.value,
@@ -63,16 +296,6 @@ OPT_OUT_MUTATIONS = {
     field_id('Mutation', 'addConnectionGroupPermission'): IgnoreReason.BACKPORT.value,
     field_id('Mutation', 'deleteConnectionGroupPermission'): IgnoreReason.BACKPORT.value,
 }
-
-OPT_IN_QUERIES = [
-    field_id('Query', 'generateEnvironmentAccessToken'),
-    field_id('Query', 'getEnvironmentAssumeRoleUrl'),
-    field_id('Query', 'getSagemakerStudioUserPresignedUrl'),
-    field_id('Query', 'getSagemakerNotebookPresignedUrl'),
-    field_id('Query', 'getDatasetAssumeRoleUrl'),
-]
-
-ALL_RESOLVERS = {(_type, field) for _type in bootstrap().types for field in _type.fields if field.resolver}
 
 
 @pytest.fixture(scope='function')
@@ -101,9 +324,11 @@ def mock_input_validation(mocker):
         if _type.name in ['Query', 'Mutation']
     ],
 )
+@patch('dataall.core.permissions.services.tenant_policy_service.TenantPolicyService.check_user_tenant_permission', wraps=TenantPolicyService.check_user_tenant_permission)
 @patch('dataall.base.context._request_storage')
 def test_unauthorized_tenant_permissions(
     mock_local,
+    spy_check,
     _type,
     field,
     request,
@@ -113,18 +338,23 @@ def test_unauthorized_tenant_permissions(
     groupNoTenantPermissions,
 ):
     fid = request.node.callspec.id
-    if _type.name == 'Mutation' and (reason := OPT_OUT_MUTATIONS.get(fid)):
-        pytest.skip(f'Skipping test for {fid}: {reason}')
-    if _type.name == 'Query' and fid not in OPT_IN_QUERIES:
-        pytest.skip(f'Skipping test for {fid}: This Query does not require a tenant permission check.')
+    expected_perm = TOP_LEVEL_QUERIES.get(fid, 'NON_EXISTENT_PERM')
+    msg = f'{fid} -> {field.resolver.__code__.co_filename}:{field.resolver.__code__.co_firstlineno}'
+    if SKIP_MARK in expected_perm:
+        pytest.skip(msg + f' Reason: {expected_perm}')
+    logging.info(msg)
+
     assert_that(field.resolver).is_not_none()
+    groups = [groupNoTenantPermissions.groupUri]
+    username = userNoTenantPermissions.username
     mock_local.context = RequestContext(
-        db, userNoTenantPermissions.username, [groupNoTenantPermissions.groupUri], userNoTenantPermissions
+        db, username, groups, userNoTenantPermissions
     )
     # Mocking arguments
     iargs = {arg: MagicMock() for arg in inspect.signature(field.resolver).parameters.keys()}
     # Assert Unauthorized exception is raised
     assert_that(field.resolver).raises(TenantUnauthorized).when_called_with(**iargs).contains('UnauthorizedOperation')
+    spy_check.assert_called_once_with(session=ANY, username=username, groups=groups, tenant_name=ANY, permission_name=expected_perm)
 
 
 EXPECTED_RESOURCE_PERMS = {
