@@ -8,10 +8,11 @@ from dataall.core.permissions.db.tenant.tenant_policy_repositories import Tenant
 from dataall.base.db.exceptions import UnauthorizedOperation, TenantUnauthorized, AWSResourceNotFound
 from dataall.core.permissions.services.tenant_permissions import TENANT_ALL
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.dashboards.db.dashboard_repositories import DashboardRepository
 from dataall.modules.dashboards.db.dashboard_models import Dashboard
 from dataall.modules.dashboards.aws.dashboard_quicksight_client import DashboardQuicksightClient
-from dataall.modules.dashboards.services.dashboard_permissions import GET_DASHBOARD, CREATE_DASHBOARD
+from dataall.modules.dashboards.services.dashboard_permissions import GET_DASHBOARD, CREATE_DASHBOARD, MANAGE_DASHBOARDS
 from dataall.base.utils import Parameter
 
 
@@ -58,6 +59,7 @@ class DashboardQuicksightService:
                     return client.get_anonymous_session(dashboard_id=dash.DashboardId)
 
     @classmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DASHBOARDS)
     @ResourcePolicyService.has_resource_permission(CREATE_DASHBOARD)
     def get_quicksight_designer_url(cls, uri: str):
         context = get_context()

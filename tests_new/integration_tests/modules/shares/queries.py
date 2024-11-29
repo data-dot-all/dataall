@@ -272,3 +272,34 @@ def get_s3_consumption_data(client, shareUri: str):
 
     response = client.query(query=query)
     return response.data.getS3ConsumptionData
+
+
+def reapply_share_object_items(client, dataset_uri: str):
+    query = {
+        'operationName': 'reApplyShareObjectItemsOnDataset',
+        'variables': {'input': dataset_uri},
+        'query': f"""
+                    mutation reApplyShareObjectItemsOnDataset($datasetUri: String!) {{
+                        reApplyShareObjectItemsOnDataset(datasetUri: $datasetUri)
+                    }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.reApplyShareObjectItemsOnDataset
+
+
+def reapply_items_share_object(client, share_uri: str, item_uris: List[str]):
+    query = {
+        'operationName': 'reApplyItemsShareObject',
+        'variables': {'input': {'shareUri': share_uri, 'itemUris': item_uris}},
+        'query': f"""
+                    mutation reApplyItemsShareObject($input: ShareItemSelectorInput) {{
+                      reApplyItemsShareObject(input: $input) {{
+                        shareUri
+                        status
+                      }}
+                    }}
+                """,
+    }
+    response = client.query(query=query)
+    return response.data.reApplyItemsShareObject

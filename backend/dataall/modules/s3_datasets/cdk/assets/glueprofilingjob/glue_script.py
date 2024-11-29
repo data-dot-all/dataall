@@ -2,7 +2,7 @@ import os
 
 # workaround: SPARK_VERSION must be already set before import of pydeequ packages
 # ruff: noqa: E402
-os.environ['SPARK_VERSION'] = '3.1'
+os.environ['SPARK_VERSION'] = '3.3'
 
 import json
 import logging

@@ -204,7 +204,7 @@ class DatasetStack(Stack):
                 server_access_logs_bucket=s3.Bucket.from_bucket_name(
                     self,
                     'EnvAccessLogsBucket',
-                    f'{env.EnvironmentDefaultBucketName}',
+                    f'{env.EnvironmentLogsBucketName}',
                 ),
                 server_access_logs_prefix=f'access_logs/{dataset.S3BucketName}/',
                 enforce_ssl=True,
@@ -556,12 +556,12 @@ class DatasetStack(Stack):
             '--apiUrl': 'None',
             '--snsTopicArn': 'None',
             '--extra-jars': (
-                f's3://{env.EnvironmentDefaultBucketName}' f'/profiling/code/jars/deequ-2.0.0-spark-3.1.jar'
+                f's3://{env.EnvironmentDefaultBucketName}' f'/profiling/code/jars/deequ-2.0.7-spark-3.3.jar'
             ),
             '--enable-metrics': 'true',
             '--enable-continuous-cloudwatch-log': 'true',
             '--enable-glue-datacatalog': 'true',
-            '--SPARK_VERSION': '3.1',
+            '--SPARK_VERSION': '3.3',
         }
 
         job = glue.CfnJob(
@@ -579,7 +579,7 @@ class DatasetStack(Stack):
                 script_location=(f's3://{env.EnvironmentDefaultBucketName}' f'/profiling/code/glue_script.py'),
             ),
             default_arguments=job_args,
-            glue_version='3.0',
+            glue_version='4.0',
             tags={'Application': 'dataall'},
         )
         if dataset.GlueProfilingTriggerSchedule:

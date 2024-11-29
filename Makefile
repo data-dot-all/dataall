@@ -16,7 +16,7 @@ venv:
 	@python3 -m venv "venv"
 	@/bin/bash -c "source venv/bin/activate"
 
-install: upgrade-pip install-deploy install-backend install-cdkproxy install-tests
+install: upgrade-pip install-deploy install-backend install-cdkproxy install-tests install-integration-tests install-custom-auth install-userguide
 
 upgrade-pip:
 	pip install --upgrade pip setuptools
@@ -35,6 +35,12 @@ install-tests:
 
 install-integration-tests:
 	pip install -r tests_new/integration_tests/requirements.txt
+
+install-custom-auth:
+	pip install -r deploy/custom_resources/custom_authorizer/requirements.txt
+
+install-userguide:
+	pip install -r documentation/userguide/requirements.txt
 
 lint:
 	pip install ruff

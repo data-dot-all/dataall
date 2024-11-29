@@ -41,7 +41,11 @@ class DatasetApiModuleInterface(ModuleInterface):
         from dataall.modules.s3_datasets.indexers.table_indexer import DatasetTableIndexer
 
         import dataall.modules.s3_datasets.api
-        from dataall.modules.s3_datasets.services.dataset_permissions import GET_DATASET, UPDATE_DATASET
+        from dataall.modules.s3_datasets.services.dataset_permissions import (
+            GET_DATASET,
+            UPDATE_DATASET,
+            MANAGE_DATASETS,
+        )
         from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
         from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset
 
@@ -73,7 +77,7 @@ class DatasetApiModuleInterface(ModuleInterface):
 
         add_vote_type('dataset', DatasetIndexer)
 
-        TargetType('dataset', GET_DATASET, UPDATE_DATASET)
+        TargetType('dataset', GET_DATASET, UPDATE_DATASET, MANAGE_DATASETS)
 
         EnvironmentResourceManager.register(DatasetRepository())
 

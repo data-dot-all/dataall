@@ -2,6 +2,8 @@ import logging
 import json
 import re
 import os
+from typing import List
+
 from botocore.exceptions import ClientError
 
 log = logging.getLogger(__name__)
@@ -312,3 +314,12 @@ class LakeFormationClient:
             return True
         except ClientError as e:
             log.exception('Error granting permissions to create database')
+
+    def revoke_db_perms(self, principal_arn: str, db_name: str, permissions: List[str]):
+        self._client.revoke_permissions(
+            Principal={
+                'DataLakePrincipalIdentifier': principal_arn,
+            },
+            Resource={'Database': {'Name': db_name}},
+            Permissions=permissions,
+        )

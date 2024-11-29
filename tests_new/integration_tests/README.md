@@ -173,6 +173,9 @@ You can also run the tests locally by...
   export AWS_REGION = "Introduce backend region"
   export COGNITO_CLIENT = "Introduce Cognito client id"
   export API_ENDPOINT = "Introduce API endpoint url"
+  export IDP_DOMAIN_URL = "Introduce your Identity Provider domain url"
+  export DATAALL_DOMAIN_URL = "Introduce data.all frontend domain url"
+
   echo "add your testdata here" > testdata.json 
   make integration-tests
   ```
