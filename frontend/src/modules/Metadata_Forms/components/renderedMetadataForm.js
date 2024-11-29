@@ -53,7 +53,9 @@ export const RenderedMetadataForm = (props) => {
       field.value = false;
     }
     if (field.type === 'Boolean' || field.type === 'Integer') {
-      field.value = JSON.parse(field.value);
+      if (field.value) {
+        field.value = JSON.parse(field.value);
+      }
     }
   });
 
