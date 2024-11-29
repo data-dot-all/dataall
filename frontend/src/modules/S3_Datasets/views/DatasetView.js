@@ -161,7 +161,7 @@ const DatasetView = () => {
   const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getDataset(params.uri));
-    if (!response.errors && response.data.getDataset !== null) {
+    if (response.data.getDataset !== null) {
       setDataset(response.data.getDataset);
       setIsAdmin(
         ['BusinessOwner', 'Admin', 'DataSteward', 'Creator'].indexOf(
