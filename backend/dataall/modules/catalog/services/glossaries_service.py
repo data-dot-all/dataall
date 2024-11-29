@@ -19,26 +19,29 @@ def _session():
 
 class GlossariesResourceAccess:
     @staticmethod
-    def is_owner(f):
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            uri = kwargs.get('uri')
-            if not uri:
-                raise KeyError(f"{f.__name__} doesn't have parameter uri.")
-            context = get_context()
-            with context.db_engine.scoped_session() as session:
-                node = GlossaryRepository.get_node(session=session, uri=uri)
-                while node.nodeType != 'G':
-                    node = GlossaryRepository.get_node(session=session, uri=node.parentUri)
-                if node and (node.admin in context.groups):
-                    return f(*args, **kwargs)
-                else:
-                    raise exceptions.UnauthorizedOperation(
-                        action='GLOSSARY MUTATION',
-                        message=f'User {context.username} is not the admin of the glossary {node.label}.',
-                    )
+    def is_owner():
+        def decorator(f):
+            @wraps(f)
+            def wrapper(*args, **kwargs):
+                uri = kwargs.get('uri')
+                if not uri:
+                    raise KeyError(f"{f.__name__} doesn't have parameter uri.")
+                context = get_context()
+                with context.db_engine.scoped_session() as session:
+                    node = GlossaryRepository.get_node(session=session, uri=uri)
+                    while node.nodeType != 'G':
+                        node = GlossaryRepository.get_node(session=session, uri=node.parentUri)
+                    if node and (node.admin in context.groups):
+                        return f(*args, **kwargs)
+                    else:
+                        raise exceptions.UnauthorizedOperation(
+                            action='GLOSSARY MUTATION',
+                            message=f'User {context.username} is not the admin of the glossary {node.label}.',
+                        )
 
-        return wrapper
+            return wrapper
+
+        return decorator
 
 
 class GlossariesService:
@@ -50,14 +53,14 @@ class GlossariesService:
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_GLOSSARIES)
-    @GlossariesResourceAccess.is_owner
+    @GlossariesResourceAccess.is_owner()
     def create_category(uri: str, data: dict = None):
         with _session() as session:
             return GlossaryRepository.create_category(session=session, uri=uri, data=data)
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_GLOSSARIES)
-    @GlossariesResourceAccess.is_owner
+    @GlossariesResourceAccess.is_owner()
     def create_term(uri: str, data: dict = None):
         with _session() as session:
             return GlossaryRepository.create_term(session=session, uri=uri, data=data)
@@ -123,14 +126,14 @@ class GlossariesService:
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_GLOSSARIES)
-    @GlossariesResourceAccess.is_owner
+    @GlossariesResourceAccess.is_owner()
     def update_node(uri: str = None, data: dict = None):
         with _session() as session:
             return GlossaryRepository.update_node(session=session, uri=uri, data=data)
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_GLOSSARIES)
-    @GlossariesResourceAccess.is_owner
+    @GlossariesResourceAccess.is_owner()
     def delete_node(uri: str = None):
         with _session() as session:
             return GlossaryRepository.delete_node(session=session, uri=uri)
