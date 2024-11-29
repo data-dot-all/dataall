@@ -233,11 +233,11 @@ const FolderView = () => {
   const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getDatasetStorageLocation(params.uri));
-    if (!response.errors && response.data.getDatasetStorageLocation !== null) {
+    if (response.data.getDatasetStorageLocation !== null) {
       setFolder(response.data.getDatasetStorageLocation);
       setIsAdmin(
         ['Creator', 'Admin', 'Owner'].indexOf(
-          response.data.getDatasetStorageLocation.dataset.userRoleForDataset
+          response.data.getDatasetStorageLocation.dataset?.userRoleForDataset
         ) !== -1
       );
     } else {
