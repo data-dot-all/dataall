@@ -11,8 +11,9 @@ from assertpy import assert_that
 
 from dataall.base.api import bootstrap
 from dataall.base.context import RequestContext
-from dataall.base.db.exceptions import TenantUnauthorized, ResourceUnauthorized
-from dataall.core.permissions.services.environment_permissions import GET_ENVIRONMENT
+from dataall.base.db.exceptions import TenantUnauthorized
+from dataall.core.permissions.services.environment_permissions import GET_ENVIRONMENT, LIST_ENVIRONMENT_CONSUMPTION_ROLES, LIST_ENVIRONMENT_NETWORKS, CREDENTIALS_ENVIRONMENT, \
+    LIST_ENVIRONMENT_GROUPS
 from dataall.core.permissions.services.network_permissions import GET_NETWORK
 from dataall.core.permissions.services.organization_permissions import GET_ORGANIZATION
 from dataall.core.permissions.services.tenant_permissions import MANAGE_ENVIRONMENTS, MANAGE_ORGANIZATIONS
@@ -20,7 +21,7 @@ from dataall.modules.catalog.services.glossaries_permissions import MANAGE_GLOSS
 from dataall.modules.dashboards.services.dashboard_permissions import MANAGE_DASHBOARDS, SHARE_DASHBOARD
 from dataall.modules.datapipelines.services.datapipelines_permissions import GET_PIPELINE, MANAGE_PIPELINES
 from dataall.modules.metadata_forms.services.metadata_form_permissions import MANAGE_METADATA_FORMS
-from dataall.modules.mlstudio.services.mlstudio_permissions import GET_SGMSTUDIO_USER, MANAGE_SGMSTUDIO_USERS
+from dataall.modules.mlstudio.services.mlstudio_permissions import GET_SGMSTUDIO_USER, MANAGE_SGMSTUDIO_USERS, SGMSTUDIO_USER_URL
 from dataall.modules.notebooks.services.notebook_permissions import GET_NOTEBOOK, MANAGE_NOTEBOOKS
 from dataall.modules.omics.services.omics_permissions import MANAGE_OMICS_RUNS
 from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import MANAGE_REDSHIFT_DATASETS
@@ -30,13 +31,13 @@ from dataall.modules.worksheets.services.worksheet_permissions import MANAGE_WOR
 
 
 class IgnoreReason(Enum):
-    TENANT = 'admin action. No need for tenant permission check'
+    TENANT = 'tenant action, no need for tenant permission check'
     APPSUPPORT = 'permissions do not apply to application support features'
     BACKPORT = 'outside of this PR to be able to backport to v2.6.2'
     INTRAMODULE = 'returns intra-module data'
     USERROLEINRESOURCE = 'checks user permissions for a particular feature'
     PUBLIC = 'public by design'
-    SIMPLIFIED = 'simplified response'
+    SIMPLIFIED = 'returns a simplified response'
     USERLIMITED = 'returns user resources in application'
     CUSTOM = 'custom permissions checks'
     ADMINLIMITED = 'limited to resource owners/admin'
@@ -651,7 +652,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'generateEnvironmentAccessToken'): TestData(
-        tenant_perm=MANAGE_ENVIRONMENTS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=CREDENTIALS_ENVIRONMENT
     ),
     field_id('Query', 'getAttachedMetadataForm'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -660,10 +661,10 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getCDKExecPolicyPresignedUrl'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_ORGANIZATION, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getConsumptionRolePolicies'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_ENVIRONMENT, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getDashboard'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -699,13 +700,13 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getEnvironment'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_ENVIRONMENT, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getEnvironmentAssumeRoleUrl'): TestData(
-        tenant_perm=MANAGE_ENVIRONMENTS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=CREDENTIALS_ENVIRONMENT
     ),
     field_id('Query', 'getEnvironmentMLStudioDomain'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_ENVIRONMENT, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getFeed'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -735,7 +736,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getOrganization'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_ORGANIZATION, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getPivotRoleExternalId'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -774,10 +775,10 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_NOTEBOOKS, resource_perm=GET_NOTEBOOK
     ),
     field_id('Query', 'getSagemakerStudioUser'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_SGMSTUDIO_USER, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getSagemakerStudioUserPresignedUrl'): TestData(
-        tenant_perm=MANAGE_SGMSTUDIO_USERS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_SGMSTUDIO_USERS, resource_perm=SGMSTUDIO_USER_URL,
     ),
     field_id('Query', 'getShareItemDataFilters'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -798,10 +799,10 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getStack'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm='getStack', tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getStackLogs'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm='getStack', tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getTrustAccount'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -813,16 +814,16 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listAllConsumptionRoles'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'listAllEnvironmentConsumptionRoles'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=LIST_ENVIRONMENT_CONSUMPTION_ROLES, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listAllEnvironmentGroups'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=LIST_ENVIRONMENT_GROUPS, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listAllGroups'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'listAttachedMetadataForms'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -858,25 +859,25 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listEnvironmentConsumptionRoles'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=LIST_ENVIRONMENT_CONSUMPTION_ROLES, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listEnvironmentGroupInvitationPermissions'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.USERROLEINRESOURCE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listEnvironmentGroups'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=LIST_ENVIRONMENT_GROUPS, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listEnvironmentInvitedGroups'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=LIST_ENVIRONMENT_GROUPS, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listEnvironmentNetworks'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=LIST_ENVIRONMENT_NETWORKS, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listEnvironmentRedshiftConnections'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listEnvironments'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'listGlossaries'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -888,7 +889,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listKeyValueTags'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm='listKeyValueTags', tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listMetadataFormVersions'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -903,13 +904,13 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listOrganizationGroupPermissions'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_ORGANIZATION, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listOrganizationGroups'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_ORGANIZATION, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listOrganizations'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'listOwnedDatasets'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -936,7 +937,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listSagemakerStudioUsers'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'listSharedDatasetTableColumns'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -948,10 +949,10 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listTenantGroups'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.TENANT
     ),
     field_id('Query', 'listTenantPermissions'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.TENANT
     ),
     field_id('Query', 'listUserMetadataForms'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -960,7 +961,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listValidEnvironments'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'listWorksheets'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
