@@ -10,6 +10,7 @@ from dataall.modules.metadata_forms.api.resolvers import (
     create_metadata_form_version,
     delete_metadata_form_version,
     create_mf_enforcement_rule,
+    delete_mf_enforcement_rule,
 )
 
 createMetadataForm = gql.MutationField(
@@ -113,5 +114,16 @@ createMetadataFormEnforcementRule = gql.MutationField(
     args=[gql.Argument(name='input', type=gql.NonNullableType(gql.Ref('NewMetadataFormEnforcementInput')))],
     type=gql.Ref('MetadataFormEnforcementRule'),
     resolver=create_mf_enforcement_rule,
+    test_scope='MetadataForm',
+)
+
+deleteMetadataFormEnforcementRule = gql.MutationField(
+    name='deleteMetadataFormEnforcementRule',
+    args=[
+        gql.Argument(name='uri', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='rule_uri', type=gql.NonNullableType(gql.String)),
+    ],
+    type=gql.Boolean,
+    resolver=delete_mf_enforcement_rule,
     test_scope='MetadataForm',
 )

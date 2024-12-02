@@ -24,7 +24,8 @@ import { SET_ERROR } from 'globalErrors';
 import {
   createMetadataFormEnforcementRule,
   listMetadataFormEnforcementRules,
-  listEntityAffectedByEnforcementRules
+  listEntityAffectedByEnforcementRules,
+  deleteMetadataFormEnforcementRule
 } from '../services';
 import { Formik } from 'formik';
 import { LoadingButton } from '@mui/lab';
@@ -485,7 +486,21 @@ export const MetadataFormEnforcement = (props) => {
     setLoading(false);
   };
 
-  const deleteRule = async (rule) => {};
+  const deleteRule = async (rule_uri) => {
+    const response = await client.mutate(
+      deleteMetadataFormEnforcementRule(metadataForm.uri, rule_uri)
+    );
+    if (!response.errors) {
+      if (selectedRule.uri === rule_uri) {
+        setSelectedRule(null);
+        setAffectedEntities([]);
+      }
+      await fetchEnforcementRules();
+    } else {
+      const error = 'Could not delete rule';
+      dispatch({ type: SET_ERROR, error });
+    }
+  };
 
   const fetchAffectedEntities = async (
     rule,
@@ -661,7 +676,10 @@ export const MetadataFormEnforcement = (props) => {
                           onMouseOut={(e) => {
                             e.currentTarget.style.opacity = 0.5;
                           }}
-                          onClick={() => deleteRule(rule.uri)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteRule(rule.uri);
+                          }}
                         />
                       )}
                     </Grid>

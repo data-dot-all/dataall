@@ -144,24 +144,26 @@ class MetadataFormEnforcementService:
                 rule = MetadataFormRepository.get_mf_enforcement_rule_by_uri(session, uri)
 
             orgs = MetadataFormEnforcementService.get_affected_organizations(uri, rule)
-            affected_entities.extend(
-                [
-                    MetadataFormEnforcementService.form_affected_entity_object(
-                        MetadataFormEntityTypes.Organizations.value, o, rule
-                    )
-                    for o in orgs
-                ]
-            )
+            if MetadataFormEntityTypes.Organizations.value in rule.entityTypes:
+                affected_entities.extend(
+                    [
+                        MetadataFormEnforcementService.form_affected_entity_object(
+                            MetadataFormEntityTypes.Organizations.value, o, rule
+                        )
+                        for o in orgs
+                    ]
+                )
 
             envs = MetadataFormEnforcementService.get_affected_environments(uri, rule)
-            affected_entities.extend(
-                [
-                    MetadataFormEnforcementService.form_affected_entity_object(
-                        MetadataFormEntityTypes.Environments.value, e, rule
-                    )
-                    for e in envs
-                ]
-            )
+            if MetadataFormEntityTypes.Environments.value in rule.entityTypes:
+                affected_entities.extend(
+                    [
+                        MetadataFormEnforcementService.form_affected_entity_object(
+                            MetadataFormEntityTypes.Environments.value, e, rule
+                        )
+                        for e in envs
+                    ]
+                )
 
             datasets = MetadataFormEnforcementService.get_affected_datasets(uri, rule)
             affected_entities.extend(
@@ -170,6 +172,7 @@ class MetadataFormEnforcementService:
                         ds.datasetType.value + '-Dataset', ds, rule
                     )
                     for ds in datasets
+                    if ds.datasetType.value + '-Dataset' in rule.entityTypes
                 ]
             )
 
@@ -226,3 +229,13 @@ class MetadataFormEnforcementService:
                 return EnvironmentRepository.get_environment_by_uri(session, rule.homeEntity).label
             if rule.level == MetadataFormEnforcementScope.Dataset.value:
                 return DatasetBaseRepository.get_dataset_by_uri(session, rule.homeEntity).label
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_METADATA_FORMS)
+    @MetadataFormAccessService.can_perform(ENFORCE_METADATA_FORM)
+    def delete_mf_enforcement_rule(uri, rule_uri):
+        with get_context().db_engine.scoped_session() as session:
+            rule = MetadataFormRepository.get_mf_enforcement_rule_by_uri(session, rule_uri)
+            session.delete(rule)
+            session.commit()
+        return True

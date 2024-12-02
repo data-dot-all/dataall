@@ -138,3 +138,7 @@ def list_mf_affected_entities(context: Context, source, uri, filter):
 
 def get_mf_rule_home_entity_name(context: Context, source: MetadataFormEnforcementRule):
     return MetadataFormEnforcementService.resolve_home_entity(source.uri, source)
+
+
+def delete_mf_enforcement_rule(context: Context, source, uri, rule_uri):
+    return MetadataFormEnforcementService.delete_mf_enforcement_rule(uri=uri, rule_uri=rule_uri)
