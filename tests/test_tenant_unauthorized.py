@@ -1167,6 +1167,10 @@ def mock_input_validation(mocker):
         return_value='MANAGE_ENVIRONMENTS',
     )
     mocker.patch('dataall.modules.shares_base.api.resolvers.RequestValidator', MagicMock())
+    # mock aws calls for speed
+    mocker.patch('dataall.base.aws.sts.SessionHelper._get_parameter_value')
+    mocker.patch('dataall.base.aws.sts.SessionHelper.remote_session')
+    mocker.patch('boto3.client').side_effect = RuntimeError('mocked boto3 client')
 
 
 @pytest.mark.parametrize('field', ALL_PARAMS)
@@ -1175,9 +1179,7 @@ def mock_input_validation(mocker):
 @patch('dataall.core.permissions.services.group_policy_service.GroupPolicyService.check_group_environment_permission')
 @patch('dataall.core.permissions.services.tenant_policy_service.TenantPolicyService.check_user_tenant_permission')
 @patch('dataall.core.stacks.db.target_type_repositories.TargetType.get_resource_read_permission_name')
-@patch('dataall.base.aws.sts.SessionHelper.remote_session')
 def test_permissions(
-    remote_session,
     mock_perm_name,
     mock_check_tenant,
     mock_check_group,
