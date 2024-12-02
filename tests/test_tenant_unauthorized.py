@@ -61,6 +61,12 @@ class TestData:
     tenant_ignore: IgnoreReason = IgnoreReason.NOTREQUIRED
     tenant_perm: str = None
 
+    def __post_init__(self):
+        if not any([self.resource_perm, self.resource_ignore]):
+            raise ValueError("Either resource_perm or resource_ignore must be set")
+        if not any([self.tenant_perm, self.tenant_ignore]):
+            raise ValueError("Either tenant_perm or tenant_ignore must be set")
+
 
 EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('AttachedMetadataForm', 'entityName'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
