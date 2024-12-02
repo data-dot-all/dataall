@@ -36,11 +36,11 @@ def resolver_id(type_name, field_name):
 
 class IgnoreReason(Enum):
     TENANT = 'admin action. No need for tenant permission check'
-    APPSUPPORT = 'permissions do not apply to application support features (Feed/Votes)'
+    APPSUPPORT = 'permissions do not apply to application support features'
     BACKPORT = 'outside of this PR to be able to backport to v2.6.2'
     INTRAMODULE = 'returns intra-module data'
-    PERMCHECK = 'checks user permissions for a particular feature'
-    CATALOG = 'catalog resources are public by design'
+    USERROLEINRESOURCE = 'checks user permissions for a particular feature'
+    PUBLIC = 'public by design'
     SIMPLIFIED = 'simplified response'
     NOTREQUIRED = 'permission check is not required'
 
@@ -61,9 +61,9 @@ class TestData:
 
     def __post_init__(self):
         if not any([self.resource_perm, self.resource_ignore]):
-            raise ValueError("Either resource_perm or resource_ignore must be set")
+            raise ValueError('Either resource_perm or resource_ignore must be set')
         if not any([self.tenant_perm, self.tenant_ignore]):
-            raise ValueError("Either tenant_perm or tenant_ignore must be set")
+            raise ValueError('Either tenant_perm or tenant_ignore must be set')
 
 
 EXPECTED_RESOLVERS: Mapping[str, TestData] = {
@@ -71,7 +71,9 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('AttachedMetadataForm', 'fields'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
     field_id('AttachedMetadataForm', 'metadataForm'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
     field_id('AttachedMetadataFormField', 'field'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
-    field_id('AttachedMetadataFormField', 'hasTenantPermissions'): TestData(resource_ignore=IgnoreReason.PERMCHECK),
+    field_id('AttachedMetadataFormField', 'hasTenantPermissions'): TestData(
+        resource_ignore=IgnoreReason.USERROLEINRESOURCE
+    ),
     field_id('Category', 'associations'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
     field_id('Category', 'categories'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
     field_id('Category', 'children'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
@@ -79,7 +81,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Category', 'terms'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
     field_id('ConsumptionRole', 'managedPolicies'): TestData(resource_perm=GET_ENVIRONMENT),
     field_id('Dashboard', 'environment'): TestData(resource_perm=GET_ENVIRONMENT),
-    field_id('Dashboard', 'terms'): TestData(resource_ignore=IgnoreReason.CATALOG),
+    field_id('Dashboard', 'terms'): TestData(resource_ignore=IgnoreReason.PUBLIC),
     field_id('Dashboard', 'upvotes'): TestData(resource_ignore=IgnoreReason.APPSUPPORT),
     field_id('Dashboard', 'userRoleForDashboard'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
     field_id('DataPipeline', 'cloneUrlHttp'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
@@ -95,7 +97,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Dataset', 'statistics'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
     field_id('Dataset', 'stewards'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
     field_id('Dataset', 'tables'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
-    field_id('Dataset', 'terms'): TestData(resource_ignore=IgnoreReason.CATALOG),
+    field_id('Dataset', 'terms'): TestData(resource_ignore=IgnoreReason.PUBLIC),
     field_id('Dataset', 'userRoleForDataset'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
     field_id('DatasetBase', 'environment'): TestData(resource_perm=GET_ENVIRONMENT),
     field_id('DatasetBase', 'owners'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
@@ -106,12 +108,12 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('DatasetProfilingRun', 'results'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
     field_id('DatasetProfilingRun', 'status'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
     field_id('DatasetStorageLocation', 'dataset'): TestData(resource_perm=GET_DATASET),
-    field_id('DatasetStorageLocation', 'terms'): TestData(resource_ignore=IgnoreReason.CATALOG),
+    field_id('DatasetStorageLocation', 'terms'): TestData(resource_ignore=IgnoreReason.PUBLIC),
     field_id('DatasetTable', 'GlueTableProperties'): TestData(resource_perm=GET_DATASET_TABLE),
     field_id('DatasetTable', 'columns'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
     field_id('DatasetTable', 'dataset'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
-    field_id('DatasetTable', 'terms'): TestData(resource_ignore=IgnoreReason.CATALOG),
-    field_id('DatasetTableColumn', 'terms'): TestData(resource_ignore=IgnoreReason.CATALOG),
+    field_id('DatasetTable', 'terms'): TestData(resource_ignore=IgnoreReason.PUBLIC),
+    field_id('DatasetTableColumn', 'terms'): TestData(resource_ignore=IgnoreReason.PUBLIC),
     field_id('Environment', 'networks'): TestData(resource_perm=GET_NETWORK),
     field_id('Environment', 'organization'): TestData(resource_ignore=IgnoreReason.SIMPLIFIED),
     field_id('Environment', 'parameters'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
@@ -120,21 +122,23 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('EnvironmentSimplified', 'networks'): TestData(resource_perm=GET_NETWORK),
     field_id('EnvironmentSimplified', 'organization'): TestData(resource_ignore=IgnoreReason.SIMPLIFIED),
     field_id('Feed', 'messages'): TestData(resource_ignore=IgnoreReason.APPSUPPORT),
-    field_id('Glossary', 'associations'): TestData(resource_ignore=IgnoreReason.CATALOG),
-    field_id('Glossary', 'categories'): TestData(resource_ignore=IgnoreReason.CATALOG),
-    field_id('Glossary', 'children'): TestData(resource_ignore=IgnoreReason.CATALOG),
-    field_id('Glossary', 'stats'): TestData(resource_ignore=IgnoreReason.CATALOG),
-    field_id('Glossary', 'tree'): TestData(resource_ignore=IgnoreReason.CATALOG),
-    field_id('Glossary', 'userRoleForGlossary'): TestData(resource_ignore=IgnoreReason.CATALOG),
-    field_id('GlossaryTermLink', 'target'): TestData(resource_ignore=IgnoreReason.CATALOG),
-    field_id('GlossaryTermLink', 'term'): TestData(resource_ignore=IgnoreReason.CATALOG),
-    field_id('Group', 'environmentPermissions'): TestData(resource_ignore=IgnoreReason.PERMCHECK),
-    field_id('Group', 'tenantPermissions'): TestData(resource_ignore=IgnoreReason.PERMCHECK),
+    field_id('Glossary', 'associations'): TestData(resource_ignore=IgnoreReason.PUBLIC),
+    field_id('Glossary', 'categories'): TestData(resource_ignore=IgnoreReason.PUBLIC),
+    field_id('Glossary', 'children'): TestData(resource_ignore=IgnoreReason.PUBLIC),
+    field_id('Glossary', 'stats'): TestData(resource_ignore=IgnoreReason.PUBLIC),
+    field_id('Glossary', 'tree'): TestData(resource_ignore=IgnoreReason.PUBLIC),
+    field_id('Glossary', 'userRoleForGlossary'): TestData(resource_ignore=IgnoreReason.PUBLIC),
+    field_id('GlossaryTermLink', 'target'): TestData(resource_ignore=IgnoreReason.PUBLIC),
+    field_id('GlossaryTermLink', 'term'): TestData(resource_ignore=IgnoreReason.PUBLIC),
+    field_id('Group', 'environmentPermissions'): TestData(resource_ignore=IgnoreReason.USERROLEINRESOURCE),
+    field_id('Group', 'tenantPermissions'): TestData(resource_ignore=IgnoreReason.USERROLEINRESOURCE),
     field_id('MetadataForm', 'fields'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
     field_id('MetadataForm', 'homeEntityName'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
     field_id('MetadataForm', 'userRole'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
-    field_id('MetadataFormField', 'glossaryNodeName'): TestData(resource_ignore=IgnoreReason.CATALOG),
-    field_id('MetadataFormSearchResult', 'hasTenantPermissions'): TestData(resource_ignore=IgnoreReason.PERMCHECK),
+    field_id('MetadataFormField', 'glossaryNodeName'): TestData(resource_ignore=IgnoreReason.PUBLIC),
+    field_id('MetadataFormSearchResult', 'hasTenantPermissions'): TestData(
+        resource_ignore=IgnoreReason.USERROLEINRESOURCE
+    ),
     field_id('Mutation', 'DisableDataSubscriptions'): TestData(tenant_perm=MANAGE_ENVIRONMENTS),
     field_id('Mutation', 'addConnectionGroupPermission'): TestData(tenant_ignore=IgnoreReason.BACKPORT),
     field_id('Mutation', 'addConsumptionRoleToEnvironment'): TestData(tenant_perm=MANAGE_ENVIRONMENTS),
@@ -384,11 +388,11 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('RedshiftDataset', 'environment'): TestData(resource_perm=GET_ENVIRONMENT),
     field_id('RedshiftDataset', 'owners'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
     field_id('RedshiftDataset', 'stewards'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
-    field_id('RedshiftDataset', 'terms'): TestData(resource_ignore=IgnoreReason.CATALOG),
+    field_id('RedshiftDataset', 'terms'): TestData(resource_ignore=IgnoreReason.PUBLIC),
     field_id('RedshiftDataset', 'upvotes'): TestData(resource_ignore=IgnoreReason.APPSUPPORT),
     field_id('RedshiftDataset', 'userRoleForDataset'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
     field_id('RedshiftDatasetTable', 'dataset'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
-    field_id('RedshiftDatasetTable', 'terms'): TestData(resource_ignore=IgnoreReason.CATALOG),
+    field_id('RedshiftDatasetTable', 'terms'): TestData(resource_ignore=IgnoreReason.PUBLIC),
     field_id('SagemakerNotebook', 'NotebookInstanceStatus'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
     field_id('SagemakerNotebook', 'environment'): TestData(resource_perm=GET_ENVIRONMENT),
     field_id('SagemakerNotebook', 'organization'): TestData(resource_perm=GET_ORGANIZATION),
@@ -411,7 +415,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('ShareObject', 'items'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
     field_id('ShareObject', 'principal'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
     field_id('ShareObject', 'statistics'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
-    field_id('ShareObject', 'userRoleForShareObject'): TestData(resource_ignore=IgnoreReason.PERMCHECK),
+    field_id('ShareObject', 'userRoleForShareObject'): TestData(resource_ignore=IgnoreReason.USERROLEINRESOURCE),
     field_id('SharedDatabaseTableItem', 'sharedGlueDatabaseName'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
     field_id('Stack', 'EcsTaskId'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
     field_id('Stack', 'canViewLogs'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
@@ -429,9 +433,9 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
 
 
 def test_all_resolvers_have_test_data():
-    '''
+    """
     ensure that all EXPECTED_RESOURCES_PERMS have a corresponding query (to avoid stale entries) and vice versa
-    '''
+    """
     assert_that([field_id(res[0].name, res[1].name) for res in ALL_RESOLVERS]).described_as(
         'stale or missing EXPECTED_RESOURCE_PERMS detected'
     ).contains_only(*EXPECTED_RESOLVERS.keys())
