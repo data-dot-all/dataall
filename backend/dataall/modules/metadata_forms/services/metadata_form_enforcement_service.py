@@ -7,9 +7,15 @@ from dataall.core.permissions.services.tenant_policy_service import TenantPolicy
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository, DatasetListRepository
 from dataall.modules.metadata_forms.db.enums import (
     MetadataFormEnforcementScope,
-    MetadataFormEntityTypes,
     MetadataFormEnforcementSeverity,
+    ENTITY_SCOPE_BY_TYPE,
 )
+from dataall.core.metadata_manager.metadata_form_entity_manager import (
+    MetadataFormEntityTypes,
+    MetadataFormEntityManager,
+    MetadataFormEntity,
+)
+
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
 from dataall.modules.metadata_forms.services.metadata_form_access_service import MetadataFormAccessService
 from dataall.modules.metadata_forms.services.metadata_form_permissions import (
@@ -114,15 +120,21 @@ class MetadataFormEnforcementService:
             return []
 
     @staticmethod
-    def form_affected_entity_object(uri, owner, label, type, rule):
+    def form_affected_entity_object(type, entity: MetadataFormEntity, rule):
         with get_context().db_engine.scoped_session() as session:
             attached = MetadataFormRepository.query_all_attached_metadata_forms_for_entity(
                 session,
-                entityUri=uri,
+                entityUri=entity.get_uri(),
                 metadataFormUri=rule.metadataFormUri,
                 version=rule.version,
             )
-        return {'type': type, 'name': label, 'uri': uri, 'owner': owner, 'attached': attached.first()}
+        return {
+            'type': type,
+            'name': entity.get_entity_name(),
+            'uri': entity.get_uri(),
+            'owner': entity.get_owner(),
+            'attached': attached.first(),
+        }
 
     @staticmethod
     def get_affected_entities(uri, rule=None):
@@ -135,7 +147,7 @@ class MetadataFormEnforcementService:
             affected_entities.extend(
                 [
                     MetadataFormEnforcementService.form_affected_entity_object(
-                        o.organizationUri, o.SamlGroupName, o.label,  MetadataFormEntityTypes.Organizations.value, rule
+                        MetadataFormEntityTypes.Organizations.value, o, rule
                     )
                     for o in orgs
                 ]
@@ -145,7 +157,7 @@ class MetadataFormEnforcementService:
             affected_entities.extend(
                 [
                     MetadataFormEnforcementService.form_affected_entity_object(
-                        e.environmentUri, e.SamlGroupName, e.label,  MetadataFormEntityTypes.Environments.value, rule
+                        MetadataFormEntityTypes.Environments.value, e, rule
                     )
                     for e in envs
                 ]
@@ -155,7 +167,7 @@ class MetadataFormEnforcementService:
             affected_entities.extend(
                 [
                     MetadataFormEnforcementService.form_affected_entity_object(
-                        ds.datasetUri, ds.SamlAdminGroupName, ds.label,  ds.datasetType.value + '-Dataset', rule
+                        ds.datasetType.value + '-Dataset', ds, rule
                     )
                     for ds in datasets
                 ]
@@ -169,20 +181,19 @@ class MetadataFormEnforcementService:
             }
 
             for entity_type in entity_types:
-                entity_class, level, get_uri_owner_label = MetadataFormEntityTypes.get_entity_class(entity_type)
+                entity_class = MetadataFormEntityManager.get_resource(entity_type)
+                level = ENTITY_SCOPE_BY_TYPE[entity_type]
                 all_entities = session.query(entity_class)
-                if level == MetadataFormEnforcementScope.Organization.value:
+                if level == MetadataFormEnforcementScope.Organization:
                     all_entities = all_entities.filter(entity_class.organizationUri.in_([org.uri for org in orgs]))
-                if level == MetadataFormEnforcementScope.Environment.value:
+                if level == MetadataFormEnforcementScope.Environment:
                     all_entities = all_entities.filter(entity_class.environmentUri.in_([env.uri for env in envs]))
-                if level == MetadataFormEnforcementScope.Dataset.value:
+                if level == MetadataFormEnforcementScope.Dataset:
                     all_entities = all_entities.filter(entity_class.datasetUri.in_([ds.uri for ds in datasets]))
                 all_entities = all_entities.all()
                 affected_entities.extend(
                     [
-                        MetadataFormEnforcementService.form_affected_entity_object(
-                            *get_uri_owner_label(e), entity_type, rule
-                        )
+                        MetadataFormEnforcementService.form_affected_entity_object(entity_type, e, rule)
                         for e in all_entities
                     ]
                 )

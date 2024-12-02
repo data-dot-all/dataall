@@ -10,8 +10,8 @@ from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRep
 from dataall.modules.metadata_forms.db.enums import (
     MetadataFormVisibility,
     MetadataFormFieldType,
-    MetadataFormEntityTypes,
 )
+from dataall.core.metadata_manager.metadata_form_entity_manager import MetadataFormEntityTypes
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
 from dataall.modules.metadata_forms.services.metadata_form_access_service import MetadataFormAccessService

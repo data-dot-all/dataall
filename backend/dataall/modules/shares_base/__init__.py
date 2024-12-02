@@ -1,6 +1,7 @@
 import logging
 from typing import Set, List, Type
 from dataall.base.loader import ModuleInterface, ImportMode
+from dataall.modules.shares_base.db.share_object_models import ShareObject, ShareObjectItem
 
 log = logging.getLogger(__name__)
 
@@ -18,6 +19,13 @@ class SharesBaseAPIModuleInterface(ModuleInterface):
 
     def __init__(self):
         import dataall.modules.shares_base.api
+        from dataall.core.metadata_manager.metadata_form_entity_manager import (
+            MetadataFormEntityManager,
+            MetadataFormEntityTypes,
+        )
+
+        MetadataFormEntityManager.register(ShareObject, MetadataFormEntityTypes.Share.value)
+        MetadataFormEntityManager.register(ShareObjectItem, MetadataFormEntityTypes.ShareItem.value)
 
 
 class SharesBaseAsyncHandlerModuleInterface(ModuleInterface):

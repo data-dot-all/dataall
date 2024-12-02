@@ -8,9 +8,9 @@ from dataall.core.permissions.services.tenant_policy_service import TenantPolicy
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.metadata_forms.db.enums import (
     MetadataFormUserRoles,
-    MetadataFormEntityTypes,
     MetadataFormEnforcementScope,
 )
+from dataall.core.metadata_manager.metadata_form_entity_manager import MetadataFormEntityTypes
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
 from functools import wraps
 from dataall.base.db import exceptions

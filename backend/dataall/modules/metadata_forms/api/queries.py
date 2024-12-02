@@ -61,8 +61,10 @@ listMetadataFormEnforcementRules = gql.QueryField(
 
 listEntityAffectedByEnforcementRule = gql.QueryField(
     name='listEntityAffectedByEnforcementRules',
-    args=[gql.Argument('uri', gql.NonNullableType(gql.String)),
-          gql.Argument('filter', gql.Ref('AffectedEntityFilter'))],
+    args=[
+        gql.Argument('uri', gql.NonNullableType(gql.String)),
+        gql.Argument('filter', gql.Ref('AffectedEntityFilter')),
+    ],
     type=gql.Ref('MFAffectedEntitiesSearchResult'),
     resolver=list_mf_affected_entities,
     test_scope='MetadataForm',

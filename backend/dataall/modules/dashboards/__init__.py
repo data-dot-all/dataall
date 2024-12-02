@@ -5,7 +5,6 @@ from typing import Set, List, Type
 
 from dataall.base.loader import ImportMode, ModuleInterface
 
-
 log = logging.getLogger(__name__)
 
 
@@ -26,6 +25,7 @@ class DashboardApiModuleInterface(ModuleInterface):
 
     def __init__(self):
         from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
+        from dataall.core.metadata_manager import MetadataFormEntityManager, MetadataFormEntityTypes
         from dataall.modules.dashboards.db.dashboard_repositories import DashboardRepository
         from dataall.modules.dashboards.db.dashboard_models import Dashboard
         import dataall.modules.dashboards.api
@@ -45,6 +45,7 @@ class DashboardApiModuleInterface(ModuleInterface):
         add_vote_type('dashboard', DashboardIndexer)
 
         EnvironmentResourceManager.register(DashboardRepository())
+        MetadataFormEntityManager.register(Dashboard, MetadataFormEntityTypes.Dashboards.value)
         log.info('Dashboard API has been loaded')
 
 
