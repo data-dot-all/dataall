@@ -35,7 +35,7 @@ def resolver_id(type_name, field_name):
 
 
 class IgnoreReason(Enum):
-    ADMIN = 'admin action. No need for tenant permission check'
+    TENANT = 'admin action. No need for tenant permission check'
     SUPPORT = 'permissions do not apply to support notifications'
     FEED = 'permissions do not apply to support feed messages'
     VOTES = 'permissions do not apply to support votes'
@@ -163,7 +163,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Mutation', 'createNetwork'): TestData(tenant_perm=MANAGE_ENVIRONMENTS),
     field_id('Mutation', 'createOmicsRun'): TestData(tenant_perm=MANAGE_OMICS_RUNS),
     field_id('Mutation', 'createOrganization'): TestData(tenant_perm=MANAGE_ORGANIZATIONS),
-    field_id('Mutation', 'createQuicksightDataSourceSet'): TestData(tenant_ignore=IgnoreReason.ADMIN),
+    field_id('Mutation', 'createQuicksightDataSourceSet'): TestData(tenant_ignore=IgnoreReason.TENANT),
     field_id('Mutation', 'createRedshiftConnection'): TestData(tenant_ignore=IgnoreReason.BACKPORT),
     field_id('Mutation', 'createSagemakerNotebook'): TestData(tenant_perm=MANAGE_NOTEBOOKS),
     field_id('Mutation', 'createSagemakerStudioUser'): TestData(tenant_perm=MANAGE_SGMSTUDIO_USERS),
@@ -220,10 +220,10 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Mutation', 'revokeItemsShareObject'): TestData(tenant_perm=MANAGE_SHARES),
     field_id('Mutation', 'startDatasetProfilingRun'): TestData(tenant_perm=MANAGE_DATASETS),
     field_id('Mutation', 'startGlueCrawler'): TestData(tenant_perm=MANAGE_DATASETS),
-    field_id('Mutation', 'startMaintenanceWindow'): TestData(tenant_ignore=IgnoreReason.ADMIN),
-    field_id('Mutation', 'startReindexCatalog'): TestData(tenant_ignore=IgnoreReason.ADMIN),
+    field_id('Mutation', 'startMaintenanceWindow'): TestData(tenant_ignore=IgnoreReason.TENANT),
+    field_id('Mutation', 'startReindexCatalog'): TestData(tenant_ignore=IgnoreReason.TENANT),
     field_id('Mutation', 'startSagemakerNotebook'): TestData(tenant_perm=MANAGE_NOTEBOOKS),
-    field_id('Mutation', 'stopMaintenanceWindow'): TestData(tenant_ignore=IgnoreReason.ADMIN),
+    field_id('Mutation', 'stopMaintenanceWindow'): TestData(tenant_ignore=IgnoreReason.TENANT),
     field_id('Mutation', 'stopSagemakerNotebook'): TestData(tenant_perm=MANAGE_NOTEBOOKS),
     field_id('Mutation', 'submitShareExtension'): TestData(tenant_perm=MANAGE_SHARES),
     field_id('Mutation', 'submitShareObject'): TestData(tenant_perm=MANAGE_SHARES),
@@ -242,13 +242,13 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Mutation', 'updateEnvironment'): TestData(tenant_perm=MANAGE_ENVIRONMENTS),
     field_id('Mutation', 'updateGlossary'): TestData(tenant_perm=MANAGE_GLOSSARIES),
     field_id('Mutation', 'updateGroupEnvironmentPermissions'): TestData(tenant_perm=MANAGE_ENVIRONMENTS),
-    field_id('Mutation', 'updateGroupTenantPermissions'): TestData(tenant_ignore=IgnoreReason.ADMIN),
+    field_id('Mutation', 'updateGroupTenantPermissions'): TestData(tenant_ignore=IgnoreReason.TENANT),
     field_id('Mutation', 'updateKeyValueTags'): TestData(tenant_perm=MANAGE_ENVIRONMENTS),
     field_id('Mutation', 'updateOrganization'): TestData(tenant_perm=MANAGE_ORGANIZATIONS),
     field_id('Mutation', 'updateOrganizationGroup'): TestData(tenant_perm=MANAGE_ORGANIZATIONS),
     field_id('Mutation', 'updateRedshiftDataset'): TestData(tenant_perm=MANAGE_REDSHIFT_DATASETS),
     field_id('Mutation', 'updateRedshiftDatasetTable'): TestData(tenant_perm=MANAGE_REDSHIFT_DATASETS),
-    field_id('Mutation', 'updateSSMParameter'): TestData(tenant_ignore=IgnoreReason.ADMIN),
+    field_id('Mutation', 'updateSSMParameter'): TestData(tenant_ignore=IgnoreReason.TENANT),
     field_id('Mutation', 'updateShareExpirationPeriod'): TestData(tenant_perm=MANAGE_SHARES),
     field_id('Mutation', 'updateShareExtensionReason'): TestData(tenant_perm=MANAGE_SHARES),
     field_id('Mutation', 'updateShareItemFilters'): TestData(tenant_perm=MANAGE_SHARES),
