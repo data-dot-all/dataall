@@ -11,7 +11,6 @@ from assertpy import assert_that
 
 from dataall.base.api import bootstrap
 from dataall.base.context import RequestContext
-from dataall.base.db.exceptions import TenantUnauthorized
 from dataall.core.permissions.services.environment_permissions import (
     GET_ENVIRONMENT,
     LIST_ENVIRONMENT_CONSUMPTION_ROLES,
@@ -66,8 +65,14 @@ from dataall.modules.mlstudio.services.mlstudio_permissions import (
     MANAGE_SGMSTUDIO_USERS,
     SGMSTUDIO_USER_URL,
     DELETE_SGMSTUDIO_USER,
+    CREATE_SGMSTUDIO_USER,
 )
-from dataall.modules.notebooks.services.notebook_permissions import GET_NOTEBOOK, MANAGE_NOTEBOOKS, DELETE_NOTEBOOK
+from dataall.modules.notebooks.services.notebook_permissions import (
+    GET_NOTEBOOK,
+    MANAGE_NOTEBOOKS,
+    DELETE_NOTEBOOK,
+    CREATE_NOTEBOOK,
+)
 from dataall.modules.omics.services.omics_permissions import MANAGE_OMICS_RUNS, CREATE_OMICS_RUN
 from dataall.modules.redshift_datasets.services.redshift_connection_permissions import GET_REDSHIFT_CONNECTION
 from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import (
@@ -92,7 +97,6 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     DELETE_DATASET,
     DELETE_DATASET_FOLDER,
     DELETE_TABLE_DATA_FILTER,
-    CREATE_DATASET,
     UPDATE_DATASET,
     PROFILE_DATASET_TABLE,
     CRAWL_DATASET,
@@ -100,6 +104,8 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     SYNC_DATASET,
     UPDATE_DATASET_FOLDER,
     LIST_TABLE_DATA_FILTERS,
+    CREATE_DATASET,
+    CREATE_DATASET_FOLDER,
 )
 from dataall.modules.shares_base.services.share_permissions import (
     MANAGE_SHARES,
@@ -111,6 +117,7 @@ from dataall.modules.shares_base.services.share_permissions import (
     DELETE_SHARE_OBJECT,
     REJECT_SHARE_OBJECT,
     REMOVE_ITEM,
+    CREATE_SHARE_OBJECT,
 )
 from dataall.modules.worksheets.services.worksheet_permissions import (
     MANAGE_WORKSHEETS,
@@ -384,11 +391,9 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Mutation', 'createDataPipelineEnvironment'): TestData(
         tenant_perm=MANAGE_PIPELINES, resource_perm=CREATE_PIPELINE
     ),
-    field_id('Mutation', 'createDataset'): TestData(
-        tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'createDataset'): TestData(tenant_perm=MANAGE_DATASETS, resource_perm=CREATE_DATASET),
     field_id('Mutation', 'createDatasetStorageLocation'): TestData(
-        tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_DATASETS, resource_perm=CREATE_DATASET_FOLDER
     ),
     field_id('Mutation', 'createEnvironment'): TestData(
         tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=LINK_ENVIRONMENT
@@ -417,14 +422,12 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_ignore=IgnoreReason.BACKPORT, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'createSagemakerNotebook'): TestData(
-        tenant_perm=MANAGE_NOTEBOOKS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_NOTEBOOKS, resource_perm=CREATE_NOTEBOOK
     ),
     field_id('Mutation', 'createSagemakerStudioUser'): TestData(
-        tenant_perm=MANAGE_SGMSTUDIO_USERS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_SGMSTUDIO_USERS, resource_perm=CREATE_SGMSTUDIO_USER
     ),
-    field_id('Mutation', 'createShareObject'): TestData(
-        tenant_perm=MANAGE_SHARES, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'createShareObject'): TestData(tenant_perm=MANAGE_SHARES, resource_perm=CREATE_SHARE_OBJECT),
     field_id('Mutation', 'createTableDataFilter'): TestData(
         tenant_perm=MANAGE_DATASETS, resource_perm=CREATE_TABLE_DATA_FILTER
     ),
@@ -590,9 +593,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Mutation', 'updateDataPipelineEnvironment'): TestData(
         tenant_perm=MANAGE_PIPELINES, resource_perm=UPDATE_PIPELINE
     ),
-    field_id('Mutation', 'updateDataset'): TestData(
-        tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'updateDataset'): TestData(tenant_perm=MANAGE_DATASETS, resource_perm=UPDATE_DATASET),
     field_id('Mutation', 'updateDatasetStorageLocation'): TestData(
         tenant_perm=MANAGE_DATASETS, resource_perm=UPDATE_DATASET_FOLDER
     ),
@@ -639,7 +640,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_SHARES, resource_perm=SUBMIT_SHARE_OBJECT
     ),
     field_id('Mutation', 'updateShareItemFilters'): TestData(
-        tenant_perm=MANAGE_SHARES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_SHARES, resource_perm=APPROVE_SHARE_OBJECT
     ),
     field_id('Mutation', 'updateShareRejectReason'): TestData(
         tenant_perm=MANAGE_SHARES, resource_perm=REJECT_SHARE_OBJECT
@@ -1147,7 +1148,7 @@ def test_all_resolvers_have_test_data():
     ).contains_only(*EXPECTED_RESOLVERS.keys())
 
 
-ALL_PARAMS = [pytest.param(_type, field, id=field_id(_type.name, field.name)) for _type, field in ALL_RESOLVERS]
+ALL_PARAMS = [pytest.param(field, id=field_id(_type.name, field.name)) for _type, field in ALL_RESOLVERS]
 
 
 @pytest.fixture(scope='function')
@@ -1168,17 +1169,20 @@ def mock_input_validation(mocker):
     mocker.patch('dataall.modules.shares_base.api.resolvers.RequestValidator', MagicMock())
 
 
-@pytest.mark.parametrize('_type,field', ALL_PARAMS)
+@pytest.mark.parametrize('field', ALL_PARAMS)
 @patch('dataall.base.context._request_storage')
 @patch('dataall.core.permissions.services.resource_policy_service.ResourcePolicyService.check_user_resource_permission')
 @patch('dataall.core.permissions.services.group_policy_service.GroupPolicyService.check_group_environment_permission')
 @patch('dataall.core.permissions.services.tenant_policy_service.TenantPolicyService.check_user_tenant_permission')
-def test_unauthorized_tenant_permissions(
-    mock_tenant_check,
+@patch('dataall.core.stacks.db.target_type_repositories.TargetType.get_resource_read_permission_name')
+@patch('dataall.base.aws.sts.SessionHelper.remote_session')
+def test_permissions(
+    remote_session,
+    mock_perm_name,
+    mock_check_tenant,
     mock_check_group,
     mock_check_resource,
     mock_storage,
-    _type,
     field,
     request,
     mock_input_validation,
@@ -1186,43 +1190,8 @@ def test_unauthorized_tenant_permissions(
     fid = request.node.callspec.id
     tdata = EXPECTED_RESOLVERS[fid]
     msg = f'{fid} -> {field.resolver.__code__.co_filename}:{field.resolver.__code__.co_firstlineno}'
-    expected_perm = tdata.tenant_perm
-    if not expected_perm:
-        pytest.skip(msg + f' Reason: {tdata.tenant_ignore.value}')
-    logging.info(msg)
-
-    assert_that(field.resolver).is_not_none()
-    username = 'ausername'
-    groups = ['agroup']
-    mock_storage.context = RequestContext(MagicMock(), username, groups, 'auserid')
-    mock_tenant_check.side_effect = TenantUnauthorized(username, 'test_action', 'test_tenant')
-    iargs = {arg: MagicMock() for arg in inspect.signature(field.resolver).parameters.keys()}
-    assert_that(field.resolver).raises(TenantUnauthorized).when_called_with(**iargs).contains('UnauthorizedOperation')
-    mock_tenant_check.assert_called_once_with(
-        session=ANY, username=username, groups=groups, tenant_name=ANY, permission_name=expected_perm
-    )
-
-
-@patch('dataall.base.aws.sts.SessionHelper.remote_session')
-@patch('dataall.core.stacks.db.target_type_repositories.TargetType.get_resource_read_permission_name')
-@patch('dataall.core.permissions.services.resource_policy_service.ResourcePolicyService.check_user_resource_permission')
-@patch('dataall.base.context._request_storage')
-@pytest.mark.parametrize('_type,field', ALL_PARAMS)
-def test_unauthorized_resource_permissions(
-    mock_storage,
-    mock_check_resource,
-    mock_perm_name,
-    mock_session,
-    _type,
-    field,
-    request,
-):
-    fid = request.node.callspec.id
-    tdata = EXPECTED_RESOLVERS[fid]
-    msg = f'{fid} -> {field.resolver.__code__.co_filename}:{field.resolver.__code__.co_firstlineno}'
-    expected_perm = tdata.resource_perm
-    if not expected_perm:
-        pytest.skip(msg + f' Reason: {tdata.resource_ignore.value}')
+    if not any([tdata.resource_perm, tdata.tenant_perm]):
+        pytest.skip(msg + f' Reason: {tdata.tenant_ignore.value or tdata.resource_ignore.value}')
     logging.info(msg)
 
     assert_that(field.resolver).is_not_none()
@@ -1230,16 +1199,23 @@ def test_unauthorized_resource_permissions(
     groups = ['agroup']
     mock_storage.context = RequestContext(MagicMock(), username, groups, 'auserid')
     mock_storage.context.db_engine.scoped_session().__enter__().query().filter().all.return_value = [MagicMock()]
-    mock_perm_name.return_value = expected_perm
+    mock_perm_name.return_value = tdata.resource_perm
     iargs = {arg: MagicMock() for arg in inspect.signature(field.resolver).parameters.keys()}
     with suppress(Exception):
         field.resolver(**iargs)
-    # TODO add support for asserting multiple calls in case a resolver checks multiple perms
-    if mock_check_resource.called:
+    if tdata.tenant_perm:
+        mock_check_tenant.assert_any_call(
+            session=ANY,
+            username=username,
+            groups=groups,
+            tenant_name=ANY,
+            permission_name=tdata.tenant_perm,
+        )
+    if tdata.resource_perm:
         mock_check_resource.assert_any_call(
             session=ANY,
             resource_uri=ANY,
             username=username,
             groups=groups,
-            permission_name=expected_perm,
+            permission_name=tdata.resource_perm,
         )
