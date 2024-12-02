@@ -423,10 +423,15 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Worksheet', 'userRoleForWorksheet'): TestData(resource_ignore=IgnoreReason.INTRAMODULE),
 }
 
-# ensure that all EXPECTED_RESOURCES_PERMS have a corresponding query (to avoid stale entries) and vice versa
-assert_that([field_id(res[0].name, res[1].name) for res in ALL_RESOLVERS]).described_as(
-    'stale or missing EXPECTED_RESOURCE_PERMS detected'
-).contains_only(*EXPECTED_RESOLVERS.keys())
+
+def test_all_resolvers_have_test_data():
+    '''
+    ensure that all EXPECTED_RESOURCES_PERMS have a corresponding query (to avoid stale entries) and vice versa
+    '''
+    assert_that([field_id(res[0].name, res[1].name) for res in ALL_RESOLVERS]).described_as(
+        'stale or missing EXPECTED_RESOURCE_PERMS detected'
+    ).contains_only(*EXPECTED_RESOLVERS.keys())
+
 
 ALL_PARAMS = [pytest.param(_type, field, id=field_id(_type.name, field.name)) for _type, field in ALL_RESOLVERS]
 
