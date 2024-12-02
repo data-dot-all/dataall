@@ -449,7 +449,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Mutation', 'deleteDashboard'): TestData(tenant_perm=MANAGE_DASHBOARDS, resource_perm=DELETE_DASHBOARD),
     field_id('Mutation', 'deleteDataPipeline'): TestData(tenant_perm=MANAGE_PIPELINES, resource_perm=DELETE_PIPELINE),
     field_id('Mutation', 'deleteDataPipelineEnvironment'): TestData(
-        tenant_perm=MANAGE_PIPELINES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_PIPELINES, resource_perm=UPDATE_PIPELINE
     ),
     field_id('Mutation', 'deleteDataset'): TestData(tenant_perm=MANAGE_DATASETS, resource_perm=DELETE_DATASET),
     field_id('Mutation', 'deleteDatasetStorageLocation'): TestData(

@@ -255,6 +255,7 @@ class DataPipelineService:
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_PIPELINES)
+    @ResourcePolicyService.has_resource_permission(UPDATE_PIPELINE, param_name='envPipelineUri')
     def delete_pipeline_environment(envPipelineUri: str):
         with _session() as session:
             DatapipelinesRepository.delete_pipeline_environment(session=session, envPipelineUri=envPipelineUri)
