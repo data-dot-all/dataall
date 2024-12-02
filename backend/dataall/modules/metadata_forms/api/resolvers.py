@@ -5,7 +5,7 @@ from dataall.modules.metadata_forms.db.metadata_form_models import (
     MetadataForm,
     MetadataFormField,
     AttachedMetadataForm,
-    AttachedMetadataFormField,
+    AttachedMetadataFormField, MetadataFormEnforcementRule,
 )
 from dataall.modules.metadata_forms.services.attached_metadata_form_service import AttachedMetadataFormService
 from dataall.modules.metadata_forms.services.metadata_form_enforcement_service import MetadataFormEnforcementService
@@ -129,3 +129,11 @@ def create_mf_enforcement_rule(context: Context, source, input):
 
 def list_mf_enforcement_rules(context: Context, source, uri):
     return MetadataFormEnforcementService.list_mf_enforcement_rules(uri=uri)
+
+
+def list_mf_affected_entities(context: Context, source, uri, filter):
+    return MetadataFormEnforcementService.paginate_mf_affected_entities(uri=uri, data = filter)
+
+
+def get_mf_rule_home_entity_name(context: Context, source: MetadataFormEnforcementRule):
+    return MetadataFormEnforcementService.resolve_home_entity(source.uri, source)

@@ -7,13 +7,15 @@ import {
   CardContent,
   CardHeader,
   Checkbox,
+  Chip,
+  CircularProgress,
   Dialog,
   FormControlLabel,
   Grid,
   TextField,
   Typography
 } from '@mui/material';
-import { Defaults, PlusIcon } from 'design';
+import { Defaults, Label, PlusIcon } from 'design';
 import React, { useEffect, useState } from 'react';
 import DoNotDisturbAltOutlinedIcon from '@mui/icons-material/DoNotDisturbAltOutlined';
 import { fetchEnums, listValidEnvironments, useClient } from 'services';
@@ -21,13 +23,17 @@ import { useDispatch } from 'react-redux';
 import { SET_ERROR } from 'globalErrors';
 import {
   createMetadataFormEnforcementRule,
-  listMetadataFormEnforcementRules
+  listMetadataFormEnforcementRules,
+  listEntityAffectedByEnforcementRules
 } from '../services';
 import { Formik } from 'formik';
 import { LoadingButton } from '@mui/lab';
 import SendIcon from '@mui/icons-material/Send';
 import { listOrganizations } from '../../Organizations/services';
 import { listDatasets } from '../../DatasetsBase/services';
+import { useTheme } from '@mui/styles';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import { DataGrid } from '@mui/x-data-grid';
 
 const CreateEnforcementRuleModal = (props) => {
   const {
@@ -419,14 +425,44 @@ const CreateEnforcementRuleModal = (props) => {
 export const MetadataFormEnforcement = (props) => {
   const { canEdit, metadataForm } = props;
   const client = useClient();
+  const theme = useTheme();
   const dispatch = useDispatch();
   const [showCreateRuleModal, setShowCreateRuleModal] = useState(false);
   const [rules, setRules] = useState([]);
+  const [selectedRule, setSelectedRule] = useState(null);
   const [severityOptions, setSeverityOptions] = useState({});
   const [entityTypesOptions, setEntityTypesOptions] = useState({});
   const [enforcementScopeOptions, setEnforcementScopeOptions] = useState({});
+  const [affectedEntities, setAffectedEntities] = useState([]);
+  const [paginationModel, setPaginationModel] = useState({
+    pageSize: 5,
+    page: 0
+  });
+  const [selectedEntity, setSelectedEntity] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingAffected, setLoadingAffected] = useState(true);
+
+  const header = [
+    { field: 'type', width: 200, headerName: 'Type', editable: false },
+    { field: 'name', width: 350, headerName: 'Name', editable: false },
+    { field: 'owner', width: 200, headerName: 'Owner', editable: false },
+    {
+      field: 'attached',
+      width: 100,
+      headerName: 'Attached',
+      editable: false,
+      renderCell: (params) => {
+        return (
+          <Label color={params.attached ? 'success' : 'error'}>
+            {params.attached ? 'Yes' : 'No'}
+          </Label>
+        );
+      }
+    }
+  ];
 
   const fetchEnforcementRules = async () => {
+    setLoading(true);
     const response = await client.query(
       listMetadataFormEnforcementRules(metadataForm.uri)
     );
@@ -436,7 +472,49 @@ export const MetadataFormEnforcement = (props) => {
       response.data.listMetadataFormEnforcementRules
     ) {
       setRules(response.data.listMetadataFormEnforcementRules);
+      if (response.data.listMetadataFormEnforcementRules.length > 0) {
+        setSelectedRule(response.data.listMetadataFormEnforcementRules[0]);
+        await fetchAffectedEntities(
+          response.data.listMetadataFormEnforcementRules[0]
+        );
+      }
+    } else {
+      const error = 'Could not fetch rules';
+      dispatch({ type: SET_ERROR, error });
     }
+    setLoading(false);
+  };
+
+  const deleteRule = async (rule) => {};
+
+  const fetchAffectedEntities = async (
+    rule,
+    page = paginationModel.page,
+    pageSize = paginationModel.pageSize
+  ) => {
+    setLoadingAffected(true);
+    const response = await client.query(
+      listEntityAffectedByEnforcementRules(rule.uri, {
+        pageSize: pageSize,
+        page: page + 1
+      })
+    );
+    if (
+      !response.errors &&
+      response.data &&
+      response.data.listEntityAffectedByEnforcementRules
+    ) {
+      response.data.listEntityAffectedByEnforcementRules.nodes.forEach(
+        (entity) => {
+          entity.id = entity.uri;
+        }
+      );
+      setAffectedEntities(response.data.listEntityAffectedByEnforcementRules);
+    } else {
+      const error = 'Could not fetch affeceted entities';
+      dispatch({ type: SET_ERROR, error });
+    }
+    setLoadingAffected(false);
   };
 
   const fetchEnforcementEnums = async () => {
@@ -467,9 +545,9 @@ export const MetadataFormEnforcement = (props) => {
 
   useEffect(() => {
     if (client) {
-      fetchEnforcementRules().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
+      fetchEnforcementRules()
+        .then()
+        .catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
       fetchEnforcementEnums().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
@@ -511,12 +589,83 @@ export const MetadataFormEnforcement = (props) => {
                 )}
               </Grid>
             </Grid>
-            {rules.length > 0 ? (
+            {rules.length > 0 && !loading ? (
               rules.map((rule) => (
-                <CardContent>
-                  <Typography variant="subtitle2" color="textPrimary">
-                    rule.uri
-                  </Typography>
+                <CardContent
+                  onClick={async () => {
+                    setSelectedRule(rule);
+                    await fetchAffectedEntities(rule);
+                  }}
+                  sx={{
+                    backgroundColor:
+                      selectedRule &&
+                      selectedRule.uri === rule.uri &&
+                      theme.palette.action.selected
+                  }}
+                >
+                  <Grid container spacing={2}>
+                    <Grid
+                      item
+                      lg={1}
+                      xl={1}
+                      sx={{
+                        mt: 1
+                      }}
+                    >
+                      <Typography color="textPrimary" variant="subtitle2">
+                        {'v. ' + rule.version}
+                      </Typography>
+                    </Grid>
+                    <Grid item lg={3} xl={3}>
+                      <Typography
+                        color="textPrimary"
+                        variant="subtitle2"
+                        sx={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          maxLines: 1,
+                          mt: 1
+                        }}
+                      >
+                        {rule.level}
+                      </Typography>
+                    </Grid>
+                    <Grid item lg={3} xl={3}>
+                      <Typography
+                        color="textPrimary"
+                        variant="subtitle2"
+                        sx={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          maxLines: 1,
+                          mt: 1
+                        }}
+                      >
+                        {rule.homeEntityName}
+                      </Typography>
+                    </Grid>
+                    <Grid item lg={4} xl={4}>
+                      {rule.entityTypes.map((et) => (
+                        <Chip label={et} sx={{ mt: 1, mr: 1 }} />
+                      ))}
+                    </Grid>
+                    <Grid item lg={1} xl={1}>
+                      {canEdit && (
+                        <DeleteIcon
+                          sx={{ color: 'primary.main', opacity: 0.5 }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.opacity = 1;
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.opacity = 0.5;
+                          }}
+                          onClick={() => deleteRule(rule.uri)}
+                        />
+                      )}
+                    </Grid>
+                  </Grid>
                 </CardContent>
               ))
             ) : (
@@ -527,6 +676,64 @@ export const MetadataFormEnforcement = (props) => {
                 </Typography>
               </CardContent>
             )}
+            {loading && (
+              <CardContent sx={{ display: 'flex', justifyContent: 'center' }}>
+                <CircularProgress />
+              </CardContent>
+            )}
+          </Card>
+        </Grid>
+        <Grid item lg={7} xl={7}>
+          <Card sx={{ height: '100%' }}>
+            <CardHeader title="Attached Entities" />
+            <CardContent>
+              {!loadingAffected &&
+              affectedEntities.nodes &&
+              affectedEntities.nodes.length > 0 ? (
+                <DataGrid
+                  rows={affectedEntities.nodes}
+                  columns={header}
+                  pageSize={paginationModel.pageSize}
+                  rowsPerPageOptions={[5, 10, 20]}
+                  onPageSizeChange={async (newPageSize) => {
+                    setPaginationModel({
+                      ...paginationModel,
+                      pageSize: newPageSize
+                    });
+                    await fetchAffectedEntities(
+                      selectedRule,
+                      paginationModel.page,
+                      newPageSize
+                    );
+                  }}
+                  page={paginationModel.page}
+                  onPageChange={async (newPage) => {
+                    setPaginationModel({ ...paginationModel, page: newPage });
+                    await fetchAffectedEntities(
+                      selectedRule,
+                      newPage,
+                      paginationModel.pageSize
+                    );
+                  }}
+                  rowCount={affectedEntities.count}
+                  autoHeight={true}
+                  onSelectionModelChange={async (newSelection) => {
+                    setSelectedEntity(newSelection);
+                  }}
+                  selectionModel={selectedEntity}
+                  hideFooterSelectedRowCount={true}
+                />
+              ) : (
+                <Typography color="textPrimary" variant="subtitle2">
+                  {loadingAffected ? '' : 'No entities affected.'}
+                </Typography>
+              )}
+              {loadingAffected && selectedRule && (
+                <CardContent sx={{ display: 'flex', justifyContent: 'center' }}>
+                  <CircularProgress />
+                </CardContent>
+              )}
+            </CardContent>
           </Card>
         </Grid>
       </Grid>

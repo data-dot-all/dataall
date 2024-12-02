@@ -93,3 +93,11 @@ NewMetadataFormEnforcementInput = gql.InputType(
         gql.Field(name='entityTypes', type=gql.ArrayType(gql.String)),
     ],
 )
+
+AffectedEntityFilter = gql.InputType(
+    name='AffectedEntityFilter',
+    arguments=[
+        gql.Argument('page', gql.Integer),
+        gql.Argument('pageSize', gql.Integer),
+    ],
+)

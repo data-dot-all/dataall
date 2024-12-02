@@ -14,3 +14,4 @@ export * from './deleteMetadataFormVersion';
 export * from './listMetadataFormVersions';
 export * from './createMetadataFormEnforcementRule';
 export * from './listMetadataFormEnforcementRules';
+export * from './listMetadataFormEnforcementRuleAffectedEntities';

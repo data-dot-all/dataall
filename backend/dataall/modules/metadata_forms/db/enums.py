@@ -50,82 +50,82 @@ class MetadataFormEntityTypes(GraphQLEnumMapper):
             MetadataFormEntityTypes.Organizations.value: (
                 Organization,
                 MetadataFormEnforcementScope.Global,
-                lambda o: (o.organizationUri, o.SamlGroupName),
+                lambda o: (o.organizationUri, o.SamlGroupName, o.lable),
             ),
             MetadataFormEntityTypes.OrganizationTeams.value: (
                 OrganizationGroup,
                 MetadataFormEnforcementScope.Organization,
-                lambda o: (o.organizationUri + o.groupUri, o.invitedBy),
+                lambda o: (o.organizationUri + o.groupUri, o.invitedBy, o.groupUri),
             ),
             MetadataFormEntityTypes.Environments.value: (
                 Environment,
                 MetadataFormEnforcementScope.Organization,
-                lambda o: (o.environmentUri, o.SamlGroupName),
+                lambda o: (o.environmentUri, o.SamlGroupName, o.lable),
             ),
             MetadataFormEntityTypes.EnvironmentTeams.value: (
                 EnvironmentGroup,
                 MetadataFormEnforcementScope.Environment,
-                lambda o: (o.environmentUri + o.groupUri, o.invitedBy),
+                lambda o: (o.environmentUri + o.groupUri, o.invitedBy, o.groupUri),
             ),
             MetadataFormEntityTypes.S3Datasets.value: (
                 S3Dataset,
                 MetadataFormEnforcementScope.Environment,
-                lambda o: (o.datasetUri, o.SamlAdminGroupName),
+                lambda o: (o.datasetUri, o.SamlAdminGroupName, o.groupUri),
             ),
             MetadataFormEntityTypes.RDDatasets.value: (
                 RedshiftDataset,
                 MetadataFormEnforcementScope.Environment,
-                lambda o: (o.datasetUri, o.SamlAdminGroupName),
+                lambda o: (o.datasetUri, o.SamlAdminGroupName, o.groupUri),
             ),
             MetadataFormEntityTypes.Worksheets.value: (
                 Worksheet,
                 MetadataFormEnforcementScope.Global,
-                lambda o: (o.worksheetUri, o.SamlAdminGroupName),
+                lambda o: (o.worksheetUri, o.SamlAdminGroupName, o.lable),
             ),
             MetadataFormEntityTypes.Dashboards.value: (
                 Dashboard,
                 MetadataFormEnforcementScope.Environment,
-                lambda o: (o.dashboardUri, o.SamlGroupName),
+                lambda o: (o.dashboardUri, o.SamlGroupName, o.groupUri),
             ),
             MetadataFormEntityTypes.ConsumptionRoles.value: (
                 ConsumptionRole,
                 MetadataFormEnforcementScope.Environment,
-                lambda o: (o.consumptionRoleUri, o.groupUri),
+                lambda o: (o.consumptionRoleUri, o.groupUri, o.consumptionRoleName),
             ),
             MetadataFormEntityTypes.Notebooks.value: (
                 SagemakerNotebook,
                 MetadataFormEnforcementScope.Environment,
-                lambda o: (o.notebookUri, o.SamlAdminGroupName),
+                lambda o: (o.notebookUri, o.SamlAdminGroupName, o.lable),
             ),
             MetadataFormEntityTypes.MLStudioEntities.value: (
                 SagemakerStudioDomain,
                 MetadataFormEnforcementScope.Environment,
-                lambda o: (o.sagemakerStudioUri, o.SamlGroupName),
+                lambda o: (o.sagemakerStudioUri, o.SamlGroupName, o.lable),
             ),
             MetadataFormEntityTypes.Pipelines.value: (
                 DataPipeline,
                 MetadataFormEnforcementScope.Environment,
-                lambda o: (o.DataPipelineUri, o.SamlGroupName),
+                lambda o: (o.DataPipelineUri, o.SamlGroupName, o.lable),
             ),
             MetadataFormEntityTypes.Tables.value: (
                 DatasetTable,
                 MetadataFormEnforcementScope.Dataset,
-                lambda o: (o.tableUri, None),  # ToDo: resolve owner
+                lambda o: (o.tableUri, None, o.GlueTableName),  # ToDo: resolve owner
             ),
             MetadataFormEntityTypes.Folder.value: (
                 DatasetStorageLocation,
                 MetadataFormEnforcementScope.Dataset,
-                lambda o: (o.locationUri, None),  # ToDo: resolve owner
+                lambda o: (o.locationUri, None, o.S3BucketName),  # ToDo: resolve owner
             ),
             MetadataFormEntityTypes.Bucket.value: (
                 DatasetBucket,
                 MetadataFormEnforcementScope.Dataset,
-                lambda o: (o.bucketUri, None),  # ToDo: resolve owner
+                lambda o: (o.bucketUri, None, o.S3BucketName),  # ToDo: resolve owner
             ),
             MetadataFormEntityTypes.Share.value: (
                 ShareObject,
                 MetadataFormEnforcementScope.Dataset,
-                lambda o: (o.shareUri, o.groupUri),
+                lambda o: (o.shareUri, o.groupUri, o.shareUri),
             ),
         }
 

@@ -1,5 +1,6 @@
 from dataall.base.context import get_context
 from dataall.base.db import exceptions
+from dataall.base.db.paginator import paginate_list
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
@@ -113,7 +114,7 @@ class MetadataFormEnforcementService:
             return []
 
     @staticmethod
-    def form_affected_entity_object(uri, owner, type, rule):
+    def form_affected_entity_object(uri, owner, label, type, rule):
         with get_context().db_engine.scoped_session() as session:
             attached = MetadataFormRepository.query_all_attached_metadata_forms_for_entity(
                 session,
@@ -121,7 +122,7 @@ class MetadataFormEnforcementService:
                 metadataFormUri=rule.metadataFormUri,
                 version=rule.version,
             )
-        return {'type': type, 'uri': uri, 'owner': owner, 'attached': attached.first()}
+        return {'type': type, 'name': label, 'uri': uri, 'owner': owner, 'attached': attached.first()}
 
     @staticmethod
     def get_affected_entities(uri, rule=None):
@@ -134,7 +135,7 @@ class MetadataFormEnforcementService:
             affected_entities.extend(
                 [
                     MetadataFormEnforcementService.form_affected_entity_object(
-                        o.organizationUri, o.SamlGroupName, MetadataFormEntityTypes.Organizations.value, rule
+                        o.organizationUri, o.SamlGroupName, o.label,  MetadataFormEntityTypes.Organizations.value, rule
                     )
                     for o in orgs
                 ]
@@ -144,7 +145,7 @@ class MetadataFormEnforcementService:
             affected_entities.extend(
                 [
                     MetadataFormEnforcementService.form_affected_entity_object(
-                        e.environmentUri, e.SamlGroupName, MetadataFormEntityTypes.Environments.value, rule
+                        e.environmentUri, e.SamlGroupName, e.label,  MetadataFormEntityTypes.Environments.value, rule
                     )
                     for e in envs
                 ]
@@ -154,7 +155,7 @@ class MetadataFormEnforcementService:
             affected_entities.extend(
                 [
                     MetadataFormEnforcementService.form_affected_entity_object(
-                        ds.datasetUri, ds.SamlAdminGroupName, ds.datasetType.value + '-Dataset', rule
+                        ds.datasetUri, ds.SamlAdminGroupName, ds.label,  ds.datasetType.value + '-Dataset', rule
                     )
                     for ds in datasets
                 ]
@@ -168,7 +169,7 @@ class MetadataFormEnforcementService:
             }
 
             for entity_type in entity_types:
-                entity_class, level, get_uri_and_owner = MetadataFormEntityTypes.get_entity_class(entity_type)
+                entity_class, level, get_uri_owner_label = MetadataFormEntityTypes.get_entity_class(entity_type)
                 all_entities = session.query(entity_class)
                 if level == MetadataFormEnforcementScope.Organization.value:
                     all_entities = all_entities.filter(entity_class.organizationUri.in_([org.uri for org in orgs]))
@@ -180,7 +181,7 @@ class MetadataFormEnforcementService:
                 affected_entities.extend(
                     [
                         MetadataFormEnforcementService.form_affected_entity_object(
-                            *get_uri_and_owner(e), entity_type, rule
+                            *get_uri_owner_label(e), entity_type, rule
                         )
                         for e in all_entities
                     ]
@@ -191,3 +192,26 @@ class MetadataFormEnforcementService:
     def list_mf_enforcement_rules(uri):
         with get_context().db_engine.scoped_session() as session:
             return MetadataFormRepository.list_mf_enforcement_rules(session, uri)
+
+    @staticmethod
+    def paginate_mf_affected_entities(uri, data=None):
+        data = data or {}
+        return paginate_list(
+            items=MetadataFormEnforcementService.get_affected_entities(uri),
+            page=data.get('page', 1),
+            page_size=data.get('pageSize', 10),
+        ).to_dict()
+
+    @staticmethod
+    def resolve_home_entity(uri, rule=None):
+        with get_context().db_engine.scoped_session() as session:
+            if not rule:
+                rule = MetadataFormRepository.get_mf_enforcement_rule_by_uri(session, uri)
+            if rule.level == MetadataFormEnforcementScope.Global.value:
+                return ''
+            if rule.level == MetadataFormEnforcementScope.Organization.value:
+                return OrganizationRepository.get_organization_by_uri(session, rule.homeEntity).label
+            if rule.level == MetadataFormEnforcementScope.Environment.value:
+                return EnvironmentRepository.get_environment_by_uri(session, rule.homeEntity).label
+            if rule.level == MetadataFormEnforcementScope.Dataset.value:
+                return DatasetBaseRepository.get_dataset_by_uri(session, rule.homeEntity).label
