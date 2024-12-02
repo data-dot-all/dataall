@@ -12,23 +12,113 @@ from assertpy import assert_that
 from dataall.base.api import bootstrap
 from dataall.base.context import RequestContext
 from dataall.base.db.exceptions import TenantUnauthorized
-from dataall.core.permissions.services.environment_permissions import GET_ENVIRONMENT, LIST_ENVIRONMENT_CONSUMPTION_ROLES, LIST_ENVIRONMENT_NETWORKS, CREDENTIALS_ENVIRONMENT, \
-    LIST_ENVIRONMENT_GROUPS
-from dataall.core.permissions.services.network_permissions import GET_NETWORK
-from dataall.core.permissions.services.organization_permissions import GET_ORGANIZATION
+from dataall.core.permissions.services.environment_permissions import (
+    GET_ENVIRONMENT,
+    LIST_ENVIRONMENT_CONSUMPTION_ROLES,
+    LIST_ENVIRONMENT_NETWORKS,
+    CREDENTIALS_ENVIRONMENT,
+    LIST_ENVIRONMENT_GROUPS,
+    LIST_ENVIRONMENT_GROUP_PERMISSIONS,
+    ADD_ENVIRONMENT_CONSUMPTION_ROLES,
+    CREATE_NETWORK,
+    ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
+    DELETE_ENVIRONMENT,
+    INVITE_ENVIRONMENT_GROUP,
+    REMOVE_ENVIRONMENT_CONSUMPTION_ROLE,
+    REMOVE_ENVIRONMENT_GROUP,
+    UPDATE_ENVIRONMENT,
+    UPDATE_ENVIRONMENT_GROUP,
+)
+from dataall.core.permissions.services.network_permissions import GET_NETWORK, DELETE_NETWORK
+from dataall.core.permissions.services.organization_permissions import (
+    GET_ORGANIZATION,
+    UPDATE_ORGANIZATION,
+    DELETE_ORGANIZATION,
+    INVITE_ORGANIZATION_GROUP,
+    LINK_ENVIRONMENT,
+    REMOVE_ORGANIZATION_GROUP,
+)
 from dataall.core.permissions.services.tenant_permissions import MANAGE_ENVIRONMENTS, MANAGE_ORGANIZATIONS
 from dataall.modules.catalog.services.glossaries_permissions import MANAGE_GLOSSARIES
-from dataall.modules.dashboards.services.dashboard_permissions import MANAGE_DASHBOARDS, SHARE_DASHBOARD, GET_DASHBOARD, CREATE_DASHBOARD
-from dataall.modules.datapipelines.services.datapipelines_permissions import GET_PIPELINE, MANAGE_PIPELINES, CREDENTIALS_PIPELINE
+from dataall.modules.dashboards.services.dashboard_permissions import (
+    MANAGE_DASHBOARDS,
+    SHARE_DASHBOARD,
+    GET_DASHBOARD,
+    CREATE_DASHBOARD,
+    DELETE_DASHBOARD,
+    UPDATE_DASHBOARD,
+)
+from dataall.modules.datapipelines.services.datapipelines_permissions import (
+    GET_PIPELINE,
+    MANAGE_PIPELINES,
+    CREDENTIALS_PIPELINE,
+    CREATE_PIPELINE,
+    DELETE_PIPELINE,
+    UPDATE_PIPELINE,
+)
 from dataall.modules.datasets_base.services.dataset_list_permissions import LIST_ENVIRONMENT_DATASETS
-from dataall.modules.metadata_forms.services.metadata_form_permissions import MANAGE_METADATA_FORMS
-from dataall.modules.mlstudio.services.mlstudio_permissions import GET_SGMSTUDIO_USER, MANAGE_SGMSTUDIO_USERS, SGMSTUDIO_USER_URL
-from dataall.modules.notebooks.services.notebook_permissions import GET_NOTEBOOK, MANAGE_NOTEBOOKS
-from dataall.modules.omics.services.omics_permissions import MANAGE_OMICS_RUNS
-from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import MANAGE_REDSHIFT_DATASETS
-from dataall.modules.s3_datasets.services.dataset_permissions import GET_DATASET, GET_DATASET_TABLE, MANAGE_DATASETS, GET_DATASET_FOLDER, CREDENTIALS_DATASET
-from dataall.modules.shares_base.services.share_permissions import MANAGE_SHARES, GET_SHARE_OBJECT, LIST_ENVIRONMENT_SHARED_WITH_OBJECTS
-from dataall.modules.worksheets.services.worksheet_permissions import MANAGE_WORKSHEETS, GET_WORKSHEET, RUN_ATHENA_QUERY
+from dataall.modules.metadata_forms.services.metadata_form_permissions import (
+    MANAGE_METADATA_FORMS,
+    ATTACH_METADATA_FORM,
+)
+from dataall.modules.mlstudio.services.mlstudio_permissions import (
+    GET_SGMSTUDIO_USER,
+    MANAGE_SGMSTUDIO_USERS,
+    SGMSTUDIO_USER_URL,
+    DELETE_SGMSTUDIO_USER,
+)
+from dataall.modules.notebooks.services.notebook_permissions import GET_NOTEBOOK, MANAGE_NOTEBOOKS, DELETE_NOTEBOOK
+from dataall.modules.omics.services.omics_permissions import MANAGE_OMICS_RUNS, CREATE_OMICS_RUN
+from dataall.modules.redshift_datasets.services.redshift_connection_permissions import GET_REDSHIFT_CONNECTION
+from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import (
+    MANAGE_REDSHIFT_DATASETS,
+    ADD_TABLES_REDSHIFT_DATASET,
+    DELETE_REDSHIFT_DATASET,
+    DELETE_REDSHIFT_DATASET_TABLE,
+    IMPORT_REDSHIFT_DATASET,
+    UPDATE_REDSHIFT_DATASET_TABLE,
+    UPDATE_REDSHIFT_DATASET,
+    GET_REDSHIFT_DATASET,
+    GET_REDSHIFT_DATASET_TABLE,
+)
+from dataall.modules.s3_datasets.services.dataset_permissions import (
+    GET_DATASET,
+    GET_DATASET_TABLE,
+    MANAGE_DATASETS,
+    GET_DATASET_FOLDER,
+    CREDENTIALS_DATASET,
+    CREATE_TABLE_DATA_FILTER,
+    DELETE_DATASET_TABLE,
+    DELETE_DATASET,
+    DELETE_DATASET_FOLDER,
+    DELETE_TABLE_DATA_FILTER,
+    CREATE_DATASET,
+    UPDATE_DATASET,
+    PROFILE_DATASET_TABLE,
+    CRAWL_DATASET,
+    UPDATE_DATASET_TABLE,
+    SYNC_DATASET,
+    UPDATE_DATASET_FOLDER,
+    LIST_TABLE_DATA_FILTERS,
+)
+from dataall.modules.shares_base.services.share_permissions import (
+    MANAGE_SHARES,
+    GET_SHARE_OBJECT,
+    LIST_ENVIRONMENT_SHARED_WITH_OBJECTS,
+    ADD_ITEM,
+    APPROVE_SHARE_OBJECT,
+    SUBMIT_SHARE_OBJECT,
+    DELETE_SHARE_OBJECT,
+    REJECT_SHARE_OBJECT,
+    REMOVE_ITEM,
+)
+from dataall.modules.worksheets.services.worksheet_permissions import (
+    MANAGE_WORKSHEETS,
+    GET_WORKSHEET,
+    RUN_ATHENA_QUERY,
+    DELETE_WORKSHEET,
+    UPDATE_WORKSHEET,
+)
 
 
 class IgnoreReason(Enum):
@@ -232,7 +322,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Group', 'environmentPermissions'): TestData(
-        resource_ignore=IgnoreReason.USERROLEINRESOURCE, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=LIST_ENVIRONMENT_GROUP_PERMISSIONS, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Group', 'tenantPermissions'): TestData(
         resource_ignore=IgnoreReason.USERROLEINRESOURCE, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -253,52 +343,46 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.USERROLEINRESOURCE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'DisableDataSubscriptions'): TestData(
-        tenant_perm=MANAGE_ENVIRONMENTS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=ENABLE_ENVIRONMENT_SUBSCRIPTIONS
     ),
     field_id('Mutation', 'addConnectionGroupPermission'): TestData(
         tenant_ignore=IgnoreReason.BACKPORT, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'addConsumptionRoleToEnvironment'): TestData(
-        tenant_perm=MANAGE_ENVIRONMENTS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=ADD_ENVIRONMENT_CONSUMPTION_ROLES
     ),
     field_id('Mutation', 'addRedshiftDatasetTables'): TestData(
-        tenant_perm=MANAGE_REDSHIFT_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_REDSHIFT_DATASETS, resource_perm=ADD_TABLES_REDSHIFT_DATASET
     ),
-    field_id('Mutation', 'addSharedItem'): TestData(
-        tenant_perm=MANAGE_SHARES, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'addSharedItem'): TestData(tenant_perm=MANAGE_SHARES, resource_perm=ADD_ITEM),
     field_id('Mutation', 'approveDashboardShare'): TestData(
-        tenant_perm=MANAGE_DASHBOARDS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_DASHBOARDS, resource_perm=SHARE_DASHBOARD
     ),
     field_id('Mutation', 'approveShareExtension'): TestData(
-        tenant_perm=MANAGE_SHARES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_SHARES, resource_perm=APPROVE_SHARE_OBJECT
     ),
-    field_id('Mutation', 'approveShareObject'): TestData(
-        tenant_perm=MANAGE_SHARES, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'approveShareObject'): TestData(tenant_perm=MANAGE_SHARES, resource_perm=APPROVE_SHARE_OBJECT),
     field_id('Mutation', 'approveTermAssociation'): TestData(
         tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'archiveOrganization'): TestData(
-        tenant_perm=MANAGE_ORGANIZATIONS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_ORGANIZATIONS, resource_perm=DELETE_ORGANIZATION
     ),
     field_id('Mutation', 'batchMetadataFormFieldUpdates'): TestData(
         tenant_perm=MANAGE_METADATA_FORMS, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'cancelShareExtension'): TestData(
-        tenant_perm=MANAGE_SHARES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_SHARES, resource_perm=SUBMIT_SHARE_OBJECT
     ),
     field_id('Mutation', 'createAttachedMetadataForm'): TestData(
-        tenant_ignore=IgnoreReason.BACKPORT, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_ignore=IgnoreReason.BACKPORT, resource_perm=ATTACH_METADATA_FORM
     ),
     field_id('Mutation', 'createCategory'): TestData(
         tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
-    field_id('Mutation', 'createDataPipeline'): TestData(
-        tenant_perm=MANAGE_PIPELINES, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'createDataPipeline'): TestData(tenant_perm=MANAGE_PIPELINES, resource_perm=CREATE_PIPELINE),
     field_id('Mutation', 'createDataPipelineEnvironment'): TestData(
-        tenant_perm=MANAGE_PIPELINES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_PIPELINES, resource_perm=CREATE_PIPELINE
     ),
     field_id('Mutation', 'createDataset'): TestData(
         tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
@@ -307,7 +391,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'createEnvironment'): TestData(
-        tenant_perm=MANAGE_ENVIRONMENTS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=LINK_ENVIRONMENT
     ),
     field_id('Mutation', 'createGlossary'): TestData(
         tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
@@ -321,12 +405,8 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Mutation', 'createMetadataFormVersion'): TestData(
         tenant_perm=MANAGE_METADATA_FORMS, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
-    field_id('Mutation', 'createNetwork'): TestData(
-        tenant_perm=MANAGE_ENVIRONMENTS, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
-    field_id('Mutation', 'createOmicsRun'): TestData(
-        tenant_perm=MANAGE_OMICS_RUNS, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'createNetwork'): TestData(tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=CREATE_NETWORK),
+    field_id('Mutation', 'createOmicsRun'): TestData(tenant_perm=MANAGE_OMICS_RUNS, resource_perm=CREATE_OMICS_RUN),
     field_id('Mutation', 'createOrganization'): TestData(
         tenant_perm=MANAGE_ORGANIZATIONS, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
@@ -346,7 +426,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_SHARES, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'createTableDataFilter'): TestData(
-        tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_DATASETS, resource_perm=CREATE_TABLE_DATA_FILTER
     ),
     field_id('Mutation', 'createTerm'): TestData(
         tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
@@ -355,7 +435,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_WORKSHEETS, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'deleteAttachedMetadataForm'): TestData(
-        tenant_ignore=IgnoreReason.BACKPORT, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_ignore=IgnoreReason.BACKPORT, resource_perm=ATTACH_METADATA_FORM
     ),
     field_id('Mutation', 'deleteCategory'): TestData(
         tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
@@ -363,26 +443,20 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Mutation', 'deleteConnectionGroupPermission'): TestData(
         tenant_ignore=IgnoreReason.BACKPORT, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
-    field_id('Mutation', 'deleteDashboard'): TestData(
-        tenant_perm=MANAGE_DASHBOARDS, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
-    field_id('Mutation', 'deleteDataPipeline'): TestData(
-        tenant_perm=MANAGE_PIPELINES, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'deleteDashboard'): TestData(tenant_perm=MANAGE_DASHBOARDS, resource_perm=DELETE_DASHBOARD),
+    field_id('Mutation', 'deleteDataPipeline'): TestData(tenant_perm=MANAGE_PIPELINES, resource_perm=DELETE_PIPELINE),
     field_id('Mutation', 'deleteDataPipelineEnvironment'): TestData(
         tenant_perm=MANAGE_PIPELINES, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
-    field_id('Mutation', 'deleteDataset'): TestData(
-        tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'deleteDataset'): TestData(tenant_perm=MANAGE_DATASETS, resource_perm=DELETE_DATASET),
     field_id('Mutation', 'deleteDatasetStorageLocation'): TestData(
-        tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_DATASETS, resource_perm=DELETE_DATASET_FOLDER
     ),
     field_id('Mutation', 'deleteDatasetTable'): TestData(
-        tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_DATASETS, resource_perm=DELETE_DATASET_TABLE
     ),
     field_id('Mutation', 'deleteEnvironment'): TestData(
-        tenant_perm=MANAGE_ENVIRONMENTS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=DELETE_ENVIRONMENT
     ),
     field_id('Mutation', 'deleteGlossary'): TestData(
         tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
@@ -396,9 +470,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Mutation', 'deleteMetadataFormVersion'): TestData(
         tenant_perm=MANAGE_METADATA_FORMS, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
-    field_id('Mutation', 'deleteNetwork'): TestData(
-        tenant_perm=MANAGE_ENVIRONMENTS, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'deleteNetwork'): TestData(tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=DELETE_NETWORK),
     field_id('Mutation', 'deleteNotification'): TestData(
         tenant_ignore=IgnoreReason.APPSUPPORT, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
@@ -409,52 +481,44 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_ignore=IgnoreReason.BACKPORT, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'deleteRedshiftDataset'): TestData(
-        tenant_perm=MANAGE_REDSHIFT_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_REDSHIFT_DATASETS, resource_perm=DELETE_REDSHIFT_DATASET
     ),
     field_id('Mutation', 'deleteRedshiftDatasetTable'): TestData(
-        tenant_perm=MANAGE_REDSHIFT_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_REDSHIFT_DATASETS, resource_perm=DELETE_REDSHIFT_DATASET_TABLE
     ),
     field_id('Mutation', 'deleteSagemakerNotebook'): TestData(
-        tenant_perm=MANAGE_NOTEBOOKS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_NOTEBOOKS, resource_perm=DELETE_NOTEBOOK
     ),
     field_id('Mutation', 'deleteSagemakerStudioUser'): TestData(
-        tenant_perm=MANAGE_SGMSTUDIO_USERS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_SGMSTUDIO_USERS, resource_perm=DELETE_SGMSTUDIO_USER
     ),
-    field_id('Mutation', 'deleteShareObject'): TestData(
-        tenant_perm=MANAGE_SHARES, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'deleteShareObject'): TestData(tenant_perm=MANAGE_SHARES, resource_perm=DELETE_SHARE_OBJECT),
     field_id('Mutation', 'deleteTableDataFilter'): TestData(
-        tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_DATASETS, resource_perm=DELETE_TABLE_DATA_FILTER
     ),
     field_id('Mutation', 'deleteTerm'): TestData(
         tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
-    field_id('Mutation', 'deleteWorksheet'): TestData(
-        tenant_perm=MANAGE_WORKSHEETS, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'deleteWorksheet'): TestData(tenant_perm=MANAGE_WORKSHEETS, resource_perm=DELETE_WORKSHEET),
     field_id('Mutation', 'dismissTermAssociation'): TestData(
         tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'enableDataSubscriptions'): TestData(
-        tenant_perm=MANAGE_ENVIRONMENTS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=ENABLE_ENVIRONMENT_SUBSCRIPTIONS
     ),
     field_id('Mutation', 'generateDatasetAccessToken'): TestData(
-        tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_DATASETS, resource_perm=CREDENTIALS_DATASET
     ),
-    field_id('Mutation', 'importDashboard'): TestData(
-        tenant_perm=MANAGE_DASHBOARDS, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
-    field_id('Mutation', 'importDataset'): TestData(
-        tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'importDashboard'): TestData(tenant_perm=MANAGE_DASHBOARDS, resource_perm=CREATE_DASHBOARD),
+    field_id('Mutation', 'importDataset'): TestData(tenant_perm=MANAGE_DATASETS, resource_perm=CREATE_DATASET),
     field_id('Mutation', 'importRedshiftDataset'): TestData(
-        tenant_perm=MANAGE_REDSHIFT_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_REDSHIFT_DATASETS, resource_perm=IMPORT_REDSHIFT_DATASET
     ),
     field_id('Mutation', 'inviteGroupOnEnvironment'): TestData(
-        tenant_perm=MANAGE_ENVIRONMENTS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=INVITE_ENVIRONMENT_GROUP
     ),
     field_id('Mutation', 'inviteGroupToOrganization'): TestData(
-        tenant_perm=MANAGE_ORGANIZATIONS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_ORGANIZATIONS, resource_perm=INVITE_ORGANIZATION_GROUP
     ),
     field_id('Mutation', 'markNotificationAsRead'): TestData(
         tenant_ignore=IgnoreReason.APPSUPPORT, resource_ignore=IgnoreReason.NOTREQUIRED
@@ -463,69 +527,55 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_ignore=IgnoreReason.APPSUPPORT, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'reApplyItemsShareObject'): TestData(
-        tenant_perm=MANAGE_SHARES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_SHARES, resource_perm=APPROVE_SHARE_OBJECT
     ),
     field_id('Mutation', 'reApplyShareObjectItemsOnDataset'): TestData(
-        tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_DATASETS, resource_perm=UPDATE_DATASET
     ),
     field_id('Mutation', 'rejectDashboardShare'): TestData(
         tenant_perm=MANAGE_DASHBOARDS, resource_perm=SHARE_DASHBOARD
     ),
-    field_id('Mutation', 'rejectShareObject'): TestData(
-        tenant_perm=MANAGE_SHARES, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'rejectShareObject'): TestData(tenant_perm=MANAGE_SHARES, resource_perm=REJECT_SHARE_OBJECT),
     field_id('Mutation', 'removeConsumptionRoleFromEnvironment'): TestData(
-        tenant_perm=MANAGE_ENVIRONMENTS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=REMOVE_ENVIRONMENT_CONSUMPTION_ROLE
     ),
     field_id('Mutation', 'removeGroupFromEnvironment'): TestData(
-        tenant_perm=MANAGE_ENVIRONMENTS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=REMOVE_ENVIRONMENT_GROUP
     ),
     field_id('Mutation', 'removeGroupFromOrganization'): TestData(
-        tenant_perm=MANAGE_ORGANIZATIONS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_ORGANIZATIONS, resource_perm=REMOVE_ORGANIZATION_GROUP
     ),
     field_id('Mutation', 'removeShareItemFilter'): TestData(
-        tenant_perm=MANAGE_SHARES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_SHARES, resource_perm=APPROVE_SHARE_OBJECT
     ),
-    field_id('Mutation', 'removeSharedItem'): TestData(
-        tenant_perm=MANAGE_SHARES, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'removeSharedItem'): TestData(tenant_perm=MANAGE_SHARES, resource_perm=REMOVE_ITEM),
     field_id('Mutation', 'requestDashboardShare'): TestData(
         tenant_perm=MANAGE_DASHBOARDS, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
-    field_id('Mutation', 'revokeItemsShareObject'): TestData(
-        tenant_perm=MANAGE_SHARES, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'revokeItemsShareObject'): TestData(tenant_perm=MANAGE_SHARES, resource_perm=GET_SHARE_OBJECT),
     field_id('Mutation', 'startDatasetProfilingRun'): TestData(
-        tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_DATASETS, resource_perm=PROFILE_DATASET_TABLE
     ),
-    field_id('Mutation', 'startGlueCrawler'): TestData(
-        tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'startGlueCrawler'): TestData(tenant_perm=MANAGE_DATASETS, resource_perm=CRAWL_DATASET),
     field_id('Mutation', 'startMaintenanceWindow'): TestData(
         tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'startReindexCatalog'): TestData(
         tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
-    field_id('Mutation', 'startSagemakerNotebook'): TestData(
-        tenant_perm=MANAGE_NOTEBOOKS, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'startSagemakerNotebook'): TestData(tenant_perm=MANAGE_NOTEBOOKS, resource_perm=GET_NOTEBOOK),
     field_id('Mutation', 'stopMaintenanceWindow'): TestData(
         tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
-    field_id('Mutation', 'stopSagemakerNotebook'): TestData(
-        tenant_perm=MANAGE_NOTEBOOKS, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'stopSagemakerNotebook'): TestData(tenant_perm=MANAGE_NOTEBOOKS, resource_perm=GET_NOTEBOOK),
     field_id('Mutation', 'submitShareExtension'): TestData(
-        tenant_perm=MANAGE_SHARES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_SHARES, resource_perm=SUBMIT_SHARE_OBJECT
     ),
-    field_id('Mutation', 'submitShareObject'): TestData(
-        tenant_perm=MANAGE_SHARES, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'submitShareObject'): TestData(tenant_perm=MANAGE_SHARES, resource_perm=SUBMIT_SHARE_OBJECT),
     field_id('Mutation', 'syncDatasetTableColumns'): TestData(
-        tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_DATASETS, resource_perm=UPDATE_DATASET_TABLE
     ),
-    field_id('Mutation', 'syncTables'): TestData(tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED),
+    field_id('Mutation', 'syncTables'): TestData(tenant_perm=MANAGE_DATASETS, resource_perm=SYNC_DATASET),
     field_id('Mutation', 'upVote'): TestData(
         tenant_ignore=IgnoreReason.APPSUPPORT, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
@@ -533,37 +583,33 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'updateConsumptionRole'): TestData(
-        tenant_perm=MANAGE_ENVIRONMENTS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=REMOVE_ENVIRONMENT_CONSUMPTION_ROLE
     ),
-    field_id('Mutation', 'updateDashboard'): TestData(
-        tenant_perm=MANAGE_DASHBOARDS, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
-    field_id('Mutation', 'updateDataPipeline'): TestData(
-        tenant_perm=MANAGE_PIPELINES, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'updateDashboard'): TestData(tenant_perm=MANAGE_DASHBOARDS, resource_perm=UPDATE_DASHBOARD),
+    field_id('Mutation', 'updateDataPipeline'): TestData(tenant_perm=MANAGE_PIPELINES, resource_perm=UPDATE_PIPELINE),
     field_id('Mutation', 'updateDataPipelineEnvironment'): TestData(
-        tenant_perm=MANAGE_PIPELINES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_PIPELINES, resource_perm=UPDATE_PIPELINE
     ),
     field_id('Mutation', 'updateDataset'): TestData(
         tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'updateDatasetStorageLocation'): TestData(
-        tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_DATASETS, resource_perm=UPDATE_DATASET_FOLDER
     ),
     field_id('Mutation', 'updateDatasetTable'): TestData(
-        tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_DATASETS, resource_perm=UPDATE_DATASET_TABLE
     ),
     field_id('Mutation', 'updateDatasetTableColumn'): TestData(
-        tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_DATASETS, resource_perm=UPDATE_DATASET_TABLE
     ),
     field_id('Mutation', 'updateEnvironment'): TestData(
-        tenant_perm=MANAGE_ENVIRONMENTS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=UPDATE_ENVIRONMENT
     ),
     field_id('Mutation', 'updateGlossary'): TestData(
         tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'updateGroupEnvironmentPermissions'): TestData(
-        tenant_perm=MANAGE_ENVIRONMENTS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=UPDATE_ENVIRONMENT_GROUP
     ),
     field_id('Mutation', 'updateGroupTenantPermissions'): TestData(
         tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.NOTREQUIRED
@@ -572,34 +618,34 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_ENVIRONMENTS, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'updateOrganization'): TestData(
-        tenant_perm=MANAGE_ORGANIZATIONS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_ORGANIZATIONS, resource_perm=UPDATE_ORGANIZATION
     ),
     field_id('Mutation', 'updateOrganizationGroup'): TestData(
-        tenant_perm=MANAGE_ORGANIZATIONS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_ORGANIZATIONS, resource_perm=INVITE_ORGANIZATION_GROUP
     ),
     field_id('Mutation', 'updateRedshiftDataset'): TestData(
-        tenant_perm=MANAGE_REDSHIFT_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_REDSHIFT_DATASETS, resource_perm=UPDATE_REDSHIFT_DATASET
     ),
     field_id('Mutation', 'updateRedshiftDatasetTable'): TestData(
-        tenant_perm=MANAGE_REDSHIFT_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_REDSHIFT_DATASETS, resource_perm=UPDATE_REDSHIFT_DATASET_TABLE
     ),
     field_id('Mutation', 'updateSSMParameter'): TestData(
         tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'updateShareExpirationPeriod'): TestData(
-        tenant_perm=MANAGE_SHARES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_SHARES, resource_perm=SUBMIT_SHARE_OBJECT
     ),
     field_id('Mutation', 'updateShareExtensionReason'): TestData(
-        tenant_perm=MANAGE_SHARES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_SHARES, resource_perm=SUBMIT_SHARE_OBJECT
     ),
     field_id('Mutation', 'updateShareItemFilters'): TestData(
         tenant_perm=MANAGE_SHARES, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'updateShareRejectReason'): TestData(
-        tenant_perm=MANAGE_SHARES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_SHARES, resource_perm=REJECT_SHARE_OBJECT
     ),
     field_id('Mutation', 'updateShareRequestReason'): TestData(
-        tenant_perm=MANAGE_SHARES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_SHARES, resource_perm=SUBMIT_SHARE_OBJECT
     ),
     field_id('Mutation', 'updateStack'): TestData(
         tenant_perm=MANAGE_ENVIRONMENTS, resource_ignore=IgnoreReason.NOTREQUIRED
@@ -607,15 +653,11 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Mutation', 'updateTerm'): TestData(
         tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
-    field_id('Mutation', 'updateWorksheet'): TestData(
-        tenant_perm=MANAGE_WORKSHEETS, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'updateWorksheet'): TestData(tenant_perm=MANAGE_WORKSHEETS, resource_perm=UPDATE_WORKSHEET),
     field_id('Mutation', 'verifyDatasetShareObjects'): TestData(
-        tenant_perm=MANAGE_DATASETS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_DATASETS, resource_perm=UPDATE_DATASET
     ),
-    field_id('Mutation', 'verifyItemsShareObject'): TestData(
-        tenant_perm=MANAGE_SHARES, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'verifyItemsShareObject'): TestData(tenant_perm=MANAGE_SHARES, resource_perm=GET_SHARE_OBJECT),
     field_id('OmicsRun', 'environment'): TestData(
         resource_perm=GET_ENVIRONMENT, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
@@ -649,30 +691,22 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Query', 'countUnreadNotifications'): TestData(
         resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
-    field_id('Query', 'countUpVotes'): TestData(
-        resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.PUBLIC
-    ),
+    field_id('Query', 'countUpVotes'): TestData(resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.PUBLIC),
     field_id('Query', 'generateEnvironmentAccessToken'): TestData(
         tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=CREDENTIALS_ENVIRONMENT
     ),
     field_id('Query', 'getAttachedMetadataForm'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
-    field_id('Query', 'getAuthorSession'): TestData(
-        resource_perm=CREATE_DASHBOARD, tenant_perm=MANAGE_DASHBOARDS
-    ),
+    field_id('Query', 'getAuthorSession'): TestData(resource_perm=CREATE_DASHBOARD, tenant_perm=MANAGE_DASHBOARDS),
     field_id('Query', 'getCDKExecPolicyPresignedUrl'): TestData(
         resource_perm=GET_ORGANIZATION, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getConsumptionRolePolicies'): TestData(
         resource_perm=GET_ENVIRONMENT, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
-    field_id('Query', 'getDashboard'): TestData(
-        resource_perm=GET_DASHBOARD, tenant_ignore=IgnoreReason.NOTREQUIRED
-    ),
-    field_id('Query', 'getDataPipeline'): TestData(
-        resource_perm=GET_PIPELINE, tenant_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Query', 'getDashboard'): TestData(resource_perm=GET_DASHBOARD, tenant_ignore=IgnoreReason.NOTREQUIRED),
+    field_id('Query', 'getDataPipeline'): TestData(resource_perm=GET_PIPELINE, tenant_ignore=IgnoreReason.NOTREQUIRED),
     field_id('Query', 'getDataPipelineCredsLinux'): TestData(
         resource_perm=CREDENTIALS_PIPELINE, tenant_perm=MANAGE_PIPELINES
     ),
@@ -712,9 +746,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Query', 'getFeed'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
-    field_id('Query', 'getGlossary'): TestData(
-        resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.PUBLIC
-    ),
+    field_id('Query', 'getGlossary'): TestData(resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.PUBLIC),
     field_id('Query', 'getGroup'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
@@ -740,13 +772,13 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_perm=GET_ORGANIZATION, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getPivotRoleExternalId'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_ORGANIZATION, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getPivotRoleName'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_ORGANIZATION, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getPivotRolePresignedUrl'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_ORGANIZATION, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getPlatformAuthorSession'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -758,13 +790,13 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_perm=GET_DASHBOARD, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getRedshiftDataset'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_REDSHIFT_DATASET, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getRedshiftDatasetTable'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_REDSHIFT_DATASET_TABLE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getRedshiftDatasetTableColumns'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_REDSHIFT_DATASET_TABLE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getS3ConsumptionData'): TestData(
         resource_perm=GET_SHARE_OBJECT, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -779,14 +811,13 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_perm=GET_SGMSTUDIO_USER, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getSagemakerStudioUserPresignedUrl'): TestData(
-        tenant_perm=MANAGE_SGMSTUDIO_USERS, resource_perm=SGMSTUDIO_USER_URL,
+        tenant_perm=MANAGE_SGMSTUDIO_USERS,
+        resource_perm=SGMSTUDIO_USER_URL,
     ),
     field_id('Query', 'getShareItemDataFilters'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_SHARE_OBJECT, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
-    field_id('Query', 'getShareLogs'): TestData(
-        resource_ignore=IgnoreReason.CUSTOM, tenant_ignore=IgnoreReason.CUSTOM
-    ),
+    field_id('Query', 'getShareLogs'): TestData(resource_ignore=IgnoreReason.CUSTOM, tenant_ignore=IgnoreReason.CUSTOM),
     field_id('Query', 'getShareObject'): TestData(
         resource_perm=GET_SHARE_OBJECT, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
@@ -799,21 +830,13 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Query', 'getSharedDatasetTables'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),  # TODO Review
-    field_id('Query', 'getStack'): TestData(
-        resource_perm='getStack', tenant_ignore=IgnoreReason.NOTREQUIRED
-    ),
-    field_id('Query', 'getStackLogs'): TestData(
-        resource_perm='getStack', tenant_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Query', 'getStack'): TestData(resource_perm='getStack', tenant_ignore=IgnoreReason.NOTREQUIRED),
+    field_id('Query', 'getStackLogs'): TestData(resource_perm='getStack', tenant_ignore=IgnoreReason.NOTREQUIRED),
     field_id('Query', 'getTrustAccount'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
-    field_id('Query', 'getVote'): TestData(
-        resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.PUBLIC
-    ),
-    field_id('Query', 'getWorksheet'): TestData(
-        resource_perm=GET_WORKSHEET, tenant_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Query', 'getVote'): TestData(resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.PUBLIC),
+    field_id('Query', 'getWorksheet'): TestData(resource_perm=GET_WORKSHEET, tenant_ignore=IgnoreReason.NOTREQUIRED),
     field_id('Query', 'listAllConsumptionRoles'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
@@ -920,16 +943,16 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listRedshiftDatasetTables'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_REDSHIFT_DATASET, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listRedshiftSchemaDatasetTables'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_REDSHIFT_DATASET, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listRedshiftSchemaTables'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listS3DatasetsOwnedByEnvGroup'): TestData(
-        resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
+        resource_perm=LIST_ENVIRONMENT_DATASETS, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'listS3DatasetsSharedWithEnvGroup'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -941,13 +964,13 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'listSharedDatasetTableColumns'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_DATASET_TABLE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listTableDataFilters'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=LIST_TABLE_DATA_FILTERS, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listTableDataFiltersByAttached'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_SHARE_OBJECT, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listTenantGroups'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.TENANT
@@ -967,15 +990,11 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Query', 'listWorksheets'): TestData(
         resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
-    field_id('Query', 'previewTable'): TestData(
-        resource_ignore=IgnoreReason.CUSTOM, tenant_ignore=IgnoreReason.CUSTOM
-    ),
+    field_id('Query', 'previewTable'): TestData(resource_ignore=IgnoreReason.CUSTOM, tenant_ignore=IgnoreReason.CUSTOM),
     field_id('Query', 'queryEnums'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
-    field_id('Query', 'runAthenaSqlQuery'): TestData(
-        resource_perm=RUN_ATHENA_QUERY, tenant_perm=MANAGE_WORKSHEETS
-    ),
+    field_id('Query', 'runAthenaSqlQuery'): TestData(resource_perm=RUN_ATHENA_QUERY, tenant_perm=MANAGE_WORKSHEETS),
     field_id('Query', 'searchDashboards'): TestData(
         resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
@@ -986,7 +1005,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('RedshiftDataset', 'connection'): TestData(
-        resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_REDSHIFT_CONNECTION, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('RedshiftDataset', 'environment'): TestData(
         resource_perm=GET_ENVIRONMENT, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -1001,19 +1020,19 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('RedshiftDataset', 'upvotes'): TestData(
-        resource_ignore=IgnoreReason.APPSUPPORT, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_REDSHIFT_DATASET, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('RedshiftDataset', 'userRoleForDataset'): TestData(
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('RedshiftDatasetTable', 'dataset'): TestData(
-        resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_REDSHIFT_DATASET, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('RedshiftDatasetTable', 'terms'): TestData(
         resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('SagemakerNotebook', 'NotebookInstanceStatus'): TestData(
-        resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_NOTEBOOK, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('SagemakerNotebook', 'environment'): TestData(
         resource_perm=GET_ENVIRONMENT, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -1191,7 +1210,7 @@ def test_unauthorized_tenant_permissions(
 @pytest.mark.parametrize('_type,field', ALL_PARAMS)
 def test_unauthorized_resource_permissions(
     mock_storage,
-    mock_check,
+    mock_check_resource,
     mock_perm_name,
     mock_session,
     _type,
@@ -1216,10 +1235,11 @@ def test_unauthorized_resource_permissions(
     with suppress(Exception):
         field.resolver(**iargs)
     # TODO add support for asserting multiple calls in case a resolver checks multiple perms
-    mock_check.assert_any_call(
-        session=ANY,
-        resource_uri=ANY,
-        username=username,
-        groups=groups,
-        permission_name=expected_perm,
-    )
+    if mock_check_resource.called:
+        mock_check_resource.assert_any_call(
+            session=ANY,
+            resource_uri=ANY,
+            username=username,
+            groups=groups,
+            permission_name=expected_perm,
+        )
