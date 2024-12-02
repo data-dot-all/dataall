@@ -16,7 +16,6 @@ from dataall.core.permissions.services.environment_permissions import GET_ENVIRO
 from dataall.core.permissions.services.network_permissions import GET_NETWORK
 from dataall.core.permissions.services.organization_permissions import GET_ORGANIZATION
 from dataall.core.permissions.services.tenant_permissions import MANAGE_ENVIRONMENTS, MANAGE_ORGANIZATIONS
-from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.catalog.services.glossaries_permissions import MANAGE_GLOSSARIES
 from dataall.modules.dashboards.services.dashboard_permissions import MANAGE_DASHBOARDS, SHARE_DASHBOARD
 from dataall.modules.datapipelines.services.datapipelines_permissions import GET_PIPELINE, MANAGE_PIPELINES
@@ -772,7 +771,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getSagemakerNotebookPresignedUrl'): TestData(
-        tenant_perm=MANAGE_NOTEBOOKS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_NOTEBOOKS, resource_perm=GET_NOTEBOOK
     ),
     field_id('Query', 'getSagemakerStudioUser'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -1149,21 +1148,19 @@ def mock_input_validation(mocker):
 
 
 @pytest.mark.parametrize('_type,field', ALL_PARAMS)
-@patch(
-    'dataall.core.permissions.services.tenant_policy_service.TenantPolicyService.check_user_tenant_permission',
-    wraps=TenantPolicyService.check_user_tenant_permission,
-)
 @patch('dataall.base.context._request_storage')
+@patch('dataall.core.permissions.services.resource_policy_service.ResourcePolicyService.check_user_resource_permission')
+@patch('dataall.core.permissions.services.group_policy_service.GroupPolicyService.check_group_environment_permission')
+@patch('dataall.core.permissions.services.tenant_policy_service.TenantPolicyService.check_user_tenant_permission')
 def test_unauthorized_tenant_permissions(
-    mock_local,
-    spy_check,
+    mock_tenant_check,
+    mock_check_group,
+    mock_check_resource,
+    mock_storage,
     _type,
     field,
     request,
     mock_input_validation,
-    db,
-    userNoTenantPermissions,
-    groupNoTenantPermissions,
 ):
     fid = request.node.callspec.id
     tdata = EXPECTED_RESOLVERS[fid]
@@ -1174,14 +1171,13 @@ def test_unauthorized_tenant_permissions(
     logging.info(msg)
 
     assert_that(field.resolver).is_not_none()
-    groups = [groupNoTenantPermissions.groupUri]
-    username = userNoTenantPermissions.username
-    mock_local.context = RequestContext(db, username, groups, userNoTenantPermissions)
-    # Mocking arguments
+    username = 'ausername'
+    groups = ['agroup']
+    mock_storage.context = RequestContext(MagicMock(), username, groups, 'auserid')
+    mock_tenant_check.side_effect = TenantUnauthorized(username, 'test_action', 'test_tenant')
     iargs = {arg: MagicMock() for arg in inspect.signature(field.resolver).parameters.keys()}
-    # Assert Unauthorized exception is raised
     assert_that(field.resolver).raises(TenantUnauthorized).when_called_with(**iargs).contains('UnauthorizedOperation')
-    spy_check.assert_called_once_with(
+    mock_tenant_check.assert_called_once_with(
         session=ANY, username=username, groups=groups, tenant_name=ANY, permission_name=expected_perm
     )
 
@@ -1191,7 +1187,7 @@ def test_unauthorized_tenant_permissions(
 @patch('dataall.base.context._request_storage')
 @pytest.mark.parametrize('_type,field', ALL_PARAMS)
 def test_unauthorized_resource_permissions(
-    mock_local,
+    mock_storage,
     mock_check,
     mock_session,
     _type,
@@ -1209,8 +1205,8 @@ def test_unauthorized_resource_permissions(
     assert_that(field.resolver).is_not_none()
     username = 'ausername'
     groups = ['agroup']
-    mock_local.context = RequestContext(MagicMock(), username, groups, 'auserid')
-    mock_local.context.db_engine.scoped_session().__enter__().query().filter().all.return_value = [MagicMock()]
+    mock_storage.context = RequestContext(MagicMock(), username, groups, 'auserid')
+    mock_storage.context.db_engine.scoped_session().__enter__().query().filter().all.return_value = [MagicMock()]
     mock_check.side_effect = ResourceUnauthorized(groups, 'test_action', 'test_uri')
     iargs = {arg: MagicMock() for arg in inspect.signature(field.resolver).parameters.keys()}
     with suppress(ResourceUnauthorized):
