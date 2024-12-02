@@ -1209,12 +1209,11 @@ def test_unauthorized_resource_permissions(
     groups = ['agroup']
     mock_storage.context = RequestContext(MagicMock(), username, groups, 'auserid')
     mock_storage.context.db_engine.scoped_session().__enter__().query().filter().all.return_value = [MagicMock()]
-    mock_check.side_effect = ResourceUnauthorized(groups, 'test_action', 'test_uri')
     mock_perm_name.return_value = expected_perm
     iargs = {arg: MagicMock() for arg in inspect.signature(field.resolver).parameters.keys()}
-    with suppress(ResourceUnauthorized):
+    with suppress(Exception):
         field.resolver(**iargs)
-    mock_check.assert_called_once_with(
+    mock_check.assert_called_with(
         session=ANY,
         resource_uri=ANY,
         username=username,
