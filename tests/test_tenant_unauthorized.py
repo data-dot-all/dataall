@@ -1183,12 +1183,14 @@ def test_unauthorized_tenant_permissions(
 
 
 @patch('dataall.base.aws.sts.SessionHelper.remote_session')
+@patch('dataall.core.stacks.db.target_type_repositories.TargetType.get_resource_read_permission_name')
 @patch('dataall.core.permissions.services.resource_policy_service.ResourcePolicyService.check_user_resource_permission')
 @patch('dataall.base.context._request_storage')
 @pytest.mark.parametrize('_type,field', ALL_PARAMS)
 def test_unauthorized_resource_permissions(
     mock_storage,
     mock_check,
+    mock_perm_name,
     mock_session,
     _type,
     field,
@@ -1208,6 +1210,7 @@ def test_unauthorized_resource_permissions(
     mock_storage.context = RequestContext(MagicMock(), username, groups, 'auserid')
     mock_storage.context.db_engine.scoped_session().__enter__().query().filter().all.return_value = [MagicMock()]
     mock_check.side_effect = ResourceUnauthorized(groups, 'test_action', 'test_uri')
+    mock_perm_name.return_value = expected_perm
     iargs = {arg: MagicMock() for arg in inspect.signature(field.resolver).parameters.keys()}
     with suppress(ResourceUnauthorized):
         field.resolver(**iargs)
