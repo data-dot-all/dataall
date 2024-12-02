@@ -242,8 +242,9 @@ const FolderView = () => {
       );
     } else {
       setFolder(null);
-      const error = response.errors[0].message;
-      dispatch({ type: SET_ERROR, error });
+      response.errors.forEach((err) =>
+        dispatch({ type: SET_ERROR, error: err.message })
+      );
     }
     setLoading(false);
   }, [client, dispatch, params.uri]);
