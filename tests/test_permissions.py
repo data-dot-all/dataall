@@ -710,7 +710,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     ),
     field_id('Query', 'getAuthorSession'): TestData(resource_perm=CREATE_DASHBOARD, tenant_perm=MANAGE_DASHBOARDS),
     field_id('Query', 'getCDKExecPolicyPresignedUrl'): TestData(
-        resource_perm=GET_ORGANIZATION, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=LINK_ENVIRONMENT, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getConsumptionRolePolicies'): TestData(
         resource_perm=GET_ENVIRONMENT, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -782,16 +782,13 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_perm=GET_ORGANIZATION, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getPivotRoleExternalId'): TestData(
-        resource_perm=GET_ORGANIZATION, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=LINK_ENVIRONMENT, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getPivotRoleName'): TestData(
-        resource_perm=GET_ORGANIZATION, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=LINK_ENVIRONMENT, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getPivotRolePresignedUrl'): TestData(
-        resource_perm=GET_ORGANIZATION, tenant_ignore=IgnoreReason.NOTREQUIRED
-    ),
-    field_id('Query', 'getPlatformAuthorSession'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=LINK_ENVIRONMENT, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getPlatformReaderSession'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -843,7 +840,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Query', 'getStack'): TestData(resource_perm='getStack', tenant_ignore=IgnoreReason.NOTREQUIRED),
     field_id('Query', 'getStackLogs'): TestData(resource_perm='getStack', tenant_ignore=IgnoreReason.NOTREQUIRED),
     field_id('Query', 'getTrustAccount'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=LINK_ENVIRONMENT, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getVote'): TestData(resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.PUBLIC),
     field_id('Query', 'getWorksheet'): TestData(resource_perm=GET_WORKSHEET, tenant_ignore=IgnoreReason.NOTREQUIRED),
@@ -965,7 +962,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_perm=LIST_ENVIRONMENT_DATASETS, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'listS3DatasetsSharedWithEnvGroup'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=LIST_ENVIRONMENT_DATASETS, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),  # TODO Review
     field_id('Query', 'listSagemakerNotebooks'): TestData(
         resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
@@ -1174,36 +1171,43 @@ def mock_input_validation(mocker):
     mocker.patch('boto3.client').side_effect = RuntimeError('mocked boto3 client')
 
 
+ALL_PARAMS = [pytest.param(field, id=field_id(_type.name, field.name)) for _type, field in ALL_RESOLVERS]
+
+
 def test_all_resolvers_have_test_data():
     """
     ensure that all EXPECTED_RESOURCES_PERMS have a corresponding query (to avoid stale entries) and vice versa
     """
-    assert_that([field_id(res[0].name, res[1].name) for res in ALL_RESOLVERS]).described_as(
+    assert_that(ALL_PARAMS).extracting(2).described_as(
         'stale or missing EXPECTED_RESOURCE_PERMS detected'
     ).contains_only(*EXPECTED_RESOLVERS.keys())
 
 
-@pytest.mark.parametrize(
-    'field', [pytest.param(field, id=field_id(_type.name, field.name)) for _type, field in ALL_RESOLVERS]
-)
+@pytest.mark.parametrize('field', ALL_PARAMS)
 @patch('dataall.base.context._request_storage')
 @patch('dataall.core.permissions.services.resource_policy_service.ResourcePolicyService.check_user_resource_permission')
 @patch('dataall.core.permissions.services.group_policy_service.GroupPolicyService.check_group_environment_permission')
 @patch('dataall.core.permissions.services.tenant_policy_service.TenantPolicyService.check_user_tenant_permission')
 @patch('dataall.core.stacks.db.target_type_repositories.TargetType.get_resource_read_permission_name')
-class TestGroup:
-    def _setup(self, field, request, mock_storage, mock_perm_name, permission_type):
-        """Common setup for both tenant and resource permission tests"""
-        fid = request.node.callspec.id
-        perm, reason = EXPECTED_RESOLVERS[fid].get(permission_type)
+class TestPermissions:
+    @pytest.mark.parametrize('perm_type', ['resource', 'tenant'])
+    def test_permissions(
+        self,
+        mock_perm_name,
+        mock_check_tenant,
+        mock_check_group,
+        mock_check_resource,
+        mock_storage,
+        field,
+        perm_type,
+        request,
+        mock_input_validation,
+    ):
+        fid = request.node.callspec.id.split('-')[-1]
+        perm, reason = EXPECTED_RESOLVERS[fid].get(perm_type)
         msg = f'{fid} -> {field.resolver.__code__.co_filename}:{field.resolver.__code__.co_firstlineno}'
-
-        if not perm:
-            pytest.skip(msg + f' Reason: {reason.value}')
         logging.info(msg)
-
         assert_that(field.resolver).is_not_none()
-
         # Setup mock context
         username = 'ausername'
         groups = ['agroup']
@@ -1211,55 +1215,29 @@ class TestGroup:
         mock_storage.context.db_engine.scoped_session().__enter__().query().filter().all.return_value = [MagicMock()]
         mock_perm_name.return_value = perm
 
-        return username, groups, perm
-
-    def _execute_resolver(self, field):
         iargs = {arg: MagicMock() for arg in inspect.signature(field.resolver).parameters.keys()}
         with suppress(Exception):
             field.resolver(**iargs)
 
-    def test_tenant_permissions(
-        self,
-        mock_perm_name,
-        mock_check_tenant,
-        mock_check_group,
-        mock_check_resource,
-        mock_storage,
-        field,
-        request,
-        mock_input_validation,
-    ):
-        username, groups, perm = self._setup(field, request, mock_storage, mock_perm_name, 'tenant')
-
-        self._execute_resolver(field)
-
-        mock_check_tenant.assert_any_call(
-            session=ANY,
-            username=username,
-            groups=groups,
-            tenant_name=ANY,
-            permission_name=perm,
-        )
-
-    def test_resource_permissions(
-        self,
-        mock_perm_name,
-        mock_check_tenant,
-        mock_check_group,
-        mock_check_resource,
-        mock_storage,
-        field,
-        request,
-        mock_input_validation,
-    ):
-        username, groups, perm = self._setup(field, request, mock_storage, mock_perm_name, 'resource')
-
-        self._execute_resolver(field)
-
-        mock_check_resource.assert_any_call(
-            session=ANY,
-            resource_uri=ANY,
-            username=username,
-            groups=groups,
-            permission_name=perm,
-        )
+        if not perm:
+            # if no expected permission is defined, we expect the check to not be called
+            locals()[f'mock_check_{perm_type}'].assert_not_called()
+            pytest.skip(msg + f' Reason: {reason.value}')
+        elif perm_type == 'resource':
+            mock_check_resource.assert_any_call(
+                session=ANY,
+                resource_uri=ANY,
+                username=username,
+                groups=groups,
+                permission_name=perm,
+            )
+        elif perm_type == 'tenant':
+            mock_check_tenant.assert_any_call(
+                session=ANY,
+                username=username,
+                groups=groups,
+                tenant_name=ANY,
+                permission_name=perm,
+            )
+        else:
+            raise ValueError(f'unknown permission type {perm_type}')
