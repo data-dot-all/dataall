@@ -95,7 +95,7 @@ export const DatasetTables = (props) => {
       fetchItems().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
-      enqueueSnackbar(`Retrieved ${response.data.syncTables.count} tables`, {
+      enqueueSnackbar(`Retrieved ${response.data.syncTables} tables`, {
         anchorOrigin: {
           horizontal: 'right',
           vertical: 'top'

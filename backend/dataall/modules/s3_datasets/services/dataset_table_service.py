@@ -153,11 +153,7 @@ class DatasetTableService:
             DatasetTableIndexer.upsert_all(session=session, dataset_uri=dataset.datasetUri)
             DatasetTableIndexer.remove_all_deleted(session=session, dataset_uri=dataset.datasetUri)
             DatasetIndexer.upsert(session=session, dataset_uri=dataset.datasetUri)
-            return DatasetRepository.paginated_dataset_tables(
-                session=session,
-                uri=uri,
-                data={'page': 1, 'pageSize': 10},
-            )
+            return DatasetRepository.count_dataset_tables(session, dataset.datasetUri)
 
     @staticmethod
     def sync_existing_tables(session, uri, glue_tables=None):

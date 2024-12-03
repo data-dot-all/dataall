@@ -15,6 +15,7 @@ export const getDatasetStorageLocation = (locationUri) => ({
         dataset {
           datasetUri
           name
+          label
           userRoleForDataset
           SamlAdminGroupName
           owner
