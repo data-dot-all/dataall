@@ -1184,59 +1184,57 @@ def test_all_resolvers_have_test_data():
 
 
 @pytest.mark.parametrize('field', ALL_PARAMS)
+@pytest.mark.parametrize('perm_type', ['resource', 'tenant'])
 @patch('dataall.base.context._request_storage')
 @patch('dataall.core.permissions.services.resource_policy_service.ResourcePolicyService.check_user_resource_permission')
 @patch('dataall.core.permissions.services.group_policy_service.GroupPolicyService.check_group_environment_permission')
 @patch('dataall.core.permissions.services.tenant_policy_service.TenantPolicyService.check_user_tenant_permission')
 @patch('dataall.core.stacks.db.target_type_repositories.TargetType.get_resource_read_permission_name')
-class TestPermissions:
-    @pytest.mark.parametrize('perm_type', ['resource', 'tenant'])
-    def test_permissions(
-        self,
-        mock_perm_name,
-        mock_check_tenant,
-        mock_check_group,
-        mock_check_resource,
-        mock_storage,
-        field,
-        perm_type,
-        request,
-        mock_input_validation,
-    ):
-        fid = request.node.callspec.id.split('-')[-1]
-        perm, reason = EXPECTED_RESOLVERS[fid].get(perm_type)
-        msg = f'{fid} -> {field.resolver.__code__.co_filename}:{field.resolver.__code__.co_firstlineno}'
-        logging.info(msg)
-        assert_that(field.resolver).is_not_none()
-        # Setup mock context
-        username = 'ausername'
-        groups = ['agroup']
-        mock_storage.context = RequestContext(MagicMock(), username, groups, 'auserid')
-        mock_storage.context.db_engine.scoped_session().__enter__().query().filter().all.return_value = [MagicMock()]
-        mock_perm_name.return_value = perm
+def test_permissions(
+    mock_perm_name,
+    mock_check_tenant,
+    mock_check_group,
+    mock_check_resource,
+    mock_storage,
+    field,
+    perm_type,
+    request,
+    mock_input_validation,
+):
+    fid = request.node.callspec.id.split('-')[-1]
+    perm, reason = EXPECTED_RESOLVERS[fid].get(perm_type)
+    msg = f'{fid} -> {field.resolver.__code__.co_filename}:{field.resolver.__code__.co_firstlineno}'
+    logging.info(msg)
+    assert_that(field.resolver).is_not_none()
+    # Setup mock context
+    username = 'ausername'
+    groups = ['agroup']
+    mock_storage.context = RequestContext(MagicMock(), username, groups, 'auserid')
+    mock_storage.context.db_engine.scoped_session().__enter__().query().filter().all.return_value = [MagicMock()]
+    mock_perm_name.return_value = perm
 
-        iargs = {arg: MagicMock() for arg in inspect.signature(field.resolver).parameters.keys()}
-        with suppress(Exception):
-            field.resolver(**iargs)
+    iargs = {arg: MagicMock() for arg in inspect.signature(field.resolver).parameters.keys()}
+    with suppress(Exception):
+        field.resolver(**iargs)
 
-        if not perm:  # if no expected permission is defined, we expect the check to not be called
-            locals()[f'mock_check_{perm_type}'].assert_not_called()  # nosemgrep
-            pytest.skip(msg + f' Reason: {reason.value}')
-        elif perm_type == 'resource':
-            mock_check_resource.assert_any_call(
-                session=ANY,
-                resource_uri=ANY,
-                username=username,
-                groups=groups,
-                permission_name=perm,
-            )
-        elif perm_type == 'tenant':
-            mock_check_tenant.assert_any_call(
-                session=ANY,
-                username=username,
-                groups=groups,
-                tenant_name=ANY,
-                permission_name=perm,
-            )
-        else:
-            raise ValueError(f'unknown permission type {perm_type}')
+    if not perm:  # if no expected permission is defined, we expect the check to not be called
+        locals()[f'mock_check_{perm_type}'].assert_not_called()  # nosemgrep
+        pytest.skip(msg + f' Reason: {reason.value}')
+    elif perm_type == 'resource':
+        mock_check_resource.assert_any_call(
+            session=ANY,
+            resource_uri=ANY,
+            username=username,
+            groups=groups,
+            permission_name=perm,
+        )
+    elif perm_type == 'tenant':
+        mock_check_tenant.assert_any_call(
+            session=ANY,
+            username=username,
+            groups=groups,
+            tenant_name=ANY,
+            permission_name=perm,
+        )
+    else:
+        raise ValueError(f'unknown permission type {perm_type}')
