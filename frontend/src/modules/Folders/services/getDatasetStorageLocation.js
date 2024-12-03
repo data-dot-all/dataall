@@ -7,17 +7,17 @@ export const getDatasetStorageLocation = (locationUri) => ({
   query: gql`
     query getDatasetStorageLocation($locationUri: String!) {
       getDatasetStorageLocation(locationUri: $locationUri) {
+        restricted {
+          AwsAccountId
+          region
+          S3BucketName
+        }
         dataset {
           datasetUri
           name
           userRoleForDataset
           SamlAdminGroupName
           owner
-          restricted {
-            AwsAccountId
-            region
-            S3BucketName
-          }
           environment {
             environmentUri
             label

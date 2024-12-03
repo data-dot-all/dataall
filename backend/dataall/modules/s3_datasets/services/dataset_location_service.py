@@ -3,7 +3,7 @@ from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
-from dataall.base.db.exceptions import ResourceShared, ResourceAlreadyExists
+from dataall.base.db.exceptions import ResourceUnauthorized, ResourceAlreadyExists
 from dataall.modules.s3_datasets.services.dataset_service import DatasetService
 from dataall.modules.s3_datasets.aws.s3_location_client import S3LocationClient
 from dataall.modules.s3_datasets.db.dataset_location_repositories import DatasetLocationRepository
@@ -134,3 +134,42 @@ class DatasetLocationService:
         }
         for group in permission_group:
             ResourcePolicyService.delete_resource_policy(session=session, group=group, resource_uri=location_uri)
+
+    @staticmethod
+    def get_folder_restricted_information(folder: DatasetStorageLocation):
+        try:
+            context = get_context()
+            with context.db_engine.scoped_session() as session:
+                ResourcePolicyService.check_user_resource_permission(
+                    session=session,
+                    username=context.username,
+                    groups=context.groups,
+                    resource_uri=folder.locationUri,
+                    permission_name=GET_DATASET_FOLDER,
+                )
+                dataset = DatasetRepository.get_dataset_by_uri(session, folder.datasetUri)
+                return {
+                    'AwsAccountId': dataset.AwsAccountId,
+                    'region': dataset.region,
+                    'S3BucketName': dataset.S3BucketName,
+                    'GlueDatabaseName': dataset.GlueDatabaseName,
+                    'IAMDatasetAdminRoleArn': dataset.IAMDatasetAdminRoleArn,
+                    'KmsAlias': dataset.KmsAlias,
+                    'importedS3Bucket': dataset.importedS3Bucket,
+                    'importedGlueDatabase': dataset.importedGlueDatabase,
+                    'importedKmsKey': dataset.importedKmsKey,
+                    'importedAdminRole': dataset.importedAdminRole,
+                }
+        except ResourceUnauthorized:
+            return {
+                'AwsAccountId': 'Unauthorized to see information',
+                'region': 'Unauthorized to see information',
+                'S3BucketName': 'Unauthorized to see information',
+                'GlueDatabaseName': 'Unauthorized to see information',
+                'IAMDatasetAdminRoleArn': 'Unauthorized to see information',
+                'KmsAlias': 'Unauthorized to see information',
+                'importedS3Bucket': 'Unauthorized to see information',
+                'importedGlueDatabase': 'Unauthorized to see information',
+                'importedKmsKey': 'Unauthorized to see information',
+                'importedAdminRole': 'Unauthorized to see information',
+            }

@@ -28,7 +28,7 @@ export const FolderOverview = (props) => {
       <Grid item lg={4} xl={3} xs={12}>
         <ObjectMetadata
           environment={folder.dataset.environment}
-          region={folder.dataset.restricted.region}
+          region={folder.restricted.region}
           organization={folder.dataset.environment.organization}
           owner={folder.owner}
           admins={folder.dataset.SamlAdminGroupName || '-'}

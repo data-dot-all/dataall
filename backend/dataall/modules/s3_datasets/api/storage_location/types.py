@@ -1,5 +1,9 @@
 from dataall.base.api import gql
-from dataall.modules.s3_datasets.api.storage_location.resolvers import resolve_glossary_terms, resolve_dataset
+from dataall.modules.s3_datasets.api.storage_location.resolvers import (
+    resolve_glossary_terms,
+    resolve_dataset,
+    get_folder_restricted_information,
+)
 
 DatasetStorageLocation = gql.ObjectType(
     name='DatasetStorageLocation',
@@ -15,6 +19,11 @@ DatasetStorageLocation = gql.ObjectType(
         gql.Field(name='S3Prefix', type=gql.String),
         gql.Field(name='locationCreated', type=gql.Boolean),
         gql.Field(name='dataset', type=gql.Ref('Dataset'), resolver=resolve_dataset),
+        gql.Field(
+            name='restricted',
+            type=gql.Ref('DatasetRestrictedInformation'),
+            resolver=get_folder_restricted_information,
+        ),
         gql.Field(name='userRoleForStorageLocation', type=gql.Ref('DatasetRole')),
         gql.Field(name='environmentEndPoint', type=gql.String),
         gql.Field(
