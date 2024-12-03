@@ -22,10 +22,8 @@ export const getDataset = (datasetUri) => ({
         S3BucketName
         GlueDatabaseName
         tags
-        businessOwnerEmail
         stewards
         IAMDatasetAdminRoleArn
-        businessOwnerDelegationEmails
         stack {
           stack
           status
