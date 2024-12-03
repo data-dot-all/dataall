@@ -124,10 +124,6 @@ def create_quicksight_data_source_set(context, source, vpcConnectionId: str = No
     return DashboardQuicksightService.create_quicksight_data_source_set(vpcConnectionId)
 
 
-def get_quicksight_author_session(context, source, awsAccount: str = None):
-    return DashboardQuicksightService.get_quicksight_author_session(awsAccount)
-
-
 def get_quicksight_reader_session(context, source, dashboardId: str = None):
     return DashboardQuicksightService.get_quicksight_reader_session(dashboardId)
 
