@@ -12,18 +12,20 @@ export const getDataset = (datasetUri) => ({
         description
         label
         name
-        region
         created
         imported
         userRoleForDataset
         SamlAdminGroupName
-        AwsAccountId
-        KmsAlias
-        S3BucketName
-        GlueDatabaseName
+        restricted {
+          AwsAccountId
+          region
+          KmsAlias
+          S3BucketName
+          GlueDatabaseName
+          IAMDatasetAdminRoleArn
+        }
         tags
         stewards
-        IAMDatasetAdminRoleArn
         stack {
           stack
           status

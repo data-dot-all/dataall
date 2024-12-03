@@ -39,6 +39,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     DATASET_READ,
     IMPORT_DATASET,
     DATASET_TABLE_ALL,
+    GET_DATASET,
 )
 from dataall.modules.datasets_base.services.dataset_list_permissions import LIST_ENVIRONMENT_DATASETS
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
@@ -337,6 +338,44 @@ class DatasetService:
             'locations': count_locations or 0,
             'upvotes': count_upvotes or 0,
         }
+
+    @staticmethod
+    def get_dataset_restricted_information(dataset: S3Dataset):
+        try:
+            context = get_context()
+            with context.db_engine.scoped_session() as session:
+                ResourcePolicyService.check_user_resource_permission(
+                    session=session,
+                    username=context.username,
+                    groups=context.groups,
+                    resource_uri=dataset.datasetUri,
+                    permission_name=GET_DATASET,
+                )
+                return {
+                    'AwsAccountId': dataset.AwsAccountId,
+                    'region': dataset.region,
+                    'S3BucketName': dataset.S3BucketName,
+                    'GlueDatabaseName': dataset.GlueDatabaseName,
+                    'IAMDatasetAdminRoleArn': dataset.IAMDatasetAdminRoleArn,
+                    'KmsAlias': dataset.KmsAlias,
+                    'importedS3Bucket': dataset.importedS3Bucket,
+                    'importedGlueDatabase': dataset.importedGlueDatabase,
+                    'importedKmsKey': dataset.importedKmsKey,
+                    'importedAdminRole': dataset.importedAdminRole,
+                }
+        except exceptions.ResourceUnauthorized:
+            return {
+                'AwsAccountId': 'Unauthorized to see information',
+                'region': 'Unauthorized to see information',
+                'S3BucketName': 'Unauthorized to see information',
+                'GlueDatabaseName': 'Unauthorized to see information',
+                'IAMDatasetAdminRoleArn': 'Unauthorized to see information',
+                'KmsAlias': 'Unauthorized to see information',
+                'importedS3Bucket': 'Unauthorized to see information',
+                'importedGlueDatabase': 'Unauthorized to see information',
+                'importedKmsKey': 'Unauthorized to see information',
+                'importedAdminRole': 'Unauthorized to see information',
+            }
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)

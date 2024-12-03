@@ -11,6 +11,7 @@ from dataall.modules.s3_datasets.api.dataset.resolvers import (
     get_dataset_statistics,
     get_dataset_glossary_terms,
     resolve_dataset_stack,
+    get_dataset_restricted_information,
 )
 from dataall.core.environment.api.enums import EnvironmentPermission
 
@@ -20,6 +21,22 @@ DatasetStatistics = gql.ObjectType(
         gql.Field(name='tables', type=gql.Integer),
         gql.Field(name='locations', type=gql.Integer),
         gql.Field(name='upvotes', type=gql.Integer),
+    ],
+)
+
+DatasetRestrictedInformation = gql.ObjectType(
+    name='DatasetRestrictedInformation',
+    fields=[
+        gql.Field(name='AwsAccountId', type=gql.String),
+        gql.Field(name='region', type=gql.String),
+        gql.Field(name='S3BucketName', type=gql.String),
+        gql.Field(name='GlueDatabaseName', type=gql.String),
+        gql.Field(name='IAMDatasetAdminRoleArn', type=gql.String),
+        gql.Field(name='KmsAlias', type=gql.String),
+        gql.Field(name='importedS3Bucket', type=gql.Boolean),
+        gql.Field(name='importedGlueDatabase', type=gql.Boolean),
+        gql.Field(name='importedKmsKey', type=gql.Boolean),
+        gql.Field(name='importedAdminRole', type=gql.Boolean),
     ],
 )
 
@@ -35,18 +52,13 @@ Dataset = gql.ObjectType(
         gql.Field(name='created', type=gql.String),
         gql.Field(name='updated', type=gql.String),
         gql.Field(name='admins', type=gql.ArrayType(gql.String)),
-        gql.Field(name='AwsAccountId', type=gql.String),
-        gql.Field(name='region', type=gql.String),
-        gql.Field(name='S3BucketName', type=gql.String),
-        gql.Field(name='GlueDatabaseName', type=gql.String),
-        gql.Field(name='IAMDatasetAdminRoleArn', type=gql.String),
-        gql.Field(name='KmsAlias', type=gql.String),
         gql.Field(name='SamlAdminGroupName', type=gql.String),
-        gql.Field(name='importedS3Bucket', type=gql.Boolean),
-        gql.Field(name='importedGlueDatabase', type=gql.Boolean),
-        gql.Field(name='importedKmsKey', type=gql.Boolean),
-        gql.Field(name='importedAdminRole', type=gql.Boolean),
         gql.Field(name='imported', type=gql.Boolean),
+        gql.Field(
+            name='restricted',
+            type=DatasetRestrictedInformation,
+            resolver=get_dataset_restricted_information,
+        ),
         gql.Field(
             name='environment',
             type=gql.Ref('EnvironmentSimplified'),
