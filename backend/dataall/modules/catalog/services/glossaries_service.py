@@ -29,8 +29,11 @@ class GlossariesResourceAccess:
                 context = get_context()
                 with context.db_engine.scoped_session() as session:
                     node = GlossaryRepository.get_node(session=session, uri=uri)
-                    while node.nodeType != 'G':
+                    MAX_GLOSSARY_DEPTH = 10
+                    depth = 0
+                    while node.nodeType != 'G' and depth <= MAX_GLOSSARY_DEPTH:
                         node = GlossaryRepository.get_node(session=session, uri=node.parentUri)
+                        depth += 1
                     if node and (node.admin in context.groups):
                         return f(*args, **kwargs)
                     else:
