@@ -1219,9 +1219,8 @@ class TestPermissions:
         with suppress(Exception):
             field.resolver(**iargs)
 
-        if not perm:
-            # if no expected permission is defined, we expect the check to not be called
-            locals()[f'mock_check_{perm_type}'].assert_not_called()
+        if not perm:  # if no expected permission is defined, we expect the check to not be called
+            locals()[f'mock_check_{perm_type}'].assert_not_called()  # nosemgrep
             pytest.skip(msg + f' Reason: {reason.value}')
         elif perm_type == 'resource':
             mock_check_resource.assert_any_call(
