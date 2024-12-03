@@ -243,6 +243,11 @@ class DatasetService:
                 dataset.userRoleForDataset = DatasetRole.Admin.value
             return dataset
 
+    @classmethod
+    @ResourcePolicyService.has_resource_permission(GET_DATASET)
+    def find_dataset(cls, uri):
+        return DatasetService.get_dataset(uri)
+
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
