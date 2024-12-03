@@ -131,8 +131,6 @@ GlueCrawler = gql.ObjectType(
     name='GlueCrawler',
     fields=[
         gql.Field(name='Name', type=gql.ID),
-        gql.Field(name='AwsAccountId', type=gql.String),
-        gql.Field(name='region', type=gql.String),
         gql.Field(name='status', type=gql.String),
     ],
 )

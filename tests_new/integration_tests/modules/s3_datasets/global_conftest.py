@@ -181,14 +181,14 @@ def create_tables(client, dataset):
     file_path = os.path.join(os.path.dirname(__file__), 'sample_data/csv_table/csv_sample.csv')
     s3_client = S3Client(dataset_session, dataset.region)
     glue_client = GlueClient(dataset_session, dataset.region)
-    s3_client.upload_file_to_prefix(local_file_path=file_path, s3_path=f'{dataset.S3BucketName}/integrationtest1')
+    s3_client.upload_file_to_prefix(local_file_path=file_path, s3_path=f'{dataset.restricted.S3BucketName}/integrationtest1')
     glue_client.create_table(
-        database_name=dataset.GlueDatabaseName, table_name='integrationtest1', bucket=dataset.S3BucketName
+        database_name=dataset.restricted.GlueDatabaseName, table_name='integrationtest1', bucket=dataset.restricted.S3BucketName
     )
 
-    s3_client.upload_file_to_prefix(local_file_path=file_path, s3_path=f'{dataset.S3BucketName}/integrationtest2')
+    s3_client.upload_file_to_prefix(local_file_path=file_path, s3_path=f'{dataset.restricted.S3BucketName}/integrationtest2')
     glue_client.create_table(
-        database_name=dataset.GlueDatabaseName, table_name='integrationtest2', bucket=dataset.S3BucketName
+        database_name=dataset.restricted.GlueDatabaseName, table_name='integrationtest2', bucket=dataset.restricted.S3BucketName
     )
     response = sync_tables(client, datasetUri=dataset.datasetUri)
     return [table for table in response.get('nodes', []) if table.GlueTableName.startswith('integrationtest')]
@@ -238,7 +238,7 @@ def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdat
     finally:
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
-            delete_aws_dataset_resources(aws_client=session_env1_aws_client, env=session_env1, bucket=ds.S3BucketName)
+            delete_aws_dataset_resources(aws_client=session_env1_aws_client, env=session_env1, bucket=ds.restricted.S3BucketName)
 
 
 @pytest.fixture(scope='session')
@@ -394,7 +394,7 @@ def temp_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata, 
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
 
-            delete_aws_dataset_resources(aws_client=session_env1_aws_client, env=session_env1, bucket=ds.S3BucketName)
+            delete_aws_dataset_resources(aws_client=session_env1_aws_client, env=session_env1, bucket=ds.restricted.S3BucketName)
 
 
 """

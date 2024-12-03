@@ -430,8 +430,6 @@ class DatasetService:
 
             return {
                 'Name': dataset.GlueCrawlerName,
-                'AwsAccountId': dataset.AwsAccountId,
-                'region': dataset.region,
                 'status': crawler.get('LastCrawl', {}).get('Status', 'N/A'),
             }
 

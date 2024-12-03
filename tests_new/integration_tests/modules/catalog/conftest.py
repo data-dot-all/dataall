@@ -85,7 +85,7 @@ def dataset_association1(client1, group1, glossary1, glossary_term1, session_s3_
             datasetUri=session_s3_dataset1.datasetUri,
             input={
                 'terms': [glossary_term1.nodeUri],
-                'KmsAlias': session_s3_dataset1.KmsAlias,
+                'KmsAlias': session_s3_dataset1.restricted.KmsAlias,
             },
         )
         response = list_glossary_associations(client1, node_uri=glossary1.nodeUri)
@@ -100,7 +100,7 @@ def dataset_association1(client1, group1, glossary1, glossary_term1, session_s3_
                 datasetUri=session_s3_dataset1.datasetUri,
                 input={
                     'terms': [],
-                    'KmsAlias': session_s3_dataset1.KmsAlias,
+                    'KmsAlias': session_s3_dataset1.restricted.KmsAlias,
                 },
             )
 
