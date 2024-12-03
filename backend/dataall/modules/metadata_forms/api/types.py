@@ -122,6 +122,7 @@ MetadataFormEnforcementRule = gql.ObjectType(
     fields=[
         gql.Field(name='uri', type=gql.String),
         gql.Field(name='level', type=gql.String),
+        gql.Field(name='severity', type=gql.String),
         gql.Field(name='homeEntity', type=gql.String),
         gql.Field(name='homeEntityName', type=gql.String, resolver=get_mf_rule_home_entity_name),
         gql.Field(
@@ -159,5 +160,21 @@ MFAffectedEntity = gql.ObjectType(
         gql.Field(name='name', type=gql.String),
         gql.Field(name='owner', type=gql.String),
         gql.Field(name='attached', type=gql.Ref('AttachedMetadataForm')),
+    ],
+)
+
+EntityTypeWithScope = gql.ObjectType(
+    name='EntityTypeWithScope',
+    fields=[
+        gql.Field(name='name', type=gql.String),
+        gql.Field(name='levels', type=gql.ArrayType(gql.String)),
+    ],
+)
+
+AffectingRules = gql.ObjectType(
+    name='AffectingRules',
+    fields=MetadataFormEnforcementRule.fields[:]
+    + [
+        gql.Field(name='attached', type=gql.String),
     ],
 )

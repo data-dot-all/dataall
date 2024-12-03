@@ -44,6 +44,15 @@ class MetadataFormEnforcementRequestValidationService:
         if 'entityTypes' not in data:
             raise exceptions.RequiredParameter('entityTypes')
 
+        else:
+            for entity_type in data.get('entityTypes'):
+                if not MetadataFormEntityManager.is_registered(entity_type):
+                    raise exceptions.InvalidInput(
+                        param_name='entityType',
+                        param_value=entity_type,
+                        constraint='must be registered in MetadataFormEntityManager',
+                    )
+
         # check that values are valid for the enums
         MetadataFormEnforcementScope(data.get('level'))
         MetadataFormEnforcementSeverity(data.get('severity'))
@@ -120,20 +129,23 @@ class MetadataFormEnforcementService:
             return []
 
     @staticmethod
-    def form_affected_entity_object(type, entity: MetadataFormEntity, rule):
+    def get_attachement_for_rule(rule, entityUri):
         with get_context().db_engine.scoped_session() as session:
-            attached = MetadataFormRepository.query_all_attached_metadata_forms_for_entity(
+            return MetadataFormRepository.query_all_attached_metadata_forms_for_entity(
                 session,
-                entityUri=entity.get_uri(),
+                entityUri=entityUri,
                 metadataFormUri=rule.metadataFormUri,
                 version=rule.version,
-            )
+            ).first()
+
+    @staticmethod
+    def form_affected_entity_object(type, entity: MetadataFormEntity, rule):
         return {
             'type': type,
             'name': entity.get_entity_name(),
             'uri': entity.get_uri(),
             'owner': entity.get_owner(),
-            'attached': attached.first(),
+            'attached': MetadataFormEnforcementService.get_attachement_for_rule(rule, entity.get_uri()),
         }
 
     @staticmethod
@@ -165,16 +177,21 @@ class MetadataFormEnforcementService:
                     ]
                 )
 
-            datasets = MetadataFormEnforcementService.get_affected_datasets(uri, rule)
-            affected_entities.extend(
-                [
-                    MetadataFormEnforcementService.form_affected_entity_object(
-                        ds.datasetType.value + '-Dataset', ds, rule
-                    )
-                    for ds in datasets
-                    if ds.datasetType.value + '-Dataset' in rule.entityTypes
-                ]
-            )
+            datasets = []
+            if MetadataFormEntityManager.is_registered(
+                MetadataFormEntityTypes.S3Datasets.value
+            ) or MetadataFormEntityManager.is_registered(MetadataFormEntityTypes.RDDatasets.value):
+                datasets = MetadataFormEnforcementService.get_affected_datasets(uri, rule)
+                affected_entities.extend(
+                    [
+                        MetadataFormEnforcementService.form_affected_entity_object(
+                            ds.datasetType.value + '-Dataset', ds, rule
+                        )
+                        for ds in datasets
+                        if ds.datasetType.value + '-Dataset' in rule.entityTypes
+                        and MetadataFormEntityManager.is_registered(ds.datasetType.value + '-Dataset')
+                    ]
+                )
 
             entity_types = set(rule.entityTypes[:]) - {
                 MetadataFormEntityTypes.Organizations.value,
@@ -239,3 +256,83 @@ class MetadataFormEnforcementService:
             session.delete(rule)
             session.commit()
         return True
+
+    @staticmethod
+    def list_supported_entity_types():
+        supported_entity_types = []
+        all_levels_scope = [level for level in MetadataFormEnforcementScope]
+        for entity_type in MetadataFormEntityManager.all_registered_keys():
+            entity_scope = ENTITY_SCOPE_BY_TYPE[entity_type]
+            levels = [level.value for level in all_levels_scope if level > entity_scope or level == entity_scope]
+            supported_entity_types.append({'name': entity_type, 'levels': levels})
+        return supported_entity_types
+
+    @staticmethod
+    def get_rules_that_affect_entity(entity_type, entity_uri):
+        if not MetadataFormEntityManager.is_registered(entity_type):
+            return []
+        all_rules = []
+        entity_class = MetadataFormEntityManager.get_resource(entity_type)
+        entity_scope = ENTITY_SCOPE_BY_TYPE[entity_type]
+        with get_context().db_engine.scoped_session() as session:
+            entity = session.query(entity_class).get(entity_uri)
+            parent_dataset_uri, parent_env_uri, parent_org_uri = None, None, None
+
+            if entity_scope == MetadataFormEnforcementScope.Dataset:
+                parent_dataset_uri = entity.datasetUri
+                ds = DatasetBaseRepository.get_dataset_by_uri(session, parent_dataset_uri)
+                parent_env_uri = ds.environmentUri
+                parent_org_uri = ds.organizationUri
+            if entity_scope == MetadataFormEnforcementScope.Environment:
+                parent_env_uri = entity.environmentUri
+                env = EnvironmentRepository.get_environment_by_uri(session, parent_env_uri)
+                parent_org_uri = env.organizationUri
+            if entity_scope == MetadataFormEnforcementScope.Organization:
+                parent_org_uri = entity.organizationUri
+
+            all_rules.extend(
+                MetadataFormRepository.query_all_enforcement_rules(
+                    session=session,
+                    filter={'entity_types': [entity_type], 'level': MetadataFormEnforcementScope.Global.value},
+                )
+            )
+            if entity_scope < MetadataFormEnforcementScope.Global:
+                all_rules.extend(
+                    MetadataFormRepository.query_all_enforcement_rules(
+                        session=session,
+                        filter={
+                            'entity_types': [entity_type],
+                            'level': MetadataFormEnforcementScope.Organization.value,
+                            'home_entity': parent_org_uri,
+                        },
+                    )
+                )
+
+            if entity_scope < MetadataFormEnforcementScope.Organization:
+                all_rules.extend(
+                    MetadataFormRepository.query_all_enforcement_rules(
+                        session=session,
+                        filter={
+                            'entity_types': [entity_type],
+                            'level': MetadataFormEnforcementScope.Environment.value,
+                            'home_entity': parent_env_uri,
+                        },
+                    )
+                )
+            if entity_scope < MetadataFormEnforcementScope.Environment:
+                all_rules.extend(
+                    MetadataFormRepository.query_all_enforcement_rules(
+                        session=session,
+                        filter={
+                            'entity_types': [entity_type],
+                            'level': MetadataFormEnforcementScope.Dataset.value,
+                            'home_entity': parent_dataset_uri,
+                        },
+                    )
+                )
+
+        for r in all_rules:
+            attached = MetadataFormEnforcementService.get_attachement_for_rule(r, entity_uri)
+            r.attached = attached.uri if attached else None
+
+        return all_rules

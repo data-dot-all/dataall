@@ -25,7 +25,8 @@ import {
   createMetadataFormEnforcementRule,
   listMetadataFormEnforcementRules,
   listEntityAffectedByEnforcementRules,
-  deleteMetadataFormEnforcementRule
+  deleteMetadataFormEnforcementRule,
+  listEntityTypesWithScope
 } from '../services';
 import { Formik } from 'formik';
 import { LoadingButton } from '@mui/lab';
@@ -53,6 +54,7 @@ const CreateEnforcementRuleModal = (props) => {
   const [environmentOptions, setEnvironmentOptions] = useState([]);
   const [organizationOptions, setOrganizationOptions] = useState([]);
   const [datasetOptions, setDatasetOptions] = useState([]);
+  const [entityTypes, setEntityTypes] = useState([...entityTypesOptions]);
 
   const enforcementScopeDict = {};
   for (const option of enforcementScopeOptions) {
@@ -244,6 +246,11 @@ const CreateEnforcementRuleModal = (props) => {
                     defaultValue={enforcementScopeDict['Global']}
                     onChange={(event, value) => {
                       setFieldValue('scope', value.value);
+                      setEntityTypes(
+                        entityTypesOptions.filter((entityType) => {
+                          return entityType.levels.includes(value.value);
+                        })
+                      );
                     }}
                     renderInput={(params) => (
                       <TextField
@@ -362,7 +369,7 @@ const CreateEnforcementRuleModal = (props) => {
                 </CardContent>
                 <CardContent>
                   <Grid container spacing={2}>
-                    {entityTypesOptions.map((entityType) => (
+                    {entityTypes.map((entityType) => (
                       <Grid item lg={4} xl={4}>
                         <FormControlLabel
                           control={
@@ -372,20 +379,20 @@ const CreateEnforcementRuleModal = (props) => {
                                 if (value) {
                                   setFieldValue('entityTypes', [
                                     ...values.entityTypes,
-                                    entityType.value
+                                    entityType.name
                                   ]);
                                 } else {
                                   setFieldValue(
                                     'entityTypes',
                                     values.entityTypes.filter(
-                                      (item) => item !== entityType.value
+                                      (item) => item !== entityType.name
                                     )
                                   );
                                 }
                               }}
                             />
                           }
-                          label={entityType.value}
+                          label={entityType.name}
                         />
                       </Grid>
                     ))}
@@ -462,6 +469,20 @@ export const MetadataFormEnforcement = (props) => {
     }
   ];
 
+  const fetchEntityTypesWithScope = async () => {
+    const response = await client.query(listEntityTypesWithScope());
+    if (
+      !response.errors &&
+      response.data &&
+      response.data.listEntityTypesWithScope
+    ) {
+      setEntityTypesOptions(response.data.listEntityTypesWithScope);
+    } else {
+      const error = 'Could not fetch entity types';
+      dispatch({ type: SET_ERROR, error });
+    }
+  };
+
   const fetchEnforcementRules = async () => {
     setLoading(true);
     const response = await client.query(
@@ -534,16 +555,9 @@ export const MetadataFormEnforcement = (props) => {
 
   const fetchEnforcementEnums = async () => {
     const enums = await fetchEnums(client, [
-      'MetadataFormEntityTypes',
       'MetadataFormEnforcementSeverity',
       'MetadataFormEnforcementScope'
     ]);
-    if (enums['MetadataFormEntityTypes'].length > 0) {
-      setEntityTypesOptions(enums['MetadataFormEntityTypes']);
-    } else {
-      const error = 'Could not fetch entity type options';
-      dispatch({ type: SET_ERROR, error });
-    }
     if (enums['MetadataFormEnforcementSeverity'].length > 0) {
       setSeverityOptions(enums['MetadataFormEnforcementSeverity']);
     } else {
@@ -564,6 +578,9 @@ export const MetadataFormEnforcement = (props) => {
         .then()
         .catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
       fetchEnforcementEnums().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+      fetchEntityTypesWithScope().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }

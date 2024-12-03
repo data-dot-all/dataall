@@ -27,6 +27,20 @@ class MetadataFormEnforcementScope(GraphQLEnumMapper):
     Organization = 'Organizational Level'
     Global = 'Global'
 
+    @classmethod
+    def _ordering(cls):
+        return ['Global', 'Organization', 'Environment', 'Dataset']
+
+    def __lt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.__class__._ordering().index(self._name_) > self.__class__._ordering().index(other._name_)
+        return NotImplemented
+
+    def __gt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.__class__._ordering().index(self._name_) < self.__class__._ordering().index(other._name_)
+        return NotImplemented
+
 
 class MetadataFormUserRoles(GraphQLEnumMapper):
     Owner = 'Owner'

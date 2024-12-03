@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import List
+from typing import Dict
 
 from dataall.base.api import GraphQLEnumMapper
 
@@ -40,7 +40,7 @@ class MetadataFormEntityManager:
     API for managing entities, to which MF can be attached.
     """
 
-    _resources: List[MetadataFormEntity] = {}
+    _resources: Dict[str, MetadataFormEntity] = {}
 
     @classmethod
     def register(cls, resource: MetadataFormEntity, resource_key):
@@ -51,3 +51,11 @@ class MetadataFormEntityManager:
         if resource_key not in cls._resources:
             raise NotImplementedError(f'Entity {resource_key} is not registered')
         return cls._resources[resource_key]
+
+    @classmethod
+    def is_registered(cls, resource_key):
+        return resource_key in cls._resources
+
+    @classmethod
+    def all_registered_keys(cls):
+        return cls._resources.keys()

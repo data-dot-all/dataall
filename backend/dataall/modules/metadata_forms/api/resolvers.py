@@ -142,3 +142,11 @@ def get_mf_rule_home_entity_name(context: Context, source: MetadataFormEnforceme
 
 def delete_mf_enforcement_rule(context: Context, source, uri, rule_uri):
     return MetadataFormEnforcementService.delete_mf_enforcement_rule(uri=uri, rule_uri=rule_uri)
+
+
+def list_entity_types_with_scope(context: Context, source):
+    return MetadataFormEnforcementService.list_supported_entity_types()
+
+
+def list_affecting_rules(context: Context, source, entityUri, entityType):
+    return MetadataFormEnforcementService.get_rules_that_affect_entity(entity_type=entityType, entity_uri=entityUri)

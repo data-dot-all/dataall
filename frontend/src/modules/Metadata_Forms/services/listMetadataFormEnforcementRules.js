@@ -9,6 +9,7 @@ export const listMetadataFormEnforcementRules = (uri) => ({
       listMetadataFormEnforcementRules(uri: $uri) {
         uri
         level
+        severity
         homeEntity
         homeEntityName
         entityTypes

@@ -367,3 +367,17 @@ class MetadataFormRepository:
         return (
             session.query(MetadataFormEnforcementRule).filter(MetadataFormEnforcementRule.metadataFormUri == uri).all()
         )
+
+    @staticmethod
+    def query_all_enforcement_rules(session, filter):
+        all_rules = session.query(MetadataFormEnforcementRule)
+        if filter:
+            if filter.get('entity_types'):
+                for etype in filter.get('entity_types'):
+                    all_rules = all_rules.filter(MetadataFormEnforcementRule.entityTypes.any(etype))
+            if filter.get('level'):
+                all_rules = all_rules.filter(MetadataFormEnforcementRule.level == filter.get('level'))
+            if filter.get('home_entity'):
+                all_rules = all_rules.filter(MetadataFormEnforcementRule.homeEntity == filter.get('home_entity'))
+
+        return all_rules.all()
