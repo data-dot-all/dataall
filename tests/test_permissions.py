@@ -138,7 +138,6 @@ class IgnoreReason(Enum):
     SIMPLIFIED = 'returns a simplified response'
     USERLIMITED = 'returns user resources in application'
     CUSTOM = 'custom permissions checks'
-    ADMINLIMITED = 'limited to resource owners/admin'
     NOTREQUIRED = 'permission check is not required'
 
 
@@ -152,14 +151,16 @@ class TestData:
     resource_perm: str = None
     tenant_ignore: IgnoreReason = None
     tenant_perm: str = None
+    tenant_admin_ignore: IgnoreReason = IgnoreReason.NOTREQUIRED
+    tenant_admin_perm: bool = False
 
-    def get_perm(self, _type: str) -> IgnoreReason:
+    def get_perm(self, _type: str) -> str:
         return getattr(self, f'{_type}_perm')
 
-    def get_ignore(self, _type) -> str:
+    def get_ignore(self, _type) -> IgnoreReason:
         return getattr(self, f'{_type}_ignore')
 
-    def get(self, _type) -> Tuple[IgnoreReason, str]:
+    def get(self, _type) -> Tuple[str, IgnoreReason]:
         return self.get_perm(_type), self.get_ignore(_type)
 
     def __post_init__(self):
@@ -183,7 +184,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('AttachedMetadataFormField', 'hasTenantPermissions'): TestData(
-        resource_ignore=IgnoreReason.USERROLEINRESOURCE, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.USERROLEINRESOURCE, tenant_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('Category', 'associations'): TestData(
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -341,7 +342,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_perm=LIST_ENVIRONMENT_GROUP_PERMISSIONS, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Group', 'tenantPermissions'): TestData(
-        resource_ignore=IgnoreReason.USERROLEINRESOURCE, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.USERROLEINRESOURCE, tenant_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('MetadataForm', 'fields'): TestData(
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -356,7 +357,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('MetadataFormSearchResult', 'hasTenantPermissions'): TestData(
-        resource_ignore=IgnoreReason.USERROLEINRESOURCE, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.USERROLEINRESOURCE, tenant_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('Mutation', 'DisableDataSubscriptions'): TestData(
         tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=ENABLE_ENVIRONMENT_SUBSCRIPTIONS
@@ -573,11 +574,11 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'startReindexCatalog'): TestData(
-        tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('Mutation', 'startSagemakerNotebook'): TestData(tenant_perm=MANAGE_NOTEBOOKS, resource_perm=GET_NOTEBOOK),
     field_id('Mutation', 'stopMaintenanceWindow'): TestData(
-        tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('Mutation', 'stopSagemakerNotebook'): TestData(tenant_perm=MANAGE_NOTEBOOKS, resource_perm=GET_NOTEBOOK),
     field_id('Mutation', 'submitShareExtension'): TestData(
@@ -640,7 +641,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_REDSHIFT_DATASETS, resource_perm=UPDATE_REDSHIFT_DATASET_TABLE
     ),
     field_id('Mutation', 'updateSSMParameter'): TestData(
-        tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('Mutation', 'updateShareExpirationPeriod'): TestData(
         tenant_perm=MANAGE_SHARES, resource_perm=SUBMIT_SHARE_OBJECT
@@ -857,7 +858,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'listAttachedMetadataForms'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('Query', 'listConnectionGroupNoPermissions'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -887,7 +888,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_perm=LIST_ENVIRONMENT_DATASETS, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listEntityMetadataForms'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('Query', 'listEnvironmentConsumptionRoles'): TestData(
         resource_perm=LIST_ENVIRONMENT_CONSUMPTION_ROLES, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -980,13 +981,13 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_perm=GET_SHARE_OBJECT, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listTenantGroups'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.TENANT
+        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('Query', 'listTenantPermissions'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.TENANT
+        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('Query', 'listUserMetadataForms'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('Query', 'listUsersForGroup'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -1184,14 +1185,16 @@ def test_all_resolvers_have_test_data():
 
 
 @pytest.mark.parametrize('field', ALL_PARAMS)
-@pytest.mark.parametrize('perm_type', ['resource', 'tenant'])
+@pytest.mark.parametrize('perm_type', ['resource', 'tenant', 'tenant_admin'])
 @patch('dataall.base.context._request_storage')
 @patch('dataall.core.permissions.services.resource_policy_service.ResourcePolicyService.check_user_resource_permission')
 @patch('dataall.core.permissions.services.group_policy_service.GroupPolicyService.check_group_environment_permission')
 @patch('dataall.core.permissions.services.tenant_policy_service.TenantPolicyService.check_user_tenant_permission')
+@patch('dataall.core.permissions.services.tenant_policy_service.TenantPolicyValidationService.is_tenant_admin')
 @patch('dataall.core.stacks.db.target_type_repositories.TargetType.get_resource_read_permission_name')
 def test_permissions(
     mock_perm_name,
+    mock_check_tenant_admin,
     mock_check_tenant,
     mock_check_group,
     mock_check_resource,
@@ -1236,5 +1239,7 @@ def test_permissions(
             tenant_name=ANY,
             permission_name=perm,
         )
+    elif perm_type == 'tenant_admin':
+        mock_check_tenant_admin.assert_called()
     else:
         raise ValueError(f'unknown permission type {perm_type}')
