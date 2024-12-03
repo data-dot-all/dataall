@@ -3,7 +3,7 @@ import logging
 from contextlib import suppress
 from dataclasses import dataclass
 from enum import Enum
-from typing import Mapping
+from typing import Mapping, Tuple
 from unittest.mock import MagicMock, patch, ANY
 
 import pytest
@@ -152,6 +152,15 @@ class TestData:
     resource_perm: str = None
     tenant_ignore: IgnoreReason = None
     tenant_perm: str = None
+
+    def get_perm(self, _type: str) -> IgnoreReason:
+        return getattr(self, f'{_type}_perm')
+
+    def get_ignore(self, _type) -> str:
+        return getattr(self, f'{_type}_ignore')
+
+    def get(self, _type) -> Tuple[IgnoreReason, str]:
+        return self.get_perm(_type), self.get_ignore(_type)
 
     def __post_init__(self):
         if not bool(self.resource_perm) ^ bool(self.resource_ignore):
@@ -1139,18 +1148,6 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
 ALL_RESOLVERS = {(_type, field) for _type in bootstrap().types for field in _type.fields if field.resolver}
 
 
-def test_all_resolvers_have_test_data():
-    """
-    ensure that all EXPECTED_RESOURCES_PERMS have a corresponding query (to avoid stale entries) and vice versa
-    """
-    assert_that([field_id(res[0].name, res[1].name) for res in ALL_RESOLVERS]).described_as(
-        'stale or missing EXPECTED_RESOURCE_PERMS detected'
-    ).contains_only(*EXPECTED_RESOLVERS.keys())
-
-
-ALL_PARAMS = [pytest.param(field, id=field_id(_type.name, field.name)) for _type, field in ALL_RESOLVERS]
-
-
 @pytest.fixture(scope='function')
 def mock_input_validation(mocker):
     mocker.patch('dataall.modules.mlstudio.api.resolvers.RequestValidator', MagicMock())
@@ -1177,51 +1174,92 @@ def mock_input_validation(mocker):
     mocker.patch('boto3.client').side_effect = RuntimeError('mocked boto3 client')
 
 
-@pytest.mark.parametrize('field', ALL_PARAMS)
+def test_all_resolvers_have_test_data():
+    """
+    ensure that all EXPECTED_RESOURCES_PERMS have a corresponding query (to avoid stale entries) and vice versa
+    """
+    assert_that([field_id(res[0].name, res[1].name) for res in ALL_RESOLVERS]).described_as(
+        'stale or missing EXPECTED_RESOURCE_PERMS detected'
+    ).contains_only(*EXPECTED_RESOLVERS.keys())
+
+
+@pytest.mark.parametrize(
+    'field', [pytest.param(field, id=field_id(_type.name, field.name)) for _type, field in ALL_RESOLVERS]
+)
 @patch('dataall.base.context._request_storage')
 @patch('dataall.core.permissions.services.resource_policy_service.ResourcePolicyService.check_user_resource_permission')
 @patch('dataall.core.permissions.services.group_policy_service.GroupPolicyService.check_group_environment_permission')
 @patch('dataall.core.permissions.services.tenant_policy_service.TenantPolicyService.check_user_tenant_permission')
 @patch('dataall.core.stacks.db.target_type_repositories.TargetType.get_resource_read_permission_name')
-def test_permissions(
-    mock_perm_name,
-    mock_check_tenant,
-    mock_check_group,
-    mock_check_resource,
-    mock_storage,
-    field,
-    request,
-    mock_input_validation,
-):
-    fid = request.node.callspec.id
-    tdata = EXPECTED_RESOLVERS[fid]
-    msg = f'{fid} -> {field.resolver.__code__.co_filename}:{field.resolver.__code__.co_firstlineno}'
-    if not any([tdata.resource_perm, tdata.tenant_perm]):
-        pytest.skip(msg + f' Reason: {tdata.tenant_ignore.value or tdata.resource_ignore.value}')
-    logging.info(msg)
+class TestGroup:
+    def _setup(self, field, request, mock_storage, mock_perm_name, permission_type):
+        """Common setup for both tenant and resource permission tests"""
+        fid = request.node.callspec.id
+        perm, reason = EXPECTED_RESOLVERS[fid].get(permission_type)
+        msg = f'{fid} -> {field.resolver.__code__.co_filename}:{field.resolver.__code__.co_firstlineno}'
 
-    assert_that(field.resolver).is_not_none()
-    username = 'ausername'
-    groups = ['agroup']
-    mock_storage.context = RequestContext(MagicMock(), username, groups, 'auserid')
-    mock_storage.context.db_engine.scoped_session().__enter__().query().filter().all.return_value = [MagicMock()]
-    mock_perm_name.return_value = tdata.resource_perm
-    iargs = {arg: MagicMock() for arg in inspect.signature(field.resolver).parameters.keys()}
-    with suppress(Exception):
-        field.resolver(**iargs)
-    if tdata.tenant_perm:
+        if not perm:
+            pytest.skip(msg + f' Reason: {reason.value}')
+        logging.info(msg)
+
+        assert_that(field.resolver).is_not_none()
+
+        # Setup mock context
+        username = 'ausername'
+        groups = ['agroup']
+        mock_storage.context = RequestContext(MagicMock(), username, groups, 'auserid')
+        mock_storage.context.db_engine.scoped_session().__enter__().query().filter().all.return_value = [MagicMock()]
+        mock_perm_name.return_value = perm
+
+        return username, groups, perm
+
+    def _execute_resolver(self, field):
+        iargs = {arg: MagicMock() for arg in inspect.signature(field.resolver).parameters.keys()}
+        with suppress(Exception):
+            field.resolver(**iargs)
+
+    def test_tenant_permissions(
+        self,
+        mock_perm_name,
+        mock_check_tenant,
+        mock_check_group,
+        mock_check_resource,
+        mock_storage,
+        field,
+        request,
+        mock_input_validation,
+    ):
+        username, groups, perm = self._setup(field, request, mock_storage, mock_perm_name, 'tenant')
+
+        self._execute_resolver(field)
+
         mock_check_tenant.assert_any_call(
             session=ANY,
             username=username,
             groups=groups,
             tenant_name=ANY,
-            permission_name=tdata.tenant_perm,
+            permission_name=perm,
         )
-    if tdata.resource_perm:
+
+    def test_resource_permissions(
+        self,
+        mock_perm_name,
+        mock_check_tenant,
+        mock_check_group,
+        mock_check_resource,
+        mock_storage,
+        field,
+        request,
+        mock_input_validation,
+    ):
+        username, groups, perm = self._setup(field, request, mock_storage, mock_perm_name, 'resource')
+
+        self._execute_resolver(field)
+
         mock_check_resource.assert_any_call(
             session=ANY,
             resource_uri=ANY,
             username=username,
             groups=groups,
-            permission_name=tdata.resource_perm,
+            permission_name=perm,
         )
