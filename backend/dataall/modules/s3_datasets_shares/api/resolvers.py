@@ -41,7 +41,7 @@ class RequestValidator:
 
 
 def list_shared_tables_by_env_dataset(context: Context, source, datasetUri: str, envUri: str):
-    return S3ShareService.list_shared_tables_by_env_dataset(datasetUri, envUri)
+    return S3ShareService.list_shared_tables_by_env_dataset(dataset_uri=datasetUri, uri=envUri)
 
 
 @is_feature_enabled('modules.s3_datasets.features.aws_actions')
