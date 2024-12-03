@@ -72,3 +72,9 @@ def list_table_data_filters(context: Context, source, tableUri: str = None, filt
     if not filter:
         filter = {'page': 1, 'pageSize': 5}
     return DatasetTableDataFilterService.list_table_data_filters(uri=tableUri, data=filter)
+
+
+def get_dataset_table_restricted_information(context: Context, source: DatasetTable, **kwargs):
+    if not source:
+        return None
+    return DatasetTableService.get_table_restricted_information(table=source)

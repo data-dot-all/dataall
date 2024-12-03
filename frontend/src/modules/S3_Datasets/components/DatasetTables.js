@@ -257,11 +257,13 @@ export const DatasetTables = (props) => {
                             to={`/console/s3-datasets/table/${table.tableUri}`}
                             variant="subtitle2"
                           >
-                            {table.GlueTableName}
+                            {table.name}
                           </Link>
                         </TableCell>
-                        <TableCell>{table.GlueDatabaseName}</TableCell>
-                        <TableCell>{table.S3Prefix}</TableCell>
+                        <TableCell>
+                          {table.restricted.GlueDatabaseName}
+                        </TableCell>
+                        <TableCell>{table.restricted.S3Prefix}</TableCell>
                         <TableCell>
                           {isAdmin && (
                             <IconButton

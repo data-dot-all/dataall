@@ -45,6 +45,32 @@ class DatasetTableService:
             return DatasetTableRepository.get_dataset_table_by_uri(session, uri)
 
     @staticmethod
+    def get_table_restricted_information(table: DatasetTable):
+        try:
+            context = get_context()
+            with context.db_engine.scoped_session() as session:
+                ResourcePolicyService.check_user_resource_permission(
+                    session=session,
+                    username=context.username,
+                    groups=context.groups,
+                    resource_uri=table.tableUri,
+                    permission_name=GET_DATASET_TABLE,
+                )
+                return {
+                    'AwsAccountId': table.AWSAccountId,
+                    'GlueDatabaseName': table.GlueDatabaseName,
+                    'GlueTableName': table.GlueTableName,
+                    'S3Prefix': table.S3Prefix,
+                }
+        except exceptions.ResourceUnauthorized:
+            return {
+                'AwsAccountId': 'Unauthorized to see information',
+                'GlueDatabaseName': 'Unauthorized to see information',
+                'GlueTableName': 'Unauthorized to see information',
+                'S3Prefix': 'Unauthorized to see information',
+            }
+
+    @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(UPDATE_DATASET_TABLE, parent_resource=_get_dataset_uri)
     def update_table(uri: str, table_data: dict = None):
