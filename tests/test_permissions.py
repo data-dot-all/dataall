@@ -1162,10 +1162,6 @@ def mock_input_validation(mocker):
         return_value='MANAGE_ENVIRONMENTS',
     )
     mocker.patch('dataall.modules.shares_base.api.resolvers.RequestValidator', MagicMock())
-    # workaround infinite loop when checking GlossaryResourceAccess.is_owner()
-    mocker.patch(
-        'dataall.modules.catalog.db.glossary_repositories.GlossaryRepository.get_node'
-    ).side_effect = RuntimeError
     # mock aws calls for speed
     mocker.patch('dataall.base.aws.sts.SessionHelper._get_parameter_value')
     mocker.patch('dataall.base.aws.sts.SessionHelper.remote_session')
