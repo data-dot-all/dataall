@@ -11,11 +11,13 @@ export const getDatasetStorageLocation = (locationUri) => ({
           datasetUri
           name
           userRoleForDataset
-          region
           SamlAdminGroupName
-          S3BucketName
-          AwsAccountId
           owner
+          restricted {
+            AwsAccountId
+            region
+            S3BucketName
+          }
           environment {
             environmentUri
             label
@@ -31,7 +33,6 @@ export const getDatasetStorageLocation = (locationUri) => ({
         created
         tags
         locationUri
-        AwsAccountId
         label
         name
         S3Prefix
