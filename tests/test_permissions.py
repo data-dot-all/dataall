@@ -1238,7 +1238,7 @@ def test_permissions(
     iargs = {arg: MagicMock() for arg in inspect.signature(field.resolver).parameters.keys()}
 
     # run test specific setup if required
-    globals().get(f'setup_{fid}', lambda *_a, **b: None)(**locals())
+    globals().get(f'setup_{fid}', lambda *_a, **b: None)(**locals())  # nosemgrep
 
     with suppress(Exception):
         field.resolver(**iargs)
