@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+from sqlalchemy import inspect
 from typing import List
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db import exceptions
@@ -351,31 +352,13 @@ class DatasetService:
                     resource_uri=dataset.datasetUri,
                     permission_name=GET_DATASET,
                 )
-                return {
-                    'AwsAccountId': dataset.AwsAccountId,
-                    'region': dataset.region,
-                    'S3BucketName': dataset.S3BucketName,
-                    'GlueDatabaseName': dataset.GlueDatabaseName,
-                    'IAMDatasetAdminRoleArn': dataset.IAMDatasetAdminRoleArn,
-                    'KmsAlias': dataset.KmsAlias,
-                    'importedS3Bucket': dataset.importedS3Bucket,
-                    'importedGlueDatabase': dataset.importedGlueDatabase,
-                    'importedKmsKey': dataset.importedKmsKey,
-                    'importedAdminRole': dataset.importedAdminRole,
-                }
+                return dataset
         except exceptions.ResourceUnauthorized:
-            return {
-                'AwsAccountId': 'Unauthorized to see information',
-                'region': 'Unauthorized to see information',
-                'S3BucketName': 'Unauthorized to see information',
-                'GlueDatabaseName': 'Unauthorized to see information',
-                'IAMDatasetAdminRoleArn': 'Unauthorized to see information',
-                'KmsAlias': 'Unauthorized to see information',
-                'importedS3Bucket': 'Unauthorized to see information',
-                'importedGlueDatabase': 'Unauthorized to see information',
-                'importedKmsKey': 'Unauthorized to see information',
-                'importedAdminRole': 'Unauthorized to see information',
-            }
+            restricted_data = {}
+            columns = [c.key for c in inspect(dataset.__class__).mapper.column_attrs]
+            for column in columns:
+                restricted_data[column] = 'Unauthorized to see information'
+            return restricted_data
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)

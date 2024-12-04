@@ -1,5 +1,5 @@
 import logging
-
+from sqlalchemy import inspect
 from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
@@ -56,19 +56,13 @@ class DatasetTableService:
                     resource_uri=table.tableUri,
                     permission_name=GET_DATASET_TABLE,
                 )
-                return {
-                    'AwsAccountId': table.AWSAccountId,
-                    'GlueDatabaseName': table.GlueDatabaseName,
-                    'GlueTableName': table.GlueTableName,
-                    'S3Prefix': table.S3Prefix,
-                }
+                return table
         except exceptions.ResourceUnauthorized:
-            return {
-                'AwsAccountId': 'Unauthorized to see information',
-                'GlueDatabaseName': 'Unauthorized to see information',
-                'GlueTableName': 'Unauthorized to see information',
-                'S3Prefix': 'Unauthorized to see information',
-            }
+            restricted_data = {}
+            columns = [c.key for c in inspect(table.__class__).mapper.column_attrs]
+            for column in columns:
+                restricted_data[column] = 'Unauthorized to see information'
+            return restricted_data
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)

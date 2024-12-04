@@ -1,3 +1,4 @@
+from sqlalchemy import inspect
 from dataall.modules.s3_datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
@@ -137,9 +138,10 @@ class DatasetLocationService:
 
     @staticmethod
     def get_folder_restricted_information(folder: DatasetStorageLocation):
-        try:
-            context = get_context()
-            with context.db_engine.scoped_session() as session:
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            dataset = DatasetRepository.get_dataset_by_uri(session, folder.datasetUri)
+            try:
                 ResourcePolicyService.check_user_resource_permission(
                     session=session,
                     username=context.username,
@@ -147,29 +149,10 @@ class DatasetLocationService:
                     resource_uri=folder.locationUri,
                     permission_name=GET_DATASET_FOLDER,
                 )
-                dataset = DatasetRepository.get_dataset_by_uri(session, folder.datasetUri)
-                return {
-                    'AwsAccountId': dataset.AwsAccountId,
-                    'region': dataset.region,
-                    'S3BucketName': dataset.S3BucketName,
-                    'GlueDatabaseName': dataset.GlueDatabaseName,
-                    'IAMDatasetAdminRoleArn': dataset.IAMDatasetAdminRoleArn,
-                    'KmsAlias': dataset.KmsAlias,
-                    'importedS3Bucket': dataset.importedS3Bucket,
-                    'importedGlueDatabase': dataset.importedGlueDatabase,
-                    'importedKmsKey': dataset.importedKmsKey,
-                    'importedAdminRole': dataset.importedAdminRole,
-                }
-        except ResourceUnauthorized:
-            return {
-                'AwsAccountId': 'Unauthorized to see information',
-                'region': 'Unauthorized to see information',
-                'S3BucketName': 'Unauthorized to see information',
-                'GlueDatabaseName': 'Unauthorized to see information',
-                'IAMDatasetAdminRoleArn': 'Unauthorized to see information',
-                'KmsAlias': 'Unauthorized to see information',
-                'importedS3Bucket': 'Unauthorized to see information',
-                'importedGlueDatabase': 'Unauthorized to see information',
-                'importedKmsKey': 'Unauthorized to see information',
-                'importedAdminRole': 'Unauthorized to see information',
-            }
+                return dataset
+            except ResourceUnauthorized:
+                restricted_data = {}
+                columns = [c.key for c in inspect(dataset.__class__).mapper.column_attrs]
+                for column in columns:
+                    restricted_data[column] = 'Unauthorized to see information'
+                return restricted_data
