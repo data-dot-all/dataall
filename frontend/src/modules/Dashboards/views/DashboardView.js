@@ -224,6 +224,7 @@ const DashboardView = () => {
               <Box sx={{ m: -1 }}>
                 <UpVoteButton
                   upVoted={isUpVoted}
+                  disabled={!isAdmin}
                   onClick={() => upVoteDashboard(dashboard.dashboardUri)}
                   upVotes={upVotes || 0}
                 />

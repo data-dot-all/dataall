@@ -42,7 +42,7 @@ class DashboardApiModuleInterface(ModuleInterface):
             )
         )
 
-        add_vote_type('dashboard', DashboardIndexer)
+        add_vote_type('dashboard', DashboardIndexer, GET_DASHBOARD)
 
         EnvironmentResourceManager.register(DashboardRepository())
         log.info('Dashboard API has been loaded')
