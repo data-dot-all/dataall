@@ -77,7 +77,7 @@ class DatasetApiModuleInterface(ModuleInterface):
             )
         )
 
-        add_vote_type('dataset', DatasetIndexer)
+        add_vote_type('dataset', DatasetIndexer, GET_DATASET)
 
         TargetType('dataset', GET_DATASET, UPDATE_DATASET, MANAGE_DATASETS)
 
