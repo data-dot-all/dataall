@@ -72,6 +72,7 @@ from dataall.modules.notebooks.services.notebook_permissions import (
     MANAGE_NOTEBOOKS,
     DELETE_NOTEBOOK,
     CREATE_NOTEBOOK,
+    UPDATE_NOTEBOOK,
 )
 from dataall.modules.omics.services.omics_permissions import MANAGE_OMICS_RUNS, CREATE_OMICS_RUN
 from dataall.modules.redshift_datasets.services.redshift_connection_permissions import GET_REDSHIFT_CONNECTION
@@ -139,6 +140,9 @@ class IgnoreReason(Enum):
     USERLIMITED = 'returns user resources in application'
     CUSTOM = 'custom permissions checks'
     NOTREQUIRED = 'permission check is not required'
+
+
+TARGET_TYPE_PERM = 'TARGET_TYPE_INDIRECT_PERM'
 
 
 def field_id(type_name: str, field_name: str) -> str:
@@ -576,11 +580,15 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Mutation', 'startReindexCatalog'): TestData(
         tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
-    field_id('Mutation', 'startSagemakerNotebook'): TestData(tenant_perm=MANAGE_NOTEBOOKS, resource_perm=GET_NOTEBOOK),
+    field_id('Mutation', 'startSagemakerNotebook'): TestData(
+        tenant_perm=MANAGE_NOTEBOOKS, resource_perm=UPDATE_NOTEBOOK
+    ),
     field_id('Mutation', 'stopMaintenanceWindow'): TestData(
         tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
-    field_id('Mutation', 'stopSagemakerNotebook'): TestData(tenant_perm=MANAGE_NOTEBOOKS, resource_perm=GET_NOTEBOOK),
+    field_id('Mutation', 'stopSagemakerNotebook'): TestData(
+        tenant_perm=MANAGE_NOTEBOOKS, resource_perm=UPDATE_NOTEBOOK
+    ),
     field_id('Mutation', 'submitShareExtension'): TestData(
         tenant_perm=MANAGE_SHARES, resource_perm=SUBMIT_SHARE_OBJECT
     ),
@@ -626,7 +634,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('Mutation', 'updateKeyValueTags'): TestData(
-        tenant_perm=MANAGE_ENVIRONMENTS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=TARGET_TYPE_PERM
     ),
     field_id('Mutation', 'updateOrganization'): TestData(
         tenant_perm=MANAGE_ORGANIZATIONS, resource_perm=UPDATE_ORGANIZATION
@@ -658,9 +666,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Mutation', 'updateShareRequestReason'): TestData(
         tenant_perm=MANAGE_SHARES, resource_perm=SUBMIT_SHARE_OBJECT
     ),
-    field_id('Mutation', 'updateStack'): TestData(
-        tenant_perm=MANAGE_ENVIRONMENTS, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'updateStack'): TestData(tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=TARGET_TYPE_PERM),
     field_id('Mutation', 'updateTerm'): TestData(
         tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
@@ -838,8 +844,8 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Query', 'getSharedDatasetTables'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),  # TODO Review
-    field_id('Query', 'getStack'): TestData(resource_perm='getStack', tenant_ignore=IgnoreReason.NOTREQUIRED),
-    field_id('Query', 'getStackLogs'): TestData(resource_perm='getStack', tenant_ignore=IgnoreReason.NOTREQUIRED),
+    field_id('Query', 'getStack'): TestData(resource_perm=TARGET_TYPE_PERM, tenant_ignore=IgnoreReason.NOTREQUIRED),
+    field_id('Query', 'getStackLogs'): TestData(resource_perm=TARGET_TYPE_PERM, tenant_ignore=IgnoreReason.NOTREQUIRED),
     field_id('Query', 'getTrustAccount'): TestData(
         resource_perm=LINK_ENVIRONMENT, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
@@ -921,7 +927,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listKeyValueTags'): TestData(
-        resource_perm='listKeyValueTags', tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=TARGET_TYPE_PERM, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listMetadataFormVersions'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -1189,8 +1195,10 @@ def test_all_resolvers_have_test_data():
 @patch('dataall.core.permissions.services.tenant_policy_service.TenantPolicyService.check_user_tenant_permission')
 @patch('dataall.core.permissions.services.tenant_policy_service.TenantPolicyValidationService.is_tenant_admin')
 @patch('dataall.core.stacks.db.target_type_repositories.TargetType.get_resource_read_permission_name')
+@patch('dataall.core.stacks.db.target_type_repositories.TargetType.get_resource_update_permission_name')
 def test_permissions(
-    mock_perm_name,
+    mock_update_perm_name,
+    mock_read_perm_name,
     mock_check_tenant_admin,
     mock_check_tenant,
     mock_check_group,
@@ -1211,7 +1219,8 @@ def test_permissions(
     groups = ['agroup']
     mock_storage.context = RequestContext(MagicMock(), username, groups, 'auserid')
     mock_storage.context.db_engine.scoped_session().__enter__().query().filter().all.return_value = [MagicMock()]
-    mock_perm_name.return_value = perm
+    mock_update_perm_name.return_value = perm
+    mock_read_perm_name.return_value = perm
 
     iargs = {arg: MagicMock() for arg in inspect.signature(field.resolver).parameters.keys()}
     with suppress(Exception):
