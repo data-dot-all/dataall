@@ -51,9 +51,8 @@ class RedshiftDatasetApiModuleInterface(ModuleInterface):
             FEED_REDSHIFT_DATASET_TABLE_NAME,
             VOTE_REDSHIFT_DATASET_NAME,
         )
-
-        import dataall.modules.redshift_datasets.api
         from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import GET_REDSHIFT_DATASET
+        import dataall.modules.redshift_datasets.api
 
         FeedRegistry.register(FeedDefinition(FEED_REDSHIFT_DATASET_TABLE_NAME, RedshiftTable))
         FeedRegistry.register(FeedDefinition(FEED_REDSHIFT_DATASET_NAME, RedshiftDataset))
