@@ -318,9 +318,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('EnvironmentSimplified', 'organization'): TestData(
         resource_ignore=IgnoreReason.SIMPLIFIED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
-    field_id('Feed', 'messages'): TestData(
-        resource_ignore=IgnoreReason.APPSUPPORT, tenant_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Feed', 'messages'): TestData(resource_perm=TARGET_TYPE_PERM, tenant_ignore=IgnoreReason.NOTREQUIRED),
     field_id('Glossary', 'associations'): TestData(
         resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
@@ -385,7 +383,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     ),
     field_id('Mutation', 'approveShareObject'): TestData(tenant_perm=MANAGE_SHARES, resource_perm=APPROVE_SHARE_OBJECT),
     field_id('Mutation', 'approveTermAssociation'): TestData(
-        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Mutation', 'archiveOrganization'): TestData(
         tenant_perm=MANAGE_ORGANIZATIONS, resource_perm=DELETE_ORGANIZATION
@@ -519,7 +517,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     ),
     field_id('Mutation', 'deleteWorksheet'): TestData(tenant_perm=MANAGE_WORKSHEETS, resource_perm=DELETE_WORKSHEET),
     field_id('Mutation', 'dismissTermAssociation'): TestData(
-        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Mutation', 'enableDataSubscriptions'): TestData(
         tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=ENABLE_ENVIRONMENT_SUBSCRIPTIONS
@@ -542,7 +540,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_ignore=IgnoreReason.APPSUPPORT, resource_ignore=IgnoreReason.APPSUPPORT
     ),
     field_id('Mutation', 'postFeedMessage'): TestData(
-        tenant_ignore=IgnoreReason.APPSUPPORT, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_ignore=IgnoreReason.APPSUPPORT, resource_perm=TARGET_TYPE_PERM
     ),
     field_id('Mutation', 'reApplyItemsShareObject'): TestData(
         tenant_perm=MANAGE_SHARES, resource_perm=APPROVE_SHARE_OBJECT
@@ -761,9 +759,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Query', 'getEnvironmentMLStudioDomain'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),  # TODO add resource_perm GET_ENVIRONMENT
-    field_id('Query', 'getFeed'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Query', 'getFeed'): TestData(resource_perm=TARGET_TYPE_PERM, tenant_ignore=IgnoreReason.NOTREQUIRED),
     field_id('Query', 'getGlossary'): TestData(resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.PUBLIC),
     field_id('Query', 'getGroup'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -1197,7 +1193,9 @@ def test_all_resolvers_have_test_data():
 @patch('dataall.core.permissions.services.tenant_policy_service.TenantPolicyValidationService.is_tenant_admin')
 @patch('dataall.core.stacks.db.target_type_repositories.TargetType.get_resource_read_permission_name')
 @patch('dataall.core.stacks.db.target_type_repositories.TargetType.get_resource_update_permission_name')
+@patch('dataall.modules.feed.api.registry.FeedRegistry.find_permission')
 def test_permissions(
+    mock_feed_find_perm,
     mock_update_perm_name,
     mock_read_perm_name,
     mock_check_tenant_admin,
@@ -1220,6 +1218,7 @@ def test_permissions(
     groups = ['agroup']
     mock_storage.context = RequestContext(MagicMock(), username, groups, 'auserid')
     mock_storage.context.db_engine.scoped_session().__enter__().query().filter().all.return_value = [MagicMock()]
+    mock_feed_find_perm.return_value = perm
     mock_update_perm_name.return_value = perm
     mock_read_perm_name.return_value = perm
 
