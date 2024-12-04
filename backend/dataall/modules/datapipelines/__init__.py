@@ -35,7 +35,7 @@ class DatapipelinesApiModuleInterface(ModuleInterface):
         )
         import dataall.modules.datapipelines.api
 
-        FeedRegistry.register(FeedDefinition('DataPipeline', DataPipeline))
+        FeedRegistry.register(FeedDefinition('DataPipeline', DataPipeline, GET_PIPELINE))
 
         TargetType('pipeline', GET_PIPELINE, UPDATE_PIPELINE, MANAGE_PIPELINES)
         TargetType('cdkpipeline', GET_PIPELINE, UPDATE_PIPELINE, MANAGE_PIPELINES)

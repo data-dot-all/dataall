@@ -44,14 +44,16 @@ class DatasetApiModuleInterface(ModuleInterface):
         from dataall.modules.s3_datasets.services.dataset_permissions import (
             GET_DATASET,
             UPDATE_DATASET,
+            GET_DATASET_TABLE,
+            GET_DATASET_FOLDER,
             MANAGE_DATASETS,
         )
         from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
         from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset
 
-        FeedRegistry.register(FeedDefinition('DatasetStorageLocation', DatasetStorageLocation))
-        FeedRegistry.register(FeedDefinition('DatasetTable', DatasetTable))
-        FeedRegistry.register(FeedDefinition('Dataset', S3Dataset))
+        FeedRegistry.register(FeedDefinition('DatasetStorageLocation', DatasetStorageLocation, GET_DATASET_FOLDER))
+        FeedRegistry.register(FeedDefinition('DatasetTable', DatasetTable, GET_DATASET_TABLE))
+        FeedRegistry.register(FeedDefinition('Dataset', S3Dataset, GET_DATASET))
 
         GlossaryRegistry.register(
             GlossaryDefinition(

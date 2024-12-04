@@ -228,16 +228,18 @@ const DashboardView = () => {
                   onClick={() => upVoteDashboard(dashboard.dashboardUri)}
                   upVotes={upVotes || 0}
                 />
-                <Button
-                  color="primary"
-                  startIcon={<ForumOutlined fontSize="small" />}
-                  sx={{ mt: 1, mr: 1 }}
-                  onClick={() => setOpenFeed(true)}
-                  type="button"
-                  variant="outlined"
-                >
-                  Chat
-                </Button>
+                {isAdmin && (
+                  <Button
+                    color="primary"
+                    startIcon={<ForumOutlined fontSize="small" />}
+                    sx={{ mt: 1, mr: 1 }}
+                    onClick={() => setOpenFeed(true)}
+                    type="button"
+                    variant="outlined"
+                  >
+                    Chat
+                  </Button>
+                )}
                 <Button
                   color="primary"
                   component={RouterLink}
