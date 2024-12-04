@@ -56,6 +56,7 @@ from dataall.modules.datapipelines.services.datapipelines_permissions import (
     UPDATE_PIPELINE,
 )
 from dataall.modules.datasets_base.services.dataset_list_permissions import LIST_ENVIRONMENT_DATASETS
+from dataall.modules.maintenance.api.enums import MaintenanceModes
 from dataall.modules.metadata_forms.services.metadata_form_permissions import (
     MANAGE_METADATA_FORMS,
     ATTACH_METADATA_FORM,
@@ -489,7 +490,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     ),
     field_id('Mutation', 'deleteNetwork'): TestData(tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=DELETE_NETWORK),
     field_id('Mutation', 'deleteNotification'): TestData(
-        tenant_ignore=IgnoreReason.APPSUPPORT, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_ignore=IgnoreReason.APPSUPPORT, resource_ignore=IgnoreReason.APPSUPPORT
     ),
     field_id('Mutation', 'deleteOmicsRun'): TestData(
         tenant_perm=MANAGE_OMICS_RUNS, resource_ignore=IgnoreReason.NOTREQUIRED
@@ -538,7 +539,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_ORGANIZATIONS, resource_perm=INVITE_ORGANIZATION_GROUP
     ),
     field_id('Mutation', 'markNotificationAsRead'): TestData(
-        tenant_ignore=IgnoreReason.APPSUPPORT, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_ignore=IgnoreReason.APPSUPPORT, resource_ignore=IgnoreReason.APPSUPPORT
     ),
     field_id('Mutation', 'postFeedMessage'): TestData(
         tenant_ignore=IgnoreReason.APPSUPPORT, resource_ignore=IgnoreReason.NOTREQUIRED
@@ -575,7 +576,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     ),
     field_id('Mutation', 'startGlueCrawler'): TestData(tenant_perm=MANAGE_DATASETS, resource_perm=CRAWL_DATASET),
     field_id('Mutation', 'startMaintenanceWindow'): TestData(
-        tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('Mutation', 'startReindexCatalog'): TestData(
         tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
@@ -1223,6 +1224,8 @@ def test_permissions(
     mock_read_perm_name.return_value = perm
 
     iargs = {arg: MagicMock() for arg in inspect.signature(field.resolver).parameters.keys()}
+    if 'mode' in iargs:
+        iargs['mode'] = MaintenanceModes.READONLY.value
     with suppress(Exception):
         field.resolver(**iargs)
 
