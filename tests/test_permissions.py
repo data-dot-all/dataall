@@ -75,7 +75,7 @@ from dataall.modules.notebooks.services.notebook_permissions import (
     CREATE_NOTEBOOK,
     UPDATE_NOTEBOOK,
 )
-from dataall.modules.omics.services.omics_permissions import MANAGE_OMICS_RUNS, CREATE_OMICS_RUN
+from dataall.modules.omics.services.omics_permissions import MANAGE_OMICS_RUNS, CREATE_OMICS_RUN, DELETE_OMICS_RUN
 from dataall.modules.redshift_datasets.services.redshift_connection_permissions import GET_REDSHIFT_CONNECTION
 from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import (
     MANAGE_REDSHIFT_DATASETS,
@@ -490,9 +490,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Mutation', 'deleteNotification'): TestData(
         tenant_ignore=IgnoreReason.APPSUPPORT, resource_ignore=IgnoreReason.APPSUPPORT
     ),
-    field_id('Mutation', 'deleteOmicsRun'): TestData(
-        tenant_perm=MANAGE_OMICS_RUNS, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'deleteOmicsRun'): TestData(tenant_perm=MANAGE_OMICS_RUNS, resource_perm=DELETE_OMICS_RUN),
     field_id('Mutation', 'deleteRedshiftConnection'): TestData(
         tenant_ignore=IgnoreReason.BACKPORT, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
@@ -1184,6 +1182,22 @@ def test_all_resolvers_have_test_data():
     ).contains_only(*EXPECTED_RESOLVERS.keys())
 
 
+def setup_Mutation_deleteOmicsRun(iargs, **kwargs):
+    iargs['input'] = {'runUris': [MagicMock()]}
+
+
+def setup_Mutation_startMaintenanceWindow(iargs, **kwargs):
+    iargs['mode'] = MaintenanceModes.READONLY.value
+
+
+def setup_networks(mock_storage, **kwargs):
+    mock_storage.context.db_engine.scoped_session().__enter__().query().filter().all.return_value = [MagicMock()]
+
+
+setup_EnvironmentSimplified_networks = setup_networks
+setup_Environment_networks = setup_networks
+
+
 @pytest.mark.parametrize('field', ALL_PARAMS)
 @pytest.mark.parametrize('perm_type', ['resource', 'tenant', 'tenant_admin'])
 @patch('dataall.base.context._request_storage')
@@ -1217,14 +1231,15 @@ def test_permissions(
     username = 'ausername'
     groups = ['agroup']
     mock_storage.context = RequestContext(MagicMock(), username, groups, 'auserid')
-    mock_storage.context.db_engine.scoped_session().__enter__().query().filter().all.return_value = [MagicMock()]
     mock_feed_find_perm.return_value = perm
     mock_update_perm_name.return_value = perm
     mock_read_perm_name.return_value = perm
 
     iargs = {arg: MagicMock() for arg in inspect.signature(field.resolver).parameters.keys()}
-    if 'mode' in iargs:
-        iargs['mode'] = MaintenanceModes.READONLY.value
+
+    # run test specific setup if required
+    globals().get(f'setup_{fid}', lambda *_a, **b: None)(**locals())
+
     with suppress(Exception):
         field.resolver(**iargs)
 
