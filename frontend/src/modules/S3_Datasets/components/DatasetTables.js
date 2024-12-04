@@ -80,7 +80,7 @@ export const DatasetTables = (props) => {
         filter: { ...filter }
       })
     );
-    if (!response.errors) {
+    if (response.data.getDataset != null) {
       setItems({ ...response.data.getDataset.tables });
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
@@ -261,9 +261,12 @@ export const DatasetTables = (props) => {
                           </Link>
                         </TableCell>
                         <TableCell>
-                          {table.restricted.GlueDatabaseName}
+                          {table.restricted?.GlueDatabaseName ||
+                            'UNAUTHORIZED_INFO'}
                         </TableCell>
-                        <TableCell>{table.restricted.S3Prefix}</TableCell>
+                        <TableCell>
+                          {table.restricted?.S3Prefix || 'UNAUTHORIZED_INFO'}
+                        </TableCell>
                         <TableCell>
                           {isAdmin && (
                             <IconButton

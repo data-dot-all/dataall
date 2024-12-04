@@ -45,24 +45,9 @@ class DatasetTableService:
             return DatasetTableRepository.get_dataset_table_by_uri(session, uri)
 
     @staticmethod
-    def get_table_restricted_information(table: DatasetTable):
-        try:
-            context = get_context()
-            with context.db_engine.scoped_session() as session:
-                ResourcePolicyService.check_user_resource_permission(
-                    session=session,
-                    username=context.username,
-                    groups=context.groups,
-                    resource_uri=table.tableUri,
-                    permission_name=GET_DATASET_TABLE,
-                )
-                return table
-        except exceptions.ResourceUnauthorized:
-            restricted_data = {}
-            columns = [c.key for c in inspect(table.__class__).mapper.column_attrs]
-            for column in columns:
-                restricted_data[column] = 'Unauthorized to see information'
-            return restricted_data
+    @ResourcePolicyService.has_resource_permission(GET_DATASET_TABLE)
+    def get_table_restricted_information(uri: str, table: DatasetTable):
+        return table
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)

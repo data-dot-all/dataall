@@ -222,7 +222,7 @@ const TableView = () => {
   const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getDatasetTable(params.uri));
-    if (!response.errors && response.data.getDatasetTable !== null) {
+    if (response.data.getDatasetTable !== null) {
       setTable(response.data.getDatasetTable);
       handleUserRole(
         response.data.getDatasetTable.dataset.userRoleForDataset,

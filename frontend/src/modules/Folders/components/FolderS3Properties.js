@@ -19,7 +19,9 @@ export const FolderS3Properties = (props) => {
           S3 URI
         </Typography>
         <Typography color="textPrimary" variant="body2">
-          {`s3://${folder.restricted.S3BucketName}/${folder.S3Prefix}/`}
+          {`s3://${folder.restricted?.S3BucketName || 'UNAUTHORIZED_INFO'}/${
+            folder.S3Prefix
+          }/`}
         </Typography>
       </CardContent>
       <CardContent>
@@ -27,7 +29,9 @@ export const FolderS3Properties = (props) => {
           S3 ARN
         </Typography>
         <Typography color="textPrimary" variant="body2">
-          {`arn:aws:s3:::${folder.restricted.S3BucketName}/${folder.S3Prefix}/`}
+          {`arn:aws:s3:::${
+            folder.restricted?.S3BucketName || 'UNAUTHORIZED_INFO'
+          }/${folder.S3Prefix}/`}
         </Typography>
       </CardContent>
       <CardContent>
@@ -35,7 +39,7 @@ export const FolderS3Properties = (props) => {
           Region
         </Typography>
         <Typography color="textPrimary" variant="body2">
-          {folder.restricted.region}
+          {folder.restricted?.region || 'UNAUTHORIZED_INFO'}
         </Typography>
       </CardContent>
       <CardContent>
@@ -43,7 +47,7 @@ export const FolderS3Properties = (props) => {
           Account
         </Typography>
         <Typography color="textPrimary" variant="body2">
-          {folder.restricted.AwsAccountId}
+          {folder.restricted?.AwsAccountId || 'UNAUTHORIZED_INFO'}
         </Typography>
       </CardContent>
     </Card>

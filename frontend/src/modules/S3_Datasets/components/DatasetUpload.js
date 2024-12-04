@@ -153,7 +153,9 @@ export const DatasetUpload = (props) => {
               <TextField
                 fullWidth
                 helperText="Prefix without trailing slash at the end (e.g raw not raw/)"
-                label={`s3://${dataset.restricted.S3BucketName}/`}
+                label={`s3://${
+                  dataset.restricted?.S3BucketName || 'UNAUTHORIZED_INFO'
+                }/`}
                 name="label"
                 variant="outlined"
                 value={prefix}

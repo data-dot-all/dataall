@@ -137,22 +137,8 @@ class DatasetLocationService:
             ResourcePolicyService.delete_resource_policy(session=session, group=group, resource_uri=location_uri)
 
     @staticmethod
-    def get_folder_restricted_information(folder: DatasetStorageLocation):
+    @ResourcePolicyService.has_resource_permission(GET_DATASET_FOLDER)
+    def get_folder_restricted_information(uri: str, folder: DatasetStorageLocation):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            dataset = DatasetRepository.get_dataset_by_uri(session, folder.datasetUri)
-            try:
-                ResourcePolicyService.check_user_resource_permission(
-                    session=session,
-                    username=context.username,
-                    groups=context.groups,
-                    resource_uri=folder.locationUri,
-                    permission_name=GET_DATASET_FOLDER,
-                )
-                return dataset
-            except ResourceUnauthorized:
-                restricted_data = {}
-                columns = [c.key for c in inspect(dataset.__class__).mapper.column_attrs]
-                for column in columns:
-                    restricted_data[column] = 'Unauthorized to see information'
-                return restricted_data
+            return DatasetRepository.get_dataset_by_uri(session, folder.datasetUri)

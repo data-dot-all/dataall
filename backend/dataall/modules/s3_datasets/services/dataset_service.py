@@ -341,24 +341,9 @@ class DatasetService:
         }
 
     @staticmethod
-    def get_dataset_restricted_information(dataset: S3Dataset):
-        try:
-            context = get_context()
-            with context.db_engine.scoped_session() as session:
-                ResourcePolicyService.check_user_resource_permission(
-                    session=session,
-                    username=context.username,
-                    groups=context.groups,
-                    resource_uri=dataset.datasetUri,
-                    permission_name=GET_DATASET,
-                )
-                return dataset
-        except exceptions.ResourceUnauthorized:
-            restricted_data = {}
-            columns = [c.key for c in inspect(dataset.__class__).mapper.column_attrs]
-            for column in columns:
-                restricted_data[column] = 'Unauthorized to see information'
-            return restricted_data
+    @ResourcePolicyService.has_resource_permission(GET_DATASET)
+    def get_dataset_restricted_information(uri: str, dataset: S3Dataset):
+        return dataset
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)

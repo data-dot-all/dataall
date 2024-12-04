@@ -136,7 +136,7 @@ const WorksheetView = () => {
           (d) => ({
             ...d,
             value: d.datasetUri,
-            label: d.restricted.GlueDatabaseName
+            label: d.restricted?.GlueDatabaseName || 'UNAUTHORIZED_INFO'
           })
         );
       }
@@ -198,7 +198,7 @@ const WorksheetView = () => {
           response.data.getDataset.tables.nodes.map((t) => ({
             ...t,
             value: t.tableUri,
-            label: t.restricted.GlueTableName
+            label: t.restricted?.GlueTableName || 'UNAUTHORIZED_INFO'
           }))
         );
       } else {
@@ -381,7 +381,7 @@ const WorksheetView = () => {
     setSqlBody(
       `SELECT * FROM "${selectedDatabase.label}"."${
         event.target.value.restricted
-          ? event.target.value.restricted.GlueTableName
+          ? event.target.value.restricted?.GlueTableName || 'UNAUTHORIZED_INFO'
           : event.target.value.GlueTableName
       }" limit 10;`
     );
