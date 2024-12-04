@@ -33,8 +33,9 @@ class DashboardApiModuleInterface(ModuleInterface):
         from dataall.modules.catalog.indexers.registry import GlossaryRegistry, GlossaryDefinition
         from dataall.modules.vote.services.vote_service import add_vote_type
         from dataall.modules.dashboards.indexers.dashboard_indexer import DashboardIndexer
+        from dataall.modules.dashboards.services.dashboard_permissions import GET_DASHBOARD
 
-        FeedRegistry.register(FeedDefinition('Dashboard', Dashboard))
+        FeedRegistry.register(FeedDefinition('Dashboard', Dashboard, GET_DASHBOARD))
 
         GlossaryRegistry.register(
             GlossaryDefinition(

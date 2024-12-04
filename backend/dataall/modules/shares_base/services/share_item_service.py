@@ -220,9 +220,11 @@ class ShareItemService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
-    def paginated_shared_with_environment_datasets(session, uri, data) -> dict:
-        share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
-        return ShareObjectRepository.paginate_shared_datasets(session, uri, data, share_item_shared_states)
+    def paginated_shared_with_environment_datasets(uri, data) -> dict:
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
+            return ShareObjectRepository.paginate_shared_datasets(session, uri, data, share_item_shared_states)
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
@@ -256,6 +258,9 @@ class ShareItemService:
             raise ObjectNotFound('ShareObjectItem', uri)
 
     @staticmethod
+    @ResourcePolicyService.has_resource_permission(
+        GET_SHARE_OBJECT, parent_resource=_get_share_uri_from_item_filter_uri
+    )
     def get_share_item_data_filters(uri: str):
         with get_context().db_engine.scoped_session() as session:
             return ShareObjectItemRepository.get_share_item_filter_by_uri(session, uri)
