@@ -381,3 +381,12 @@ class MetadataFormRepository:
                 all_rules = all_rules.filter(MetadataFormEnforcementRule.homeEntity == filter.get('home_entity'))
 
         return all_rules.all()
+
+    @staticmethod
+    def update_version_in_rules(session, uri, version):
+        all_rules = (
+            session.query(MetadataFormEnforcementRule).filter(MetadataFormEnforcementRule.metadataFormUri == uri).all()
+        )
+        for r in all_rules:
+            r.version = version
+        session.commit()

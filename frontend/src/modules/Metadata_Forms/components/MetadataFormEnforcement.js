@@ -152,7 +152,6 @@ const CreateEnforcementRuleModal = (props) => {
 
     const input = {
       metadataFormUri: metadataForm.uri,
-      version: values.version,
       level: values.scope,
       severity: values.severity,
       homeEntity: homeEntity,
@@ -183,7 +182,7 @@ const CreateEnforcementRuleModal = (props) => {
           gutterBottom
           variant="h4"
         >
-          Enforce {metadataForm.name}
+          Enforce {metadataForm.name + ' v. ' + metadataForm.versions[0]}
         </Typography>
         <Formik
           initialValues={{
@@ -208,33 +207,6 @@ const CreateEnforcementRuleModal = (props) => {
           }) => (
             <form onSubmit={handleSubmit}>
               <Box>
-                <CardContent>
-                  <Autocomplete
-                    id="version"
-                    disablePortal
-                    options={metadataForm.versions.map((option) => {
-                      return {
-                        label: 'version ' + option,
-                        value: option
-                      };
-                    })}
-                    onChange={(event, value) => {
-                      setFieldValue('version', value.value);
-                    }}
-                    defaultValue={'version ' + metadataForm.versions[0]}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        fullWidth
-                        error={Boolean(touched.version && errors.version)}
-                        helperText={touched.version && errors.version}
-                        label="Version"
-                        onChange={handleChange}
-                        variant="outlined"
-                      />
-                    )}
-                  />
-                </CardContent>
                 <CardContent>
                   <Autocomplete
                     id="scope"
@@ -453,8 +425,8 @@ export const MetadataFormEnforcement = (props) => {
   const [loadingAffected, setLoadingAffected] = useState(true);
 
   const header = [
-    { field: 'type', width: 200, headerName: 'Type', editable: false },
-    { field: 'name', width: 350, headerName: 'Name', editable: false },
+    { field: 'type', width: 150, headerName: 'Type', editable: false },
+    { field: 'name', width: 300, headerName: 'Name', editable: false },
     { field: 'owner', width: 200, headerName: 'Owner', editable: false },
     {
       field: 'attached',
@@ -595,7 +567,7 @@ export const MetadataFormEnforcement = (props) => {
         spacing={2}
         sx={{ height: 'calc(100vh - 320px)', mb: -5 }}
       >
-        <Grid item lg={5} xl={5}>
+        <Grid item lg={6} xl={6}>
           <Card sx={{ height: '100%' }}>
             <Grid container spacing={2}>
               <Grid item lg={8} xl={8}>
@@ -640,14 +612,14 @@ export const MetadataFormEnforcement = (props) => {
                   <Grid container spacing={2}>
                     <Grid
                       item
-                      lg={1}
-                      xl={1}
+                      lg={2}
+                      xl={2}
                       sx={{
                         mt: 1
                       }}
                     >
                       <Typography color="textPrimary" variant="subtitle2">
-                        {'v. ' + rule.version}
+                        {rule.severity}
                       </Typography>
                     </Grid>
                     <Grid item lg={3} xl={3}>
@@ -680,7 +652,7 @@ export const MetadataFormEnforcement = (props) => {
                         {rule.homeEntityName}
                       </Typography>
                     </Grid>
-                    <Grid item lg={4} xl={4}>
+                    <Grid item lg={3} xl={3}>
                       {rule.entityTypes.map((et) => (
                         <Chip label={et} sx={{ mt: 1, mr: 1 }} />
                       ))}
@@ -720,7 +692,7 @@ export const MetadataFormEnforcement = (props) => {
             )}
           </Card>
         </Grid>
-        <Grid item lg={7} xl={7}>
+        <Grid item lg={6} xl={6}>
           <Card sx={{ height: '100%' }}>
             <CardHeader title="Attached Entities" />
             <CardContent>

@@ -88,7 +88,6 @@ NewMetadataFormEnforcementInput = gql.InputType(
         gql.Field(name='metadataFormUri', type=gql.NonNullableType(gql.String)),
         gql.Field(name='level', type=gql.NonNullableType(gql.String)),
         gql.Field(name='homeEntity', type=gql.String),
-        gql.Field(name='version', type=gql.Integer),
         gql.Field(name='severity', type=gql.String),
         gql.Field(name='entityTypes', type=gql.ArrayType(gql.String)),
     ],

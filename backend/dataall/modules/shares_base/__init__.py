@@ -25,7 +25,6 @@ class SharesBaseAPIModuleInterface(ModuleInterface):
         )
 
         MetadataFormEntityManager.register(ShareObject, MetadataFormEntityTypes.Share.value)
-        MetadataFormEntityManager.register(ShareObjectItem, MetadataFormEntityTypes.ShareItem.value)
 
 
 class SharesBaseAsyncHandlerModuleInterface(ModuleInterface):

@@ -71,9 +71,7 @@ class MetadataFormEnforcementService:
         MetadataFormAccessService.check_enforcement_access(data.get('homeEntity'), data.get('level'))
         with get_context().db_engine.scoped_session() as session:
             mf = MetadataFormRepository.get_metadata_form(session, uri)
-            version = data.get('version') or MetadataFormRepository.get_metadata_form_version_number_latest(
-                session, uri
-            )
+            version = MetadataFormRepository.get_metadata_form_version_number_latest(session, uri)
             rule = MetadataFormRepository.create_mf_enforcement_rule(session, uri, data, version)
 
             affected_entities = MetadataFormEnforcementService.get_affected_entities(rule.uri, rule=rule)
@@ -205,11 +203,15 @@ class MetadataFormEnforcementService:
                 level = ENTITY_SCOPE_BY_TYPE[entity_type]
                 all_entities = session.query(entity_class)
                 if level == MetadataFormEnforcementScope.Organization:
-                    all_entities = all_entities.filter(entity_class.organizationUri.in_([org.uri for org in orgs]))
+                    all_entities = all_entities.filter(
+                        entity_class.organizationUri.in_([org.organizationUri for org in orgs])
+                    )
                 if level == MetadataFormEnforcementScope.Environment:
-                    all_entities = all_entities.filter(entity_class.environmentUri.in_([env.uri for env in envs]))
+                    all_entities = all_entities.filter(
+                        entity_class.environmentUri.in_([env.environmentUri for env in envs])
+                    )
                 if level == MetadataFormEnforcementScope.Dataset:
-                    all_entities = all_entities.filter(entity_class.datasetUri.in_([ds.uri for ds in datasets]))
+                    all_entities = all_entities.filter(entity_class.datasetUri.in_([ds.datasetUri for ds in datasets]))
                 all_entities = all_entities.all()
                 affected_entities.extend(
                     [

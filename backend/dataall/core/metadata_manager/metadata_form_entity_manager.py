@@ -21,7 +21,6 @@ class MetadataFormEntityTypes(GraphQLEnumMapper):
     Folder = 'Folder'
     Bucket = 'Bucket'
     Share = 'Share'
-    ShareItem = 'Share Item'
 
 
 class MetadataFormEntity(ABC):

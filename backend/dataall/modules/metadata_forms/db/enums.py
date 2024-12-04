@@ -64,5 +64,4 @@ ENTITY_SCOPE_BY_TYPE = {
     MetadataFormEntityTypes.Folder.value: MetadataFormEnforcementScope.Dataset,
     MetadataFormEntityTypes.Bucket.value: MetadataFormEnforcementScope.Dataset,
     MetadataFormEntityTypes.Share.value: MetadataFormEnforcementScope.Dataset,
-    MetadataFormEntityTypes.ShareItem.value: MetadataFormEnforcementScope.Dataset,
 }
