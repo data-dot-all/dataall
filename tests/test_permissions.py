@@ -623,7 +623,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=UPDATE_ENVIRONMENT_GROUP
     ),
     field_id('Mutation', 'updateGroupTenantPermissions'): TestData(
-        tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('Mutation', 'updateKeyValueTags'): TestData(
         tenant_perm=MANAGE_ENVIRONMENTS, resource_ignore=IgnoreReason.NOTREQUIRED
@@ -1162,6 +1162,7 @@ def mock_input_validation(mocker):
         return_value='MANAGE_ENVIRONMENTS',
     )
     mocker.patch('dataall.modules.shares_base.api.resolvers.RequestValidator', MagicMock())
+    mocker.patch('dataall.core.permissions.services.tenant_policy_service.RequestValidationService', MagicMock())
     # mock aws calls for speed
     mocker.patch('dataall.base.aws.sts.SessionHelper._get_parameter_value')
     mocker.patch('dataall.base.aws.sts.SessionHelper.remote_session')
