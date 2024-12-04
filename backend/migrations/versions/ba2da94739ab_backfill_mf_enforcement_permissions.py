@@ -21,7 +21,7 @@ from dataall.modules.metadata_forms.services.metadata_form_permissions import EN
 
 # revision identifiers, used by Alembic.
 revision = 'ba2da94739ab'
-down_revision = 'b21f86882012'
+down_revision = 'af2e1362d4cb'
 branch_labels = None
 depends_on = None
 
