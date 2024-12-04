@@ -39,7 +39,8 @@ import { DataGrid } from '@mui/x-data-grid';
 
 const CreateEnforcementRuleModal = (props) => {
   const {
-    onClose,
+    onCancel,
+    onSubmit,
     open,
     metadataForm,
     severityOptions,
@@ -163,17 +164,18 @@ const CreateEnforcementRuleModal = (props) => {
     if (response.errors) {
       setStatus({ success: false });
       setErrors({ submit: response.errors[0].message });
+      const error = response.errors[0].message;
+      dispatch({ type: SET_ERROR, error });
       setSubmitting(false);
     } else {
       setStatus({ success: true });
       setSubmitting(false);
-      props.refetch();
-      onClose();
+      onSubmit();
     }
   }
 
   return (
-    <Dialog maxWidth="md" fullWidth onClose={onClose} open={open} {...other}>
+    <Dialog maxWidth="md" fullWidth onClose={onCancel} open={open} {...other}>
       <Box sx={{ p: 3 }}>
         <Typography
           align="center"
@@ -412,7 +414,7 @@ const CreateEnforcementRuleModal = (props) => {
 
                   <Button
                     sx={{ mt: 2 }}
-                    onClick={onClose}
+                    onClick={onCancel}
                     fullWidth
                     color="primary"
                     variant="outlined"
@@ -779,7 +781,13 @@ export const MetadataFormEnforcement = (props) => {
           enforcementScopeOptions={enforcementScopeOptions}
           entityTypesOptions={entityTypesOptions}
           severityOptions={severityOptions}
-          onClose={() => setShowCreateRuleModal(false)}
+          onSubmit={async (rule) => {
+            setShowCreateRuleModal(false);
+            fetchEnforcementRules().catch((e) =>
+              dispatch({ type: SET_ERROR, error: e.message })
+            );
+          }}
+          onCancel={() => setShowCreateRuleModal(false)}
         />
       )}
     </Box>
