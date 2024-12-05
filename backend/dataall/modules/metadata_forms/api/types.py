@@ -176,5 +176,6 @@ AffectingRules = gql.ObjectType(
     fields=MetadataFormEnforcementRule.fields[:]
     + [
         gql.Field(name='attached', type=gql.String),
+        gql.Field(name='metadataFormName', type=gql.String),
     ],
 )

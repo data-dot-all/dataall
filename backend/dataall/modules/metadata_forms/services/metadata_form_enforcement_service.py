@@ -333,8 +333,9 @@ class MetadataFormEnforcementService:
                     )
                 )
 
-        for r in all_rules:
-            attached = MetadataFormEnforcementService.get_attachement_for_rule(r, entity_uri)
-            r.attached = attached.uri if attached else None
+            for r in all_rules:
+                attached = MetadataFormEnforcementService.get_attachement_for_rule(r, entity_uri)
+                r.attached = attached.uri if attached else None
+                r.metadataFormName = MetadataFormRepository.get_metadata_form(session, r.metadataFormUri).name
 
         return all_rules

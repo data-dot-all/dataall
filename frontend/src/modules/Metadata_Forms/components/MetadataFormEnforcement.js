@@ -136,6 +136,9 @@ const CreateEnforcementRuleModal = (props) => {
       await fetchOrganizations();
       await fetchDatasets();
     }
+    setEntityTypes([
+      ...entityTypesOptions.map((t) => ({ ...t, disabled: false }))
+    ]);
   }, [client, open, dispatch]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
@@ -218,13 +221,20 @@ const CreateEnforcementRuleModal = (props) => {
                       };
                     })}
                     defaultValue={enforcementScopeDict['Global']}
-                    onChange={(event, value) => {
-                      setFieldValue('scope', value.value);
-                      setEntityTypes(
-                        entityTypesOptions.filter((entityType) => {
-                          return entityType.levels.includes(value.value);
-                        })
-                      );
+                    onChange={async (event, value) => {
+                      entityTypesOptions.forEach((entityType) => {
+                        entityType.disabled = !entityType.levels.includes(
+                          value.value
+                        );
+                      });
+                      setEntityTypes([...entityTypesOptions]);
+                      const active = entityTypesOptions
+                        .filter((t) => !t.disabled)
+                        .map((t) => t.name);
+                      await setFieldValue('scope', value.value);
+                      await setFieldValue('entityTypes', [
+                        ...values.entityTypes.filter((t) => active.includes(t))
+                      ]);
                     }}
                     renderInput={(params) => (
                       <TextField
@@ -348,6 +358,10 @@ const CreateEnforcementRuleModal = (props) => {
                         <FormControlLabel
                           control={
                             <Checkbox
+                              disabled={entityType.disabled}
+                              checked={values.entityTypes.includes(
+                                entityType.name
+                              )}
                               id={entityType.name}
                               onChange={(event, value) => {
                                 if (value) {
@@ -435,8 +449,8 @@ export const MetadataFormEnforcement = (props) => {
       editable: false,
       renderCell: (params) => {
         return (
-          <Label color={params.attached ? 'success' : 'error'}>
-            {params.attached ? 'Yes' : 'No'}
+          <Label color={params.row.attached ? 'success' : 'error'}>
+            {params.row.attached ? 'Yes' : 'No'}
           </Label>
         );
       }

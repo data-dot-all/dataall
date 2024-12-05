@@ -17,6 +17,7 @@ export const listRulesThatAffectEntity = (uri, type) => ({
         homeEntityName
         entityTypes
         metadataFormUri
+        metadataFormName
         version
         severity
         attached

@@ -270,7 +270,7 @@ export const MetadataAttachment = (props) => {
                         maxLines: 1
                       }}
                     >
-                      {rule.metadataFormUri + ' v.' + rule.version}
+                      {rule.metadataFormName + ' v.' + rule.version}
                     </Typography>
                   </Grid>
                   <Grid item lg={3} xl={3}>
