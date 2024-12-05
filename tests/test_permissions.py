@@ -66,8 +66,9 @@ setup_Environment_networks = setup_networks
 
 
 @pytest.mark.parametrize('field', ALL_PARAMS)
-@pytest.mark.parametrize('perm_type', ['resource', 'tenant', 'tenant_admin', 'glossary_owner'])
+@pytest.mark.parametrize('perm_type', ['resource', 'tenant', 'tenant_admin', 'glossary_owner', 'mf_owner'])
 @patch('dataall.base.context._request_storage')
+@patch('dataall.modules.metadata_forms.services.metadata_form_access_service.MetadataFormAccessService.is_owner')
 @patch('dataall.modules.catalog.services.glossaries_service.GlossariesResourceAccess.check_owner')
 @patch('dataall.core.permissions.services.resource_policy_service.ResourcePolicyService.check_user_resource_permission')
 @patch('dataall.core.permissions.services.group_policy_service.GroupPolicyService.check_group_environment_permission')
@@ -85,6 +86,7 @@ def test_permissions(
     mock_check_group,
     mock_check_resource,
     mock_check_glossary_owner,
+    mock_check_mf_owner,
     mock_storage,
     field,
     perm_type,
@@ -133,9 +135,7 @@ def test_permissions(
             tenant_name=ANY,
             permission_name=perm,
         )
-    elif perm_type == 'tenant_admin':
-        mock_check_tenant_admin.assert_called()
-    elif perm_type == 'glossary_owner':
-        mock_check_glossary_owner.assert_called()
+    elif perm_type in ['tenant_admin', 'glossary_owner', 'mf_owner']:
+        locals()[f'mock_check_{perm_type}'].assert_called()  # nosemgrep
     else:
         raise ValueError(f'unknown permission type {perm_type}')

@@ -150,6 +150,8 @@ class TestData:
     tenant_admin_perm: bool = False
     glossary_owner_ignore: IgnoreReason = IgnoreReason.NOTREQUIRED
     glossary_owner_perm: bool = False
+    mf_owner_ignore: IgnoreReason = IgnoreReason.NOTREQUIRED
+    mf_owner_perm: bool = False
 
     def get_perm(self, _type: str) -> str:
         return getattr(self, f'{_type}_perm')
@@ -346,7 +348,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('MetadataForm', 'userRole'): TestData(
-        resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED, mf_owner_perm=True
     ),
     field_id('MetadataFormField', 'glossaryNodeName'): TestData(
         resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -381,7 +383,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_ORGANIZATIONS, resource_perm=DELETE_ORGANIZATION
     ),
     field_id('Mutation', 'batchMetadataFormFieldUpdates'): TestData(
-        tenant_perm=MANAGE_METADATA_FORMS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_METADATA_FORMS, resource_ignore=IgnoreReason.USERLIMITED, mf_owner_perm=True
     ),
     field_id('Mutation', 'cancelShareExtension'): TestData(
         tenant_perm=MANAGE_SHARES, resource_perm=SUBMIT_SHARE_OBJECT
@@ -410,10 +412,10 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_METADATA_FORMS, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'createMetadataFormFields'): TestData(
-        tenant_perm=MANAGE_METADATA_FORMS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_METADATA_FORMS, resource_ignore=IgnoreReason.USERLIMITED, mf_owner_perm=True
     ),
     field_id('Mutation', 'createMetadataFormVersion'): TestData(
-        tenant_perm=MANAGE_METADATA_FORMS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_METADATA_FORMS, resource_ignore=IgnoreReason.USERLIMITED, mf_owner_perm=True
     ),
     field_id('Mutation', 'createNetwork'): TestData(tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=CREATE_NETWORK),
     field_id('Mutation', 'createOmicsRun'): TestData(tenant_perm=MANAGE_OMICS_RUNS, resource_perm=CREATE_OMICS_RUN),
@@ -470,13 +472,13 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED, glossary_owner_perm=True
     ),
     field_id('Mutation', 'deleteMetadataForm'): TestData(
-        tenant_perm=MANAGE_METADATA_FORMS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_METADATA_FORMS, resource_ignore=IgnoreReason.USERLIMITED, mf_owner_perm=True
     ),
     field_id('Mutation', 'deleteMetadataFormField'): TestData(
-        tenant_perm=MANAGE_METADATA_FORMS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_METADATA_FORMS, resource_ignore=IgnoreReason.USERLIMITED, mf_owner_perm=True
     ),
     field_id('Mutation', 'deleteMetadataFormVersion'): TestData(
-        tenant_perm=MANAGE_METADATA_FORMS, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_METADATA_FORMS, resource_ignore=IgnoreReason.USERLIMITED, mf_owner_perm=True
     ),
     field_id('Mutation', 'deleteNetwork'): TestData(tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=DELETE_NETWORK),
     field_id('Mutation', 'deleteNotification'): TestData(
