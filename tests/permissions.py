@@ -284,7 +284,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_perm=GET_DATASET_TABLE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('DatasetTable', 'columns'): TestData(
-        resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.CUSTOM, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('DatasetTable', 'dataset'): TestData(
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -392,7 +392,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_ignore=IgnoreReason.BACKPORT, resource_perm=ATTACH_METADATA_FORM
     ),
     field_id('Mutation', 'createCategory'): TestData(
-        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED, glossary_owner_perm=True
+        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.CUSTOM, glossary_owner_perm=True
     ),
     field_id('Mutation', 'createDataPipeline'): TestData(tenant_perm=MANAGE_PIPELINES, resource_perm=CREATE_PIPELINE),
     field_id('Mutation', 'createDataPipelineEnvironment'): TestData(
@@ -439,7 +439,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_DATASETS, resource_perm=CREATE_TABLE_DATA_FILTER
     ),
     field_id('Mutation', 'createTerm'): TestData(
-        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED, glossary_owner_perm=True
+        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.CUSTOM, glossary_owner_perm=True
     ),
     field_id('Mutation', 'createWorksheet'): TestData(
         tenant_perm=MANAGE_WORKSHEETS, resource_ignore=IgnoreReason.NOTREQUIRED
@@ -448,7 +448,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_ignore=IgnoreReason.BACKPORT, resource_perm=ATTACH_METADATA_FORM
     ),
     field_id('Mutation', 'deleteCategory'): TestData(
-        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED, glossary_owner_perm=True
+        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.CUSTOM, glossary_owner_perm=True
     ),
     field_id('Mutation', 'deleteConnectionGroupPermission'): TestData(
         tenant_ignore=IgnoreReason.BACKPORT, resource_ignore=IgnoreReason.NOTREQUIRED
@@ -469,7 +469,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=DELETE_ENVIRONMENT
     ),
     field_id('Mutation', 'deleteGlossary'): TestData(
-        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED, glossary_owner_perm=True
+        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.CUSTOM, glossary_owner_perm=True
     ),
     field_id('Mutation', 'deleteMetadataForm'): TestData(
         tenant_perm=MANAGE_METADATA_FORMS, resource_ignore=IgnoreReason.USERLIMITED, mf_owner_perm=True
@@ -505,7 +505,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_DATASETS, resource_perm=DELETE_TABLE_DATA_FILTER
     ),
     field_id('Mutation', 'deleteTerm'): TestData(
-        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED, glossary_owner_perm=True
+        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.CUSTOM, glossary_owner_perm=True
     ),
     field_id('Mutation', 'deleteWorksheet'): TestData(tenant_perm=MANAGE_WORKSHEETS, resource_perm=DELETE_WORKSHEET),
     field_id('Mutation', 'dismissTermAssociation'): TestData(
@@ -592,7 +592,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_ignore=IgnoreReason.APPSUPPORT, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'updateCategory'): TestData(
-        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED, glossary_owner_perm=True
+        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.CUSTOM, glossary_owner_perm=True
     ),
     field_id('Mutation', 'updateConsumptionRole'): TestData(
         tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=REMOVE_ENVIRONMENT_CONSUMPTION_ROLE
@@ -616,7 +616,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=UPDATE_ENVIRONMENT
     ),
     field_id('Mutation', 'updateGlossary'): TestData(
-        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED, glossary_owner_perm=True
+        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.CUSTOM, glossary_owner_perm=True
     ),
     field_id('Mutation', 'updateGroupEnvironmentPermissions'): TestData(
         tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=UPDATE_ENVIRONMENT_GROUP
@@ -659,7 +659,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     ),
     field_id('Mutation', 'updateStack'): TestData(tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=TARGET_TYPE_PERM),
     field_id('Mutation', 'updateTerm'): TestData(
-        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED, glossary_owner_perm=True
+        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.CUSTOM, glossary_owner_perm=True
     ),
     field_id('Mutation', 'updateWorksheet'): TestData(tenant_perm=MANAGE_WORKSHEETS, resource_perm=UPDATE_WORKSHEET),
     field_id('Mutation', 'verifyDatasetShareObjects'): TestData(
@@ -691,10 +691,10 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'countDeletedNotifications'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'countReadNotifications'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'countUnreadNotifications'): TestData(
         resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
