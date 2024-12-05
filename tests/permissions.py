@@ -352,7 +352,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('MetadataForm', 'homeEntityName'): TestData(
-        resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.SIMPLIFIED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('MetadataForm', 'userRole'): TestData(
         resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED, mf_owner_perm=True
@@ -709,7 +709,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=CREDENTIALS_ENVIRONMENT
     ),
     field_id('Query', 'getAttachedMetadataForm'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getAuthorSession'): TestData(resource_perm=CREATE_DASHBOARD, tenant_perm=MANAGE_DASHBOARDS),
     field_id('Query', 'getCDKExecPolicyPresignedUrl'): TestData(
