@@ -836,8 +836,8 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'getSharedDatasetTables'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
-    ),  # TODO Review
+        resource_perm=LIST_ENVIRONMENT_DATASETS, tenant_ignore=IgnoreReason.USERLIMITED
+    ),
     field_id('Query', 'getStack'): TestData(resource_perm=TARGET_TYPE_PERM, tenant_ignore=IgnoreReason.NOTREQUIRED),
     field_id('Query', 'getStackLogs'): TestData(resource_perm=TARGET_TYPE_PERM, tenant_ignore=IgnoreReason.NOTREQUIRED),
     field_id('Query', 'getTrustAccount'): TestData(
