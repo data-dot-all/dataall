@@ -1,6 +1,5 @@
 import inspect
 import logging
-from contextlib import suppress
 from dataclasses import dataclass
 from enum import Enum
 from typing import Mapping, Tuple
@@ -158,6 +157,8 @@ class TestData:
     tenant_perm: str = None
     tenant_admin_ignore: IgnoreReason = IgnoreReason.NOTREQUIRED
     tenant_admin_perm: bool = False
+    glossary_owner_ignore: IgnoreReason = IgnoreReason.NOTREQUIRED
+    glossary_owner_perm: bool = False
 
     def get_perm(self, _type: str) -> str:
         return getattr(self, f'{_type}_perm')
@@ -398,7 +399,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_ignore=IgnoreReason.BACKPORT, resource_perm=ATTACH_METADATA_FORM
     ),
     field_id('Mutation', 'createCategory'): TestData(
-        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED, glossary_owner_perm=True
     ),
     field_id('Mutation', 'createDataPipeline'): TestData(tenant_perm=MANAGE_PIPELINES, resource_perm=CREATE_PIPELINE),
     field_id('Mutation', 'createDataPipelineEnvironment'): TestData(
@@ -445,7 +446,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_DATASETS, resource_perm=CREATE_TABLE_DATA_FILTER
     ),
     field_id('Mutation', 'createTerm'): TestData(
-        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED, glossary_owner_perm=True
     ),
     field_id('Mutation', 'createWorksheet'): TestData(
         tenant_perm=MANAGE_WORKSHEETS, resource_ignore=IgnoreReason.NOTREQUIRED
@@ -454,7 +455,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_ignore=IgnoreReason.BACKPORT, resource_perm=ATTACH_METADATA_FORM
     ),
     field_id('Mutation', 'deleteCategory'): TestData(
-        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED, glossary_owner_perm=True
     ),
     field_id('Mutation', 'deleteConnectionGroupPermission'): TestData(
         tenant_ignore=IgnoreReason.BACKPORT, resource_ignore=IgnoreReason.NOTREQUIRED
@@ -475,7 +476,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=DELETE_ENVIRONMENT
     ),
     field_id('Mutation', 'deleteGlossary'): TestData(
-        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED, glossary_owner_perm=True
     ),
     field_id('Mutation', 'deleteMetadataForm'): TestData(
         tenant_perm=MANAGE_METADATA_FORMS, resource_ignore=IgnoreReason.NOTREQUIRED
@@ -511,7 +512,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_DATASETS, resource_perm=DELETE_TABLE_DATA_FILTER
     ),
     field_id('Mutation', 'deleteTerm'): TestData(
-        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED, glossary_owner_perm=True
     ),
     field_id('Mutation', 'deleteWorksheet'): TestData(tenant_perm=MANAGE_WORKSHEETS, resource_perm=DELETE_WORKSHEET),
     field_id('Mutation', 'dismissTermAssociation'): TestData(
@@ -598,7 +599,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_ignore=IgnoreReason.APPSUPPORT, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'updateCategory'): TestData(
-        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED, glossary_owner_perm=True
     ),
     field_id('Mutation', 'updateConsumptionRole'): TestData(
         tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=REMOVE_ENVIRONMENT_CONSUMPTION_ROLE
@@ -622,7 +623,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=UPDATE_ENVIRONMENT
     ),
     field_id('Mutation', 'updateGlossary'): TestData(
-        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED, glossary_owner_perm=True
     ),
     field_id('Mutation', 'updateGroupEnvironmentPermissions'): TestData(
         tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=UPDATE_ENVIRONMENT_GROUP
@@ -665,7 +666,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     ),
     field_id('Mutation', 'updateStack'): TestData(tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=TARGET_TYPE_PERM),
     field_id('Mutation', 'updateTerm'): TestData(
-        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.NOTREQUIRED, glossary_owner_perm=True
     ),
     field_id('Mutation', 'updateWorksheet'): TestData(tenant_perm=MANAGE_WORKSHEETS, resource_perm=UPDATE_WORKSHEET),
     field_id('Mutation', 'verifyDatasetShareObjects'): TestData(
@@ -1199,8 +1200,9 @@ setup_Environment_networks = setup_networks
 
 
 @pytest.mark.parametrize('field', ALL_PARAMS)
-@pytest.mark.parametrize('perm_type', ['resource', 'tenant', 'tenant_admin'])
+@pytest.mark.parametrize('perm_type', ['resource', 'tenant', 'tenant_admin', 'glossary_owner'])
 @patch('dataall.base.context._request_storage')
+@patch('dataall.modules.catalog.services.glossaries_service.GlossariesResourceAccess.check_owner')
 @patch('dataall.core.permissions.services.resource_policy_service.ResourcePolicyService.check_user_resource_permission')
 @patch('dataall.core.permissions.services.group_policy_service.GroupPolicyService.check_group_environment_permission')
 @patch('dataall.core.permissions.services.tenant_policy_service.TenantPolicyService.check_user_tenant_permission')
@@ -1216,6 +1218,7 @@ def test_permissions(
     mock_check_tenant,
     mock_check_group,
     mock_check_resource,
+    mock_check_glossary_owner,
     mock_storage,
     field,
     perm_type,
@@ -1240,8 +1243,10 @@ def test_permissions(
     # run test specific setup if required
     globals().get(f'setup_{fid}', lambda *_a, **b: None)(**locals())  # nosemgrep
 
-    with suppress(Exception):
+    try:
         field.resolver(**iargs)
+    except:
+        logging.info('expected exception', exc_info=True)
 
     if not perm:  # if no expected permission is defined, we expect the check to not be called
         locals()[f'mock_check_{perm_type}'].assert_not_called()  # nosemgrep
@@ -1264,5 +1269,7 @@ def test_permissions(
         )
     elif perm_type == 'tenant_admin':
         mock_check_tenant_admin.assert_called()
+    elif perm_type == 'glossary_owner':
+        mock_check_glossary_owner.assert_called()
     else:
         raise ValueError(f'unknown permission type {perm_type}')
