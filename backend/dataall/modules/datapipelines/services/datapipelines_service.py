@@ -3,8 +3,9 @@ import logging
 
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
-from dataall.core.permissions.services.group_policy_service import GroupPolicyService
+from dataall.base.db import exceptions
 from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTagRepository
@@ -12,7 +13,6 @@ from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.core.stacks.services.stack_service import StackService
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.tasks.service_handlers import Worker
-from dataall.base.db import exceptions
 from dataall.modules.datapipelines.db.datapipelines_models import DataPipeline, DataPipelineEnvironment
 from dataall.modules.datapipelines.db.datapipelines_repositories import DatapipelinesRepository
 from dataall.modules.datapipelines.services.datapipelines_permissions import (
@@ -25,7 +25,6 @@ from dataall.modules.datapipelines.services.datapipelines_permissions import (
     UPDATE_PIPELINE,
 )
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -34,6 +33,10 @@ def _session():
 
 
 class DataPipelineService:
+    @staticmethod
+    def _get_pipeline_uri_from_env_uri(session, envPipelineUri):
+        return DatapipelinesRepository.get_pipeline_environment_by_uri(session, envPipelineUri).pipelineUri
+
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_PIPELINES)
     @ResourcePolicyService.has_resource_permission(CREATE_PIPELINE)
@@ -255,7 +258,9 @@ class DataPipelineService:
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_PIPELINES)
-    @ResourcePolicyService.has_resource_permission(UPDATE_PIPELINE, param_name='envPipelineUri')
+    @ResourcePolicyService.has_resource_permission(
+        UPDATE_PIPELINE, param_name='envPipelineUri', parent_resource=_get_pipeline_uri_from_env_uri
+    )
     def delete_pipeline_environment(envPipelineUri: str):
         with _session() as session:
             DatapipelinesRepository.delete_pipeline_environment(session=session, envPipelineUri=envPipelineUri)
