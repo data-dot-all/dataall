@@ -14,27 +14,21 @@ ALL_RESOLVERS = {(_type, field) for _type in bootstrap().types for field in _typ
 
 
 @pytest.fixture(scope='function')
-def mock_input_validation(mocker):
-    mocker.patch('dataall.modules.mlstudio.api.resolvers.RequestValidator', MagicMock())
-    mocker.patch(
-        'dataall.modules.mlstudio.services.mlstudio_service.SagemakerStudioCreationRequest.from_dict', MagicMock()
-    )
-    mocker.patch('dataall.modules.notebooks.api.resolvers.RequestValidator', MagicMock())
-    mocker.patch('dataall.modules.notebooks.services.notebook_service.NotebookCreationRequest.from_dict', MagicMock())
-    mocker.patch('dataall.modules.s3_datasets.api.profiling.resolvers._validate_uri', MagicMock())
-    mocker.patch('dataall.modules.s3_datasets.api.storage_location.resolvers._validate_input', MagicMock())
-    mocker.patch('dataall.modules.s3_datasets.api.dataset.resolvers.RequestValidator', MagicMock())
-    mocker.patch(
-        'dataall.core.stacks.db.target_type_repositories.TargetType.get_resource_tenant_permission_name',
-        return_value='MANAGE_ENVIRONMENTS',
-    )
-    mocker.patch('dataall.modules.shares_base.api.resolvers.RequestValidator', MagicMock())
-    mocker.patch('dataall.core.permissions.services.tenant_policy_service.RequestValidationService', MagicMock())
-    # mock aws calls for speed
-    mocker.patch('dataall.base.aws.sts.SessionHelper._get_parameter_value')
-    mocker.patch('dataall.base.aws.sts.SessionHelper.remote_session')
-    mocker.patch('dataall.base.aws.sts.SessionHelper.get_session')
+def common_mocks(mocker):
     mocker.patch('boto3.client').side_effect = RuntimeError('mocked boto3 client')
+    mocker.patch('dataall.base.aws.sts.SessionHelper._get_parameter_value')
+    mocker.patch('dataall.base.aws.sts.SessionHelper.get_session')
+    mocker.patch('dataall.base.aws.sts.SessionHelper.remote_session')
+    mocker.patch('dataall.core.permissions.services.tenant_policy_service.RequestValidationService')
+    mocker.patch('dataall.modules.mlstudio.api.resolvers.RequestValidator')
+    mocker.patch('dataall.modules.mlstudio.services.mlstudio_service.SagemakerStudioCreationRequest.from_dict')
+    mocker.patch('dataall.modules.notebooks.api.resolvers.RequestValidator')
+    mocker.patch('dataall.modules.notebooks.services.notebook_service.NotebookCreationRequest.from_dict')
+    mocker.patch('dataall.modules.redshift_datasets.api.connections.resolvers.RequestValidator')
+    mocker.patch('dataall.modules.s3_datasets.api.dataset.resolvers.RequestValidator')
+    mocker.patch('dataall.modules.s3_datasets.api.profiling.resolvers._validate_uri')
+    mocker.patch('dataall.modules.s3_datasets.api.storage_location.resolvers._validate_input')
+    mocker.patch('dataall.modules.shares_base.api.resolvers.RequestValidator')
 
 
 ALL_PARAMS = [pytest.param(field, id=field_id(_type.name, field.name)) for _type, field in ALL_RESOLVERS]
@@ -76,9 +70,11 @@ setup_Environment_networks = setup_networks
 @patch('dataall.core.permissions.services.tenant_policy_service.TenantPolicyValidationService.is_tenant_admin')
 @patch('dataall.core.stacks.db.target_type_repositories.TargetType.get_resource_read_permission_name')
 @patch('dataall.core.stacks.db.target_type_repositories.TargetType.get_resource_update_permission_name')
+@patch('dataall.core.stacks.db.target_type_repositories.TargetType.get_resource_tenant_permission_name')
 @patch('dataall.modules.feed.api.registry.FeedRegistry.find_permission')
 def test_permissions(
     mock_feed_find_perm,
+    mock_tenant_perm_name,
     mock_update_perm_name,
     mock_read_perm_name,
     mock_check_tenant_admin,
@@ -91,7 +87,7 @@ def test_permissions(
     field,
     perm_type,
     request,
-    mock_input_validation,
+    common_mocks,
 ):
     fid = request.node.callspec.id.split('-')[-1]
     perm, reason = EXPECTED_RESOLVERS[fid].get(perm_type)
@@ -105,6 +101,7 @@ def test_permissions(
     mock_feed_find_perm.return_value = perm
     mock_update_perm_name.return_value = perm
     mock_read_perm_name.return_value = perm
+    mock_tenant_perm_name.return_value = perm
 
     iargs = {arg: MagicMock() for arg in inspect.signature(field.resolver).parameters.keys()}
 

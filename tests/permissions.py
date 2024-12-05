@@ -66,7 +66,14 @@ from dataall.modules.notebooks.services.notebook_permissions import (
     UPDATE_NOTEBOOK,
 )
 from dataall.modules.omics.services.omics_permissions import MANAGE_OMICS_RUNS, CREATE_OMICS_RUN, DELETE_OMICS_RUN
-from dataall.modules.redshift_datasets.services.redshift_connection_permissions import GET_REDSHIFT_CONNECTION
+from dataall.modules.redshift_datasets.services.redshift_connection_permissions import (
+    GET_REDSHIFT_CONNECTION,
+    DELETE_REDSHIFT_CONNECTION,
+    MANAGE_REDSHIFT_CONNECTIONS,
+    EDIT_REDSHIFT_CONNECTION_PERMISSIONS,
+    CREATE_REDSHIFT_CONNECTION,
+    LIST_ENVIRONMENT_REDSHIFT_CONNECTIONS,
+)
 from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import (
     MANAGE_REDSHIFT_DATASETS,
     ADD_TABLES_REDSHIFT_DATASET,
@@ -360,7 +367,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=ENABLE_ENVIRONMENT_SUBSCRIPTIONS
     ),
     field_id('Mutation', 'addConnectionGroupPermission'): TestData(
-        tenant_ignore=IgnoreReason.BACKPORT, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_REDSHIFT_CONNECTIONS, resource_perm=GET_REDSHIFT_CONNECTION
     ),
     field_id('Mutation', 'addConsumptionRoleToEnvironment'): TestData(
         tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=ADD_ENVIRONMENT_CONSUMPTION_ROLES
@@ -426,7 +433,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.USERLIMITED, tenant_admin_perm=True
     ),
     field_id('Mutation', 'createRedshiftConnection'): TestData(
-        tenant_ignore=IgnoreReason.BACKPORT, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_REDSHIFT_CONNECTIONS, resource_perm=CREATE_REDSHIFT_CONNECTION
     ),
     field_id('Mutation', 'createSagemakerNotebook'): TestData(
         tenant_perm=MANAGE_NOTEBOOKS, resource_perm=CREATE_NOTEBOOK
@@ -451,7 +458,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.CUSTOM, glossary_owner_perm=True
     ),
     field_id('Mutation', 'deleteConnectionGroupPermission'): TestData(
-        tenant_ignore=IgnoreReason.BACKPORT, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_REDSHIFT_CONNECTIONS, resource_perm=EDIT_REDSHIFT_CONNECTION_PERMISSIONS
     ),
     field_id('Mutation', 'deleteDashboard'): TestData(tenant_perm=MANAGE_DASHBOARDS, resource_perm=DELETE_DASHBOARD),
     field_id('Mutation', 'deleteDataPipeline'): TestData(tenant_perm=MANAGE_PIPELINES, resource_perm=DELETE_PIPELINE),
@@ -486,7 +493,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     ),
     field_id('Mutation', 'deleteOmicsRun'): TestData(tenant_perm=MANAGE_OMICS_RUNS, resource_perm=DELETE_OMICS_RUN),
     field_id('Mutation', 'deleteRedshiftConnection'): TestData(
-        tenant_ignore=IgnoreReason.BACKPORT, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_perm=MANAGE_REDSHIFT_CONNECTIONS, resource_perm=DELETE_REDSHIFT_CONNECTION
     ),
     field_id('Mutation', 'deleteRedshiftDataset'): TestData(
         tenant_perm=MANAGE_REDSHIFT_DATASETS, resource_perm=DELETE_REDSHIFT_DATASET
@@ -624,9 +631,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Mutation', 'updateGroupTenantPermissions'): TestData(
         tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
-    field_id('Mutation', 'updateKeyValueTags'): TestData(
-        tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=TARGET_TYPE_PERM
-    ),
+    field_id('Mutation', 'updateKeyValueTags'): TestData(tenant_perm=TARGET_TYPE_PERM, resource_perm=TARGET_TYPE_PERM),
     field_id('Mutation', 'updateOrganization'): TestData(
         tenant_perm=MANAGE_ORGANIZATIONS, resource_perm=UPDATE_ORGANIZATION
     ),
@@ -657,7 +662,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Mutation', 'updateShareRequestReason'): TestData(
         tenant_perm=MANAGE_SHARES, resource_perm=SUBMIT_SHARE_OBJECT
     ),
-    field_id('Mutation', 'updateStack'): TestData(tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=TARGET_TYPE_PERM),
+    field_id('Mutation', 'updateStack'): TestData(tenant_perm=TARGET_TYPE_PERM, resource_perm=TARGET_TYPE_PERM),
     field_id('Mutation', 'updateTerm'): TestData(
         tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.CUSTOM, glossary_owner_perm=True
     ),
@@ -856,10 +861,10 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('Query', 'listConnectionGroupNoPermissions'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=EDIT_REDSHIFT_CONNECTION_PERMISSIONS, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'listConnectionGroupPermissions'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=EDIT_REDSHIFT_CONNECTION_PERMISSIONS, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'listDashboardShares'): TestData(
         resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
@@ -901,7 +906,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_perm=LIST_ENVIRONMENT_NETWORKS, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listEnvironmentRedshiftConnections'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=LIST_ENVIRONMENT_REDSHIFT_CONNECTIONS, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'listEnvironments'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.USERLIMITED
@@ -943,7 +948,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'listRedshiftConnectionSchemas'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_REDSHIFT_CONNECTION, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'listRedshiftDatasetTables'): TestData(
         resource_perm=GET_REDSHIFT_DATASET, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -952,7 +957,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_perm=GET_REDSHIFT_DATASET, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listRedshiftSchemaTables'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_perm=GET_REDSHIFT_CONNECTION, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'listS3DatasetsOwnedByEnvGroup'): TestData(
         resource_perm=LIST_ENVIRONMENT_DATASETS, tenant_ignore=IgnoreReason.USERLIMITED
