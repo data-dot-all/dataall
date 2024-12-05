@@ -1,7 +1,6 @@
 import os
 import json
 import logging
-from sqlalchemy import inspect
 from typing import List
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db import exceptions

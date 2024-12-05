@@ -1,5 +1,4 @@
 import logging
-from sqlalchemy import inspect
 from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService

@@ -1,10 +1,9 @@
-from sqlalchemy import inspect
 from dataall.modules.s3_datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
-from dataall.base.db.exceptions import ResourceUnauthorized, ResourceAlreadyExists
+from dataall.base.db.exceptions import ResourceAlreadyExists
 from dataall.modules.s3_datasets.services.dataset_service import DatasetService
 from dataall.modules.s3_datasets.aws.s3_location_client import S3LocationClient
 from dataall.modules.s3_datasets.db.dataset_location_repositories import DatasetLocationRepository
