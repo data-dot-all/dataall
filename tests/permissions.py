@@ -244,7 +244,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Dataset', 'tables'): TestData(
-        resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.CUSTOM, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Dataset', 'terms'): TestData(resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.NOTREQUIRED),
     field_id('Dataset', 'userRoleForDataset'): TestData(
