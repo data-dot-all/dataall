@@ -40,7 +40,7 @@ import { listDatasetTables, deleteDatasetTable, useClient } from 'services';
 import { syncTables } from '../services';
 
 import { DatasetStartCrawlerModal } from './DatasetStartCrawlerModal';
-import { isFeatureEnabled } from 'utils';
+import { emptyPrintUnauthorized, isFeatureEnabled } from 'utils';
 
 export const DatasetTables = (props) => {
   const { dataset, isAdmin } = props;
@@ -261,11 +261,12 @@ export const DatasetTables = (props) => {
                           </Link>
                         </TableCell>
                         <TableCell>
-                          {table.restricted?.GlueDatabaseName ||
-                            'UNAUTHORIZED_INFO'}
+                          {emptyPrintUnauthorized(
+                            table.restricted?.GlueDatabaseName
+                          )}
                         </TableCell>
                         <TableCell>
-                          {table.restricted?.S3Prefix || 'UNAUTHORIZED_INFO'}
+                          {emptyPrintUnauthorized(table.restricted?.S3Prefix)}
                         </TableCell>
                         <TableCell>
                           {isAdmin && (

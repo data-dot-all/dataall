@@ -37,6 +37,7 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { deleteDatasetStorageLocation, useClient } from 'services';
+import { emptyPrintUnauthorized } from 'utils';
 
 import { listDatasetStorageLocations } from '../services';
 import { FolderCreateModal } from './FolderCreateModal';
@@ -224,10 +225,9 @@ export const DatasetFolders = (props) => {
                           </Link>
                         </TableCell>
                         <TableCell>
-                          {`s3://${
-                            folder.restricted?.S3BucketName ||
-                            'UNAUTHORIZED_INFO'
-                          }/${folder.S3Prefix}`}
+                          {`s3://${emptyPrintUnauthorized(
+                            folder.restricted?.S3BucketName
+                          )}/${folder.S3Prefix}`}
                         </TableCell>
                         <TableCell>{folder.description}</TableCell>
                         <TableCell>
