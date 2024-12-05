@@ -33,6 +33,7 @@ def mock_input_validation(mocker):
     # mock aws calls for speed
     mocker.patch('dataall.base.aws.sts.SessionHelper._get_parameter_value')
     mocker.patch('dataall.base.aws.sts.SessionHelper.remote_session')
+    mocker.patch('dataall.base.aws.sts.SessionHelper.get_session')
     mocker.patch('boto3.client').side_effect = RuntimeError('mocked boto3 client')
 
 
