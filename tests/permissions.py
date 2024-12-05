@@ -421,7 +421,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_ORGANIZATIONS, resource_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Mutation', 'createQuicksightDataSourceSet'): TestData(
-        tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.NOTREQUIRED
+        tenant_ignore=IgnoreReason.TENANT, resource_ignore=IgnoreReason.USERLIMITED, tenant_admin_perm=True
     ),
     field_id('Mutation', 'createRedshiftConnection'): TestData(
         tenant_ignore=IgnoreReason.BACKPORT, resource_ignore=IgnoreReason.NOTREQUIRED
@@ -764,10 +764,10 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getMonitoringDashboardId'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('Query', 'getMonitoringVPCConnectionId'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('Query', 'getOmicsWorkflow'): TestData(
         resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.PUBLIC
@@ -785,7 +785,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_perm=LINK_ENVIRONMENT, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getPlatformReaderSession'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('Query', 'getReaderSession'): TestData(
         resource_perm=GET_DASHBOARD, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -851,7 +851,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'listAttachedMetadataForms'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
+        resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('Query', 'listConnectionGroupNoPermissions'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -881,7 +881,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_perm=LIST_ENVIRONMENT_DATASETS, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listEntityMetadataForms'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
+        resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('Query', 'listEnvironmentConsumptionRoles'): TestData(
         resource_perm=LIST_ENVIRONMENT_CONSUMPTION_ROLES, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -980,7 +980,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('Query', 'listUserMetadataForms'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
+        resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
     field_id('Query', 'listUsersForGroup'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
