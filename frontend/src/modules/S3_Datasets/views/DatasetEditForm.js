@@ -333,7 +333,7 @@ const DatasetEditForm = (props) => {
                 terms: dataset.terms || [],
                 stewards: dataset.stewards,
                 confidentiality: dataset.confidentiality,
-                KmsAlias: dataset.restricted?.KmsAlias || 'UNAUTHORIZED_INFO',
+                KmsAlias: dataset.restricted.KmsAlias,
                 autoApprovalEnabled: dataset.autoApprovalEnabled,
                 expirationSetting: dataset.expirySetting,
                 minValidity: dataset.expiryMinDuration,

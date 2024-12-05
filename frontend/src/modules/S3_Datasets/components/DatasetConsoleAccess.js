@@ -19,7 +19,7 @@ export const DatasetConsoleAccess = (props) => {
           Account
         </Typography>
         <Typography color="textPrimary" variant="body2">
-          {dataset.restricted?.AwsAccountId || 'UNAUTHORIZED_INFO'}
+          {dataset.restricted.AwsAccountId}
         </Typography>
       </CardContent>
       <CardContent>
@@ -28,7 +28,7 @@ export const DatasetConsoleAccess = (props) => {
         </Typography>
         <Typography color="textPrimary" variant="body2">
           arn:aws:s3:::
-          {dataset.restricted?.S3BucketName || 'UNAUTHORIZED_INFO'}
+          {dataset.restricted.S3BucketName}
         </Typography>
       </CardContent>
       <CardContent>
@@ -36,11 +36,7 @@ export const DatasetConsoleAccess = (props) => {
           Glue database
         </Typography>
         <Typography color="textPrimary" variant="body2">
-          {`arn:aws:glue:${dataset.restricted?.region || 'UNAUTHORIZED_INFO'}:${
-            dataset.restricted?.AwsAccountId || 'UNAUTHORIZED_INFO'
-          }/database:${
-            dataset.restricted?.GlueDatabaseName || 'UNAUTHORIZED_INFO'
-          }`}
+          {`arn:aws:glue:${dataset.restricted.region}:${dataset.restricted.AwsAccountId}/database:${dataset.restricted.GlueDatabaseName}`}
         </Typography>
       </CardContent>
       <CardContent>
@@ -48,32 +44,29 @@ export const DatasetConsoleAccess = (props) => {
           IAM role
         </Typography>
         <Typography color="textPrimary" variant="body2">
-          {dataset.restricted?.IAMDatasetAdminRoleArn || 'UNAUTHORIZED_INFO'}
+          {dataset.restricted.IAMDatasetAdminRoleArn}
         </Typography>
       </CardContent>
-      {dataset.restricted &&
-        (dataset.restricted?.KmsAlias === 'SSE-S3' ||
-        dataset.restricted?.KmsAlias === 'Undefined' ? (
-          <CardContent>
-            <Typography color="textSecondary" variant="subtitle2">
-              S3 Encryption
-            </Typography>
-            <Typography color="textPrimary" variant="body2">
-              {`${dataset.restricted?.KmsAlias || 'UNAUTHORIZED_INFO'}`}
-            </Typography>
-          </CardContent>
-        ) : dataset.restricted?.KmsAlias !== '' ? (
-          <CardContent>
-            <Typography color="textSecondary" variant="subtitle2">
-              S3 Encryption SSE-KMS
-            </Typography>
-            <Typography color="textPrimary" variant="body2">
-              {`arn:aws:kms:${dataset.restricted.region}:${dataset.restricted.AwsAccountId}/alias:${dataset.restricted.KmsAlias}`}
-            </Typography>
-          </CardContent>
-        ) : (
-          ''
-        ))}
+      {dataset.restricted.KmsAlias === 'SSE-S3' ||
+      dataset.restricted.KmsAlias === 'Undefined' ? (
+        <CardContent>
+          <Typography color="textSecondary" variant="subtitle2">
+            S3 Encryption
+          </Typography>
+          <Typography color="textPrimary" variant="body2">
+            {`${dataset.restricted.KmsAlias}`}
+          </Typography>
+        </CardContent>
+      ) : (
+        <CardContent>
+          <Typography color="textSecondary" variant="subtitle2">
+            S3 Encryption SSE-KMS
+          </Typography>
+          <Typography color="textPrimary" variant="body2">
+            {`arn:aws:kms:${dataset.restricted.region}:${dataset.restricted.AwsAccountId}/alias:${dataset.restricted.KmsAlias}`}
+          </Typography>
+        </CardContent>
+      )}
     </Card>
   );
 };
