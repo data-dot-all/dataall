@@ -8,7 +8,7 @@ from assertpy import assert_that
 from dataall.base.api import bootstrap
 from dataall.base.context import RequestContext
 from dataall.modules.maintenance.api.enums import MaintenanceModes
-from tests.permissions import field_id, EXPECTED_RESOLVERS
+from tests.permissions import field_id, EXPECTED_RESOLVERS, TARGET_TYPE_PERM
 
 ALL_RESOLVERS = {(_type, field) for _type in bootstrap().types for field in _type.fields if field.resolver}
 
@@ -57,6 +57,12 @@ def setup_networks(mock_storage, **kwargs):
 
 setup_EnvironmentSimplified_networks = setup_networks
 setup_Environment_networks = setup_networks
+
+
+def setup_Mutation_upVote(**kwargs):
+    patch(
+        'dataall.modules.vote.services.vote_service.get_vote_type', return_value={'permission': TARGET_TYPE_PERM}
+    ).start()
 
 
 @pytest.mark.parametrize('field', ALL_PARAMS)

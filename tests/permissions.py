@@ -213,6 +213,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Dashboard', 'environment'): TestData(
         resource_perm=GET_ENVIRONMENT, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
+    field_id('Dashboard', 'restricted'): TestData(resource_perm=GET_DASHBOARD, tenant_ignore=IgnoreReason.USERLIMITED),
     field_id('Dashboard', 'terms'): TestData(
         resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
@@ -595,9 +596,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_DATASETS, resource_perm=UPDATE_DATASET_TABLE
     ),
     field_id('Mutation', 'syncTables'): TestData(tenant_perm=MANAGE_DATASETS, resource_perm=SYNC_DATASET),
-    field_id('Mutation', 'upVote'): TestData(
-        tenant_ignore=IgnoreReason.APPSUPPORT, resource_ignore=IgnoreReason.NOTREQUIRED
-    ),
+    field_id('Mutation', 'upVote'): TestData(tenant_ignore=IgnoreReason.APPSUPPORT, resource_perm=TARGET_TYPE_PERM),
     field_id('Mutation', 'updateCategory'): TestData(
         tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.CUSTOM, glossary_owner_perm=True
     ),
@@ -718,7 +717,9 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Query', 'getConsumptionRolePolicies'): TestData(
         resource_perm=GET_ENVIRONMENT, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
-    field_id('Query', 'getDashboard'): TestData(resource_perm=GET_DASHBOARD, tenant_ignore=IgnoreReason.NOTREQUIRED),
+    field_id('Query', 'getDashboard'): TestData(
+        resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
+    ),
     field_id('Query', 'getDataPipeline'): TestData(resource_perm=GET_PIPELINE, tenant_ignore=IgnoreReason.NOTREQUIRED),
     field_id('Query', 'getDataPipelineCredsLinux'): TestData(
         resource_perm=CREDENTIALS_PIPELINE, tenant_perm=MANAGE_PIPELINES
