@@ -70,3 +70,7 @@ class NotificationRepository:
         notification.is_read = True
         session.commit()
         return True
+
+    @staticmethod
+    def get_notification(session, uri):
+        return session.query(models.Notification).get(uri)

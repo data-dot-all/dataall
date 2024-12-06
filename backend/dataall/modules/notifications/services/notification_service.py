@@ -20,22 +20,27 @@ def _session():
 
 class NotificationAccess:
     @staticmethod
-    def is_recipient(f):
+    def is_recipient(uri):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            notification = NotificationRepository.get_notification(session=session, uri=uri)
+            return notification and (notification.recipient in context.groups + [context.username])
+
+    @staticmethod
+    def can_perform(f):
         @wraps(f)
         def wrapper(*args, **kwds):
             uri = kwds.get('notificationUri')
             if not uri:
                 raise KeyError(f"{f.__name__} doesn't have parameter uri.")
-            context = get_context()
-            with context.db_engine.scoped_session() as session:
-                notification = session.query(models.Notification).get(uri)
-                if notification and (notification.recipient in context.groups + [context.username]):
-                    return f(*args, **kwds)
-                else:
-                    raise exceptions.UnauthorizedOperation(
-                        action='UPDATE NOTIFICATION',
-                        message=f'User {context.username} is not the recipient user/group of the notification {uri}',
-                    )
+
+            if NotificationAccess.is_recipient:
+                return f(*args, **kwds)
+            else:
+                raise exceptions.UnauthorizedOperation(
+                    action='UPDATE NOTIFICATION',
+                    message=f'User {get_context().username} is not the recipient user/group of the notification {uri}',
+                )
 
         return wrapper
 
@@ -56,7 +61,7 @@ class NotificationService:
             )
 
     @staticmethod
-    @NotificationAccess.is_recipient
+    @NotificationAccess.can_perform
     def mark_as_read(notificationUri: str):
         with get_context().db_engine.scoped_session() as session:
             return NotificationRepository.read_notification(session=session, notificationUri=notificationUri)
