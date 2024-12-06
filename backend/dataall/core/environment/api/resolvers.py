@@ -14,7 +14,6 @@ from dataall.base.feature_toggle_checker import is_feature_enabled
 
 from dataall.core.organizations.api.resolvers import Context, exceptions, get_organization_simplified
 
-
 log = logging.getLogger()
 
 
@@ -223,6 +222,7 @@ def generate_environment_access_token(context, source, environmentUri: str = Non
 def get_environment_stack(context: Context, source: Environment, **kwargs):
     return StackService.resolve_parent_obj_stack(
         targetUri=source.environmentUri,
+        targetType='environment',
         environmentUri=source.environmentUri,
     )
 
@@ -275,8 +275,7 @@ def resolve_environment(context, source, **kwargs):
     """Resolves the environment for a environmental resource"""
     if not source:
         return None
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.get_environment_by_uri(session, source.environmentUri)
+    return EnvironmentService.find_environment_by_uri(uri=source.environmentUri)
 
 
 def resolve_parameters(context, source: Environment, **kwargs):

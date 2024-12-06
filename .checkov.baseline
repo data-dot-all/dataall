@@ -614,6 +614,25 @@
             ]
         },
         {
+            "file": "/checkov_pipeline_synth.json",
+            "findings": [
+                {
+                    "resource": "AWS::IAM::Role.PipelineRoleDCFDBB91",
+                    "check_ids": [
+                        "CKV_AWS_107",
+                        "CKV_AWS_108",
+                        "CKV_AWS_111"
+                    ]
+                },
+                {
+                    "resource": "AWS::S3::Bucket.thistableartifactsbucketDB1C8C64",
+                    "check_ids": [
+                        "CKV_AWS_18"
+                    ]
+                }
+            ]
+        },
+        {
             "file": "/frontend/docker/prod/Dockerfile",
             "findings": [
                 {

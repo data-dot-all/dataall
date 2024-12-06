@@ -9,7 +9,7 @@ import {
 
 export const FolderS3Properties = (props) => {
   const { folder } = props;
-
+  if (folder.dataset === null) return null;
   return (
     <Card {...folder}>
       <CardHeader title="S3 Properties" />

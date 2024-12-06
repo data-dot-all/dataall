@@ -1,14 +1,13 @@
-from functools import wraps
 import logging
+from functools import wraps
 
 from dataall.base.context import get_context
 from dataall.base.db import exceptions
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
-
-from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.catalog.db.glossary_models import GlossaryNode
-from dataall.modules.catalog.services.glossaries_permissions import MANAGE_GLOSSARIES
+from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.catalog.indexers.registry import GlossaryRegistry
+from dataall.modules.catalog.services.glossaries_permissions import MANAGE_GLOSSARIES
 
 logger = logging.getLogger(__name__)
 
@@ -26,25 +25,28 @@ class GlossariesResourceAccess:
                 uri = kwargs.get('uri')
                 if not uri:
                     raise KeyError(f"{f.__name__} doesn't have parameter uri.")
-                context = get_context()
-                with context.db_engine.scoped_session() as session:
-                    node = GlossaryRepository.get_node(session=session, uri=uri)
-                    MAX_GLOSSARY_DEPTH = 10
-                    depth = 0
-                    while node.nodeType != 'G' and depth <= MAX_GLOSSARY_DEPTH:
-                        node = GlossaryRepository.get_node(session=session, uri=node.parentUri)
-                        depth += 1
-                    if node and (node.admin in context.groups):
-                        return f(*args, **kwargs)
-                    else:
-                        raise exceptions.UnauthorizedOperation(
-                            action='GLOSSARY MUTATION',
-                            message=f'User {context.username} is not the admin of the glossary {node.label}.',
-                        )
+                GlossariesResourceAccess.check_owner(uri)
+                return f(*args, **kwargs)
 
             return wrapper
 
         return decorator
+
+    @staticmethod
+    def check_owner(uri):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            node = GlossaryRepository.get_node(session=session, uri=uri)
+            MAX_GLOSSARY_DEPTH = 10
+            depth = 0
+            while node.nodeType != 'G' and depth <= MAX_GLOSSARY_DEPTH:
+                node = GlossaryRepository.get_node(session=session, uri=node.parentUri)
+                depth += 1
+            if not node or node.admin not in context.groups:
+                raise exceptions.UnauthorizedOperation(
+                    action='GLOSSARY MUTATION',
+                    message=f'User {context.username} is not the admin of the glossary {node.label}.',
+                )
 
 
 class GlossariesService:
