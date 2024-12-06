@@ -4,16 +4,21 @@ Central part for working with Votes
 """
 
 from typing import Dict, Type
+
 from dataall.base.context import get_context
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
 from dataall.modules.vote.db.vote_repositories import VoteRepository
-from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 
 _VOTE_TYPES: Dict[str, Dict[Type[BaseIndexer], str]] = {}
 
 
 def add_vote_type(target_type: str, indexer: Type[BaseIndexer], permission: str):
     _VOTE_TYPES[target_type] = {'indexer': indexer, 'permission': permission}
+
+
+def get_vote_type(target_type: str) -> dict[Type[BaseIndexer], str]:
+    return _VOTE_TYPES[target_type]
 
 
 def _session():
@@ -28,7 +33,7 @@ class VoteService:
     @staticmethod
     def upvote(targetUri: str, targetType: str, upvote: bool):
         context = get_context()
-        target_type = _VOTE_TYPES[targetType]
+        target_type = get_vote_type(targetType)
         with context.db_engine.scoped_session() as session:
             ResourcePolicyService.check_user_resource_permission(
                 session=session,

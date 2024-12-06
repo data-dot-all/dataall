@@ -1,19 +1,22 @@
 import os
 from dataclasses import dataclass
+from glob import glob
 from unittest.mock import MagicMock
 
 import pytest
 from starlette.testclient import TestClient
 
+from dataall.base.config import config
 from dataall.base.db import get_engine, create_schema_and_tables, Engine
 from dataall.base.loader import load_modules, ImportMode, list_loaded_modules
-from glob import glob
-
 from dataall.core.groups.db.group_models import Group
 from dataall.core.permissions.services.permission_service import PermissionService
-from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.permissions.services.tenant_permissions import TENANT_ALL
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from tests.client import create_app, ClientWrapper
+
+for module in config.get_property('modules'):
+    config.set_property(f'modules.{module}.active', True)
 
 load_modules(modes=ImportMode.all())
 ENVNAME = os.environ.get('envname', 'pytest')

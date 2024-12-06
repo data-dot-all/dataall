@@ -84,8 +84,7 @@ def get_dataset_organization(context, source: S3Dataset, **kwargs):
 def get_dataset_environment(context, source: S3Dataset, **kwargs):
     if not source:
         return None
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.get_environment_by_uri(session, source.environmentUri)
+    return EnvironmentService.find_environment_by_uri(uri=source.environmentUri)
 
 
 def get_dataset_owners_group(context, source: S3Dataset, **kwargs):
@@ -130,6 +129,7 @@ def resolve_dataset_stack(context: Context, source: S3Dataset, **kwargs):
         return None
     return StackService.resolve_parent_obj_stack(
         targetUri=source.datasetUri,
+        targetType='dataset',
         environmentUri=source.environmentUri,
     )
 

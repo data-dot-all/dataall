@@ -5,7 +5,6 @@ from dataall.base.db.exceptions import RequiredParameter
 from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.modules.s3_datasets_shares.services.s3_share_service import S3ShareService
 
-
 log = logging.getLogger(__name__)
 
 
@@ -41,7 +40,7 @@ class RequestValidator:
 
 
 def list_shared_tables_by_env_dataset(context: Context, source, datasetUri: str, envUri: str):
-    return S3ShareService.list_shared_tables_by_env_dataset(datasetUri, envUri)
+    return S3ShareService.list_shared_tables_by_env_dataset(uri=envUri, dataset_uri=datasetUri)
 
 
 @is_feature_enabled('modules.s3_datasets.features.aws_actions')
