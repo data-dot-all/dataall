@@ -91,9 +91,9 @@ def test_permissions(
 ):
     fid = request.node.callspec.id.split('-')[-1]
     perm, reason = EXPECTED_RESOLVERS[fid].get(perm_type)
+    assert_that(field.resolver).is_not_none()
     msg = f'{fid} -> {field.resolver.__code__.co_filename}:{field.resolver.__code__.co_firstlineno}'
     logging.info(msg)
-    assert_that(field.resolver).is_not_none()
     # Setup mock context
     username = 'ausername'
     groups = ['agroup']
