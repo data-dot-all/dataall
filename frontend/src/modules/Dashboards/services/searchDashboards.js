@@ -17,7 +17,10 @@ export const searchDashboards = (filter) => ({
           name
           owner
           SamlGroupName
-          AwsAccountId
+          restricted {
+            region
+            AwsAccountId
+          }
           description
           label
           created
@@ -27,7 +30,6 @@ export const searchDashboards = (filter) => ({
           environment {
             environmentUri
             label
-            region
           }
         }
       }
