@@ -1,5 +1,5 @@
-import inspect
 import logging
+from inspect import unwrap, getabsfile, getsourcelines, signature
 from unittest.mock import MagicMock, patch, ANY
 
 import pytest
@@ -92,7 +92,7 @@ def test_permissions(
     fid = request.node.callspec.id.split('-')[-1]
     perm, reason = EXPECTED_RESOLVERS[fid].get(perm_type)
     assert_that(field.resolver).is_not_none()
-    msg = f'{fid} -> {field.resolver.__code__.co_filename}:{field.resolver.__code__.co_firstlineno}'
+    msg = f'{fid} -> {getabsfile(unwrap(field.resolver))}:{getsourcelines(unwrap(field.resolver))[1]}'
     logging.info(msg)
     # Setup mock context
     username = 'ausername'
@@ -103,7 +103,7 @@ def test_permissions(
     mock_read_perm_name.return_value = perm
     mock_tenant_perm_name.return_value = perm
 
-    iargs = {arg: MagicMock() for arg in inspect.signature(field.resolver).parameters.keys()}
+    iargs = {arg: MagicMock() for arg in signature(field.resolver).parameters.keys()}
 
     # run test specific setup if required
     globals().get(f'setup_{fid}', lambda *_a, **b: None)(**locals())  # nosemgrep
