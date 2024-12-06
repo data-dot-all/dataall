@@ -59,10 +59,10 @@ setup_EnvironmentSimplified_networks = setup_networks
 setup_Environment_networks = setup_networks
 
 
-def setup_Mutation_upVote(**kwargs):
-    patch(
+def setup_Mutation_upVote(mocker, **kwargs):
+    mocker.patch(
         'dataall.modules.vote.services.vote_service.get_vote_type', return_value={'permission': TARGET_TYPE_PERM}
-    ).start()
+    )
 
 
 @pytest.mark.parametrize('field', ALL_PARAMS)
@@ -93,6 +93,7 @@ def test_permissions(
     field,
     perm_type,
     request,
+    mocker,
     common_mocks,
 ):
     fid = request.node.callspec.id.split('-')[-1]
