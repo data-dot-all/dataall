@@ -11,7 +11,6 @@ export const getDatasetTable = (tableUri) => ({
           datasetUri
           name
           userRoleForDataset
-          region
           SamlAdminGroupName
           owner
           confidentiality
@@ -31,13 +30,15 @@ export const getDatasetTable = (tableUri) => ({
         created
         tags
         tableUri
-        AwsAccountId
-        GlueTableName
-        GlueDatabaseName
         LastGlueTableStatus
         label
         name
-        S3Prefix
+        restricted {
+          S3Prefix
+          AwsAccountId
+          GlueTableName
+          GlueDatabaseName
+        }
         terms {
           count
           nodes {

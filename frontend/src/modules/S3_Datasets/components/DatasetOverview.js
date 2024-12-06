@@ -33,7 +33,9 @@ export const DatasetOverview = (props) => {
           objectType="dataset"
         />
         <Box sx={{ mt: 2 }}>
-          {isAdmin && <DatasetConsoleAccess dataset={dataset} />}
+          {isAdmin && dataset.restricted && (
+            <DatasetConsoleAccess dataset={dataset} />
+          )}
         </Box>
       </Grid>
     </Grid>
