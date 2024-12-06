@@ -27,6 +27,8 @@ export const listAttachedMetadataForms = (filter) => ({
           version
           entityType
           entityUri
+          entityName
+          entityOwner
         }
       }
     }
