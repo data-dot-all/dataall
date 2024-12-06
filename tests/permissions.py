@@ -159,6 +159,8 @@ class TestData:
     glossary_owner_perm: bool = False
     mf_owner_ignore: IgnoreReason = IgnoreReason.NOTREQUIRED
     mf_owner_perm: bool = False
+    notification_recipient_ignore: IgnoreReason = IgnoreReason.NOTREQUIRED
+    notification_recipient_perm: bool = False
 
     def get_perm(self, _type: str) -> str:
         return getattr(self, f'{_type}_perm')
@@ -489,9 +491,6 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_METADATA_FORMS, resource_ignore=IgnoreReason.USERLIMITED, mf_owner_perm=True
     ),
     field_id('Mutation', 'deleteNetwork'): TestData(tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=DELETE_NETWORK),
-    field_id('Mutation', 'deleteNotification'): TestData(
-        tenant_ignore=IgnoreReason.APPSUPPORT, resource_ignore=IgnoreReason.APPSUPPORT
-    ),
     field_id('Mutation', 'deleteOmicsRun'): TestData(tenant_perm=MANAGE_OMICS_RUNS, resource_perm=DELETE_OMICS_RUN),
     field_id('Mutation', 'deleteRedshiftConnection'): TestData(
         tenant_perm=MANAGE_REDSHIFT_CONNECTIONS, resource_perm=DELETE_REDSHIFT_CONNECTION
@@ -537,7 +536,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_ORGANIZATIONS, resource_perm=INVITE_ORGANIZATION_GROUP
     ),
     field_id('Mutation', 'markNotificationAsRead'): TestData(
-        tenant_ignore=IgnoreReason.APPSUPPORT, resource_ignore=IgnoreReason.APPSUPPORT
+        tenant_ignore=IgnoreReason.APPSUPPORT, resource_ignore=IgnoreReason.CUSTOM, notification_recipient_perm=True
     ),
     field_id('Mutation', 'postFeedMessage'): TestData(
         tenant_ignore=IgnoreReason.APPSUPPORT, resource_perm=TARGET_TYPE_PERM
@@ -693,12 +692,6 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     ),
     field_id('Permission', 'type'): TestData(
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
-    ),
-    field_id('Query', 'countDeletedNotifications'): TestData(
-        resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
-    ),
-    field_id('Query', 'countReadNotifications'): TestData(
-        resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'countUnreadNotifications'): TestData(
         resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED

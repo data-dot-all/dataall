@@ -66,8 +66,11 @@ def setup_Mutation_upVote(mocker, **kwargs):
 
 
 @pytest.mark.parametrize('field', ALL_PARAMS)
-@pytest.mark.parametrize('perm_type', ['resource', 'tenant', 'tenant_admin', 'glossary_owner', 'mf_owner'])
+@pytest.mark.parametrize(
+    'perm_type', ['resource', 'tenant', 'tenant_admin', 'glossary_owner', 'mf_owner', 'notification_recipient']
+)
 @patch('dataall.base.context._request_storage')
+@patch('dataall.modules.notifications.services.notification_service.NotificationAccess.check_recipient')
 @patch('dataall.modules.metadata_forms.services.metadata_form_access_service.MetadataFormAccessService.is_owner')
 @patch('dataall.modules.catalog.services.glossaries_service.GlossariesResourceAccess.check_owner')
 @patch('dataall.core.permissions.services.resource_policy_service.ResourcePolicyService.check_user_resource_permission')
@@ -89,6 +92,7 @@ def test_permissions(
     mock_check_resource,
     mock_check_glossary_owner,
     mock_check_mf_owner,
+    mock_check_notification_recipient,
     mock_storage,
     field,
     perm_type,
@@ -139,7 +143,7 @@ def test_permissions(
             tenant_name=ANY,
             permission_name=perm,
         )
-    elif perm_type in ['tenant_admin', 'glossary_owner', 'mf_owner']:
+    elif perm_type in ['tenant_admin', 'glossary_owner', 'mf_owner', 'notification_recipient']:
         locals()[f'mock_check_{perm_type}'].assert_called()  # nosemgrep
     else:
         raise ValueError(f'unknown permission type {perm_type}')

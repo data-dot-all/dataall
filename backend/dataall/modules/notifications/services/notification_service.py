@@ -20,21 +20,21 @@ def _session():
 
 class NotificationAccess:
     @staticmethod
-    def is_recipient(uri):
+    def check_recipient(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             notification = NotificationRepository.get_notification(session=session, uri=uri)
             return notification and (notification.recipient in context.groups + [context.username])
 
     @staticmethod
-    def can_perform(f):
+    def is_recipient(f):
         @wraps(f)
         def wrapper(*args, **kwds):
             uri = kwds.get('notificationUri')
             if not uri:
                 raise KeyError(f"{f.__name__} doesn't have parameter uri.")
 
-            if NotificationAccess.is_recipient:
+            if NotificationAccess.check_recipient(uri):
                 return f(*args, **kwds)
             else:
                 raise exceptions.UnauthorizedOperation(
@@ -61,7 +61,7 @@ class NotificationService:
             )
 
     @staticmethod
-    @NotificationAccess.can_perform
+    @NotificationAccess.is_recipient
     def mark_as_read(notificationUri: str):
         with get_context().db_engine.scoped_session() as session:
             return NotificationRepository.read_notification(session=session, notificationUri=notificationUri)
