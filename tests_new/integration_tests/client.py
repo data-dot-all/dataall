@@ -1,12 +1,16 @@
-import requests
+import logging
 import os
 import uuid
+from pprint import pformat
 from urllib.parse import parse_qs, urlparse
+
+import requests
 from munch import DefaultMunch
-from retrying import retry
-from integration_tests.errors import GqlError
 from oauthlib.oauth2 import WebApplicationClient
 from requests_oauthlib import OAuth2Session
+from retrying import retry
+
+from integration_tests.errors import GqlError
 
 ENVNAME = os.getenv('ENVNAME', 'dev')
 
@@ -28,15 +32,18 @@ class Client:
         wait_random_min=1000,
         wait_random_max=3000,
     )
-    def query(self, query: str):
+    def query(self, query: dict):
         graphql_endpoint = os.path.join(os.environ['API_ENDPOINT'], 'graphql', 'api')
         headers = {'accesskeyid': 'none', 'SecretKey': 'none', 'Authorization': f'Bearer {self.access_token}'}
         r = requests.post(graphql_endpoint, json=query, headers=headers)
-        if errors := r.json().get('errors'):
-            raise GqlError(errors)
+        response = r.json()
+        if errors := response.get('errors'):
+            if any((response.get('data', {}) or {}).values()):  # check if there are data
+                logging.warning(f'{query=} returned both data and errors:\n {pformat(response)}')
+            else:
+                raise GqlError(errors)
         r.raise_for_status()
-
-        return DefaultMunch.fromDict(r.json())
+        return DefaultMunch.fromDict(response)
 
     def _get_jwt_tokens(self):
         token = uuid.uuid4()

@@ -9,6 +9,8 @@ from dataall.core.permissions.db.tenant.tenant_repositories import TenantReposit
 from dataall.core.permissions.services.permission_service import PermissionService
 from dataall.core.permissions.db.tenant.tenant_models import Tenant
 from dataall.base.services.service_provider_factory import ServiceProviderFactory
+from dataall.base.aws.sts import SessionHelper
+from dataall.base.aws.parameter_store import ParameterStoreManager
 import logging
 import os
 from functools import wraps
@@ -119,6 +121,26 @@ class TenantPolicyValidationService:
                 )
             )
         return tenant_group_permissions
+
+
+class TenantActionsService:
+    @staticmethod
+    def update_monitoring_ssm_parameter(name, value):
+        # raises UnauthorizedOperation exception, if there is no admin access
+        context = get_context()
+        TenantPolicyValidationService.validate_admin_access(
+            context.username, context.groups, 'UPDATE_SSM_PARAMETER_MONITORING'
+        )
+
+        current_account = SessionHelper.get_account()
+        region = os.getenv('AWS_REGION', 'eu-west-1')
+        response = ParameterStoreManager.update_parameter(
+            AwsAccountId=current_account,
+            region=region,
+            parameter_name=f'/dataall/{os.getenv("envname", "local")}/quicksightmonitoring/{name}',
+            parameter_value=value,
+        )
+        return response
 
 
 class TenantPolicyService:

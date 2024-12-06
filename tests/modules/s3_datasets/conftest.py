@@ -20,7 +20,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_ALL
 @pytest.fixture(scope='module', autouse=True)
 def patch_dataset_methods(module_mocker):
     module_mocker.patch(
-        'dataall.modules.s3_datasets.services.dataset_service.DatasetService.check_dataset_account', return_value=True
+        'dataall.modules.s3_datasets.services.dataset_service.DatasetService._check_dataset_account', return_value=True
     )
     module_mocker.patch(
         'dataall.modules.s3_datasets.services.dataset_service.DatasetService._deploy_dataset_stack', return_value=True
