@@ -51,11 +51,11 @@ def test_manage_dataset_location(client, dataset1, user, group):
         query GetDataset($datasetUri:String!){
             getDataset(datasetUri:$datasetUri){
                 label
-                AwsAccountId
                 description
-                region
-                imported
-                importedS3Bucket
+                restricted {
+                  AwsAccountId
+                  region
+                }
                 locations{
                     nodes{
                         locationUri
