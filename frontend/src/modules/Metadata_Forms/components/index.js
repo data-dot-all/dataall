@@ -8,3 +8,4 @@ export * from './fields';
 export * from './renderedMetadataForm';
 export * from './metadataAttachment';
 export * from './AttachedFormCard';
+export * from './MetadataFormAttachedEntities';
