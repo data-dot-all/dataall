@@ -25,16 +25,18 @@ def search_dashboards(client, filter):
                   owner
                   SamlGroupName
                   description
-                  AwsAccountId
                   label
                   created
                   tags
                   userRoleForDashboard
                   upvotes
+                  restricted {
+                    region
+                    AwsAccountId
+                  }
                   environment {
                     environmentUri
                     label
-                    region
                     organization {
                       organizationUri
                       label
@@ -65,10 +67,13 @@ def get_dashboard(client, dashboardUri):
                 created
                 tags
                 userRoleForDashboard
+                restricted {
+                    region
+                    AwsAccountId
+                }
                 environment {
                   environmentUri
                   label
-                  region
                   organization {
                     organizationUri
                     label

@@ -38,6 +38,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     DATASET_ALL,
     DATASET_READ,
     IMPORT_DATASET,
+    GET_DATASET,
     DATASET_TABLE_ALL,
     GET_DATASET,
 )
@@ -242,6 +243,11 @@ class DatasetService:
             if dataset.SamlAdminGroupName in context.groups:
                 dataset.userRoleForDataset = DatasetRole.Admin.value
             return dataset
+
+    @classmethod
+    @ResourcePolicyService.has_resource_permission(GET_DATASET)
+    def find_dataset(cls, uri):
+        return DatasetService.get_dataset(uri)
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)

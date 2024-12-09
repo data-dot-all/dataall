@@ -90,6 +90,7 @@ def resolve_notebook_stack(context: Context, source: SagemakerNotebook, **kwargs
         return None
     return StackService.resolve_parent_obj_stack(
         targetUri=source.notebookUri,
+        targetType='notebook',
         environmentUri=source.environmentUri,
     )
 

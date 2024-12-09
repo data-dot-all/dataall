@@ -14,8 +14,10 @@ export const DashboardViewer = ({ dashboard }) => {
   const client = useClient();
   const [dashboardRef] = useState(createRef());
   const [sessionUrl, setSessionUrl] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const fetchReaderSessionUrl = useCallback(async () => {
+    setLoading(true);
     const response = await client.query(
       getReaderSession(dashboard.dashboardUri)
     );
@@ -40,6 +42,7 @@ export const DashboardViewer = ({ dashboard }) => {
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
+    setLoading(false);
   }, [client, dispatch, dashboard, dashboardRef]);
 
   useEffect(() => {
@@ -50,7 +53,10 @@ export const DashboardViewer = ({ dashboard }) => {
     }
   }, [client, dispatch, fetchReaderSessionUrl, sessionUrl]);
 
-  if (!sessionUrl) {
+  if (!sessionUrl && !loading) {
+    return null;
+  }
+  if (loading) {
     return <CircularProgress />;
   }
   return (

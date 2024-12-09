@@ -266,13 +266,14 @@ const DatasetView = () => {
 
             <Grid item>
               <Box sx={{ m: -1 }}>
+                <UpVoteButton
+                  disabled={!isAdmin}
+                  upVoted={isUpVoted}
+                  onClick={() => upVoteDataset(dataset.datasetUri)}
+                  upVotes={upVotes}
+                />
                 {isAdmin && (
                   <span>
-                    <UpVoteButton
-                      upVoted={isUpVoted}
-                      onClick={() => upVoteDataset(dataset.datasetUri)}
-                      upVotes={upVotes}
-                    />
                     <Button
                       color="primary"
                       startIcon={<ForumOutlined fontSize="small" />}
