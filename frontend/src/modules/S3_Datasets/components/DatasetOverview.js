@@ -26,7 +26,7 @@ export const DatasetOverview = (props) => {
         <ObjectMetadata
           environment={dataset.environment}
           region={dataset.region}
-          organization={dataset.environment.organization}
+          organization={dataset.environment?.organization}
           owner={dataset.owner}
           created={dataset.created}
           status={dataset.stack?.status}

@@ -105,5 +105,6 @@ def resolve_stack(context, source: DataPipeline, **kwargs):
         return None
     return StackService.resolve_parent_obj_stack(
         targetUri=source.DataPipelineUri,
+        targetType='pipeline',
         environmentUri=source.environmentUri,
     )

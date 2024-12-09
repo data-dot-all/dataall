@@ -25,10 +25,14 @@ class DashboardService:
     """Service that serves request related to dashboard"""
 
     @staticmethod
-    @ResourcePolicyService.has_resource_permission(GET_DASHBOARD)
     def get_dashboard(uri: str) -> Dashboard:
         with get_context().db_engine.scoped_session() as session:
             return DashboardRepository.get_dashboard_by_uri(session, uri)
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(GET_DASHBOARD)
+    def get_dashboard_restricted_information(uri: str, dashboard: Dashboard):
+        return dashboard
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DASHBOARDS)

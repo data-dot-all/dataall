@@ -20,9 +20,13 @@ class MLStudioApiModuleInterface(ModuleInterface):
         from dataall.core.stacks.db.target_type_repositories import TargetType
         import dataall.modules.mlstudio.api
         from dataall.modules.mlstudio.services.mlstudio_service import SagemakerStudioEnvironmentResource
-        from dataall.modules.mlstudio.services.mlstudio_permissions import GET_SGMSTUDIO_USER, UPDATE_SGMSTUDIO_USER
+        from dataall.modules.mlstudio.services.mlstudio_permissions import (
+            GET_SGMSTUDIO_USER,
+            UPDATE_SGMSTUDIO_USER,
+            MANAGE_SGMSTUDIO_USERS,
+        )
 
-        TargetType('mlstudio', GET_SGMSTUDIO_USER, UPDATE_SGMSTUDIO_USER)
+        TargetType('mlstudio', GET_SGMSTUDIO_USER, UPDATE_SGMSTUDIO_USER, MANAGE_SGMSTUDIO_USERS)
 
         EnvironmentResourceManager.register(SagemakerStudioEnvironmentResource())
 

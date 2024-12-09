@@ -47,7 +47,7 @@ const DashboardView = () => {
   const client = useClient();
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
-  const [currentTab, setCurrentTab] = useState('viewer');
+  const [currentTab, setCurrentTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [isUpVoted, setIsUpVoted] = useState(false);
   const [upVotes, setUpvotes] = useState(null);
@@ -119,7 +119,7 @@ const DashboardView = () => {
   const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getDashboard(params.uri));
-    if (!response.errors) {
+    if (response.data.getDashboard !== null) {
       setDashboard(response.data.getDashboard);
       setUpvotes(response.data.getDashboard.upvotes);
       setIsAdmin(
@@ -224,19 +224,22 @@ const DashboardView = () => {
               <Box sx={{ m: -1 }}>
                 <UpVoteButton
                   upVoted={isUpVoted}
+                  disabled={!isAdmin}
                   onClick={() => upVoteDashboard(dashboard.dashboardUri)}
                   upVotes={upVotes || 0}
                 />
-                <Button
-                  color="primary"
-                  startIcon={<ForumOutlined fontSize="small" />}
-                  sx={{ mt: 1, mr: 1 }}
-                  onClick={() => setOpenFeed(true)}
-                  type="button"
-                  variant="outlined"
-                >
-                  Chat
-                </Button>
+                {isAdmin && (
+                  <Button
+                    color="primary"
+                    startIcon={<ForumOutlined fontSize="small" />}
+                    sx={{ mt: 1, mr: 1 }}
+                    onClick={() => setOpenFeed(true)}
+                    type="button"
+                    variant="outlined"
+                  >
+                    Chat
+                  </Button>
+                )}
                 <Button
                   color="primary"
                   component={RouterLink}
