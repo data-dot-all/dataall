@@ -38,7 +38,6 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     DATASET_ALL,
     DATASET_READ,
     IMPORT_DATASET,
-    GET_DATASET,
     DATASET_TABLE_ALL,
     GET_DATASET,
 )
