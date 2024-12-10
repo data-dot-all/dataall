@@ -65,9 +65,11 @@ def test_list_dataset_tables(client, dataset_fixture):
                         tableUri
                         name
                         label
-                        GlueDatabaseName
-                        GlueTableName
-                        S3Prefix
+                        restricted {
+                            GlueDatabaseName
+                            GlueTableName
+                            S3Prefix
+                        }
                     }
                 }
             }

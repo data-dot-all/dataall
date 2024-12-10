@@ -32,6 +32,7 @@ from dataall.core.environment.api.types import (
 
 getTrustAccount = gql.QueryField(
     name='getTrustAccount',
+    args=[gql.Argument(name='organizationUri', type=gql.NonNullableType(gql.String))],
     type=gql.String,
     resolver=get_trust_account,
     test_scope='Environment',

@@ -24,10 +24,6 @@ class Cloudformation(ServicePolicy):
                     'cloudformation:ListImports',
                     'cloudformation:DescribeAccountLimits',
                     'cloudformation:DescribeStackDriftDetectionStatus',
-                    'cloudformation:Cancel*',
-                    'cloudformation:Continue*',
-                    'cloudformation:CreateChangeSet',
-                    'cloudformation:ExecuteChangeSet',
                     'cloudformation:CreateStackSet',
                     'cloudformation:Get*',
                     'cloudformation:Describe*',
@@ -35,6 +31,15 @@ class Cloudformation(ServicePolicy):
                     'cloudformation:CreateUploadBucket',
                 ],
                 resources=['*'],
+            ),
+            iam.PolicyStatement(
+                actions=[
+                    'cloudformation:Cancel*',
+                    'cloudformation:Continue*',
+                    'cloudformation:CreateChangeSet',
+                    'cloudformation:ExecuteChangeSet',
+                ],
+                resources=[f'arn:aws:cloudformation:*:{self.account}:*/{self.resource_prefix}*'],
             ),
             iam.PolicyStatement(
                 # sid="DeleteTeamCloudFormation",

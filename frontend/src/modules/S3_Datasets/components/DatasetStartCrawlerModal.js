@@ -132,7 +132,7 @@ export const DatasetStartCrawlerModal = (props) => {
                         error={Boolean(touched.prefix && errors.prefix)}
                         fullWidth
                         helperText={touched.prefix && errors.prefix}
-                        label={`s3://${dataset.S3BucketName}/`}
+                        label={`s3://${dataset.restricted.S3BucketName}/`}
                         name="prefix"
                         onBlur={handleBlur}
                         onChange={handleChange}

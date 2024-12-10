@@ -18,10 +18,13 @@ export const getDashboard = (dashboardUri) => ({
         userRoleForDashboard
         DashboardId
         upvotes
+        restricted {
+          region
+          AwsAccountId
+        }
         environment {
           environmentUri
           label
-          region
           organization {
             organizationUri
             label

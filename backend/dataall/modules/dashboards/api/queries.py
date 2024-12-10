@@ -3,7 +3,6 @@ from dataall.modules.dashboards.api.resolvers import (
     get_dashboard,
     get_monitoring_dashboard_id,
     get_monitoring_vpc_connection_id,
-    get_quicksight_author_session,
     get_quicksight_designer_url,
     get_quicksight_reader_session,
     get_quicksight_reader_url,
@@ -37,14 +36,6 @@ getMonitoringVpcConnectionId = gql.QueryField(
     resolver=get_monitoring_vpc_connection_id,
 )
 
-getPlatformAuthorSession = gql.QueryField(
-    name='getPlatformAuthorSession',
-    args=[
-        gql.Argument(name='awsAccount', type=gql.NonNullableType(gql.String)),
-    ],
-    type=gql.String,
-    resolver=get_quicksight_author_session,
-)
 
 getPlatformReaderSession = gql.QueryField(
     name='getPlatformReaderSession',

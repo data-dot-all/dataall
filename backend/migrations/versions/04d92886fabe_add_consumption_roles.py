@@ -12,9 +12,8 @@ from sqlalchemy import orm, Column, String, Boolean, DateTime, and_
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
-from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.base.db import utils
+from dataall.base.db import utils, Resource
 from datetime import datetime
 
 from dataall.core.permissions.services.permission_service import PermissionService
@@ -31,6 +30,11 @@ branch_labels = None
 depends_on = None
 
 Base = declarative_base()
+
+
+class Environment(Resource, Base):
+    __tablename__ = 'environment'
+    environmentUri = Column(String, primary_key=True, default=utils.uuid('environment'))
 
 
 class EnvironmentGroup(Base):
@@ -123,7 +127,7 @@ def upgrade():
         bind = op.get_bind()
         session = orm.Session(bind=bind)
         print('Back-filling consumer role permissions for environments...')
-        envs = EnvironmentService.list_all_active_environments(session=session)
+        envs = session.query(Environment).filter(Environment.deleted.is_(None)).all()
         for env in envs:
             groups = EnvironmentService.get_all_environment_groups(session=session, uri=env.environmentUri, filter=None)
             for group in groups:

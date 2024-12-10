@@ -9,8 +9,6 @@ export const startGlueCrawler = ({ datasetUri, input }) => ({
     mutation StartGlueCrawler($datasetUri: String, $input: CrawlerInput) {
       startGlueCrawler(datasetUri: $datasetUri, input: $input) {
         Name
-        AwsAccountId
-        region
         status
       }
     }

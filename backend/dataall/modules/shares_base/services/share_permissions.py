@@ -14,6 +14,10 @@ from dataall.core.permissions.services.resources_permissions import (
     RESOURCES_ALL_WITH_DESC,
 )
 
+from dataall.core.permissions.services.tenant_permissions import TENANT_ALL, TENANT_ALL_WITH_DESC
+
+MANAGE_SHARES = 'MANAGE_SHARES'
+
 ADD_ITEM = 'ADD_ITEM'
 REMOVE_ITEM = 'REMOVE_ITEM'
 SUBMIT_SHARE_OBJECT = 'SUBMIT_SHARE_OBJECT'
@@ -66,3 +70,6 @@ for perm in SHARE_OBJECT_ALL:
 
 RESOURCES_ALL_WITH_DESC[CREATE_SHARE_OBJECT] = 'Create dataset Share requests for this environment'
 RESOURCES_ALL_WITH_DESC[LIST_ENVIRONMENT_SHARED_WITH_OBJECTS] = 'LIST_ENVIRONMENT_SHARED_WITH_OBJECTS'
+
+TENANT_ALL.append(MANAGE_SHARES)
+TENANT_ALL_WITH_DESC[MANAGE_SHARES] = 'Manage Data Share Objects'

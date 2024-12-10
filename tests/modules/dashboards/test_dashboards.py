@@ -82,7 +82,6 @@ def test_get_dashboard(client, env_fixture, db, dashboard, group):
                     environment {
                       environmentUri
                       label
-                      region
                       organization {
                         organizationUri
                         label

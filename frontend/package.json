@@ -29,6 +29,7 @@
     "@mui/styles": "^5.5.1",
     "@mui/x-data-grid": "^5.17.26",
     "@mui/x-date-pickers": "^5.0.0",
+    "@mui/x-tree-view": "^6.17.0",
     "@reduxjs/toolkit": "^1.8.0",
     "@testing-library/jest-dom": "^5.16.2",
     "@testing-library/react": "^12.1.4",
@@ -68,7 +69,7 @@
     "simplebar-react": "^2.3.6",
     "web-vitals": "^2.1.4",
     "yup": "^0.32.11",
-    "braces": "3.0.3"
+    "webpack": "^5.94.0"
   },
   "overrides": {
     "aws-amplify": {
@@ -91,8 +92,15 @@
     "ip": "1.1.9",
     "follow-redirects": "1.15.6",
     "webpack-dev-middleware": "5.3.4",
-    "express": "4.19.2",
-    "ejs": "3.1.10"
+    "express": "4.20.0",
+    "ejs": "3.1.10",
+    "fast-xml-parser": "4.4.1",
+    "path-to-regexp": "0.1.10",
+    "body-parser": "^1.20.3",
+    "send": "0.19.0",
+    "rollup": "3.29.5",
+    "http-proxy-middleware": "2.0.7",
+    "cross-spawn": "7.0.5"
   },
   "resolutions": {
     "react-redux": "^7.2.6",
@@ -105,9 +113,16 @@
     "ip": "1.1.9",
     "follow-redirects": "1.15.6",
     "webpack-dev-middleware": "5.3.4",
-    "express": "4.19.2",
+    "express": "4.20.0",
     "ejs": "3.1.10",
-    "ws": "^8.17.1"
+    "ws": "^8.17.1",
+    "fast-xml-parser": "4.4.1",
+    "path-to-regexp": "0.1.10",
+    "body-parser": "^1.20.3",
+    "send": "0.19.0",
+    "rollup": "3.29.5",
+    "http-proxy-middleware": "2.0.7",
+    "cross-spawn": "7.0.5"
   },
   "devDependencies": {
     "env-cmd": "^10.1.0",

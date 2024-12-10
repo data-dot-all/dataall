@@ -21,7 +21,7 @@ class ShareLogsService:
             return ds.stewards in groups or ds.SamlAdminGroupName in groups or username == ds.owner
 
     @staticmethod
-    def get_share_logs_name_query(shareUri):
+    def _get_share_logs_name_query(shareUri):
         log.info(f'Get share Logs stream name for share {shareUri}')
 
         query = f"""fields @logStream
@@ -32,7 +32,7 @@ class ShareLogsService:
         return query
 
     @staticmethod
-    def get_share_logs_query(log_stream_name):
+    def _get_share_logs_query(log_stream_name):
         query = f"""fields @timestamp, @message, @logStream, @log as @logGroup
                     | sort @timestamp asc
                     | filter @logStream like "{log_stream_name}"
@@ -52,7 +52,7 @@ class ShareLogsService:
         envname = os.getenv('envname', 'local')
         log_group_name = f"/{Parameter().get_parameter(env=envname, path='resourcePrefix')}/{envname}/ecs/share-manager"
 
-        query_for_name = ShareLogsService.get_share_logs_name_query(shareUri=shareUri)
+        query_for_name = ShareLogsService._get_share_logs_name_query(shareUri=shareUri)
         name_query_result = CloudWatch.run_query(
             query=query_for_name,
             log_group_name=log_group_name,
@@ -63,7 +63,7 @@ class ShareLogsService:
 
         name = name_query_result[0]['logStream']
 
-        query = ShareLogsService.get_share_logs_query(log_stream_name=name)
+        query = ShareLogsService._get_share_logs_query(log_stream_name=name)
         results = CloudWatch.run_query(
             query=query,
             log_group_name=log_group_name,

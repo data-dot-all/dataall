@@ -25,6 +25,7 @@ class Environment(Resource, Base):
     EnvironmentDefaultIAMRoleImported = Column(Boolean, default=False)
     EnvironmentDefaultIAMRoleArn = Column(String, nullable=False)
     EnvironmentDefaultBucketName = Column(String)
+    EnvironmentLogsBucketName = Column(String)
     EnvironmentDefaultAthenaWorkGroup = Column(String)
     roleCreated = Column(Boolean, nullable=False, default=False)
 

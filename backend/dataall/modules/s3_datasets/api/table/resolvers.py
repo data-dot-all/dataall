@@ -56,3 +56,9 @@ def resolve_glossary_terms(context: Context, source: DatasetTable, **kwargs):
         return None
     with context.engine.scoped_session() as session:
         return GlossaryRepository.get_glossary_terms_links(session, source.tableUri, 'DatasetTable')
+
+
+def get_dataset_table_restricted_information(context: Context, source: DatasetTable, **kwargs):
+    if not source:
+        return None
+    return DatasetTableService.get_table_restricted_information(uri=source.tableUri, table=source)

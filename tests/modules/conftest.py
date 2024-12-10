@@ -89,6 +89,7 @@ def env(db, environment_group):
                 EnvironmentDefaultIAMRoleName=role,
                 EnvironmentDefaultIAMRoleArn=f'arn:aws:iam::{account}:role/{role}',
                 EnvironmentDefaultBucketName='defaultbucketname1234567789',
+                EnvironmentLogsBucketName='logsbucketname1234567789',
                 CDKRoleArn=f'arn:aws::{account}:role/EnvRole',
                 EnvironmentDefaultAthenaWorkGroup='DefaultWorkGroup',
             )

@@ -122,6 +122,7 @@ def resolve_sagemaker_studio_user_stack(context: Context, source: SagemakerStudi
         return None
     return StackService.resolve_parent_obj_stack(
         targetUri=source.sagemakerStudioUserUri,
+        targetType='mlstudio',
         environmentUri=source.environmentUri,
     )
 

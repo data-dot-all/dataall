@@ -14,8 +14,7 @@ log = logging.getLogger()
 def resolve_group_environment_permissions(context, source, environmentUri):
     if not source:
         return None
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.list_group_permissions(session=session, uri=environmentUri, group_uri=source.groupUri)
+    return EnvironmentService.list_group_permissions(uri=environmentUri, group_uri=source.groupUri)
 
 
 def resolve_group_tenant_permissions(context, source):
