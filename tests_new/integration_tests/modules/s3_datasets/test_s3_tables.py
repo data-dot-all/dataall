@@ -117,7 +117,7 @@ def test_delete_table(client1, dataset_fixture_name, request):
         aws_session_token=creds['sessionToken'],
     )
     GlueClient(dataset_session, dataset.region).create_table(
-        database_name=dataset.GlueDatabaseName, table_name='todelete', bucket=dataset.S3BucketName
+        database_name=dataset.restricted.GlueDatabaseName, table_name='todelete', bucket=dataset.restricted.S3BucketName
     )
     response = sync_tables(client1, datasetUri=dataset.datasetUri)
     table_uri = [table.tableUri for table in response.get('nodes', []) if table.label == 'todelete'][0]

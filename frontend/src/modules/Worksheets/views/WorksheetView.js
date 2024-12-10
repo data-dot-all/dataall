@@ -136,7 +136,7 @@ const WorksheetView = () => {
           (d) => ({
             ...d,
             value: d.datasetUri,
-            label: d.GlueDatabaseName
+            label: d.restricted.GlueDatabaseName
           })
         );
       }
@@ -198,7 +198,7 @@ const WorksheetView = () => {
           response.data.getDataset.tables.nodes.map((t) => ({
             ...t,
             value: t.tableUri,
-            label: t.GlueTableName
+            label: t.restricted.GlueTableName
           }))
         );
       } else {
@@ -379,7 +379,11 @@ const WorksheetView = () => {
       dispatch({ type: SET_ERROR, error: e.message })
     );
     setSqlBody(
-      `SELECT * FROM "${selectedDatabase.label}"."${event.target.value.GlueTableName}" limit 10;`
+      `SELECT * FROM "${selectedDatabase.label}"."${
+        event.target.value.restricted
+          ? event.target.value.restricted.GlueTableName
+          : event.target.value.GlueTableName
+      }" limit 10;`
     );
   }
 
@@ -512,7 +516,7 @@ const WorksheetView = () => {
                     {tableOptions.length > 0 ? (
                       tableOptions.map((table) => (
                         <MenuItem key={table.tableUri} value={table}>
-                          {table.GlueTableName}
+                          {table.label}
                         </MenuItem>
                       ))
                     ) : (
