@@ -50,6 +50,12 @@ def resolve_dataset(context, source: DatasetStorageLocation, **kwargs):
     return DatasetService.find_dataset(uri=source.datasetUri)
 
 
+def get_folder_restricted_information(context: Context, source: DatasetStorageLocation, **kwargs):
+    if not source:
+        return None
+    return DatasetLocationService.get_folder_restricted_information(uri=source.locationUri, folder=source)
+
+
 def resolve_glossary_terms(context: Context, source: DatasetStorageLocation, **kwargs):
     if not source:
         return None

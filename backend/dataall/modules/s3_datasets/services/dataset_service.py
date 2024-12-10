@@ -312,6 +312,11 @@ class DatasetService:
         }
 
     @staticmethod
+    @ResourcePolicyService.has_resource_permission(GET_DATASET)
+    def get_dataset_restricted_information(uri: str, dataset: S3Dataset):
+        return dataset
+
+    @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def get_dataset_assume_role_url(uri):
@@ -364,8 +369,6 @@ class DatasetService:
 
             return {
                 'Name': dataset.GlueCrawlerName,
-                'AwsAccountId': dataset.AwsAccountId,
-                'region': dataset.region,
                 'status': crawler.get('LastCrawl', {}).get('Status', 'N/A'),
             }
 

@@ -75,15 +75,20 @@ def dataset(client, patch_es, patch_dataset_methods):
                     datasetUri
                     label
                     description
-                    AwsAccountId
-                    S3BucketName
-                    GlueDatabaseName
                     owner
-                    region,
-                    businessOwnerEmail
-                    businessOwnerDelegationEmails
                     SamlAdminGroupName
-                    GlueCrawlerName
+                    enableExpiration
+                    expirySetting
+                    expiryMinDuration
+                    expiryMaxDuration
+                    restricted {
+                      AwsAccountId
+                      region
+                      KmsAlias
+                      S3BucketName
+                      GlueDatabaseName
+                      IAMDatasetAdminRoleArn
+                    }
                     tables{
                      nodes{
                       tableUri
@@ -175,11 +180,11 @@ def table(db):
                 label=name,
                 owner=username,
                 datasetUri=dataset.datasetUri,
-                GlueDatabaseName=dataset.GlueDatabaseName,
+                GlueDatabaseName=dataset.restricted.GlueDatabaseName,
                 GlueTableName=name,
-                region=dataset.region,
-                AWSAccountId=dataset.AwsAccountId,
-                S3BucketName=dataset.S3BucketName,
+                region=dataset.restricted.region,
+                AWSAccountId=dataset.restricted.AwsAccountId,
+                S3BucketName=dataset.restricted.S3BucketName,
                 S3Prefix=f'{name}',
             )
             session.add(table)
@@ -320,9 +325,9 @@ def location(db):
                 label=name,
                 owner=username,
                 datasetUri=dataset.datasetUri,
-                S3BucketName=dataset.S3BucketName,
-                region=dataset.region,
-                AWSAccountId=dataset.AwsAccountId,
+                S3BucketName=dataset.restricted.S3BucketName,
+                region=dataset.restricted.region,
+                AWSAccountId=dataset.restricted.AwsAccountId,
                 S3Prefix=f'{name}',
             )
             session.add(ds_location)

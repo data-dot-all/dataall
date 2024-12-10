@@ -109,6 +109,12 @@ def get_dataset_statistics(context: Context, source: S3Dataset, **kwargs):
     return DatasetService.get_dataset_statistics(source)
 
 
+def get_dataset_restricted_information(context: Context, source: S3Dataset, **kwargs):
+    if not source:
+        return None
+    return DatasetService.get_dataset_restricted_information(uri=source.datasetUri, dataset=source)
+
+
 @is_feature_enabled('modules.s3_datasets.features.aws_actions')
 def get_dataset_assume_role_url(context: Context, source, datasetUri: str = None):
     return DatasetService.get_dataset_assume_role_url(uri=datasetUri)

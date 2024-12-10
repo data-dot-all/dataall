@@ -1,5 +1,4 @@
 import logging
-
 from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
@@ -40,6 +39,11 @@ class DatasetTableService:
     def get_table(uri: str):
         with get_context().db_engine.scoped_session() as session:
             return DatasetTableRepository.get_dataset_table_by_uri(session, uri)
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(GET_DATASET_TABLE)
+    def get_table_restricted_information(uri: str, table: DatasetTable):
+        return table
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
@@ -118,11 +122,7 @@ class DatasetTableService:
             DatasetTableIndexer.upsert_all(session=session, dataset_uri=dataset.datasetUri)
             DatasetTableIndexer.remove_all_deleted(session=session, dataset_uri=dataset.datasetUri)
             DatasetIndexer.upsert(session=session, dataset_uri=dataset.datasetUri)
-            return DatasetRepository.paginated_dataset_tables(
-                session=session,
-                uri=uri,
-                data={'page': 1, 'pageSize': 10},
-            )
+            return DatasetRepository.count_dataset_tables(session, dataset.datasetUri)
 
     @staticmethod
     def sync_existing_tables(session, uri, glue_tables=None):

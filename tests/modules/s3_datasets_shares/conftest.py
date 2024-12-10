@@ -75,15 +75,16 @@ def dataset(client, patch_es, patch_dataset_methods):
                     datasetUri
                     label
                     description
-                    AwsAccountId
-                    S3BucketName
-                    GlueDatabaseName
                     owner
-                    region,
-                    businessOwnerEmail
-                    businessOwnerDelegationEmails
                     SamlAdminGroupName
-                    GlueCrawlerName
+                    restricted {
+                      AwsAccountId
+                      region
+                      KmsAlias
+                      S3BucketName
+                      GlueDatabaseName
+                      IAMDatasetAdminRoleArn
+                    }
                     tables{
                      nodes{
                       tableUri
@@ -222,7 +223,12 @@ def dataset_confidential_fixture(env_fixture, org_fixture, dataset, group) -> S3
 
 @pytest.fixture(scope='module')
 def table_fixture(db, dataset_fixture, table, group, user):
-    table1 = table(dataset=dataset_fixture, name='table1', username=user.username)
+    dataset = dataset_fixture
+    dataset.GlueDatabaseName = dataset_fixture.restricted.GlueDatabaseName
+    dataset.region = dataset_fixture.restricted.region
+    dataset.S3BucketName = dataset_fixture.restricted.S3BucketName
+    dataset.AwsAccountId = dataset_fixture.restricted.AwsAccountId
+    table1 = table(dataset=dataset, name='table1', username=user.username)
 
     with db.scoped_session() as session:
         ResourcePolicyService.attach_resource_policy(

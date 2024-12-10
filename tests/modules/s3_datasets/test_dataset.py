@@ -51,13 +51,15 @@ def test_get_dataset(client, dataset1, env_fixture, group):
         query GetDataset($datasetUri:String!){
             getDataset(datasetUri:$datasetUri){
                 label
-                AwsAccountId
                 description
-                region
-                imported
-                importedS3Bucket
                 stewards
                 owners
+                imported
+                restricted {
+                  AwsAccountId
+                  region
+                  importedS3Bucket
+                }
             }
         }
         """,
@@ -65,11 +67,11 @@ def test_get_dataset(client, dataset1, env_fixture, group):
         username='alice',
         groups=[group.name],
     )
-    assert response.data.getDataset.AwsAccountId == env_fixture.AwsAccountId
-    assert response.data.getDataset.region == env_fixture.region
+    assert response.data.getDataset.restricted.AwsAccountId == env_fixture.AwsAccountId
+    assert response.data.getDataset.restricted.region == env_fixture.region
     assert response.data.getDataset.label == 'dataset1'
     assert response.data.getDataset.imported is False
-    assert response.data.getDataset.importedS3Bucket is False
+    assert response.data.getDataset.restricted.importedS3Bucket is False
 
 
 def test_list_datasets(client, dataset1, group):
@@ -176,8 +178,6 @@ def test_start_crawler(org_fixture, env_fixture, dataset1, client, group, module
                 mutation StartGlueCrawler($datasetUri:String, $input:CrawlerInput){
                         startGlueCrawler(datasetUri:$datasetUri,input:$input){
                             Name
-                            AwsAccountId
-                            region
                             status
                         }
                     }
@@ -191,7 +191,7 @@ def test_start_crawler(org_fixture, env_fixture, dataset1, client, group, module
             'prefix': 'raw',
         },
     )
-    assert response.data.startGlueCrawler.Name == dataset1.GlueCrawlerName
+    assert response.data.Name == dataset1.restricted.GlueCrawlerName
 
 
 def test_update_dataset_unauthorized(dataset1, client, group):
@@ -291,9 +291,11 @@ def test_list_dataset_tables(client, dataset1, group):
                         tableUri
                         name
                         label
-                        GlueDatabaseName
-                        GlueTableName
-                        S3Prefix
+                        restricted{
+                            GlueDatabaseName
+                            GlueTableName
+                            S3Prefix
+                        }
                     }
                 }
             }
@@ -373,9 +375,11 @@ def test_delete_dataset(client, dataset, env_fixture, org_fixture, db, module_mo
         query GetDataset($datasetUri:String!){
             getDataset(datasetUri:$datasetUri){
                 label
-                AwsAccountId
+                restricted {
+                    AwsAccountId
+                    region
+                }
                 description
-                region
             }
         }
         """,
@@ -410,17 +414,15 @@ def test_import_dataset(org_fixture, env_fixture, dataset1, client, group):
         mutation importDataset($input:ImportDatasetInput){
             importDataset(input:$input){
                 label
-                AwsAccountId
-                region
                 imported
-                importedS3Bucket
-                importedGlueDatabase
-                importedKmsKey
-                importedAdminRole
-                S3BucketName
-                GlueDatabaseName
-                IAMDatasetAdminRoleArn
-                KmsAlias
+                restricted {
+                    AwsAccountId
+                    region
+                    S3BucketName
+                    GlueDatabaseName
+                    IAMDatasetAdminRoleArn
+                    KmsAlias
+                }
             }
         }
         """,
@@ -439,17 +441,13 @@ def test_import_dataset(org_fixture, env_fixture, dataset1, client, group):
         },
     )
     assert response.data.importDataset.label == 'datasetImported'
-    assert response.data.importDataset.AwsAccountId == env_fixture.AwsAccountId
-    assert response.data.importDataset.region == env_fixture.region
+    assert response.data.importDataset.restricted.AwsAccountId == env_fixture.AwsAccountId
+    assert response.data.importDataset.restricted.region == env_fixture.region
     assert response.data.importDataset.imported is True
-    assert response.data.importDataset.importedS3Bucket is True
-    assert response.data.importDataset.importedGlueDatabase is True
-    assert response.data.importDataset.importedKmsKey is True
-    assert response.data.importDataset.importedAdminRole is True
-    assert response.data.importDataset.S3BucketName == 'dhimportedbucket'
-    assert response.data.importDataset.GlueDatabaseName == 'dhimportedGlueDB'
-    assert response.data.importDataset.KmsAlias == '1234-YYEY'
-    assert 'dhimportedRole' in response.data.importDataset.IAMDatasetAdminRoleArn
+    assert response.data.importDataset.restricted.S3BucketName == 'dhimportedbucket'
+    assert response.data.importDataset.restricted.GlueDatabaseName == 'dhimportedGlueDB'
+    assert response.data.importDataset.restricted.KmsAlias == '1234-YYEY'
+    assert 'dhimportedRole' in response.data.importDataset.restricted.IAMDatasetAdminRoleArn
 
 
 def test_get_dataset_by_prefix(db, env_fixture, org_fixture):
@@ -494,13 +492,15 @@ def test_stewardship(client, dataset, env_fixture, org_fixture, db, group2, grou
                 datasetUri
                 label
                 description
-                AwsAccountId
-                S3BucketName
-                GlueDatabaseName
+                restricted {
+                  AwsAccountId
+                  region
+                  KmsAlias
+                  S3BucketName
+                  GlueDatabaseName
+                  IAMDatasetAdminRoleArn
+                }
                 owner
-                region,
-                businessOwnerEmail
-                businessOwnerDelegationEmails
                 SamlAdminGroupName
                 stewards
 
