@@ -194,11 +194,11 @@ def principal1(request, group5, session_consumption_role_1):
 
 
 @pytest.fixture(params=['Group', 'ConsumptionRole'])
-def share_params_main(request, session_share_1, session_share_consrole_1, session_s3_dataset1):
+def share_params_main(request, session_share_1, session_cross_acc_env_1, session_share_consrole_1, session_s3_dataset1):
     if request.param == 'Group':
-        yield session_share_1, session_s3_dataset1
+        yield session_share_1, session_s3_dataset1, session_cross_acc_env_1
     else:
-        yield session_share_consrole_1, session_s3_dataset1
+        yield session_share_consrole_1, session_s3_dataset1, session_cross_acc_env_1
 
 
 @pytest.fixture(params=[(False, 'Group'), (True, 'Group'), (False, 'ConsumptionRole'), (True, 'ConsumptionRole')])
@@ -315,8 +315,10 @@ def persistent_role_share_1(
 
 
 @pytest.fixture(params=['Group', 'ConsumptionRole'])
-def persistent_share_params_main(request, persistent_role_share_1, persistent_group_share_1):
+def persistent_share_params_main(
+    request, persistent_cross_acc_env_1, persistent_role_share_1, persistent_group_share_1
+):
     if request.param == 'Group':
-        yield persistent_group_share_1
+        yield persistent_group_share_1, persistent_cross_acc_env_1
     else:
-        yield persistent_role_share_1
+        yield persistent_role_share_1, persistent_cross_acc_env_1

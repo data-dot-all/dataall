@@ -137,7 +137,7 @@ def test_reject_share(client1, client5, session_cross_acc_env_1, session_s3_data
 
 
 def test_change_share_purpose(client5, share_params_main):
-    share, dataset = share_params_main
+    share, dataset, _ = share_params_main
     change_request_purpose = update_share_request_reason(client5, share.shareUri, 'new purpose')
     assert_that(change_request_purpose).is_true()
     updated_share = get_share_object(client5, share.shareUri)
@@ -153,19 +153,19 @@ def test_submit_object(client5, share_params_all):
 
 @pytest.mark.dependency(name='share_approved', depends=['share_submitted'])
 def test_approve_share(client1, share_params_main):
-    share, dataset = share_params_main
+    share, dataset, _ = share_params_main
     check_approve_share_object(client1, share.shareUri)
 
 
 @pytest.mark.dependency(name='share_succeeded', depends=['share_approved'])
 def test_share_succeeded(client1, share_params_main):
-    share, dataset = share_params_main
+    share, dataset, _ = share_params_main
     check_share_succeeded(client1, share.shareUri, check_contains_all_item_types=True)
 
 
 @pytest.mark.dependency(name='share_verified', depends=['share_succeeded'])
 def test_verify_share_items(client1, share_params_main):
-    share, dataset = share_params_main
+    share, dataset, _ = share_params_main
     check_verify_share_items(client1, share.shareUri)
 
 
@@ -173,9 +173,14 @@ def test_verify_share_items(client1, share_params_main):
 def test_check_item_access(
     client5, session_cross_acc_env_1_aws_client, share_params_main, group5, session_consumption_role_1
 ):
-    share, dataset = share_params_main
+    share, dataset, share_environment = share_params_main
     check_share_items_access(
-        client5, group5, share.shareUri, session_consumption_role_1, session_cross_acc_env_1_aws_client
+        client5,
+        group5,
+        share.shareUri,
+        share_environment,
+        session_consumption_role_1,
+        session_cross_acc_env_1_aws_client,
     )
 
 
@@ -183,7 +188,7 @@ def test_check_item_access(
 def test_unhealthy_items(
     client5, session_cross_acc_env_1_aws_client, session_cross_acc_env_1_integration_role_arn, share_params_main
 ):
-    share, _ = share_params_main
+    share, _, __ = share_params_main
     iam = session_cross_acc_env_1_aws_client.resource('iam')
     principal_role = iam.Role(share.principal.principalRoleName)
     # break s3 by removing policies
@@ -209,7 +214,7 @@ def test_unhealthy_items(
 
 @pytest.mark.dependency(depends=['share_approved'])
 def test_reapply_unauthoried(client5, share_params_main):
-    share, _ = share_params_main
+    share, _, __ = share_params_main
     share_uri = share.shareUri
     share_object = get_share_object(client5, share_uri)
     item_uris = [item.shareItemUri for item in share_object['items'].nodes]
@@ -220,7 +225,7 @@ def test_reapply_unauthoried(client5, share_params_main):
 
 @pytest.mark.dependency(depends=['share_approved'])
 def test_reapply(client1, share_params_main):
-    share, _ = share_params_main
+    share, _, __ = share_params_main
     share_uri = share.shareUri
     share_object = get_share_object(client1, share_uri)
     item_uris = [item.shareItemUri for item in share_object['items'].nodes]
@@ -233,7 +238,7 @@ def test_reapply(client1, share_params_main):
 
 @pytest.mark.dependency(name='share_revoked', depends=['share_succeeded'])
 def test_revoke_share(client1, share_params_main):
-    share, dataset = share_params_main
+    share, dataset, _ = share_params_main
     check_share_ready(client1, share.shareUri)
     revoke_and_check_all_shared_items(client1, share.shareUri, check_contains_all_item_types=True)
 
@@ -242,8 +247,13 @@ def test_revoke_share(client1, share_params_main):
 def test_revoke_succeeded(
     client1, client5, session_cross_acc_env_1_aws_client, share_params_main, group5, session_consumption_role_1
 ):
-    share, dataset = share_params_main
+    share, dataset, share_environment = share_params_main
     check_all_items_revoke_job_succeeded(client1, share.shareUri, check_contains_all_item_types=True)
     check_share_items_access(
-        client5, group5, share.shareUri, session_consumption_role_1, session_cross_acc_env_1_aws_client
+        client5,
+        group5,
+        share.shareUri,
+        share_environment,
+        session_consumption_role_1,
+        session_cross_acc_env_1_aws_client,
     )
