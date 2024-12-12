@@ -10,11 +10,9 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.notifications.db.notification_models import Notification
+from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.shares_base.services.shares_enums import (
-    ShareItemHealthStatus,
-    PrincipalType,
-)
+from dataall.modules.shares_base.services.shares_enums import ShareItemHealthStatus, PrincipalType, ShareableType
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +105,14 @@ class ShareObjectRepository:
     @staticmethod
     def get_share_item_details(session, share_type_model, item_uri):
         return session.query(share_type_model).get(item_uri)
+
+    @staticmethod
+    def get_shares_for_principal_and_database(session, principal, database):
+        return (
+            session.query(ShareObject)
+            .join(S3Dataset, S3Dataset.datasetUri == ShareObject.datasetUri)
+            .filter(and_(S3Dataset.GlueDatabaseName == database, ShareObject.principalIAMRoleName == principal))
+        )
 
     @staticmethod
     def remove_share_object_item(session, share_item):
@@ -411,6 +417,8 @@ class ShareObjectRepository:
         )
         if status:
             query = query.filter(ShareObjectItem.status.in_(status))
+        if type == ShareableType.Table:
+            query = query.filter(share_type_model.LastGlueTableStatus == 'InSync')
         return query
 
     @staticmethod
@@ -454,6 +462,14 @@ class ShareObjectRepository:
             .all()
         )
         return share_objects
+
+    @staticmethod
+    def list_share_object_items_for_item_with_status(session, item_uri: str, status: List[str]):
+        return (
+            session.query(ShareObjectItem)
+            .filter(ShareObjectItem.status.in_(status), ShareObjectItem.itemUri == item_uri)
+            .all()
+        )
 
     @staticmethod
     def fetch_submitted_shares_with_notifications(session):
