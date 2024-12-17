@@ -44,10 +44,10 @@ def test_start_table_profiling(client1, dataset_fixture_name, tables_fixture_nam
     table = tables[0]
     dataset_uri = dataset.datasetUri
     response = start_dataset_profiling_run(
-        client1, input={'datasetUri': dataset_uri, 'tableUri': table.tableUri, 'GlueTableName': table.GlueTableName}
+        client1, input={'datasetUri': dataset_uri, 'tableUri': table.tableUri, 'GlueTableName': table.restricted.GlueTableName}
     )
     assert_that(response.datasetUri).is_equal_to(dataset_uri)
-    assert_that(response.GlueTableName).is_equal_to(table.GlueTableName)
+    assert_that(response.GlueTableName).is_equal_to(table.restricted.GlueTableName)
 
 
 @pytest.mark.parametrize('dataset_fixture_name', ['session_s3_dataset1'])
@@ -90,7 +90,7 @@ def test_get_table_profiling_run_by_confidentiality(client2, tables_fixture_name
     table_uri = tables[0].tableUri
     if confidentiality in ['Unclassified']:
         response = get_table_profiling_run(client2, tableUri=table_uri)
-        assert_that(response.GlueTableName).is_equal_to(tables[0].GlueTableName)
+        assert_that(response.GlueTableName).is_equal_to(tables[0].restricted.GlueTableName)
     else:
         assert_that(get_table_profiling_run).raises(GqlError).when_called_with(client2, table_uri).contains(
             'UnauthorizedOperation', 'GET_TABLE_PROFILING_METRICS'

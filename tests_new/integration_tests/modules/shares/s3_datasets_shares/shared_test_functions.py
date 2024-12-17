@@ -154,20 +154,20 @@ def check_share_items_access(
         )
     elif principal_type == 'ConsumptionRole':
         session = STSClient(
-            role_arn=consumption_role.IAMRoleArn, region=dataset.region, session_name='ConsumptionRole'
+            role_arn=consumption_role.IAMRoleArn, region=dataset.restricted.region, session_name='ConsumptionRole'
         ).get_role_session(env_client)
     else:
         raise Exception('wrong principal type')
 
-    s3_client = S3Client(session, dataset.region)
-    athena_client = AthenaClient(session, dataset.region)
+    s3_client = S3Client(session, dataset.restricted.region)
+    athena_client = AthenaClient(session, dataset.restricted.region)
 
     consumption_data = get_s3_consumption_data(client, shareUri)
     items = share['items'].nodes
 
     glue_db = consumption_data.sharedGlueDatabase
     access_point_arn = (
-        f'arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{consumption_data.s3AccessPointName}'
+        f'arn:aws:s3:{dataset.restricted.region}:{dataset.AwsAccountId}:accesspoint/{consumption_data.s3AccessPointName}'
     )
     if principal_type == 'Group':
         workgroup = athena_client.get_env_work_group(share_environment.label)

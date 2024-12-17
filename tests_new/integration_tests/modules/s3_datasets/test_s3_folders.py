@@ -49,7 +49,8 @@ def test_get_folder(client1, folders_fixture_name, request):
 def test_get_folder_unauthorized(client2, folders_fixture_name, request):
     folders = request.getfixturevalue(folders_fixture_name)
     folder = folders[0]
-    assert_that(get_folder).raises(GqlError).when_called_with(client2, locationUri=folder.locationUri).contains(
+    to_be_error = get_folder(client2, locationUri=folder.locationUri)
+    assert_that(to_be_error).contains(
         'UnauthorizedOperation', 'GET_DATASET_FOLDER', folder.locationUri
     )
 

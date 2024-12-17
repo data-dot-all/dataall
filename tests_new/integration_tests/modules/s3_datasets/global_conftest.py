@@ -17,7 +17,9 @@ from integration_tests.modules.s3_datasets.queries import (
     sync_tables,
     create_folder,
     create_table_data_filter,
+    list_dataset_tables
 )
+
 from tests_new.integration_tests.modules.datasets_base.queries import list_datasets
 from integration_tests.aws_clients.s3 import S3Client as S3CommonClient
 from integration_tests.modules.s3_datasets.aws_clients import S3Client, KMSClient, GlueClient, LakeFormationClient
@@ -179,8 +181,8 @@ def create_tables(client, dataset):
         aws_session_token=creds['sessionToken'],
     )
     file_path = os.path.join(os.path.dirname(__file__), 'sample_data/csv_table/csv_sample.csv')
-    s3_client = S3Client(dataset_session, dataset.region)
-    glue_client = GlueClient(dataset_session, dataset.region)
+    s3_client = S3Client(dataset_session, dataset.restricted.region)
+    glue_client = GlueClient(dataset_session, dataset.restricted.region)
     s3_client.upload_file_to_prefix(
         local_file_path=file_path, s3_path=f'{dataset.restricted.S3BucketName}/integrationtest1'
     )
@@ -198,8 +200,9 @@ def create_tables(client, dataset):
         table_name='integrationtest2',
         bucket=dataset.restricted.S3BucketName,
     )
-    response = sync_tables(client, datasetUri=dataset.datasetUri)
-    return [table for table in response.get('nodes', []) if table.GlueTableName.startswith('integrationtest')]
+    sync_tables(client, datasetUri=dataset.datasetUri)
+    response = list_dataset_tables(client, datasetUri=dataset.datasetUri)
+    return [table for table in response.tables.get('nodes', []) if table.restricted.GlueTableName.startswith('integrationtest')]
 
 
 def create_folders(client, dataset):
