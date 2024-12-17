@@ -377,11 +377,7 @@ def get_folder(client, locationUri):
                 """,
     }
     response = client.query(query=query)
-    print(response)
-    if not response.errors:
-        return response.data.getDatasetStorageLocation
-    else:
-        return response.errors[0].message
+    return response.data.getDatasetStorageLocation
 
 
 ## Tables Queries/Mutations
