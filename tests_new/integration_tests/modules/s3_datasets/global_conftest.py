@@ -17,7 +17,7 @@ from integration_tests.modules.s3_datasets.queries import (
     sync_tables,
     create_folder,
     create_table_data_filter,
-    list_dataset_tables
+    list_dataset_tables,
 )
 
 from tests_new.integration_tests.modules.datasets_base.queries import list_datasets
@@ -202,7 +202,11 @@ def create_tables(client, dataset):
     )
     sync_tables(client, datasetUri=dataset.datasetUri)
     response = list_dataset_tables(client, datasetUri=dataset.datasetUri)
-    return [table for table in response.tables.get('nodes', []) if table.restricted.GlueTableName.startswith('integrationtest')]
+    return [
+        table
+        for table in response.tables.get('nodes', [])
+        if table.restricted.GlueTableName.startswith('integrationtest')
+    ]
 
 
 def create_folders(client, dataset):

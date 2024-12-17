@@ -44,7 +44,8 @@ def test_start_table_profiling(client1, dataset_fixture_name, tables_fixture_nam
     table = tables[0]
     dataset_uri = dataset.datasetUri
     response = start_dataset_profiling_run(
-        client1, input={'datasetUri': dataset_uri, 'tableUri': table.tableUri, 'GlueTableName': table.restricted.GlueTableName}
+        client1,
+        input={'datasetUri': dataset_uri, 'tableUri': table.tableUri, 'GlueTableName': table.restricted.GlueTableName},
     )
     assert_that(response.datasetUri).is_equal_to(dataset_uri)
     assert_that(response.GlueTableName).is_equal_to(table.restricted.GlueTableName)

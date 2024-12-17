@@ -59,7 +59,11 @@ def test_list_dataset_tables(client1, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
     response = list_dataset_tables(client1, dataset.datasetUri)
     assert_that(response.tables.count).is_greater_than_or_equal_to(2)
-    tables = [table for table in response.tables.get('nodes', []) if table.restricted.GlueTableName.startswith('integrationtest')]
+    tables = [
+        table
+        for table in response.tables.get('nodes', [])
+        if table.restricted.GlueTableName.startswith('integrationtest')
+    ]
     assert_that(len(tables)).is_equal_to(2)
 
 
