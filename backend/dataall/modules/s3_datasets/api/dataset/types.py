@@ -31,6 +31,7 @@ DatasetRestrictedInformation = gql.ObjectType(
         gql.Field(name='region', type=gql.String),
         gql.Field(name='S3BucketName', type=gql.String),
         gql.Field(name='GlueDatabaseName', type=gql.String),
+        gql.Field(name='GlueCrawlerName', type=gql.String),
         gql.Field(name='IAMDatasetAdminRoleArn', type=gql.String),
         gql.Field(name='KmsAlias', type=gql.String),
         gql.Field(name='importedS3Bucket', type=gql.Boolean),
