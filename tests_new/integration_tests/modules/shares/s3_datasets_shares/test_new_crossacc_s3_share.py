@@ -188,7 +188,7 @@ def test_check_item_access(
 def test_unhealthy_items(
     client5, session_cross_acc_env_1_aws_client, session_cross_acc_env_1_integration_role_arn, share_params_main
 ):
-    share, _, __ = share_params_main
+    share, _, _ = share_params_main
     iam = session_cross_acc_env_1_aws_client.resource('iam')
     principal_role = iam.Role(share.principal.principalRoleName)
     # break s3 by removing policies
@@ -214,7 +214,7 @@ def test_unhealthy_items(
 
 @pytest.mark.dependency(depends=['share_approved'])
 def test_reapply_unauthoried(client5, share_params_main):
-    share, _, __ = share_params_main
+    share, _, _ = share_params_main
     share_uri = share.shareUri
     share_object = get_share_object(client5, share_uri)
     item_uris = [item.shareItemUri for item in share_object['items'].nodes]
@@ -225,7 +225,7 @@ def test_reapply_unauthoried(client5, share_params_main):
 
 @pytest.mark.dependency(depends=['share_approved'])
 def test_reapply(client1, share_params_main):
-    share, _, __ = share_params_main
+    share, _, _ = share_params_main
     share_uri = share.shareUri
     share_object = get_share_object(client1, share_uri)
     item_uris = [item.shareItemUri for item in share_object['items'].nodes]
