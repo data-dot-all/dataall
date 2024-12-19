@@ -18,6 +18,7 @@ restricted {
   KmsAlias
   S3BucketName
   GlueDatabaseName
+  GlueCrawlerName
   IAMDatasetAdminRoleArn
 }
 environment { 
@@ -352,6 +353,7 @@ def update_folder(client, locationUri, input):
                     mutation updateDatasetStorageLocation($locationUri: String!, $input: ModifyDatasetStorageLocationInput!) {{
                       updateDatasetStorageLocation(locationUri: $locationUri, input: $input) {{
                         locationUri
+                        label
                       }}
                     }}
                 """,
@@ -500,6 +502,8 @@ def list_dataset_tables(client, datasetUri):
                             tables {{
                               count
                               nodes {{
+                                tableUri
+                                label
                                 restricted {{
                                     GlueTableName
                                 }}

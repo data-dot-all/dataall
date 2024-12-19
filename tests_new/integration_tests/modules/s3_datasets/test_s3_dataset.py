@@ -223,7 +223,7 @@ def test_start_crawler(client1, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
     dataset_uri = dataset.datasetUri
     response = start_glue_crawler(client1, datasetUri=dataset_uri, input={})
-    assert_that(response.Name).is_equal_to(dataset.GlueCrawlerName)
+    assert_that(response.Name).is_equal_to(dataset.restricted.GlueCrawlerName)
     # TODO: check it can run successfully + check sending prefix - We should first implement it in API
 
 
