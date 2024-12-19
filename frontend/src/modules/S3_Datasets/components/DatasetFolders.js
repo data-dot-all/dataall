@@ -37,6 +37,7 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { deleteDatasetStorageLocation, useClient } from 'services';
+import { emptyPrintUnauthorized } from 'utils';
 
 import { listDatasetStorageLocations } from '../services';
 import { FolderCreateModal } from './FolderCreateModal';
@@ -69,7 +70,7 @@ export const DatasetFolders = (props) => {
     const response = await client.query(
       listDatasetStorageLocations(dataset.datasetUri, filter)
     );
-    if (!response.errors) {
+    if (response.data.getDataset != null) {
       setItems({ ...response.data.getDataset.locations });
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
@@ -224,7 +225,9 @@ export const DatasetFolders = (props) => {
                           </Link>
                         </TableCell>
                         <TableCell>
-                          {`s3://${dataset.S3BucketName}/${folder.S3Prefix}`}
+                          {`s3://${emptyPrintUnauthorized(
+                            folder.restricted?.S3BucketName
+                          )}/${folder.S3Prefix}`}
                         </TableCell>
                         <TableCell>{folder.description}</TableCell>
                         <TableCell>

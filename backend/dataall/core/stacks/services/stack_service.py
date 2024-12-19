@@ -6,6 +6,7 @@ import logging
 from dataall.base.db import exceptions
 from dataall.base.feature_toggle_checker import is_feature_enabled_for_allowed_values
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.stacks.aws.cloudformation import CloudFormation
 from dataall.core.stacks.services.keyvaluetag_service import KeyValueTagService
 from dataall.core.tasks.service_handlers import Worker
@@ -64,9 +65,16 @@ def map_target_type_to_log_config_path(**kwargs):
 
 class StackService:
     @staticmethod
-    def resolve_parent_obj_stack(targetUri: str, environmentUri: str):
+    def resolve_parent_obj_stack(targetUri: str, targetType: str, environmentUri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
+            ResourcePolicyService.check_user_resource_permission(
+                session=session,
+                username=context.username,
+                groups=context.groups,
+                resource_uri=targetUri,
+                permission_name=TargetType.get_resource_read_permission_name(targetType),
+            )
             env: Environment = EnvironmentRepository.get_environment_by_uri(session, environmentUri)
             stack: Stack = StackRepository.find_stack_by_target_uri(session, target_uri=targetUri)
             if not stack:
@@ -181,6 +189,13 @@ class StackService:
         StackRequestVerifier.verify_target_type_and_uri(target_uri, target_type)
         context = get_context()
         with context.db_engine.scoped_session() as session:
+            TenantPolicyService.check_user_tenant_permission(
+                session=session,
+                username=context.username,
+                groups=context.groups,
+                permission_name=TargetType.get_resource_tenant_permission_name(target_type),
+                tenant_name=TenantPolicyService.TENANT_NAME,
+            )
             ResourcePolicyService.check_user_resource_permission(
                 session=session,
                 username=context.username,
@@ -196,6 +211,23 @@ class StackService:
     def update_stack_tags(input):
         StackRequestVerifier.validate_update_tag_input(input)
         target_uri = input.get('targetUri')
+        target_type = input.get('targetType')
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            TenantPolicyService.check_user_tenant_permission(
+                session=session,
+                username=context.username,
+                groups=context.groups,
+                permission_name=TargetType.get_resource_tenant_permission_name(target_type),
+                tenant_name=TenantPolicyService.TENANT_NAME,
+            )
+            ResourcePolicyService.check_user_resource_permission(
+                session=session,
+                username=context.username,
+                groups=context.groups,
+                resource_uri=target_uri,
+                permission_name=TargetType.get_resource_update_permission_name(target_type),
+            )
         kv_tags = KeyValueTagService.update_key_value_tags(
             uri=target_uri,
             data=input,

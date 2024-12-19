@@ -28,14 +28,17 @@ class DatapipelinesApiModuleInterface(ModuleInterface):
         from dataall.modules.feed.api.registry import FeedRegistry, FeedDefinition
         from dataall.modules.datapipelines.db.datapipelines_models import DataPipeline
         from dataall.modules.datapipelines.db.datapipelines_repositories import DatapipelinesRepository
-        from dataall.modules.datapipelines.services.datapipelines_permissions import GET_PIPELINE, UPDATE_PIPELINE
-
+        from dataall.modules.datapipelines.services.datapipelines_permissions import (
+            GET_PIPELINE,
+            UPDATE_PIPELINE,
+            MANAGE_PIPELINES,
+        )
         import dataall.modules.datapipelines.api
 
-        FeedRegistry.register(FeedDefinition('DataPipeline', DataPipeline))
+        FeedRegistry.register(FeedDefinition('DataPipeline', DataPipeline, GET_PIPELINE))
 
-        TargetType('pipeline', GET_PIPELINE, UPDATE_PIPELINE)
-        TargetType('cdkpipeline', GET_PIPELINE, UPDATE_PIPELINE)
+        TargetType('pipeline', GET_PIPELINE, UPDATE_PIPELINE, MANAGE_PIPELINES)
+        TargetType('cdkpipeline', GET_PIPELINE, UPDATE_PIPELINE, MANAGE_PIPELINES)
 
         EnvironmentResourceManager.register(DatapipelinesRepository())
 

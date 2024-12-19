@@ -1,9 +1,5 @@
-from typing import Dict, Type
 from dataall.base.db import exceptions
 from dataall.modules.vote.services.vote_service import VoteService
-from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
-
-_VOTE_TYPES: Dict[str, Type[BaseIndexer]] = {}
 
 
 def _required_param(param, name):

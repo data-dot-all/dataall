@@ -84,6 +84,16 @@ def test_search_glossary(client1, glossary1, category1, glossary_term1, category
     assert_that(response.count).is_equal_to(1)
 
 
+def test_update_glossary_unauthorized(client2, group2, glossary1):
+    assert_that(update_glossary).raises(GqlError).when_called_with(
+        client2,
+        node_uri=glossary1.nodeUri,
+        name='glossaryUpdated',
+        group=group2,
+        read_me='dummy',
+    ).contains('UnauthorizedOperation', 'GLOSSARY MUTATION')
+
+
 def test_update_glossary(client1, group1, glossary1, session_id):
     response = update_glossary(
         client1,
@@ -94,6 +104,12 @@ def test_update_glossary(client1, group1, glossary1, session_id):
     )
     assert_that(response.label).is_equal_to('glossaryUpdated')
     assert_that(response.readme).is_equal_to(f'UPDATED: {session_id} Glossary created for integration testing')
+
+
+def test_delete_glossary_unauthorized(client2, group2, glossary1):
+    assert_that(delete_glossary).raises(GqlError).when_called_with(client2, glossary1.nodeUri).contains(
+        'UnauthorizedOperation', 'GLOSSARY MUTATION'
+    )
 
 
 def test_delete_glossary(client1, group1):
@@ -122,6 +138,15 @@ def test_create_category(client1, category1):
     assert_that(category1.label).is_equal_to('category1')
 
 
+def test_update_category_unauthorized(client2, group2, category1):
+    assert_that(update_category).raises(GqlError).when_called_with(
+        client2,
+        node_uri=category1.nodeUri,
+        name=category1.label,
+        read_me='dummy',
+    ).contains('UnauthorizedOperation', 'GLOSSARY MUTATION')
+
+
 def test_update_category(client1, category1, session_id):
     response = update_category(
         client1,
@@ -130,6 +155,13 @@ def test_update_category(client1, category1, session_id):
         read_me=f'UPDATED: {session_id} Category created for integration testing',
     )
     assert_that(response.readme).is_equal_to(f'UPDATED: {session_id} Category created for integration testing')
+
+
+def test_delete_category_unauthorized(client2, group2, category1):
+    assert_that(delete_category).raises(GqlError).when_called_with(
+        client2,
+        category1.nodeUri,
+    ).contains('UnauthorizedOperation', 'GLOSSARY MUTATION')
 
 
 def test_delete_category(client1, glossary1):
@@ -154,14 +186,35 @@ def test_delete_category_with_terms(client1, glossary1):
     assert_that(response).is_true()
 
 
+def test_create_term_in_glossary_unauthorized(client2, glossary1):
+    assert_that(create_term).raises(GqlError).when_called_with(
+        client2, name='glos_term1', parent_uri=glossary1.nodeUri, read_me='Term created for integration testing'
+    ).contains('UnauthorizedOperation', 'GLOSSARY MUTATION')
+
+
 def test_create_term_in_glossary(client1, glossary_term1):
     assert_that(glossary_term1.nodeUri).is_not_none()
     assert_that(glossary_term1.label).is_equal_to('glos_term1')
 
 
+def test_create_term_in_category_unauthorized(client2, category1):
+    assert_that(create_term).raises(GqlError).when_called_with(
+        client2, name='glos_term1', parent_uri=category1.nodeUri, read_me='Term created for integration testing'
+    ).contains('UnauthorizedOperation', 'GLOSSARY MUTATION')
+
+
 def test_create_term_in_category(client1, category_term1):
     assert_that(category_term1.nodeUri).is_not_none()
     assert_that(category_term1.label).is_equal_to('cat_term1')
+
+
+def test_update_term_unauthorized(client2, glossary_term1):
+    assert_that(update_term).raises(GqlError).when_called_with(
+        client2,
+        node_uri=glossary_term1.nodeUri,
+        name=glossary_term1.label,
+        read_me='Dummy',
+    ).contains('UnauthorizedOperation', 'GLOSSARY MUTATION')
 
 
 def test_update_term(client1, glossary_term1, session_id):
@@ -172,6 +225,13 @@ def test_update_term(client1, glossary_term1, session_id):
         read_me=f'UPDATED: {session_id} Glossary term created for integration testing',
     )
     assert_that(response.readme).is_equal_to(f'UPDATED: {session_id} Glossary term created for integration testing')
+
+
+def test_delete_term_unauthorized(client2, glossary_term1):
+    assert_that(delete_term).raises(GqlError).when_called_with(
+        client2,
+        glossary_term1.nodeUri,
+    ).contains('UnauthorizedOperation', 'GLOSSARY MUTATION')
 
 
 def test_delete_term(client1, group1, category1, glossary1):
@@ -185,7 +245,7 @@ def test_delete_term(client1, group1, category1, glossary1):
     assert_that(response.stats.terms).is_equal_to(number_terms_before_delete - 1)
 
 
-def test_approve_term_association_unathorized(client2, dataset_association1):
+def test_approve_term_association_unauthorized(client2, dataset_association1):
     assert_that(approve_term_association).raises(GqlError).when_called_with(
         client2, link_uri=dataset_association1.linkUri
     ).contains('UnauthorizedOperation', 'ASSOCIATE_GLOSSARY_TERM')
@@ -196,7 +256,7 @@ def test_approve_term_association(approved_dataset_association1, dataset_associa
     assert_that(approved_dataset_association1.approvedBySteward).is_equal_to(True)
 
 
-def test_dismiss_term_association_unathorized(client2, approved_dataset_association1):
+def test_dismiss_term_association_unauthorized(client2, approved_dataset_association1):
     assert_that(dismiss_term_association).raises(GqlError).when_called_with(
         client2, link_uri=approved_dataset_association1.linkUri
     ).contains('UnauthorizedOperation', 'ASSOCIATE_GLOSSARY_TERM')

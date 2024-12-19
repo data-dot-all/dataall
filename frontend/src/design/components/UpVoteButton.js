@@ -4,10 +4,11 @@ import * as PropTypes from 'prop-types';
 import React from 'react';
 
 export const UpVoteButton = (props) => {
-  const { upVoted, onClick, upVotes } = props;
+  const { upVoted, onClick, upVotes, disabled } = props;
   return (
     <Button
       color="primary"
+      disabled={disabled}
       startIcon={
         upVoted ? (
           <ThumbUpAlt fontSize="small" />
@@ -27,5 +28,6 @@ export const UpVoteButton = (props) => {
 UpVoteButton.propTypes = {
   upVoted: PropTypes.bool,
   onClick: PropTypes.func,
-  upVotes: PropTypes.any
+  upVotes: PropTypes.any,
+  disabled: PropTypes.bool
 };

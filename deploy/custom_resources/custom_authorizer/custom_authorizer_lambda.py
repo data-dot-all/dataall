@@ -1,5 +1,6 @@
 import logging
 import os
+import json
 
 from auth_services import AuthServices
 from jwt_services import JWTServices
@@ -16,21 +17,33 @@ Custom Lambda Authorizer Code Performs following,
 Custom Lambda Authorizer is attached to the API Gateway. Check the deploy/stacks/lambda_api.py for more details on deployment
 """
 
+OPENID_CONFIG_PATH = os.path.join(os.environ['custom_auth_url'], '.well-known', 'openid-configuration')
+JWT_SERVICE = JWTServices(OPENID_CONFIG_PATH)
+
 
 def lambda_handler(incoming_event, context):
     # Get the Token which is sent in the Authorization Header
+    logger.debug(incoming_event)
     auth_token = incoming_event['headers']['Authorization']
     if not auth_token:
-        raise Exception('Unauthorized . Token not found')
+        raise Exception('Unauthorized. Missing JWT')
 
-    verified_claims = JWTServices.validate_jwt_token(auth_token)
-    logger.debug(verified_claims)
+    # Validate User is Active with Proper Access Token
+    user_info = JWT_SERVICE.validate_access_token(auth_token)
+
+    # Validate JWT
+    # Note: Removing the 7 Prefix Chars for 'Bearer ' from JWT
+    verified_claims = JWT_SERVICE.validate_jwt_token(auth_token[7:])
     if not verified_claims:
         raise Exception('Unauthorized. Token is not valid')
+    logger.debug(verified_claims)
 
+    # Generate Allow Policy w/ Context
     effect = 'Allow'
+    verified_claims.update(user_info)
     policy = AuthServices.generate_policy(verified_claims, effect, incoming_event['methodArn'])
-    logger.debug('Generated policy is ', policy)
+    logger.debug(f'Generated policy is {json.dumps(policy)}')
+    print(f'Generated policy is {json.dumps(policy)}')
     return policy
 
 
@@ -39,12 +52,13 @@ def lambda_handler(incoming_event, context):
 # AWS Lambda and any other local environments
 if __name__ == '__main__':
     # for testing locally you can enter the JWT ID Token here
-    token = ''
+    #
+    access_token = ''
     account_id = ''
     api_gw_id = ''
     event = {
+        'headers': {'Authorization': access_token},
         'type': 'TOKEN',
-        'Authorization': token,
         'methodArn': f'arn:aws:execute-api:us-east-1:{account_id}:{api_gw_id}/prod/POST/graphql/api',
     }
     lambda_handler(event, None)

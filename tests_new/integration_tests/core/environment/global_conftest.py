@@ -53,6 +53,9 @@ def create_env(client, env_name, group, org_uri, account_id, region, tags=[], re
             S3Client(session=session, account=env.AwsAccountId, region=env.region).delete_bucket(
                 env.EnvironmentDefaultBucketName
             )
+            S3Client(session=session, account=env.AwsAccountId, region=env.region).delete_bucket(
+                env.EnvironmentLogsBucketName
+            )
             delete_env(client, env)
 
 
