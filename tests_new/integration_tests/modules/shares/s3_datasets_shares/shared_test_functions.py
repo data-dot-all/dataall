@@ -170,7 +170,7 @@ def check_share_items_access(
         f'arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{consumption_data.s3AccessPointName}'
     )
     if principal_type == 'Group':
-        workgroup = athena_client.get_env_work_group(share_environment.label)
+        workgroup = athena_client.get_work_group(share_environment.label, group)
         athena_workgroup_output_location = None
     else:
         workgroup = 'primary'
