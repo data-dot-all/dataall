@@ -596,13 +596,20 @@ class EnvironmentSetup(Stack):
                     's3:CreateBucket',
                     's3:DeleteBucket',
                     's3:PutEncryptionConfiguration',
-                    's3:List*',
                     's3:GetObject*',
                     's3:DeleteObject',
+                    's3:DeleteObjectVersion',
                 ],
                 effect=iam.Effect.ALLOW,
                 resources=[
                     'arn:aws:s3:::dataalltesting*',
+                    'arn:aws:s3:::dataalltesting*/*',
+                    'arn:aws:s3:::dataall-session*',
+                    'arn:aws:s3:::dataall-session*/*',
+                    'arn:aws:s3:::dataall-test-session*',
+                    'arn:aws:s3:::dataall-test-session*/*',
+                    'arn:aws:s3:::dataall-temp*',
+                    'arn:aws:s3:::dataall-temp*/*',
                     'arn:aws:s3:::dataall-env-access-logs*',
                 ],
             )
@@ -623,8 +630,10 @@ class EnvironmentSetup(Stack):
             iam.PolicyStatement(
                 actions=[
                     'lakeformation:GrantPermissions',
+                    'lakeformation:RevokePermissions',
                     'lakeformation:PutDataLakeSettings',
                     'lakeformation:GetDataLakeSettings',
+                    'glue:GetDatabase',
                     'kms:CreateKey',
                     'kms:CreateAlias',
                     'kms:DeleteAlias',
@@ -633,7 +642,11 @@ class EnvironmentSetup(Stack):
                     'kms:PutKeyPolicy',
                     'kms:ScheduleKeyDeletion',
                     'kms:TagResource',
+                    'kms:DescribeKey',
                     's3:GetBucketVersioning',
+                    's3:List*',
+                    's3:ListAccessPoints',
+                    's3:DeleteAccessPoint',
                 ],
                 effect=iam.Effect.ALLOW,
                 resources=['*'],
@@ -668,5 +681,42 @@ class EnvironmentSetup(Stack):
                 actions=['cloudformation:Describe*'],
                 effect=iam.Effect.ALLOW,
                 resources=[f'arn:aws:cloudformation:*:{self.account}:stack/*/*'],
+            ),
+        )
+
+        self.test_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    'iam:GetRole',
+                    'iam:CreateRole',
+                    'iam:DeleteRole',
+                    'iam:PutRolePolicy',
+                    'iam:DeleteRolePolicy',
+                    'iam:DetachRolePolicy',
+                    'iam:ListAttachedRolePolicies',
+                ],
+                effect=iam.Effect.ALLOW,
+                resources=[
+                    f'arn:aws:iam::{self.account}:role/dataall-test*',
+                    f'arn:aws:iam::{self.account}:role/dataall-session*',
+                ],
+            ),
+        )
+
+        self.test_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    'quicksight:DescribeAccountSubscription',
+                ],
+                effect=iam.Effect.ALLOW,
+                resources=[f'arn:aws:quicksight:*:{self.account}:*'],
+            ),
+        )
+
+        self.test_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=['redshift:DeauthorizeDataShare'],
+                effect=iam.Effect.ALLOW,
+                resources=[f'arn:aws:redshift:{self.region}:{self.account}:datashare:*/dataall*'],
             ),
         )
