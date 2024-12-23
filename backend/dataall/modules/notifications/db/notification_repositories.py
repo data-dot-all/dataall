@@ -1,33 +1,7 @@
-from datetime import datetime
-
 from sqlalchemy import func, and_, or_
 
 from dataall.modules.notifications.db import notification_models as models
-from dataall.base.db import paginate, exceptions
-from dataall.base.context import get_context
-from functools import wraps
-
-
-class NotificationAccess:
-    @staticmethod
-    def is_recipient(f):
-        @wraps(f)
-        def wrapper(*args, **kwds):
-            uri = kwds.get('notificationUri')
-            if not uri:
-                raise KeyError(f"{f.__name__} doesn't have parameter uri.")
-            context = get_context()
-            with context.db_engine.scoped_session() as session:
-                notification = session.query(models.Notification).get(uri)
-                if notification and (notification.recipient in context.groups + [context.username]):
-                    return f(*args, **kwds)
-                else:
-                    raise exceptions.UnauthorizedOperation(
-                        action='UPDATE NOTIFICATION',
-                        message=f'User {context.username} is not the recipient user/group of the notification {uri}',
-                    )
-
-        return wrapper
+from dataall.base.db import paginate
 
 
 class NotificationRepository:
@@ -91,28 +65,6 @@ class NotificationRepository:
         return int(count)
 
     @staticmethod
-    def count_read_notifications(session, username, groups):
-        count = (
-            session.query(func.count(models.Notification.notificationUri))
-            .filter(or_(models.Notification.recipient == username, models.Notification.recipient.in_(groups)))
-            .filter(models.Notification.is_read == True)
-            .filter(models.Notification.deleted.is_(None))
-            .scalar()
-        )
-        return int(count)
-
-    @staticmethod
-    def count_deleted_notifications(session, username, groups):
-        count = (
-            session.query(func.count(models.Notification.notificationUri))
-            .filter(or_(models.Notification.recipient == username, models.Notification.recipient.in_(groups)))
-            .filter(models.Notification.deleted.isnot(None))
-            .scalar()
-        )
-        return int(count)
-
-    @staticmethod
-    @NotificationAccess.is_recipient
     def read_notification(session, notificationUri):
         notification = session.query(models.Notification).get(notificationUri)
         notification.is_read = True
@@ -120,10 +72,5 @@ class NotificationRepository:
         return True
 
     @staticmethod
-    @NotificationAccess.is_recipient
-    def delete_notification(session, notificationUri):
-        notification = session.query(models.Notification).get(notificationUri)
-        if notification:
-            notification.deleted = datetime.now()
-            session.commit()
-        return True
+    def get_notification(session, uri):
+        return session.query(models.Notification).get(uri)
