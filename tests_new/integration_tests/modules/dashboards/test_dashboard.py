@@ -1,6 +1,15 @@
 import pytest
 from assertpy import assert_that
 
+from integration_tests.core.environment.utils import set_env_params
+from integration_tests.errors import GqlError
+from integration_tests.modules.dashboards.conftest import create_dataall_dashboard
+from integration_tests.modules.dashboards.mutations import (
+    update_dashboard,
+    delete_dashboard,
+    approve_dashboard_share,
+    reject_dashboard_share,
+)
 from integration_tests.modules.dashboards.queries import (
     search_dashboards,
     get_dashboard,
@@ -8,15 +17,6 @@ from integration_tests.modules.dashboards.queries import (
     get_author_session,
     get_reader_session,
 )
-from integration_tests.modules.dashboards.mutations import (
-    update_dashboard,
-    delete_dashboard,
-    approve_dashboard_share,
-    reject_dashboard_share,
-)
-from integration_tests.modules.dashboards.conftest import create_dataall_dashboard
-from integration_tests.core.environment.utils import set_env_params
-from integration_tests.errors import GqlError
 
 UPDATED_DESC = 'new description'
 
@@ -45,9 +45,7 @@ def test_list_dashboards(client1, client2, session_id, dashboard1):
 
 
 def test_get_dashboard_unauthorized(client2, dashboard1):
-    assert_that(get_dashboard).raises(GqlError).when_called_with(client2, dashboard1.dashboardUri).contains(
-        'UnauthorizedOperation', 'GET_DASHBOARD', dashboard1.dashboardUri
-    )
+    assert_that(get_dashboard(client2, dashboard1.dashboardUri)).contains_entry(restricted=None, environment=None)
 
 
 def test_update_dashboard(client1, dashboard1):

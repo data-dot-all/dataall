@@ -248,6 +248,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Dataset', 'owners'): TestData(
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
+    field_id('Dataset', 'restricted'): TestData(resource_perm=GET_DATASET, tenant_ignore=IgnoreReason.NOTREQUIRED),
     field_id('Dataset', 'stack'): TestData(resource_perm=GET_DATASET, tenant_ignore=IgnoreReason.NOTREQUIRED),
     field_id('Dataset', 'statistics'): TestData(
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -287,6 +288,9 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('DatasetStorageLocation', 'dataset'): TestData(
         resource_perm=GET_DATASET, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
+    field_id('DatasetStorageLocation', 'restricted'): TestData(
+        resource_perm=GET_DATASET_FOLDER, tenant_ignore=IgnoreReason.NOTREQUIRED
+    ),
     field_id('DatasetStorageLocation', 'terms'): TestData(
         resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
@@ -298,6 +302,9 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     ),
     field_id('DatasetTable', 'dataset'): TestData(
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
+    ),
+    field_id('DatasetTable', 'restricted'): TestData(
+        resource_perm=GET_DATASET_TABLE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('DatasetTable', 'terms'): TestData(
         resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.NOTREQUIRED
@@ -718,8 +725,8 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         resource_perm=CREDENTIALS_PIPELINE, tenant_perm=MANAGE_PIPELINES
     ),
     field_id('Query', 'getDataset'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
-    ),  # TODO Review
+        resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.NOTREQUIRED
+    ),
     field_id('Query', 'getDatasetAssumeRoleUrl'): TestData(
         tenant_perm=MANAGE_DATASETS, resource_perm=CREDENTIALS_DATASET
     ),
@@ -730,11 +737,11 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_DATASETS, resource_perm=CREDENTIALS_DATASET
     ),
     field_id('Query', 'getDatasetStorageLocation'): TestData(
-        resource_perm=GET_DATASET_FOLDER, tenant_ignore=IgnoreReason.NOTREQUIRED
+        resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getDatasetTable'): TestData(
-        resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
-    ),  # TODO Review
+        resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.NOTREQUIRED
+    ),
     field_id('Query', 'getDatasetTableProfilingRun'): TestData(
         resource_ignore=IgnoreReason.CUSTOM, tenant_ignore=IgnoreReason.CUSTOM
     ),

@@ -159,7 +159,7 @@ def test_update_dataset(client1, dataset_fixture_name, request):
     test_description = f'a test description {datetime.utcnow().isoformat()}'
     dataset_uri = dataset.datasetUri
     updated_dataset = update_dataset(
-        client1, dataset_uri, {'description': test_description, 'KmsAlias': dataset.KmsAlias}
+        client1, dataset_uri, {'description': test_description, 'KmsAlias': dataset.restricted.KmsAlias}
     )
     assert_that(updated_dataset).contains_entry(datasetUri=dataset_uri, description=test_description)
     env = get_dataset(client1, dataset_uri)
@@ -175,7 +175,7 @@ def test_update_dataset_unauthorized(client1, client2, dataset_fixture_name, req
     test_description = f'unauthorized {datetime.utcnow().isoformat()}'
     dataset_uri = dataset.datasetUri
     assert_that(update_dataset).raises(GqlError).when_called_with(
-        client2, dataset_uri, {'description': test_description, 'KmsAlias': dataset.KmsAlias}
+        client2, dataset_uri, {'description': test_description, 'KmsAlias': dataset.restricted.KmsAlias}
     ).contains('UnauthorizedOperation', dataset_uri)
     response = get_dataset(client1, dataset_uri)
     assert_that(response).contains_entry(datasetUri=dataset_uri).does_not_contain_entry(description=test_description)
@@ -223,7 +223,7 @@ def test_start_crawler(client1, dataset_fixture_name, request):
     dataset = request.getfixturevalue(dataset_fixture_name)
     dataset_uri = dataset.datasetUri
     response = start_glue_crawler(client1, datasetUri=dataset_uri, input={})
-    assert_that(response.Name).is_equal_to(dataset.GlueCrawlerName)
+    assert_that(response.Name).is_equal_to(dataset.restricted.GlueCrawlerName)
     # TODO: check it can run successfully + check sending prefix - We should first implement it in API
 
 
