@@ -14,10 +14,6 @@ from dataall.modules.notifications.db.notification_repositories import Notificat
 logger = logging.getLogger(__name__)
 
 
-def _session():
-    return get_context().db_engine.scoped_session()
-
-
 class NotificationAccess:
     @staticmethod
     def check_recipient(uri):
