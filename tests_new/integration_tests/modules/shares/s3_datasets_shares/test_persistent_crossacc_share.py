@@ -99,7 +99,7 @@ def test_re_share_succeeded(
     check_verify_share_items(client5, share.shareUri)
     check_share_items_access(
         client5,
-        share.group,
+        share.principal.SamlGroupName,
         share.shareUri,
         env,
         persistent_consumption_role_1,
