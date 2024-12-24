@@ -3,7 +3,7 @@ from assertpy import assert_that
 
 from integration_tests.errors import GqlError
 from integration_tests.modules.s3_datasets.aws_clients import LakeFormationClient
-from integration_tests.modules.shares.s3_datasets_shares.conftest import clean_up_share
+from integration_tests.modules.shares.s3_datasets_shares.global_conftest import clean_up_share
 from tests_new.integration_tests.modules.shares.queries import (
     create_share_object,
     submit_share_object,
