@@ -34,6 +34,7 @@ stack {
   accountid
   region
   stackid
+  updated
   link
   outputs
   resources
@@ -62,10 +63,8 @@ def create_environment(client, name, group, organizationUri, awsAccountId, regio
                 'region': region,
                 'description': 'Created for integration testing',
                 'tags': tags,
-                'parameters': [
-                    {'key': 'notebooksEnabled', 'value': 'true'},
-                ],
                 'type': 'IntegrationTesting',
+                'parameters': [],
             }
         },
         'query': f"""
@@ -241,6 +240,33 @@ def add_consumption_role(client, env_uri, group_uri, consumption_role_name, iam_
     return response.data.addConsumptionRoleToEnvironment
 
 
+def list_environment_consumption_roles(client, env_uri, filter):
+    query = {
+        'operationName': 'listEnvironmentConsumptionRoles',
+        'variables': {'environmentUri': env_uri, 'filter': filter},
+        'query': """
+                    query listEnvironmentConsumptionRoles($environmentUri: String!, $filter: ConsumptionRoleFilter) {
+                      listEnvironmentConsumptionRoles(environmentUri: $environmentUri, filter: $filter) {
+                        count
+                        page
+                        pages
+                        hasNext
+                        hasPrevious
+                        nodes {
+                          consumptionRoleUri
+                          consumptionRoleName
+                          environmentUri
+                          groupUri
+                          IAMRoleArn
+                        }
+                      }
+                    }
+        """,
+    }
+    response = client.query(query=query)
+    return response.data.listEnvironmentConsumptionRoles
+
+
 def remove_consumption_role(client, env_uri, consumption_role_uri):
     query = {
         'operationName': 'removeConsumptionRoleFromEnvironment',
@@ -262,3 +288,26 @@ def remove_consumption_role(client, env_uri, consumption_role_uri):
     }
     response = client.query(query=query)
     return response.data.removeConsumptionRoleFromEnvironment
+
+
+def get_environment_access_token(client, env_uri, group_uri):
+    query = {
+        'operationName': 'generateEnvironmentAccessToken',
+        'variables': {
+            'environmentUri': env_uri,
+            'groupUri': group_uri,
+        },
+        'query': """
+                     query generateEnvironmentAccessToken(
+                      $environmentUri: String!
+                      $groupUri: String
+                    ) {
+                      generateEnvironmentAccessToken(
+                        environmentUri: $environmentUri
+                        groupUri: $groupUri
+                      )
+                    }
+        """,
+    }
+    response = client.query(query=query)
+    return response.data.generateEnvironmentAccessToken
