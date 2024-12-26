@@ -77,10 +77,6 @@ def dataset(client, patch_es, patch_dataset_methods):
                     description
                     owner
                     SamlAdminGroupName
-                    enableExpiration
-                    expirySetting
-                    expiryMinDuration
-                    expiryMaxDuration
                     restricted {
                       AwsAccountId
                       region

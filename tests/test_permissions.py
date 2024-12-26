@@ -24,7 +24,6 @@ def common_mocks(mocker):
     mocker.patch('dataall.modules.mlstudio.services.mlstudio_service.SagemakerStudioCreationRequest.from_dict')
     mocker.patch('dataall.modules.notebooks.api.resolvers.RequestValidator')
     mocker.patch('dataall.modules.notebooks.services.notebook_service.NotebookCreationRequest.from_dict')
-    mocker.patch('dataall.modules.redshift_datasets.api.connections.resolvers.RequestValidator')
     mocker.patch('dataall.modules.s3_datasets.api.dataset.resolvers.RequestValidator')
     mocker.patch('dataall.modules.s3_datasets.api.profiling.resolvers._validate_uri')
     mocker.patch('dataall.modules.s3_datasets.api.storage_location.resolvers._validate_input')
@@ -67,11 +66,10 @@ def setup_Mutation_upVote(mocker, **kwargs):
 
 @pytest.mark.parametrize('field', ALL_PARAMS)
 @pytest.mark.parametrize(
-    'perm_type', ['resource', 'tenant', 'tenant_admin', 'glossary_owner', 'mf_owner', 'notification_recipient']
+    'perm_type', ['resource', 'tenant', 'tenant_admin', 'glossary_owner', 'notification_recipient']
 )
 @patch('dataall.base.context._request_storage')
 @patch('dataall.modules.notifications.services.notification_service.NotificationAccess.check_recipient')
-@patch('dataall.modules.metadata_forms.services.metadata_form_access_service.MetadataFormAccessService.is_owner')
 @patch('dataall.modules.catalog.services.glossaries_service.GlossariesResourceAccess.check_owner')
 @patch('dataall.core.permissions.services.resource_policy_service.ResourcePolicyService.check_user_resource_permission')
 @patch('dataall.core.permissions.services.group_policy_service.GroupPolicyService.check_group_environment_permission')
@@ -91,7 +89,6 @@ def test_permissions(
     mock_check_group,
     mock_check_resource,
     mock_check_glossary_owner,
-    mock_check_mf_owner,
     mock_check_notification_recipient,
     mock_storage,
     field,

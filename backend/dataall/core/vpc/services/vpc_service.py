@@ -49,6 +49,7 @@ class VpcService:
                 owner=username,
                 label=data['label'],
                 name=data['label'],
+                tags=data.get('tags', []),
                 default=data.get('default', False),
             )
             VpcRepository.save_network(session, vpc)

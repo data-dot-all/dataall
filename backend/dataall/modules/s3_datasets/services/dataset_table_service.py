@@ -1,5 +1,6 @@
 import logging
 from dataall.base.context import get_context
+from dataall.base.db import exceptions
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
@@ -91,13 +92,10 @@ class DatasetTableService:
             if (
                 ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality)
                 != ConfidentialityClassification.Unclassified.value
-            ):
-                ResourcePolicyService.check_user_resource_permission(
-                    session=session,
-                    username=context.username,
-                    groups=context.groups,
-                    resource_uri=table.tableUri,
-                    permission_name=PREVIEW_DATASET_TABLE,
+            ) and (dataset.SamlAdminGroupName not in context.groups and dataset.stewards not in context.groups):
+                raise exceptions.UnauthorizedOperation(
+                    action=PREVIEW_DATASET_TABLE,
+                    message='User is not authorized to Preview Table for Confidential datasets',
                 )
             env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
             return AthenaTableClient(env, table).get_table(dataset_uri=dataset.datasetUri)
