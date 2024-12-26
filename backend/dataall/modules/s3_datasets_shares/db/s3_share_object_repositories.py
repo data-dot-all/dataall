@@ -149,22 +149,25 @@ class S3ShareObjectRepository:
         return query.first()
 
     @staticmethod
-    def check_existing_shared_items_of_type(session, uri, item_type):
-        share: ShareObject = ShareObjectRepository.get_share_by_uri(session, uri)
-        share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
-        shared_items = (
-            session.query(ShareObjectItem)
-            .filter(
-                and_(
-                    ShareObjectItem.shareUri == share.shareUri,
-                    ShareObjectItem.itemType == item_type,
-                    ShareObjectItem.status.in_(share_item_shared_states),
-                )
-            )
-            .all()
+    def check_existing_shares_on_items_for_principal(session, item_type, principal, database):
+        shares: List[ShareObject] = ShareObjectRepository.get_shares_for_principal_and_database(
+            session=session, principal=principal, database=database
         )
-        if shared_items:
-            return True
+        share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
+        for share in shares:
+            shared_items = (
+                session.query(ShareObjectItem)
+                .filter(
+                    and_(
+                        ShareObjectItem.shareUri == share.shareUri,
+                        ShareObjectItem.itemType == item_type,
+                        ShareObjectItem.status.in_(share_item_shared_states),
+                    )
+                )
+                .all()
+            )
+            if shared_items:
+                return True
         return False
 
     @staticmethod
