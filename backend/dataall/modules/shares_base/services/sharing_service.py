@@ -1,14 +1,17 @@
 import logging
 from dataclasses import dataclass
 
-from typing import Any
+from typing import Any, List
+
 from dataall.core.resource_lock.db.resource_lock_repositories import ResourceLockRepository
 from dataall.base.db import Engine
 from dataall.core.environment.db.environment_models import ConsumptionRole, Environment, EnvironmentGroup
+from dataall.modules.notifications.services.admin_notifications import AdminNotificationService
 from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
     ShareItemSM,
 )
+from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
     ShareObjectActions,
@@ -127,11 +130,16 @@ class SharingService:
                 log.exception('Error occurred during share approval')
                 new_share_item_state = share_item_sm.run_transition(ShareItemActions.Failure.value)
                 share_item_sm.update_state(session, share_data.share.shareUri, new_share_item_state)
-                return False
+                share_successful = False
 
             finally:
                 new_share_state = share_object_sm.run_transition(ShareObjectActions.Finish.value)
                 share_object_sm.update_state(session, share_data.share, new_share_state)
+                if not share_successful:
+                    # Create UI and email notifications
+                    ShareNotificationService(session=session, dataset=share_data.dataset,
+                                             share=share_data.share).notify_share_object_failed()
+                return share_successful
 
     @classmethod
     def revoke_share(cls, engine: Engine, share_uri: str) -> bool:
@@ -224,7 +232,7 @@ class SharingService:
                 log.error(f'Error occurred during share revoking: {e}')
                 new_share_item_state = share_item_sm.run_transition(ShareItemActions.Failure.value)
                 share_item_sm.update_state(session, share_data.share.shareUri, new_share_item_state)
-                return False
+                revoke_successful = False
 
             finally:
                 existing_pending_items = ShareStatusRepository.check_pending_share_items(session, share_uri)
@@ -233,6 +241,11 @@ class SharingService:
                 else:
                     new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
                 share_sm.update_state(session, share_data.share, new_share_state)
+                if not revoke_successful:
+                    # Create UI and email notifications
+                    ShareNotificationService(session=session, dataset=share_data.dataset,
+                                             share=share_data.share).notify_share_object_failed()
+                return revoke_successful
 
     @classmethod
     def verify_share(
@@ -255,6 +268,7 @@ class SharingService:
         -------
         """
         with engine.scoped_session() as session:
+            share_object_item_health_status: List = []
             share_data, share_items = cls._get_share_data_and_items(session, share_uri, status, healthStatus)
             for type, processor in ShareProcessorManager.SHARING_PROCESSORS.items():
                 try:
@@ -268,12 +282,19 @@ class SharingService:
                         healthStatus=healthStatus,
                     )
                     if shareable_items:
-                        processor.Processor(session, share_data, shareable_items).verify_shares()
+                        health_status = processor.Processor(session, share_data, shareable_items).verify_shares_health_status()
+                        share_object_item_health_status.append(health_status)
                     else:
                         log.info(f'There are no items to verify of type {type.value}')
                 except Exception as e:
                     log.error(f'Error occurred during share verifying of {type.value}: {e}')
+                    AdminNotificationService().notify_admins_with_error_log(
+                        process_error=f'Error occurred during verification of share with uri: {share_data.share.shareUri} for processor type: {type.value}  due to an unknown exception',
+                        error_logs=[str(e)], process_name='Sharing Service')
 
+            if False in share_object_item_health_status:
+                log.info(f'Sending notifications since share object item(s) for share: {share_data.share.shareUri} are in unhealthy state after verifying shares')
+                ShareNotificationService(session=session, dataset=share_data.dataset, share=share_data.share).notify_share_object_items_unhealthy()
         return True
 
     @classmethod
@@ -295,6 +316,7 @@ class SharingService:
         False if any re-apply of share item(s) failed
         """
         reapply_successful = True
+        code_exception_list = []
         with engine.scoped_session() as session:
             share_data, share_items = cls._get_share_data_and_items(
                 session, share_uri, None, ShareItemHealthStatus.PendingReApply.value
@@ -334,11 +356,23 @@ class SharingService:
                                 log.info(f'Reapplying {type.value} succeeded = {success}')
                                 if not success:
                                     reapply_successful = False
+                                if success:
+                                    log.info(f'Sending notifications to the share owner to inform that the share with uri: {share_data.share.shareUri} is now in healthy state')
+                                    ShareNotificationService(session=session, dataset=share_data.dataset,
+                                                            share=share_data.share).notify_share_object_items_healthy()
                             else:
                                 log.info(f'There are no items to reapply of type {type.value}')
                         except Exception as e:
                             log.error(f'Error occurred during share reapplying of {type.value}: {e}')
+                            AdminNotificationService().notify_admins_with_error_log(
+                                process_error=f'Error occurred during reapplying of share with uri: {share_data.share.shareUri} for processor type: {type.value}  due to an unknown exception',
+                                error_logs=[str(e)], process_name='Sharing Service')
 
+                if not reapply_successful:
+                    log.info(
+                        f'Sending notifications since share object item(s) for share: {share_data.share.shareUri} are in unhealthy state after reapplying shares')
+                    ShareNotificationService(session=session, dataset=share_data.dataset,
+                                             share=share_data.share).notify_share_object_items_unhealthy()
                 return reapply_successful
 
             except ResourceLockTimeout as e:
@@ -349,10 +383,18 @@ class SharingService:
                     new_status=ShareItemHealthStatus.Unhealthy.value,
                     message=str(e),
                 )
+                code_exception_list.append(str(e))
 
             except Exception as e:
                 log.exception('Error occurred during share approval')
+                code_exception_list.append(str(e))
                 return False
+
+            finally:
+                if len(code_exception_list) > 0:
+                    AdminNotificationService().notify_admins_with_error_log(
+                        process_error=f'Error occurred during reapplying of share with uri: {share_data.share.shareUri}',
+                        error_logs=[str(e)], process_name='Sharing Service')
 
     @classmethod
     def cleanup_share(
