@@ -43,4 +43,4 @@ def resolve_feed_messages(context: Context, source: Feed, filter: dict = None):
     _required_uri(source.targetUri)
     if not filter:
         filter = {}
-    return FeedService.list_feed_messages(targetUri=source.targetUri, filter=filter)
+    return FeedService.list_feed_messages(targetUri=source.targetUri, targetType=source.targetType, filter=filter)

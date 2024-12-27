@@ -35,7 +35,8 @@ import {
   getPivotRoleExternalId,
   getPivotRoleName,
   getPivotRolePresignedUrl,
-  getCDKExecPolicyPresignedUrl
+  getCDKExecPolicyPresignedUrl,
+  getTrustAccount
 } from '../services';
 import {
   SanitizedHTML,
@@ -45,12 +46,7 @@ import {
   useSettings
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import {
-  getOrganization,
-  getTrustAccount,
-  useClient,
-  useGroups
-} from 'services';
+import { getOrganization, useClient, useGroups } from 'services';
 import {
   AwsRegions,
   isAnyEnvironmentModuleEnabled,
@@ -84,13 +80,13 @@ const EnvironmentCreateForm = (props) => {
     setLoading(false);
   }, [client, dispatch, params.uri]);
   const fetchTrustedAccount = useCallback(async () => {
-    const response = await client.query(getTrustAccount());
+    const response = await client.query(getTrustAccount(params.uri));
     if (!response.errors) {
       setTrustedAccount(response.data.getTrustAccount);
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
     }
-  }, [client, dispatch]);
+  }, [client, dispatch, params.uri]);
   const getRoleName = useCallback(async () => {
     const response = await client.query(getPivotRoleName(params.uri));
     if (!response.errors) {

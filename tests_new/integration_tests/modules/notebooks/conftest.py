@@ -10,6 +10,7 @@ from integration_tests.modules.notebooks.queries import (
     list_sagemaker_notebooks,
 )
 from integration_tests.core.stack.utils import check_stack_ready, wait_stack_delete_complete
+from integration_tests.core.environment.utils import set_env_params
 
 from integration_tests.modules.notebooks.aws_clients import VpcClient
 
@@ -62,6 +63,7 @@ def session_notebook1(client1, group1, session_env1, session_id, session_env1_aw
     resource_name = 'sessionnotebook1'
     notebook = None
     try:
+        set_env_params(client1, session_env1, notebooksEnabled='true')
         vpc_client = VpcClient(session=session_env1_aws_client, region=session_env1['region'])
         vpc_id = vpc_client.create_vpc(vpc_name=resource_name, cidr='172.31.0.0/26')
         subnet_id = vpc_client.create_subnet(vpc_id=vpc_id, subnet_name=resource_name, cidr='172.31.0.0/28')
@@ -162,6 +164,7 @@ def get_or_create_persistent_notebook(resource_name, client, group, env, session
 
 @pytest.fixture(scope='session')
 def persistent_notebook1(client1, group1, persistent_env1, persistent_env1_aws_client):
+    set_env_params(client1, persistent_env1, notebooksEnabled='true')
     return get_or_create_persistent_notebook(
         'persistent_notebook1', client1, group1, persistent_env1, persistent_env1_aws_client
     )

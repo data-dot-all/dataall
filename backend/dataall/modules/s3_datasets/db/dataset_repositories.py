@@ -219,7 +219,9 @@ class DatasetRepository(EnvironmentResource):
                 or_(
                     S3Dataset.label.ilike('%' + term + '%'),
                     S3Dataset.description.ilike('%' + term + '%'),
-                    S3Dataset.tags.contains(f'{{{term}}}'),
+                    S3Dataset.tags.contains(
+                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, target_label=term).sanitize()}}}'
+                    ),
                     S3Dataset.region.ilike('%' + term + '%'),
                 )
             )
@@ -236,7 +238,9 @@ class DatasetRepository(EnvironmentResource):
                 or_(
                     S3Dataset.label.ilike('%' + term + '%'),
                     S3Dataset.description.ilike('%' + term + '%'),
-                    S3Dataset.tags.contains(f'{{{term}}}'),
+                    S3Dataset.tags.contains(
+                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, target_label=term).sanitize()}}}'
+                    ),
                     S3Dataset.region.ilike('%' + term + '%'),
                 )
             )

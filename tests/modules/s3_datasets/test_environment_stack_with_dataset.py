@@ -122,6 +122,25 @@ def test_resources_created(env_fixture, org_fixture, mocker):
         },
         count=1,
     )
+
+    # Assert that we have created:
+    template.resource_properties_count_is(
+        type='AWS::S3::Bucket',
+        props={
+            'BucketName': env_fixture.EnvironmentLogsBucketName,
+            'BucketEncryption': {
+                'ServerSideEncryptionConfiguration': [{'ServerSideEncryptionByDefault': {'SSEAlgorithm': 'AES256'}}]
+            },
+            'PublicAccessBlockConfiguration': {
+                'BlockPublicAcls': True,
+                'BlockPublicPolicy': True,
+                'IgnorePublicAcls': True,
+                'RestrictPublicBuckets': True,
+            },
+        },
+        count=1,
+    )
+
     template.resource_properties_count_is(
         type='AWS::Lambda::Function',
         props={

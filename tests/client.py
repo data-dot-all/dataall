@@ -1,12 +1,16 @@
-import typing
 import json
+import typing
+
 from ariadne import graphql_sync
 from ariadne.constants import PLAYGROUND_HTML
-from flask import Flask, request, jsonify, Response
+from fastapi import FastAPI
 from munch import DefaultMunch
+from starlette.requests import Request
+from starlette.responses import JSONResponse, HTMLResponse
+
 from dataall.base.api import get_executable_schema
-from dataall.base.context import set_context, dispose_context, RequestContext
 from dataall.base.config import config
+from dataall.base.context import set_context, dispose_context, RequestContext
 
 config.set_property('cdk_proxy_url', 'mock_url')
 
@@ -22,40 +26,41 @@ class ClientWrapper:
         groups: typing.List[str] = ['-'],
         **variables,
     ):
-        response: Response = self.client.post(
+        if not isinstance(username, str):
+            username = username.username
+        response = self.client.post(
             '/graphql',
             json={'query': f""" {query} """, 'variables': variables},
             headers={'groups': json.dumps(groups), 'username': username},
         )
-        return DefaultMunch.fromDict(response.get_json())
+        return DefaultMunch.fromDict(json.loads(response.text))
 
 
 def create_app(db):
-    app = Flask('tests')
+    app = FastAPI(debug=True)
     schema = get_executable_schema()
 
-    @app.route('/', methods=['OPTIONS'])
+    @app.options('/')
     def opt():
         # On GET request serve GraphQL Playground
         # You don't need to provide Playground if you don't want to
         # but keep on mind this will not prohibit clients from
         # exploring your API using desktop GraphQL Playground app.
-        return '<html><body><h1>Hello</h1></body></html>', 200
+        return HTMLResponse('<html><body><h1>Hello</h1></body></html>')
 
-    @app.route('/graphql', methods=['GET'])
+    @app.get('/graphql')
     def graphql_playground():
         # On GET request serve GraphQL Playground
         # You don't need to provide Playground if you don't want to
         # but keep on mind this will not prohibit clients from
         # exploring your API using desktop GraphQL Playground app.
-        return PLAYGROUND_HTML, 200
+        return HTMLResponse(PLAYGROUND_HTML)
 
-    @app.route('/graphql', methods=['POST'])
-    def graphql_server():
+    @app.post('/graphql')
+    async def graphql_server(request: Request):
         # GraphQL queries are always sent as POST
         # Note: Passing the request to the context is optional.
-        # In Flask, the current request is always accessible as flask.request
-        data = request.get_json()
+        data = await request.json()
 
         username = request.headers.get('Username', 'anonym')
         user_id = request.headers.get('Username', 'anonym_id')
@@ -72,6 +77,6 @@ def create_app(db):
 
         dispose_context()
         status_code = 200 if success else 400
-        return jsonify(result), status_code
+        return JSONResponse(result, status_code)
 
     return app

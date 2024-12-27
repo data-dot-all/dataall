@@ -6,25 +6,7 @@ export const syncTables = (datasetUri) => ({
   },
   mutation: gql`
     mutation SyncTables($datasetUri: String!) {
-      syncTables(datasetUri: $datasetUri) {
-        count
-        nodes {
-          tableUri
-          GlueTableName
-          GlueDatabaseName
-          description
-          name
-          label
-          created
-          S3Prefix
-          dataset {
-            datasetUri
-            name
-            GlueDatabaseName
-            userRoleForDataset
-          }
-        }
-      }
+      syncTables(datasetUri: $datasetUri)
     }
   `
 });

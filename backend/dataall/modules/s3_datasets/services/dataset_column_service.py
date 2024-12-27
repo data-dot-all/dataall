@@ -1,16 +1,17 @@
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
+from dataall.base.db import exceptions
 from dataall.core.tasks.db.task_models import Task
 from dataall.modules.s3_datasets.aws.glue_table_client import GlueTableClient
 from dataall.modules.s3_datasets.db.dataset_column_repositories import DatasetColumnRepository
 from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
-from dataall.modules.s3_datasets.services.dataset_permissions import UPDATE_DATASET_TABLE
+from dataall.modules.s3_datasets.services.dataset_permissions import UPDATE_DATASET_TABLE, MANAGE_DATASETS
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable, DatasetTableColumn
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
-from dataall.modules.s3_datasets.services.dataset_permissions import PREVIEW_DATASET_TABLE
 
 
 class DatasetColumnService:
@@ -33,17 +34,15 @@ class DatasetColumnService:
             if (
                 ConfidentialityClassification.get_confidentiality_level(dataset.confidentiality)
                 != ConfidentialityClassification.Unclassified.value
-            ):
-                ResourcePolicyService.check_user_resource_permission(
-                    session=session,
-                    username=context.username,
-                    groups=context.groups,
-                    resource_uri=table.tableUri,
-                    permission_name=PREVIEW_DATASET_TABLE,
+            ) and (dataset.SamlAdminGroupName not in context.groups and dataset.stewards not in context.groups):
+                raise exceptions.UnauthorizedOperation(
+                    action='LIST_DATASET_TABLE_COLUMNS',
+                    message='User is not authorized to view Columns for Confidential datasets',
                 )
             return DatasetColumnRepository.paginate_active_columns_for_table(session, uri, filter)
 
     @classmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(
         UPDATE_DATASET_TABLE, parent_resource=_get_dataset_uri, param_name='table_uri'
     )
@@ -58,6 +57,7 @@ class DatasetColumnService:
         return cls.paginate_active_columns_for_table(uri=table_uri, filter={})
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(
         UPDATE_DATASET_TABLE, parent_resource=_get_dataset_uri_for_column, param_name='column_uri'
     )

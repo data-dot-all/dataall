@@ -28,6 +28,10 @@ PIPELINE_STACK_CDK_NAG_EXCLUSIONS = [
         'id': 'AwsSolutions-CB3',
         'reason': 'Access to docker daemon is required to build docker images',
     },
+    {
+        'id': 'AwsSolutions-SMG4',
+        'reason': 'Database is used for test purposes',
+    },
 ]
 
 BACKEND_STACK_CDK_NAG_EXCLUSIONS = [

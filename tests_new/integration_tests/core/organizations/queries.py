@@ -82,10 +82,12 @@ def update_organization(client, organizationUri):
     return response.data.updateOrganization
 
 
-def invite_team_to_organization(client, organizationUri, group):
+def invite_team_to_organization(client, organizationUri, group, permissions=None):
     query = {
         'operationName': 'inviteGroupToOrganization',
-        'variables': {'input': {'organizationUri': organizationUri, 'groupUri': group}},
+        'variables': {
+            'input': {'organizationUri': organizationUri, 'groupUri': group, 'permissions': permissions or []}
+        },
         'query': """mutation inviteGroupToOrganization($input:InviteGroupToOrganizationInput!){
             inviteGroupToOrganization(input:$input){
                 organizationUri

@@ -82,7 +82,6 @@ def test_get_dashboard(client, env_fixture, db, dashboard, group):
                     environment {
                       environmentUri
                       label
-                      region
                       organization {
                         organizationUri
                         label
@@ -262,40 +261,6 @@ def test_request_dashboard_share(
         groups=[group2.name],
     )
     assert len(response.data.searchDashboards['nodes']) == 0
-
-    response = client.query(
-        """
-        mutation shareDashboard($dashboardUri:String!, $principalId:String!){
-            shareDashboard(dashboardUri:$dashboardUri, principalId:$principalId){
-                shareUri
-                status
-            }
-        }
-        """,
-        dashboardUri=dashboard.dashboardUri,
-        principalId=group2.name,
-        username=user.username,
-        groups=[group.name],
-    )
-    assert response.data.shareDashboard.shareUri
-
-    response = client.query(
-        """
-        query searchDashboards($filter:DashboardFilter!){
-            searchDashboards(filter:$filter){
-                count
-                nodes{
-                    dashboardUri
-                    userRoleForDashboard
-                }
-            }
-        }
-        """,
-        filter={},
-        username=user2.username,
-        groups=[group2.name],
-    )
-    assert len(response.data.searchDashboards['nodes']) == 1
 
 
 def test_delete_dashboard(client, env_fixture, db, user, group, module_mocker, dashboard, patch_es):

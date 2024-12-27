@@ -159,7 +159,7 @@ export const DashboardListItem = (props) => {
             </Grid>
             <Grid item md={8} xs={6}>
               <Typography color="textPrimary" variant="body2">
-                {dashboard.AwsAccountId}
+                {dashboard.restricted.AwsAccountId}
               </Typography>
             </Grid>
           </Grid>
@@ -178,7 +178,7 @@ export const DashboardListItem = (props) => {
             </Grid>
             <Grid item md={8} xs={12}>
               <Typography color="textPrimary" variant="body2">
-                {dashboard.environment.region}
+                {dashboard.restricted.region}
               </Typography>
             </Grid>
           </Grid>

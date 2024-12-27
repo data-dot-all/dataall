@@ -41,7 +41,6 @@ def test_get_organization_organization_with_admin_team(client1, org1):
     assert_that(response.owner).is_equal_to(organization.owner)
     assert_that(response.SamlGroupName).is_equal_to(organization.SamlGroupName)
     assert_that(response.userRoleInOrganization).is_equal_to('Owner')
-    assert_that(response.stats.groups).is_equal_to(0)
 
 
 def test_get_organization_with_invited_team(client2, org2):

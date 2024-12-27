@@ -26,6 +26,9 @@ export const listDatasetStorageLocations = (datasetUri, filter) => ({
             description
             created
             userRoleForStorageLocation
+            restricted {
+              S3BucketName
+            }
           }
         }
       }

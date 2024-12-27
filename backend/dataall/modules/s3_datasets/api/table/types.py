@@ -4,6 +4,7 @@ from dataall.modules.s3_datasets.api.table.resolvers import (
     resolve_dataset,
     get_glue_table_properties,
     resolve_glossary_terms,
+    get_dataset_table_restricted_information,
 )
 
 TablePermission = gql.ObjectType(
@@ -21,6 +22,15 @@ TablePermissionSearchResult = gql.ObjectType(
         gql.Field(name='nodes', type=gql.ArrayType(TablePermission)),
     ],
 )
+DatasetTableRestrictedInformation = gql.ObjectType(
+    name='DatasetTableRestrictedInformation',
+    fields=[
+        gql.Field(name='AwsAccountId', type=gql.String),
+        gql.Field(name='GlueDatabaseName', type=gql.String),
+        gql.Field(name='GlueTableName', type=gql.String),
+        gql.Field(name='S3Prefix', type=gql.String),
+    ],
+)
 
 DatasetTable = gql.ObjectType(
     name='DatasetTable',
@@ -35,12 +45,11 @@ DatasetTable = gql.ObjectType(
         gql.Field(name='created', type=gql.String),
         gql.Field(name='updated', type=gql.String),
         gql.Field(name='admins', type=gql.ArrayType(gql.String)),
-        gql.Field(name='AwsAccountId', type=gql.String),
-        gql.Field(name='GlueDatabaseName', type=gql.String),
-        gql.Field(name='GlueTableName', type=gql.String),
         gql.Field(name='LastGlueTableStatus', type=gql.String),
-        gql.Field(name='S3Prefix', type=gql.String),
         gql.Field(name='GlueTableConfig', type=gql.String),
+        gql.Field(
+            name='restricted', type=DatasetTableRestrictedInformation, resolver=get_dataset_table_restricted_information
+        ),
         gql.Field(
             name='GlueTableProperties',
             type=gql.String,

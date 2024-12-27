@@ -35,17 +35,6 @@ deleteDashboard = gql.MutationField(
     resolver=delete_dashboard,
 )
 
-
-shareDashboard = gql.MutationField(
-    name='shareDashboard',
-    type=gql.Ref('DashboardShare'),
-    args=[
-        gql.Argument(name='principalId', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='dashboardUri', type=gql.NonNullableType(gql.String)),
-    ],
-    resolver=share_dashboard,
-)
-
 requestDashboardShare = gql.MutationField(
     name='requestDashboardShare',
     type=gql.Ref('DashboardShare'),

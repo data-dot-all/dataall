@@ -12,6 +12,7 @@ export * from './getPivotRoleExternalId';
 export * from './getPivotRoleName';
 export * from './getPivotRolePresignedUrl';
 export * from './getCDKExecPolicyPresignedUrl.js';
+export * from './getTrustAccount';
 export * from './inviteGroup';
 export * from './listAllEnvironmentConsumptionRoles';
 export * from './listAllEnvironmentGroups';

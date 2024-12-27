@@ -1,11 +1,5 @@
 import logging
-import os
-
-from dataall.base.aws.sts import SessionHelper
-from dataall.base.aws.parameter_store import ParameterStoreManager
-from dataall.base.db.exceptions import RequiredParameter
-from dataall.core.permissions.services.permission_service import PermissionService
-from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService, TenantActionsService
 
 log = logging.getLogger(__name__)
 
@@ -26,12 +20,4 @@ def list_tenant_groups(context, source, filter=None):
 
 
 def update_ssm_parameter(context, source, name: str = None, value: str = None):
-    current_account = SessionHelper.get_account()
-    region = os.getenv('AWS_REGION', 'eu-west-1')
-    response = ParameterStoreManager.update_parameter(
-        AwsAccountId=current_account,
-        region=region,
-        parameter_name=f'/dataall/{os.getenv("envname", "local")}/quicksightmonitoring/{name}',
-        parameter_value=value,
-    )
-    return response
+    return TenantActionsService.update_monitoring_ssm_parameter(name, value)
