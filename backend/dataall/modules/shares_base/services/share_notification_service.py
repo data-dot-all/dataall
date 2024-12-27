@@ -53,7 +53,7 @@ class ShareNotificationService:
         share_link_text = ''
         if os.environ.get('frontend_domain_url'):
             share_link_text = f'<br><br> Please visit data.all <a href="{os.environ.get("frontend_domain_url")}/console/shares/{self.share.shareUri}">share link </a> to take action or view more details'
-        msg = f'User {email_id} SUBMITTED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
+        msg = f'User {email_id} SUBMITTED share request for dataset {self.dataset.label} for principal {self.share.principalRoleName}'
         subject = f'Data.all | Share Request Submitted for {self.dataset.label}'
         email_notification_msg = msg + share_link_text
 
@@ -68,7 +68,7 @@ class ShareNotificationService:
         share_link_text = ''
         if os.environ.get('frontend_domain_url'):
             share_link_text = f'<br><br> Please visit data.all <a href="{os.environ.get("frontend_domain_url")}/console/shares/{self.share.shareUri}">share link </a> to take action or view more details'
-        msg = f'User {email_id} SUBMITTED share extension request for dataset {self.dataset.label} for principal {self.share.principalId}'
+        msg = f'User {email_id} SUBMITTED share extension request for dataset {self.dataset.label} for principal {self.share.principalRoleName}'
         subject = f'Data.all | Share Extension Request Submitted for {self.dataset.label}'
         email_notification_msg = msg + share_link_text
 
@@ -90,7 +90,7 @@ class ShareNotificationService:
 
         msg_intro = f"""Dear User,
         This is a reminder that a share request for the dataset "{self.dataset.label}" submitted by {email_id} 
-        on behalf of principal "{self.share.principalId}" is still pending and has not been addressed.
+        on behalf of principal "{self.share.principalRoleName}" is still pending and has not been addressed.
         """
 
         msg_end = """Your prompt attention in this matter is greatly appreciated.
@@ -123,7 +123,7 @@ class ShareNotificationService:
             )
         msg = (
             f'User {email_id} APPROVED share request for dataset {self.dataset.label} '
-            f'for principal {self.share.principalId}'
+            f'for principal {self.share.principalRoleName}'
         )
         subject = f'Data.all | Share Request Approved for {self.dataset.label}'
         email_notification_msg = msg + share_link_text
@@ -145,7 +145,7 @@ class ShareNotificationService:
             )
         msg = (
             f'User {email_id} APPROVED share extension request for dataset {self.dataset.label} '
-            f'for principal {self.share.principalId}'
+            f'for principal {self.share.principalRoleName}'
         )
         subject = f'Data.all | Share Extension Request Approved for {self.dataset.label}'
         email_notification_msg = msg + share_link_text
@@ -162,13 +162,13 @@ class ShareNotificationService:
         if os.environ.get('frontend_domain_url'):
             share_link_text = f'<br><br> Please visit data.all <a href="{os.environ.get("frontend_domain_url")}/console/shares/{self.share.shareUri}">share link </a> to take action or view more details'
         if self.share.status == ShareObjectStatus.Rejected.value:
-            msg = f'User {email_id} REJECTED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
+            msg = f'User {email_id} REJECTED share request for dataset {self.dataset.label} for principal {self.share.principalRoleName}'
             subject = f'Data.all | Share Request Rejected for {self.dataset.label}'
         elif self.share.status == ShareObjectStatus.Revoked.value:
-            msg = f'User {email_id} REVOKED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
+            msg = f'User {email_id} REVOKED share request for dataset {self.dataset.label} for principal {self.share.principalRoleName}'
             subject = f'Data.all | Share Request Revoked for {self.dataset.label}'
         else:
-            msg = f'User {email_id} REJECTED/REVOKED share request for dataset {self.dataset.label} for principal {self.share.principalId}'
+            msg = f'User {email_id} REJECTED/REVOKED share request for dataset {self.dataset.label} for principal {self.share.principalRoleName}'
             subject = f'Data.all | Share Request Rejected / Revoked for {self.dataset.label}'
         email_notification_msg = msg + share_link_text
 
@@ -183,7 +183,7 @@ class ShareNotificationService:
         share_link_text = ''
         if os.environ.get('frontend_domain_url'):
             share_link_text = f'<br><br> Please visit data.all <a href="{os.environ.get("frontend_domain_url")}/console/shares/{self.share.shareUri}">share link </a> to take action or view more details'
-        msg = f'User {email_id} REJECTED share extension request for dataset {self.dataset.label} on principal {self.share.principalId}'
+        msg = f'User {email_id} REJECTED share extension request for dataset {self.dataset.label} on principal {self.share.principalRoleName}'
         subject = f'Data.all | Share Extension Request Rejected for {self.dataset.label}'
         email_notification_msg = msg + share_link_text
 
