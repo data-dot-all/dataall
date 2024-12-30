@@ -195,6 +195,21 @@ class ShareObjectRepository:
         return query.all()
 
     @staticmethod
+    def get_share_object_with_health_status(session, health_status_list: List[str] = None):
+        query = (
+            session.query(ShareObject)
+            .join(
+                ShareObjectItem,
+                ShareObjectItem.shareUri == ShareObject.shareUri
+            ).filter(
+                ShareObjectItem.healthStatus.in_(health_status_list)
+            )
+        )
+
+        return query.all()
+
+
+    @staticmethod
     def get_all_share_items_in_share(session, share_uri, status=None, healthStatus=None):
         query = (
             session.query(ShareObjectItem)
