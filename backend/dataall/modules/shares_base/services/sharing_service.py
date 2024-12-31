@@ -364,9 +364,7 @@ class SharingService:
                                 log.info(f'There are no items to reapply of type {type.value}')
                         except Exception as e:
                             log.error(f'Error occurred during share reapplying of {type.value}: {e}')
-                            AdminNotificationService().notify_admins_with_error_log(
-                                process_error=f'Error occurred during reapplying of share with uri: {share_data.share.shareUri} for processor type: {type.value}  due to an unknown exception',
-                                error_logs=[str(e)], process_name='Sharing Service')
+                            code_exception_list.append(f'Error occurred during reapplying of share with uri: {share_data.share.shareUri} for processor type: {type.value}  due to an unknown exception: {e}')
 
                 if not reapply_successful:
                     log.info(
@@ -375,18 +373,19 @@ class SharingService:
                                              share=share_data.share).notify_share_object_items_unhealthy()
                 return reapply_successful
 
-            except ResourceLockTimeout as e:
+            except ResourceLockTimeout as timeout_exception:
                 ShareStatusRepository.update_share_item_health_status_batch(
                     session,
                     share_uri,
                     old_status=ShareItemHealthStatus.PendingReApply.value,
                     new_status=ShareItemHealthStatus.Unhealthy.value,
-                    message=str(e),
+                    message=str(timeout_exception),
                 )
-                code_exception_list.append(str(e))
+                code_exception_list.append(str(timeout_exception))
+                return False
 
             except Exception as e:
-                log.exception('Error occurred during share approval')
+                log.exception(f'Error occurred during share reapply: {e}')
                 code_exception_list.append(str(e))
                 return False
 
@@ -394,7 +393,7 @@ class SharingService:
                 if len(code_exception_list) > 0:
                     AdminNotificationService().notify_admins_with_error_log(
                         process_error=f'Error occurred during reapplying of share with uri: {share_data.share.shareUri}',
-                        error_logs=[str(e)], process_name='Sharing Service')
+                        error_logs=code_exception_list, process_name='Sharing Service')
 
     @classmethod
     def cleanup_share(

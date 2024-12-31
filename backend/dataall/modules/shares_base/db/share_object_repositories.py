@@ -491,6 +491,11 @@ class ShareObjectRepository:
         return pending_shares
 
     @staticmethod
+    def get_shares_with_statuses(session, status_list: List[str]):
+        query = session.query(ShareObject).filter(ShareObject.status.in_(status_list))
+        return query.all()
+
+    @staticmethod
     def get_all_active_shares_with_expiration(session):
         return (
             session.query(ShareObject)

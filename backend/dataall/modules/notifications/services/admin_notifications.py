@@ -10,10 +10,12 @@ class AdminNotificationService:
 
         subject = f'Data.all alert | Attention Required | Failure in : {process_name}'
         email_message = f"""
-            Following error occurred when , {process_error} <br><br>
+            Following error occurred - <br><br> {process_error} <br><br>
         """
         for error_log in error_logs:
             email_message += error_log + "<br><br>"
+
+        email_message += "Please check the logs in cloudwatch for more details"
 
         SESEmailNotificationService.create_and_send_email_notifications(
             subject=subject,

@@ -271,11 +271,15 @@ class ShareNotificationService:
                 f'to take action or view more details'
             )
         msg = (
-            f'Share request made for dataset: {self.dataset.label} with requestor principal: {self.share.principalRoleName} failed. <br><br>'
+            f'Share request made for dataset: <b>{self.dataset.label}</b> with requestor principal: <b>{self.share.principalRoleName}</b> failed. <br><br>'
             f'You can delete and resubmit the failed items in the share. If your share item still remains in the Share_Failed state then please get in touch with data.all admins.'
         )
+        msg_footer = """
+        Regards,<br>
+        data.all team
+        """
         subject = f'Data.all | Attention Required | Share failed for {self.dataset.label}'
-        email_notification_msg = msg + share_link_text
+        email_notification_msg = msg + share_link_text + "<br><br>" + msg_footer
 
         notifications = self.register_notifications(
             notification_type=DataSharingNotificationType.SHARE_OBJECT_FAILED.value, msg=msg
@@ -296,12 +300,16 @@ class ShareNotificationService:
             )
         msg = (
             f'Hello Team, <br>'
-            f'Your share with share uri: {self.share.shareUri} has one or more unhealthy share items. <br><br>'
-            f'Once you visit your share link you can click on the Reapply button and this should correct your share and get it into an healthy state. If this doesn\'t get your share in healthy state then please get in touch with data.all admins for your share.'
-            f'<br>If you are using any terraform / cloudformation or any other IaC to also manage your bucket policy, kms policy and requestor IAM role, please make them aware of the data.all changes so that they don\'t wipe off data.all related policies'
+            f'Your share with share uri: <b>{self.share.shareUri}</b> has one or more unhealthy share items. <br><br>'
+            f'Once you visit your share link you can click on the Reapply button and this should correct your share and get it into an healthy state.<b> If this doesn\'t get your share in healthy state then please get in touch with data.all admins for your share.'
+            f'<br><br><b>Please note</b>: If you are using any terraform / cloudformation or any other IaC to also manage your bucket policy, kms policy and requestor IAM role, please make them aware of the data.all changes so that they don\'t wipe off data.all related policies'
         )
+        msg_footer = """
+                Regards,<br>
+                data.all team
+                """
         subject = f'Data.all | Attention Required | Share for {self.dataset.label} dataset in unhealthy state'
-        email_notification_msg = msg + share_link_text
+        email_notification_msg = msg + share_link_text + "<br><br>" + msg_footer
 
         notifications = self.register_notifications(
             notification_type=DataSharingNotificationType.SHARE_OBJECT_UNHEALTHY.value, msg=msg, to_recipients=[self.share.groupUri]
@@ -323,10 +331,14 @@ class ShareNotificationService:
             )
         msg = (
             f'Hello Team, <br>'
-            f'Your share with share uri: {self.share.shareUri} is in healthy state<br>'
+            f'Your share with share uri: <b>{self.share.shareUri}</b> is now in healthy state after reapplying the share.<br>'
         )
+        msg_footer = """
+                Regards,<br>
+                data.all team
+                """
         subject = f'Data.all | Share for {self.dataset.label} dataset now in healthy state'
-        email_notification_msg = msg + share_link_text
+        email_notification_msg = msg + share_link_text + "<br><br>" + msg_footer
 
         notifications = self.register_notifications(
             notification_type=DataSharingNotificationType.SHARE_OBJECT_HEALTHY.value, msg=msg, to_recipients=[self.share.groupUri]

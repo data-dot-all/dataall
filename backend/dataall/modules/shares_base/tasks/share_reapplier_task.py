@@ -45,23 +45,22 @@ class EcsBulkShareRepplyService:
         processed_share_objects = []
         task_exceptions = []
         for share_object in share_objects:
-            log.info(
-                f'Re-applying Share Items for Share Object, Share URI: {share_object.shareUri} ) with Requestor: {share_object.principalId} on Target Dataset: {share_object.datasetUri}'
-            )
-            processed_share_objects.append(share_object.shareUri)
-            ShareStatusRepository.update_share_item_health_status_batch(
-                session=session,
-                share_uri=share_object.shareUri,
-                old_status=ShareItemHealthStatus.Unhealthy.value,
-                new_status=ShareItemHealthStatus.PendingReApply.value,
-            )
             try:
+                log.info(
+                    f'Re-applying Share Items for Share Object, Share URI: {share_object.shareUri} ) with Requestor: {share_object.principalId} on Target Dataset: {share_object.datasetUri}'
+                )
+                processed_share_objects.append(share_object.shareUri)
+                ShareStatusRepository.update_share_item_health_status_batch(
+                    session=session,
+                    share_uri=share_object.shareUri,
+                    old_status=ShareItemHealthStatus.Unhealthy.value,
+                    new_status=ShareItemHealthStatus.PendingReApply.value,
+                )
                 SharingService.reapply_share(engine, share_uri=share_object.shareUri)
             except Exception as e:
-                log.error(
-                    f'Error occurred while reapplying share for share with uri:{share_object.shareUri} due to: {e}')
-                task_exceptions.append(
-                    f'Error occurred while reapplying share for share with uri:{share_object.shareUri} due to: {e}')
+                error_formatted = f'Error occurred while reapplying share in the reapplie task for share with uri:{share_object.shareUri} due to: {e}'
+                log.error(error_formatted)
+                task_exceptions.append(error_formatted)
         return (processed_share_objects, task_exceptions)
     @classmethod
     def process_reapply_shares(cls, engine):
