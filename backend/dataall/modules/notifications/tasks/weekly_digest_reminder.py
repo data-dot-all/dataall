@@ -137,12 +137,13 @@ def send_reminder_email(engine):
 
 def _construct_email_body(resource_bundle: NotificationResourceBundle):
     msg_heading = """
-    Dear Team, <br>
-    You have following data.all resources in unhealthy state. Please click on the links provided to get to the affected resource.
-    Please correct affected resources ASAP. <br><br> 
+    Dear Team, <br><br>
     
+    This email contains data.al resources where you need to take some actions. For resources which are in unhealthy state we request you to take actions ASAP so as to minimize any disruptions.<br><br>
+    
+    <b>Helpful Tips:</b><br><br>
     For shares which are in unhealthy state, you can re-apply share by clicking on the "Reapply share" button <br>
-    For environments and datasets which are in unhealthy state, you can go to the AWS account and check the stack associated with that environment and check the root cause of the stack. Once you address the root cause issue, you can click on "Update Stack" on the Stack Page. <br> 
+    For environments and datasets which are in unhealthy state, you can go to the AWS account and check the stack associated with that environment/dataset and check the root cause of the stack. Once you address the root cause issue, you can click on "Update Stack" on the Stack Page. <br><br><br> 
     """
     msg_content = """"""
     share_object_table_content = _create_table_for_resource(resource_bundle.share_object_notifications, "shareUri",
@@ -157,7 +158,7 @@ def _construct_email_body(resource_bundle: NotificationResourceBundle):
     msg_content += share_object_table_content + dataset_object_table_content + environment_object_table_content + "<br><br>"
 
     msg_footer = """
-    In case your stack(s) or share object is still in unhealthy state after applying remedial measures, please contact data.all team. <br><br>
+    In case your stack(s) or share object(s) are still in unhealthy state after applying remedial measures, please contact data.all team. <br><br>
     Regards,<br>
     data.all Team
     """
@@ -192,7 +193,6 @@ def _create_table_for_resource(list_of_resources, uri_attr, link_uri):
                     {resource.resource_status}
                 </td>
             </tr>
-            <>
         """
     table = f"""
     <table border='1' style='border-collapse:collapse'>

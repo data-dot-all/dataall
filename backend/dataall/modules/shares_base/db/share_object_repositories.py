@@ -42,11 +42,18 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def find_dataset_shares(session, dataset_uri):
-        return session.query(ShareObject).filter(ShareObject.datasetUri == dataset_uri).all()
+    def find_dataset_shares(session, dataset_uri: str, share_statues: List[str] = None):
+        query = session.query(ShareObject).filter(ShareObject.datasetUri == dataset_uri)
+
+        if share_statues:
+            query = query.filter(ShareObject.status.in_(share_statues))
+
+        return query.all()
 
     @staticmethod
-    def find_share_by_dataset_attributes(session, dataset_uri, dataset_owner, groups=[]):
+    def find_share_by_dataset_attributes(session, dataset_uri, dataset_owner, groups = None):
+        if groups is None:
+            groups = []
         share: ShareObject = (
             session.query(ShareObject)
             .filter(ShareObject.datasetUri == dataset_uri)
