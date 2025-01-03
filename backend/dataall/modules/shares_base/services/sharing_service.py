@@ -136,7 +136,6 @@ class SharingService:
                 new_share_state = share_object_sm.run_transition(ShareObjectActions.Finish.value)
                 share_object_sm.update_state(session, share_data.share, new_share_state)
                 if not share_successful:
-                    # Create UI and email notifications
                     ShareNotificationService(session=session, dataset=share_data.dataset,
                                              share=share_data.share).notify_share_object_failed()
                 return share_successful
@@ -242,7 +241,6 @@ class SharingService:
                     new_share_state = share_sm.run_transition(ShareObjectActions.Finish.value)
                 share_sm.update_state(session, share_data.share, new_share_state)
                 if not revoke_successful:
-                    # Create UI and email notifications
                     ShareNotificationService(session=session, dataset=share_data.dataset,
                                              share=share_data.share).notify_share_object_failed()
                 return revoke_successful

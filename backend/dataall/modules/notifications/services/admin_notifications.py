@@ -6,7 +6,15 @@ from dataall.modules.notifications.services.ses_email_notification_service impor
 class AdminNotificationService:
     admin_group = 'DAAdministrators'
 
-    def notify_admins_with_error_log(self, process_error: str, error_logs: List[str], process_name:str = ''):
+    """
+    Send email notifications to Admin Group i.e. DAAdministrators in data.all
+    Args -
+        1. process_error - string describing in short the error / exception details
+        2. error_logs - List of all the exception error logs 
+        3. process_name - Code where the exception occurred. Example, inside an ECS task like cataloging task, etc or inside a graphql service
+    """
+    @classmethod
+    def notify_admins_with_error_log(cls, process_error: str, error_logs: List[str], process_name:str = ''):
 
         subject = f'Data.all alert | Attention Required | Failure in : {process_name}'
         email_message = f"""
@@ -20,5 +28,5 @@ class AdminNotificationService:
         SESEmailNotificationService.create_and_send_email_notifications(
             subject=subject,
             msg=email_message,
-            recipient_groups_list=[AdminNotificationService.admin_group]
+            recipient_groups_list=[cls.admin_group]
         )

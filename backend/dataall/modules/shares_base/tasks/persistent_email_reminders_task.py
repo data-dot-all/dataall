@@ -18,6 +18,7 @@ def persistent_email_reminders(engine):
     A method used by the scheduled ECS Task to run persistent_email_reminder() process against ALL
     active share objects within data.all and send emails to all pending shares.
     """
+    task_exceptions = []
     try:
         with engine.scoped_session() as session:
             log.info('Running Persistent Email Reminders Task')
@@ -35,11 +36,14 @@ def persistent_email_reminders(engine):
             log.info('Completed Persistent Email Reminders Task')
     except Exception as e:
         log.error(f'Error while running persistent email reminder task: {e}')
-        AdminNotificationService().notify_admins_with_error_log(
-            process_name='Persistent Email Service',
-            error_logs=[str(e)],
-            process_error='Error while running persistent email reminder task'
-        )
+        task_exceptions.append(f'Error while running persistent email reminder task: {e}')
+    finally:
+        if len(task_exceptions) > 0:
+            AdminNotificationService().notify_admins_with_error_log(
+                process_name='Persistent Email Task',
+                error_logs=task_exceptions,
+                process_error='Error while running persistent email reminder task'
+            )
 
 
 if __name__ == '__main__':

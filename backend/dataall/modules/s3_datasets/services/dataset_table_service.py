@@ -158,6 +158,7 @@ class DatasetTableService:
 
                 DatasetTableRepository.sync_table_columns(session, updated_table, table)
 
+        log.debug(f'Updated tables map: {updated_table_status_map}')
         return updated_table_status_map
 
     @staticmethod

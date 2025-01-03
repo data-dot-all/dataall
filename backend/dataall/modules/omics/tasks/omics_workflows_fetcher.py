@@ -61,7 +61,7 @@ def fetch_omics_workflows(engine):
                     OmicsRepository(session).save_omics_workflow(omicsWorkflow)
         return True
     except Exception as e:
-        log.error(f'Error occured while processing omics workflow task due to: {e}')
+        log.error(f'Error occurred while processing omics workflow task due to: {e}')
         AdminNotificationService().notify_admins_with_error_log(
             process_error='Error occurred while processing omics workflow task',
             error_logs=[str(e)],

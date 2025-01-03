@@ -69,7 +69,6 @@ class EcsBulkShareRepplyService:
             with engine.scoped_session() as session:
                 all_share_objects: [ShareObject] = ShareObjectRepository.list_all_active_share_objects(session)
                 log.info(f'Found {len(all_share_objects)} share objects ')
-                share_object: ShareObject
                 processed_share_objects, task_exceptions = cls._reapply_share_objects(engine=engine, session=session,
                                                                                       share_objects=all_share_objects)
             return processed_share_objects

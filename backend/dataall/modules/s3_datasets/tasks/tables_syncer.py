@@ -54,8 +54,8 @@ def sync_tables(engine):
 
                         table_status_map = DatasetTableService.sync_existing_tables(session, uri=dataset.datasetUri, glue_tables=tables)
 
-                        # Send notifications
                         if table_status_map:
+                            log.info('Sending email notification after dataset table updates were found')
                             try:
                                 DatasetTableNotifications(dataset=dataset).notify_dataset_table_updates(session=session, table_status_map=table_status_map)
                             except Exception as e:
