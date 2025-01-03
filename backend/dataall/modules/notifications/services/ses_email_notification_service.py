@@ -3,6 +3,7 @@ import logging
 
 from dataall.base.aws.cognito import Cognito
 from dataall.base.aws.ses import Ses
+from dataall.base.config import config
 from dataall.base.services.service_provider_factory import ServiceProviderFactory
 from dataall.modules.notifications.services.base_email_notification_service import BaseEmailNotificationService
 
@@ -60,3 +61,31 @@ class SESEmailNotificationService(BaseEmailNotificationService):
         # https://aws.amazon.com/blogs/messaging-and-targeting/how-to-send-messages-to-multiple-recipients-with-amazon-simple-email-service-ses/
         for emailId in email_list:
             email_provider.send_email([emailId], message, subject)
+
+    @staticmethod
+    def create_and_send_email_notifications(subject, msg, recipient_groups_list=None, recipient_email_ids=None):
+        """
+        Method to directly send email notification instead of creating an SQS Task
+        This approach is used while sending email notifications in an ECS task ( e.g. persistent email reminder task, share expiration task, etc )
+        Emails send to groups mentioned in recipient_groups_list and / or emails mentioned in recipient_email_ids
+        """
+        if recipient_groups_list is None:
+            recipient_groups_list = []
+        if recipient_email_ids is None:
+            recipient_email_ids = []
+
+        share_notification_config = config.get_property(
+            'modules.datasets_base.features.share_notifications', default=None
+        )
+        if share_notification_config:
+            for share_notification_config_type in share_notification_config.keys():
+                n_config = share_notification_config[share_notification_config_type]
+                if n_config.get('active', False) == True:
+                    if share_notification_config_type == 'email':
+                        SESEmailNotificationService.send_email_task(
+                            subject, msg, recipient_groups_list, recipient_email_ids
+                        )
+                else:
+                    log.info(f'Notification type : {share_notification_config_type} is not active')
+        else:
+            log.info('Notifications are not active')

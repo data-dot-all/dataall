@@ -441,7 +441,7 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                 return False
             return success
 
-    def verify_shares(self) -> bool:
+    def verify_shares_health_status(self) -> bool:
         """
         1) (in source namespace) Check the datashare exists
         2) (in source namespace) Check that schema is added to datashare
@@ -459,7 +459,7 @@ class ProcessRedshiftShare(SharesProcessorInterface):
             9) (in target namespace) Check that the redshift role has select access to the requested table in the local db.
             10) (in target namespace) Check that the redshift role has select access to the requested table in the external schema.
         """
-
+        share_object_item_health_status = True
         log.info('##### Verifying Redshift tables #######')
         if not self.tables:
             log.info('No tables to verify. Skipping...')
@@ -599,11 +599,12 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                         ' | '.join(ds_level_errors) + ' | ' + ' | '.join(tbl_level_errors),
                         datetime.now(),
                     )
+                    share_object_item_health_status = False
                 else:
                     ShareStatusRepository.update_share_item_health_status(
                         self.session, share_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
                     )
-        return True
+        return share_object_item_health_status
 
     def cleanup_shares(self) -> bool:
         """
