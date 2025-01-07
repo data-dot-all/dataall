@@ -42,7 +42,6 @@ def test_create_and_delete_share_object(new_share_param):
         principalType=principal_type,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
-        permissions=['Read'],
     )
     assert_that(share.status).is_equal_to('Draft')
     delete_share_object(client, share.shareUri)
@@ -61,7 +60,6 @@ def test_submit_empty_object(new_share_param):
         principalType=principal_type,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
-        permissions=['Read'],
     )
     assert_that(submit_share_object).raises(Exception).when_called_with(client, share.shareUri).contains(
         'ShareItemsFound', 'The request is empty'
@@ -80,7 +78,6 @@ def test_add_share_items(new_share_param):
         principalType=principal_type,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
-        permissions=['Read'],
     )
     share = get_share_object(client, share.shareUri)
 
@@ -112,7 +109,6 @@ def test_reject_share(client1, new_share_param):
         principalType=principal_type,
         requestPurpose='test create share object',
         attachMissingPolicies=True,
-        permissions=['Read'],
     )
     share = get_share_object(client, share.shareUri)
 

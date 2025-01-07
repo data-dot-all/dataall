@@ -113,7 +113,6 @@ def session_share_1(
         principalType='Group',
         requestPurpose='test create share object',
         attachMissingPolicies=True,
-        permissions=['Read'],
     )
     share1 = get_share_object(client5, share1.shareUri)
     yield share1
@@ -139,7 +138,6 @@ def session_share_2(
         principalType='Group',
         requestPurpose='test create share object',
         attachMissingPolicies=True,
-        permissions=['Read'],
     )
     share2 = get_share_object(client5, share2.shareUri)
     yield share2
@@ -165,7 +163,6 @@ def session_share_3(
         principalType='Group',
         requestPurpose='test create share object',
         attachMissingPolicies=True,
-        permissions=['Read'],
     )
     share3 = get_share_object(client6, share3.shareUri)
     yield share3
@@ -192,7 +189,6 @@ def session_share_consrole_1(
         principalType='ConsumptionRole',
         requestPurpose='test create share object',
         attachMissingPolicies=True,
-        permissions=['Read'],
     )
     share1cr = get_share_object(client5, share1cr.shareUri)
     yield share1cr
@@ -219,7 +215,6 @@ def session_share_consrole_2(
         principalType='ConsumptionRole',
         requestPurpose='test create share object',
         attachMissingPolicies=True,
-        permissions=['Read'],
     )
     share2cr = get_share_object(client5, share2cr.shareUri)
     yield share2cr
@@ -246,7 +241,6 @@ def session_share_consrole_3(
         principalType='ConsumptionRole',
         requestPurpose='test create share object',
         attachMissingPolicies=True,
-        permissions=['Read'],
     )
     share3cr = get_share_object(client6, share3cr.shareUri)
     yield share3cr
@@ -474,7 +468,6 @@ def persistent_group_share_1(
         principalType='Group',
         requestPurpose='create persistent share object',
         attachMissingPolicies=True,
-        permissions=['Read'],
     )
     share1 = get_share_object(client5, share1.shareUri)
 
@@ -507,7 +500,6 @@ def persistent_role_share_1(
         principalType='ConsumptionRole',
         requestPurpose='create persistent share object',
         attachMissingPolicies=True,
-        permissions=['Read'],
     )
     share1 = get_share_object(client5, share1.shareUri)
 
