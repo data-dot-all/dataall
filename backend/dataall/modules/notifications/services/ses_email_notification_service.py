@@ -1,7 +1,6 @@
 # Email Notification Provider implements the email notification service abstract method
 import logging
 
-from dataall.base.aws.cognito import Cognito
 from dataall.base.aws.ses import Ses
 from dataall.base.config import config
 from dataall.base.services.service_provider_factory import ServiceProviderFactory
@@ -38,9 +37,8 @@ class SESEmailNotificationService(BaseEmailNotificationService):
         email_provider = SESEmailNotificationService.get_email_provider_instance(
             recipient_groups_list, recipient_email_list
         )
+        identityProvider = ServiceProviderFactory.get_service_provider_instance()
         try:
-            identityProvider = ServiceProviderFactory.get_service_provider_instance()
-
             email_ids_to_send_emails = email_provider.get_email_ids_from_groupList(
                 email_provider.recipient_group_list, identityProvider
             )
@@ -51,6 +49,8 @@ class SESEmailNotificationService(BaseEmailNotificationService):
             SESEmailNotificationService.send_email_to_users(email_ids_to_send_emails, email_provider, message, subject)
 
         except Exception as e:
+            email_ids_to_send_emails = email_provider.get_email_ids_from_groupList(['DAAdministrators'] , identityProvider)
+            SESEmailNotificationService.send_email_to_users(email_ids_to_send_emails, email_provider, f'Error sending email due to: {e}', 'Data.all alert | Attention Required | Failure in: Email Notification Service')
             raise e
         else:
             return True

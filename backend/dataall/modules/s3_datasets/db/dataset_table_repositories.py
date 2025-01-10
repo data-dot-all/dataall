@@ -66,9 +66,12 @@ class DatasetTableRepository:
         updated_tables_status_map: Dict[str: str] = {}
         for existing_table in existing_tables:
             if existing_table.GlueTableName not in [t['Name'] for t in glue_tables]:
-                existing_table.LastGlueTableStatus = 'Deleted'
-                updated_tables_status_map[existing_table.GlueTableName] = 'Deleted'
-                logger.info(f'Existing Table {existing_table.GlueTableName} status set to Deleted from Glue')
+                if existing_table.LastGlueTableStatus != 'Deleted':
+                    existing_table.LastGlueTableStatus = 'Deleted'
+                    updated_tables_status_map[existing_table.GlueTableName] = 'Deleted'
+                    logger.info(f'Existing Table {existing_table.GlueTableName} status set to Deleted from Glue')
+                else:
+                    logger.info(f'Existing Table {existing_table.GlueTableName} status already set Deleted')
             elif (
                 existing_table.GlueTableName in [t['Name'] for t in glue_tables]
                 and existing_table.LastGlueTableStatus == 'Deleted'
