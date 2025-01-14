@@ -272,7 +272,7 @@ class ShareNotificationService:
             )
         msg = (
             f'Share request made for dataset: <b>{self.dataset.label}</b> with requestor principal: <b>{self.share.principalRoleName}</b> failed. <br><br>'
-            f'You can delete and resubmit the failed items in the share. If your share item still remains in the Share_Failed state then please get in touch with data.all admins.'
+            f'Please reach out to the data.all team for troubleshooting problems with this share'
         )
         msg_footer = """
         Regards,<br>

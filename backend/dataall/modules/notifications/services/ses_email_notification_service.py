@@ -74,10 +74,9 @@ class SESEmailNotificationService(BaseEmailNotificationService):
         if recipient_email_ids is None:
             recipient_email_ids = []
 
-        share_notification_config = config.get_property(
+        if share_notification_config := config.get_property(
             'modules.datasets_base.features.share_notifications', default=None
-        )
-        if share_notification_config:
+        ):
             for share_notification_config_type in share_notification_config.keys():
                 n_config = share_notification_config[share_notification_config_type]
                 if n_config.get('active', False) == True:

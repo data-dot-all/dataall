@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 
 from dataall.base.db import get_engine
 from dataall.base.loader import load_modules, ImportMode
@@ -63,7 +63,7 @@ def _get_unhealthy_share_notification(session):
         session=session, health_status_list=[ShareItemHealthStatus.Unhealthy.value])
     log.info(f"Found {len(unhealthy_share_objects)} unhealthy share objects")
     return [
-        NotificationResource(resource=share, resource_type='Share_object', resource_status='Unhealthy',
+        NotificationResource(resource=share, resource_type='Share Object', resource_status='Unhealthy',
                              receivers=[share.groupUri]) for share in unhealthy_share_objects]
 
 
@@ -102,7 +102,7 @@ def _get_receivers_for_stack(resource, target_type):
         return [resource.SamlGroupName]
 
 """
-Function to create a map of group name : resource bundle, where each resource bundle contains dataset, share and environment notification lists. 
+Function to create a map of {group name : resource bundle}, where each resource bundle contains dataset, share and environment notification lists. 
 Iterated over all the notification ( NotificationResources ) and then segregate based on the dataset, shares & environment notifications and map the bundle to a team.
 """
 def _map_groups_to_resource_bundles(list_of_notifications: List[NotificationResource], resource_bundle_type: str):
@@ -121,7 +121,7 @@ def _map_groups_to_resource_bundles(list_of_notifications: List[NotificationReso
 
 def send_reminder_email(engine):
     task_exceptions = []
-    resources_type_tuple = ()
+    resources_type_tuple: List[Tuple] = []
     try:
         with engine.scoped_session() as session:
             # Get all shares in submitted state
@@ -145,12 +145,6 @@ def send_reminder_email(engine):
 
             # For each notification resource ( i.e. share notification, dataset notification, etc ),
             # function _map_groups_to_resource_bundles maps each team name : resource bundle
-            # Equivalent to calling
-            # _map_groups_to_resource_bundles(list_of_notifications=pending_share_notification_resources,
-            #                                 resource_bundle_type="share_object_notifications")
-            # _map_groups_to_resource_bundles(list_of_notifications=unhealthy_share_objects_notification_resources,
-            #                                 resource_bundle_type="share_object_notifications") ....
-
             for notification_resources, resource_bundle_type in resources_type_tuple:
                 _map_groups_to_resource_bundles(list_of_notifications=notification_resources, resource_bundle_type=resource_bundle_type)
 
@@ -181,11 +175,11 @@ def _construct_email_body(resource_bundle: NotificationResourceBundle):
     msg_heading = """
     Dear Team, <br><br>
     
-    This email contains data.al resources where you need to take some actions. For resources which are in unhealthy state we request you to take actions ASAP so as to minimize any disruptions.<br><br>
+    This email contains data.all resources where you need to take some actions. For resources which are in unhealthy state we request you to take actions ASAP so as to minimize any disruptions.<br><br>
     
     <b>Helpful Tips:</b><br><br>
     For shares which are in unhealthy state, you can re-apply share by clicking on the "Reapply share" button <br>
-    For environments and datasets which are in unhealthy state, you can go to the AWS account and check the stack associated with that environment/dataset and check the root cause of the stack. Once you address the root cause issue, you can click on "Update Stack" on the Stack Page. <br><br><br> 
+    For environments and datasets which are in unhealthy state, you can go to the AWS account and check the stack associated with that environment/dataset and check the root cause of the stack. Once you address the root cause issue, you can click on "Update Stack" on the stack page of the data.all resource in the data.all UI <br><br><br> 
     """
     msg_content = """"""
     share_object_table_content = _create_table_for_resource(resource_bundle.share_object_notifications, "shareUri",
