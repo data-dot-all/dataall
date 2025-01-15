@@ -7,18 +7,28 @@ Create Date: 2024-06-18 17:00:22.910461
 """
 
 from alembic import op
-from sqlalchemy import orm
-from dataall.core.environment.db.environment_models import EnvironmentGroup, Environment
+from sqlalchemy import orm, Column, String
+from sqlalchemy.ext.declarative import declarative_base
+from dataall.core.environment.db.environment_models import EnvironmentGroup
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.permissions.services.organization_permissions import GET_ORGANIZATION
 from dataall.core.organizations.db import organization_models as models
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.base.db import utils, Resource
 
 # revision identifiers, used by Alembic.
 revision = '328e35e39e1e'
 down_revision = '448d9dc95e94'
 branch_labels = None
 depends_on = None
+
+Base = declarative_base()
+
+
+class Environment(Resource, Base):
+    __tablename__ = 'environment'
+    environmentUri = Column(String, primary_key=True, default=utils.uuid('environment'))
+    organizationUri = Column(String, nullable=False)
 
 
 def get_session():

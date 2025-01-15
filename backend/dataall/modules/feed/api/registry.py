@@ -10,6 +10,7 @@ from dataall.base.db import Resource
 class FeedDefinition:
     target_type: str
     model: Type[Resource]
+    permission: str
 
 
 class FeedRegistry(UnionTypeRegistry):
@@ -24,6 +25,10 @@ class FeedRegistry(UnionTypeRegistry):
     @classmethod
     def find_model(cls, target_type: str):
         return cls._DEFINITIONS[target_type].model
+
+    @classmethod
+    def find_permission(cls, target_type: str):
+        return cls._DEFINITIONS[target_type].permission
 
     @classmethod
     def find_target(cls, obj: Resource):

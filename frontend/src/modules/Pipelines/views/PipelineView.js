@@ -31,7 +31,7 @@ import { deleteDataPipeline, getDataPipeline } from '../services';
 import { FeedComments, KeyValueTagList, Stack } from 'modules/Shared';
 import { PipelineOverview } from '../components';
 
-function PipelineViewPageHeader({ pipeline, deletePipeline }) {
+function PipelineViewPageHeader({ pipeline, deletePipeline, isAdmin }) {
   const [openFeed, setOpenFeed] = useState(false);
   return (
     <Grid container justifyContent="space-between" spacing={3}>
@@ -69,16 +69,18 @@ function PipelineViewPageHeader({ pipeline, deletePipeline }) {
       </Grid>
       <Grid item>
         <Box sx={{ m: -1 }}>
-          <Button
-            color="primary"
-            startIcon={<ForumOutlined fontSize="small" />}
-            sx={{ mt: 1, mr: 1 }}
-            onClick={() => setOpenFeed(true)}
-            type="button"
-            variant="outlined"
-          >
-            Chat
-          </Button>
+          {isAdmin && (
+            <Button
+              color="primary"
+              startIcon={<ForumOutlined fontSize="small" />}
+              sx={{ mt: 1, mr: 1 }}
+              onClick={() => setOpenFeed(true)}
+              type="button"
+              variant="outlined"
+            >
+              Chat
+            </Button>
+          )}
           <Button
             color="primary"
             component={RouterLink}
@@ -116,7 +118,8 @@ function PipelineViewPageHeader({ pipeline, deletePipeline }) {
 
 PipelineViewPageHeader.propTypes = {
   pipeline: PropTypes.object.isRequired,
-  deletePipeline: PropTypes.func.isRequired
+  deletePipeline: PropTypes.func.isRequired,
+  isAdmin: PropTypes.bool.isRequired
 };
 const PipelineView = () => {
   const dispatch = useDispatch();
@@ -134,6 +137,7 @@ const PipelineView = () => {
     { label: 'Tags', value: 'tags', icon: <LocalOffer fontSize="small" /> },
     { label: 'Stack', value: 'stack', icon: <FaAws size={20} /> }
   ];
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const handleDeleteObjectModalOpen = () => {
     setIsDeleteObjectModalOpen(true);
@@ -148,6 +152,11 @@ const PipelineView = () => {
     const response = await client.query(getDataPipeline(params.uri));
     if (!response.errors && response.data.getDataPipeline !== null) {
       setPipeline(response.data.getDataPipeline);
+      setIsAdmin(
+        ['Creator', 'Admin', 'Owner'].indexOf(
+          response.data.getDataPipeline.userRoleForPipeline
+        ) !== -1
+      );
     } else {
       const error = response.errors
         ? response.errors[0].message
@@ -212,6 +221,7 @@ const PipelineView = () => {
           <PipelineViewPageHeader
             pipeline={pipeline}
             deletePipeline={handleDeleteObjectModalOpen}
+            isAdmin={isAdmin}
           />
           <Box sx={{ mt: 3 }}>
             <Tabs

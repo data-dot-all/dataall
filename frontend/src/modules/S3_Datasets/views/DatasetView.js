@@ -154,7 +154,7 @@ const DatasetView = () => {
   const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getDataset(params.uri));
-    if (!response.errors && response.data.getDataset !== null) {
+    if (response.data.getDataset !== null) {
       setDataset(response.data.getDataset);
       setIsAdmin(
         ['BusinessOwner', 'Admin', 'DataSteward', 'Creator'].indexOf(
@@ -259,13 +259,14 @@ const DatasetView = () => {
 
             <Grid item>
               <Box sx={{ m: -1 }}>
+                <UpVoteButton
+                  disabled={!isAdmin}
+                  upVoted={isUpVoted}
+                  onClick={() => upVoteDataset(dataset.datasetUri)}
+                  upVotes={upVotes}
+                />
                 {isAdmin && (
                   <span>
-                    <UpVoteButton
-                      upVoted={isUpVoted}
-                      onClick={() => upVoteDataset(dataset.datasetUri)}
-                      upVotes={upVotes}
-                    />
                     <Button
                       color="primary"
                       startIcon={<ForumOutlined fontSize="small" />}

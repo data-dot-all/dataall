@@ -1,7 +1,7 @@
 import logging
 from warnings import warn
 
-from dataall.base.db import utils
+from dataall.base.db import utils, exceptions
 from dataall.base.context import get_context
 from dataall.base.aws.sts import SessionHelper
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
@@ -10,6 +10,7 @@ from dataall.core.environment.services.environment_service import EnvironmentSer
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.tasks.service_handlers import Worker
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.datasets_base.services.dataset_list_permissions import LIST_ENVIRONMENT_DATASETS
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.services.share_item_service import ShareItemService
 from dataall.modules.shares_base.services.share_permissions import GET_SHARE_OBJECT
@@ -164,17 +165,19 @@ class S3ShareService:
         return True
 
     @staticmethod
-    def list_shared_tables_by_env_dataset(dataset_uri: str, env_uri: str):
+    @ResourcePolicyService.has_resource_permission(LIST_ENVIRONMENT_DATASETS)
+    def list_shared_tables_by_env_dataset(uri: str, dataset_uri: str):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             return [
                 {'tableUri': t.tableUri, 'GlueTableName': t.GlueTableName}
                 for t in S3ShareObjectRepository.query_dataset_tables_shared_with_env(
-                    session, env_uri, dataset_uri, context.username, context.groups
+                    session, uri, dataset_uri, context.username, context.groups
                 )
             ]
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def get_dataset_shared_assume_role_url(uri):
         context = get_context()
@@ -246,11 +249,17 @@ class S3ShareService:
             }
 
     @staticmethod
-    def list_shared_databases_tables_with_env_group(environmentUri: str, groupUri: str):
+    @ResourcePolicyService.has_resource_permission(LIST_ENVIRONMENT_DATASETS)
+    def list_shared_databases_tables_with_env_group(uri: str, group_uri: str):
         context = get_context()
+        if group_uri not in context.groups:
+            raise exceptions.UnauthorizedOperation(
+                action='LIST_ENVIRONMENT_GROUP_DATASETS',
+                message=f'User: {context.username} is not a member of the owner team',
+            )
         with context.db_engine.scoped_session() as session:
             return S3ShareObjectRepository.query_shared_glue_databases(
-                session=session, groups=context.groups, env_uri=environmentUri, group_uri=groupUri
+                session=session, groups=context.groups, env_uri=uri, group_uri=group_uri
             )
 
     @staticmethod
