@@ -31,7 +31,7 @@ class DatasetTableNotifications:
         msg_footer = f"""
                     You have an active share with uri: {share.shareUri}. If there is any table requested by you on the dataset: {self.dataset.name} for that share it may have been affected <b>in case if the tables are deleted.</b><br> 
                     <b>Note</b>: Please check with the dataset owner if there is any missing table from your share - as it is likely deleted from the dataset.<br> If the table exists in the dataset and is successfully shared but you are unable to access the table, then please reach out to the data.all team<br><br>
-                    Regards,
+                    Regards,<br>
                     data.all team 
                 """
         table_content = self._construct_html_table_from_glue_status_map(table_status_map)

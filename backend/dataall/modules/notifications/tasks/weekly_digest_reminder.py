@@ -135,7 +135,7 @@ def send_reminder_email(engine):
             unhealthy_datasets_notification_resources = _get_unhealthy_stack_by_type(session=session,
                                                                                      target_uri='datasetUri',
                                                                                      target_type=DatasetBase)
-            resources_type_tuple.append((unhealthy_share_objects_notification_resources, "dataset_object_notifications"))
+            resources_type_tuple.append((unhealthy_datasets_notification_resources, "dataset_object_notifications"))
             # Get all the environments which are in unhealthy state
             unhealthy_environment_notification_resources = _get_unhealthy_stack_by_type(session=session,
                                                                                         target_uri='environmentUri',
