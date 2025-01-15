@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 from typing import List
 from dataall.base.utils.naming_convention import NamingConventionService, NamingConventionPattern
+from dataall.modules.notifications.services.admin_notifications import AdminNotificationService
 from dataall.modules.shares_base.services.sharing_service import ShareData
 from dataall.modules.shares_base.services.share_processor_manager import SharesProcessorInterface
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
@@ -260,6 +261,11 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                         ShareStatusRepository.update_share_item_health_status(
                             self.session, share_item, ShareItemHealthStatus.Unhealthy.value, str(e), datetime.now()
                         )
+                AdminNotificationService().notify_admins_with_error_log(
+                    process_error='Error occurred while processing redshift table share request',
+                    process_name='redshift table share processor',
+                    error_logs=[str(e)]
+                )
                 return False
         return success
 
@@ -364,6 +370,11 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                     ShareStatusRepository.update_share_item_health_status(
                         self.session, share_item, ShareItemHealthStatus.Unhealthy.value, str(e), datetime.now()
                     )
+                    AdminNotificationService().notify_admins_with_error_log(
+                        process_error='Error occurred while revoking redshift table share request',
+                        process_name='redshift tables share processor',
+                        error_logs=[str(e)]
+                    )
             self.session.commit()
             try:
                 if success:
@@ -438,6 +449,11 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                     ShareStatusRepository.update_share_item_health_status(
                         self.session, share_item, ShareItemHealthStatus.Unhealthy.value, str(e), datetime.now()
                     )
+                AdminNotificationService().notify_admins_with_error_log(
+                    process_error='Error occurred while revoking redshift table share request',
+                    process_name='redshift tables share processor',
+                    error_logs=[str(e)]
+                )
                 return False
             return success
 

@@ -1,11 +1,13 @@
+import logging
 from typing import List
 
+from dataall.core.groups.db.constants import DataallGroups
 from dataall.modules.notifications.services.ses_email_notification_service import SESEmailNotificationService
+from dataall.base.config import config
 
+log = logging.getLogger(__name__)
 
 class AdminNotificationService:
-    admin_group = 'DAAdministrators'
-
     """
     Send email notifications to Admin Group i.e. DAAdministrators in data.all
     Args -
@@ -15,6 +17,11 @@ class AdminNotificationService:
     """
     @classmethod
     def notify_admins_with_error_log(cls, process_error: str, error_logs: List[str], process_name:str = ''):
+        if config.get_property(
+            'modules.datasets_base.features.share_notifications.email.parameters.admin_notifications', default=False
+        ) is False:
+            log.info("Admin notifications are switched off")
+            return
 
         subject = f'Data.all alert | Attention Required | Failure in : {process_name}'
         email_message = f"""
@@ -28,5 +35,5 @@ class AdminNotificationService:
         SESEmailNotificationService.create_and_send_email_notifications(
             subject=subject,
             msg=email_message,
-            recipient_groups_list=[cls.admin_group]
+            recipient_groups_list=[DataallGroups.admin]
         )

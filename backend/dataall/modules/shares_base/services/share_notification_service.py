@@ -302,7 +302,6 @@ class ShareNotificationService:
             f'Hello Team, <br>'
             f'Your share with share uri: <b>{self.share.shareUri}</b> has one or more unhealthy share items. <br><br>'
             f'Once you visit your share link you can click on the Reapply button and this should correct your share and get it into an healthy state.<b> If this doesn\'t get your share in healthy state then please get in touch with data.all admins for your share.'
-            f'<br><br><b>Please note</b>: If you are using any terraform / cloudformation or any other IaC to also manage your bucket policy, kms policy and requestor IAM role, please make them aware of the data.all changes so that they don\'t wipe off data.all related policies'
         )
         msg_footer = """
                 Regards,<br>
