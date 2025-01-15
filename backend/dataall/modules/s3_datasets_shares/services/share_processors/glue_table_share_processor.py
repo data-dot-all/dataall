@@ -198,11 +198,6 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         )
                     success = False
                     manager.handle_share_failure(table=table, error=e)
-                    AdminNotificationService().notify_admins_with_error_log(
-                        process_error='Error occurred while processing glue table share request',
-                        process_name='s3 glue table share processor',
-                        error_logs=[str(e)],
-                    )
         return success
 
     def process_revoked_shares(self) -> bool:
@@ -327,11 +322,6 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     success = False
 
                     manager.handle_revoke_failure(table=table, error=e)
-                    AdminNotificationService().notify_admins_with_error_log(
-                        process_error='Error occurred while revoking glue tables share request',
-                        process_name='glue tables share processor',
-                        error_logs=[str(e)],
-                    )
 
             try:
                 if self.tables:
@@ -361,11 +351,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     f'Failed to clean-up database permissions or delete shared database {manager.shared_db_name} '
                     f'due to: {e}'
                 )
-                AdminNotificationService().notify_admins_with_error_log(
-                    process_error='Error occurred while revoking glue tables share request',
-                    process_name='glue tables share processor',
-                    error_logs=[str(e)],
-                )
+                manager.handle_revoke_clean_up_failure(error=e)
                 success = False
             return success
 

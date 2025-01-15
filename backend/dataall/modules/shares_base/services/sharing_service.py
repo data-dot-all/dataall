@@ -59,7 +59,7 @@ class SharingService:
         True if sharing succeeds,
         False if sharing fails
         """
-        task_exceptions = []
+        service_exceptions = []
         share_successful = True
         try:
             with engine.scoped_session() as session:
@@ -125,32 +125,31 @@ class SharingService:
                                     new_status=ShareItemStatus.Share_Failed.value,
                                     share_item_type=processor.type,
                                 )
-                                task_exceptions.append(str(e))
+                                service_exceptions.append(str(e))
                                 share_successful = False
                 except Exception as e:
                     log.exception(f'Error occurred during share approval: {e}')
                     new_share_item_state = share_item_sm.run_transition(ShareItemActions.Failure.value)
                     share_item_sm.update_state(session, share_data.share.shareUri, new_share_item_state)
-                    task_exceptions.append(str(e))
+                    service_exceptions.append(str(e))
                     share_successful = False
                 finally:
                     new_share_state = share_object_sm.run_transition(ShareObjectActions.Finish.value)
                     share_object_sm.update_state(session, share_data.share, new_share_state)
-
         except Exception as e:
             log.error(f'Unexpected error occurred while processing share with uri: {share_uri} due to: {e}')
             share_successful = False
-            task_exceptions.append(str(e))
+            service_exceptions.append(str(e))
         finally:
             if not share_successful:
                 ShareNotificationService(
                     session=session, dataset=share_data.dataset, share=share_data.share
                 ).notify_share_object_failed()
-            if len(task_exceptions) > 0:
+            if len(service_exceptions) > 0:
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error=f'Error occurred while processing share with uri: {share_uri}',
                     process_name='Sharing Service',
-                    error_logs=task_exceptions,
+                    error_logs=service_exceptions,
                 )
 
         return share_successful
@@ -174,7 +173,7 @@ class SharingService:
         True if revoking succeeds
         False if revoking failed
         """
-        task_exceptions = []
+        service_exceptions = []
         revoke_successful = True
         try:
             with engine.scoped_session() as session:
@@ -241,14 +240,14 @@ class SharingService:
                                     new_status=ShareItemStatus.Revoke_Failed.value,
                                     share_item_type=processor.type,
                                 )
-                                task_exceptions.append(str(e))
+                                service_exceptions.append(str(e))
                                 revoke_successful = False
                 except Exception as e:
                     log.error(f'Error occurred during share revoking: {e}')
                     new_share_item_state = share_item_sm.run_transition(ShareItemActions.Failure.value)
                     share_item_sm.update_state(session, share_data.share.shareUri, new_share_item_state)
                     revoke_successful = False
-                    task_exceptions.append(str(e))
+                    service_exceptions.append(str(e))
                 finally:
                     existing_pending_items = ShareStatusRepository.check_pending_share_items(session, share_uri)
                     if existing_pending_items:
@@ -260,17 +259,17 @@ class SharingService:
         except Exception as e:
             log.error(f'Unexpected error occurred while revoking a share with uri: {share_uri} due to: {e}')
             revoke_successful = False
-            task_exceptions.append(str(e))
+            service_exceptions.append(str(e))
         finally:
             if not revoke_successful:
                 ShareNotificationService(
                     session=session, dataset=share_data.dataset, share=share_data.share
                 ).notify_share_object_failed()
-            if len(task_exceptions) > 0:
+            if len(service_exceptions) > 0:
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error=f'Error occurred while revoking share with uri: {share_uri}',
                     process_name='Sharing Service',
-                    error_logs=task_exceptions,
+                    error_logs=service_exceptions,
                 )
 
         return revoke_successful

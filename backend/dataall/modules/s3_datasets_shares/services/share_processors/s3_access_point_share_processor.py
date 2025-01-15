@@ -100,11 +100,6 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                     )
                 success = False
                 manager.handle_share_failure(e)
-                AdminNotificationService().notify_admins_with_error_log(
-                    process_error='Error occurred while processing access point share request',
-                    process_name='s3 access point share processor',
-                    error_logs=[str(e)],
-                )
         return success
 
     def process_revoked_shares(self) -> bool:
@@ -175,11 +170,6 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
 
                 # statements which can throw exceptions but are not critical
                 manager.handle_revoke_failure(e)
-                AdminNotificationService().notify_admins_with_error_log(
-                    process_error='Error occurred while revoking access point share request',
-                    process_name='s3 access point share processor',
-                    error_logs=[str(e)],
-                )
 
         return success
 
