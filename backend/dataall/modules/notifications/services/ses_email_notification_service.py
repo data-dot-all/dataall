@@ -4,6 +4,7 @@ import logging
 from dataall.base.aws.ses import Ses
 from dataall.base.config import config
 from dataall.base.services.service_provider_factory import ServiceProviderFactory
+from dataall.core.groups.db.constants import DataallGroups
 from dataall.modules.notifications.services.base_email_notification_service import BaseEmailNotificationService
 
 log = logging.getLogger(__name__)
@@ -50,7 +51,7 @@ class SESEmailNotificationService(BaseEmailNotificationService):
 
         except Exception as e:
             email_ids_to_send_emails = email_provider.get_email_ids_from_groupList(
-                ['DAAdministrators'], identityProvider
+                [DataallGroups.admin], identityProvider
             )
             SESEmailNotificationService.send_email_to_users(
                 email_ids_to_send_emails,
