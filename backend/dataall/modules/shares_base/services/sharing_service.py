@@ -85,10 +85,10 @@ class SharingService:
 
                 try:
                     with ResourceLockRepository.acquire_lock_with_retry(
-                            resources=resources,
-                            session=session,
-                            acquired_by_uri=share_data.share.shareUri,
-                            acquired_by_type=share_data.share.__tablename__,
+                        resources=resources,
+                        session=session,
+                        acquired_by_uri=share_data.share.shareUri,
+                        acquired_by_type=share_data.share.__tablename__,
                     ):
                         for type, processor in ShareProcessorManager.SHARING_PROCESSORS.items():
                             try:
@@ -143,13 +143,14 @@ class SharingService:
             task_exceptions.append(str(e))
         finally:
             if not share_successful:
-                ShareNotificationService(session=session, dataset=share_data.dataset,
-                                         share=share_data.share).notify_share_object_failed()
+                ShareNotificationService(
+                    session=session, dataset=share_data.dataset, share=share_data.share
+                ).notify_share_object_failed()
             if len(task_exceptions) > 0:
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error=f'Error occurred while processing share with uri: {share_uri}',
                     process_name='Sharing Service',
-                    error_logs=task_exceptions
+                    error_logs=task_exceptions,
                 )
 
         return share_successful
@@ -200,10 +201,10 @@ class SharingService:
 
                 try:
                     with ResourceLockRepository.acquire_lock_with_retry(
-                            resources=resources,
-                            session=session,
-                            acquired_by_uri=share_data.share.shareUri,
-                            acquired_by_type=share_data.share.__tablename__,
+                        resources=resources,
+                        session=session,
+                        acquired_by_uri=share_data.share.shareUri,
+                        acquired_by_type=share_data.share.__tablename__,
                     ):
                         for type, processor in ShareProcessorManager.SHARING_PROCESSORS.items():
                             try:
@@ -262,24 +263,25 @@ class SharingService:
             task_exceptions.append(str(e))
         finally:
             if not revoke_successful:
-                ShareNotificationService(session=session, dataset=share_data.dataset,
-                                         share=share_data.share).notify_share_object_failed()
+                ShareNotificationService(
+                    session=session, dataset=share_data.dataset, share=share_data.share
+                ).notify_share_object_failed()
             if len(task_exceptions) > 0:
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error=f'Error occurred while revoking share with uri: {share_uri}',
                     process_name='Sharing Service',
-                    error_logs=task_exceptions
+                    error_logs=task_exceptions,
                 )
 
         return revoke_successful
 
     @classmethod
     def verify_share(
-            cls,
-            engine: Engine,
-            share_uri: str,
-            status: str = None,
-            healthStatus: str = ShareItemHealthStatus.PendingVerify.value,
+        cls,
+        engine: Engine,
+        share_uri: str,
+        status: str = None,
+        healthStatus: str = ShareItemHealthStatus.PendingVerify.value,
     ) -> bool:
         """
         1) Retrieves share data and items in specified status and health state (by default - PendingVerify)
@@ -310,7 +312,9 @@ class SharingService:
                             healthStatus=healthStatus,
                         )
                         if shareable_items:
-                            health_status = processor.Processor(session, share_data, shareable_items).verify_shares_health_status()
+                            health_status = processor.Processor(
+                                session, share_data, shareable_items
+                            ).verify_shares_health_status()
                             health_status_list.append(health_status)
                         else:
                             log.info(f'There are no items to verify of type {type.value}')
@@ -318,8 +322,12 @@ class SharingService:
                         log.error(f'Error occurred during share verifying of {type.value}: {e}')
                         task_exceptions.append(str(e))
                 if False in health_status_list:
-                    log.info(f'Sending notifications since share object item(s) for share: {share_data.share.shareUri} are in unhealthy state after verifying shares')
-                    ShareNotificationService(session=session, dataset=share_data.dataset, share=share_data.share).notify_share_object_items_unhealthy()
+                    log.info(
+                        f'Sending notifications since share object item(s) for share: {share_data.share.shareUri} are in unhealthy state after verifying shares'
+                    )
+                    ShareNotificationService(
+                        session=session, dataset=share_data.dataset, share=share_data.share
+                    ).notify_share_object_items_unhealthy()
         except Exception as e:
             log.error(f'Unexpected error occurred while verifying share with uri: {share_uri} due to: {e}')
             task_exceptions.append(str(e))
@@ -328,7 +336,7 @@ class SharingService:
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error=f'Error occurred during verification of share with uri: {share_data.share.shareUri} ',
                     error_logs=task_exceptions,
-                    process_name='Sharing Service'
+                    process_name='Sharing Service',
                 )
             return True
 
@@ -369,10 +377,10 @@ class SharingService:
 
                 try:
                     with ResourceLockRepository.acquire_lock_with_retry(
-                            resources=resources,
-                            session=session,
-                            acquired_by_uri=share_data.share.shareUri,
-                            acquired_by_type=share_data.share.__tablename__,
+                        resources=resources,
+                        session=session,
+                        acquired_by_uri=share_data.share.shareUri,
+                        acquired_by_type=share_data.share.__tablename__,
                     ):
                         for type, processor in ShareProcessorManager.SHARING_PROCESSORS.items():
                             try:
@@ -396,19 +404,25 @@ class SharingService:
                                     log.info(f'There are no items to reapply of type {type.value}')
                             except Exception as e:
                                 log.error(f'Error occurred during share reapplying of {type.value}: {e}')
-                                code_exception_list.append(f'Error occurred during reapplying of share with uri: {share_data.share.shareUri} for processor type: {type.value}  due to an unknown exception: {e}')
+                                code_exception_list.append(
+                                    f'Error occurred during reapplying of share with uri: {share_data.share.shareUri} for processor type: {type.value}  due to an unknown exception: {e}'
+                                )
 
                     if not reapply_successful:
                         log.info(
-                            f'Sending notifications since share object item(s) for share: {share_data.share.shareUri} are in unhealthy state after reapplying shares')
-                        ShareNotificationService(session=session, dataset=share_data.dataset,
-                                                 share=share_data.share).notify_share_object_items_unhealthy()
+                            f'Sending notifications since share object item(s) for share: {share_data.share.shareUri} are in unhealthy state after reapplying shares'
+                        )
+                        ShareNotificationService(
+                            session=session, dataset=share_data.dataset, share=share_data.share
+                        ).notify_share_object_items_unhealthy()
                     else:
                         if len(code_exception_list) == 0:
                             log.info(
-                                f'Sending notifications to the share owner to inform that the share with uri: {share_data.share.shareUri} is now in healthy state')
-                            ShareNotificationService(session=session, dataset=share_data.dataset,
-                                                     share=share_data.share).notify_share_object_items_healthy()
+                                f'Sending notifications to the share owner to inform that the share with uri: {share_data.share.shareUri} is now in healthy state'
+                            )
+                            ShareNotificationService(
+                                session=session, dataset=share_data.dataset, share=share_data.share
+                            ).notify_share_object_items_healthy()
 
                 except ResourceLockTimeout as timeout_exception:
                     ShareStatusRepository.update_share_item_health_status_batch(
@@ -434,15 +448,15 @@ class SharingService:
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error=f'Error occurred during reapplying of share with uri: {share_data.share.shareUri}',
                     error_logs=code_exception_list,
-                    process_name='Sharing Service'
+                    process_name='Sharing Service',
                 )
             return reapply_successful
 
     @classmethod
     def cleanup_share(
-            cls,
-            engine: Engine,
-            share_uri: str,
+        cls,
+        engine: Engine,
+        share_uri: str,
     ) -> bool:
         """
         1) Retrieves share data and items in share

@@ -29,6 +29,6 @@ if __name__ == '__main__':
         AdminNotificationService().notify_admins_with_error_log(
             process_error=f'Error occurred while running sharing task for share with uri: {os.getenv("shareUri", "Share URI not available")}',
             error_logs=[str(e)],
-            process_name='Sharing Service'
+            process_name='Sharing Service',
         )
         raise e

@@ -201,7 +201,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     AdminNotificationService().notify_admins_with_error_log(
                         process_error='Error occurred while processing glue table share request',
                         process_name='s3 glue table share processor',
-                        error_logs=[str(e)]
+                        error_logs=[str(e)],
                     )
         return success
 
@@ -330,7 +330,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                     AdminNotificationService().notify_admins_with_error_log(
                         process_error='Error occurred while revoking glue tables share request',
                         process_name='glue tables share processor',
-                        error_logs=[str(e)]
+                        error_logs=[str(e)],
                     )
 
             try:
@@ -364,7 +364,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error='Error occurred while revoking glue tables share request',
                     process_name='glue tables share processor',
-                    error_logs=[str(e)]
+                    error_logs=[str(e)],
                 )
                 success = False
             return success

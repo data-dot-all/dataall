@@ -103,7 +103,7 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error='Error occurred while processing access point share request',
                     process_name='s3 access point share processor',
-                    error_logs=[str(e)]
+                    error_logs=[str(e)],
                 )
         return success
 
@@ -178,7 +178,7 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error='Error occurred while revoking access point share request',
                     process_name='s3 access point share processor',
-                    error_logs=[str(e)]
+                    error_logs=[str(e)],
                 )
 
         return success

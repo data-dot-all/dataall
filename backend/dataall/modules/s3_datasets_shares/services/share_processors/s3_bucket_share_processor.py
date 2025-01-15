@@ -97,7 +97,7 @@ class ProcessS3BucketShare(SharesProcessorInterface):
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error='Error occurred while processing s3 bucket share request',
                     process_name='s3 bucket share processor',
-                    error_logs=[str(e)]
+                    error_logs=[str(e)],
                 )
         return success
 
@@ -164,7 +164,7 @@ class ProcessS3BucketShare(SharesProcessorInterface):
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error='Error occurred while revoking s3 bucket manager',
                     process_name='s3 bucket share processor',
-                    error_logs=[str(e)]
+                    error_logs=[str(e)],
                 )
 
         return success

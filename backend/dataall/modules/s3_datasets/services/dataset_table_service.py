@@ -142,7 +142,9 @@ class DatasetTableService:
             existing_table_names = [e.GlueTableName for e in existing_tables]
             existing_dataset_tables_map = {t.GlueTableName: t for t in existing_tables}
 
-            updated_table_status_map = DatasetTableRepository.update_existing_tables_status(existing_tables, glue_tables)
+            updated_table_status_map = DatasetTableRepository.update_existing_tables_status(
+                existing_tables, glue_tables
+            )
             log.info(f'existing_tables={glue_tables}')
 
             for table in glue_tables:

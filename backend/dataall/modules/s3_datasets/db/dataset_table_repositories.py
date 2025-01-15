@@ -63,7 +63,7 @@ class DatasetTableRepository:
 
     @staticmethod
     def update_existing_tables_status(existing_tables, glue_tables):
-        updated_tables_status_map: Dict[str: str] = {}
+        updated_tables_status_map: Dict[str:str] = {}
         for existing_table in existing_tables:
             if existing_table.GlueTableName not in [t['Name'] for t in glue_tables]:
                 if existing_table.LastGlueTableStatus != 'Deleted':

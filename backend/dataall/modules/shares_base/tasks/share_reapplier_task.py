@@ -25,8 +25,12 @@ class EcsBulkShareRepplyService:
                 share_objects_for_dataset = ShareObjectRepository.list_active_share_object_for_dataset(
                     session=session, dataset_uri=dataset_uri
                 )
-                log.info(f'Found {len(share_objects_for_dataset)} active share objects on dataset with uri: {dataset_uri}')
-                processed_share_objects, task_exceptions = cls._reapply_share_objects(engine=engine, session=session, share_objects=share_objects_for_dataset)
+                log.info(
+                    f'Found {len(share_objects_for_dataset)} active share objects on dataset with uri: {dataset_uri}'
+                )
+                processed_share_objects, task_exceptions = cls._reapply_share_objects(
+                    engine=engine, session=session, share_objects=share_objects_for_dataset
+                )
             return processed_share_objects
         except Exception as e:
             log.error(f'Error occurred while reapplying share task due to: {e}')
@@ -36,7 +40,7 @@ class EcsBulkShareRepplyService:
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error='Error occurred while processing share during reapplying task',
                     error_logs=task_exceptions,
-                    process_name='Share Reapplier Task'
+                    process_name='Share Reapplier Task',
                 )
 
     @classmethod
@@ -62,6 +66,7 @@ class EcsBulkShareRepplyService:
                 log.error(error_formatted)
                 task_exceptions.append(error_formatted)
         return (processed_share_objects, task_exceptions)
+
     @classmethod
     def process_reapply_shares(cls, engine):
         task_exceptions = []
@@ -69,8 +74,9 @@ class EcsBulkShareRepplyService:
             with engine.scoped_session() as session:
                 all_share_objects: [ShareObject] = ShareObjectRepository.list_all_active_share_objects(session)
                 log.info(f'Found {len(all_share_objects)} share objects ')
-                processed_share_objects, task_exceptions = cls._reapply_share_objects(engine=engine, session=session,
-                                                                                      share_objects=all_share_objects)
+                processed_share_objects, task_exceptions = cls._reapply_share_objects(
+                    engine=engine, session=session, share_objects=all_share_objects
+                )
             return processed_share_objects
         except Exception as e:
             log.error(f'Error occurred while reapplying share task due to: {e}')
@@ -80,7 +86,7 @@ class EcsBulkShareRepplyService:
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error='Error occurred while processing share during reapplying task',
                     error_logs=task_exceptions,
-                    process_name='Share Reapplier Task'
+                    process_name='Share Reapplier Task',
                 )
 
 

@@ -29,9 +29,9 @@ def persistent_email_reminders(engine):
                 log.info(f'Sending Email Reminder for Share: {pending_share.shareUri}')
                 share = ShareObjectRepository.get_share_by_uri(session, pending_share.shareUri)
                 dataset = DatasetBaseRepository.get_dataset_by_uri(session, share.datasetUri)
-                ShareNotificationService(session=session, dataset=dataset, share=share).notify_persistent_email_reminder(
-                    email_id=share.owner
-                )
+                ShareNotificationService(
+                    session=session, dataset=dataset, share=share
+                ).notify_persistent_email_reminder(email_id=share.owner)
                 log.info(f'Email reminder sent for share {share.shareUri}')
             log.info('Completed Persistent Email Reminders Task')
     except Exception as e:
@@ -42,7 +42,7 @@ def persistent_email_reminders(engine):
             AdminNotificationService().notify_admins_with_error_log(
                 process_name='Persistent Email Task',
                 error_logs=task_exceptions,
-                process_error='Error while running persistent email reminder task'
+                process_error='Error while running persistent email reminder task',
             )
 
 

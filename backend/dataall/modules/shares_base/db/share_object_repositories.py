@@ -51,7 +51,7 @@ class ShareObjectRepository:
         return query.all()
 
     @staticmethod
-    def find_share_by_dataset_attributes(session, dataset_uri, dataset_owner, groups = None):
+    def find_share_by_dataset_attributes(session, dataset_uri, dataset_owner, groups=None):
         if groups is None:
             groups = []
         share: ShareObject = (
@@ -205,16 +205,11 @@ class ShareObjectRepository:
     def get_share_object_with_health_status(session, health_status_list: List[str] = None):
         query = (
             session.query(ShareObject)
-            .join(
-                ShareObjectItem,
-                ShareObjectItem.shareUri == ShareObject.shareUri
-            ).filter(
-                ShareObjectItem.healthStatus.in_(health_status_list)
-            )
+            .join(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
+            .filter(ShareObjectItem.healthStatus.in_(health_status_list))
         )
 
         return query.all()
-
 
     @staticmethod
     def get_all_share_items_in_share(session, share_uri, status=None, healthStatus=None):

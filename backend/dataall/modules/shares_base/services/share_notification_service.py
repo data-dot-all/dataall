@@ -279,13 +279,17 @@ class ShareNotificationService:
         data.all team
         """
         subject = f'Data.all | Attention Required | Share failed for {self.dataset.label}'
-        email_notification_msg = msg + share_link_text + "<br><br>" + msg_footer
+        email_notification_msg = msg + share_link_text + '<br><br>' + msg_footer
 
         notifications = self.register_notifications(
             notification_type=DataSharingNotificationType.SHARE_OBJECT_FAILED.value, msg=msg
         )
 
-        SESEmailNotificationService.create_and_send_email_notifications(subject=subject, msg=email_notification_msg, recipient_groups_list=[self.share.groupUri, self.dataset.SamlAdminGroupName, self.dataset.stewards])
+        SESEmailNotificationService.create_and_send_email_notifications(
+            subject=subject,
+            msg=email_notification_msg,
+            recipient_groups_list=[self.share.groupUri, self.dataset.SamlAdminGroupName, self.dataset.stewards],
+        )
 
         return notifications
 
@@ -301,20 +305,24 @@ class ShareNotificationService:
         msg = (
             f'Hello Team, <br>'
             f'Your share with share uri: <b>{self.share.shareUri}</b> has one or more unhealthy share items. <br><br>'
-            f'Once you visit your share link you can click on the Reapply button and this should correct your share and get it into an healthy state.<b> If this doesn\'t get your share in healthy state then please get in touch with data.all admins for your share.'
+            f"Once you visit your share link you can click on the Reapply button and this should correct your share and get it into an healthy state.<b> If this doesn't get your share in healthy state then please get in touch with data.all admins for your share."
         )
         msg_footer = """
                 Regards,<br>
                 data.all team
                 """
         subject = f'Data.all | Attention Required | Share for {self.dataset.label} dataset in unhealthy state'
-        email_notification_msg = msg + share_link_text + "<br><br>" + msg_footer
+        email_notification_msg = msg + share_link_text + '<br><br>' + msg_footer
 
         notifications = self.register_notifications(
-            notification_type=DataSharingNotificationType.SHARE_OBJECT_UNHEALTHY.value, msg=msg, to_recipients=[self.share.groupUri]
+            notification_type=DataSharingNotificationType.SHARE_OBJECT_UNHEALTHY.value,
+            msg=msg,
+            to_recipients=[self.share.groupUri],
         )
 
-        SESEmailNotificationService.create_and_send_email_notifications(subject=subject, msg=email_notification_msg, recipient_groups_list=[self.share.groupUri])
+        SESEmailNotificationService.create_and_send_email_notifications(
+            subject=subject, msg=email_notification_msg, recipient_groups_list=[self.share.groupUri]
+        )
 
         return notifications
 
@@ -337,13 +345,17 @@ class ShareNotificationService:
                 data.all team
                 """
         subject = f'Data.all | Share for {self.dataset.label} dataset now in healthy state'
-        email_notification_msg = msg + share_link_text + "<br><br>" + msg_footer
+        email_notification_msg = msg + share_link_text + '<br><br>' + msg_footer
 
         notifications = self.register_notifications(
-            notification_type=DataSharingNotificationType.SHARE_OBJECT_HEALTHY.value, msg=msg, to_recipients=[self.share.groupUri]
+            notification_type=DataSharingNotificationType.SHARE_OBJECT_HEALTHY.value,
+            msg=msg,
+            to_recipients=[self.share.groupUri],
         )
 
-        SESEmailNotificationService.create_and_send_email_notifications(subject=subject, msg=email_notification_msg, recipient_groups_list=[self.share.groupUri])
+        SESEmailNotificationService.create_and_send_email_notifications(
+            subject=subject, msg=email_notification_msg, recipient_groups_list=[self.share.groupUri]
+        )
         return notifications
 
     def _get_share_object_targeted_users(self):
@@ -425,4 +437,3 @@ class ShareNotificationService:
                     log.info(f'Notification type : {share_notification_config_type} is not active')
         else:
             log.info('Notifications are not active')
-

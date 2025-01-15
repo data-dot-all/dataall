@@ -49,8 +49,15 @@ class SESEmailNotificationService(BaseEmailNotificationService):
             SESEmailNotificationService.send_email_to_users(email_ids_to_send_emails, email_provider, message, subject)
 
         except Exception as e:
-            email_ids_to_send_emails = email_provider.get_email_ids_from_groupList(['DAAdministrators'] , identityProvider)
-            SESEmailNotificationService.send_email_to_users(email_ids_to_send_emails, email_provider, f'Error sending email due to: {e}', 'Data.all alert | Attention Required | Failure in: Email Notification Service')
+            email_ids_to_send_emails = email_provider.get_email_ids_from_groupList(
+                ['DAAdministrators'], identityProvider
+            )
+            SESEmailNotificationService.send_email_to_users(
+                email_ids_to_send_emails,
+                email_provider,
+                f'Error sending email due to: {e}',
+                'Data.all alert | Attention Required | Failure in: Email Notification Service',
+            )
             raise e
         else:
             return True

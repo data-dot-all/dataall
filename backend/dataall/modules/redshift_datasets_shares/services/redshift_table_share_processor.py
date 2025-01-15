@@ -264,7 +264,7 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error='Error occurred while processing redshift table share request',
                     process_name='redshift table share processor',
-                    error_logs=[str(e)]
+                    error_logs=[str(e)],
                 )
                 return False
         return success
@@ -373,7 +373,7 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                     AdminNotificationService().notify_admins_with_error_log(
                         process_error='Error occurred while revoking redshift table share request',
                         process_name='redshift tables share processor',
-                        error_logs=[str(e)]
+                        error_logs=[str(e)],
                     )
             self.session.commit()
             try:
@@ -452,7 +452,7 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error='Error occurred while revoking redshift table share request',
                     process_name='redshift tables share processor',
-                    error_logs=[str(e)]
+                    error_logs=[str(e)],
                 )
                 return False
             return success

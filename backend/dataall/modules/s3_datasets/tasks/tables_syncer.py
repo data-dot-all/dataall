@@ -52,16 +52,19 @@ def sync_tables(engine):
 
                         log.info(f'Found {len(tables)} tables on Glue database {dataset.GlueDatabaseName}')
 
-                        table_status_map = DatasetTableService.sync_existing_tables(session, uri=dataset.datasetUri, glue_tables=tables)
+                        table_status_map = DatasetTableService.sync_existing_tables(
+                            session, uri=dataset.datasetUri, glue_tables=tables
+                        )
 
                         if table_status_map:
                             log.info('Sending email notification after dataset table updates were found')
                             try:
-                                DatasetTableNotifications(dataset=dataset).notify_dataset_table_updates(session=session, table_status_map=table_status_map)
+                                DatasetTableNotifications(dataset=dataset).notify_dataset_table_updates(
+                                    session=session, table_status_map=table_status_map
+                                )
                             except Exception as e:
-                                error_log = f"Error occurred while sending email to notify about changes to the glue tables for dataset with uri: {dataset.datasetUri} due to: {e}"
+                                error_log = f'Error occurred while sending email to notify about changes to the glue tables for dataset with uri: {dataset.datasetUri} due to: {e}'
                                 task_exceptions.append(error_log)
-
 
                         tables = session.query(DatasetTable).filter(DatasetTable.datasetUri == dataset.datasetUri).all()
 
@@ -89,17 +92,15 @@ def sync_tables(engine):
                     task_exceptions.append(str(e))
             return processed_tables
     except Exception as e:
-        log.error(
-            f'Error while running table syncer task due to: {e}'
-        )
+        log.error(f'Error while running table syncer task due to: {e}')
         task_exceptions.append(str(e))
     finally:
-     if len(task_exceptions) > 0:
-        AdminNotificationService().notify_admins_with_error_log(
-            process_name='Table Syncer',
-            error_logs=task_exceptions,
-            process_error='Error while running table syncer task'
-        )
+        if len(task_exceptions) > 0:
+            AdminNotificationService().notify_admins_with_error_log(
+                process_name='Table Syncer',
+                error_logs=task_exceptions,
+                process_error='Error while running table syncer task',
+            )
 
 
 def is_assumable_pivot_role(env: Environment):

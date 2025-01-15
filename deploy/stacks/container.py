@@ -400,7 +400,6 @@ class ContainerStack(pyNestedClass):
         )
         self.ecs_task_definitions_families.append(weekly_email_reminders_task.task_definition.family)
 
-
     @run_if(['modules.s3_datasets.active'])
     def add_subscription_task(self):
         subscriptions_task, subscription_task_def = self.set_scheduled_task(
