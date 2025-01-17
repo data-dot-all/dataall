@@ -1,8 +1,9 @@
 from aws_cdk import Stack, aws_dms as dms, aws_iam as iam
 from constructs import Construct
+from .pyNestedStack import pyNestedClass
 
 
-class DMSTaskStack(Stack):
+class DMSTaskStack(pyNestedClass):
     def __init__(
         self,
         scope: Construct,
