@@ -10,22 +10,23 @@ from aws_cdk import (
 )
 
 from .pyNestedStack import pyNestedClass
+from .dms_task import DMSTaskStack
 
 
 class AuroraServerlessStack(pyNestedClass):
     def __init__(
-            self,
-            scope,
-            id,
-            envname='dev',
-            resource_prefix='dataall',
-            vpc: ec2.Vpc = None,
-            lambdas: [_lambda.Function] = None,
-            ecs_security_groups: [aws_ec2.SecurityGroup] = None,
-            codebuild_dbmigration_sg: aws_ec2.SecurityGroup = None,
-            prod_sizing=False,
-            quicksight_monitoring_sg=None,
-            **kwargs,
+        self,
+        scope,
+        id,
+        envname='dev',
+        resource_prefix='dataall',
+        vpc: ec2.Vpc = None,
+        lambdas: [_lambda.Function] = None,
+        ecs_security_groups: [aws_ec2.SecurityGroup] = None,
+        codebuild_dbmigration_sg: aws_ec2.SecurityGroup = None,
+        prod_sizing=False,
+        quicksight_monitoring_sg=None,
+        **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
 
@@ -60,7 +61,10 @@ class AuroraServerlessStack(pyNestedClass):
         )
 
         db_credentials = rds.DatabaseSecret(
-            self, f'{resource_prefix}-{envname}-aurora-v2-db', username='dtaadmin', encryption_key=key
+            self,
+            f'{resource_prefix}-{envname}-aurora-v2-db',
+            username='dtaadmin',
+            encryption_key=key,
         )
 
         database_name = f'{envname}db'
@@ -70,13 +74,12 @@ class AuroraServerlessStack(pyNestedClass):
             f'AuroraDatabase{envname}',
             engine=rds.DatabaseClusterEngine.aurora_postgres(version=rds.AuroraPostgresEngineVersion.VER_15_4),
             deletion_protection=True,
-            writer=rds.ClusterInstance.serverless_v2("writer"),
-
+            writer=rds.ClusterInstance.serverless_v2('writer'),
             readers=[
                 # will be put in promotion tier 1 and will scale with the writer
-                rds.ClusterInstance.serverless_v2("reader1", scale_with_writer=True),
+                rds.ClusterInstance.serverless_v2('reader1', scale_with_writer=True),
                 # will be put in promotion tier 2 and will not scale with the writer
-                rds.ClusterInstance.serverless_v2("reader2")
+                rds.ClusterInstance.serverless_v2('reader2'),
             ],
             cluster_identifier=f'{resource_prefix}-{envname}-db-v2',
             parameter_group=rds.ParameterGroup.from_parameter_group_name(
@@ -84,7 +87,9 @@ class AuroraServerlessStack(pyNestedClass):
             ),
             backup=rds.BackupProps(
                 retention=Duration.days(30),
-            ) if prod_sizing else None,
+            )
+            if prod_sizing
+            else None,
             default_database_name=database_name,
             subnet_group=db_subnet_group,
             vpc=vpc,
@@ -186,3 +191,14 @@ class AuroraServerlessStack(pyNestedClass):
 
         self.cluster = database
         self.aurora_sg = db_security_group
+
+        if codebuild_dbmigration_sg:
+            DMSTaskStack(
+                self,
+                'DMSTaskStack',
+                secret_id_aurora_v1='arn:aws:secretsmanager:eu-west-2:637423210447:secret:devdb-cluster-old-sH1KVw',
+                secret_id_aurora_v2=db_credentials.secret_arn,
+                database_name=database_name,
+                vpc_security_group=codebuild_dbmigration_sg.security_group_id,
+                replication_subnet_group_identifier=f'default-{vpc.vpc_id}',
+            )
