@@ -637,7 +637,7 @@ class LFShareManager:
         S3ShareAlarmService().trigger_table_sharing_failure_alarm(table, self.share, self.target_environment)
         AdminNotificationService().notify_admins_with_error_log(
             process_error=f'Error occurred while processing glue tables share request for share with uri: {self.share.shareUri}',
-            process_name='Glue tables share processor',
+            process_name=self.__class__.__name__,
             error_logs=[str(error)],
         )
         return True
@@ -662,7 +662,7 @@ class LFShareManager:
         S3ShareAlarmService().trigger_revoke_table_sharing_failure_alarm(table, self.share, self.target_environment)
         AdminNotificationService().notify_admins_with_error_log(
             process_error=f'Error occurred while revoking glue tables share request for share with uri: {self.share.shareUri}',
-            process_name='Glue tables share processor',
+            process_name=self.__class__.__name__,
             error_logs=[str(error)],
         )
         return True
@@ -685,7 +685,7 @@ class LFShareManager:
         )
         AdminNotificationService().notify_admins_with_error_log(
             process_error=f'Error occurred while revoking glue tables share request for share with uri: {self.share.shareUri} when cleaning database permissions',
-            process_name='Glue tables share processor',
+            process_name=self.__class__.__name__,
             error_logs=[str(error)],
         )
         return True

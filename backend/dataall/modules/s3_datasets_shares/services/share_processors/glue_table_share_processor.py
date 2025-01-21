@@ -347,10 +347,6 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         log.info('Deleting target shared database...')
                         manager.delete_shared_database_in_target()
             except Exception as e:
-                log.error(
-                    f'Failed to clean-up database permissions or delete shared database {manager.shared_db_name} '
-                    f'due to: {e}'
-                )
                 manager.handle_revoke_clean_up_failure(error=e)
                 success = False
             return success

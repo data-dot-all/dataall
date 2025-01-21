@@ -31,16 +31,7 @@ def sync_tables(engine):
             dataset: S3Dataset
             for dataset in all_datasets:
                 log.info(f'Synchronizing dataset {dataset.name}|{dataset.datasetUri} tables')
-                env: Environment = (
-                    session.query(Environment)
-                    .filter(
-                        and_(
-                            Environment.environmentUri == dataset.environmentUri,
-                            Environment.deleted.is_(None),
-                        )
-                    )
-                    .first()
-                )
+                env: Environment = _get_environment_for_dataset(dataset, session)
                 env_group: EnvironmentGroup = EnvironmentService.get_environment_group(
                     session, dataset.SamlAdminGroupName, env.environmentUri
                 )
@@ -49,34 +40,20 @@ def sync_tables(engine):
                         log.info(f'Dataset {dataset.GlueDatabaseName} has an invalid environment')
                     else:
                         tables = DatasetCrawler(dataset).list_glue_database_tables(dataset.S3BucketName)
-
                         log.info(f'Found {len(tables)} tables on Glue database {dataset.GlueDatabaseName}')
 
                         table_status_map = DatasetTableService.sync_existing_tables(
                             session, uri=dataset.datasetUri, glue_tables=tables
                         )
 
-                        if table_status_map:
-                            log.info('Sending email notification after dataset table updates were found')
-                            try:
-                                DatasetTableNotifications(dataset=dataset).notify_dataset_table_updates(
-                                    session=session, table_status_map=table_status_map
-                                )
-                            except Exception as e:
-                                error_log = f'Error occurred while sending email to notify about changes to the glue tables for dataset with uri: {dataset.datasetUri} due to: {e}'
-                                task_exceptions.append(error_log)
+                        # Send email notification if there are any table additions/ deletions
+                        _send_notification_after_table_updates(dataset, session, table_status_map, task_exceptions)
 
-                        tables = session.query(DatasetTable).filter(DatasetTable.datasetUri == dataset.datasetUri).all()
-
+                        # For all tables in dataset, grant lake formation permission to all principals on the tables
+                        tables = _get_tables_for_dataset(dataset, session)
                         log.info('Updating tables permissions on Lake Formation...')
-
                         for table in tables:
-                            LakeFormationTableClient(table).grant_principals_all_table_permissions(
-                                principals=[
-                                    SessionHelper.get_delegation_role_arn(env.AwsAccountId, env.region),
-                                    env_group.environmentIAMRoleArn,
-                                ],
-                            )
+                            _grant_lf_table_permissions_to_all_principals(env, env_group, table)
 
                         processed_tables.extend(tables)
 
@@ -94,6 +71,7 @@ def sync_tables(engine):
     except Exception as e:
         log.error(f'Error while running table syncer task due to: {e}')
         task_exceptions.append(str(e))
+        raise e
     finally:
         if len(task_exceptions) > 0:
             AdminNotificationService().notify_admins_with_error_log(
@@ -101,6 +79,44 @@ def sync_tables(engine):
                 error_logs=task_exceptions,
                 process_error='Error while running table syncer task',
             )
+
+
+def _send_notification_after_table_updates(dataset, session, table_status_map, task_exceptions):
+    if table_status_map:
+        log.info('Sending email notification after dataset table updates were found')
+        try:
+            DatasetTableNotifications(dataset=dataset).notify_dataset_table_updates(
+                session=session, table_status_map=table_status_map
+            )
+        except Exception as e:
+            error_log = f'Error occurred while sending email to notify about changes to the glue tables for dataset with uri: {dataset.datasetUri} due to: {e}'
+            task_exceptions.append(error_log)
+
+
+def _get_tables_for_dataset(dataset, session):
+    return session.query(DatasetTable).filter(DatasetTable.datasetUri == dataset.datasetUri).all()
+
+
+def _grant_lf_table_permissions_to_all_principals(env, env_group, table):
+    LakeFormationTableClient(table).grant_principals_all_table_permissions(
+        principals=[
+            SessionHelper.get_delegation_role_arn(env.AwsAccountId, env.region),
+            env_group.environmentIAMRoleArn,
+        ],
+    )
+
+
+def _get_environment_for_dataset(dataset, session):
+    return (
+        session.query(Environment)
+        .filter(
+            and_(
+                Environment.environmentUri == dataset.environmentUri,
+                Environment.deleted.is_(None),
+            )
+        )
+        .first()
+    )
 
 
 def is_assumable_pivot_role(env: Environment):

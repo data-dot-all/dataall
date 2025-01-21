@@ -148,7 +148,7 @@ class SharingService:
             if len(service_exceptions) > 0:
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error=f'Error occurred while processing share with uri: {share_uri}',
-                    process_name='Sharing Service',
+                    process_name=cls.__name__,
                     error_logs=service_exceptions,
                 )
 
@@ -268,7 +268,7 @@ class SharingService:
             if len(service_exceptions) > 0:
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error=f'Error occurred while revoking share with uri: {share_uri}',
-                    process_name='Sharing Service',
+                    process_name=cls.__name__,
                     error_logs=service_exceptions,
                 )
 
@@ -294,10 +294,10 @@ class SharingService:
         Returns True when completed
         -------
         """
-        task_exceptions = []
+        service_exceptions = []
         try:
             with engine.scoped_session() as session:
-                health_status_list: List[bool] = []
+                shares_health_status: bool = True
                 share_data, share_items = cls._get_share_data_and_items(session, share_uri, status, healthStatus)
                 for type, processor in ShareProcessorManager.SHARING_PROCESSORS.items():
                     try:
@@ -311,16 +311,15 @@ class SharingService:
                             healthStatus=healthStatus,
                         )
                         if shareable_items:
-                            health_status = processor.Processor(
+                            shares_health_status &= processor.Processor(
                                 session, share_data, shareable_items
                             ).verify_shares_health_status()
-                            health_status_list.append(health_status)
                         else:
                             log.info(f'There are no items to verify of type {type.value}')
                     except Exception as e:
                         log.error(f'Error occurred during share verifying of {type.value}: {e}')
-                        task_exceptions.append(str(e))
-                if False in health_status_list:
+                        service_exceptions.append(str(e))
+                if not shares_health_status:
                     log.info(
                         f'Sending notifications since share object item(s) for share: {share_data.share.shareUri} are in unhealthy state after verifying shares'
                     )
@@ -329,13 +328,13 @@ class SharingService:
                     ).notify_share_object_items_unhealthy()
         except Exception as e:
             log.error(f'Unexpected error occurred while verifying share with uri: {share_uri} due to: {e}')
-            task_exceptions.append(str(e))
+            service_exceptions.append(str(e))
         finally:
-            if len(task_exceptions) > 0:
+            if len(service_exceptions) > 0:
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error=f'Error occurred during verification of share with uri: {share_data.share.shareUri} ',
-                    error_logs=task_exceptions,
-                    process_name='Sharing Service',
+                    error_logs=service_exceptions,
+                    process_name=cls.__name__,
                 )
             return True
 
@@ -358,7 +357,7 @@ class SharingService:
         False if any re-apply of share item(s) failed
         """
         reapply_successful = True
-        code_exception_list = []
+        service_exceptions = []
         try:
             with engine.scoped_session() as session:
                 share_data, share_items = cls._get_share_data_and_items(
@@ -403,7 +402,7 @@ class SharingService:
                                     log.info(f'There are no items to reapply of type {type.value}')
                             except Exception as e:
                                 log.error(f'Error occurred during share reapplying of {type.value}: {e}')
-                                code_exception_list.append(
+                                service_exceptions.append(
                                     f'Error occurred during reapplying of share with uri: {share_data.share.shareUri} for processor type: {type.value}  due to an unknown exception: {e}'
                                 )
 
@@ -415,7 +414,7 @@ class SharingService:
                             session=session, dataset=share_data.dataset, share=share_data.share
                         ).notify_share_object_items_unhealthy()
                     else:
-                        if len(code_exception_list) == 0:
+                        if len(service_exceptions) == 0:
                             log.info(
                                 f'Sending notifications to the share owner to inform that the share with uri: {share_data.share.shareUri} is now in healthy state'
                             )
@@ -431,7 +430,7 @@ class SharingService:
                         new_status=ShareItemHealthStatus.Unhealthy.value,
                         message=str(timeout_exception),
                     )
-                    code_exception_list.append(str(timeout_exception))
+                    service_exceptions.append(str(timeout_exception))
         except Exception as e:
             log.error(f'Unexpected error occurred while reapplying share with uri: {share_uri} due to: {e}')
             ShareStatusRepository.update_share_item_health_status_batch(
@@ -441,13 +440,13 @@ class SharingService:
                 new_status=ShareItemHealthStatus.Unhealthy.value,
                 message='Unexpected error occurred while reapplying share',
             )
-            code_exception_list.append(str(e))
+            service_exceptions.append(str(e))
         finally:
-            if len(code_exception_list) > 0:
+            if len(service_exceptions) > 0:
                 AdminNotificationService().notify_admins_with_error_log(
-                    process_error=f'Error occurred during reapplying of share with uri: {share_data.share.shareUri}',
-                    error_logs=code_exception_list,
-                    process_name='Sharing Service',
+                    process_error=f'Error occurred during reapplying of share with uri: {share_uri}',
+                    error_logs=service_exceptions,
+                    process_name=cls.__name__,
                 )
             return reapply_successful
 

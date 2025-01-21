@@ -1,6 +1,7 @@
 import logging
 import os
-from typing import List, Dict, Any, Tuple
+from dataclasses import dataclass, field
+from typing import List, Dict, Any, Tuple, Set
 
 from dataall.base.db import get_engine
 from dataall.base.loader import load_modules, ImportMode
@@ -22,12 +23,12 @@ A container for holding the resource ( e.g. dataset, share object, environment, 
 """
 
 
+@dataclass
 class NotificationResource:
-    def __init__(self, resource, resource_type: str, resource_status: str, receivers: List[str] = None):
-        self.resource = resource
-        self.resource_type = resource_type
-        self.resource_status = resource_status
-        self.receivers_list = set(receivers)
+    resource: any
+    resource_type: str
+    resource_status: str
+    receivers: Set[str] = field(default_factory=set)
 
 
 """
@@ -35,11 +36,21 @@ Notification Bundle - Contains list of notification events for different types o
 """
 
 
+@dataclass
 class NotificationResourceBundle:
-    def __init__(self):
-        self.share_object_notifications: List[NotificationResource] = []
-        self.dataset_object_notifications: List[NotificationResource] = []
-        self.environment_object_notifications: List[NotificationResource] = []
+    """
+    A collection of notification resources, categorized by object type.
+    """
+
+    share_object_notifications: List[NotificationResource] = field(default_factory=list)
+    dataset_object_notifications: List[NotificationResource] = field(default_factory=list)
+    environment_object_notifications: List[NotificationResource] = field(default_factory=list)
+
+
+"""
+Mapping between the group / team name and the associated notification events ( in the form of NotificationResourceBundle )
+"""
+group_name_to_resource_bundle_map: Dict[str, NotificationResourceBundle] = {}
 
 
 def _get_pending_share_notifications(session):
@@ -54,20 +65,20 @@ def _get_pending_share_notifications(session):
             resource=share,
             resource_type='Share Object',
             resource_status=f'{share.status} - Pending Approval',
-            receivers=[share_dataset_map[share].SamlAdminGroupName, share_dataset_map[share].stewards],
+            receivers={share_dataset_map[share].SamlAdminGroupName, share_dataset_map[share].stewards},
         )
         for share in share_dataset_map
     ]
 
 
 def _get_unhealthy_share_notification(session):
-    unhealthy_share_objects: List[ShareObject] = ShareObjectRepository.get_share_object_with_health_status(
+    unhealthy_share_objects: List[ShareObject] = ShareObjectRepository.get_share_objects_with_item_health_status(
         session=session, health_status_list=[ShareItemHealthStatus.Unhealthy.value]
     )
     log.info(f'Found {len(unhealthy_share_objects)} unhealthy share objects')
     return [
         NotificationResource(
-            resource=share, resource_type='Share Object', resource_status='Unhealthy', receivers=[share.groupUri]
+            resource=share, resource_type='Share Object', resource_status='Unhealthy', receivers={share.groupUri}
         )
         for share in unhealthy_share_objects
     ]
@@ -105,9 +116,9 @@ def _get_unhealthy_stack_by_type(session, target_uri: str, target_type: Any):
 
 def _get_receivers_for_stack(resource, target_type):
     if target_type.__name__ == 'Dataset':
-        return [resource.SamlAdminGroupName, resource.stewards]
+        return {resource.SamlAdminGroupName, resource.stewards}
     if target_type.__name__ == 'Environment':
-        return [resource.SamlGroupName]
+        return {resource.SamlGroupName}
 
 
 """
@@ -119,7 +130,7 @@ Iterated over all the notification ( NotificationResources ) and then segregate 
 def _map_groups_to_resource_bundles(list_of_notifications: List[NotificationResource], resource_bundle_type: str):
     for notification in list_of_notifications:
         # Get all the receivers groups
-        notification_receiver_groups = notification.receivers_list
+        notification_receiver_groups = notification.receivers
         for receiver_group_name in notification_receiver_groups:
             if receiver_group_name in group_name_to_resource_bundle_map:
                 resource_bundle = group_name_to_resource_bundle_map.get(receiver_group_name)
@@ -164,7 +175,7 @@ def send_reminder_email(engine):
 
             for group, resource_bundle in group_name_to_resource_bundle_map.items():
                 email_body = _construct_email_body(resource_bundle)
-                log.debug(email_body)
+                log.debug(f' Sending email to group: {group} with email content: {email_body}')
                 subject = 'Attention Required | Data.all weekly digest'
                 try:
                     SESEmailNotificationService.create_and_send_email_notifications(
@@ -274,5 +285,4 @@ if __name__ == '__main__':
     load_modules(modes={ImportMode.SHARES_TASK})
     ENVNAME = os.environ.get('envname', 'dkrcompose')
     ENGINE = get_engine(envname=ENVNAME)
-    group_name_to_resource_bundle_map: Dict[str, NotificationResourceBundle] = {}
     send_reminder_email(engine=ENGINE)

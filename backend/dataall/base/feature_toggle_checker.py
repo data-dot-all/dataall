@@ -3,10 +3,13 @@ Contains decorators that check if a feature has been enabled or not
 """
 
 import functools
+import logging
 from typing import List, Any, Optional, Callable
 
 from dataall.base.config import config
 from dataall.base.utils.decorator_utls import process_func
+
+log = logging.getLogger(__name__)
 
 
 def is_feature_enabled(config_property: str):
@@ -51,6 +54,23 @@ def is_feature_enabled_for_allowed_values(
                 )
             if value not in enabled_values:
                 raise Exception(f'Disabled by config: {value}. Enable config value(s): {", ".join(enabled_values)}')
+            return fn(*args, **kwargs)
+
+        return fn_decorator(decorated)
+
+    return decorator
+
+
+def is_config_active(config_property: str, default_value: Any):
+    def decorator(f):
+        fn, fn_decorator = process_func(f)
+
+        @functools.wraps(fn)
+        def decorated(*args, **kwargs):
+            value = config.get_property(config_property, default_value)
+            if not value:
+                log.info(f'Config - {config_property} is inactive')
+                return
             return fn(*args, **kwargs)
 
         return fn_decorator(decorated)

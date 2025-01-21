@@ -85,9 +85,8 @@ class SESEmailNotificationService(BaseEmailNotificationService):
         if share_notification_config := config.get_property(
             'modules.datasets_base.features.share_notifications', default=None
         ):
-            for share_notification_config_type in share_notification_config.keys():
-                n_config = share_notification_config[share_notification_config_type]
-                if n_config.get('active', False) == True:
+            for share_notification_config_type, n_config in share_notification_config.items():
+                if n_config.get('active', False):
                     if share_notification_config_type == 'email':
                         SESEmailNotificationService.send_email_task(
                             subject, msg, recipient_groups_list, recipient_email_ids

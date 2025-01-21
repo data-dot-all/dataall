@@ -163,17 +163,14 @@ class S3Client:
             )
             log.info(f'Created bucket policy of {bucket_name} on {self._account_id} successfully')
         except ClientError as e:
-            if e.response['Error']['Code'] == 'MalformedPolicy':
-                if fix_malformed_principals:
-                    log.info('MalformedPolicy. Lets try again')
-                    fixed_policy = SharePolicyVerifier.remove_malformed_principal(
-                        policy, DATAALL_BUCKET_SIDS, self._account_id, self.region
-                    )
-                    self.create_bucket_policy(bucket_name, fixed_policy, False)
-                else:
-                    log.error(f'Failed to create bucket policy. MalformedPolicy: {policy}')
-                    raise e
+            if e.response['Error']['Code'] == 'MalformedPolicy' and fix_malformed_principals:
+                log.info('MalformedPolicy. Lets try again')
+                fixed_policy = SharePolicyVerifier.remove_malformed_principal(
+                    policy, DATAALL_BUCKET_SIDS, self._account_id, self.region
+                )
+                self.create_bucket_policy(bucket_name, fixed_policy, False)
             else:
+                log.error(f'Failed to create bucket policy: {policy} due to: {e}')
                 raise e
         except Exception as e:
             log.error(f'Bucket policy created failed on bucket {bucket_name} of {self._account_id} : {e}')

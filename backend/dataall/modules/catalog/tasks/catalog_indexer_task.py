@@ -38,7 +38,7 @@ class CatalogIndexerTask:
             AdminNotificationService().notify_admins_with_error_log(
                 process_error='Exception occurred during cataloging task',
                 error_logs=[error_log],
-                process_name='Catalog Task',
+                process_name=cls.__name__,
             )
             raise e
 

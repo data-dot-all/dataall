@@ -601,7 +601,7 @@ class S3BucketShareManager:
         )
         AdminNotificationService().notify_admins_with_error_log(
             process_error=f'Error occurred while processing s3 bucket share request for share with uri: {self.share.shareUri}',
-            process_name='s3 bucket share processor',
+            process_name=self.__class__.__name__,
             error_logs=[str(error)],
         )
         return True
@@ -624,7 +624,7 @@ class S3BucketShareManager:
         )
         AdminNotificationService().notify_admins_with_error_log(
             process_error=f'Error occurred while revoking s3 bucket manager for share with uri: {self.share.shareUri}',
-            process_name='s3 bucket share processor',
+            process_name=self.__class__.__name__,
             error_logs=[str(error)],
         )
         return True

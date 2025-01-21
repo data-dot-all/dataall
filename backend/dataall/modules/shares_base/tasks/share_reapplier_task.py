@@ -33,14 +33,15 @@ class EcsBulkShareRepplyService:
                 )
             return processed_share_objects
         except Exception as e:
-            log.error(f'Error occurred while reapplying share task due to: {e}')
-            task_exceptions.append(f'Error occurred while reapplying share task due to: {e}')
+            error_msg = f'Error occurred while reapplying share task due to: {e}'
+            log.error(error_msg)
+            task_exceptions.append(error_msg)
         finally:
             if len(task_exceptions) > 0:
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error='Error occurred while processing share during reapplying task',
                     error_logs=task_exceptions,
-                    process_name='Share Reapplier Task',
+                    process_name=cls.__name__,
                 )
 
     @classmethod
@@ -79,14 +80,15 @@ class EcsBulkShareRepplyService:
                 )
             return processed_share_objects
         except Exception as e:
-            log.error(f'Error occurred while reapplying share task due to: {e}')
-            task_exceptions.append(f'Error occurred while reapplying share task due to: {e}')
+            error_msg = f'Error occurred while reapplying share task due to: {e}'
+            log.error(error_msg)
+            task_exceptions.append(error_msg)
         finally:
             if len(task_exceptions) > 0:
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error='Error occurred while processing share during reapplying task',
                     error_logs=task_exceptions,
-                    process_name='Share Reapplier Task',
+                    process_name=cls.__name__,
                 )
 
 

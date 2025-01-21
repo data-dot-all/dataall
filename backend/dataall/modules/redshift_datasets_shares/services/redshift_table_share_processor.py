@@ -263,7 +263,7 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                         )
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error='Error occurred while processing redshift table share request',
-                    process_name='redshift table share processor',
+                    process_name=self.__class__.__name__,
                     error_logs=[str(e)],
                 )
                 return False
@@ -354,13 +354,14 @@ class ProcessRedshiftShare(SharesProcessorInterface):
 
                 except Exception as e:
                     success = False
-                    log.error(
+                    error_msg = (
                         f'Failed to process revoked redshift dataset {self.dataset.name} '
                         f'table {table.name} '
                         f'from source {self.source_connection.name} in namespace {self.source_connection.nameSpaceId} '
                         f'with target {self.target_connection.name} in namespace {self.target_connection.nameSpaceId} '
                         f'due to: {e}'
                     )
+                    log.error(error_msg)
                     share_item = ShareObjectRepository.find_sharable_item(
                         self.session, self.share.shareUri, table.rsTableUri
                     )
@@ -372,8 +373,8 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                     )
                     AdminNotificationService().notify_admins_with_error_log(
                         process_error='Error occurred while revoking redshift table share request',
-                        process_name='redshift tables share processor',
-                        error_logs=[str(e)],
+                        process_name=self.__class__.__name__,
+                        error_logs=[error_msg],
                     )
             self.session.commit()
             try:
@@ -451,7 +452,7 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                     )
                 AdminNotificationService().notify_admins_with_error_log(
                     process_error='Error occurred while revoking redshift table share request',
-                    process_name='redshift tables share processor',
+                    process_name=self.__class__.__name__,
                     error_logs=[str(e)],
                 )
                 return False

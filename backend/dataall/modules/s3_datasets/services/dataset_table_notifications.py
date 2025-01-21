@@ -23,7 +23,7 @@ class DatasetTableNotifications:
 
         # Find all the shares made on this dataset
         shares = ShareObjectRepository.find_dataset_shares(
-            session=session, dataset_uri=self.dataset.datasetUri, share_statues=['Processed']
+            session=session, dataset_uri=self.dataset.datasetUri, share_statuses=['Processed']
         )
         if shares:
             for share in shares:

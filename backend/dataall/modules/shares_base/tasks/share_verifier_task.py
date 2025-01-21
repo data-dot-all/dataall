@@ -41,10 +41,9 @@ def verify_shares(engine):
                         healthStatus=None,
                     )
                 except Exception as e:
-                    log.error(f'Error occurred while verifying share with uri: {share_object.shareUri} due to: {e}')
-                    task_exceptions.append(
-                        f'Error occurred while verifying share with uri: {share_object.shareUri} due to: {e}'
-                    )
+                    error_msg = f'Error occurred while verifying share with uri: {share_object.shareUri} due to: {e}'
+                    log.error(error_msg)
+                    task_exceptions.append(error_msg)
             return processed_share_objects
     except Exception as e:
         log.error(f'Error occurred while verifying shares task due to: {e}')
