@@ -83,14 +83,15 @@ def sync_tables(engine):
             )
 
 
-def _send_email_notification_for_table_updates(dataset: S3Dataset,
-                                               table_status_map: Dict[DatasetTable, DatasetTableShareDetails],
-                                               task_exceptions: List[str]):
+def _send_email_notification_for_table_updates(
+    dataset: S3Dataset, table_status_map: Dict[DatasetTable, DatasetTableShareDetails], task_exceptions: List[str]
+):
     if table_status_map:
         log.info('Sending email notification after dataset table updates were found')
         try:
             DatasetTableNotifications(dataset=dataset).notify_dataset_table_updates(
-                dataset_table_status_map=table_status_map)
+                dataset_table_status_map=table_status_map
+            )
         except Exception as e:
             error_log = f'Error occurred while sending email to notify about changes to the glue tables for dataset with uri: {dataset.datasetUri} due to: {e}'
             task_exceptions.append(error_log)

@@ -74,7 +74,7 @@ class ShareObjectRepository:
                     ShareObject.datasetUri == dataset_uri,
                     ShareObject.deleted.is_(None),
                     ShareObjectItem.status.in_(share_item_shared_states),
-                    ShareObjectItem.itemUri.in_(item_uris)
+                    ShareObjectItem.itemUri.in_(item_uris),
                 )
             )
         )

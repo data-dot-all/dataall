@@ -144,8 +144,9 @@ class DatasetTableService:
             existing_table_names = [e.GlueTableName for e in existing_tables]
             existing_dataset_tables_map = {t.GlueTableName: t for t in existing_tables}
 
-            updated_table_status_map = DatasetTableRepository.update_existing_tables_status(session, existing_tables,
-                                                                                            glue_tables)
+            updated_table_status_map = DatasetTableRepository.update_existing_tables_status(
+                session, existing_tables, glue_tables
+            )
             log.info(f'existing_tables={glue_tables}')
 
             for table in glue_tables:
@@ -153,7 +154,9 @@ class DatasetTableService:
                     log.info(f'Storing new table: {table} for dataset db {dataset.GlueDatabaseName}')
                     updated_table = DatasetTableRepository.create_synced_table(session, dataset, table)
                     DatasetTableService._attach_dataset_table_permission(session, dataset, updated_table.tableUri)
-                    updated_table_status_map[updated_table] = DatasetTableShareDetails(status='Newly Added', share_objects=[], tableUri=updated_table.tableUri)  # No share object exist on newly added tables
+                    updated_table_status_map[updated_table] = DatasetTableShareDetails(
+                        status='Newly Added', share_objects=[], tableUri=updated_table.tableUri
+                    )  # No share object exist on newly added tables
                 else:
                     log.info(f'Updating table: {table} for dataset db {dataset.GlueDatabaseName}')
                     updated_table: DatasetTable = existing_dataset_tables_map.get(table['Name'])

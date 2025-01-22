@@ -28,7 +28,7 @@ class DatasetTableNotifications:
                     self._send_email_notification_for_share(share, dataset_table_status_map)
 
     def _send_email_notification_for_share(self, share, dataset_table_status_map):
-        subject = f'Alert: Data.all Update | Glue table updated for dataset: {self.dataset.name}'
+        subject = f'Alert: Data.all Update | Glue table(s) updated for dataset: {self.dataset.name}'
         msg_footer = f"""
                     You have an active share with uri: {share.shareUri}. If there are any table(s) requested by you on the dataset: {self.dataset.name}, then for that share the table might be affected <b>in case the tables were deleted.</b><br> 
                     <br><b>Note</b>: Please check with the dataset owner if there is any missing table from your share - as it is likely deleted from the dataset.<br> If the table exists in the dataset and is successfully shared but you are unable to access the table, then please reach out to the data.all team<br><br>
