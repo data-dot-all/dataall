@@ -27,9 +27,7 @@ class AdminNotificationService:
         email_message = f"""
             Following error occurred - <br><br> {process_error} 
         """
-        for error_log in error_logs:
-            email_message += '<br><br>'.join(error_log)
-
+        email_message += '<br><br>'.join(error_logs)
         email_message += '<br><br> Please check the logs in cloudwatch for more details'
 
         SESEmailNotificationService.create_and_send_email_notifications(

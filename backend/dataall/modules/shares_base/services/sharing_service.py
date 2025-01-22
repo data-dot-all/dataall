@@ -332,7 +332,7 @@ class SharingService:
         finally:
             if len(service_exceptions) > 0:
                 AdminNotificationService().notify_admins_with_error_log(
-                    process_error=f'Error occurred during verification of share with uri: {share_data.share.shareUri} ',
+                    process_error=f'Error occurred during verification of share with uri: {share_uri} ',
                     error_logs=service_exceptions,
                     process_name=cls.__name__,
                 )
