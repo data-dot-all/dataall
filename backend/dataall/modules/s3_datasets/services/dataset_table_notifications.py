@@ -82,7 +82,7 @@ class DatasetTableNotifications:
                 </tr>
             """
         table_content = f"""
-        <table border='1' style='border-collapse:collapse'>
+        <table border='1' style='border-collapse:collapse; width: 70%;'>
             {table_heading}
             {table_body}
         </table>

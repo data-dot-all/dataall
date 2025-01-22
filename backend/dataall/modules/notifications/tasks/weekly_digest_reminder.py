@@ -135,7 +135,7 @@ def _map_email_ids_to_resource_bundles(list_of_notifications: List[NotificationR
         service_provider = ServiceProviderFactory.get_service_provider_instance()
         email_ids: Set = set()
         for group in notification_receiver_groups:
-            email_ids.update(service_provider.get_user_emailids_from_group(groupName=group))
+            email_ids.update(service_provider.get_user_emailids_from_group(role_name=group))
         for email_id in email_ids:
             if email_id in user_email_to_resource_bundle_map:
                 resource_bundle = user_email_to_resource_bundle_map.get(email_id)
@@ -275,7 +275,7 @@ def _create_table_for_resource(list_of_resources, uri_attr, link_uri):
             </tr>
         """
     table = f"""
-    <table border='1' style='border-collapse:collapse'>
+    <table border='1' style='border-collapse:collapse; width: 70%;'>
         {table_heading}
         {table_body}
     </table>
