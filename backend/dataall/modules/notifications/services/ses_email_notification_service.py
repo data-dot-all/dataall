@@ -40,9 +40,11 @@ class SESEmailNotificationService(BaseEmailNotificationService):
         )
         identityProvider = ServiceProviderFactory.get_service_provider_instance()
         try:
-            email_ids_to_send_emails = email_provider.get_email_ids_from_groupList(
-                email_provider.recipient_group_list, identityProvider
-            )
+            email_ids_to_send_emails = set()
+            if len(recipient_groups_list) > 0:
+                email_ids_to_send_emails = email_provider.get_email_ids_from_groupList(
+                    email_provider.recipient_group_list, identityProvider
+                )
 
             if len(recipient_email_list) > 0:
                 email_ids_to_send_emails.update(recipient_email_list)

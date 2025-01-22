@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 from operator import and_
+from typing import Dict, List
 
 from dataall.base.aws.sts import SessionHelper
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
@@ -10,6 +11,7 @@ from dataall.base.db import get_engine
 from dataall.modules.notifications.services.admin_notifications import AdminNotificationService
 from dataall.modules.s3_datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.s3_datasets.aws.lf_table_client import LakeFormationTableClient
+from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableShareDetails
 from dataall.modules.s3_datasets.services.dataset_table_notifications import DatasetTableNotifications
 from dataall.modules.s3_datasets.services.dataset_table_service import DatasetTableService
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
@@ -47,7 +49,7 @@ def sync_tables(engine):
                         )
 
                         # Send email notification if there are any table additions/ deletions
-                        _send_notification_after_table_updates(dataset, session, table_status_map, task_exceptions)
+                        _send_email_notification_for_table_updates(dataset, table_status_map, task_exceptions)
 
                         # For all tables in dataset, grant lake formation permission to all principals on the tables
                         tables = _get_tables_for_dataset(dataset, session)
@@ -81,13 +83,14 @@ def sync_tables(engine):
             )
 
 
-def _send_notification_after_table_updates(dataset, session, table_status_map, task_exceptions):
+def _send_email_notification_for_table_updates(dataset: S3Dataset,
+                                               table_status_map: Dict[DatasetTable, DatasetTableShareDetails],
+                                               task_exceptions: List[str]):
     if table_status_map:
         log.info('Sending email notification after dataset table updates were found')
         try:
             DatasetTableNotifications(dataset=dataset).notify_dataset_table_updates(
-                session=session, table_status_map=table_status_map
-            )
+                dataset_table_status_map=table_status_map)
         except Exception as e:
             error_log = f'Error occurred while sending email to notify about changes to the glue tables for dataset with uri: {dataset.datasetUri} due to: {e}'
             task_exceptions.append(error_log)

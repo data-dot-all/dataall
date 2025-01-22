@@ -5,6 +5,7 @@ from typing import List, Dict, Any, Tuple, Set
 
 from dataall.base.db import get_engine
 from dataall.base.loader import load_modules, ImportMode
+from dataall.base.services.service_provider_factory import ServiceProviderFactory
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.stacks.api.enums import StackStatus
 from dataall.core.stacks.db.stack_repositories import StackRepository
@@ -50,7 +51,7 @@ class NotificationResourceBundle:
 """
 Mapping between the group / team name and the associated notification events ( in the form of NotificationResourceBundle )
 """
-group_name_to_resource_bundle_map: Dict[str, NotificationResourceBundle] = {}
+user_email_to_resource_bundle_map: Dict[str, NotificationResourceBundle] = {}
 
 
 def _get_pending_share_notifications(session):
@@ -127,18 +128,22 @@ Iterated over all the notification ( NotificationResources ) and then segregate 
 """
 
 
-def _map_groups_to_resource_bundles(list_of_notifications: List[NotificationResource], resource_bundle_type: str):
+def _map_email_ids_to_resource_bundles(list_of_notifications: List[NotificationResource], resource_bundle_type: str):
     for notification in list_of_notifications:
         # Get all the receivers groups
         notification_receiver_groups = notification.receivers
-        for receiver_group_name in notification_receiver_groups:
-            if receiver_group_name in group_name_to_resource_bundle_map:
-                resource_bundle = group_name_to_resource_bundle_map.get(receiver_group_name)
+        service_provider = ServiceProviderFactory.get_service_provider_instance()
+        email_ids: Set = set()
+        for group in notification_receiver_groups:
+            email_ids.update(service_provider.get_user_emailids_from_group(groupName=group))
+        for email_id in email_ids:
+            if email_id in user_email_to_resource_bundle_map:
+                resource_bundle = user_email_to_resource_bundle_map.get(email_id)
                 resource_bundle.__getattribute__(resource_bundle_type).append(notification)
             else:
                 resource_bundle = NotificationResourceBundle()
                 resource_bundle.__getattribute__(resource_bundle_type).append(notification)
-                group_name_to_resource_bundle_map[receiver_group_name] = resource_bundle
+                user_email_to_resource_bundle_map[email_id] = resource_bundle
 
 
 def send_reminder_email(engine):
@@ -149,7 +154,6 @@ def send_reminder_email(engine):
             # Get all shares in submitted state
             pending_share_notification_resources = _get_pending_share_notifications(session=session)
             resources_type_tuple.append((pending_share_notification_resources, 'share_object_notifications'))
-            # Todo : Check if distinct needed for the share object repository
             # Get all shares in unhealthy state
             unhealthy_share_objects_notification_resources = _get_unhealthy_share_notification(session=session)
             resources_type_tuple.append((unhealthy_share_objects_notification_resources, 'share_object_notifications'))
@@ -169,24 +173,26 @@ def send_reminder_email(engine):
             # For each notification resource ( i.e. share notification, dataset notification, etc ),
             # function _map_groups_to_resource_bundles maps each team name : resource bundle
             for notification_resources, resource_bundle_type in resources_type_tuple:
-                _map_groups_to_resource_bundles(
+                _map_email_ids_to_resource_bundles(
                     list_of_notifications=notification_resources, resource_bundle_type=resource_bundle_type
                 )
 
-            for group, resource_bundle in group_name_to_resource_bundle_map.items():
+            for email_id, resource_bundle in user_email_to_resource_bundle_map.items():
                 email_body = _construct_email_body(resource_bundle)
-                log.debug(f' Sending email to group: {group} with email content: {email_body}')
+                log.debug(f' Sending email to user: {email_id} with email content: {email_body}')
                 subject = 'Attention Required | Data.all weekly digest'
                 try:
                     SESEmailNotificationService.create_and_send_email_notifications(
-                        subject=subject, msg=email_body, recipient_groups_list=[group]
+                        subject=subject, msg=email_body, recipient_email_ids=[email_id]
                     )
                 except Exception as e:
-                    log.error(f'Error occurred in sending email while weekly reminder task due to: {e}')
-                    task_exceptions.append(f'Error occurred in sending email while weekly reminder task due to: {e}')
+                    err_msg = f'Error occurred in sending email while weekly reminder task due to: {e}'
+                    log.error(err_msg)
+                    task_exceptions.append(err_msg)
     except Exception as e:
-        log.error(f'Error occurred while running the weekly reminder task: {e}')
-        task_exceptions.append(f'Error occurred while running the weekly reminder task: {e}')
+        err_msg = f'Error occurred while running the weekly reminder task: {e}'
+        log.error(err_msg)
+        task_exceptions.append(err_msg)
     finally:
         if len(task_exceptions) > 0:
             log.info('Sending email notifications to the admin team')

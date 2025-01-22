@@ -63,6 +63,25 @@ class ShareObjectRepository:
         return share
 
     @staticmethod
+    def list_dataset_shares_for_item_uris(
+        session, dataset_uri: str, share_item_shared_states: List[str], item_uris: List[str]
+    ) -> [ShareObject]:
+        query = (
+            session.query(ShareObject)
+            .outerjoin(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
+            .filter(
+                and_(
+                    ShareObject.datasetUri == dataset_uri,
+                    ShareObject.deleted.is_(None),
+                    ShareObjectItem.status.in_(share_item_shared_states),
+                    ShareObjectItem.itemUri.in_(item_uris)
+                )
+            )
+        )
+
+        return query.all()
+
+    @staticmethod
     def list_dataset_shares_with_existing_shared_items(
         session, dataset_uri, share_item_shared_states, environment_uri=None, item_type=None
     ) -> [ShareObject]:

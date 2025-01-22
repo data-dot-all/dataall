@@ -1,6 +1,7 @@
 import logging
+from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict
+from typing import Dict, List
 
 from sqlalchemy.sql import and_
 
@@ -12,8 +13,21 @@ from dataall.modules.s3_datasets.db.dataset_models import (
     DatasetTableDataFilter,
 )
 from dataall.base.utils import json_utils
+from dataall.modules.shares_base.db.share_object_models import ShareObject
+from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
+from dataall.modules.shares_base.services.shares_enums import ShareItemStatus
 
 logger = logging.getLogger(__name__)
+
+
+"""
+Dataclass containing status of the dataset table and the share objects where the dataset table is present 
+"""
+@dataclass
+class DatasetTableShareDetails:
+    tableUri: str
+    status: str
+    share_objects: List[ShareObject] = field(default_factory=list)
 
 
 class DatasetTableRepository:
@@ -62,22 +76,25 @@ class DatasetTableRepository:
         return table
 
     @staticmethod
-    def update_existing_tables_status(existing_tables, glue_tables):
-        updated_tables_status_map: Dict[str:str] = {}
+    def update_existing_tables_status(session, existing_tables, glue_tables):
+        # Map between tables and the details about the table ( i.e. status, share object on that table )
+        updated_tables_status_map: Dict[DatasetTable, DatasetTableShareDetails] = dict()
         for existing_table in existing_tables:
             if existing_table.GlueTableName not in [t['Name'] for t in glue_tables]:
                 if existing_table.LastGlueTableStatus != 'Deleted':
                     existing_table.LastGlueTableStatus = 'Deleted'
-                    updated_tables_status_map[existing_table.GlueTableName] = 'Deleted'
+                    # Get all the share objects where the table is used
+                    dataset_shares: List[ShareObject] = ShareObjectRepository.list_dataset_shares_for_item_uris(session=session, dataset_uri=existing_table.datasetUri, share_item_shared_states=[ShareItemStatus.Share_Succeeded.value], item_uris=[existing_table.tableUri])
+                    updated_tables_status_map[existing_table] = DatasetTableShareDetails(status='Deleted', share_objects=dataset_shares, tableUri=existing_table.tableUri)
                     logger.info(f'Existing Table {existing_table.GlueTableName} status set to Deleted from Glue')
                 else:
                     logger.info(f'Existing Table {existing_table.GlueTableName} status already set Deleted')
             elif (
-                existing_table.GlueTableName in [t['Name'] for t in glue_tables]
-                and existing_table.LastGlueTableStatus == 'Deleted'
+                    existing_table.GlueTableName in [t['Name'] for t in glue_tables]
+                    and existing_table.LastGlueTableStatus == 'Deleted'
             ):
                 existing_table.LastGlueTableStatus = 'InSync'
-                updated_tables_status_map[existing_table.GlueTableName] = 'InSync: Updated to InSync from Deleted'
+                updated_tables_status_map[existing_table] = DatasetTableShareDetails(status='InSync: Updated to InSync from Deleted', share_objects=[], tableUri=existing_table.tableUri) # Keeping share object empty as no user needs to be informed when a table gets in sync
                 logger.info(
                     f'Updating Existing Table {existing_table.GlueTableName} status set to InSync from Deleted after found in Glue'
                 )

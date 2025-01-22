@@ -1,4 +1,6 @@
 import logging
+from typing import Dict
+
 from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
@@ -6,7 +8,7 @@ from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.s3_datasets.aws.athena_table_client import AthenaTableClient
 from dataall.modules.s3_datasets.aws.glue_dataset_client import DatasetCrawler
-from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
+from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository, DatasetTableShareDetails
 from dataall.modules.s3_datasets.db.dataset_table_data_filter_repositories import DatasetTableDataFilterRepository
 from dataall.modules.s3_datasets.indexers.table_indexer import DatasetTableIndexer
 from dataall.modules.s3_datasets.indexers.dataset_indexer import DatasetIndexer
@@ -136,15 +138,14 @@ class DatasetTableService:
     @staticmethod
     def sync_existing_tables(session, uri, glue_tables=None):
         dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
-        updated_table_status_map = {}
+        updated_table_status_map: Dict[DatasetTable, DatasetTableShareDetails] = dict()
         if dataset:
             existing_tables = DatasetTableRepository.find_dataset_tables(session, uri)
             existing_table_names = [e.GlueTableName for e in existing_tables]
             existing_dataset_tables_map = {t.GlueTableName: t for t in existing_tables}
 
-            updated_table_status_map = DatasetTableRepository.update_existing_tables_status(
-                existing_tables, glue_tables
-            )
+            updated_table_status_map = DatasetTableRepository.update_existing_tables_status(session, existing_tables,
+                                                                                            glue_tables)
             log.info(f'existing_tables={glue_tables}')
 
             for table in glue_tables:
@@ -152,7 +153,7 @@ class DatasetTableService:
                     log.info(f'Storing new table: {table} for dataset db {dataset.GlueDatabaseName}')
                     updated_table = DatasetTableRepository.create_synced_table(session, dataset, table)
                     DatasetTableService._attach_dataset_table_permission(session, dataset, updated_table.tableUri)
-                    updated_table_status_map[updated_table.GlueTableName] = 'Newly Added'
+                    updated_table_status_map[updated_table] = DatasetTableShareDetails(status='Newly Added', share_objects=[], tableUri=updated_table.tableUri)  # No share object exist on newly added tables
                 else:
                     log.info(f'Updating table: {table} for dataset db {dataset.GlueDatabaseName}')
                     updated_table: DatasetTable = existing_dataset_tables_map.get(table['Name'])
