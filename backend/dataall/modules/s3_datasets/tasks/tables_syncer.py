@@ -52,7 +52,7 @@ def sync_tables(engine):
                         _send_email_notification_for_table_updates(dataset, table_status_map, task_exceptions)
 
                         # For all tables in dataset, grant lake formation permission to all principals on the tables
-                        tables = _get_tables_for_dataset(dataset, session)
+                        tables = _list_tables_for_dataset(dataset, session)
                         log.info('Updating tables permissions on Lake Formation...')
                         for table in tables:
                             _grant_lf_table_permissions_to_all_principals(env, env_group, table)
@@ -97,7 +97,7 @@ def _send_email_notification_for_table_updates(
             task_exceptions.append(error_log)
 
 
-def _get_tables_for_dataset(dataset, session):
+def _list_tables_for_dataset(dataset, session):
     return session.query(DatasetTable).filter(DatasetTable.datasetUri == dataset.datasetUri).all()
 
 

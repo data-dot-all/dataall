@@ -36,6 +36,7 @@ class EcsBulkShareRepplyService:
             error_msg = f'Error occurred while reapplying share task due to: {e}'
             log.error(error_msg)
             task_exceptions.append(error_msg)
+            raise e
         finally:
             if len(task_exceptions) > 0:
                 AdminNotificationService().notify_admins_with_error_log(
@@ -83,6 +84,7 @@ class EcsBulkShareRepplyService:
             error_msg = f'Error occurred while reapplying share task due to: {e}'
             log.error(error_msg)
             task_exceptions.append(error_msg)
+            raise e
         finally:
             if len(task_exceptions) > 0:
                 AdminNotificationService().notify_admins_with_error_log(

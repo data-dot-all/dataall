@@ -69,15 +69,14 @@ def share_expiration_checker(engine):
                                 session=session, dataset=dataset, share=share
                             ).notify_share_expiration_to_requesters()
                 except Exception as e:
-                    log.error(
-                        f'Error occurred while processing share expiration processing for share with URI: {share.shareUri} due to: {e}'
-                    )
-                    task_exceptions.append(
-                        f'Error occurred while processing share expiration processing for share with URI: {share.shareUri} due to: {e}'
-                    )
+                    err_msg = f'Error occurred while processing share expiration processing for share with URI: {share.shareUri} due to: {e}'
+                    log.exception(err_msg)
+                    task_exceptions.append(err_msg)
     except Exception as e:
-        log.error(f'Error occurred while processing share expiration due to : {e}')
-        task_exceptions.append(f'Error occurred while processing share expiration due to: {e}')
+        err_msg = f'Error occurred while processing share expiration due to : {e}'
+        log.error(err_msg)
+        task_exceptions.append(err_msg)
+        raise e
     finally:
         if len(task_exceptions) > 0:
             AdminNotificationService().notify_admins_with_error_log(

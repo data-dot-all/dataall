@@ -25,7 +25,7 @@ if __name__ == '__main__':
         log.info('Sharing task finished successfully')
 
     except Exception as e:
-        log.error(f'Sharing task failed due to: {e}')
+        log.exception(f'Sharing task failed due to: {e}')
         AdminNotificationService().notify_admins_with_error_log(
             process_error=f'Error occurred while running sharing task for share with uri: {os.getenv("shareUri", "Share URI not available")}',
             error_logs=[str(e)],

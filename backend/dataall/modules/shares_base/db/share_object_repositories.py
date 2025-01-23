@@ -42,11 +42,8 @@ class ShareObjectRepository:
         )
 
     @staticmethod
-    def find_dataset_shares(session, dataset_uri: str, share_statuses: List[str] = None):
+    def find_dataset_shares(session, dataset_uri: str):
         query = session.query(ShareObject).filter(ShareObject.datasetUri == dataset_uri)
-
-        if share_statuses:
-            query = query.filter(ShareObject.status.in_(share_statuses))
 
         return query.all()
 
@@ -221,7 +218,7 @@ class ShareObjectRepository:
         return query.all()
 
     @staticmethod
-    def get_share_objects_with_item_health_status(session, health_status_list: List[str] = None):
+    def list_share_objects_with_item_health_status(session, health_status_list: List[str] = None):
         if health_status_list is None:
             health_status_list = []
 

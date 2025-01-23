@@ -33,21 +33,18 @@ def verify_shares(engine):
                     f'Verifying Share Items for Share Object with Requestor: {share_object.principalId} on Target Dataset: {share_object.datasetUri}'
                 )
                 processed_share_objects.append(share_object.shareUri)
-                try:
-                    SharingService.verify_share(
-                        engine,
-                        share_uri=share_object.shareUri,
-                        status=ShareItemStatus.Share_Succeeded.value,
-                        healthStatus=None,
-                    )
-                except Exception as e:
-                    error_msg = f'Error occurred while verifying share with uri: {share_object.shareUri} due to: {e}'
-                    log.error(error_msg)
-                    task_exceptions.append(error_msg)
+                SharingService.verify_share(
+                    engine,
+                    share_uri=share_object.shareUri,
+                    status=ShareItemStatus.Share_Succeeded.value,
+                    healthStatus=None,
+                )
             return processed_share_objects
     except Exception as e:
-        log.error(f'Error occurred while verifying shares task due to: {e}')
-        task_exceptions.append(f'Error occurred while verifying shares task due to: {e}')
+        err_msg = f'Error occurred while verifying shares task due to: {e}'
+        log.error(err_msg)
+        task_exceptions.append(err_msg)
+        raise e
     finally:
         if len(task_exceptions) > 0:
             AdminNotificationService().notify_admins_with_error_log(

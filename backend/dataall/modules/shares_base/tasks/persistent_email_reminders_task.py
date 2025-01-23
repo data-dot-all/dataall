@@ -35,8 +35,10 @@ def persistent_email_reminders(engine):
                 log.info(f'Email reminder sent for share {share.shareUri}')
             log.info('Completed Persistent Email Reminders Task')
     except Exception as e:
-        log.error(f'Error while running persistent email reminder task: {e}')
-        task_exceptions.append(f'Error while running persistent email reminder task: {e}')
+        err_msg = f'Error while running persistent email reminder task: {e}'
+        log.error(err_msg)
+        task_exceptions.append(err_msg)
+        raise e
     finally:
         if len(task_exceptions) > 0:
             AdminNotificationService().notify_admins_with_error_log(

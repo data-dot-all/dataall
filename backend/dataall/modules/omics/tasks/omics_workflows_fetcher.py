@@ -65,8 +65,9 @@ def fetch_omics_workflows(engine):
         AdminNotificationService().notify_admins_with_error_log(
             process_error='Error occurred while processing omics workflow task',
             error_logs=[str(e)],
-            process_name='Omics Workflow',
+            process_name='Omics Workflow task',
         )
+        raise e
 
 
 if __name__ == '__main__':

@@ -225,7 +225,7 @@ class SharingService:
                                 else:
                                     log.info(f'There are no items to revoke of type {type.value}')
                             except Exception as e:
-                                log.error(f'Error occurred during share revoking of {type.value}: {e}')
+                                log.exception(f'Error occurred during share revoking of {type.value}: {e}')
                                 ShareStatusRepository.update_share_item_status_batch(
                                     session,
                                     share_uri,
@@ -243,7 +243,7 @@ class SharingService:
                                 service_exceptions.append(str(e))
                                 revoke_successful = False
                 except Exception as e:
-                    log.error(f'Error occurred during share revoking: {e}')
+                    log.exception(f'Error occurred during share revoking: {e}')
                     new_share_item_state = share_item_sm.run_transition(ShareItemActions.Failure.value)
                     share_item_sm.update_state(session, share_data.share.shareUri, new_share_item_state)
                     revoke_successful = False
@@ -317,7 +317,7 @@ class SharingService:
                         else:
                             log.info(f'There are no items to verify of type {type.value}')
                     except Exception as e:
-                        log.error(f'Error occurred during share verifying of {type.value}: {e}')
+                        log.exception(f'Error occurred during share verifying of {type.value}: {e}')
                         service_exceptions.append(str(e))
                 if not shares_health_status:
                     log.info(
@@ -401,7 +401,7 @@ class SharingService:
                                 else:
                                     log.info(f'There are no items to reapply of type {type.value}')
                             except Exception as e:
-                                log.error(f'Error occurred during share reapplying of {type.value}: {e}')
+                                log.exception(f'Error occurred during share reapplying of {type.value}: {e}')
                                 service_exceptions.append(
                                     f'Error occurred during reapplying of share with uri: {share_data.share.shareUri} for processor type: {type.value}  due to an unknown exception: {e}'
                                 )
@@ -423,6 +423,7 @@ class SharingService:
                             ).notify_share_object_items_healthy()
 
                 except ResourceLockTimeout as timeout_exception:
+                    log.error(f'Resource lock timed out for share with uri: {share_uri}')
                     ShareStatusRepository.update_share_item_health_status_batch(
                         session,
                         share_uri,

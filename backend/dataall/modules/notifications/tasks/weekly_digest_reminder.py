@@ -13,6 +13,7 @@ from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.notifications.services.admin_notifications import AdminNotificationService
 from dataall.modules.notifications.services.ses_email_notification_service import SESEmailNotificationService
+from dataall.modules.notifications.tasks.notification_enums import ResourceStatus, ResourceType
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.services.shares_enums import ShareItemHealthStatus
@@ -27,8 +28,8 @@ A container for holding the resource ( e.g. dataset, share object, environment, 
 @dataclass
 class NotificationResource:
     resource: any
-    resource_type: str
-    resource_status: str
+    resource_type: ResourceType
+    resource_status: ResourceStatus
     receivers: Set[str] = field(default_factory=set)
 
 
@@ -49,7 +50,8 @@ class NotificationResourceBundle:
 
 
 """
-Mapping between the group / team name and the associated notification events ( in the form of NotificationResourceBundle )
+{user_email_id: Notification bundle}
+Notification bundle consists of share, dataset & environment notification events ( NotificationResource )
 """
 user_email_to_resource_bundle_map: Dict[str, NotificationResourceBundle] = {}
 
@@ -64,8 +66,8 @@ def _get_pending_share_notifications(session):
     return [
         NotificationResource(
             resource=share,
-            resource_type='Share Object',
-            resource_status=f'{share.status} - Pending Approval',
+            resource_type=ResourceType.SHAREOBJECT,
+            resource_status=ResourceStatus.PENDINGAPPROVAL,
             receivers={share_dataset_map[share].SamlAdminGroupName, share_dataset_map[share].stewards},
         )
         for share in share_dataset_map
@@ -73,16 +75,26 @@ def _get_pending_share_notifications(session):
 
 
 def _get_unhealthy_share_notification(session):
-    unhealthy_share_objects: List[ShareObject] = ShareObjectRepository.get_share_objects_with_item_health_status(
+    unhealthy_share_objects: List[ShareObject] = ShareObjectRepository.list_share_objects_with_item_health_status(
         session=session, health_status_list=[ShareItemHealthStatus.Unhealthy.value]
     )
     log.info(f'Found {len(unhealthy_share_objects)} unhealthy share objects')
     return [
         NotificationResource(
-            resource=share, resource_type='Share Object', resource_status='Unhealthy', receivers={share.groupUri}
+            resource=share,
+            resource_type=ResourceType.SHAREOBJECT,
+            resource_status=ResourceStatus.UNHEALTHY,
+            receivers={share.groupUri},
         )
         for share in unhealthy_share_objects
     ]
+
+
+"""
+Function to fetch all the unhealthy stacks for a target type
+target_uri : any unique uri representing a resource ( datasetUri, environmentUri, etc )
+target_type: any db model representing a data.all resource ( e.g. DatasetBase, Environment, etc ) 
+"""
 
 
 def _get_unhealthy_stack_by_type(session, target_uri: str, target_type: Any):
@@ -106,8 +118,8 @@ def _get_unhealthy_stack_by_type(session, target_uri: str, target_type: Any):
         if stack is not None:
             notification_resource = NotificationResource(
                 resource=resource,
-                resource_type=target_type.__name__,
-                resource_status=stack.status,
+                resource_type=_get_resource_type_for_stack(target_type),
+                resource_status=_get_resource_status_for_stack(stack.status),
                 receivers=_get_receivers_for_stack(resource=resource, target_type=target_type),
             )
             unhealthy_stack_notification_resources.append(notification_resource)
@@ -116,26 +128,46 @@ def _get_unhealthy_stack_by_type(session, target_uri: str, target_type: Any):
 
 
 def _get_receivers_for_stack(resource, target_type):
+    """Returns team(s) / group(s) as per the target_type model (DatasetBase, Environment, etc )"""
     if target_type.__name__ == 'Dataset':
         return {resource.SamlAdminGroupName, resource.stewards}
     if target_type.__name__ == 'Environment':
         return {resource.SamlGroupName}
 
 
+def _get_resource_type_for_stack(target_type):
+    """Returns ResourceType as per the target_type model (DatasetBase, Environment, etc )"""
+    if target_type.__name__ == 'Dataset':
+        return ResourceType.DATASET
+    if target_type.__name__ == 'Environment':
+        return ResourceType.ENVIRONMENT
+
+
+def _get_resource_status_for_stack(stack_status):
+    """Returns the enum associated with the stack's status.
+    Iterates over all enums of ResourceStatus and returns enums with matching values with the stack status
+    """
+
+    for resource_status in ResourceStatus:
+        if resource_status.value == stack_status:
+            return resource_status
+
+
 """
-Function to create a map of {group name : resource bundle}, where each resource bundle contains dataset, share and environment notification lists. 
-Iterated over all the notification ( NotificationResources ) and then segregate based on the dataset, shares & environment notifications and map the bundle to a team.
+Function to create a map of {user_email_id : resource bundle}, where each resource bundle contains dataset, share and environment notification lists. 
+Iterated over all the notification ( NotificationResources ) and then segregate based on the dataset, shares & environment notifications and map the bundle to a user.
 """
 
 
 def _map_email_ids_to_resource_bundles(list_of_notifications: List[NotificationResource], resource_bundle_type: str):
     for notification in list_of_notifications:
-        # Get all the receivers groups
         notification_receiver_groups = notification.receivers
         service_provider = ServiceProviderFactory.get_service_provider_instance()
+
         email_ids: Set = set()
         for group in notification_receiver_groups:
             email_ids.update(service_provider.get_user_emailids_from_group(role_name=group))
+
         for email_id in email_ids:
             if email_id in user_email_to_resource_bundle_map:
                 resource_bundle = user_email_to_resource_bundle_map.get(email_id)
@@ -154,14 +186,17 @@ def send_reminder_email(engine):
             # Get all shares in submitted state
             pending_share_notification_resources = _get_pending_share_notifications(session=session)
             resources_type_tuple.append((pending_share_notification_resources, 'share_object_notifications'))
+
             # Get all shares in unhealthy state
             unhealthy_share_objects_notification_resources = _get_unhealthy_share_notification(session=session)
             resources_type_tuple.append((unhealthy_share_objects_notification_resources, 'share_object_notifications'))
+
             # Get all the dataset which are in unhealthy state
             unhealthy_datasets_notification_resources = _get_unhealthy_stack_by_type(
                 session=session, target_uri='datasetUri', target_type=DatasetBase
             )
             resources_type_tuple.append((unhealthy_datasets_notification_resources, 'dataset_object_notifications'))
+
             # Get all the environments which are in unhealthy state
             unhealthy_environment_notification_resources = _get_unhealthy_stack_by_type(
                 session=session, target_uri='environmentUri', target_type=Environment
@@ -179,7 +214,7 @@ def send_reminder_email(engine):
 
             for email_id, resource_bundle in user_email_to_resource_bundle_map.items():
                 email_body = _construct_email_body(resource_bundle)
-                log.debug(f' Sending email to user: {email_id} with email content: {email_body}')
+                log.debug(f'Sending email to user: {email_id} with email content: {email_body}')
                 subject = 'Attention Required | Data.all weekly digest'
                 try:
                     SESEmailNotificationService.create_and_send_email_notifications(
@@ -264,13 +299,13 @@ def _create_table_for_resource(list_of_resources, uri_attr, link_uri):
         table_body += f"""
             <tr>
                 <td align='center'>
-                    {resource.resource_type}
+                    {resource.resource_type.value}
                 </td>
                  <td align='center'>
                     {os.environ.get('frontend_domain_url', '') + link_uri + resource.resource.__getattribute__(uri_attr)}
                 </td>
                 <td align='center'>
-                    {resource.resource_status}
+                    {resource.resource_status.value}
                 </td>
             </tr>
         """
