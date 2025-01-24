@@ -222,12 +222,13 @@ def send_reminder_email(engine):
                     )
                 except Exception as e:
                     err_msg = f'Error occurred in sending email while weekly reminder task due to: {e}'
-                    log.error(err_msg)
+                    log.exception(err_msg)
                     task_exceptions.append(err_msg)
     except Exception as e:
         err_msg = f'Error occurred while running the weekly reminder task: {e}'
         log.error(err_msg)
         task_exceptions.append(err_msg)
+        raise e
     finally:
         if len(task_exceptions) > 0:
             log.info('Sending email notifications to the admin team')
