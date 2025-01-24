@@ -13,7 +13,7 @@ from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.notifications.services.admin_notifications import AdminNotificationService
 from dataall.modules.notifications.services.ses_email_notification_service import SESEmailNotificationService
-from dataall.modules.notifications.tasks.notification_enums import ResourceStatus, ResourceType
+from dataall.modules.notifications.tasks.weekly_notification_enums import ResourceStatus, ResourceType
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.services.shares_enums import ShareItemHealthStatus
