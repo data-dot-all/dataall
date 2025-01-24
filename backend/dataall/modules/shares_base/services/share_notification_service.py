@@ -282,7 +282,7 @@ class ShareNotificationService:
         email_notification_msg = msg + share_link_text + '<br><br>' + msg_footer
 
         notifications = self.register_notifications(
-            notification_type=DataSharingNotificationType.SHARE_OBJECT_FAILED.value, msg=msg
+            notification_type=DataSharingNotificationType.SHARE_OBJECT_FAILED.value, msg=msg.replace('<br>', '').replace('<b>', '').replace('</b>', '')
         )
 
         SESEmailNotificationService.create_and_send_email_notifications(
@@ -316,7 +316,7 @@ class ShareNotificationService:
 
         notifications = self.register_notifications(
             notification_type=DataSharingNotificationType.SHARE_OBJECT_UNHEALTHY.value,
-            msg=msg,
+            msg=msg.replace('<br>', '').replace('<b>', '').replace('</b>', ''),
             to_recipients=[self.share.groupUri],
         )
 
@@ -349,7 +349,7 @@ class ShareNotificationService:
 
         notifications = self.register_notifications(
             notification_type=DataSharingNotificationType.SHARE_OBJECT_HEALTHY.value,
-            msg=msg,
+            msg=msg.replace('<br>', '').replace('<b>', '').replace('</b>', ''),
             to_recipients=[self.share.groupUri],
         )
 
