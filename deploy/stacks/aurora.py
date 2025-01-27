@@ -7,6 +7,7 @@ from aws_cdk import (
     aws_ssm as ssm,
     aws_kms,
     aws_ec2,
+    aws_iam as iam,
 )
 
 from .pyNestedStack import pyNestedClass
@@ -65,6 +66,29 @@ class AuroraServerlessStack(pyNestedClass):
 
         database_name = f'{envname}db'
 
+        monitoring_role = iam.Role(
+            self,
+            'RDSMonitoringRole',
+            role_name='dataall-rds-monitoring-role',
+            assumed_by=iam.ServicePrincipal('monitoring.rds.amazonaws.com'),
+        )
+
+        monitoring_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=['logs:CreateLogGroup', 'logs:PutRetentionPolicy'],
+                effect=iam.Effect.ALLOW,
+                resources=['arn:aws:logs:*:*:log-group:RDS*'],
+            )
+        )
+
+        monitoring_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=['logs:CreateLogStream', 'logs:PutLogEvents', 'logs:DescribeLogStreams', 'logs:GetLogEvents'],
+                effect=iam.Effect.ALLOW,
+                resources=['arn:aws:logs:*:*:log-group:RDS*:log-stream:*'],
+            )
+        )
+
         database = rds.DatabaseCluster(
             self,
             f'AuroraDatabase{envname}',
@@ -95,6 +119,7 @@ class AuroraServerlessStack(pyNestedClass):
             serverless_v2_max_capacity=16 if prod_sizing else 8,
             storage_encryption_key=key,
             monitoring_interval=Duration.seconds(1),
+            monitoring_role=monitoring_role,
         )
         database.add_rotation_single_user(automatically_after=Duration.days(90))
 
