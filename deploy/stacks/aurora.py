@@ -94,6 +94,7 @@ class AuroraServerlessStack(pyNestedClass):
             serverless_v2_min_capacity=4 if prod_sizing else 2,
             serverless_v2_max_capacity=16 if prod_sizing else 8,
             storage_encryption_key=key,
+            monitoring_interval=Duration.seconds(1),
         )
         database.add_rotation_single_user(automatically_after=Duration.days(90))
 
