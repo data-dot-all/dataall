@@ -77,7 +77,7 @@ class DatasetTableNotifications:
         for dataset_table, dataset_table_details in dataset_table_status_map.items():
             table_body += f"""
                 <tr>
-                    <td align='center'>{dataset_table.GlueTableName}</td>
+                    <td align='center'>{dataset_table.label}</td>
                     <td align='center'>{dataset_table_details.status}</td>
                 </tr>
             """

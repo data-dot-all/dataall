@@ -3,7 +3,6 @@ from typing import List
 from warnings import warn
 from datetime import datetime
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.modules.notifications.services.admin_notifications import AdminNotificationService
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
     ShareItemStatus,

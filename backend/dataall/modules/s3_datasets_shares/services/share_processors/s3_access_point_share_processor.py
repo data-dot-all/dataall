@@ -2,7 +2,6 @@ import logging
 from datetime import datetime
 from typing import List
 
-from dataall.modules.notifications.services.admin_notifications import AdminNotificationService
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers import S3AccessPointShareManager
 from dataall.modules.s3_datasets_shares.services.s3_share_service import S3ShareService

@@ -55,7 +55,6 @@ class EcsBulkShareRepplyService:
                 log.info(
                     f'Re-applying Share Items for Share Object, Share URI: {share_object.shareUri} ) with Requestor: {share_object.principalId} on Target Dataset: {share_object.datasetUri}'
                 )
-                processed_share_objects.append(share_object.shareUri)
                 ShareStatusRepository.update_share_item_health_status_batch(
                     session=session,
                     share_uri=share_object.shareUri,
@@ -63,6 +62,7 @@ class EcsBulkShareRepplyService:
                     new_status=ShareItemHealthStatus.PendingReApply.value,
                 )
                 SharingService.reapply_share(engine, share_uri=share_object.shareUri)
+                processed_share_objects.append(share_object.shareUri)
             except Exception as e:
                 error_formatted = f'Error occurred while reapplying share in the reapplie task for share with uri:{share_object.shareUri} due to: {e}'
                 log.error(error_formatted)
