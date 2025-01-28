@@ -10,7 +10,7 @@ from dataall.core.tasks.db.task_models import Task
 
 def mock_cognito_client(mocker):
     mock_client = MagicMock()
-    mocker.patch('dataall.modules.notifications.services.ses_email_notification_service.Cognito', mock_client)
+    mocker.patch('dataall.base.aws.cognito.Cognito', mock_client)
     return mock_client
 
 
