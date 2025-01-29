@@ -14,10 +14,10 @@ import {
   listAttachedMetadataForms,
   listMetadataFormVersions
 } from '../services';
-import { SET_ERROR } from '../../../globalErrors';
+import { SET_ERROR } from 'globalErrors';
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { useClient } from '../../../services';
+import { useClient } from 'services';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import DoNotDisturbAltOutlinedIcon from '@mui/icons-material/DoNotDisturbAltOutlined';
 import { useSnackbar } from 'notistack';

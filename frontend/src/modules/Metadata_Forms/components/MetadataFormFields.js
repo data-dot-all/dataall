@@ -31,8 +31,8 @@ import {
   SaveIcon,
   PlusIcon,
   ChipInput
-} from '../../../design';
-import { SET_ERROR } from '../../../globalErrors';
+} from 'design';
+import { SET_ERROR } from 'globalErrors';
 import Checkbox from '@mui/material/Checkbox';
 import {
   createMetadataFormVersion,
@@ -40,7 +40,7 @@ import {
   getMetadataForm,
   listMetadataFormVersions
 } from '../services';
-import { useClient } from '../../../services';
+import { useClient } from 'services';
 import { GridActionsCellItem } from '@mui/x-data-grid';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import SettingsBackupRestoreOutlinedIcon from '@mui/icons-material/SettingsBackupRestoreOutlined';

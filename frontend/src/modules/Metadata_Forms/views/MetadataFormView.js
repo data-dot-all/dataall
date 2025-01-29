@@ -1,8 +1,8 @@
 import React, { useEffect, useCallback, useState } from 'react';
 
 import { Helmet } from 'react-helmet-async';
-import { SET_ERROR, useDispatch } from '../../../globalErrors';
-import { fetchEnums, useClient } from '../../../services';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { fetchEnums, useClient } from 'services';
 import { getMetadataForm } from '../services';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import {
@@ -18,7 +18,7 @@ import {
   Tabs,
   Typography
 } from '@mui/material';
-import { ChevronRightIcon, useSettings } from '../../../design';
+import { ChevronRightIcon, useSettings } from 'design';
 import { FaTrash } from 'react-icons/fa';
 import {
   MetadataFormInfo,

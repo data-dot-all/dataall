@@ -21,11 +21,11 @@ import {
   listAttachedMetadataForms,
   listEntityMetadataForms
 } from '../services';
-import { Defaults, PlusIcon } from '../../../design';
+import { Defaults, PlusIcon } from 'design';
 import CircularProgress from '@mui/material/CircularProgress';
-import { useClient } from '../../../services';
+import { useClient } from 'services';
 import { RenderedMetadataForm } from './renderedMetadataForm';
-import { SET_ERROR } from '../../../globalErrors';
+import { SET_ERROR } from 'globalErrors';
 import { AttachedFormCard } from './AttachedFormCard';
 import DoNotDisturbAltOutlinedIcon from '@mui/icons-material/DoNotDisturbAltOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';

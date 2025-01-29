@@ -39,7 +39,7 @@ import {
   OrganizationTeams
 } from '../components';
 import { MetadataAttachment } from '../../Metadata_Forms/components';
-import { isModuleEnabled, ModuleNames } from '../../../utils';
+import { isModuleEnabled, ModuleNames } from 'utils';
 
 const tabs = [
   { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
