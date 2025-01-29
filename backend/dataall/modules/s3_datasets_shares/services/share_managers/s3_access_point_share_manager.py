@@ -6,6 +6,7 @@ from itertools import count
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.db import utils
 from dataall.base.aws.sts import SessionHelper
+from dataall.modules.notifications.services.admin_notifications import AdminNotificationService
 from dataall.modules.s3_datasets_shares.aws.s3_client import (
     S3ControlClient,
     S3Client,
@@ -565,12 +566,12 @@ class S3AccessPointShareManager:
 
             for target_sid in perms_to_sids(self.share.permissions, SidType.KmsAccessPointPolicy):
                 if target_sid in statements.keys():
-                    logger.info(f'KMS key policy contains share statement {target_sid}, ' f'updating the current one')
+                    logger.info(f'KMS key policy contains share statement {target_sid}, updating the current one')
                     statements[target_sid] = add_target_arn_to_statement_principal(
                         statements[target_sid], target_requester_arn
                     )
                 else:
-                    logger.info(f'KMS key does not contain share statement {target_sid}, ' f'generating a new one')
+                    logger.info(f'KMS key does not contain share statement {target_sid}, generating a new one')
                     statements[target_sid] = self.generate_default_kms_policy_statement(
                         target_requester_arn, target_sid
                     )
@@ -744,6 +745,11 @@ class S3AccessPointShareManager:
         S3ShareAlarmService().trigger_folder_sharing_failure_alarm(
             self.target_folder, self.share, self.target_environment
         )
+        AdminNotificationService().notify_admins_with_error_log(
+            process_error='Error occurred while processing access point share request',
+            process_name=self.__class__.__name__,
+            error_logs=[str(error)],
+        )
 
     def handle_revoke_failure(self, error: Exception) -> bool:
         """
@@ -760,6 +766,11 @@ class S3AccessPointShareManager:
         )
         S3ShareAlarmService().trigger_revoke_folder_sharing_failure_alarm(
             self.target_folder, self.share, self.target_environment
+        )
+        AdminNotificationService().notify_admins_with_error_log(
+            process_error='Error occurred while revoking access point share request',
+            process_name=self.__class__.__name__,
+            error_logs=[str(error)],
         )
         return True
 

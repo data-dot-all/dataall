@@ -68,7 +68,7 @@ class S3SharePolicyService(ManagedPolicy):
         policy_actions = S3_ALLOWED_ACTIONS if resource_type == 's3' else [f'{resource_type}:*']
         index = self._get_statement_by_sid(policy_document, statement_sid)
         if index is None:
-            log.info(f'{statement_sid} does NOT exists for Managed policy {policy_name} ' f'creating statement...')
+            log.info(f'{statement_sid} does NOT exists for Managed policy {policy_name} creating statement...')
             additional_policy = {
                 'Sid': statement_sid,
                 'Effect': 'Allow',
@@ -97,7 +97,7 @@ class S3SharePolicyService(ManagedPolicy):
         index = self._get_statement_by_sid(policy_document, statement_sid)
         log.info(f'Removing {target_resources} from Statement[{index}] in Managed policy {policy_name} ...')
         if index is None:
-            log.info(f'{statement_sid} does NOT exists for Managed policy {policy_name} ' f'skipping...')
+            log.info(f'{statement_sid} does NOT exists for Managed policy {policy_name} skipping...')
         else:
             policy_statement = policy_document['Statement'][index]
             for target_resource in target_resources:

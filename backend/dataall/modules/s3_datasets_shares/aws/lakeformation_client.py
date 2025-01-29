@@ -150,7 +150,7 @@ class LakeFormationClient:
                     permissions_with_grant_options=permissions_with_grant_options,
                     check_resource=check_resource,
                 ):
-                    log.info(f'Granting principal {principal} ' f'permissions {permissions} ' f'to {str(resource)}...')
+                    log.info(f'Granting principal {principal} permissions {permissions} to {str(resource)}...')
                     # We define the grant with "permissions" instead of "missing_permissions" because we want to avoid
                     # duplicates done by data.all, but we want to avoid dependencies with external grants
                     grant_dict = dict(
@@ -428,7 +428,7 @@ class LakeFormationClient:
         check_resource: dict = None,
     ) -> bool:
         try:
-            log.info(f'Checking principal {principal} ' f'permissions {permissions} ' f'to {str(resource)}...')
+            log.info(f'Checking principal {principal} permissions {permissions} to {str(resource)}...')
             check_dict = dict(
                 Principal={'DataLakePrincipalIdentifier': principal},
                 Resource=check_resource if check_resource else resource,
@@ -463,10 +463,5 @@ class LakeFormationClient:
                 )
                 return True
         except ClientError as e:
-            log.error(
-                f'Could not list principal {principal} '
-                f'permissions {permissions} '
-                f'to {str(resource)}  '
-                f'due to: {e}'
-            )
+            log.error(f'Could not list principal {principal} permissions {permissions} to {str(resource)}  due to: {e}')
             raise e

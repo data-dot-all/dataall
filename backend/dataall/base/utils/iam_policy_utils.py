@@ -156,5 +156,5 @@ def _policy_splitter(
         resulting_statement = statement_builder(split=split, subset=subset)
         split += 1
         resulting_statements.append(resulting_statement)
-    logger.info(f'Statement divided into {split+1} smaller statements')
+    logger.info(f'Statement divided into {split + 1} smaller statements')
     return resulting_statements

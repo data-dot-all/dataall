@@ -97,7 +97,7 @@ class IdpStack(pyNestedClass):
             f'UserPool{envname}',
             user_pool=self.user_pool,
             cognito_domain=cognito.CognitoDomainOptions(
-                domain_prefix=f"{resource_prefix.replace('-', '')}{envname}{self.region.replace('-', '')}{self.account}"
+                domain_prefix=f'{resource_prefix.replace("-", "")}{envname}{self.region.replace("-", "")}{self.account}'
             ),
         )
         jwt_token_duration = 180 if with_approval_tests else 60

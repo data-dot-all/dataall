@@ -346,15 +346,13 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         log.info('Deleting target shared database...')
                         manager.delete_shared_database_in_target()
             except Exception as e:
-                log.error(
-                    f'Failed to clean-up database permissions or delete shared database {manager.shared_db_name} '
-                    f'due to: {e}'
-                )
+                manager.handle_revoke_clean_up_failure(error=e)
                 success = False
             return success
 
-    def verify_shares(self) -> bool:
+    def verify_shares_health_status(self) -> bool:
         log.info('##### Verifying tables #######')
+        share_object_item_health_status = True
         if not self.tables:
             log.info('No tables to verify. Skipping...')
         else:
@@ -430,11 +428,12 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         ' | '.join(manager.db_level_errors) + ' | ' + ' | '.join(manager.tbl_level_errors),
                         datetime.now(),
                     )
+                    share_object_item_health_status = False
                 else:
                     ShareStatusRepository.update_share_item_health_status(
                         self.session, share_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
                     )
-        return True
+        return share_object_item_health_status
 
     def cleanup_shares(self) -> bool:
         """

@@ -39,7 +39,7 @@ def redact_creds(event):
 def get_cognito_groups(claims):
     if not claims:
         raise ValueError(
-            'Received empty claims. ' 'Please verify authorizer configuration',
+            'Received empty claims. Please verify authorizer configuration',
             claims,
         )
     groups = list()
@@ -134,7 +134,7 @@ def check_reauth(query, auth_time, username):
             log.info(f'ReAuth Required for User {username} on Operation {query.get("operationName", "")}, Error: {e}')
             return send_unauthorized_response(
                 operation=query.get('operationName', 'operation'),
-                message=f"ReAuth Required To Perform This Action {query.get('operationName', '')}",
+                message=f'ReAuth Required To Perform This Action {query.get("operationName", "")}',
                 extension={'code': 'REAUTH'},
             )
 

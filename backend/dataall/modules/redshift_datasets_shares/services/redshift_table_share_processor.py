@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 from typing import List
 from dataall.base.utils.naming_convention import NamingConventionService, NamingConventionPattern
+from dataall.modules.notifications.services.admin_notifications import AdminNotificationService
 from dataall.modules.shares_base.services.sharing_service import ShareData
 from dataall.modules.shares_base.services.share_processor_manager import SharesProcessorInterface
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
@@ -260,6 +261,11 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                         ShareStatusRepository.update_share_item_health_status(
                             self.session, share_item, ShareItemHealthStatus.Unhealthy.value, str(e), datetime.now()
                         )
+                AdminNotificationService().notify_admins_with_error_log(
+                    process_error='Error occurred while processing redshift table share request',
+                    process_name=self.__class__.__name__,
+                    error_logs=[str(e)],
+                )
                 return False
         return success
 
@@ -348,13 +354,14 @@ class ProcessRedshiftShare(SharesProcessorInterface):
 
                 except Exception as e:
                     success = False
-                    log.error(
+                    error_msg = (
                         f'Failed to process revoked redshift dataset {self.dataset.name} '
                         f'table {table.name} '
                         f'from source {self.source_connection.name} in namespace {self.source_connection.nameSpaceId} '
                         f'with target {self.target_connection.name} in namespace {self.target_connection.nameSpaceId} '
                         f'due to: {e}'
                     )
+                    log.error(error_msg)
                     share_item = ShareObjectRepository.find_sharable_item(
                         self.session, self.share.shareUri, table.rsTableUri
                     )
@@ -363,6 +370,11 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                     failed_table_SM.update_state_single_item(self.session, share_item, failed_state)
                     ShareStatusRepository.update_share_item_health_status(
                         self.session, share_item, ShareItemHealthStatus.Unhealthy.value, str(e), datetime.now()
+                    )
+                    AdminNotificationService().notify_admins_with_error_log(
+                        process_error='Error occurred while revoking redshift table share request',
+                        process_name=self.__class__.__name__,
+                        error_logs=[error_msg],
                     )
             self.session.commit()
             try:
@@ -438,10 +450,15 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                     ShareStatusRepository.update_share_item_health_status(
                         self.session, share_item, ShareItemHealthStatus.Unhealthy.value, str(e), datetime.now()
                     )
+                AdminNotificationService().notify_admins_with_error_log(
+                    process_error='Error occurred while revoking redshift table share request',
+                    process_name=self.__class__.__name__,
+                    error_logs=[str(e)],
+                )
                 return False
             return success
 
-    def verify_shares(self) -> bool:
+    def verify_shares_health_status(self) -> bool:
         """
         1) (in source namespace) Check the datashare exists
         2) (in source namespace) Check that schema is added to datashare
@@ -459,7 +476,7 @@ class ProcessRedshiftShare(SharesProcessorInterface):
             9) (in target namespace) Check that the redshift role has select access to the requested table in the local db.
             10) (in target namespace) Check that the redshift role has select access to the requested table in the external schema.
         """
-
+        share_object_item_health_status = True
         log.info('##### Verifying Redshift tables #######')
         if not self.tables:
             log.info('No tables to verify. Skipping...')
@@ -599,11 +616,12 @@ class ProcessRedshiftShare(SharesProcessorInterface):
                         ' | '.join(ds_level_errors) + ' | ' + ' | '.join(tbl_level_errors),
                         datetime.now(),
                     )
+                    share_object_item_health_status = False
                 else:
                     ShareStatusRepository.update_share_item_health_status(
                         self.session, share_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
                     )
-        return True
+        return share_object_item_health_status
 
     def cleanup_shares(self) -> bool:
         """

@@ -38,7 +38,7 @@ class WorksheetService:
         context = get_context()
         if data['SamlAdminGroupName'] not in context.groups:
             raise exceptions.UnauthorizedOperation(
-                'CREATE_WORKSHEET', f"user {context.username} does not belong to group {data['SamlAdminGroupName']}"
+                'CREATE_WORKSHEET', f'user {context.username} does not belong to group {data["SamlAdminGroupName"]}'
             )
         with context.db_engine.scoped_session() as session:
             worksheet = Worksheet(
