@@ -774,9 +774,7 @@ class LFShareManager:
                 )
                 return False
         except Exception as e:
-            logger.error(
-                f'Failed to initialise catalog account details for share - {self.share.shareUri} ' f'due to: {e}'
-            )
+            logger.error(f'Failed to initialise catalog account details for share - {self.share.shareUri} due to: {e}')
             return None
         return True
 
@@ -796,7 +794,7 @@ class LFShareManager:
             ).get_source_catalog()
             return catalog_dict.get('account_id'), catalog_dict.get('region'), catalog_dict.get('database_name')
         except Exception as e:
-            logger.error(f'Failed to fetch catalog account details for share - {self.share.shareUri} ' f'due to: {e}')
+            logger.error(f'Failed to fetch catalog account details for share - {self.share.shareUri} due to: {e}')
             return None, None, None
 
     def initialize_clients(self):

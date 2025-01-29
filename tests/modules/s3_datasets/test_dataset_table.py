@@ -20,7 +20,7 @@ def mock_lf_client(mocker, mock_aws_client):
 
 def test_add_tables(table, dataset_fixture, db):
     for i in range(0, 10):
-        table(dataset=dataset_fixture, name=f'table{i+1}', username=dataset_fixture.owner)
+        table(dataset=dataset_fixture, name=f'table{i + 1}', username=dataset_fixture.owner)
 
     with db.scoped_session() as session:
         nb = session.query(DatasetTable).count()

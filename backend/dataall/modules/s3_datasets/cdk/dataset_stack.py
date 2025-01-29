@@ -555,9 +555,7 @@ class DatasetStack(Stack):
             '--datasetBucket': dataset.S3BucketName,
             '--apiUrl': 'None',
             '--snsTopicArn': 'None',
-            '--extra-jars': (
-                f's3://{env.EnvironmentDefaultBucketName}' f'/profiling/code/jars/deequ-2.0.7-spark-3.3.jar'
-            ),
+            '--extra-jars': (f's3://{env.EnvironmentDefaultBucketName}/profiling/code/jars/deequ-2.0.7-spark-3.3.jar'),
             '--enable-metrics': 'true',
             '--enable-continuous-cloudwatch-log': 'true',
             '--enable-glue-datacatalog': 'true',
@@ -576,7 +574,7 @@ class DatasetStack(Stack):
             command=glue.CfnJob.JobCommandProperty(
                 name='glueetl',
                 python_version='3',
-                script_location=(f's3://{env.EnvironmentDefaultBucketName}' f'/profiling/code/glue_script.py'),
+                script_location=(f's3://{env.EnvironmentDefaultBucketName}/profiling/code/glue_script.py'),
             ),
             default_arguments=job_args,
             glue_version='4.0',

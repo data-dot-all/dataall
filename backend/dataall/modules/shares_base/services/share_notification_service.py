@@ -240,7 +240,7 @@ class ShareNotificationService:
             )
 
         msg_intro = f"""Dear User, <br>
-                   This is a reminder that your share request for the dataset "{self.dataset.label}" will get expired on {self.share.expiryDate.date().strftime("%B %d, %Y")}. Please request a share extension request before it to have continued access to the dataset.
+                   This is a reminder that your share request for the dataset "{self.dataset.label}" will get expired on {self.share.expiryDate.date().strftime('%B %d, %Y')}. Please request a share extension request before it to have continued access to the dataset.
                    <br><br><b>Note: If you fail request for an extension and if it expires, the share item will be revoked which will result in loss of access to the dataset.</b>
                    """
 

@@ -31,7 +31,7 @@ class RamClient:
             ]
             return filtered_invitations
         except ClientError as e:
-            log.error(f'Failed retrieving RAM resource ' f'share invitations {resource_share_arns} due to {e}')
+            log.error(f'Failed retrieving RAM resource share invitations {resource_share_arns} due to {e}')
             raise e
 
     def _accept_resource_share_invitation(self, resource_share_invitation_arn):
@@ -43,9 +43,9 @@ class RamClient:
             return response.get('resourceShareInvitation')
         except ClientError as e:
             if e.response['Error']['Code'] == 'ResourceShareInvitationAlreadyAcceptedException':
-                log.info(f'Failed to accept RAM invitation ' f'{resource_share_invitation_arn} already accepted')
+                log.info(f'Failed to accept RAM invitation {resource_share_invitation_arn} already accepted')
             else:
-                log.error(f'Failed to accept RAM invitation ' f'{resource_share_invitation_arn} due to {e}')
+                log.error(f'Failed to accept RAM invitation {resource_share_invitation_arn} due to {e}')
                 raise e
 
     @staticmethod
@@ -54,9 +54,7 @@ class RamClient:
     ):
         source_ram = RamClient(source_account_id, source_region)
 
-        resource_arn = (
-            f'arn:aws:glue:{source_region}:{source_account_id}:' f'table/{source_database}/{source_table_name}'
-        )
+        resource_arn = f'arn:aws:glue:{source_region}:{source_account_id}:table/{source_database}/{source_table_name}'
         associations = source_ram._list_resource_share_associations(resource_arn)
         resource_share_arns = [a['resourceShareArn'] for a in associations if a['status'] == 'ASSOCIATED']
 
@@ -99,9 +97,7 @@ class RamClient:
         source_ram = RamClient(source_account_id, source_region)
         target_ram = RamClient(target_account_id, target_region)
 
-        resource_arn = (
-            f'arn:aws:glue:{source_region}:{source_account_id}:' f'table/{source_database}/{source_table_name}'
-        )
+        resource_arn = f'arn:aws:glue:{source_region}:{source_account_id}:table/{source_database}/{source_table_name}'
         associations = source_ram._list_resource_share_associations(resource_arn)
         resource_share_arns = [a['resourceShareArn'] for a in associations]
 
