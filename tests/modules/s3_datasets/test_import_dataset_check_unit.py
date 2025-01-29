@@ -13,7 +13,7 @@ def test_s3_managed_bucket_import(mock_aws_client, api_context_1):
 
     mock_encryption_bucket(mock_aws_client, 'AES256', None)
 
-    assert DatasetService.check_imported_resources(dataset)
+    assert DatasetService._check_imported_resources(dataset)
 
 
 def test_s3_managed_bucket_but_bucket_encrypted_with_kms(mock_aws_client, api_context_1):
@@ -21,7 +21,7 @@ def test_s3_managed_bucket_but_bucket_encrypted_with_kms(mock_aws_client, api_co
 
     mock_encryption_bucket(mock_aws_client, 'aws:kms', 'any')
     with pytest.raises(RequiredParameter):
-        DatasetService.check_imported_resources(dataset)
+        DatasetService._check_imported_resources(dataset)
 
 
 def test_s3_managed_bucket_but_alias_provided(mock_aws_client, api_context_1):
@@ -29,7 +29,7 @@ def test_s3_managed_bucket_but_alias_provided(mock_aws_client, api_context_1):
 
     mock_encryption_bucket(mock_aws_client, 'AES256', None)
     with pytest.raises(InvalidInput):
-        DatasetService.check_imported_resources(dataset)
+        DatasetService._check_imported_resources(dataset)
 
 
 def test_kms_encrypted_bucket_but_key_not_exist(mock_aws_client, api_context_1):
@@ -39,7 +39,7 @@ def test_kms_encrypted_bucket_but_key_not_exist(mock_aws_client, api_context_1):
     mock_existing_alias(mock_aws_client)
 
     with pytest.raises(AWSResourceNotFound):
-        DatasetService.check_imported_resources(dataset)
+        DatasetService._check_imported_resources(dataset)
 
 
 def test_kms_encrypted_bucket_but_key_is_wrong(mock_aws_client, api_context_1):
@@ -51,7 +51,7 @@ def test_kms_encrypted_bucket_but_key_is_wrong(mock_aws_client, api_context_1):
     mock_key_id(mock_aws_client, kms_id)
 
     with pytest.raises(InvalidInput):
-        DatasetService.check_imported_resources(dataset)
+        DatasetService._check_imported_resources(dataset)
 
 
 def test_kms_encrypted_bucket_imported(mock_aws_client, api_context_1):
@@ -62,7 +62,7 @@ def test_kms_encrypted_bucket_imported(mock_aws_client, api_context_1):
     mock_existing_alias(mock_aws_client, f'alias/{alias}')
     mock_key_id(mock_aws_client, kms_id)
 
-    assert DatasetService.check_imported_resources(dataset)
+    assert DatasetService._check_imported_resources(dataset)
 
 
 def mock_encryption_bucket(mock_aws_client, algorithm, kms_id=None):

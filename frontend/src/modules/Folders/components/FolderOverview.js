@@ -23,15 +23,17 @@ export const FolderOverview = (props) => {
             }
           />
         </Box>
-        <FolderS3Properties folder={folder} isAdmin={isAdmin} />
+        {folder.restricted && (
+          <FolderS3Properties folder={folder} isAdmin={isAdmin} />
+        )}
       </Grid>
       <Grid item lg={4} xl={3} xs={12}>
         <ObjectMetadata
-          environment={folder.dataset.environment}
-          region={folder.dataset.region}
-          organization={folder.dataset.environment.organization}
+          environment={folder.dataset?.environment}
+          region={folder.restricted?.region}
+          organization={folder.dataset?.environment.organization}
           owner={folder.owner}
-          admins={folder.dataset.SamlAdminGroupName || '-'}
+          admins={folder.dataset?.SamlAdminGroupName || '-'}
           created={folder.created}
         />
       </Grid>

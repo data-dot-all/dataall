@@ -3,17 +3,16 @@ import os
 from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
-from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.tenant.tenant_policy_repositories import TenantPolicyRepository
 from dataall.base.db.exceptions import UnauthorizedOperation, TenantUnauthorized, AWSResourceNotFound
-from dataall.core.permissions.services.tenant_permissions import TENANT_ALL
-from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
-from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
-from dataall.modules.dashboards.db.dashboard_repositories import DashboardRepository
-from dataall.modules.dashboards.db.dashboard_models import Dashboard
-from dataall.modules.dashboards.aws.dashboard_quicksight_client import DashboardQuicksightClient
-from dataall.modules.dashboards.services.dashboard_permissions import GET_DASHBOARD, CREATE_DASHBOARD, MANAGE_DASHBOARDS
 from dataall.base.utils import Parameter
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_permissions import TENANT_ALL
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService, TenantPolicyValidationService
+from dataall.modules.dashboards.aws.dashboard_quicksight_client import DashboardQuicksightClient
+from dataall.modules.dashboards.db.dashboard_models import Dashboard
+from dataall.modules.dashboards.db.dashboard_repositories import DashboardRepository
+from dataall.modules.dashboards.services.dashboard_permissions import GET_DASHBOARD, CREATE_DASHBOARD, MANAGE_DASHBOARDS
 
 
 class DashboardQuicksightService:
@@ -71,6 +70,7 @@ class DashboardQuicksightService:
 
     @staticmethod
     def get_monitoring_dashboard_id():
+        DashboardQuicksightService._check_user_must_be_admin()
         current_account = SessionHelper.get_account()
         dashboard_id = ParameterStoreManager.get_parameter_value(
             AwsAccountId=current_account,
@@ -87,6 +87,7 @@ class DashboardQuicksightService:
 
     @staticmethod
     def get_monitoring_vpc_connection_id():
+        DashboardQuicksightService._check_user_must_be_admin()
         current_account = SessionHelper.get_account()
         vpc_connection_id = ParameterStoreManager.get_parameter_value(
             AwsAccountId=current_account,
@@ -103,6 +104,7 @@ class DashboardQuicksightService:
 
     @classmethod
     def create_quicksight_data_source_set(cls, vpc_connection_id):
+        cls._check_user_must_be_admin()
         client = cls._client()
         client.register_user_in_group(group_name='dataall', user_role='AUTHOR')
 
@@ -117,11 +119,6 @@ class DashboardQuicksightService:
         return datasource_id
 
     @classmethod
-    def get_quicksight_author_session(cls, aws_account):
-        DashboardQuicksightService._check_user_must_be_admin()
-        return cls._client(aws_account).get_author_session()
-
-    @classmethod
     def get_quicksight_reader_session(cls, dashboard_uri):
         cls._check_user_must_be_admin()
         client = cls._client()
@@ -130,7 +127,7 @@ class DashboardQuicksightService:
     @staticmethod
     def _check_user_must_be_admin():
         context = get_context()
-        admin = TenantPolicyRepository.is_tenant_admin(context.groups)
+        admin = TenantPolicyValidationService.is_tenant_admin(context.groups)
 
         if not admin:
             raise TenantUnauthorized(

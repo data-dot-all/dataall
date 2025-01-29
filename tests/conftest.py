@@ -1,19 +1,22 @@
 import os
 from dataclasses import dataclass
+from glob import glob
 from unittest.mock import MagicMock
 
 import pytest
 from starlette.testclient import TestClient
 
+from dataall.base.config import config
 from dataall.base.db import get_engine, create_schema_and_tables, Engine
 from dataall.base.loader import load_modules, ImportMode, list_loaded_modules
-from glob import glob
-
 from dataall.core.groups.db.group_models import Group
 from dataall.core.permissions.services.permission_service import PermissionService
-from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.permissions.services.tenant_permissions import TENANT_ALL
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from tests.client import create_app, ClientWrapper
+
+for module in config.get_property('modules'):
+    config.set_property(f'modules.{module}.active', True)
 
 load_modules(modes=ImportMode.all())
 ENVNAME = os.environ.get('envname', 'pytest')
@@ -187,11 +190,11 @@ def patch_stack_tasks(module_mocker):
 @pytest.fixture(scope='module', autouse=True)
 def patch_check_env(module_mocker):
     module_mocker.patch(
-        'dataall.core.environment.services.environment_service.EnvironmentService.check_cdk_resources',
+        'dataall.core.environment.services.environment_service.EnvironmentService._check_cdk_resources',
         return_value='CDKROLENAME',
     )
     module_mocker.patch(
-        'dataall.core.environment.services.environment_service.EnvironmentService.get_pivot_role_as_part_of_environment',
+        'dataall.core.environment.services.environment_service.EnvironmentService._get_pivot_role_as_part_of_environment',
         return_value=False,
     )
 
