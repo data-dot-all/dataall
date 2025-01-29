@@ -107,14 +107,6 @@ class ShareObjectRepository:
         return session.query(share_type_model).get(item_uri)
 
     @staticmethod
-    def get_shares_for_principal_and_database(session, principal, database):
-        return (
-            session.query(ShareObject)
-            .join(S3Dataset, S3Dataset.datasetUri == ShareObject.datasetUri)
-            .filter(and_(S3Dataset.GlueDatabaseName == database, ShareObject.principalIAMRoleName == principal))
-        )
-
-    @staticmethod
     def remove_share_object_item(session, share_item):
         session.delete(share_item)
         return True
