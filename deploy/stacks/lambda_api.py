@@ -145,6 +145,7 @@ class LambdaApiStack(pyNestedClass):
             'LOG_LEVEL': log_level,
             'REAUTH_TTL': str(reauth_ttl),
             'ALLOWED_ORIGINS': allowed_origins,
+            'ALLOW_INTROSPECTION': str(not prod_sizing),
         }
         # Check if custom domain exists and if it exists email notifications could be enabled. Create a env variable which stores the domain url. This is used for sending data.all share weblinks in the email notifications.
         if custom_domain and custom_domain.get('hosted_zone_name', None):
@@ -271,7 +272,7 @@ class LambdaApiStack(pyNestedClass):
             )
 
         # Initialize Klayers
-        runtime = _lambda.Runtime.PYTHON_3_9
+        runtime = _lambda.Runtime.PYTHON_3_12
         klayers = Klayers(self, python_version=runtime, region=self.region)
 
         # get the latest layer version for the cryptography package

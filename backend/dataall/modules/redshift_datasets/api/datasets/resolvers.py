@@ -87,8 +87,7 @@ def resolve_dataset_environment(
 ):  # TODO- duplicated with S3 datasets - follow-up PR
     if not source:
         return None
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.get_environment_by_uri(session, source.environmentUri)
+    return EnvironmentService.find_environment_by_uri(uri=source.environmentUri)
 
 
 def resolve_dataset_owners_group(

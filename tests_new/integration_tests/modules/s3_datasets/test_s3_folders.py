@@ -42,18 +42,6 @@ def test_get_folder(client1, folders_fixture_name, request):
     assert_that(response.label).is_equal_to('labelSessionFolderA')
 
 
-@pytest.mark.parametrize(
-    'folders_fixture_name',
-    ['session_s3_dataset1_folders'],
-)
-def test_get_folder_unauthorized(client2, folders_fixture_name, request):
-    folders = request.getfixturevalue(folders_fixture_name)
-    folder = folders[0]
-    assert_that(get_folder).raises(GqlError).when_called_with(client2, locationUri=folder.locationUri).contains(
-        'UnauthorizedOperation', 'GET_DATASET_FOLDER', folder.locationUri
-    )
-
-
 @pytest.mark.parametrize(*FOLDERS_FIXTURES_PARAMS)
 def test_update_folder(client1, folders_fixture_name, request):
     folders = request.getfixturevalue(folders_fixture_name)

@@ -94,10 +94,12 @@ const DatasetList = () => {
   const fetchItems = useCallback(async () => {
     setLoading(true);
     const response = await client.query(listDatasets({ filter }));
-    if (!response.errors) {
+    if (response.data.listDatasets !== null) {
       setItems(response.data.listDatasets);
     } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      response.errors.forEach((err) =>
+        dispatch({ type: SET_ERROR, error: err.message })
+      );
     }
     setLoading(false);
   }, [client, dispatch, filter]);

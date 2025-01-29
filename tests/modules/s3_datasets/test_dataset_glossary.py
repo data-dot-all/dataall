@@ -13,13 +13,13 @@ def _columns(db, dataset_fixture, table_fixture) -> List[DatasetTableColumn]:
             c = DatasetTableColumn(
                 datasetUri=dataset_fixture.datasetUri,
                 tableUri=table_fixture.tableUri,
-                label=f'c{i + 1}',
-                AWSAccountId=dataset_fixture.AwsAccountId,
-                region=dataset_fixture.region,
+                label=f'c{i+1}',
+                AWSAccountId=dataset_fixture.restricted.AwsAccountId,
+                region=dataset_fixture.restricted.region,
                 GlueTableName='table',
                 typeName='String',
                 owner='user',
-                GlueDatabaseName=dataset_fixture.GlueDatabaseName,
+                GlueDatabaseName=dataset_fixture.restricted.GlueDatabaseName,
             )
             session.add(c)
             cols.append(c)

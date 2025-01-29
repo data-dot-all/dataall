@@ -697,7 +697,7 @@ class EnvironmentSetup(Stack):
                 ],
                 effect=iam.Effect.ALLOW,
                 resources=[
-                    f'arn:aws:iam::{self.account}:role/dataall-test-*',
+                    f'arn:aws:iam::{self.account}:role/dataall-test*',
                     f'arn:aws:iam::{self.account}:role/dataall-session*',
                 ],
             ),

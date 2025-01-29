@@ -29,14 +29,16 @@ export const listS3DatasetsOwnedByEnvGroup = ({
         nodes {
           datasetUri
           label
-          AwsAccountId
-          region
-          GlueDatabaseName
           SamlAdminGroupName
           name
-          S3BucketName
           created
           owner
+          restricted {
+            AwsAccountId
+            region
+            S3BucketName
+            GlueDatabaseName
+          }
           stack {
             status
           }
