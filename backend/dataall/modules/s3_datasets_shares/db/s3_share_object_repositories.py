@@ -150,7 +150,7 @@ class S3ShareObjectRepository:
 
     @staticmethod
     def check_existing_shares_on_items_for_principal(session, item_type, principal, database):
-        shares: List[ShareObject] = ShareObjectRepository.get_shares_for_principal_and_database(
+        shares: List[ShareObject] = S3ShareObjectRepository.get_shares_for_principal_and_database(
             session=session, principal=principal, database=database
         )
         share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
@@ -169,6 +169,14 @@ class S3ShareObjectRepository:
             if shared_items:
                 return True
         return False
+
+    @staticmethod
+    def get_shares_for_principal_and_database(session, principal, database):
+        return (
+            session.query(ShareObject)
+            .join(S3Dataset, S3Dataset.datasetUri == ShareObject.datasetUri)
+            .filter(and_(S3Dataset.GlueDatabaseName == database, ShareObject.principalRoleName == principal))
+        )
 
     @staticmethod
     def query_dataset_tables_shared_with_env(
@@ -301,3 +309,25 @@ class S3ShareObjectRepository:
             .first()
         )
         return share_object
+
+    @staticmethod
+    def list_dataset_shares_on_database(
+        session, dataset_uri, share_item_shared_states, item_type, environment_uri=None, database=None
+    ) -> [ShareObject]:
+        query = (
+            session.query(ShareObject)
+            .join(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
+            .join(S3Dataset, S3Dataset.datasetUri == dataset_uri)
+            .filter(
+                and_(
+                    S3Dataset.GlueDatabaseName == database,
+                    ShareObject.deleted.is_(None),
+                    ShareObjectItem.status.in_(share_item_shared_states),
+                    ShareObjectItem.itemType == item_type,
+                )
+            )
+        )
+
+        if environment_uri:
+            query = query.filter(ShareObject.environmentUri == environment_uri)
+        return query.all()

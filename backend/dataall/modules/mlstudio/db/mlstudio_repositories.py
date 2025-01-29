@@ -76,7 +76,7 @@ class SageMakerStudioRepository:
     @staticmethod
     def create_sagemaker_studio_domain(session, username, environment, data):
         domain = SagemakerStudioDomain(
-            label=f"{data.get('label')}-domain",
+            label=f'{data.get("label")}-domain',
             owner=username,
             description=data.get('description', 'No description provided'),
             tags=data.get('tags', []),

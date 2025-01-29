@@ -10,7 +10,6 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.notifications.db.notification_models import Notification
-from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
@@ -78,29 +77,6 @@ class ShareObjectRepository:
         return query.all()
 
     @staticmethod
-    def list_dataset_shares_on_database(
-        session, dataset_uri, share_item_shared_states, environment_uri=None, item_type=None, database=None
-    ) -> [ShareObject]:
-        query = (
-            session.query(ShareObject)
-            .join(ShareObjectItem, ShareObjectItem.shareUri == ShareObject.shareUri)
-            .join(S3Dataset, S3Dataset.datasetUri == dataset_uri)
-            .filter(
-                and_(
-                    S3Dataset.GlueDatabaseName == database,
-                    ShareObject.deleted.is_(None),
-                    ShareObjectItem.status.in_(share_item_shared_states),
-                )
-            )
-        )
-
-        if environment_uri:
-            query = query.filter(ShareObject.environmentUri == environment_uri)
-        if item_type:
-            query = query.filter(ShareObjectItem.itemType == item_type)
-        return query.all()
-
-    @staticmethod
     def find_sharable_item(session, share_uri, item_uri) -> ShareObjectItem:
         return (
             session.query(ShareObjectItem)
@@ -131,14 +107,6 @@ class ShareObjectRepository:
     @staticmethod
     def get_share_item_details(session, share_type_model, item_uri):
         return session.query(share_type_model).get(item_uri)
-
-    @staticmethod
-    def get_shares_for_principal_and_database(session, principal, database):
-        return (
-            session.query(ShareObject)
-            .join(S3Dataset, S3Dataset.datasetUri == ShareObject.datasetUri)
-            .filter(and_(S3Dataset.GlueDatabaseName == database, ShareObject.principalRoleName == principal))
-        )
 
     @staticmethod
     def remove_share_object_item(session, share_item):

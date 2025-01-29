@@ -60,7 +60,7 @@ def resolver_adapter(resolver):
 
 executable_schema = get_executable_schema()
 end = perf_counter()
-print(f'Lambda Context ' f'Initialization took: {end - start:.3f} sec')
+print(f'Lambda Context Initialization took: {end - start:.3f} sec')
 
 
 def handler(event, context):

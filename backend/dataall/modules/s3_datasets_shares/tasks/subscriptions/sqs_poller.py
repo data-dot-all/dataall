@@ -23,7 +23,7 @@ def poll_queues(queues):
 
     for queue in queues:
         sqs = boto3.client(
-            'sqs', region_name=queue['region'], endpoint_url=f"https://sqs.{queue['region']}.amazonaws.com"
+            'sqs', region_name=queue['region'], endpoint_url=f'https://sqs.{queue["region"]}.amazonaws.com'
         )
         try:
             response = sqs.receive_message(
@@ -34,10 +34,10 @@ def poll_queues(queues):
             )
 
             if not response or not response.get('Messages'):
-                log.info(f"No new messages available from queue: {queue['url']}")
+                log.info(f'No new messages available from queue: {queue["url"]}')
 
             if response and response.get('Messages'):
-                log.info(f"Available messages from queue: {response['Messages']}")
+                log.info(f'Available messages from queue: {response["Messages"]}')
                 for message in response['Messages']:
                     if message.get('Body'):
                         log.info('Consumed message from queue: %s' % message)

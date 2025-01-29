@@ -72,9 +72,7 @@ def sync_tables(engine):
                     DatasetIndexer.upsert(session=session, dataset_uri=dataset.datasetUri)
             except Exception as e:
                 log.error(
-                    f'Failed to sync tables for dataset '
-                    f'{dataset.AwsAccountId}/{dataset.GlueDatabaseName} '
-                    f'due to: {e}'
+                    f'Failed to sync tables for dataset {dataset.AwsAccountId}/{dataset.GlueDatabaseName} due to: {e}'
                 )
                 DatasetAlarmService().trigger_dataset_sync_failure_alarm(dataset, str(e))
         return processed_tables

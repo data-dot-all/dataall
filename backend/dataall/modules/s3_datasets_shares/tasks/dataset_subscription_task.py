@@ -125,8 +125,7 @@ class DatasetSubscriptionService:
                         message = {
                             'location': prefix,
                             'owner': dataset.owner,
-                            'message': f'Dataset owner {dataset.owner} '
-                            f'has updated the table shared with you {prefix}',
+                            'message': f'Dataset owner {dataset.owner} has updated the table shared with you {prefix}',
                         }
 
                         sns_client = SnsDatasetClient(environment, dataset)

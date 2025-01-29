@@ -122,8 +122,8 @@ class DatasetRepository(EnvironmentResource):
         ).build_compliant_name()
         iam_role_arn = f'arn:aws:iam::{dataset.AwsAccountId}:role/{iam_role_name}'
         if data.get('adminRoleName'):
-            dataset.IAMDatasetAdminRoleArn = f"arn:aws:iam::{dataset.AwsAccountId}:role/{data['adminRoleName']}"
-            dataset.IAMDatasetAdminUserArn = f"arn:aws:iam::{dataset.AwsAccountId}:role/{data['adminRoleName']}"
+            dataset.IAMDatasetAdminRoleArn = f'arn:aws:iam::{dataset.AwsAccountId}:role/{data["adminRoleName"]}'
+            dataset.IAMDatasetAdminUserArn = f'arn:aws:iam::{dataset.AwsAccountId}:role/{data["adminRoleName"]}'
         else:
             dataset.IAMDatasetAdminRoleArn = iam_role_arn
             dataset.IAMDatasetAdminUserArn = iam_role_arn
@@ -203,11 +203,14 @@ class DatasetRepository(EnvironmentResource):
         return session.query(S3Dataset).filter(S3Dataset.deleted.is_(None)).all()
 
     @staticmethod
-    def list_all_active_datasets_with_glue_db(session, dataset_uri) -> [S3Dataset]:
-        s3_dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session=session, dataset_uri=dataset_uri)
+    def list_all_active_datasets_with_glue_db(session, glue_db_name: str) -> [S3Dataset]:
+        # List all the S3 datasets which have the same glue db name ( irrespective of the environment )
+        # This query will fetch S3 dataset even if they belong to different environments.
+        # This is because the _shared db which will be created in consumer's account is a common resource which can be modified at the same time and cause contention and potential override. See https://github.com/data-dot-all/dataall/issues/1633 for more details
+
         return (
             session.query(S3Dataset)
-            .filter(and_(S3Dataset.deleted.is_(None), S3Dataset.GlueDatabaseName == s3_dataset.GlueDatabaseName))
+            .filter(and_(S3Dataset.deleted.is_(None), S3Dataset.GlueDatabaseName == glue_db_name))
             .all()
         )
 

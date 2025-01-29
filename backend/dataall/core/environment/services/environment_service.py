@@ -105,8 +105,8 @@ class EnvironmentRequestValidationService:
         if environment:
             raise exceptions.InvalidInput(
                 'AwsAccount/region',
-                f"{data.get('AwsAccountId')}/{data.get('region')}",
-                f"unique. An environment for {data.get('AwsAccountId')}/{data.get('region')} already exists",
+                f'{data.get("AwsAccountId")}/{data.get("region")}',
+                f'unique. An environment for {data.get("AwsAccountId")}/{data.get("region")} already exists',
             )
 
     @staticmethod
@@ -163,7 +163,7 @@ class EnvironmentService:
     def get_pivot_role_as_part_of_environment():
         ssm_param = ParameterStoreManager.get_parameter_value(
             region=os.getenv('AWS_REGION', 'eu-west-1'),
-            parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/enablePivotRoleAutoCreate",
+            parameter_path=f'/dataall/{os.getenv("envname", "local")}/pivotRole/enablePivotRoleAutoCreate',
         )
         return ssm_param == 'True'
 
@@ -238,7 +238,7 @@ class EnvironmentService:
                 isOrganizationDefaultEnvironment=False,
                 EnvironmentDefaultIAMRoleName=data.get('EnvironmentDefaultIAMRoleArn', 'unknown').split('/')[-1],
                 EnvironmentDefaultIAMRoleArn=data.get('EnvironmentDefaultIAMRoleArn', 'unknown'),
-                CDKRoleArn=f"arn:aws:iam::{data.get('AwsAccountId')}:role/{cdk_role_name}",
+                CDKRoleArn=f'arn:aws:iam::{data.get("AwsAccountId")}:role/{cdk_role_name}',
                 resourcePrefix=data.get('resourcePrefix'),
             )
 
