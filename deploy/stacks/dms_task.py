@@ -28,7 +28,7 @@ class CodeBuildProjectStack(pyNestedClass):
 
             # Define build environment
             environment=codebuild.BuildEnvironment(
-                build_image=codebuild.LinuxBuildImage.UBUNTU_STANDARD_7_0,
+                build_image=codebuild.LinuxBuildImage.STANDARD_7_0,
                 privileged=False,
                 environment_variables={
                     'SRC_PGVER': codebuild.BuildEnvironmentVariable(
