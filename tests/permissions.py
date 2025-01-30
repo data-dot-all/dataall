@@ -1145,5 +1145,4 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Worksheet', 'userRoleForWorksheet'): TestData(
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
-
 }
