@@ -495,7 +495,7 @@ class ShareObjectService:
 
             if share_item_invalid_state:
                 raise Exception(
-                    f"Cannot update share object's expiration as it share items are in incorrect state { ', '.join(invalid_states)}"
+                    f"Cannot update share object's expiration as it share items are in incorrect state {', '.join(invalid_states)}"
                 )
 
             if nonExpirable:

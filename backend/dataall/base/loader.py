@@ -238,8 +238,7 @@ def _check_loading_correct(in_config: Set[str], modes: Set[ImportMode]):
     for module in _all_modules():
         if module.is_supported(modes) and module not in expected_load:
             raise ImportError(
-                f'ModuleInterface has not been initialized for module {module.name()}. '
-                'Declare the module in depends_on'
+                f'ModuleInterface has not been initialized for module {module.name()}. Declare the module in depends_on'
             )
 
     # 4) Checks all references for modules (when ModuleInterfaces don't exist or not supported)
@@ -260,8 +259,7 @@ def _describe_loading(in_config: Set[str], inactive: Set[str]):
         log.debug(f'The {name} module was loaded')
         if name in inactive:
             log.info(
-                f'There is a module that depends on {module.name()}. '
-                "The module has been loaded despite it's inactive."
+                f"There is a module that depends on {module.name()}. The module has been loaded despite it's inactive."
             )
         elif name not in in_config:
             log.info(

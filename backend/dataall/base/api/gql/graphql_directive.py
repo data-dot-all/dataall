@@ -18,7 +18,9 @@ class DirectiveArgs:
         if not len(self.args.keys()):
             return f'@{self.name}'
         else:
-            return f"@{self.name}({','.join([k+':'+DirectiveArgs.to_string(self.args[k]) for k in self.args.keys()])})"
+            return (
+                f'@{self.name}({",".join([k + ":" + DirectiveArgs.to_string(self.args[k]) for k in self.args.keys()])})'
+            )
 
 
 if __name__ == '__main__':
