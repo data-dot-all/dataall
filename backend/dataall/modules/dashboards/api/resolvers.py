@@ -48,6 +48,12 @@ def get_dashboard(context: Context, source, dashboardUri: str = None):
     return DashboardService.get_dashboard(uri=dashboardUri)
 
 
+def get_dashboard_restricted_information(context: Context, source: Dashboard):
+    if not source:
+        return None
+    return DashboardService.get_dashboard_restricted_information(uri=source.dashboardUri, dashboard=source)
+
+
 def resolve_user_role(context: Context, source: Dashboard):
     if context.username and source.owner == context.username:
         return DashboardRole.Creator.value
@@ -113,10 +119,6 @@ def get_monitoring_vpc_connection_id(context, source):
 
 def create_quicksight_data_source_set(context, source, vpcConnectionId: str = None):
     return DashboardQuicksightService.create_quicksight_data_source_set(vpcConnectionId)
-
-
-def get_quicksight_author_session(context, source, awsAccount: str = None):
-    return DashboardQuicksightService.get_quicksight_author_session(awsAccount)
 
 
 def get_quicksight_reader_session(context, source, dashboardId: str = None):

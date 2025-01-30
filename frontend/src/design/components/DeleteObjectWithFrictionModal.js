@@ -22,6 +22,7 @@ export const DeleteObjectWithFrictionModal = (props) => {
     open,
     deleteFunction,
     isAWSResource = true,
+    confirmMessage = 'permanently delete',
     ...other
   } = props;
   const [confirmValue, setConfirmValue] = useState(null);
@@ -72,14 +73,15 @@ export const DeleteObjectWithFrictionModal = (props) => {
         )}
         <Box sx={{ mt: 2 }}>
           <Typography align="center" variant="subtitle2" color="textSecondary">
-            To confirm deletion, type <i>permanently delete</i> in the text
-            input field.
+            To confirm deletion, type <i>{confirmMessage}</i> in the text input
+            field.
           </Typography>
           <CardContent>
             <TextField
               fullWidth
-              label="permanently delete"
-              name="confirm"
+              id={confirmMessage}
+              label={confirmMessage}
+              name={confirmMessage}
               onChange={handleChange}
               value={confirmValue}
               variant="outlined"
@@ -88,7 +90,7 @@ export const DeleteObjectWithFrictionModal = (props) => {
           <CardContent>
             <Button
               fullWidth
-              disabled={confirmValue !== 'permanently delete'}
+              disabled={confirmValue !== confirmMessage}
               startIcon={<FaTrash size={15} />}
               color="error"
               type="submit"
@@ -114,5 +116,6 @@ DeleteObjectWithFrictionModal.propTypes = {
   onClose: PropTypes.func,
   deleteFunction: PropTypes.func.isRequired,
   open: PropTypes.bool.isRequired,
-  isAWSResource: PropTypes.bool
+  isAWSResource: PropTypes.bool,
+  confirmMessage: PropTypes.string
 };

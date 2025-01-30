@@ -26,11 +26,14 @@ export const listDatasetTables = ({ datasetUri, filter }) => ({
             tableUri
             name
             created
-            GlueTableName
-            GlueDatabaseName
+            restricted {
+              S3Prefix
+              AwsAccountId
+              GlueTableName
+              GlueDatabaseName
+            }
             description
             stage
-            S3Prefix
             userRoleForTable
           }
         }

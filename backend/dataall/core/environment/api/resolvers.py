@@ -14,14 +14,11 @@ from dataall.base.feature_toggle_checker import is_feature_enabled
 
 from dataall.core.organizations.api.resolvers import Context, exceptions, get_organization_simplified
 
-
 log = logging.getLogger()
 
 
-def get_trust_account(context: Context, source, **kwargs):
-    current_account = SessionHelper.get_account()
-    print('current_account  = ', current_account)
-    return current_account
+def get_trust_account(context: Context, source, organizationUri):
+    return EnvironmentService.get_trust_account(uri=organizationUri)
 
 
 def create_environment(context: Context, source, input={}):
@@ -196,8 +193,7 @@ def resolve_user_role(context: Context, source: Environment):
 
 
 def list_environment_group_permissions(context, source, environmentUri: str = None, groupUri: str = None):
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.list_group_permissions(session=session, uri=environmentUri, group_uri=groupUri)
+    return EnvironmentService.list_group_permissions(uri=environmentUri, group_uri=groupUri)
 
 
 @is_feature_enabled('core.features.env_aws_actions')
@@ -207,18 +203,19 @@ def get_environment_assume_role_url(
     environmentUri: str = None,
     groupUri: str = None,
 ):
-    return EnvironmentService.get_environment_assume_role_url(environmentUri=environmentUri, groupUri=groupUri)
+    return EnvironmentService.get_environment_assume_role_url(uri=environmentUri, groupUri=groupUri)
 
 
 @is_feature_enabled('core.features.env_aws_actions')
 def generate_environment_access_token(context, source, environmentUri: str = None, groupUri: str = None):
-    credentials = EnvironmentService.generate_environment_access_token(environmentUri=environmentUri, groupUri=groupUri)
+    credentials = EnvironmentService.generate_environment_access_token(uri=environmentUri, groupUri=groupUri)
     return json.dumps(credentials)
 
 
 def get_environment_stack(context: Context, source: Environment, **kwargs):
     return StackService.resolve_parent_obj_stack(
         targetUri=source.environmentUri,
+        targetType='environment',
         environmentUri=source.environmentUri,
     )
 
@@ -238,39 +235,40 @@ def delete_environment(context: Context, source, environmentUri: str = None, del
 
 
 def enable_subscriptions(context: Context, source, environmentUri: str = None, input: dict = None):
-    EnvironmentService.enable_subscriptions(environmentUri, input)
+    EnvironmentService.enable_subscriptions(uri=environmentUri, input=input)
     StackService.deploy_stack(targetUri=environmentUri)
     return True
 
 
 def disable_subscriptions(context: Context, source, environmentUri: str = None):
-    EnvironmentService.disable_subscriptions(environmentUri)
+    EnvironmentService.disable_subscriptions(uri=environmentUri)
     StackService.deploy_stack(targetUri=environmentUri)
     return True
 
 
 def get_pivot_role_template(context: Context, source, organizationUri=None):
-    return EnvironmentService.get_template_from_resource_bucket(organizationUri, 'pivot_role_prefix')
+    return EnvironmentService.get_template_from_resource_bucket(uri=organizationUri, template_name='pivot_role_prefix')
 
 
 def get_cdk_exec_policy_template(context: Context, source, organizationUri=None):
-    return EnvironmentService.get_template_from_resource_bucket(organizationUri, 'cdk_exec_policy_prefix')
+    return EnvironmentService.get_template_from_resource_bucket(
+        uri=organizationUri, template_name='cdk_exec_policy_prefix'
+    )
 
 
 def get_external_id(context: Context, source, organizationUri=None):
-    return EnvironmentService.get_external_id(organizationUri)
+    return EnvironmentService.get_external_id(uri=organizationUri)
 
 
 def get_pivot_role_name(context: Context, source, organizationUri=None):
-    return EnvironmentService.get_pivot_role(organizationUri)
+    return EnvironmentService.get_pivot_role(uri=organizationUri)
 
 
 def resolve_environment(context, source, **kwargs):
     """Resolves the environment for a environmental resource"""
     if not source:
         return None
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.get_environment_by_uri(session, source.environmentUri)
+    return EnvironmentService.find_environment_by_uri(uri=source.environmentUri)
 
 
 def resolve_parameters(context, source: Environment, **kwargs):

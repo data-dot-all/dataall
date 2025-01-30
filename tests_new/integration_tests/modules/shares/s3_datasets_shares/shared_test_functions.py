@@ -84,7 +84,7 @@ def check_share_succeeded(client, shareUri, check_contains_all_item_types=False)
         assert_that(items).extracting('itemType').contains(*ALL_S3_SHARABLE_TYPES_NAMES)
 
 
-def check_verify_share_items(client, shareUri):
+def check_verify_share_items(client, shareUri, expected_health_status=['Healthy'], expected_health_msg=[]):
     share = get_share_object(client, shareUri, {'isShared': True})
     items = share['items'].nodes
     times = [item.lastVerificationTime for item in items]
@@ -93,8 +93,11 @@ def check_verify_share_items(client, shareUri):
     updated_share = get_share_object(client, shareUri, {'isShared': True})
     items = updated_share['items'].nodes
     assert_that(items).extracting('status').contains_only('Share_Succeeded')
-    assert_that(items).extracting('healthStatus').contains_only('Healthy')
+    assert_that(items).extracting('healthStatus').contains_only(*expected_health_status)
     assert_that(items).extracting('lastVerificationTime').does_not_contain(*times)
+    if expected_health_msg:
+        health_msgs = ' '.join([i.healthMessage for i in items])
+        assert_that(health_msgs).contains(*expected_health_msg)
 
 
 def check_table_access(
@@ -121,19 +124,20 @@ def check_bucket_access(client, s3_client, bucket_name, should_have_access):
 
 
 def check_accesspoint_access(client, s3_client, access_point_arn, item_uri, should_have_access):
+    folder = get_folder(client, item_uri)
     if should_have_access:
-        folder = get_folder(client, item_uri)
         assert_that(s3_client.list_accesspoint_folder_objects(access_point_arn, folder.S3Prefix + '/')).is_not_none()
     else:
-        assert_that(get_folder).raises(Exception).when_called_with(client, item_uri).contains(
-            'is not authorized to perform: GET_DATASET_FOLDER'
-        )
+        assert_that(s3_client.list_accesspoint_folder_objects).raises(ClientError).when_called_with(
+            access_point_arn, folder.S3Prefix + '/'
+        ).contains('AccessDenied')
 
 
 def check_share_items_access(
     client,
     group,
     shareUri,
+    share_environment,
     consumption_role,
     env_client,
 ):
@@ -141,7 +145,7 @@ def check_share_items_access(
     dataset = share.dataset
     principal_type = share.principal.principalType
     if principal_type == 'Group':
-        credentials_str = get_environment_access_token(client, share.environment.environmentUri, group)
+        credentials_str = get_environment_access_token(client, share_environment.environmentUri, group)
         credentials = json.loads(credentials_str)
         session = boto3.Session(
             aws_access_key_id=credentials['AccessKey'],
@@ -166,7 +170,7 @@ def check_share_items_access(
         f'arn:aws:s3:{dataset.region}:{dataset.AwsAccountId}:accesspoint/{consumption_data.s3AccessPointName}'
     )
     if principal_type == 'Group':
-        workgroup = athena_client.get_env_work_group(share.environment.label)
+        workgroup = athena_client.get_work_group(share_environment.label, group)
         athena_workgroup_output_location = None
     else:
         workgroup = 'primary'

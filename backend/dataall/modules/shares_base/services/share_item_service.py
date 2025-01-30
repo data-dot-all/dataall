@@ -1,6 +1,7 @@
 import logging
 
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.tasks.db.task_models import Task
@@ -29,6 +30,7 @@ from dataall.modules.shares_base.services.share_permissions import (
     REMOVE_ITEM,
     LIST_ENVIRONMENT_SHARED_WITH_OBJECTS,
     APPROVE_SHARE_OBJECT,
+    MANAGE_SHARES,
 )
 from dataall.modules.shares_base.services.share_processor_manager import ShareProcessorManager
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
@@ -48,6 +50,7 @@ class ShareItemService:
         return share_item.shareUri
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(GET_SHARE_OBJECT)
     def verify_items_share_object(uri, item_uris):
         context = get_context()
@@ -63,6 +66,7 @@ class ShareItemService:
         return True
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(APPROVE_SHARE_OBJECT)
     def reapply_items_share_object(uri, item_uris):
         context = get_context()
@@ -78,6 +82,7 @@ class ShareItemService:
         return True
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(GET_SHARE_OBJECT)
     def revoke_items_share_object(uri, revoked_uris):
         context = get_context()
@@ -130,6 +135,7 @@ class ShareItemService:
         return share
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(ADD_ITEM)
     def add_shared_item(uri: str, data: dict = None):
         context = get_context()
@@ -162,6 +168,7 @@ class ShareItemService:
         return share_item
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(REMOVE_ITEM, parent_resource=_get_share_uri)
     def remove_shared_item(uri: str):
         with get_context().db_engine.scoped_session() as session:
@@ -213,11 +220,14 @@ class ShareItemService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
-    def paginated_shared_with_environment_datasets(session, uri, data) -> dict:
-        share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
-        return ShareObjectRepository.paginate_shared_datasets(session, uri, data, share_item_shared_states)
+    def paginated_shared_with_environment_datasets(uri, data) -> dict:
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
+            return ShareObjectRepository.paginate_shared_datasets(session, uri, data, share_item_shared_states)
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(APPROVE_SHARE_OBJECT, parent_resource=_get_share_uri)
     def update_filters_table_share_item(uri: str, data: dict):
         context = get_context()
@@ -248,11 +258,15 @@ class ShareItemService:
             raise ObjectNotFound('ShareObjectItem', uri)
 
     @staticmethod
+    @ResourcePolicyService.has_resource_permission(
+        GET_SHARE_OBJECT, parent_resource=_get_share_uri_from_item_filter_uri
+    )
     def get_share_item_data_filters(uri: str):
         with get_context().db_engine.scoped_session() as session:
             return ShareObjectItemRepository.get_share_item_filter_by_uri(session, uri)
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(
         APPROVE_SHARE_OBJECT, parent_resource=_get_share_uri_from_item_filter_uri
     )
