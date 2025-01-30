@@ -5,10 +5,6 @@ from typing import Any
 from dataall.core.resource_lock.db.resource_lock_repositories import ResourceLockRepository
 from dataall.base.db import Engine
 from dataall.core.environment.db.environment_models import ConsumptionRole, Environment, EnvironmentGroup
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
-from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
-from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
     ShareItemSM,
@@ -19,7 +15,6 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemActions,
     ShareItemStatus,
     PrincipalType,
-    ShareableType,
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository

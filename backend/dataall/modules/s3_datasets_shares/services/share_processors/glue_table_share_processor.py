@@ -6,9 +6,6 @@ from datetime import datetime
 from dataall.base.db.exceptions import ResourceLockTimeout
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.resource_lock.db.resource_lock_repositories import ResourceLockRepository
-from dataall.modules.datasets_base.db.dataset_models import DatasetBase
-from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
-from dataall.modules.s3_datasets.api.dataset.types import Dataset
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
