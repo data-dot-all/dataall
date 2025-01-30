@@ -9,7 +9,7 @@ from dataall.modules.shares_base.db.share_object_state_machines import ShareObje
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
 from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
-from dataall.modules.shares_base.services.shares_enums import ShareObjectActions
+from dataall.modules.shares_base.services.shares_enums import ShareObjectActions, ShareItemStatus
 from dataall.modules.shares_base.services.sharing_service import SharingService
 
 log = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ def share_expiration_checker(engine):
                     # If a share is expired, pull all the share items which are in Share_Succeeded state
                     # Update status for each share item to Revoke_Approved and Revoke the share
                     share_items_to_revoke = ShareObjectRepository.get_all_share_items_in_share(
-                        session, share.shareUri, ['Share_Succeeded']
+                        session, share.shareUri, [ShareItemStatus.Share_Succeeded.value]
                     )
 
                     # If the share doesn't have any share items in Share_Succeeded state then skip this share
