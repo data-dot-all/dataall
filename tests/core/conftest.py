@@ -12,7 +12,7 @@ def env(client):
         if not parameters:
             parameters = {'dashboardsEnabled': 'true'}
 
-        key = f"{org.organizationUri}{envname}{owner}{''.join(group or '-')}{account}{region}"
+        key = f'{org.organizationUri}{envname}{owner}{"".join(group or "-")}{account}{region}'
         if cache.get(key):
             return cache[key]
         response = client.query(

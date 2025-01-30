@@ -69,7 +69,7 @@ class ShareLogsService:
         envname = os.getenv('envname', 'local')
         log_query_period_days = config.get_property('core.log_query_period_days', 1)
         log.info(f'log_query_period_days: {log_query_period_days}')
-        log_group_name = f"/{Parameter().get_parameter(env=envname, path='resourcePrefix')}/{envname}/ecs/share-manager"
+        log_group_name = f'/{Parameter().get_parameter(env=envname, path="resourcePrefix")}/{envname}/ecs/share-manager'
 
         query_for_name = ShareLogsService._get_share_logs_name_query(shareUri=shareUri)
         name_query_result = CloudWatch.run_query(

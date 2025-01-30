@@ -17,17 +17,17 @@ class GlueClient:
 
     def create_database(self, location):
         try:
-            log.info(f'Creating database {self._database} ' f'in account {self._account_id}...')
+            log.info(f'Creating database {self._database} in account {self._account_id}...')
             existing_database = self.get_glue_database()
             if existing_database:
                 glue_database_created = True
             else:
                 self._create_glue_database(location)
                 glue_database_created = True
-            log.info(f'Successfully created database {self._database}' f'in account {self._account_id}')
+            log.info(f'Successfully created database {self._database}in account {self._account_id}')
             return glue_database_created
         except ClientError as e:
-            log.error(f'Failed to create database {self._database} ' f'in account {self._account_id} ' f'due to {e}')
+            log.error(f'Failed to create database {self._database} in account {self._account_id} due to {e}')
             raise e
 
     def _create_glue_database(self, location):
@@ -47,7 +47,7 @@ class GlueClient:
 
     def get_glue_database(self):
         try:
-            log.info(f'Getting database {self._database} ' f'in account {self._account_id}...')
+            log.info(f'Getting database {self._database} in account {self._account_id}...')
             database = self._client.get_database(CatalogId=self._account_id, Name=self._database)
             return database
         except ClientError:
@@ -56,7 +56,7 @@ class GlueClient:
 
     def database_exists(self, database_name):
         try:
-            log.info(f'Check database exists {self._database} ' f'in account {self._account_id}...')
+            log.info(f'Check database exists {self._database} in account {self._account_id}...')
             self._client.get_database(CatalogId=self._account_id, Name=database_name)
             return True
         except ClientError:
@@ -65,9 +65,7 @@ class GlueClient:
 
     def table_exists(self, table_name):
         try:
-            log.info(
-                f'Check table exists {table_name} ' f'in database {self._database} ' f'in account {self._account_id}...'
-            )
+            log.info(f'Check table exists {table_name} in database {self._database} in account {self._account_id}...')
             table = self._client.get_table(CatalogId=self._account_id, DatabaseName=self._database, Name=table_name)
             log.info(f'Glue table {table_name} found in account {self._account_id} in database {self._database}')
             return table
@@ -78,9 +76,7 @@ class GlueClient:
     def delete_table(self, table_name):
         database = self._database
         try:
-            log.info(
-                f'Deleting table {table_name} ' f'in database {self._database} ' f'in catalog {self._account_id}...'
-            )
+            log.info(f'Deleting table {table_name} in database {self._database} in catalog {self._account_id}...')
             response = self._client.delete_table(CatalogId=self._account_id, DatabaseName=database, Name=table_name)
             log.info(
                 f'Successfully deleted table {table_name} '
@@ -91,10 +87,7 @@ class GlueClient:
             return response
         except ClientError as e:
             log.error(
-                f'Could not delete table {table_name} '
-                f'in database {database} '
-                f'in catalog {self._account_id} '
-                f'due to: {e}'
+                f'Could not delete table {table_name} in database {database} in catalog {self._account_id} due to: {e}'
             )
             raise e
 
@@ -111,7 +104,7 @@ class GlueClient:
         }
 
         try:
-            log.info(f'Creating ResourceLink {resource_link_name}  ' f'in database {shared_database}...')
+            log.info(f'Creating ResourceLink {resource_link_name}  in database {shared_database}...')
             resource_link = self.table_exists(resource_link_name)
             if resource_link:
                 log.info(
@@ -143,14 +136,14 @@ class GlueClient:
         account_id = self._account_id
         database = self._database
         try:
-            log.info(f'Deleting database {self._database} ' f'in account {self._account_id}...')
+            log.info(f'Deleting database {self._database} in account {self._account_id}...')
             existing_database = self.get_glue_database()
             if existing_database:
                 self._client.delete_database(CatalogId=account_id, Name=database)
-            log.info(f'Successfully deleted database {database} ' f'in account {account_id}')
+            log.info(f'Successfully deleted database {database} in account {account_id}')
             return True
         except ClientError as e:
-            log.error(f'Could not delete database {database} ' f'in account {account_id} ' f'due to: {e}')
+            log.error(f'Could not delete database {database} in account {account_id} due to: {e}')
             raise e
 
     def get_source_catalog(self):

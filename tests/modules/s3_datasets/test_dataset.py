@@ -232,7 +232,7 @@ def test_update_dataset_unauthorized(dataset1, client, group):
 
 def test_add_tables(table, dataset1, db):
     for i in range(0, 10):
-        table(dataset=dataset1, name=f'table{i+1}', username=dataset1.owner)
+        table(dataset=dataset1, name=f'table{i + 1}', username=dataset1.owner)
 
     with db.scoped_session() as session:
         nb = session.query(DatasetTable).count()
@@ -241,7 +241,7 @@ def test_add_tables(table, dataset1, db):
 
 def test_add_locations(location, dataset1, db):
     for i in range(0, 10):
-        location(dataset=dataset1, name=f'unstructured{i+1}', username=dataset1.owner)
+        location(dataset=dataset1, name=f'unstructured{i + 1}', username=dataset1.owner)
 
     with db.scoped_session() as session:
         nb = session.query(DatasetStorageLocation).count()
