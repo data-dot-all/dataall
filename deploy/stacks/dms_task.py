@@ -1,100 +1,127 @@
-import json
-
-from aws_cdk import Stack, aws_dms as dms, aws_iam as iam
+from aws_cdk import aws_codebuild as codebuild, aws_iam as iam
 from constructs import Construct
 from .pyNestedStack import pyNestedClass
 
 
-task_settings = {
-    'TargetMetadata': {
-        'SupportLobs': True,
-        'FullLobMode': True,
-        'LimitedSizeLobMode': False,
-    },
-}
-
-
-class DMSTaskStack(pyNestedClass):
+class CodeBuildProjectStack(pyNestedClass):
     def __init__(
-        self,
-        scope: Construct,
-        construct_id: str,
-        region: str,
-        secret_id_aurora_v1: str,
-        secret_id_aurora_v2: str,
-        kms_key_for_secret_arn: str,
-        database_name: str,
-        vpc_security_group: str,
-        replication_subnet_group_identifier: str,
-        **kwargs,
+            self,
+            scope: Construct,
+            construct_id: str,
+            region: str,
+            secret_id_aurora_v1: str,
+            secret_id_aurora_v2: str,
+            kms_key_for_secret_arn: str,
+            database_name: str,
+            vpc_security_group: str,
+            vpc,
+            **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        replication_role = iam.Role(
-            self,
-            'DMSReplicationRole',
-            role_name='dataall-dms-replication-role',
-            assumed_by=iam.CompositePrincipal(
-                iam.ServicePrincipal('dms-data-migrations.amazonaws.com'),
-                iam.ServicePrincipal('dms.amazonaws.com'),
-                iam.ServicePrincipal(f'dms.{region}.amazonaws.com'),
+        # Create CodeBuild project
+        project = codebuild.Project(
+            self, 'PostgresMigrationProject',
+            project_name='postgres-migration',
+            security_groups=[vpc_security_group],
+            vpc=vpc,
+
+            # Define build environment
+            environment=codebuild.BuildEnvironment(
+                build_image=codebuild.LinuxBuildImage.UBUNTU_STANDARD_7_0,
+                privileged=False,
+                environment_variables={
+                    'SRC_PGVER': codebuild.BuildEnvironmentVariable(
+                        value='14'  # Adjust version as needed
+                    ),
+                    'TGT_PGVER': codebuild.BuildEnvironmentVariable(
+                        value='16'  # Adjust version as needed
+                    ),
+                    'SRC_HOST': codebuild.BuildEnvironmentVariable(
+                        type=codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
+                        value=secret_id_aurora_v1,
+                    ),
+                    'SRC_PORT': codebuild.BuildEnvironmentVariable(
+                        type=codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
+                        value=secret_id_aurora_v1,
+                    ),
+                    'SRC_USER': codebuild.BuildEnvironmentVariable(
+                        type=codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
+                        value=secret_id_aurora_v1,
+                    ),
+                    'SRC_PWD': codebuild.BuildEnvironmentVariable(
+                        type=codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
+                        value=secret_id_aurora_v1,
+                    ),
+                    'TGT_HOST': codebuild.BuildEnvironmentVariable(
+                        type=codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
+                        value=secret_id_aurora_v2,
+                    ),
+                    'TGT_PORT': codebuild.BuildEnvironmentVariable(
+                        type=codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
+                        value=secret_id_aurora_v2,
+                    ),
+                    'TGT_USER': codebuild.BuildEnvironmentVariable(
+                        type=codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
+                        value=secret_id_aurora_v2,
+                    ),
+                    'TGT_PWD': codebuild.BuildEnvironmentVariable(
+                        type=codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
+                        value=secret_id_aurora_v2,
+                    ),
+                    'PGDATABASE': codebuild.BuildEnvironmentVariable(
+                        type=codebuild.BuildEnvironmentVariableType.PLAINTEXT,
+                        value=database_name,
+                    ),
+                }
             ),
+
+            # Define build specification
+            build_spec=codebuild.BuildSpec.from_object({
+                'version': '0.2',
+                'phases': {
+                    'install': {
+                        'commands': [
+                            'apt install curl ca-certificates',
+                            'install -d /usr/share/postgresql-common/pgdg',
+                            'curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc',
+                            'sh -c \'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list\'',
+                            'apt update',
+                            'apt install -y postgresql-client-$SRC_PGVER postgresql-client-$TGT_PGVER'
+                        ]
+                    },
+                    'build': {
+                        'commands': [
+                            'export PGHOST=$SRC_HOST PGPORT=$SRC_PORT PGUSER=$SRC_USER PGPASSWORD=$SRC_PWD',
+                            '/usr/lib/postgresql/$SRC_PGVER/bin/pg_isready',
+                            '/usr/lib/postgresql/$SRC_PGVER/bin/pg_dump -x -Fc -v > db.dump',
+                            'export PGHOST=$TGT_HOST PGPORT=$TGT_PORT PGUSER=$TGT_USER PGPASSWORD=$TGT_PWD',
+                            '/usr/lib/postgresql/$TGT_PGVER/bin/pg_isready',
+                            '/usr/lib/postgresql/$TGT_PGVER/bin/pg_restore -v -x -O -C -c -d postgres db.dump'
+                        ]
+                    }
+                }
+            })
         )
-        replication_role.add_to_policy(
+
+        # Add required permissions
+
+        project.add_to_role_policy(
             iam.PolicyStatement(
-                actions=['secretsmanager:DescribeSecret', 'secretsmanager:GetSecretValue'],
-                effect=iam.Effect.ALLOW,
-                resources=[secret_id_aurora_v1, secret_id_aurora_v2],
+                actions=[
+                    'secretsmanager:GetSecretValue'
+                ],
+                resources=[
+                    secret_id_aurora_v1,
+                    secret_id_aurora_v2
+                ]
             )
         )
 
-        replication_role.add_to_policy(
+        project.add_to_role_policy(
             iam.PolicyStatement(
                 actions=['kms:Decrypt', 'kms:DescribeKey'],
                 effect=iam.Effect.ALLOW,
                 resources=[kms_key_for_secret_arn],
             )
-        )
-
-        cfn_replication_instance = dms.CfnReplicationInstance(
-            self,
-            'MyCfnReplicationInstance',
-            replication_instance_class='dms.t3.medium',
-            vpc_security_group_ids=[vpc_security_group],
-            replication_subnet_group_identifier=replication_subnet_group_identifier,
-            replication_instance_identifier='DataAllReplicationInstance',
-        )
-        cfn_endpoint_source = dms.CfnEndpoint(
-            self,
-            'DataAllSourceEndpoint',
-            endpoint_type='source',
-            engine_name='aurora-postgresql',
-            database_name=database_name,
-            postgre_sql_settings=dms.CfnEndpoint.PostgreSqlSettingsProperty(
-                secrets_manager_access_role_arn=replication_role.role_arn,
-                secrets_manager_secret_id=secret_id_aurora_v1,
-            ),
-        )
-
-        cfn_endpoint_target = dms.CfnEndpoint(
-            self,
-            'DataAllTargetEndpoint',
-            endpoint_type='target',
-            engine_name='aurora-postgresql',
-            database_name=database_name,
-            postgre_sql_settings=dms.CfnEndpoint.PostgreSqlSettingsProperty(
-                secrets_manager_access_role_arn=replication_role.role_arn,
-                secrets_manager_secret_id=secret_id_aurora_v2,
-            ),
-        )
-
-        cfn_replication_task = dms.CfnReplicationTask(
-            self,
-            'DataAllReplicationTask',
-            migration_type='full-load',
-            replication_instance_arn=cfn_replication_instance.ref,
-            replication_task_settings=json.dumps(task_settings),
-            source_endpoint_arn=cfn_endpoint_source.ref,
-            table_mappings='{ "rules": [ { "rule-type": "selection", "rule-id": "1", "rule-name": "1", "object-locator": { "schema-name": "%", "table-name": "%" }, "rule-action": "include" } ] }',
-            target_endpoint_arn=cfn_endpoint_target.ref,
         )
