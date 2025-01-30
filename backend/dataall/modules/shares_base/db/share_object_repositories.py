@@ -10,7 +10,6 @@ from dataall.core.environment.db.environment_models import Environment, Environm
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.notifications.db.notification_models import Notification
-from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
 from dataall.modules.shares_base.services.shares_enums import ShareItemHealthStatus, PrincipalType, ShareableType
 
