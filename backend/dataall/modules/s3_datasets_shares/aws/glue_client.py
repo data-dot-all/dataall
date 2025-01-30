@@ -24,7 +24,7 @@ class GlueClient:
             else:
                 self._create_glue_database(location)
                 glue_database_created = True
-            log.info(f'Successfully created database {self._database}in account {self._account_id}')
+            log.info(f'Successfully created database {self._database} in account {self._account_id}')
             return glue_database_created
         except ClientError as e:
             log.error(f'Failed to create database {self._database} in account {self._account_id} due to {e}')
