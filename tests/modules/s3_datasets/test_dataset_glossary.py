@@ -13,7 +13,7 @@ def _columns(db, dataset_fixture, table_fixture) -> List[DatasetTableColumn]:
             c = DatasetTableColumn(
                 datasetUri=dataset_fixture.datasetUri,
                 tableUri=table_fixture.tableUri,
-                label=f'c{i+1}',
+                label=f'c{i + 1}',
                 AWSAccountId=dataset_fixture.restricted.AwsAccountId,
                 region=dataset_fixture.restricted.region,
                 GlueTableName='table',

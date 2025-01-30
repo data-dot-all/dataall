@@ -531,7 +531,7 @@ class PipelineStack(Stack):
     def initialize_repo(pipeline, code_dir_path, env_vars):
         cmd_init = [f'mkdir {pipeline.repo}', f'cp -R data_pipeline_blueprint/* {pipeline.repo}/']
 
-        logger.info(f"Running Commands: {'; '.join(cmd_init)}")
+        logger.info(f'Running Commands: {"; ".join(cmd_init)}')
 
         CommandSanitizer(args=[pipeline.repo])
 

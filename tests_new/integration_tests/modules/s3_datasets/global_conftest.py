@@ -82,7 +82,7 @@ def create_aws_imported_resources(
                 ).create_key_with_alias(kms_alias_name)
                 bucket = S3Client(session=aws_client, region=env['region']).create_bucket(
                     bucket_name=bucket_name,
-                    kms_key_arn=f"arn:aws:kms:{env['region']}:{env['AwsAccountId']}:key/{kms_id}",
+                    kms_key_arn=f'arn:aws:kms:{env["region"]}:{env["AwsAccountId"]}:key/{kms_id}',
                 )
             else:
                 bucket = S3Client(session=aws_client, region=env['region']).create_bucket(
@@ -496,7 +496,7 @@ def updated_persistent_s3_dataset1(client1, persistent_s3_dataset1):
 
 @pytest.fixture(scope='session')
 def persistent_imported_sse_s3_dataset1(client1, group1, persistent_env1, persistent_env1_aws_client, testdata):
-    bucket_name = f"dataalltesting{persistent_env1.environmentUri}perssses3{persistent_env1['AwsAccountId']}"
+    bucket_name = f'dataalltesting{persistent_env1.environmentUri}perssses3{persistent_env1["AwsAccountId"]}'
     bucket = None
     try:
         s3_client = S3Client(session=persistent_env1_aws_client, region=persistent_env1['region'])
@@ -525,7 +525,7 @@ def persistent_imported_sse_s3_dataset1(client1, group1, persistent_env1, persis
 def persistent_imported_kms_s3_dataset1(
     client1, group1, persistent_env1, persistent_env1_aws_client, persistent_env1_integration_role_arn, testdata
 ):
-    resource_name = f"dataalltesting{persistent_env1.environmentUri}perskms{persistent_env1['AwsAccountId']}"
+    resource_name = f'dataalltesting{persistent_env1.environmentUri}perskms{persistent_env1["AwsAccountId"]}'
     existing_bucket = S3Client(session=persistent_env1_aws_client, region=persistent_env1['region']).bucket_exists(
         resource_name
     )

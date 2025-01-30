@@ -21,7 +21,7 @@ def on_event(event, context):
 
 def on_create(event):
     print('**Sync Cognito Parameters')
-    parameters = get_parameters(ssm, f"/dataall/{event['ResourceProperties']['envname']}/cognito")
+    parameters = get_parameters(ssm, f'/dataall/{event["ResourceProperties"]["envname"]}/cognito')
     print('all cognito params', parameters)
     response_data = sync_parameter_store(parameters)
     return response_data
@@ -42,7 +42,7 @@ def sync_parameter_store(parameters):
         try:
             ssm_us_east_1.put_parameter(
                 Name=_parameter_store['Name'],
-                Description=f"mirror of {_parameter_store['Name']} in eu-west-1 ",
+                Description=f'mirror of {_parameter_store["Name"]} in eu-west-1 ',
                 Value=_parameter_store['Value'],
                 Type='String',
                 Overwrite=True,

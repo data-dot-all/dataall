@@ -68,7 +68,7 @@ class S3DatasetBucketPolicyClient:
             log.info(f'Bucket Policy updated: {response}')
             update_policy_report.update({'status': 'SUCCEEDED'})
         except ClientError as e:
-            log.error(f'Failed to update bucket policy ' f"on '{dataset.S3BucketName}' policy {policy} " f'due to {e} ')
+            log.error(f"Failed to update bucket policy on '{dataset.S3BucketName}' policy {policy} due to {e} ")
             update_policy_report.update({'status': 'FAILED'})
 
         return update_policy_report
