@@ -25,7 +25,7 @@ class AthenaTableClient:
         try:
             env_workgroup = self._client.get_work_group(WorkGroup=self._env.EnvironmentDefaultAthenaWorkGroup)
         except ClientError as e:
-            log.info(f'Workgroup {self._env.EnvironmentDefaultAthenaWorkGroup} can not be found' f'due to: {e}')
+            log.info(f'Workgroup {self._env.EnvironmentDefaultAthenaWorkGroup} can not be found due to: {e}')
 
         connection = connect(
             aws_access_key_id=self._creds.access_key,

@@ -36,7 +36,7 @@ Alarm Details:
 - State Change:                        OK -> ALARM
 - Reason for State Change:    Stack Deployment Failure
 - Timestamp:                            {datetime.now()}
-- CW Log Group:                      {f"/dataall/{self.envname}/cdkproxy/{stack.EcsTaskArn.split('/')[-1]}"}
+- CW Log Group:                      {f'/dataall/{self.envname}/cdkproxy/{stack.EcsTaskArn.split("/")[-1]}'}
 """
         return self.publish_message_to_alarms_topic(subject, message)
 

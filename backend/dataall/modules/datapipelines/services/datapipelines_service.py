@@ -129,7 +129,7 @@ class DataPipelineService:
                 environmentLabel=environment.label,
                 pipelineUri=pipeline.DataPipelineUri,
                 pipelineLabel=pipeline.label,
-                envPipelineUri=f"{pipeline.DataPipelineUri}{environment.environmentUri}{data['stage']}",
+                envPipelineUri=f'{pipeline.DataPipelineUri}{environment.environmentUri}{data["stage"]}',
                 AwsAccountId=environment.AwsAccountId,
                 region=environment.region,
                 stage=data['stage'],

@@ -90,7 +90,7 @@ class Schema:
         if len(self.unions):
             unions = f"""{n.join([u.gql() for u in self.unions])}{n}"""
 
-        types = f"""{n} {n.join([n+t.gql(with_directives=with_directives)+n for t in self.types])}"""
+        types = f"""{n} {n.join([n + t.gql(with_directives=with_directives) + n for t in self.types])}"""
         return f"""{enums}{input_types}{unions}{types}"""
 
     def visit(self, visitors=[]):
