@@ -182,6 +182,9 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('AttachedMetadataForm', 'entityName'): TestData(
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
+    field_id('AttachedMetadataForm', 'entityOwner'): TestData(
+        resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
+    ),
     field_id('AttachedMetadataForm', 'fields'): TestData(
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
@@ -1142,4 +1145,5 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Worksheet', 'userRoleForWorksheet'): TestData(
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
+
 }
