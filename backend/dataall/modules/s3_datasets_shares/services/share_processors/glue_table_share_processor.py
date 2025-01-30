@@ -237,11 +237,11 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
 
         log.info(f'Found {len(s3_datasets_with_common_db)} datasets where same glue database is used')
         additional_resources_to_lock = [
-            (s3_dataset.datasetUri, s3_dataset.__base__.__tablename__)
+            (s3_dataset.datasetUri, S3Dataset.__tablename__)
             for s3_dataset in s3_datasets_with_common_db
             if s3_dataset.datasetUri != self.share_data.dataset.datasetUri
         ]
-        log.info(f'Resources to be locked while revoking glue tables: {additional_resources_to_lock}')
+        log.info(f'Additional Resources to be locked while revoking glue tables: {additional_resources_to_lock}')
 
         try:
             with ResourceLockRepository.acquire_lock_with_retry(
