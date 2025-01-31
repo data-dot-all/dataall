@@ -312,7 +312,7 @@ class S3ShareObjectRepository:
 
     @staticmethod
     def list_dataset_shares_on_database(
-        session, dataset_uri, share_item_shared_states, item_type, environment_uri=None, database=None
+        session, dataset_uri, share_item_shared_states, item_type, database=None
     ) -> [ShareObject]:
         query = (
             session.query(ShareObject)
@@ -328,6 +328,4 @@ class S3ShareObjectRepository:
             )
         )
 
-        if environment_uri:
-            query = query.filter(ShareObject.environmentUri == environment_uri)
         return query.all()
