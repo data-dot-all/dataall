@@ -36,7 +36,7 @@ import {
   updateShareExpirationPeriod,
   submitExtension
 } from '../../Shares/services';
-import { SET_ERROR } from '../../../globalErrors';
+import { SET_ERROR } from 'globalErrors';
 import { DeleteOutlined } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 import { useNavigate, useLocation } from 'react-router-dom';

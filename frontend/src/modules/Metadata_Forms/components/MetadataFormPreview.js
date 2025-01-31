@@ -3,8 +3,8 @@ import { useDispatch } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Box } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import { SET_ERROR } from '../../../globalErrors';
-import { useClient } from '../../../services';
+import { SET_ERROR } from 'globalErrors';
+import { useClient } from 'services';
 import { getMetadataForm } from '../services';
 import CircularProgress from '@mui/material/CircularProgress';
 

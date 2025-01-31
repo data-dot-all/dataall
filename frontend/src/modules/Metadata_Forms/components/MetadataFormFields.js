@@ -31,8 +31,8 @@ import {
   SaveIcon,
   PlusIcon,
   ChipInput
-} from '../../../design';
-import { SET_ERROR } from '../../../globalErrors';
+} from 'design';
+import { SET_ERROR } from 'globalErrors';
 import Checkbox from '@mui/material/Checkbox';
 import {
   createMetadataFormVersion,
@@ -40,7 +40,7 @@ import {
   getMetadataForm,
   listMetadataFormVersions
 } from '../services';
-import { useClient } from '../../../services';
+import { useClient } from 'services';
 import { GridActionsCellItem } from '@mui/x-data-grid';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import SettingsBackupRestoreOutlinedIcon from '@mui/icons-material/SettingsBackupRestoreOutlined';
@@ -50,6 +50,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { listGlossaries } from '../../Glossaries/services';
 import FormControl from '@mui/material/FormControl';
 import { useSnackbar } from 'notistack';
+import { useTheme } from '@mui/styles';
 
 const EditTable = (props) => {
   const { fields, fieldTypeOptions, saveChanges, formUri, glossaryNodes } =
@@ -57,6 +58,7 @@ const EditTable = (props) => {
   const [localFields, setLocalFields] = useState(fields);
   const dragItem = useRef();
   const dragOverItem = useRef();
+  const theme = useTheme();
 
   const swap = (i1, i2) => {
     const copyListItems = [...localFields];
@@ -72,16 +74,16 @@ const EditTable = (props) => {
 
   const dragEnter = (e) => {
     dragOverItem.current = e.currentTarget;
-    e.currentTarget.style.backgroundColor = 'aliceblue';
+    e.currentTarget.style.backgroundColor = theme.palette.action.selected;
   };
 
   const dragLeave = (e) => {
-    e.currentTarget.style.backgroundColor = 'white';
+    e.currentTarget.style.backgroundColor = e.currentTarget.style.color;
   };
 
   const drop = (e) => {
     swap(dragItem.current, dragOverItem.current.id);
-    dragOverItem.current.style.backgroundColor = 'white';
+    dragOverItem.current.style.backgroundColor = e.currentTarget.style.color;
     dragItem.current = null;
     dragOverItem.current = null;
   };
@@ -159,7 +161,9 @@ const EditTable = (props) => {
                 onDragOver={(e) => e.preventDefault()}
                 draggable
                 sx={{
-                  backgroundColor: field.deleted ? 'whitesmoke' : 'white'
+                  backgroundColor: field.deleted
+                    ? theme.palette.background.default
+                    : theme.palette.background.secondary
                 }}
               >
                 <TableCell>

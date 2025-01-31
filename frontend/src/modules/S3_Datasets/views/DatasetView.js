@@ -363,7 +363,10 @@ const DatasetView = () => {
               <DatasetData dataset={dataset} isAdmin={isAdmin} />
             )}
             {currentTab === 'metadata' && (
-              <MetadataAttachment entityType="Dataset" entityUri={params.uri} />
+              <MetadataAttachment
+                entityType="S3-Dataset"
+                entityUri={params.uri}
+              />
             )}
             {currentTab === 'overview' && (
               <DatasetOverview dataset={dataset} isAdmin={isAdmin} />
