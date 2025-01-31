@@ -69,7 +69,7 @@ class NamingConventionService:
         index_string_length = 2  # This is added to adjust the target label string even if the index is set to None. This helps in getting the base policy name when index is None
         index_string = f'-{index}' if index is not None else ''
         suffix = f'-{self.target_uri}' if len(self.target_uri) else ''
-        return f"{slugify(self.resource_prefix + '-' + self.target_label[:(max_length - len(self.resource_prefix + self.target_uri) - index_string_length)] + suffix + index_string, regex_pattern=fr'{regex}', separator=separator, lowercase=True)}"
+        return f'{slugify(self.resource_prefix + "-" + self.target_label[: (max_length - len(self.resource_prefix + self.target_uri) - index_string_length)] + suffix + index_string, regex_pattern=rf"{regex}", separator=separator, lowercase=True)}'
 
     def validate_name(self):
         regex = NamingConventionPattern[self.service].value['regex']
