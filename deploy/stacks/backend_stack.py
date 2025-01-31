@@ -86,7 +86,7 @@ class BackendStack(Stack):
         vpce_connection = ec2.Connections(security_groups=[vpc_endpoints_sg])
         self.s3_prefix_list = self.get_s3_prefix_list()
 
-        self.pivot_role_name = f"dataallPivotRole{'-cdk' if enable_pivot_role_auto_create else ''}"
+        self.pivot_role_name = f'dataallPivotRole{"-cdk" if enable_pivot_role_auto_create else ""}'
 
         ParamStoreStack(
             self,

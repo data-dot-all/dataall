@@ -46,7 +46,7 @@ class DashboardQuicksightService:
                     )
 
                 session_type = ParameterStoreManager.get_parameter_value(
-                    parameter_path=f"/dataall/{os.getenv('envname', 'local')}/quicksight/sharedDashboardsSessions"
+                    parameter_path=f'/dataall/{os.getenv("envname", "local")}/quicksight/sharedDashboardsSessions'
                 )
 
                 if session_type == 'reader':

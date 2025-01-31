@@ -18,7 +18,7 @@ print('\n'.join(sys.path))
 logger = logging.getLogger('cdksass')
 
 ENVNAME = os.getenv('envname', 'local')
-logger.warning(f"Application started for envname= `{ENVNAME}` DH_DOCKER_VERSION:{os.environ.get('DH_DOCKER_VERSION')}")
+logger.warning(f'Application started for envname= `{ENVNAME}` DH_DOCKER_VERSION:{os.environ.get("DH_DOCKER_VERSION")}')
 
 
 def connect():
