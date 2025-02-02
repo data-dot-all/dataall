@@ -31,41 +31,41 @@ from .aurora_migration_task import CodeBuildProjectStack
 
 class BackendStack(Stack):
     def __init__(
-            self,
-            scope,
-            id,
-            envname: str = 'dev',
-            resource_prefix='dataall',
-            tooling_account_id=None,
-            ecr_repository=None,
-            image_tag=None,
-            pipeline_bucket=None,
-            vpc_id=None,
-            vpc_restricted_nacls=False,
-            vpc_endpoints_sg=None,
-            internet_facing=True,
-            custom_domain=None,
-            apigw_custom_domain=None,
-            ip_ranges=None,
-            apig_vpce=None,
-            prod_sizing=False,
-            enable_cw_canaries=False,
-            enable_cw_rum=False,
-            shared_dashboard_sessions='anonymous',
-            enable_pivot_role_auto_create=False,
-            enable_opensearch_serverless=False,
-            codeartifact_domain_name=None,
-            codeartifact_pip_repo_name=None,
-            reauth_config=None,
-            cognito_user_session_timeout_inmins=43200,
-            custom_auth=None,
-            custom_waf_rules=None,
-            with_approval_tests=False,
-            allowed_origins='*',
-            log_retention_duration=None,
-            deploy_aurora_migration_stack=False,
-            old_aurora_connection_secret_arn=None,
-            **kwargs,
+        self,
+        scope,
+        id,
+        envname: str = 'dev',
+        resource_prefix='dataall',
+        tooling_account_id=None,
+        ecr_repository=None,
+        image_tag=None,
+        pipeline_bucket=None,
+        vpc_id=None,
+        vpc_restricted_nacls=False,
+        vpc_endpoints_sg=None,
+        internet_facing=True,
+        custom_domain=None,
+        apigw_custom_domain=None,
+        ip_ranges=None,
+        apig_vpce=None,
+        prod_sizing=False,
+        enable_cw_canaries=False,
+        enable_cw_rum=False,
+        shared_dashboard_sessions='anonymous',
+        enable_pivot_role_auto_create=False,
+        enable_opensearch_serverless=False,
+        codeartifact_domain_name=None,
+        codeartifact_pip_repo_name=None,
+        reauth_config=None,
+        cognito_user_session_timeout_inmins=43200,
+        custom_auth=None,
+        custom_waf_rules=None,
+        with_approval_tests=False,
+        allowed_origins='*',
+        log_retention_duration=None,
+        deploy_aurora_migration_stack=False,
+        old_aurora_connection_secret_arn=None,
+        **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
 
@@ -177,9 +177,9 @@ class BackendStack(Stack):
         repo = ecr.Repository.from_repository_arn(self, 'ECRREPO', repository_arn=ecr_repository)
         if None not in [custom_domain, ses_stack]:
             email_sender = (
-                    custom_domain.get('email_notification_sender_email_id', 'noreply')
-                    + '@'
-                    + custom_domain.get('hosted_zone_name')
+                custom_domain.get('email_notification_sender_email_id', 'noreply')
+                + '@'
+                + custom_domain.get('hosted_zone_name')
             )
         else:
             email_sender = 'none'
