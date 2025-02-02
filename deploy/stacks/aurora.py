@@ -103,7 +103,7 @@ class AuroraServerlessStack(pyNestedClass):
             ],
             cluster_identifier=f'{resource_prefix}-{envname}-db-v2',
             parameter_group=rds.ParameterGroup.from_parameter_group_name(
-                self, 'ParameterGroup', 'default.aurora-postgresql15'
+                self, 'ParameterGroup', 'default.aurora-postgresql16'
             ),
             backup=rds.BackupProps(
                 retention=Duration.days(30),
