@@ -26,7 +26,7 @@ from .sqs import SqsStack
 from .trigger_function_stack import TriggerFunctionStack
 from .vpc import VpcStack
 from .iam_utils import get_tooling_account_external_id
-from .dms_task import CodeBuildProjectStack
+from .aurora_migration_task import CodeBuildProjectStack
 
 
 class BackendStack(Stack):
@@ -63,7 +63,7 @@ class BackendStack(Stack):
             with_approval_tests=False,
             allowed_origins='*',
             log_retention_duration=None,
-            deploy_dms_stack=False,
+            deploy_aurora_migration_stack=False,
             old_aurora_connection_secret_arn=None,
             **kwargs,
     ):
@@ -351,7 +351,7 @@ class BackendStack(Stack):
             **kwargs,
         )
 
-        if deploy_dms_stack:
+        if deploy_aurora_migration_stack:
             self.dms_stack = CodeBuildProjectStack(
                 self,
                 'DMSTaskStack',
