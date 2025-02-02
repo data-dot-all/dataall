@@ -355,9 +355,8 @@ class BackendStack(Stack):
             self.dms_stack = CodeBuildProjectStack(
                 self,
                 'DMSTaskStack',
-                secret_id_aurora_v1=old_aurora_connection_secret_arn,
-                region=self.region,
-                secret_id_aurora_v2=aurora_stack.db_credentials.secret_arn,
+                secret_id_aurora_v1_arn=old_aurora_connection_secret_arn,
+                secret_aurora_v2=aurora_stack.db_credentials,
                 kms_key_for_secret_arn=aurora_stack.kms_key.key_arn,
                 database_name=aurora_stack.db_name,
                 vpc_security_group=db_migrations.security_group,

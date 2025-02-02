@@ -68,8 +68,8 @@ class AuroraServerlessStack(pyNestedClass):
 
         monitoring_role = iam.Role(
             self,
-            'RDSMonitoringRole',
-            role_name='dataall-rds-monitoring-role',
+            f'RDSMonitoringRole-{envname}',
+            role_name=f'dataall-rds-enhanced-monitoring-role-{envname}',
             assumed_by=iam.ServicePrincipal('monitoring.rds.amazonaws.com'),
         )
 
@@ -92,7 +92,7 @@ class AuroraServerlessStack(pyNestedClass):
         database = rds.DatabaseCluster(
             self,
             f'AuroraDatabase{envname}',
-            engine=rds.DatabaseClusterEngine.aurora_postgres(version=rds.AuroraPostgresEngineVersion.VER_15_4),
+            engine=rds.DatabaseClusterEngine.aurora_postgres(version=rds.AuroraPostgresEngineVersion.VER_16_4),
             deletion_protection=True,
             writer=rds.ClusterInstance.serverless_v2('writer'),
             readers=[
@@ -118,7 +118,7 @@ class AuroraServerlessStack(pyNestedClass):
             serverless_v2_min_capacity=4 if prod_sizing else 2,
             serverless_v2_max_capacity=16 if prod_sizing else 8,
             storage_encryption_key=key,
-            monitoring_interval=Duration.seconds(1),
+            monitoring_interval=Duration.seconds(30),
             monitoring_role=monitoring_role,
         )
         database.add_rotation_single_user(automatically_after=Duration.days(90))

@@ -1,4 +1,4 @@
-from aws_cdk import aws_codebuild as codebuild, aws_iam as iam
+from aws_cdk import aws_codebuild as codebuild, aws_iam as iam, aws_secretsmanager as secretsmanager, aws_ec2 as ec2
 from constructs import Construct
 from .pyNestedStack import pyNestedClass
 
@@ -8,9 +8,8 @@ class CodeBuildProjectStack(pyNestedClass):
             self,
             scope: Construct,
             construct_id: str,
-            region: str,
-            secret_id_aurora_v1: str,
-            secret_id_aurora_v2: str,
+            secret_id_aurora_v1_arn: str,
+            secret_aurora_v2,
             kms_key_for_secret_arn: str,
             database_name: str,
             vpc_security_group: str,
@@ -19,11 +18,17 @@ class CodeBuildProjectStack(pyNestedClass):
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        # Create CodeBuild project
+
+        default_security_group = ec2.SecurityGroup.from_security_group_id(
+            self, 'DefaultSecurityGroup',
+            security_group_id=vpc.vpc_default_security_group
+        )
+
+    # Create CodeBuild project
         project = codebuild.Project(
             self, 'PostgresMigrationProject',
             project_name='postgres-migration',
-            security_groups=[vpc_security_group],
+            security_groups=[vpc_security_group, default_security_group],
             vpc=vpc,
 
             # Define build environment
@@ -32,42 +37,42 @@ class CodeBuildProjectStack(pyNestedClass):
                 privileged=False,
                 environment_variables={
                     'SRC_PGVER': codebuild.BuildEnvironmentVariable(
-                        value='14'  # Adjust version as needed
+                        value='13'  # Adjust version as needed
                     ),
                     'TGT_PGVER': codebuild.BuildEnvironmentVariable(
                         value='16'  # Adjust version as needed
                     ),
                     'SRC_HOST': codebuild.BuildEnvironmentVariable(
                         type=codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-                        value=secret_id_aurora_v1,
+                        value=f'{secret_id_aurora_v1_arn}:host',
                     ),
                     'SRC_PORT': codebuild.BuildEnvironmentVariable(
                         type=codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-                        value=secret_id_aurora_v1,
+                        value=f'{secret_id_aurora_v1_arn}:port',
                     ),
                     'SRC_USER': codebuild.BuildEnvironmentVariable(
                         type=codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-                        value=secret_id_aurora_v1,
+                        value=f'{secret_id_aurora_v1_arn}:username',
                     ),
                     'SRC_PWD': codebuild.BuildEnvironmentVariable(
                         type=codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-                        value=secret_id_aurora_v1,
+                        value=f'{secret_id_aurora_v1_arn}:password',
                     ),
                     'TGT_HOST': codebuild.BuildEnvironmentVariable(
                         type=codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-                        value=secret_id_aurora_v2,
+                        value=f'{secret_aurora_v2.secret_arn}:host',
                     ),
                     'TGT_PORT': codebuild.BuildEnvironmentVariable(
                         type=codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-                        value=secret_id_aurora_v2,
+                        value=f'{secret_aurora_v2.secret_arn}:port',
                     ),
                     'TGT_USER': codebuild.BuildEnvironmentVariable(
                         type=codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-                        value=secret_id_aurora_v2,
+                        value=f'{secret_aurora_v2.secret_arn}:username',
                     ),
                     'TGT_PWD': codebuild.BuildEnvironmentVariable(
                         type=codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
-                        value=secret_id_aurora_v2,
+                        value=f'{secret_aurora_v2.secret_arn}:password',
                     ),
                     'PGDATABASE': codebuild.BuildEnvironmentVariable(
                         type=codebuild.BuildEnvironmentVariableType.PLAINTEXT,
@@ -106,17 +111,6 @@ class CodeBuildProjectStack(pyNestedClass):
 
         # Add required permissions
 
-        project.add_to_role_policy(
-            iam.PolicyStatement(
-                actions=[
-                    'secretsmanager:GetSecretValue'
-                ],
-                resources=[
-                    secret_id_aurora_v1,
-                    secret_id_aurora_v2
-                ]
-            )
-        )
 
         project.add_to_role_policy(
             iam.PolicyStatement(
