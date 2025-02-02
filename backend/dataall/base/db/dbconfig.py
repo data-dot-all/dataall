@@ -16,7 +16,7 @@ class DbConfig:
         for param in (user, db, schema):
             if len(param) > _POSTGRES_MAX_LEN:
                 raise ValueError(
-                    f"PostgreSQL doesn't allow values more than 63 characters" f' parameters {user}, {db}, {schema}'
+                    f"PostgreSQL doesn't allow values more than 63 characters parameters {user}, {db}, {schema}"
                 )
 
         if len(host) > _MAX_HOST_LENGTH:

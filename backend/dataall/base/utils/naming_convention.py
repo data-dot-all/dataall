@@ -55,7 +55,7 @@ class NamingConventionService:
         separator = NamingConventionPattern[self.service].value['separator']
         max_length = NamingConventionPattern[self.service].value['max_length']
         suffix = f'-{self.target_uri}' if len(self.target_uri) else ''
-        return f"{slugify(self.resource_prefix + '-' + self.target_label[:(max_length - len(self.resource_prefix + self.target_uri))] + suffix, regex_pattern=fr'{regex}', separator=separator, lowercase=True)}"
+        return f'{slugify(self.resource_prefix + "-" + self.target_label[: (max_length - len(self.resource_prefix + self.target_uri))] + suffix, regex_pattern=rf"{regex}", separator=separator, lowercase=True)}'
 
     def validate_name(self):
         regex = NamingConventionPattern[self.service].value['regex']

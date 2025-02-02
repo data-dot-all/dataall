@@ -122,8 +122,8 @@ class DatasetRepository(EnvironmentResource):
         ).build_compliant_name()
         iam_role_arn = f'arn:aws:iam::{dataset.AwsAccountId}:role/{iam_role_name}'
         if data.get('adminRoleName'):
-            dataset.IAMDatasetAdminRoleArn = f"arn:aws:iam::{dataset.AwsAccountId}:role/{data['adminRoleName']}"
-            dataset.IAMDatasetAdminUserArn = f"arn:aws:iam::{dataset.AwsAccountId}:role/{data['adminRoleName']}"
+            dataset.IAMDatasetAdminRoleArn = f'arn:aws:iam::{dataset.AwsAccountId}:role/{data["adminRoleName"]}'
+            dataset.IAMDatasetAdminUserArn = f'arn:aws:iam::{dataset.AwsAccountId}:role/{data["adminRoleName"]}'
         else:
             dataset.IAMDatasetAdminRoleArn = iam_role_arn
             dataset.IAMDatasetAdminUserArn = iam_role_arn

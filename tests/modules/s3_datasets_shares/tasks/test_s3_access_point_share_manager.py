@@ -627,7 +627,7 @@ def test_manage_access_point_and_policy_1(mocker, target_environment: Environmen
 
     mocker.patch(
         'dataall.base.aws.sts.SessionHelper.get_role_ids',
-        return_value=['dataset_admin_role_id:*', 'source_env_admin_role_id:*' 'source_account_pivot_role_id:*'],
+        return_value=['dataset_admin_role_id:*', 'source_env_admin_role_id:*', 'source_account_pivot_role_id:*'],
     )
 
     mocker.patch(

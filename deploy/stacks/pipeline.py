@@ -205,7 +205,7 @@ class PipelineStack(Stack):
             if target_env.get('with_approval'):
                 backend_stage.add_pre(
                     pipelines.ManualApprovalStep(
-                        id=f"Approve{target_env['envname']}Deployment",
+                        id=f'Approve{target_env["envname"]}Deployment',
                         comment=f'Approve deployment for environment {target_env["envname"]}',
                     )
                 )
@@ -587,7 +587,7 @@ class PipelineStack(Stack):
         self,
         target_env,
     ):
-        repository_name = f"{self.resource_prefix}-{target_env['envname']}-ecr-repository"
+        repository_name = f'{self.resource_prefix}-{target_env["envname"]}-ecr-repository'
         ecr_stage = self.pipeline.add_stage(
             ECRStage(
                 self,
@@ -610,13 +610,13 @@ class PipelineStack(Stack):
                     privileged=True,
                     environment_variables={
                         'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
-                            value=f"{target_env['account']}.dkr.ecr.{target_env['region']}.amazonaws.com/{repository_name}"
+                            value=f'{target_env["account"]}.dkr.ecr.{target_env["region"]}.amazonaws.com/{repository_name}'
                         ),
                         'IMAGE_TAG': codebuild.BuildEnvironmentVariable(value=f'lambdas-{self.image_tag}'),
                     },
                 ),
                 commands=[
-                    f"make deploy-image type=lambda image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
+                    f'make deploy-image type=lambda image-tag=$IMAGE_TAG account={target_env["account"]} region={target_env["region"]} repo={repository_name}',
                 ],
                 role=self.baseline_codebuild_role.without_policy_updates(),
                 vpc=self.vpc,
@@ -628,13 +628,13 @@ class PipelineStack(Stack):
                     privileged=True,
                     environment_variables={
                         'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
-                            value=f"{target_env['account']}.dkr.ecr.{target_env['region']}.amazonaws.com/{repository_name}"
+                            value=f'{target_env["account"]}.dkr.ecr.{target_env["region"]}.amazonaws.com/{repository_name}'
                         ),
                         'IMAGE_TAG': codebuild.BuildEnvironmentVariable(value=f'cdkproxy-{self.image_tag}'),
                     },
                 ),
                 commands=[
-                    f"make deploy-image type=ecs image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
+                    f'make deploy-image type=ecs image-tag=$IMAGE_TAG account={target_env["account"]} region={target_env["region"]} repo={repository_name}',
                 ],
                 role=self.baseline_codebuild_role.without_policy_updates(),
                 vpc=self.vpc,
@@ -646,7 +646,7 @@ class PipelineStack(Stack):
         backend_stage = self.pipeline.add_stage(
             BackendStage(
                 self,
-                f"{self.resource_prefix}-{target_env['envname']}-backend-stage",
+                f'{self.resource_prefix}-{target_env["envname"]}-backend-stage',
                 env={
                     'account': target_env['account'],
                     'region': target_env['region'],
@@ -751,7 +751,7 @@ class PipelineStack(Stack):
         self,
         target_env,
     ):
-        wave = self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-stacks-updater-stage")
+        wave = self.pipeline.add_wave(f'{self.resource_prefix}-{target_env["envname"]}-stacks-updater-stage')
         wave.add_post(
             pipelines.CodeBuildStep(
                 id='StacksUpdater',
@@ -782,7 +782,7 @@ class PipelineStack(Stack):
         cloudfront_stage = self.pipeline.add_stage(
             CloudfrontStage(
                 self,
-                f"{self.resource_prefix}-{target_env['envname']}-cloudfront-stage",
+                f'{self.resource_prefix}-{target_env["envname"]}-cloudfront-stage',
                 env={
                     'account': target_env['account'],
                     'region': 'us-east-1',
@@ -851,11 +851,11 @@ class PipelineStack(Stack):
                 *front_stage_actions,
                 self.cw_rum_config_action(target_env),
             )
-        self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-frontend-stage").add_post(
+        self.pipeline.add_wave(f'{self.resource_prefix}-{target_env["envname"]}-frontend-stage').add_post(
             *front_stage_actions
         )
         if target_env.get('custom_auth', None) is None:
-            self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-docs-stage").add_post(
+            self.pipeline.add_wave(f'{self.resource_prefix}-{target_env["envname"]}-docs-stage').add_post(
                 pipelines.CodeBuildStep(
                     id='UpdateDocumentation',
                     build_environment=codebuild.BuildEnvironment(
@@ -863,7 +863,7 @@ class PipelineStack(Stack):
                     ),
                     commands=[
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
-                        f"make assume-role REMOTE_ACCOUNT_ID={target_env['account']} REMOTE_ROLE={self.resource_prefix}-{target_env['envname']}-S3DeploymentRole EXTERNAL_ID={get_tooling_account_external_id(target_env['account'])}",
+                        f'make assume-role REMOTE_ACCOUNT_ID={target_env["account"]} REMOTE_ROLE={self.resource_prefix}-{target_env["envname"]}-S3DeploymentRole EXTERNAL_ID={get_tooling_account_external_id(target_env["account"])}',
                         '. ./.env.assumed_role',
                         'aws sts get-caller-identity',
                         'export AWS_DEFAULT_REGION=us-east-1',

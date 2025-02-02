@@ -565,12 +565,12 @@ class S3AccessPointShareManager:
 
             for target_sid in perms_to_sids(self.share.permissions, SidType.KmsAccessPointPolicy):
                 if target_sid in statements.keys():
-                    logger.info(f'KMS key policy contains share statement {target_sid}, ' f'updating the current one')
+                    logger.info(f'KMS key policy contains share statement {target_sid}, updating the current one')
                     statements[target_sid] = add_target_arn_to_statement_principal(
                         statements[target_sid], target_requester_arn
                     )
                 else:
-                    logger.info(f'KMS key does not contain share statement {target_sid}, ' f'generating a new one')
+                    logger.info(f'KMS key does not contain share statement {target_sid}, generating a new one')
                     statements[target_sid] = self.generate_default_kms_policy_statement(
                         target_requester_arn, target_sid
                     )

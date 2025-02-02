@@ -123,7 +123,7 @@ class CDKPipelineStack:
             'git remote add origin ${REPO_URL}',
         ]
 
-        logger.info(f"Running Commands: {'; '.join(cmd_init)}")
+        logger.info(f'Running Commands: {"; ".join(cmd_init)}')
 
         CommandSanitizer(args=[self.pipeline.repo, self.pipeline.SamlGroupName])
 
@@ -236,7 +236,7 @@ app.synth()
             'git push -u origin main',
         ]
 
-        logger.info(f"Running Commands: {'; '.join(git_cmds)}")
+        logger.info(f'Running Commands: {"; ".join(git_cmds)}')
 
         # This command does not include any customer upstream input
         # no sanitization is needed and shell=true does not impose a risk
@@ -258,7 +258,7 @@ app.synth()
             code_dir_path = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'blueprints'))
 
             cmd = ['rm', '-rf', f'./{pipeline_dir}']
-            logger.info(f"Running command : \n {' '.join(cmd)}")
+            logger.info(f'Running command : \n {" ".join(cmd)}')
 
             process = subprocess.run(
                 cmd, text=True, shell=False, encoding='utf-8', capture_output=True, cwd=code_dir_path
