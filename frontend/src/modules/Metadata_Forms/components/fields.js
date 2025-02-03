@@ -7,8 +7,8 @@ import {
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import { getGlossaryTree } from '../../Glossaries/services';
-import { SET_ERROR } from '../../../globalErrors';
-import { Defaults } from '../../../design';
+import { SET_ERROR } from 'globalErrors';
+import { Defaults } from 'design';
 
 export const FreeInputField = (props) => {
   const { field, onChange, errors } = props;
@@ -37,7 +37,7 @@ export const BooleanField = (props) => {
       control={
         <Checkbox
           id={field.name}
-          defaultChecked={field.value}
+          defaultChecked={JSON.parse(field.value)}
           onChange={(event, checked) => onChange(checked)}
         />
       }

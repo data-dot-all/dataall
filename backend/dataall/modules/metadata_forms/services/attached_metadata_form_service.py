@@ -41,13 +41,19 @@ class AttachedMetadataFormService:
         ATTACH_METADATA_FORM, parent_resource=_get_entity_uri, param_name='data'
     )
     def create_or_update_attached_metadata_form(uri, data):
-        new_form = AttachedMetadataFormService.create_attached_metadata_form(uri=uri, data=data)
-        if data.get('attachedUri'):
-            with get_context().db_engine.scoped_session() as session:
-                existingAMF = MetadataFormRepository.get_attached_metadata_form(session, data.get('attachedUri'))
-                if existingAMF and new_form:
-                    session.delete(existingAMF)
-        return new_form
+        new_form = None
+        try:
+            new_form = AttachedMetadataFormService.create_attached_metadata_form(uri=uri, data=data)
+            if data.get('attachedUri'):
+                with get_context().db_engine.scoped_session() as session:
+                    existingAMF = MetadataFormRepository.get_attached_metadata_form(session, data.get('attachedUri'))
+                    if existingAMF and new_form:
+                        session.delete(existingAMF)
+            return new_form
+        except Exception as e:
+            if new_form:
+                AttachedMetadataFormService.delete_attached_metadata_form(uri=new_form.uri)
+                raise e
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(
@@ -63,11 +69,15 @@ class AttachedMetadataFormService:
             mf_fields = MetadataFormRepository.get_metadata_form_fields(session, uri)
             AttachedMetadataFormValidationService.validate_enrich_fields_params(mf_fields, data)
             amf = MetadataFormRepository.create_attached_metadata_form(session, uri, data)
-            for f in data.get('fields'):
-                MetadataFormRepository.create_attached_metadata_form_field(
-                    session, amf.uri, f.get('field'), f.get('value')
-                )
-            return amf
+            try:
+                for f in data.get('fields'):
+                    MetadataFormRepository.create_attached_metadata_form_field(
+                        session, amf.uri, f.get('field'), f.get('value')
+                    )
+                return amf
+            except Exception as e:
+                AttachedMetadataFormService.delete_attached_metadata_form(uri=amf.uri)
+                raise e
 
     @staticmethod
     def get_attached_metadata_form(uri):

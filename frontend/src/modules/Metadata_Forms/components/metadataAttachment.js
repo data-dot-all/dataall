@@ -21,18 +21,20 @@ import {
   listAttachedMetadataForms,
   listEntityMetadataForms
 } from '../services';
-import { Defaults, PlusIcon } from '../../../design';
+import { Defaults, PlusIcon } from 'design';
 import CircularProgress from '@mui/material/CircularProgress';
-import { useClient } from '../../../services';
+import { useClient } from 'services';
 import { RenderedMetadataForm } from './renderedMetadataForm';
-import { SET_ERROR } from '../../../globalErrors';
+import { SET_ERROR } from 'globalErrors';
 import { AttachedFormCard } from './AttachedFormCard';
 import DoNotDisturbAltOutlinedIcon from '@mui/icons-material/DoNotDisturbAltOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import { useTheme } from '@mui/styles';
 
 export const MetadataAttachment = (props) => {
   const { entityType, entityUri } = props;
   const client = useClient();
+  const theme = useTheme();
   const dispatch = useDispatch();
   const [selectedForm, setSelectedForm] = useState(null);
   const [selectedAttachedForm, setSelectedAttachedForm] = useState(null);
@@ -242,9 +244,8 @@ export const MetadataAttachment = (props) => {
                 sx={{
                   backgroundColor:
                     selectedAttachedForm &&
-                    selectedAttachedForm.uri === attachedForm.uri
-                      ? '#e6e6e6'
-                      : 'white'
+                    selectedAttachedForm.uri === attachedForm.uri &&
+                    theme.palette.action.selected
                 }}
               >
                 <Grid container spacing={2}>
@@ -355,6 +356,7 @@ export const MetadataAttachment = (props) => {
           <AttachedFormCard
             fields={fields}
             attachedForm={selectedAttachedForm}
+            editable={true}
             onEdit={() => {
               setSelectedForm(selectedAttachedForm.metadataForm);
               const tmp_dict = {};

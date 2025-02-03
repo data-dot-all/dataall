@@ -13,7 +13,7 @@ import { LoadingButton } from '@mui/lab';
 import { SET_ERROR } from 'globalErrors';
 import SendIcon from '@mui/icons-material/Send';
 import React, { useState } from 'react';
-import { PencilAltIcon } from '../../../design';
+import { PencilAltIcon } from 'design';
 import { updateShareExtensionReason } from '../services/updateShareExtensionReason';
 
 export const UpdateExtensionReason = (props) => {
