@@ -15,7 +15,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
     PrincipalType,
     ShareableType,
-    ShareObjectStatus
+    ShareObjectStatus,
 )
 
 logger = logging.getLogger(__name__)
@@ -491,7 +491,13 @@ class ShareObjectRepository:
     def get_all_active_shares_with_expiration(session):
         return (
             session.query(ShareObject)
-            .filter(and_(ShareObject.expiryDate.isnot(None), ShareObject.deleted.is_(None), ShareObject.status == ShareObjectStatus.Processed.value))
+            .filter(
+                and_(
+                    ShareObject.expiryDate.isnot(None),
+                    ShareObject.deleted.is_(None),
+                    ShareObject.status == ShareObjectStatus.Processed.value,
+                )
+            )
             .all()
         )
 
