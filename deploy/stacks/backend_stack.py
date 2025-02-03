@@ -352,9 +352,9 @@ class BackendStack(Stack):
         )
 
         if deploy_aurora_migration_stack:
-            self.dms_stack = CodeBuildProjectStack(
+            self.aurora_migration_stack = CodeBuildProjectStack(
                 self,
-                'DMSTaskStack',
+                'AuroraMigrationStack',
                 secret_id_aurora_v1_arn=old_aurora_connection_secret_arn,
                 secret_aurora_v2=aurora_stack.db_credentials,
                 kms_key_for_secret_arn=aurora_stack.kms_key.key_arn,
