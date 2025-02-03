@@ -312,7 +312,7 @@ class S3ShareObjectRepository:
 
     @staticmethod
     def list_dataset_shares_on_database(
-        session, dataset_uri, share_item_shared_states, item_type, database=None
+        session, dataset_uri, share_item_shared_states, item_type, database
     ) -> [ShareObject]:
         query = (
             session.query(ShareObject)
