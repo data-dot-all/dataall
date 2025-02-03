@@ -17,13 +17,13 @@ import {
   FreeInputField,
   GlossaryTermField
 } from './fields';
-import { useClient } from '../../../services';
+import { useClient } from 'services';
 import { useDispatch } from 'react-redux';
 import { Formik } from 'formik';
 import { LoadingButton } from '@mui/lab';
 import SendIcon from '@mui/icons-material/Send';
 import { createAttachedMetadataForm, getMetadataForm } from '../services';
-import { SET_ERROR } from '../../../globalErrors';
+import { SET_ERROR } from 'globalErrors';
 import CircularProgress from '@mui/material/CircularProgress';
 
 export const RenderedMetadataForm = (props) => {
@@ -51,6 +51,11 @@ export const RenderedMetadataForm = (props) => {
   localFields.forEach((field, index) => {
     if (field.type === 'Boolean' && field.value === undefined) {
       field.value = false;
+    }
+    if (field.type === 'Boolean' || field.type === 'Integer') {
+      if (field.value) {
+        field.value = JSON.parse(field.value);
+      }
     }
   });
 

@@ -52,6 +52,10 @@ def get_entity_name(context: Context, source: AttachedMetadataForm):
     return MetadataFormService.get_entity_name(attached_metadata_form=source)
 
 
+def get_entity_owner(context: Context, source: AttachedMetadataForm):
+    return MetadataFormService.get_entity_owner(attached_metadata_form=source)
+
+
 def get_metadata_form(context: Context, source, uri):
     return MetadataFormService.get_metadata_form_by_uri(uri=uri)
 
