@@ -6,11 +6,11 @@ import {
   CardContent,
   CircularProgress,
   Dialog,
-  FormControlLabel,
-  Switch,
   TextField,
+  Tooltip,
   Typography
 } from '@mui/material';
+import InfoIcon from '@mui/icons-material/Info';
 import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
@@ -67,6 +67,21 @@ export const EnvironmentRoleAddForm = (props) => {
 
   let { groupOptions, loadingGroups } = useFetchGroups(environment);
 
+  let policyManagementOptions = [
+    {
+      label: 'Data.all fully managed',
+      info: 'Data.all manages creating, maintaining and also attaching the policy'
+    },
+    {
+      label: 'Data.all partially managed',
+      info: "Data.all will create the IAM policy but won't attach policy to your consumption role. With this option, data.all will indicate share to be unhealthy if the data.all created policy is not attached."
+    },
+    {
+      label: 'Externally Managed',
+      info: 'Data.all will create the IAM policy required for any share but it will be incumbent on role owners to attach it or use their own policy. With this option, data.all will not indicate the share to be unhealthy even if the policy is not attached.'
+    }
+  ];
+
   if (!environment) {
     return null;
   }
@@ -95,7 +110,7 @@ export const EnvironmentRoleAddForm = (props) => {
           <Formik
             initialValues={{
               groupUri: '',
-              dataallManaged: true
+              dataallManaged: ''
             }}
             validationSchema={Yup.object().shape({
               groupUri: Yup.string()
@@ -104,7 +119,12 @@ export const EnvironmentRoleAddForm = (props) => {
               consumptionRoleName: Yup.string()
                 .max(255)
                 .required('*Consumption Role Name is required'),
-              IAMRoleArn: Yup.string().required('*IAM Role Arn is required')
+              IAMRoleArn: Yup.string().required('*IAM Role Arn is required'),
+              dataallManaged: Yup.string()
+                .required(
+                  'Policy Management option required. Please select a valid option'
+                )
+                .oneOf(policyManagementOptions.map((obj) => obj.label))
             })}
             onSubmit={async (
               values,
@@ -181,28 +201,51 @@ export const EnvironmentRoleAddForm = (props) => {
                   />
                 </CardContent>
                 <CardContent>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={values.dataallManaged}
-                        onChange={handleChange}
-                        color="primary"
-                        edge="start"
+                  <Autocomplete
+                    id="PolicyManagement"
+                    disablePortal
+                    options={policyManagementOptions}
+                    onChange={(event, value) => {
+                      if (value && value.label) {
+                        setFieldValue('dataallManaged', value.label);
+                      } else {
+                        setFieldValue('dataallManaged', '');
+                      }
+                    }}
+                    renderOption={(props, option) => {
+                      const { key, ...propOptions } = props;
+                      return (
+                        <Box key={key} {...propOptions}>
+                          {option.label}
+                          <Tooltip
+                            title={
+                              <span style={{ fontSize: 'small' }}>
+                                {option.info}
+                              </span>
+                            }
+                            placement="right-start"
+                          >
+                            <InfoIcon />
+                          </Tooltip>
+                        </Box>
+                      );
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        fullWidth
+                        error={Boolean(
+                          touched.dataallManaged && errors.dataallManaged
+                        )}
+                        helperText={
+                          touched.dataallManaged && errors.dataallManaged
+                        }
+                        label="Policy Management"
                         name="dataallManaged"
+                        variant="outlined"
+                        value={values.dataallManaged}
                       />
-                    }
-                    label={
-                      <div>
-                        Data.all managed
-                        <Typography
-                          color="textSecondary"
-                          component="p"
-                          variant="caption"
-                        >
-                          Allow Data.all to attach IAM policies to this role
-                        </Typography>
-                      </div>
-                    }
+                    )}
                   />
                 </CardContent>
                 <Box>

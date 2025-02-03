@@ -1380,6 +1380,76 @@ const ShareView = () => {
                           </ListItem>
                           <ListItem
                             disableGutters
+                            sx={{
+                              paddingX: 2,
+                              paddingTop: 2,
+                              paddingBottom: 0
+                            }}
+                          >
+                            <Typography
+                              color="textSecondary"
+                              variant="subtitle2"
+                            >
+                              <Tooltip
+                                title={
+                                  <span>
+                                    IAM policy management indicates how much
+                                    control data.all has into creating and
+                                    attaching policies
+                                    <br />
+                                    <br />
+                                    1. Data.all fully managed - Data.all manages
+                                    creating, maintaining and also attaching the
+                                    policy <br />
+                                    <br />
+                                    2. Data.all partially managed - Data.all
+                                    will create the IAM policy but won't attach
+                                    policy to your consumption role. With this
+                                    option, data.all will indicate share to be
+                                    unhealthy if the data.all created policy is
+                                    not attached.
+                                    <br />
+                                    <br />
+                                    3. Externally Managed - Data.all will create
+                                    the IAM policy required for any share but it
+                                    will be incumbent on role owners to attach
+                                    it or use their own policy. With this
+                                    option, data.all will not indicate the share
+                                    to be unhealthy even if the policy is not
+                                    attached.
+                                  </span>
+                                }
+                              >
+                                Principal IAM Policy Management
+                              </Tooltip>
+                            </Typography>
+                          </ListItem>
+                          <ListItem
+                            disableGutters
+                            divider
+                            sx={{
+                              justifyContent: 'space-between',
+                              paddingX: 2,
+                              paddingTop: 1,
+                              paddingBottom: 2
+                            }}
+                          >
+                            <Typography
+                              color="textPrimary"
+                              variant="body2"
+                              sx={{
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                WebkitBoxOrient: 'vertical',
+                                WebkitLineClamp: 2
+                              }}
+                            >
+                              <span>Data.all fully managed</span>
+                            </Typography>
+                          </ListItem>
+                          <ListItem
+                            disableGutters
                             divider
                             sx={{
                               justifyContent: 'space-between',
