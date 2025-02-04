@@ -3,6 +3,7 @@ import logging
 import json
 from abc import ABC, abstractmethod
 from dataall.base.aws.iam import IAM
+from dataall.core.environment.db.environment_enums import ConsumptionRolePolicyManagementOptions
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +120,7 @@ class PolicyManager(object):
             resource_prefix=self.resource_prefix,
         )
 
-    def create_all_policies(self, managed) -> bool:
+    def create_all_policies(self, policy_management: ConsumptionRolePolicyManagementOptions) -> bool:
         """
         Manager that registers and calls all policies created by data.all modules and that
         need to be created for consumption roles and team roles
@@ -136,7 +137,7 @@ class PolicyManager(object):
                     policy=json.dumps(empty_policy),
                 )
 
-                if managed:
+                if policy_management == ConsumptionRolePolicyManagementOptions.FULLY_MANAGED:
                     IAM.attach_role_policy(
                         account_id=self.account,
                         region=self.region,

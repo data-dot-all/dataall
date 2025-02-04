@@ -26,6 +26,8 @@ export const fetchEnums = async (client, enum_names) => {
   const response = await client.query(
     getEnumByName({ enum_names: enum_names })
   );
+  console.log("Enums resp")
+  console.log(response)
   let enum_dict = {};
   if (!response.errors && response.data.queryEnums != null) {
     response.data.queryEnums.map((x) => {

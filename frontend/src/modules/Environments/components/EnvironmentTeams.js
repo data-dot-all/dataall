@@ -822,11 +822,9 @@ export const EnvironmentTeams = ({ environment }) => {
                     field: 'dataallManaged',
                     headerName: 'Policy Management',
                     valueGetter: (params) => {
-                      return `${
-                        params.row.dataallManaged
-                          ? 'Data.all managed'
-                          : 'Customer managed'
-                      }`;
+                      return `${params.row.dataallManaged
+                        ?.match(/[A-Z][a-z]+/g)
+                        .join('-')}`;
                     },
                     flex: 0.6
                   },

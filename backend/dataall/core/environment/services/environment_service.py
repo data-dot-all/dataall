@@ -13,6 +13,7 @@ from dataall.base.utils import Parameter
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.base.db.exceptions import AWSResourceNotFound
+from dataall.core.environment.db.environment_enums import ConsumptionRolePolicyManagementOptions
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.permissions.services.environment_permissions import (
     ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
@@ -123,6 +124,8 @@ class EnvironmentRequestValidationService:
             raise exceptions.RequiredParameter('groupUri')
         if not data.get('IAMRoleArn'):
             raise exceptions.RequiredParameter('IAMRoleArn')
+        if not data.get('dataallManaged'):
+            raise exceptions.RequiredParameter('dataallManaged')
 
     @staticmethod
     def validate_org_group(org_uri, group, session):
@@ -397,15 +400,16 @@ class EnvironmentService:
                 env_group_iam_role_arn = f'arn:aws:iam::{environment.AwsAccountId}:role/{env_group_iam_role_name}'
                 env_role_imported = False
 
-            # If environment role is imported, then data.all should attach the policies at import time
-            # If environment role is created in environment stack, then data.all should attach the policies in the env stack
+            # If environment role is imported, then data.all should attach the policies at import time ( Fully Managed )
+            # If environment role is created in environment stack, then data.all should attach the policies in the env stack ( Partially Managed - Here policy will be created but won't be attached )
+            policy_management: ConsumptionRolePolicyManagementOptions = ConsumptionRolePolicyManagementOptions.FULLY_MANAGED if env_role_imported is True else ConsumptionRolePolicyManagementOptions.PARTIALLY_MANAGED
             PolicyManager(
                 role_name=env_group_iam_role_name,
                 environmentUri=environment.environmentUri,
                 account=environment.AwsAccountId,
                 region=environment.region,
                 resource_prefix=environment.resourcePrefix,
-            ).create_all_policies(managed=env_role_imported)
+            ).create_all_policies(policy_management=policy_management)
 
             athena_workgroup = NamingConventionService(
                 target_uri=environment.environmentUri,
@@ -590,7 +594,7 @@ class EnvironmentService:
                 groupUri=group,
                 IAMRoleArn=IAMRoleArn,
                 IAMRoleName=IAMRoleArn.split('/')[-1],
-                dataallManaged=data.get('dataallManaged', True),
+                dataallManaged=data.get('dataallManaged')
             )
 
             PolicyManager(
@@ -599,7 +603,7 @@ class EnvironmentService:
                 account=environment.AwsAccountId,
                 region=environment.region,
                 resource_prefix=environment.resourcePrefix,
-            ).create_all_policies(managed=consumption_role.dataallManaged)
+            ).create_all_policies(policy_management=consumption_role.dataallManaged)
 
             session.add(consumption_role)
             session.commit()

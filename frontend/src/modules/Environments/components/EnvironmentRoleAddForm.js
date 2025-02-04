@@ -14,10 +14,10 @@ import InfoIcon from '@mui/icons-material/Info';
 import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { useClient, useFetchGroups } from 'services';
+import { fetchEnums, useClient, useFetchGroups } from 'services';
 import { addConsumptionRoleToEnvironment } from '../services';
 
 export const EnvironmentRoleAddForm = (props) => {
@@ -25,6 +25,32 @@ export const EnvironmentRoleAddForm = (props) => {
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const client = useClient();
+  const [policyManagementOptions, setPolicyManagementOptions] = useState([]);
+
+  useEffect(() => {
+    const fetchPolicyManagementOptions = async () => {
+      const response = await fetchEnums(client, [
+        'ConsumptionRolePolicyManagementOptions'
+      ]);
+      if (response['ConsumptionRolePolicyManagementOptions'].length > 0) {
+        setPolicyManagementOptions(
+          response['ConsumptionRolePolicyManagementOptions'].map((elem) => {
+            return { label: elem.value, key: elem.name };
+          })
+        );
+      } else {
+        dispatch({
+          type: SET_ERROR,
+          error: 'Could not fetch consumption role policy management options'
+        });
+      }
+    };
+
+    if (client)
+      fetchPolicyManagementOptions().catch((e) =>
+        dispatch({ type: SET_ERROR, e })
+      );
+  }, [client, dispatch]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
@@ -67,20 +93,14 @@ export const EnvironmentRoleAddForm = (props) => {
 
   let { groupOptions, loadingGroups } = useFetchGroups(environment);
 
-  let policyManagementOptions = [
-    {
-      label: 'Data.all fully managed',
-      info: 'Data.all manages creating, maintaining and also attaching the policy'
-    },
-    {
-      label: 'Data.all partially managed',
-      info: "Data.all will create the IAM policy but won't attach policy to your consumption role. With this option, data.all will indicate share to be unhealthy if the data.all created policy is not attached."
-    },
-    {
-      label: 'Externally Managed',
-      info: 'Data.all will create the IAM policy required for any share but it will be incumbent on role owners to attach it or use their own policy. With this option, data.all will not indicate the share to be unhealthy even if the policy is not attached.'
-    }
-  ];
+  let policyManagementInfoMap = {
+    FULLY_MANAGED:
+      'Data.all manages creating, maintaining and also attaching the policy',
+    PARTIALLY_MANAGED:
+      "Data.all will create the IAM policy but won't attach policy to your consumption role. With this option, data.all will indicate share to be unhealthy if the data.all created policy is not attached.",
+    EXTERNALLY_MANAGED:
+      'Data.all will create the IAM policy required for any share but it will be incumbent on role owners to attach it or use their own policy. With this option, data.all will not indicate the share to be unhealthy even if the policy is not attached.'
+  };
 
   if (!environment) {
     return null;
@@ -216,16 +236,19 @@ export const EnvironmentRoleAddForm = (props) => {
                       const { key, ...propOptions } = props;
                       return (
                         <Box key={key} {...propOptions}>
-                          {option.label}
+                          {/*Display string 'FullyManaged' etc with a '-' in between*/}
+                          {option.label.match(/[A-Z][a-z]+/g).join('-')}
                           <Tooltip
                             title={
                               <span style={{ fontSize: 'small' }}>
-                                {option.info}
+                                {policyManagementInfoMap[option.key] != null
+                                  ? policyManagementInfoMap[option.key]
+                                  : 'Invalid Option for policy management.'}
                               </span>
                             }
                             placement="right-start"
                           >
-                            <InfoIcon />
+                            <InfoIcon sx={{ fontSize: '1rem' }} />
                           </Tooltip>
                         </Box>
                       );
