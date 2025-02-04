@@ -11,7 +11,12 @@ from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.notifications.db.notification_models import Notification
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, ShareObject
-from dataall.modules.shares_base.services.shares_enums import ShareItemHealthStatus, PrincipalType, ShareableType
+from dataall.modules.shares_base.services.shares_enums import (
+    ShareItemHealthStatus,
+    PrincipalType,
+    ShareableType,
+    ShareObjectStatus,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -486,7 +491,13 @@ class ShareObjectRepository:
     def get_all_active_shares_with_expiration(session):
         return (
             session.query(ShareObject)
-            .filter(and_(ShareObject.expiryDate.isnot(None), ShareObject.deleted.is_(None)))
+            .filter(
+                and_(
+                    ShareObject.expiryDate.isnot(None),
+                    ShareObject.deleted.is_(None),
+                    ShareObject.status == ShareObjectStatus.Processed.value,
+                )
+            )
             .all()
         )
 
