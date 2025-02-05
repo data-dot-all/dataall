@@ -1,7 +1,7 @@
 from dataall.base.api import GraphQLEnumMapper
 
 
-class ConsumptionRolePolicyManagementOptions(GraphQLEnumMapper):
+class PolicyManagementOptions(GraphQLEnumMapper):
     FULLY_MANAGED = 'FullyManaged'
     PARTIALLY_MANAGED = 'PartiallyManaged'
     EXTERNALLY_MANAGED = 'ExternallyManaged'

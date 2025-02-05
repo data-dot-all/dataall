@@ -2,11 +2,12 @@
 
 import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, String, ForeignKey
+from sqlalchemy import Boolean, Column, DateTime, String, ForeignKey, Enum
 from sqlalchemy.orm import query_expression
 from dataall.base.db import Resource, Base, utils
 
 from dataall.core.environment.api.enums import EnvironmentPermission, EnvironmentType
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 
 
 class Environment(Resource, Base):

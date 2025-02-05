@@ -13,7 +13,7 @@ from dataall.base.utils import Parameter
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.base.db.exceptions import AWSResourceNotFound
-from dataall.core.environment.db.environment_enums import ConsumptionRolePolicyManagementOptions
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.permissions.services.environment_permissions import (
     ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
@@ -402,14 +402,10 @@ class EnvironmentService:
 
             # If environment role is imported, then data.all should attach the policies at import time ( Fully Managed )
             # If environment role is created in environment stack, then data.all should attach the policies in the env stack ( Partially Managed - Here policy will be created but won't be attached )
-            policy_management: ConsumptionRolePolicyManagementOptions = ConsumptionRolePolicyManagementOptions.FULLY_MANAGED if env_role_imported is True else ConsumptionRolePolicyManagementOptions.PARTIALLY_MANAGED
-            PolicyManager(
-                role_name=env_group_iam_role_name,
-                environmentUri=environment.environmentUri,
-                account=environment.AwsAccountId,
-                region=environment.region,
-                resource_prefix=environment.resourcePrefix,
-            ).create_all_policies(policy_management=policy_management)
+            policy_management: str = PolicyManagementOptions.FULLY_MANAGED.value if env_role_imported is True else PolicyManagementOptions.PARTIALLY_MANAGED.value
+            PolicyManager(session=session, account=environment.AwsAccountId, region=environment.region,
+                          environmentUri=environment.environmentUri, resource_prefix=environment.resourcePrefix,
+                          role_name=env_group_iam_role_name).create_all_policies(policy_management=policy_management)
 
             athena_workgroup = NamingConventionService(
                 target_uri=environment.environmentUri,
@@ -473,13 +469,9 @@ class EnvironmentService:
 
             group_membership = EnvironmentService.find_environment_group(session, group, environment.environmentUri)
 
-            PolicyManager(
-                role_name=group_membership.environmentIAMRoleName,
-                environmentUri=environment.environmentUri,
-                account=environment.AwsAccountId,
-                region=environment.region,
-                resource_prefix=environment.resourcePrefix,
-            ).delete_all_policies()
+            PolicyManager(session=session, account=environment.AwsAccountId, region=environment.region,
+                          environmentUri=environment.environmentUri, resource_prefix=environment.resourcePrefix,
+                          role_name=group_membership.environmentIAMRoleName).delete_all_policies()
 
             if group_membership:
                 session.delete(group_membership)
@@ -597,13 +589,9 @@ class EnvironmentService:
                 dataallManaged=data.get('dataallManaged')
             )
 
-            PolicyManager(
-                role_name=consumption_role.IAMRoleName,
-                environmentUri=environment.environmentUri,
-                account=environment.AwsAccountId,
-                region=environment.region,
-                resource_prefix=environment.resourcePrefix,
-            ).create_all_policies(policy_management=consumption_role.dataallManaged)
+            PolicyManager(session=session, account=environment.AwsAccountId, region=environment.region,
+                          environmentUri=environment.environmentUri, resource_prefix=environment.resourcePrefix,
+                          role_name=consumption_role.IAMRoleName).create_all_policies(policy_management=consumption_role.dataallManaged)
 
             session.add(consumption_role)
             session.commit()
@@ -633,13 +621,9 @@ class EnvironmentService:
                 )
 
             if consumption_role:
-                PolicyManager(
-                    role_name=consumption_role.IAMRoleName,
-                    environmentUri=environment.environmentUri,
-                    account=environment.AwsAccountId,
-                    region=environment.region,
-                    resource_prefix=environment.resourcePrefix,
-                ).delete_all_policies()
+                PolicyManager(session=session, account=environment.AwsAccountId, region=environment.region,
+                              environmentUri=environment.environmentUri, resource_prefix=environment.resourcePrefix,
+                              role_name=consumption_role.IAMRoleName).delete_all_policies()
 
                 ResourcePolicyService.delete_resource_policy(
                     session=session,
@@ -896,13 +880,9 @@ class EnvironmentService:
                     StackStatus.CREATE_FAILED.value,
                     StackStatus.DELETE_COMPLETE.value,
                 ]:
-                    PolicyManager(
-                        role_name=environment.EnvironmentDefaultIAMRoleName,
-                        environmentUri=environment.environmentUri,
-                        account=environment.AwsAccountId,
-                        region=environment.region,
-                        resource_prefix=environment.resourcePrefix,
-                    ).delete_all_policies()
+                    PolicyManager(session=session, account=environment.AwsAccountId, region=environment.region,
+                                  environmentUri=environment.environmentUri, resource_prefix=environment.resourcePrefix,
+                                  role_name=environment.EnvironmentDefaultIAMRoleName).delete_all_policies()
 
                 KeyValueTagRepository.delete_key_value_tags(session, environment.environmentUri, 'environment')
                 EnvironmentResourceManager.delete_env(session, environment)
@@ -1115,13 +1095,9 @@ class EnvironmentService:
     @ResourcePolicyService.has_resource_permission(environment_permissions.GET_ENVIRONMENT)
     def resolve_consumption_role_policies(uri, IAMRoleName):
         environment = EnvironmentService.find_environment_by_uri(uri=uri)
-        return PolicyManager(
-            role_name=IAMRoleName,
-            environmentUri=uri,
-            account=environment.AwsAccountId,
-            region=environment.region,
-            resource_prefix=environment.resourcePrefix,
-        ).get_all_policies()
+        with get_context().db_engine.scoped_session() as session:
+            return PolicyManager(session=session, account=environment.AwsAccountId, region=environment.region, environmentUri=uri,
+                                 resource_prefix=environment.resourcePrefix, role_name=IAMRoleName).get_all_policies()
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(environment_permissions.GET_ENVIRONMENT)

@@ -18,7 +18,8 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  TextField
+  TextField,
+  Tooltip
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
@@ -62,6 +63,8 @@ import { EnvironmentRoleAddForm } from './EnvironmentRoleAddForm';
 import { EnvironmentTeamInviteEditForm } from './EnvironmentTeamInviteEditForm';
 import { EnvironmentTeamInviteForm } from './EnvironmentTeamInviteForm';
 import { DataGrid, GridActionsCellItem, GridRowModes } from '@mui/x-data-grid';
+import InfoIcon from '@mui/icons-material/Info';
+import { policyManagementInfoMap } from '../../constants';
 
 function TeamRow({
   team,
@@ -298,6 +301,7 @@ export const IAMRolePolicyDataGridCell = ({ environmentUri, IAMRoleName }) => {
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const client = useClient();
+  const [policyAttachStatus, setPolicyAttachStatus] = useState('Not Attached');
 
   useEffect(() => {
     if (client) {
@@ -318,6 +322,11 @@ export const IAMRolePolicyDataGridCell = ({ environmentUri, IAMRoleName }) => {
       );
       if (!response.errors) {
         setManagedPolicyDetails(response.data.getConsumptionRolePolicies);
+        setPolicyAttachStatus(
+          getIAMPolicyAttachementStatus(
+            response.data.getConsumptionRolePolicies
+          )
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -328,27 +337,33 @@ export const IAMRolePolicyDataGridCell = ({ environmentUri, IAMRoleName }) => {
     }
   };
 
+  const getIAMPolicyTagColour = () => {
+    if (policyAttachStatus === 'N/A') return 'warning';
+    if (policyAttachStatus === 'Not Attached') return 'error';
+    return 'success';
+  };
+
+  const getIAMPolicyAttachementStatus = (managedPolicyDetails) => {
+    const is_policy_attach = managedPolicyDetails.map(
+      (policy) => policy.attached
+    );
+    if (is_policy_attach.every((policy) => policy === 'N/A')) {
+      return 'N/A';
+    }
+    if (is_policy_attach.some((policy) => policy === 'false')) {
+      return 'Not Attached';
+    }
+    return 'Attached';
+  };
+
   return (
     <Box>
       {isLoading ? (
         <CircularProgress size={30} />
       ) : (
         <Box>
-          <Label
-            sx={{ ml: 5 }}
-            color={
-              managedPolicyDetails
-                .map((policy) => policy.attached)
-                .includes(false)
-                ? 'error'
-                : 'success'
-            }
-          >
-            {managedPolicyDetails
-              .map((policy) => policy.attached)
-              .includes(false)
-              ? 'Not Attached'
-              : 'Attached'}
+          <Label sx={{ ml: 5 }} color={getIAMPolicyTagColour()}>
+            {policyAttachStatus}
           </Label>
           <LoadingButton
             onClick={async () => {
@@ -821,10 +836,29 @@ export const EnvironmentTeams = ({ environment }) => {
                   {
                     field: 'dataallManaged',
                     headerName: 'Policy Management',
-                    valueGetter: (params) => {
-                      return `${params.row.dataallManaged
-                        ?.match(/[A-Z][a-z]+/g)
-                        .join('-')}`;
+                    renderCell: (params) => {
+                      return (
+                        <span>
+                          {params.row.dataallManaged
+                            ?.match(/[A-Z][a-z]+/g)
+                            .join('-')}
+                          <Tooltip
+                            title={
+                              <span style={{ fontSize: 'small' }}>
+                                {policyManagementInfoMap[
+                                  params.row.dataallManaged
+                                ] != null
+                                  ? policyManagementInfoMap[
+                                      params.row.dataallManaged
+                                    ]
+                                  : 'Invalid Option for policy management.'}
+                              </span>
+                            }
+                          >
+                            <InfoIcon sx={{ fontSize: '1rem' }} />
+                          </Tooltip>
+                        </span>
+                      );
                     },
                     flex: 0.6
                   },

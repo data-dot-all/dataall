@@ -19,6 +19,7 @@ import * as Yup from 'yup';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { fetchEnums, useClient, useFetchGroups } from 'services';
 import { addConsumptionRoleToEnvironment } from '../services';
+import {policyManagementInfoMap} from "../../constants";
 
 export const EnvironmentRoleAddForm = (props) => {
   const { environment, onClose, open, reloadRoles, ...other } = props;
@@ -30,11 +31,11 @@ export const EnvironmentRoleAddForm = (props) => {
   useEffect(() => {
     const fetchPolicyManagementOptions = async () => {
       const response = await fetchEnums(client, [
-        'ConsumptionRolePolicyManagementOptions'
+        'PolicyManagementOptions'
       ]);
-      if (response['ConsumptionRolePolicyManagementOptions'].length > 0) {
+      if (response['PolicyManagementOptions'].length > 0) {
         setPolicyManagementOptions(
-          response['ConsumptionRolePolicyManagementOptions'].map((elem) => {
+          response['PolicyManagementOptions'].map((elem) => {
             return { label: elem.value, key: elem.name };
           })
         );
@@ -93,14 +94,6 @@ export const EnvironmentRoleAddForm = (props) => {
 
   let { groupOptions, loadingGroups } = useFetchGroups(environment);
 
-  let policyManagementInfoMap = {
-    FULLY_MANAGED:
-      'Data.all manages creating, maintaining and also attaching the policy',
-    PARTIALLY_MANAGED:
-      "Data.all will create the IAM policy but won't attach policy to your consumption role. With this option, data.all will indicate share to be unhealthy if the data.all created policy is not attached.",
-    EXTERNALLY_MANAGED:
-      'Data.all will create the IAM policy required for any share but it will be incumbent on role owners to attach it or use their own policy. With this option, data.all will not indicate the share to be unhealthy even if the policy is not attached.'
-  };
 
   if (!environment) {
     return null;
@@ -241,8 +234,8 @@ export const EnvironmentRoleAddForm = (props) => {
                           <Tooltip
                             title={
                               <span style={{ fontSize: 'small' }}>
-                                {policyManagementInfoMap[option.key] != null
-                                  ? policyManagementInfoMap[option.key]
+                                {policyManagementInfoMap[option.label] != null
+                                  ? policyManagementInfoMap[option.label]
                                   : 'Invalid Option for policy management.'}
                               </span>
                             }
