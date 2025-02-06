@@ -1,4 +1,5 @@
 import logging
+from contextlib import nullcontext
 from typing import List
 from warnings import warn
 from datetime import datetime
@@ -244,11 +245,15 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
         log.info(f'Additional Resources to be locked while revoking glue tables: {additional_resources_to_lock}')
 
         try:
-            with ResourceLockRepository.acquire_lock_with_retry(
-                resources=additional_resources_to_lock,
-                session=self.session,
-                acquired_by_uri=self.share_data.share.shareUri,
-                acquired_by_type=self.share_data.share.__tablename__,
+            with (
+                ResourceLockRepository.acquire_lock_with_retry(
+                    resources=additional_resources_to_lock,
+                    session=self.session,
+                    acquired_by_uri=self.share_data.share.shareUri,
+                    acquired_by_type=self.share_data.share.__tablename__,
+                )
+                if additional_resources_to_lock
+                else nullcontext()
             ):
                 log.info('##### Starting Revoking tables #######')
                 success = True
