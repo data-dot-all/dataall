@@ -326,7 +326,3 @@ class EnvironmentRepository:
             )
             .first()
         )
-
-    @staticmethod
-    def get_all_envs_by_organization(session, uri):
-        return session.query(Environment).filter(Environment.organizationUri == uri).all()

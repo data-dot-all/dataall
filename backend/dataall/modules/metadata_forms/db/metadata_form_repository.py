@@ -369,24 +369,27 @@ class MetadataFormRepository:
         )
 
     @staticmethod
-    def query_all_enforcement_rules(session, filter):
-        all_rules = session.query(MetadataFormEnforcementRule)
+    def list_enforcement_rules(session, filter):
+        query = session.query(MetadataFormEnforcementRule)
         if filter:
             if filter.get('entity_types'):
                 for etype in filter.get('entity_types'):
-                    all_rules = all_rules.filter(MetadataFormEnforcementRule.entityTypes.any(etype))
+                    query = query.filter(MetadataFormEnforcementRule.entityTypes.any(etype))
             if filter.get('level'):
-                all_rules = all_rules.filter(MetadataFormEnforcementRule.level == filter.get('level'))
+                query = query.filter(MetadataFormEnforcementRule.level == filter.get('level'))
             if filter.get('home_entity'):
-                all_rules = all_rules.filter(MetadataFormEnforcementRule.homeEntity == filter.get('home_entity'))
+                query = query.filter(MetadataFormEnforcementRule.homeEntity == filter.get('home_entity'))
 
-        return all_rules.all()
+        return query.all()
 
     @staticmethod
     def update_version_in_rules(session, uri, version):
-        all_rules = (
-            session.query(MetadataFormEnforcementRule).filter(MetadataFormEnforcementRule.metadataFormUri == uri).all()
+        session.query(MetadataFormEnforcementRule).filter(MetadataFormEnforcementRule.metadataFormUri == uri).update(
+            {MetadataFormEnforcementRule.version: version}
         )
-        for r in all_rules:
-            r.version = version
+        session.commit()
+
+    @staticmethod
+    def delete_rule(session, rule_uri):
+        session.query(MetadataFormEnforcementRule).filter(uri=rule_uri).delete()
         session.commit()

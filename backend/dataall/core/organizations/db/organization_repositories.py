@@ -133,5 +133,5 @@ class OrganizationRepository:
         return membership
 
     @staticmethod
-    def query_all_active_organizations(session):
-        return session.query(models.Organization).filter(models.Organization.deleted.is_(None)).all()
+    def query_all_active_organizations(session) -> Query:
+        return session.query(models.Organization).filter(models.Organization.deleted.is_(None))

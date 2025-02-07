@@ -106,7 +106,7 @@ class MetadataFormEnforcementService:
             if rule.level == MetadataFormEnforcementScope.Global.value:
                 return EnvironmentRepository.query_all_active_environments(session)
             if rule.level == MetadataFormEnforcementScope.Organization.value:
-                return EnvironmentRepository.get_all_envs_by_organization(session, rule.homeEntity)
+                return OrganizationRepository.query_organization_environments(session, uri=rule.homeEntity, filter=None)
             if rule.level == MetadataFormEnforcementScope.Environment.value:
                 return [EnvironmentRepository.get_environment_by_uri(session, rule.homeEntity)]
             return []
@@ -254,9 +254,7 @@ class MetadataFormEnforcementService:
     @MetadataFormAccessService.can_perform(ENFORCE_METADATA_FORM)
     def delete_mf_enforcement_rule(uri, rule_uri):
         with get_context().db_engine.scoped_session() as session:
-            rule = MetadataFormRepository.get_mf_enforcement_rule_by_uri(session, rule_uri)
-            session.delete(rule)
-            session.commit()
+            MetadataFormRepository.delete_rule(session, rule_uri)
         return True
 
     @staticmethod
@@ -293,14 +291,14 @@ class MetadataFormEnforcementService:
                 parent_org_uri = entity.organizationUri
 
             all_rules.extend(
-                MetadataFormRepository.query_all_enforcement_rules(
+                MetadataFormRepository.list_enforcement_rules(
                     session=session,
                     filter={'entity_types': [entity_type], 'level': MetadataFormEnforcementScope.Global.value},
                 )
             )
             if entity_scope < MetadataFormEnforcementScope.Global:
                 all_rules.extend(
-                    MetadataFormRepository.query_all_enforcement_rules(
+                    MetadataFormRepository.list_enforcement_rules(
                         session=session,
                         filter={
                             'entity_types': [entity_type],
@@ -312,7 +310,7 @@ class MetadataFormEnforcementService:
 
             if entity_scope < MetadataFormEnforcementScope.Organization:
                 all_rules.extend(
-                    MetadataFormRepository.query_all_enforcement_rules(
+                    MetadataFormRepository.list_enforcement_rules(
                         session=session,
                         filter={
                             'entity_types': [entity_type],
@@ -323,7 +321,7 @@ class MetadataFormEnforcementService:
                 )
             if entity_scope < MetadataFormEnforcementScope.Environment:
                 all_rules.extend(
-                    MetadataFormRepository.query_all_enforcement_rules(
+                    MetadataFormRepository.list_enforcement_rules(
                         session=session,
                         filter={
                             'entity_types': [entity_type],
