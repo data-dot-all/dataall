@@ -25,7 +25,7 @@ class Union:
 
     def gql(self, *args, **kwargs):
         types = self.type_registry.types() if self.type_registry else self.types
-        return f"union {self.name} = {'|'.join([get_named_type(t).name for t in types])}"
+        return f'union {self.name} = {"|".join([get_named_type(t).name for t in types])}'
 
 
 if __name__ == '__main__':

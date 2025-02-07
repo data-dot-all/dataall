@@ -23,14 +23,14 @@ class QuickSightClient:
             else:
                 if response['AccountInfo']['Edition'] not in ['ENTERPRISE', 'ENTERPRISE_AND_Q']:
                     log.info(
-                        f"Quicksight Subscription found in Account: {self._account_id} of incorrect type: {response['AccountInfo']['Edition']}"
+                        f'Quicksight Subscription found in Account: {self._account_id} of incorrect type: {response["AccountInfo"]["Edition"]}'
                     )
                     return False
                 else:
                     if response['AccountInfo']['AccountSubscriptionStatus'] == 'ACCOUNT_CREATED':
                         return True
             log.info(
-                f"Quicksight Subscription found in Account: {self._account_id} not active. Status = {response['AccountInfo']['AccountSubscriptionStatus']}"
+                f'Quicksight Subscription found in Account: {self._account_id} not active. Status = {response["AccountInfo"]["AccountSubscriptionStatus"]}'
             )
             return False
         except self._client.exceptions.ResourceNotFoundException:

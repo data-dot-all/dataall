@@ -124,7 +124,7 @@ class EnvironmentSetup(Stack):
 
         pivot_role_as_part_of_environment_stack = ParameterStoreManager.get_parameter_value(
             region=os.getenv('AWS_REGION', 'eu-west-1'),
-            parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/enablePivotRoleAutoCreate",
+            parameter_path=f'/dataall/{os.getenv("envname", "local")}/pivotRole/enablePivotRoleAutoCreate',
         )
         self.create_pivot_role = True if pivot_role_as_part_of_environment_stack == 'True' else False
         self.engine = self.get_engine()
@@ -582,7 +582,7 @@ class EnvironmentSetup(Stack):
     def create_integration_tests_role(self):
         toolingAccount = ParameterStoreManager.get_parameter_value(
             region=os.getenv('AWS_REGION', 'eu-west-1'),
-            parameter_path=f"/dataall/{os.getenv('envname', 'local')}/toolingAccount",
+            parameter_path=f'/dataall/{os.getenv("envname", "local")}/toolingAccount',
         )
         self.test_role = iam.Role(
             self,
@@ -697,7 +697,7 @@ class EnvironmentSetup(Stack):
                 ],
                 effect=iam.Effect.ALLOW,
                 resources=[
-                    f'arn:aws:iam::{self.account}:role/dataall-test-*',
+                    f'arn:aws:iam::{self.account}:role/dataall-test*',
                     f'arn:aws:iam::{self.account}:role/dataall-session*',
                 ],
             ),

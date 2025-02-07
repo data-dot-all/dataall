@@ -127,8 +127,8 @@ class ServicePolicy(object):
             policies.append(
                 aws_iam.ManagedPolicy(
                     self.stack,
-                    f'{self.id}-{index+1}',
-                    managed_policy_name=f'{self.id}-{index+1}',
+                    f'{self.id}-{index + 1}',
+                    managed_policy_name=f'{self.id}-{index + 1}',
                     statements=chunk,
                 )
             )

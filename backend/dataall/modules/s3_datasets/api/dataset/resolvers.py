@@ -85,8 +85,7 @@ def get_dataset_organization(context, source: S3Dataset, **kwargs):
 def get_dataset_environment(context, source: S3Dataset, **kwargs):
     if not source:
         return None
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.get_environment_by_uri(session, source.environmentUri)
+    return EnvironmentService.find_environment_by_uri(uri=source.environmentUri)
 
 
 def get_dataset_owners_group(context, source: S3Dataset, **kwargs):
@@ -113,6 +112,12 @@ def get_dataset_statistics(context: Context, source: S3Dataset, **kwargs):
     return DatasetService.get_dataset_statistics(source)
 
 
+def get_dataset_restricted_information(context: Context, source: S3Dataset, **kwargs):
+    if not source:
+        return None
+    return DatasetService.get_dataset_restricted_information(uri=source.datasetUri, dataset=source)
+
+
 @is_feature_enabled('modules.s3_datasets.features.aws_actions')
 def get_dataset_assume_role_url(context: Context, source, datasetUri: str = None):
     return DatasetService.get_dataset_assume_role_url(uri=datasetUri)
@@ -133,6 +138,7 @@ def resolve_dataset_stack(context: Context, source: S3Dataset, **kwargs):
         return None
     return StackService.resolve_parent_obj_stack(
         targetUri=source.datasetUri,
+        targetType='dataset',
         environmentUri=source.environmentUri,
     )
 

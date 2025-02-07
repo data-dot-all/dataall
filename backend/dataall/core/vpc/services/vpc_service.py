@@ -1,5 +1,8 @@
+import logging
+
 from dataall.base.context import get_context
 from dataall.base.db import exceptions
+from dataall.base.db.exceptions import ResourceUnauthorized
 from dataall.core.permissions.services.group_policy_service import GroupPolicyService
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.activity.db.activity_models import Activity
@@ -7,9 +10,11 @@ from dataall.core.permissions.services.resource_policy_service import ResourcePo
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.vpc.db.vpc_repositories import VpcRepository
 from dataall.core.vpc.db.vpc_models import Vpc
-from dataall.core.permissions.services.network_permissions import NETWORK_ALL, DELETE_NETWORK
+from dataall.core.permissions.services.network_permissions import NETWORK_ALL, DELETE_NETWORK, GET_NETWORK
 from dataall.core.permissions.services.environment_permissions import CREATE_NETWORK
 from dataall.core.permissions.services.tenant_permissions import MANAGE_ENVIRONMENTS
+
+log = logging.getLogger(__name__)
 
 
 def _session():
@@ -90,4 +95,19 @@ class VpcService:
     @staticmethod
     def get_environment_networks(environment_uri):
         with _session() as session:
-            return VpcRepository.get_environment_networks(session=session, environment_uri=environment_uri)
+            nets = []
+            all_nets = VpcRepository.get_environment_networks(session=session, environment_uri=environment_uri)
+            for net in all_nets:
+                try:
+                    ResourcePolicyService.check_user_resource_permission(
+                        session=session,
+                        username=get_context().username,
+                        groups=get_context().groups,
+                        resource_uri=net.vpcUri,
+                        permission_name=GET_NETWORK,
+                    )
+                except ResourceUnauthorized as exc:
+                    log.info(exc)
+                else:
+                    nets += net
+            return nets

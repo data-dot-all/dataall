@@ -84,7 +84,7 @@ class RedshiftDatasetApiModuleInterface(ModuleInterface):
             )
         )
 
-        add_vote_type(VOTE_REDSHIFT_DATASET_NAME, DatasetIndexer)
+        add_vote_type(VOTE_REDSHIFT_DATASET_NAME, DatasetIndexer, GET_REDSHIFT_DATASET)
 
         EnvironmentResourceManager.register(RedshiftDatasetEnvironmentResource())
         EnvironmentResourceManager.register(RedshiftConnectionEnvironmentResource())

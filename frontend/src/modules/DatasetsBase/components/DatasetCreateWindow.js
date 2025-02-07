@@ -12,7 +12,7 @@ import {
 import PropTypes from 'prop-types';
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { PlusIcon } from '../../../design';
+import { PlusIcon } from 'design';
 import { isModuleEnabled, ModuleNames } from 'utils';
 
 export const DatasetCreateWindow = (props) => {

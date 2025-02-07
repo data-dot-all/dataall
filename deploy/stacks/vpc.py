@@ -55,10 +55,10 @@ class VpcStack(pyNestedClass):
                 self.private_subnets.append(subnet.subnet_id)
                 CfnOutput(
                     self,
-                    f'{resource_prefix}-{envname}-privateSubnet-{index+1}',
-                    export_name=f'{resource_prefix}-{envname}-privateSubnet-{index+1}',
+                    f'{resource_prefix}-{envname}-privateSubnet-{index + 1}',
+                    export_name=f'{resource_prefix}-{envname}-privateSubnet-{index + 1}',
                     value=subnet.subnet_id,
-                    description=f'{resource_prefix}-{envname}-privateSubnet-{index+1}',
+                    description=f'{resource_prefix}-{envname}-privateSubnet-{index + 1}',
                 )
 
         ssm.StringParameter(

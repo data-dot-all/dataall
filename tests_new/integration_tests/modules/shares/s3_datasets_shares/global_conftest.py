@@ -18,6 +18,7 @@ from tests_new.integration_tests.modules.shares.queries import (
 from tests_new.integration_tests.modules.shares.utils import check_share_ready
 
 test_session_cons_role_name = 'dataall-test-ShareTestConsumptionRole'
+test_session_cons_role_name_2 = 'dataall-test-ShareTestConsumptionRole2'
 test_persistent_cons_role_name = 'dataall-test-PersistentConsumptionRole'
 
 
@@ -78,6 +79,22 @@ def session_consumption_role_1(client5, group5, session_cross_acc_env_1, session
 
 
 @pytest.fixture(scope='session')
+def session_consumption_role_2(client6, group6, persistent_cross_acc_env_1, persistent_cross_acc_env_1_aws_client):
+    consumption_role = create_consumption_role(
+        client6,
+        group6,
+        persistent_cross_acc_env_1,
+        persistent_cross_acc_env_1_aws_client,
+        test_session_cons_role_name_2,
+        'SessionConsRole2',
+    )
+    yield consumption_role
+    remove_consumption_role(client6, persistent_cross_acc_env_1.environmentUri, consumption_role.consumptionRoleUri)
+    iam_client = IAMClient(session=persistent_cross_acc_env_1_aws_client, region=persistent_cross_acc_env_1['region'])
+    iam_client.delete_consumption_role(test_session_cons_role_name_2)
+
+
+@pytest.fixture(scope='session')
 def session_share_1(
     client5,
     client1,
@@ -128,6 +145,31 @@ def session_share_2(
     yield share2
 
     clean_up_share(client5, share2.shareUri)
+
+
+@pytest.fixture(scope='session')
+def session_share_3(
+    client6,
+    client1,
+    persistent_env1,
+    persistent_cross_acc_env_1,
+    persistent_s3_dataset1,
+    group6,
+):
+    share3 = create_share_object(
+        client=client6,
+        dataset_or_item_params={'datasetUri': persistent_s3_dataset1.datasetUri},
+        environmentUri=persistent_cross_acc_env_1.environmentUri,
+        groupUri=group6,
+        principalId=group6,
+        principalType='Group',
+        requestPurpose='test create share object',
+        attachMissingPolicies=True,
+        permissions=['Read'],
+    )
+    share3 = get_share_object(client6, share3.shareUri)
+    yield share3
+    clean_up_share(client6, share3.shareUri)
 
 
 @pytest.fixture(scope='session')
@@ -185,43 +227,208 @@ def session_share_consrole_2(
     clean_up_share(client5, share2cr.shareUri)
 
 
-@pytest.fixture(params=['Group', 'ConsumptionRole'])
-def principal1(request, group5, session_consumption_role_1):
-    if request.param == 'Group':
-        yield group5, request.param
-    else:
-        yield session_consumption_role_1.consumptionRoleUri, request.param
+@pytest.fixture(scope='session')
+def session_share_consrole_3(
+    client6,
+    client1,
+    persistent_env1,
+    persistent_cross_acc_env_1,
+    persistent_s3_dataset1,
+    group6,
+    session_consumption_role_2,
+):
+    share3cr = create_share_object(
+        client=client6,
+        dataset_or_item_params={'datasetUri': persistent_s3_dataset1.datasetUri},
+        environmentUri=persistent_cross_acc_env_1.environmentUri,
+        groupUri=group6,
+        principalId=session_consumption_role_2.consumptionRoleUri,
+        principalType='ConsumptionRole',
+        requestPurpose='test create share object',
+        attachMissingPolicies=True,
+        permissions=['Read'],
+    )
+    share3cr = get_share_object(client6, share3cr.shareUri)
+    yield share3cr
+
+    clean_up_share(client6, share3cr.shareUri)
 
 
-@pytest.fixture(params=['Group', 'ConsumptionRole'])
-def share_params_main(request, session_share_1, session_share_consrole_1, session_s3_dataset1):
-    if request.param == 'Group':
-        yield session_share_1, session_s3_dataset1
-    else:
-        yield session_share_consrole_1, session_s3_dataset1
-
-
-@pytest.fixture(params=[(False, 'Group'), (True, 'Group'), (False, 'ConsumptionRole'), (True, 'ConsumptionRole')])
-def share_params_all(
+@pytest.fixture(
+    params=[
+        ('session_dataset', 'Group'),
+        ('session_persistent_dataset', 'Group'),
+        ('session_dataset', 'ConsumptionRole'),
+        ('session_persistent_dataset', 'ConsumptionRole'),
+    ]
+)
+def new_share_param(
     request,
+    group5,
+    group6,
+    client5,
+    client6,
+    session_consumption_role_1,
+    session_consumption_role_2,
+    session_s3_dataset1,
+    persistent_s3_dataset1,
+    session_cross_acc_env_1,
+    persistent_cross_acc_env_1,
+):  # return: client, group, dataset, env, principal_id, principal_type
+    share_type, principal_type = request.param
+    if principal_type == 'Group':
+        if share_type == 'session_dataset':
+            yield client5, group5, session_s3_dataset1, session_cross_acc_env_1, group5, principal_type
+        if share_type == 'session_persistent_dataset':
+            yield (
+                client6,
+                group6,
+                persistent_s3_dataset1,
+                persistent_cross_acc_env_1,
+                group6,
+                principal_type,
+            )
+    else:
+        if share_type == 'session_dataset':
+            yield (
+                client5,
+                group5,
+                session_s3_dataset1,
+                session_cross_acc_env_1,
+                session_consumption_role_1.consumptionRoleUri,
+                principal_type,
+            )
+        if share_type == 'session_persistent_dataset':
+            yield (
+                client6,
+                group6,
+                persistent_s3_dataset1,
+                persistent_cross_acc_env_1,
+                session_consumption_role_2.consumptionRoleUri,
+                principal_type,
+            )
+
+
+@pytest.fixture(
+    params=[
+        ('session_dataset', 'Group'),
+        ('session_persistent_dataset', 'Group'),
+        ('session_dataset', 'ConsumptionRole'),
+        ('session_persistent_dataset', 'ConsumptionRole'),
+    ]
+)
+def share_params_main(
+    request,
+    group5,
+    group6,
+    client5,
+    client6,
     session_share_1,
     session_share_consrole_1,
+    session_share_3,
+    session_share_consrole_3,
+    session_s3_dataset1,
+    persistent_s3_dataset1,
+    session_cross_acc_env_1_aws_client,
+    persistent_cross_acc_env_1_aws_client,
+    persistent_cross_acc_env_1,
+    session_cross_acc_env_1_integration_role_arn,
+    persistent_cross_acc_env_1_integration_role_arn,
+    session_cross_acc_env_1,
+    session_consumption_role_2,
+    session_consumption_role_1,
+):  # return: client, group, env_client,  role, share, dataset
+    share_type, principal_type = request.param
+    if principal_type == 'Group':
+        if share_type == 'session_dataset':
+            yield (
+                client5,
+                group5,
+                session_cross_acc_env_1,
+                session_cross_acc_env_1_aws_client,
+                session_consumption_role_1,
+                session_share_1,
+                session_s3_dataset1,
+                session_cross_acc_env_1_integration_role_arn,
+            )
+        if share_type == 'session_persistent_dataset':
+            yield (
+                client6,
+                group6,
+                persistent_cross_acc_env_1,
+                persistent_cross_acc_env_1_aws_client,
+                session_consumption_role_2,
+                session_share_3,
+                persistent_s3_dataset1,
+                persistent_cross_acc_env_1_integration_role_arn,
+            )
+
+    else:
+        if share_type == 'session_dataset':
+            yield (
+                client5,
+                group5,
+                session_cross_acc_env_1,
+                session_cross_acc_env_1_aws_client,
+                session_consumption_role_1,
+                session_share_consrole_1,
+                session_s3_dataset1,
+                session_cross_acc_env_1_integration_role_arn,
+            )
+        if share_type == 'session_persistent_dataset':
+            yield (
+                client6,
+                group6,
+                persistent_cross_acc_env_1,
+                persistent_cross_acc_env_1_aws_client,
+                session_consumption_role_2,
+                session_share_consrole_3,
+                persistent_s3_dataset1,
+                persistent_cross_acc_env_1_integration_role_arn,
+            )
+
+
+@pytest.fixture(
+    params=[
+        (False, 'Group', 'session_dataset'),
+        (False, 'Group', 'session_persistent_dataset'),
+        (True, 'Group', None),
+        (False, 'ConsumptionRole', 'session_dataset'),
+        (False, 'ConsumptionRole', 'session_persistent_dataset'),
+        (True, 'ConsumptionRole', None),
+    ]
+)
+def share_params_all(
+    request,
+    client5,
+    client6,
+    session_share_1,
+    session_share_consrole_1,
+    session_share_3,
+    session_share_consrole_3,
     session_s3_dataset1,
     session_share_2,
     session_share_consrole_2,
     session_imported_sse_s3_dataset1,
-):
-    autoapproval, principal_type = request.param
+    persistent_s3_dataset1,
+):  # return client, share, dataset
+    autoapproval, principal_type, share_type = request.param
     if autoapproval:
         if principal_type == 'Group':
-            yield session_share_2, session_imported_sse_s3_dataset1
+            yield client5, session_share_2, session_imported_sse_s3_dataset1
         else:
-            yield session_share_consrole_2, session_imported_sse_s3_dataset1
+            yield client5, session_share_consrole_2, session_imported_sse_s3_dataset1
     else:
         if principal_type == 'Group':
-            yield session_share_1, session_s3_dataset1
+            if share_type == 'session_dataset':
+                yield client5, session_share_1, session_s3_dataset1
+            if share_type == 'session_persistent_dataset':
+                yield client6, session_share_3, persistent_s3_dataset1
         else:
-            yield session_share_consrole_1, session_s3_dataset1
+            if share_type == 'session_dataset':
+                yield client5, session_share_consrole_1, session_s3_dataset1
+            if share_type == 'session_persistent_dataset':
+                yield client6, session_share_consrole_3, persistent_s3_dataset1
 
 
 # --------------PERSISTENT FIXTURES----------------------------
@@ -255,12 +462,12 @@ def persistent_group_share_1(
     client1,
     persistent_env1,
     persistent_cross_acc_env_1,
-    updated_persistent_s3_dataset1,
+    persistent_s3_dataset1,
     group5,
 ):
     share1 = create_share_object(
         client=client5,
-        dataset_or_item_params={'datasetUri': updated_persistent_s3_dataset1.datasetUri},
+        dataset_or_item_params={'datasetUri': persistent_s3_dataset1.datasetUri},
         environmentUri=persistent_cross_acc_env_1.environmentUri,
         groupUri=group5,
         principalId=group5,
@@ -287,13 +494,13 @@ def persistent_role_share_1(
     client1,
     persistent_env1,
     persistent_cross_acc_env_1,
-    updated_persistent_s3_dataset1,
+    persistent_s3_dataset1,
     group5,
     persistent_consumption_role_1,
 ):
     share1 = create_share_object(
         client=client5,
-        dataset_or_item_params={'datasetUri': updated_persistent_s3_dataset1.datasetUri},
+        dataset_or_item_params={'datasetUri': persistent_s3_dataset1.datasetUri},
         environmentUri=persistent_cross_acc_env_1.environmentUri,
         groupUri=group5,
         principalId=persistent_consumption_role_1.consumptionRoleUri,
@@ -315,8 +522,10 @@ def persistent_role_share_1(
 
 
 @pytest.fixture(params=['Group', 'ConsumptionRole'])
-def persistent_share_params_main(request, persistent_role_share_1, persistent_group_share_1):
+def persistent_share_params_main(
+    request, persistent_cross_acc_env_1, persistent_role_share_1, persistent_group_share_1
+):
     if request.param == 'Group':
-        yield persistent_group_share_1
+        yield persistent_group_share_1, persistent_cross_acc_env_1
     else:
-        yield persistent_role_share_1
+        yield persistent_role_share_1, persistent_cross_acc_env_1

@@ -39,6 +39,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     DATASET_READ,
     IMPORT_DATASET,
     DATASET_TABLE_ALL,
+    GET_DATASET,
 )
 from dataall.modules.datasets_base.services.dataset_list_permissions import LIST_ENVIRONMENT_DATASETS
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
@@ -242,6 +243,11 @@ class DatasetService:
                 dataset.userRoleForDataset = DatasetRole.Admin.value
             return dataset
 
+    @classmethod
+    @ResourcePolicyService.has_resource_permission(GET_DATASET)
+    def find_dataset(cls, uri):
+        return DatasetService.get_dataset(uri)
+
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
@@ -339,6 +345,11 @@ class DatasetService:
         }
 
     @staticmethod
+    @ResourcePolicyService.has_resource_permission(GET_DATASET)
+    def get_dataset_restricted_information(uri: str, dataset: S3Dataset):
+        return dataset
+
+    @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def get_dataset_assume_role_url(uri):
@@ -391,8 +402,6 @@ class DatasetService:
 
             return {
                 'Name': dataset.GlueCrawlerName,
-                'AwsAccountId': dataset.AwsAccountId,
-                'region': dataset.region,
                 'status': crawler.get('LastCrawl', {}).get('Status', 'N/A'),
             }
 

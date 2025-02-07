@@ -10,6 +10,7 @@ from dataall.modules.metadata_forms.api.resolvers import (
     resolve_metadata_form,
     resolve_metadata_form_field,
     get_mf_rule_home_entity_name,
+    get_entity_owner,
 )
 
 MetadataForm = gql.ObjectType(
@@ -101,6 +102,7 @@ AttachedMetadataForm = gql.ObjectType(
         gql.Field(name='entityUri', type=gql.String),
         gql.Field(name='entityType', type=gql.String),
         gql.Field(name='entityName', type=gql.String, resolver=get_entity_name),
+        gql.Field(name='entityOwner', type=gql.String, resolver=get_entity_owner),
         gql.Field(
             name='fields', type=gql.ArrayType(gql.Ref('AttachedMetadataFormField')), resolver=get_attached_form_fields
         ),

@@ -61,6 +61,7 @@ AttachedMetadataFormFilter = gql.InputType(
         gql.Argument('entityType', gql.String),
         gql.Argument('entityUri', gql.String),
         gql.Argument('metadataFormUri', gql.String),
+        gql.Argument('version', gql.Integer),
     ],
 )
 

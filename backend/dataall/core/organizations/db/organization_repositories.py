@@ -48,7 +48,7 @@ class OrganizationRepository:
                     models.Organization.label.ilike('%' + filter.get('term') + '%'),
                     models.Organization.description.ilike('%' + filter.get('term') + '%'),
                     models.Organization.tags.contains(
-                        f"{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, target_label=filter.get('term')).sanitize()}}}"
+                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, target_label=filter.get("term")).sanitize()}}}'
                     ),
                 )
             )

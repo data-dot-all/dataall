@@ -226,13 +226,14 @@ const RSDatasetView = () => {
             </Grid>
             <Grid item>
               <Box sx={{ m: -1 }}>
+                <UpVoteButton
+                  upVoted={isUpVoted}
+                  disabled={!isAdmin}
+                  onClick={() => upVoteDataset(dataset.datasetUri)}
+                  upVotes={upVotes}
+                />
                 {isAdmin && (
                   <span>
-                    <UpVoteButton
-                      upVoted={isUpVoted}
-                      onClick={() => upVoteDataset(dataset.datasetUri)}
-                      upVotes={upVotes}
-                    />
                     <Button
                       color="primary"
                       startIcon={<ForumOutlined fontSize="small" />}

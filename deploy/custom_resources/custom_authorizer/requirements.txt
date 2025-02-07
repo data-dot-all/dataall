@@ -6,4 +6,4 @@ requests==2.32.2
 rsa==4.9
 six==1.16.0
 urllib3==1.26.19
-pyjwt==2.9.0
+pyjwt==2.10.1

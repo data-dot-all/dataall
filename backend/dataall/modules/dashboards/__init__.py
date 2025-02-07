@@ -43,7 +43,7 @@ class DashboardApiModuleInterface(ModuleInterface):
             )
         )
 
-        add_vote_type('dashboard', DashboardIndexer)
+        add_vote_type('dashboard', DashboardIndexer, GET_DASHBOARD)
 
         EnvironmentResourceManager.register(DashboardRepository())
         MetadataFormEntityManager.register(Dashboard, MetadataFormEntityTypes.Dashboards.value)

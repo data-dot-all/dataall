@@ -3,17 +3,16 @@ import os
 from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
-from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.permissions.db.tenant.tenant_policy_repositories import TenantPolicyRepository
 from dataall.base.db.exceptions import UnauthorizedOperation, TenantUnauthorized, AWSResourceNotFound
-from dataall.core.permissions.services.tenant_permissions import TENANT_ALL
-from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
-from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
-from dataall.modules.dashboards.db.dashboard_repositories import DashboardRepository
-from dataall.modules.dashboards.db.dashboard_models import Dashboard
-from dataall.modules.dashboards.aws.dashboard_quicksight_client import DashboardQuicksightClient
-from dataall.modules.dashboards.services.dashboard_permissions import GET_DASHBOARD, CREATE_DASHBOARD, MANAGE_DASHBOARDS
 from dataall.base.utils import Parameter
+from dataall.core.environment.services.environment_service import EnvironmentService
+from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_permissions import TENANT_ALL
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService, TenantPolicyValidationService
+from dataall.modules.dashboards.aws.dashboard_quicksight_client import DashboardQuicksightClient
+from dataall.modules.dashboards.db.dashboard_models import Dashboard
+from dataall.modules.dashboards.db.dashboard_repositories import DashboardRepository
+from dataall.modules.dashboards.services.dashboard_permissions import GET_DASHBOARD, CREATE_DASHBOARD, MANAGE_DASHBOARDS
 
 
 class DashboardQuicksightService:
@@ -47,7 +46,7 @@ class DashboardQuicksightService:
                     )
 
                 session_type = ParameterStoreManager.get_parameter_value(
-                    parameter_path=f"/dataall/{os.getenv('envname', 'local')}/quicksight/sharedDashboardsSessions"
+                    parameter_path=f'/dataall/{os.getenv("envname", "local")}/quicksight/sharedDashboardsSessions'
                 )
 
                 if session_type == 'reader':
@@ -128,7 +127,7 @@ class DashboardQuicksightService:
     @staticmethod
     def _check_user_must_be_admin():
         context = get_context()
-        admin = TenantPolicyRepository.is_tenant_admin(context.groups)
+        admin = TenantPolicyValidationService.is_tenant_admin(context.groups)
 
         if not admin:
             raise TenantUnauthorized(

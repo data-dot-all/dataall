@@ -59,7 +59,7 @@ function TablePageHeader(props) {
     <Grid container justifyContent="space-between" spacing={3}>
       <Grid item>
         <Typography color="textPrimary" variant="h5">
-          Table {table.GlueTableName}
+          Table {table.label}
         </Typography>
         <Breadcrumbs
           aria-label="breadcrumb"
@@ -100,7 +100,7 @@ function TablePageHeader(props) {
             to={`/console/s3-datasets/table/${table.tableUri}`}
             variant="subtitle2"
           >
-            {table.GlueTableName}
+            {table.label}
           </Link>
         </Breadcrumbs>
       </Grid>
@@ -222,7 +222,7 @@ const TableView = () => {
   const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getDatasetTable(params.uri));
-    if (!response.errors && response.data.getDatasetTable !== null) {
+    if (response.data.getDatasetTable !== null) {
       setTable(response.data.getDatasetTable);
       handleUserRole(
         response.data.getDatasetTable.dataset.userRoleForDataset,
