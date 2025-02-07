@@ -7,10 +7,8 @@ import {
   CircularProgress,
   Dialog,
   TextField,
-  Tooltip,
   Typography
 } from '@mui/material';
-import InfoIcon from '@mui/icons-material/Info';
 import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
@@ -19,7 +17,8 @@ import * as Yup from 'yup';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { fetchEnums, useClient, useFetchGroups } from 'services';
 import { addConsumptionRoleToEnvironment } from '../services';
-import {policyManagementInfoMap} from "../../constants";
+import { policyManagementInfoMap } from '../../constants';
+import { InfoIconWithToolTip } from '../../../design';
 
 export const EnvironmentRoleAddForm = (props) => {
   const { environment, onClose, open, reloadRoles, ...other } = props;
@@ -30,13 +29,14 @@ export const EnvironmentRoleAddForm = (props) => {
 
   useEffect(() => {
     const fetchPolicyManagementOptions = async () => {
-      const response = await fetchEnums(client, [
-        'PolicyManagementOptions'
-      ]);
+      const response = await fetchEnums(client, ['PolicyManagementOptions']);
       if (response['PolicyManagementOptions'].length > 0) {
         setPolicyManagementOptions(
           response['PolicyManagementOptions'].map((elem) => {
-            return { label: elem.value, key: elem.name };
+            return {
+              label: elem.value,
+              key: elem.name
+            };
           })
         );
       } else {
@@ -93,7 +93,6 @@ export const EnvironmentRoleAddForm = (props) => {
   }
 
   let { groupOptions, loadingGroups } = useFetchGroups(environment);
-
 
   if (!environment) {
     return null;
@@ -229,9 +228,8 @@ export const EnvironmentRoleAddForm = (props) => {
                       const { key, ...propOptions } = props;
                       return (
                         <Box key={key} {...propOptions}>
-                          {/*Display string 'FullyManaged' etc with a '-' in between*/}
-                          {option.label.match(/[A-Z][a-z]+/g).join('-')}
-                          <Tooltip
+                          {option.label}
+                          <InfoIconWithToolTip
                             title={
                               <span style={{ fontSize: 'small' }}>
                                 {policyManagementInfoMap[option.label] != null
@@ -239,10 +237,9 @@ export const EnvironmentRoleAddForm = (props) => {
                                   : 'Invalid Option for policy management.'}
                               </span>
                             }
-                            placement="right-start"
-                          >
-                            <InfoIcon sx={{ fontSize: '1rem' }} />
-                          </Tooltip>
+                            placement={'right-start'}
+                            size={1}
+                          />
                         </Box>
                       );
                     }}

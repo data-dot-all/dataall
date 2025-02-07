@@ -198,8 +198,13 @@ class PolicyManager(object):
             # Check if the role_name is registered as a consumption role.
             # If its a consumption role with a "Externally Managed" policy management then 'attached' will be marked as 'N/A'
             externally_managed_role: bool = False
-            consumption_role_details = EnvironmentRepository.get_environment_consumption_role_by_name(self.session, self.environmentUri, self.role_name)
-            if consumption_role_details and consumption_role_details.dataallManaged == PolicyManagementOptions.EXTERNALLY_MANAGED.value:
+            consumption_role_details = EnvironmentRepository.get_environment_consumption_role_by_name(
+                self.session, self.environmentUri, self.role_name
+            )
+            if (
+                consumption_role_details
+                and consumption_role_details.dataallManaged == PolicyManagementOptions.EXTERNALLY_MANAGED.value
+            ):
                 externally_managed_role = True
 
             for policy_name in policy_name_list:
@@ -207,7 +212,9 @@ class PolicyManager(object):
                     'policy_name': policy_name,
                     'policy_type': policy_manager.policy_type,
                     'exists': policy_manager.check_if_policy_exists(policy_name=policy_name),
-                    'attached': 'N/A' if externally_managed_role else policy_manager.check_if_policy_attached(policy_name=policy_name),
+                    'attached': 'N/A'
+                    if externally_managed_role
+                    else policy_manager.check_if_policy_attached(policy_name=policy_name),
                 }
                 all_policies.append(policy_dict)
         logger.info(f'All policies currently added to role: {self.role_name} are: {str(all_policies)}')

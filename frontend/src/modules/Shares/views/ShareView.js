@@ -55,7 +55,8 @@ import {
   useSettings,
   Label,
   SanitizedHTML,
-  UserModal
+  UserModal,
+  InfoIconWithToolTip
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
@@ -88,6 +89,7 @@ import { ShareSubmitModal } from '../components/ShareSubmitModal';
 import { useTheme } from '@mui/styles';
 import { UpdateExtensionReason } from '../components/ShareUpdateExtension';
 import CancelIcon from '@mui/icons-material/Close';
+import { policyManagementInfoMap } from '../../constants';
 
 const isReadOnlyShare = (share) => share.permissions.every((p) => p === 'Read');
 
@@ -1380,10 +1382,10 @@ const ShareView = () => {
                           </ListItem>
                           <ListItem
                             disableGutters
+                            divider
                             sx={{
-                              paddingX: 2,
-                              paddingTop: 2,
-                              paddingBottom: 0
+                              justifyContent: 'space-between',
+                              padding: 2
                             }}
                           >
                             <Typography
@@ -1423,17 +1425,6 @@ const ShareView = () => {
                                 Principal IAM Policy Management
                               </Tooltip>
                             </Typography>
-                          </ListItem>
-                          <ListItem
-                            disableGutters
-                            divider
-                            sx={{
-                              justifyContent: 'space-between',
-                              paddingX: 2,
-                              paddingTop: 1,
-                              paddingBottom: 2
-                            }}
-                          >
                             <Typography
                               color="textPrimary"
                               variant="body2"
@@ -1445,7 +1436,15 @@ const ShareView = () => {
                                 WebkitLineClamp: 2
                               }}
                             >
-                              <span>Data.all fully managed</span>
+                              <span>{share.policyManagement} </span>
+                              <InfoIconWithToolTip
+                                title={
+                                  policyManagementInfoMap[
+                                    share.policyManagement
+                                  ]
+                                }
+                                size={1}
+                              />
                             </Typography>
                           </ListItem>
                           <ListItem

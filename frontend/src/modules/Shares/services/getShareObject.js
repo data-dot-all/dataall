@@ -31,6 +31,7 @@ export const getShareObject = ({ shareUri, filter }) => ({
           SamlGroupName
           environmentName
         }
+        policyManagement
         items(filter: $filter) {
           count
           page

@@ -18,8 +18,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  TextField,
-  Tooltip
+  TextField
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
@@ -36,6 +35,7 @@ import { VscChecklist } from 'react-icons/vsc';
 import {
   Defaults,
   DeleteObjectWithFrictionModal,
+  InfoIconWithToolTip,
   Label,
   Pager,
   RefreshTableMenu,
@@ -63,7 +63,6 @@ import { EnvironmentRoleAddForm } from './EnvironmentRoleAddForm';
 import { EnvironmentTeamInviteEditForm } from './EnvironmentTeamInviteEditForm';
 import { EnvironmentTeamInviteForm } from './EnvironmentTeamInviteForm';
 import { DataGrid, GridActionsCellItem, GridRowModes } from '@mui/x-data-grid';
-import InfoIcon from '@mui/icons-material/Info';
 import { policyManagementInfoMap } from '../../constants';
 
 function TeamRow({
@@ -839,10 +838,8 @@ export const EnvironmentTeams = ({ environment }) => {
                     renderCell: (params) => {
                       return (
                         <span>
-                          {params.row.dataallManaged
-                            ?.match(/[A-Z][a-z]+/g)
-                            .join('-')}
-                          <Tooltip
+                          {params.row.dataallManaged}
+                          <InfoIconWithToolTip
                             title={
                               <span style={{ fontSize: 'small' }}>
                                 {policyManagementInfoMap[
@@ -854,9 +851,9 @@ export const EnvironmentTeams = ({ environment }) => {
                                   : 'Invalid Option for policy management.'}
                               </span>
                             }
-                          >
-                            <InfoIcon sx={{ fontSize: '1rem' }} />
-                          </Tooltip>
+                            size={1}
+                            placement={'right-start'}
+                          />
                         </span>
                       );
                     },
