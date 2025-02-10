@@ -125,8 +125,6 @@ class EnvironmentRequestValidationService:
             raise exceptions.RequiredParameter('groupUri')
         if not data.get('IAMRoleArn'):
             raise exceptions.RequiredParameter('IAMRoleArn')
-        if not data.get('dataallManaged'):
-            raise exceptions.RequiredParameter('dataallManaged')
 
     @staticmethod
     def validate_org_group(org_uri, group, session):

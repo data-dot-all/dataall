@@ -961,6 +961,16 @@ const ShareView = () => {
     return null;
   }
 
+  const formattedName = (unformattedPolicyMgmtName) => {
+    // Split name by "_"
+    return unformattedPolicyMgmtName
+      .split('_')
+      .map((word) => {
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      })
+      .join('-');
+  };
+
   return (
     <>
       <Helmet>
@@ -1436,7 +1446,9 @@ const ShareView = () => {
                                 WebkitLineClamp: 2
                               }}
                             >
-                              <span>{share.policyManagement} </span>
+                              <span>
+                                {formattedName(share.policyManagement)}{' '}
+                              </span>
                               <InfoIconWithToolTip
                                 title={
                                   policyManagementInfoMap[

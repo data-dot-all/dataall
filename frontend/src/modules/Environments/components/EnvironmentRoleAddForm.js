@@ -136,7 +136,7 @@ export const EnvironmentRoleAddForm = (props) => {
                 .required(
                   'Policy Management option required. Please select a valid option'
                 )
-                .oneOf(policyManagementOptions.map((obj) => obj.label))
+                .oneOf(policyManagementOptions.map((obj) => obj.key))
             })}
             onSubmit={async (
               values,
@@ -218,8 +218,8 @@ export const EnvironmentRoleAddForm = (props) => {
                     disablePortal
                     options={policyManagementOptions}
                     onChange={(event, value) => {
-                      if (value && value.label) {
-                        setFieldValue('dataallManaged', value.label);
+                      if (value && value.key) {
+                        setFieldValue('dataallManaged', value.key);
                       } else {
                         setFieldValue('dataallManaged', '');
                       }
@@ -232,8 +232,8 @@ export const EnvironmentRoleAddForm = (props) => {
                           <InfoIconWithToolTip
                             title={
                               <span style={{ fontSize: 'small' }}>
-                                {policyManagementInfoMap[option.label] != null
-                                  ? policyManagementInfoMap[option.label]
+                                {policyManagementInfoMap[option.key] != null
+                                  ? policyManagementInfoMap[option.key]
                                   : 'Invalid Option for policy management.'}
                               </span>
                             }

@@ -617,6 +617,16 @@ export const EnvironmentTeams = ({ environment }) => {
     return newRow;
   };
 
+  const formattedName = (unformattedPolicyMgmtName) => {
+    // Split name by "_"
+    return unformattedPolicyMgmtName
+      .split('_')
+      .map((word) => {
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      })
+      .join('-');
+  };
+
   let { groupOptions } = useFetchGroups(environment);
 
   return (
@@ -838,7 +848,7 @@ export const EnvironmentTeams = ({ environment }) => {
                     renderCell: (params) => {
                       return (
                         <span>
-                          {params.row.dataallManaged}
+                          {formattedName(params.row.dataallManaged)}
                           <InfoIconWithToolTip
                             title={
                               <span style={{ fontSize: 'small' }}>

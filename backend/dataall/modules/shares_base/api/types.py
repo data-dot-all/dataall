@@ -1,4 +1,5 @@
 from dataall.base.api import gql
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 from dataall.modules.shares_base.services.shares_enums import (
     ShareableType,
     PrincipalType,
@@ -174,7 +175,7 @@ ShareObject = gql.ObjectType(
         gql.Field('permissions', gql.ArrayType(ShareObjectDataPermission.toGraphQLEnum())),
         gql.Field(
             name='policyManagement',
-            type=gql.String,
+            type=gql.NonNullableType(PolicyManagementOptions.toGraphQLEnum()),
             resolver=resolve_role_policy_management,
         ),
     ],
