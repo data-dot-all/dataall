@@ -961,12 +961,11 @@ const ShareView = () => {
     return null;
   }
 
-  const formattedName = (unformattedPolicyMgmtName) => {
-    // Split name by "_"
+  const formatPolicyManagmentType = (unformattedPolicyMgmtName) => {
     return unformattedPolicyMgmtName
-      .split('_')
+      .split('_') // Split string "FULLY_MANAGED", etc on "_"
       .map((word) => {
-        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(); // Capitalize first word and lower case others
       })
       .join('-');
   };
@@ -1447,7 +1446,7 @@ const ShareView = () => {
                               }}
                             >
                               <span>
-                                {formattedName(share.policyManagement)}{' '}
+                                {formatPolicyManagmentType(share.policyManagement)}{' '}
                               </span>
                               <InfoIconWithToolTip
                                 title={
