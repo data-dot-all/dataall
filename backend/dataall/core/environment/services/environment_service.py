@@ -1142,8 +1142,3 @@ class EnvironmentService:
                 role_name=IAMRoleName,
             ).get_all_policies()
 
-    @staticmethod
-    @ResourcePolicyService.has_resource_permission(environment_permissions.GET_ENVIRONMENT)
-    def get_consumption_role_by_name(uri, IAMRoleName):
-        with get_context().db_engine.scoped_session() as session:
-            return EnvironmentRepository.get_environment_consumption_role_by_name(session, uri, IAMRoleName)

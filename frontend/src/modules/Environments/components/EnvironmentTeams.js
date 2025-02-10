@@ -339,10 +339,14 @@ export const IAMRolePolicyDataGridCell = ({ environmentUri, IAMRoleName }) => {
   const getIAMPolicyTagColour = () => {
     if (policyAttachStatus === 'N/A') return 'warning';
     if (policyAttachStatus === 'Not Attached') return 'error';
+    if (policyAttachStatus === 'No Policies Present') return 'error';
     return 'success';
   };
 
   const getIAMPolicyAttachementStatus = (managedPolicyDetails) => {
+    if (managedPolicyDetails.length === 0) {
+      return 'No Policies Present';
+    }
     const is_policy_attach = managedPolicyDetails.map(
       (policy) => policy.attached
     );

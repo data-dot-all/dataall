@@ -198,8 +198,9 @@ class PolicyManager(object):
             # Check if the role_name is registered as a consumption role.
             # If its a consumption role with a "Externally Managed" policy management then 'attached' will be marked as 'N/A'
             externally_managed_role: bool = False
-            consumption_role_details = EnvironmentRepository.get_environment_consumption_role_by_name(
-                self.session, self.environmentUri, self.role_name
+            role_arn = f'arn:aws:iam::{self.account}:role/{self.role_name}'
+            consumption_role_details = EnvironmentRepository.find_consumption_roles_by_IAMArn(
+                session=self.session, uri=self.environmentUri, arn=role_arn
             )
             if (
                 consumption_role_details
