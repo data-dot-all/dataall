@@ -134,7 +134,7 @@ class MetadataFormEnforcementService:
             return []
 
     @staticmethod
-    def get_attachement_for_rule(rule, entityUri) -> AttachedMetadataForm | None:
+    def get_attachement_for_rule(rule, entityUri) -> AttachedMetadataForm:
         with get_context().db_engine.scoped_session() as session:
             return MetadataFormRepository.query_all_attached_metadata_forms_for_entity(
                 session,
