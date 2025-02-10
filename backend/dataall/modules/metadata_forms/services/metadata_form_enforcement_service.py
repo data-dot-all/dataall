@@ -1,9 +1,13 @@
+from typing import List
 from dataall.base.context import get_context
 from dataall.base.db import exceptions
 from dataall.base.db.paginator import paginate_list
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
+from dataall.core.environment.db.environment_models import Environment
+from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
+from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository, DatasetListRepository
 from dataall.modules.metadata_forms.db.enums import (
     MetadataFormEnforcementScope,
@@ -15,6 +19,7 @@ from dataall.core.metadata_manager.metadata_form_entity_manager import (
     MetadataFormEntityManager,
     MetadataFormEntity,
 )
+from dataall.modules.metadata_forms.db.metadata_form_models import AttachedMetadataForm
 
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
 from dataall.modules.metadata_forms.services.metadata_form_access_service import MetadataFormAccessService
@@ -88,7 +93,7 @@ class MetadataFormEnforcementService:
         return rule
 
     @staticmethod
-    def get_affected_organizations(uri, rule=None):
+    def get_affected_organizations(uri, rule=None) -> List[Organization]:
         with get_context().db_engine.scoped_session() as session:
             if not rule:
                 rule = MetadataFormRepository.get_mf_enforcement_rule_by_uri(session, uri)
@@ -99,20 +104,22 @@ class MetadataFormEnforcementService:
             return []
 
     @staticmethod
-    def get_affected_environments(uri, rule=None):
+    def get_affected_environments(uri, rule=None) -> List[Environment]:
         with get_context().db_engine.scoped_session() as session:
             if not rule:
                 rule = MetadataFormRepository.get_mf_enforcement_rule_by_uri(session, uri)
-            if rule.level == MetadataFormEnforcementScope.Global.value:
-                return EnvironmentRepository.query_all_active_environments(session)
-            if rule.level == MetadataFormEnforcementScope.Organization.value:
-                return OrganizationRepository.query_organization_environments(session, uri=rule.homeEntity, filter=None)
-            if rule.level == MetadataFormEnforcementScope.Environment.value:
-                return [EnvironmentRepository.get_environment_by_uri(session, rule.homeEntity)]
-            return []
+                if rule.level == MetadataFormEnforcementScope.Global.value:
+                    return EnvironmentRepository.query_all_active_environments(session)
+                if rule.level == MetadataFormEnforcementScope.Organization.value:
+                    return OrganizationRepository.query_organization_environments(
+                        session, uri=rule.homeEntity, filter=None
+                    ).all()
+                if rule.level == MetadataFormEnforcementScope.Environment.value:
+                    return [EnvironmentRepository.get_environment_by_uri(session, rule.homeEntity)]
+                return []
 
     @staticmethod
-    def get_affected_datasets(uri, rule=None):
+    def get_affected_datasets(uri, rule=None) -> List[DatasetBase]:
         with get_context().db_engine.scoped_session() as session:
             if not rule:
                 rule = MetadataFormRepository.get_mf_enforcement_rule_by_uri(session, uri)
@@ -127,7 +134,7 @@ class MetadataFormEnforcementService:
             return []
 
     @staticmethod
-    def get_attachement_for_rule(rule, entityUri):
+    def get_attachement_for_rule(rule, entityUri) -> AttachedMetadataForm | None:
         with get_context().db_engine.scoped_session() as session:
             return MetadataFormRepository.query_all_attached_metadata_forms_for_entity(
                 session,
