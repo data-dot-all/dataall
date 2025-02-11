@@ -679,6 +679,24 @@ class EnvironmentService:
                 for key, value in input.items():
                     setattr(consumption_role, key, value)
                 session.commit()
+
+                # If the input consumption role is not Fully-Managed then attach the share policy if it exists
+                if consumption_role.dataallManaged == PolicyManagementOptions.FULLY_MANAGED.value:
+                    environment: Environment = EnvironmentService.get_environment_by_uri(session, env_uri)
+                    share_policy_manager = PolicyManager(
+                        session=session,
+                        account=environment.AwsAccountId,
+                        region=environment.region,
+                        environmentUri=environment.environmentUri,
+                        resource_prefix=environment.resourcePrefix,
+                        role_name=consumption_role.IAMRoleName,
+                    )
+                    for policy_manager in [
+                        Policy for Policy in share_policy_manager.initializedPolicies if Policy.policy_type == 'SharePolicy'
+                    ]:
+                        managed_policy_list = policy_manager.get_policies_unattached_to_role()
+                        policy_manager.attach_policies(managed_policy_list)
+
             return consumption_role
 
     @staticmethod

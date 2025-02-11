@@ -46,6 +46,7 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { isFeatureEnabled } from 'utils';
 import {
+  fetchEnums,
   getConsumptionRolePolicies,
   useClient,
   useFetchGroups
@@ -412,6 +413,7 @@ export const EnvironmentTeams = ({ environment }) => {
   const [isDeleteRoleModalOpenId, setIsDeleteRoleModalOpen] = useState(0);
   const [isTeamEditModalOpenId, setIsTeamEditModalOpen] = useState('');
   const [isDeleteTeamModalOpenId, setIsDeleteTeamModalOpen] = useState('');
+  const [policyManagementOptions, setPolicyManagementOptions] = useState([]);
 
   const handleDeleteTeamModalOpen = (groupUri) => {
     setIsDeleteTeamModalOpen(groupUri);
@@ -523,7 +525,8 @@ export const EnvironmentTeams = ({ environment }) => {
         consumptionRoleUri: newRow.consumptionRoleUri,
         input: {
           groupUri: newRow.groupUri,
-          consumptionRoleName: newRow.consumptionRoleName
+          consumptionRoleName: newRow.consumptionRoleName,
+          dataallManaged: newRow.dataallManaged
         }
       })
     );
@@ -541,12 +544,34 @@ export const EnvironmentTeams = ({ environment }) => {
     }
   };
 
+  const fetchPolicyManagementOptions = async () => {
+    const response = await fetchEnums(client, ['PolicyManagementOptions']);
+    if (response['PolicyManagementOptions'].length > 0) {
+      setPolicyManagementOptions(
+        response['PolicyManagementOptions'].map((elem) => {
+          return {
+            label: elem.value,
+            key: elem.name
+          };
+        })
+      );
+    } else {
+      dispatch({
+        type: SET_ERROR,
+        error: 'Could not fetch consumption role policy management options'
+      });
+    }
+  };
+
   useEffect(() => {
     if (client) {
       fetchItems().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
       fetchRoles().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+      fetchPolicyManagementOptions().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
@@ -815,6 +840,7 @@ export const EnvironmentTeams = ({ environment }) => {
                   open
                   reloadRoles={fetchRoles}
                   onClose={handleAddRoleModalClose}
+                  policyManagementOptions={policyManagementOptions}
                 />
               )}
             </Grid>
@@ -871,7 +897,15 @@ export const EnvironmentTeams = ({ environment }) => {
                         </span>
                       );
                     },
-                    flex: 0.6
+                    flex: 0.6,
+                    editable: true,
+                    type: 'singleSelect',
+                    valueOptions: policyManagementOptions.map(
+                      (obj) => obj.key
+                    ),
+                    valueFormatter: (value) => {
+                      return formattedName(value.value);
+                    }
                   },
                   {
                     field: 'policiesNames',

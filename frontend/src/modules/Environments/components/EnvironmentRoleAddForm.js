@@ -1,6 +1,7 @@
 import { GroupAddOutlined } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
+  Alert,
   Autocomplete,
   Box,
   CardContent,
@@ -21,37 +22,17 @@ import { policyManagementInfoMap } from '../../constants';
 import { InfoIconWithToolTip } from '../../../design';
 
 export const EnvironmentRoleAddForm = (props) => {
-  const { environment, onClose, open, reloadRoles, ...other } = props;
+  const {
+    environment,
+    onClose,
+    open,
+    reloadRoles,
+    policyManagementOptions,
+    ...other
+  } = props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const client = useClient();
-  const [policyManagementOptions, setPolicyManagementOptions] = useState([]);
-
-  useEffect(() => {
-    const fetchPolicyManagementOptions = async () => {
-      const response = await fetchEnums(client, ['PolicyManagementOptions']);
-      if (response['PolicyManagementOptions'].length > 0) {
-        setPolicyManagementOptions(
-          response['PolicyManagementOptions'].map((elem) => {
-            return {
-              label: elem.value,
-              key: elem.name
-            };
-          })
-        );
-      } else {
-        dispatch({
-          type: SET_ERROR,
-          error: 'Could not fetch consumption role policy management options'
-        });
-      }
-    };
-
-    if (client)
-      fetchPolicyManagementOptions().catch((e) =>
-        dispatch({ type: SET_ERROR, e })
-      );
-  }, [client, dispatch]);
 
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
@@ -261,6 +242,20 @@ export const EnvironmentRoleAddForm = (props) => {
                     )}
                   />
                 </CardContent>
+                {values.dataallManaged === 'EXTERNALLY_MANAGED' ? (
+                  <CardContent>
+                    <Alert severity="error" sx={{ mr: 1 }}>
+                      With "Externally-Managed" policy management, you are
+                      completely responsible for attaching / giving your
+                      consumption role appropriate permissions. Please select
+                      "Externally-Managed" if you know that your role has some
+                      super-user permissions or if you are completely managing
+                      the role and its policies.
+                    </Alert>
+                  </CardContent>
+                ) : (
+                  <div></div>
+                )}
                 <Box>
                   <CardContent>
                     <LoadingButton

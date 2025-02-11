@@ -120,5 +120,6 @@ UpdateConsumptionRoleInput = gql.InputType(
     arguments=[
         gql.Argument('consumptionRoleName', gql.String),
         gql.Argument('groupUri', gql.String),
+        gql.Argument('dataallManaged', gql.NonNullableType(PolicyManagementOptions.toGraphQLEnum()))
     ],
 )
