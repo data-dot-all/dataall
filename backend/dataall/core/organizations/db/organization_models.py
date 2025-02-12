@@ -50,5 +50,5 @@ class OrganizationGroup(Base):
         return f'{self.groupUri}-{self.organizationUri}'
 
 
-MetadataFormEntityManager.register(Organization, MetadataFormEntityTypes.Organizations.value)
-MetadataFormEntityManager.register(OrganizationGroup, MetadataFormEntityTypes.OrganizationTeams.value)
+MetadataFormEntityManager.register(Organization, MetadataFormEntityTypes.Organization.value)
+MetadataFormEntityManager.register(OrganizationGroup, MetadataFormEntityTypes.OrganizationTeam.value)

@@ -98,7 +98,7 @@ class MetadataFormEnforcementService:
             if not rule:
                 rule = MetadataFormRepository.get_mf_enforcement_rule_by_uri(session, uri)
             if rule.level == MetadataFormEnforcementScope.Global.value:
-                return OrganizationRepository.query_all_active_organizations(session).all()
+                return OrganizationRepository.query_all_active_organizations(session)
             if rule.level == MetadataFormEnforcementScope.Organization.value:
                 return [OrganizationRepository.get_organization_by_uri(session, rule.homeEntity)]
             return []
@@ -161,22 +161,22 @@ class MetadataFormEnforcementService:
                 rule = MetadataFormRepository.get_mf_enforcement_rule_by_uri(session, uri)
 
             orgs = MetadataFormEnforcementService.get_affected_organizations(uri, rule)
-            if MetadataFormEntityTypes.Organizations.value in rule.entityTypes:
+            if MetadataFormEntityTypes.Organization.value in rule.entityTypes:
                 affected_entities.extend(
                     [
                         MetadataFormEnforcementService.form_affected_entity_object(
-                            MetadataFormEntityTypes.Organizations.value, o, rule
+                            MetadataFormEntityTypes.Organization.value, o, rule
                         )
                         for o in orgs
                     ]
                 )
 
             envs = MetadataFormEnforcementService.get_affected_environments(uri, rule)
-            if MetadataFormEntityTypes.Environments.value in rule.entityTypes:
+            if MetadataFormEntityTypes.Environment.value in rule.entityTypes:
                 affected_entities.extend(
                     [
                         MetadataFormEnforcementService.form_affected_entity_object(
-                            MetadataFormEntityTypes.Environments.value, e, rule
+                            MetadataFormEntityTypes.Environment.value, e, rule
                         )
                         for e in envs
                     ]
@@ -184,8 +184,8 @@ class MetadataFormEnforcementService:
 
             datasets = []
             if MetadataFormEntityManager.is_registered(
-                MetadataFormEntityTypes.S3Datasets.value
-            ) or MetadataFormEntityManager.is_registered(MetadataFormEntityTypes.RDDatasets.value):
+                MetadataFormEntityTypes.S3Dataset.value
+            ) or MetadataFormEntityManager.is_registered(MetadataFormEntityTypes.RDDataset.value):
                 datasets = MetadataFormEnforcementService.get_affected_datasets(uri, rule)
                 affected_entities.extend(
                     [
@@ -199,10 +199,10 @@ class MetadataFormEnforcementService:
                 )
 
             entity_types = set(rule.entityTypes[:]) - {
-                MetadataFormEntityTypes.Organizations.value,
-                MetadataFormEntityTypes.Environments.value,
-                MetadataFormEntityTypes.RDDatasets.value,
-                MetadataFormEntityTypes.S3Datasets.value,
+                MetadataFormEntityTypes.Organization.value,
+                MetadataFormEntityTypes.Environment.value,
+                MetadataFormEntityTypes.RDDataset.value,
+                MetadataFormEntityTypes.S3Dataset.value,
             }
 
             for entity_type in entity_types:

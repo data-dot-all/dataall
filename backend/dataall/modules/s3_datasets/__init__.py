@@ -87,8 +87,8 @@ class DatasetApiModuleInterface(ModuleInterface):
         TargetType('dataset', GET_DATASET, UPDATE_DATASET, MANAGE_DATASETS)
 
         EnvironmentResourceManager.register(DatasetRepository())
-        MetadataFormEntityManager.register(S3Dataset, MetadataFormEntityTypes.S3Datasets.value)
-        MetadataFormEntityManager.register(DatasetTable, MetadataFormEntityTypes.Tables.value)
+        MetadataFormEntityManager.register(S3Dataset, MetadataFormEntityTypes.S3Dataset.value)
+        MetadataFormEntityManager.register(DatasetTable, MetadataFormEntityTypes.Table.value)
         MetadataFormEntityManager.register(DatasetStorageLocation, MetadataFormEntityTypes.Folder.value)
         MetadataFormEntityManager.register(DatasetBucket, MetadataFormEntityTypes.Bucket.value)
 

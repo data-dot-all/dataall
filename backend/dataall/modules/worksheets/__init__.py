@@ -27,7 +27,7 @@ class WorksheetApiModuleInterface(ModuleInterface):
         import dataall.modules.worksheets.api
 
         EnvironmentResourceManager.register(WorksheetRepository())
-        MetadataFormEntityManager.register(Worksheet, MetadataFormEntityTypes.Worksheets.value)
+        MetadataFormEntityManager.register(Worksheet, MetadataFormEntityTypes.Worksheet.value)
         log.info('API of worksheets has been imported')
 
     @staticmethod

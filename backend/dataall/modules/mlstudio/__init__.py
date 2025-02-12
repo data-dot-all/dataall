@@ -33,7 +33,7 @@ class MLStudioApiModuleInterface(ModuleInterface):
         TargetType('mlstudio', GET_SGMSTUDIO_USER, UPDATE_SGMSTUDIO_USER, MANAGE_SGMSTUDIO_USERS)
 
         EnvironmentResourceManager.register(SagemakerStudioEnvironmentResource())
-        MetadataFormEntityManager.register(SagemakerStudioDomain, MetadataFormEntityTypes.MLStudioEntities.value)
+        MetadataFormEntityManager.register(SagemakerStudioDomain, MetadataFormEntityTypes.MLStudioUser.value)
 
         log.info('API of sagemaker mlstudio has been imported')
 

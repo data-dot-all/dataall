@@ -26,7 +26,7 @@ class NotebookApiModuleInterface(ModuleInterface):
         )
 
         TargetType('notebook', GET_NOTEBOOK, UPDATE_NOTEBOOK, MANAGE_NOTEBOOKS)
-        MetadataFormEntityManager.register(SagemakerNotebook, MetadataFormEntityTypes.Notebooks.value)
+        MetadataFormEntityManager.register(SagemakerNotebook, MetadataFormEntityTypes.Notebook.value)
         log.info('API of sagemaker notebooks has been imported')
 
 

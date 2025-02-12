@@ -88,7 +88,7 @@ class RedshiftDatasetApiModuleInterface(ModuleInterface):
 
         EnvironmentResourceManager.register(RedshiftDatasetEnvironmentResource())
         EnvironmentResourceManager.register(RedshiftConnectionEnvironmentResource())
-        MetadataFormEntityManager.register(RedshiftDataset, MetadataFormEntityTypes.RDDatasets.value)
+        MetadataFormEntityManager.register(RedshiftDataset, MetadataFormEntityTypes.RDDataset.value)
 
     log.info('API of Redshift datasets has been imported')
 

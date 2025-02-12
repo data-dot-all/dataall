@@ -46,7 +46,7 @@ class DashboardApiModuleInterface(ModuleInterface):
         add_vote_type('dashboard', DashboardIndexer, GET_DASHBOARD)
 
         EnvironmentResourceManager.register(DashboardRepository())
-        MetadataFormEntityManager.register(Dashboard, MetadataFormEntityTypes.Dashboards.value)
+        MetadataFormEntityManager.register(Dashboard, MetadataFormEntityTypes.Dashboard.value)
         log.info('Dashboard API has been loaded')
 
 

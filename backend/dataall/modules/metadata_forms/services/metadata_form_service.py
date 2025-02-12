@@ -349,13 +349,13 @@ class MetadataFormService:
     @staticmethod
     def resolve_attached_entity(attached_metadata_form):
         with get_context().db_engine.scoped_session() as session:
-            if attached_metadata_form.entityType == MetadataFormEntityTypes.Organizations.value:
+            if attached_metadata_form.entityType == MetadataFormEntityTypes.Organization.value:
                 return OrganizationRepository.get_organization_by_uri(session, attached_metadata_form.entityUri)
-            elif attached_metadata_form.entityType == MetadataFormEntityTypes.Environments.value:
+            elif attached_metadata_form.entityType == MetadataFormEntityTypes.Environment.value:
                 return EnvironmentRepository.get_environment_by_uri(session, attached_metadata_form.entityUri)
             elif attached_metadata_form.entityType in [
-                MetadataFormEntityTypes.S3Datasets.value,
-                MetadataFormEntityTypes.RDDatasets.value,
+                MetadataFormEntityTypes.S3Dataset.value,
+                MetadataFormEntityTypes.RDDataset.value,
             ]:
                 return DatasetBaseRepository.get_dataset_by_uri(session, attached_metadata_form.entityUri)
             else:
@@ -370,13 +370,13 @@ class MetadataFormService:
     def get_entity_owner(attached_metadata_form):
         entity = MetadataFormService.resolve_attached_entity(attached_metadata_form)
         if entity:
-            if attached_metadata_form.entityType == MetadataFormEntityTypes.Organizations.value:
+            if attached_metadata_form.entityType == MetadataFormEntityTypes.Organization.value:
                 return entity.SamlGroupName
-            elif attached_metadata_form.entityType == MetadataFormEntityTypes.Environments.value:
+            elif attached_metadata_form.entityType == MetadataFormEntityTypes.Environment.value:
                 return entity.SamlGroupName
             elif attached_metadata_form.entityType in [
-                MetadataFormEntityTypes.S3Datasets.value,
-                MetadataFormEntityTypes.RDDatasets.value,
+                MetadataFormEntityTypes.S3Dataset.value,
+                MetadataFormEntityTypes.RDDataset.value,
             ]:
                 return entity.SamlAdminGroupName
         return None

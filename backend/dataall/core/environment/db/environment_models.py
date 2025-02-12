@@ -122,6 +122,6 @@ class ConsumptionRole(Base):
         return f'{self.consumptionRoleName}-{self.environmentUri}'
 
 
-MetadataFormEntityManager.register(Environment, MetadataFormEntityTypes.Environments.value)
-MetadataFormEntityManager.register(ConsumptionRole, MetadataFormEntityTypes.ConsumptionRoles.value)
-MetadataFormEntityManager.register(EnvironmentGroup, MetadataFormEntityTypes.EnvironmentTeams.value)
+MetadataFormEntityManager.register(Environment, MetadataFormEntityTypes.Environment.value)
+MetadataFormEntityManager.register(ConsumptionRole, MetadataFormEntityTypes.ConsumptionRole.value)
+MetadataFormEntityManager.register(EnvironmentGroup, MetadataFormEntityTypes.EnvironmentTeam.value)

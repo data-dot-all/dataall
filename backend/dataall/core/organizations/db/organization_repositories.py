@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import Query
@@ -133,5 +134,5 @@ class OrganizationRepository:
         return membership
 
     @staticmethod
-    def query_all_active_organizations(session) -> Query:
-        return session.query(models.Organization).filter(models.Organization.deleted.is_(None))
+    def query_all_active_organizations(session) -> List[models.Organization]:
+        return session.query(models.Organization).filter(models.Organization.deleted.is_(None)).all()

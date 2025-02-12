@@ -71,12 +71,12 @@ class MetadataFormAccessService:
     def _target_org_uri_getter(entityType, entityUri):
         if not entityType or not entityUri:
             return None
-        if entityType == MetadataFormEntityTypes.Organizations.value:
+        if entityType == MetadataFormEntityTypes.Organization.value:
             return [entityUri]
-        elif entityType == MetadataFormEntityTypes.Environments.value:
+        elif entityType == MetadataFormEntityTypes.Environment.value:
             with get_context().db_engine.scoped_session() as session:
                 return [EnvironmentRepository.get_environment_by_uri(session, entityUri).organizationUri]
-        elif entityType in [MetadataFormEntityTypes.S3Datasets.value, MetadataFormEntityTypes.RDDatasets.value]:
+        elif entityType in [MetadataFormEntityTypes.S3Dataset.value, MetadataFormEntityTypes.RDDataset.value]:
             with get_context().db_engine.scoped_session() as session:
                 return [DatasetBaseRepository.get_dataset_by_uri(session, entityUri).organizationUri]
         else:
@@ -87,11 +87,11 @@ class MetadataFormAccessService:
     def _target_env_uri_getter(entityType, entityUri):
         if not entityType or not entityUri:
             return None
-        if entityType == MetadataFormEntityTypes.Organizations.value:
+        if entityType == MetadataFormEntityTypes.Organization.value:
             return None
-        elif entityType == MetadataFormEntityTypes.Environments.value:
+        elif entityType == MetadataFormEntityTypes.Environment.value:
             return [entityUri]
-        elif entityType in [MetadataFormEntityTypes.S3Datasets.value, MetadataFormEntityTypes.RDDatasets.value]:
+        elif entityType in [MetadataFormEntityTypes.S3Dataset.value, MetadataFormEntityTypes.RDDataset.value]:
             with get_context().db_engine.scoped_session() as session:
                 return [DatasetBaseRepository.get_dataset_by_uri(session, entityUri).environmentUri]
         else:
