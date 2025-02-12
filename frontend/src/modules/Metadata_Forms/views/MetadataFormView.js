@@ -40,7 +40,7 @@ const MetadataFormView = () => {
     { label: 'Form Info', value: 'info' },
     { label: 'Fields', value: 'fields' },
     { label: 'Attached Entities', value: 'attached' },
-    // { label: 'Enforcement', value: 'enforcement' },
+    { label: 'Enforcement', value: 'enforcement' },
     { label: 'Preview', value: 'preview' }
   ];
   const [metadataForm, setMetadataForm] = useState(null);
@@ -253,7 +253,10 @@ const MetadataFormView = () => {
               />
             )}
             {currentTab === 'enforcement' && (
-              <MetadataFormEnforcement metadataForm={metadataForm} />
+              <MetadataFormEnforcement
+                metadataForm={metadataForm}
+                canEdit={metadataForm.userRole === userRolesMF.Owner}
+              />
             )}
             {currentTab === 'attached' && (
               <MetadataFormAttachedEntities
