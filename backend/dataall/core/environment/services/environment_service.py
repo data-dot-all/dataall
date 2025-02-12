@@ -692,7 +692,9 @@ class EnvironmentService:
                         role_name=consumption_role.IAMRoleName,
                     )
                     for policy_manager in [
-                        Policy for Policy in share_policy_manager.initializedPolicies if Policy.policy_type == 'SharePolicy'
+                        Policy
+                        for Policy in share_policy_manager.initializedPolicies
+                        if Policy.policy_type == 'SharePolicy'
                     ]:
                         managed_policy_list = policy_manager.get_policies_unattached_to_role()
                         policy_manager.attach_policies(managed_policy_list)
@@ -1159,4 +1161,3 @@ class EnvironmentService:
                 resource_prefix=environment.resourcePrefix,
                 role_name=IAMRoleName,
             ).get_all_policies()
-

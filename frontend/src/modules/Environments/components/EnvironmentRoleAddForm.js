@@ -13,10 +13,9 @@ import {
 import { Formik } from 'formik';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { fetchEnums, useClient, useFetchGroups } from 'services';
+import { useClient, useFetchGroups } from 'services';
 import { addConsumptionRoleToEnvironment } from '../services';
 import { policyManagementInfoMap } from '../../constants';
 import { InfoIconWithToolTip } from '../../../design';

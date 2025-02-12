@@ -1,5 +1,6 @@
 import uuid
 
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 from tests.core.permissions.test_permission import *
 
 
@@ -33,7 +34,7 @@ def consumption_role(mock_aws_client, client, org_fixture, env_fixture, user, gr
             'groupUri': str(uuid.uuid4())[:8],
             'IAMRoleArn': test_arn,
             'environmentUri': env_fixture.environmentUri,
-            'dataallManaged': False,
+            'dataallManaged': 'FULLY_MANAGED',
         },
     )
     assert not response.errors

@@ -1446,7 +1446,9 @@ const ShareView = () => {
                               }}
                             >
                               <span>
-                                {formatPolicyManagmentType(share.policyManagement)}{' '}
+                                {formatPolicyManagmentType(
+                                  share.policyManagement
+                                )}{' '}
                               </span>
                               <InfoIconWithToolTip
                                 title={

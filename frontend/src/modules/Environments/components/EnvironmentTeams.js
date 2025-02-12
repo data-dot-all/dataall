@@ -900,9 +900,7 @@ export const EnvironmentTeams = ({ environment }) => {
                     flex: 0.6,
                     editable: true,
                     type: 'singleSelect',
-                    valueOptions: policyManagementOptions.map(
-                      (obj) => obj.key
-                    ),
+                    valueOptions: policyManagementOptions.map((obj) => obj.key),
                     valueFormatter: (value) => {
                       return formattedName(value.value);
                     }
