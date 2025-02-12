@@ -112,8 +112,8 @@ class MetadataFormEnforcementService:
                 return EnvironmentRepository.query_all_active_environments(session)
             if rule.level == MetadataFormEnforcementScope.Organization.value:
                 return OrganizationRepository.query_organization_environments(
-                        session, uri=rule.homeEntity, filter=None
-                    ).all()
+                    session, uri=rule.homeEntity, filter=None
+                ).all()
             if rule.level == MetadataFormEnforcementScope.Environment.value:
                 return [EnvironmentRepository.get_environment_by_uri(session, rule.homeEntity)]
             return []
