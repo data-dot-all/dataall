@@ -4,6 +4,7 @@ from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.orm import query_expression
 
 from dataall.base.db import Base, Resource, utils
+from dataall.core.metadata_manager import MetadataFormEntity
 
 
 class DashboardShareStatus(Enum):
@@ -22,6 +23,7 @@ class DashboardShare(Base):
 
 
 class Dashboard(Resource, Base):
+    __metaclass__ = MetadataFormEntity
     __tablename__ = 'dashboard'
     environmentUri = Column(String, ForeignKey('environment.environmentUri'), nullable=False)
     organizationUri = Column(String, nullable=False)
@@ -35,5 +37,11 @@ class Dashboard(Resource, Base):
     userRoleForDashboard = query_expression()
 
     @classmethod
-    def uri(cls):
+    def get_uri(cls):
         return cls.dashboardUri
+
+    def get_owner(self):
+        return self.SamlGroupName
+
+    def get_entity_name(self):
+        return self.label

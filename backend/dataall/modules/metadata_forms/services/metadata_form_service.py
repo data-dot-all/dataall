@@ -10,8 +10,8 @@ from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRep
 from dataall.modules.metadata_forms.db.enums import (
     MetadataFormVisibility,
     MetadataFormFieldType,
-    MetadataFormEntityTypes,
 )
+from dataall.core.metadata_manager.metadata_form_entity_manager import MetadataFormEntityTypes
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
 from dataall.modules.metadata_forms.services.metadata_form_access_service import MetadataFormAccessService
@@ -318,6 +318,8 @@ class MetadataFormService:
                         message=f'New version {new_version.version} is available for metadata form "{mf.name}" for {attached.entityType} {attached.entityUri}',
                         notification_type='METADATA_FORM_UPDATE',
                     )
+
+            MetadataFormRepository.update_version_in_rules(session, uri, new_version.version)
         return new_version.version
 
     @staticmethod
@@ -331,6 +333,8 @@ class MetadataFormService:
                     action='Delete version', message='Cannot delete the only version of the form'
                 )
             mf = MetadataFormRepository.get_metadata_form_version(session, uri, version)
+            if version == all_versions[0]:
+                MetadataFormRepository.update_version_in_rules(session, uri, all_versions[1])
             session.delete(mf)
             return MetadataFormRepository.get_metadata_form_version_number_latest(session, uri)
 
@@ -345,13 +349,13 @@ class MetadataFormService:
     @staticmethod
     def resolve_attached_entity(attached_metadata_form):
         with get_context().db_engine.scoped_session() as session:
-            if attached_metadata_form.entityType == MetadataFormEntityTypes.Organizations.value:
+            if attached_metadata_form.entityType == MetadataFormEntityTypes.Organization.value:
                 return OrganizationRepository.get_organization_by_uri(session, attached_metadata_form.entityUri)
-            elif attached_metadata_form.entityType == MetadataFormEntityTypes.Environments.value:
+            elif attached_metadata_form.entityType == MetadataFormEntityTypes.Environment.value:
                 return EnvironmentRepository.get_environment_by_uri(session, attached_metadata_form.entityUri)
             elif attached_metadata_form.entityType in [
-                MetadataFormEntityTypes.S3Datasets.value,
-                MetadataFormEntityTypes.RDDatasets.value,
+                MetadataFormEntityTypes.S3Dataset.value,
+                MetadataFormEntityTypes.RDDataset.value,
             ]:
                 return DatasetBaseRepository.get_dataset_by_uri(session, attached_metadata_form.entityUri)
             else:
@@ -366,13 +370,13 @@ class MetadataFormService:
     def get_entity_owner(attached_metadata_form):
         entity = MetadataFormService.resolve_attached_entity(attached_metadata_form)
         if entity:
-            if attached_metadata_form.entityType == MetadataFormEntityTypes.Organizations.value:
+            if attached_metadata_form.entityType == MetadataFormEntityTypes.Organization.value:
                 return entity.SamlGroupName
-            elif attached_metadata_form.entityType == MetadataFormEntityTypes.Environments.value:
+            elif attached_metadata_form.entityType == MetadataFormEntityTypes.Environment.value:
                 return entity.SamlGroupName
             elif attached_metadata_form.entityType in [
-                MetadataFormEntityTypes.S3Datasets.value,
-                MetadataFormEntityTypes.RDDatasets.value,
+                MetadataFormEntityTypes.S3Dataset.value,
+                MetadataFormEntityTypes.RDDataset.value,
             ]:
                 return entity.SamlAdminGroupName
         return None

@@ -179,7 +179,13 @@ class TestData:
 
 
 EXPECTED_RESOLVERS: Mapping[str, TestData] = {
+    field_id('MetadataFormEnforcementRule', 'homeEntityName'): TestData(
+        resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
+    ),
     field_id('AttachedMetadataForm', 'entityName'): TestData(
+        resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
+    ),
+    field_id('AffectingRules', 'homeEntityName'): TestData(
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('AttachedMetadataForm', 'entityOwner'): TestData(
@@ -372,6 +378,12 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     ),
     field_id('MetadataFormSearchResult', 'hasTenantPermissions'): TestData(
         resource_ignore=IgnoreReason.USERROLEINRESOURCE, tenant_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
+    ),
+    field_id('Mutation', 'createMetadataFormEnforcementRule'): TestData(
+        tenant_perm=MANAGE_METADATA_FORMS, resource_ignore=IgnoreReason.USERROLEINRESOURCE, mf_owner_perm=True
+    ),
+    field_id('Mutation', 'deleteMetadataFormEnforcementRule'): TestData(
+        tenant_perm=MANAGE_METADATA_FORMS, resource_ignore=IgnoreReason.USERROLEINRESOURCE, mf_owner_perm=True
     ),
     field_id('Mutation', 'DisableDataSubscriptions'): TestData(
         tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=ENABLE_ENVIRONMENT_SUBSCRIPTIONS
@@ -699,6 +711,18 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     ),
     field_id('Permission', 'type'): TestData(
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
+    ),
+    field_id('Query', 'listEntityTypesWithScope'): TestData(
+        resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
+    ),
+    field_id('Query', 'listRulesThatAffectEntity'): TestData(
+        resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
+    ),
+    field_id('Query', 'listEntityAffectedByEnforcementRules'): TestData(
+        resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
+    ),
+    field_id('Query', 'listMetadataFormEnforcementRules'): TestData(
+        resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
     field_id('Query', 'countUnreadNotifications'): TestData(
         resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
