@@ -147,10 +147,10 @@ class MetadataFormEnforcementService:
     def form_affected_entity_object(type, entity: MetadataFormEntity, rule):
         return {
             'type': type,
-            'name': entity.get_entity_name(),
-            'uri': entity.get_uri(),
-            'owner': entity.get_owner(),
-            'attached': MetadataFormEnforcementService.get_attachement_for_rule(rule, entity.get_uri()),
+            'name': entity.entity_name(),
+            'uri': entity.uri(),
+            'owner': entity.owner_name(),
+            'attached': MetadataFormEnforcementService.get_attachement_for_rule(rule, entity.uri()),
         }
 
     @staticmethod
