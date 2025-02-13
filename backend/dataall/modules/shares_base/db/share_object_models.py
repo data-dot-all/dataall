@@ -50,13 +50,13 @@ class ShareObject(Base):
     nonExpirable = Column(Boolean, default=False, nullable=False)
     shareExpirationPeriod = Column(Integer, nullable=True)
 
-    def get_owner(self):
+    def owner_name(self):
         return self.owner
 
-    def get_entity_name(self):
+    def entity_name(self):
         return self.shareUri
 
-    def get_uri(self):
+    def uri(self):
         return self.shareUri
 
 
@@ -82,13 +82,13 @@ class ShareObjectItem(Base):
         String, ForeignKey('share_object_item_data_filter.attachedDataFilterUri'), nullable=True
     )
 
-    def get_owner(self):
+    def owner_name(self):
         return self.owner
 
-    def get_entity_name(self):
+    def entity_name(self):
         return self.itemName
 
-    def get_uri(self):
+    def uri(self):
         return self.shareItemUri
 
 

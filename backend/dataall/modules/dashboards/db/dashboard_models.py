@@ -36,7 +36,6 @@ class Dashboard(Resource, Base):
 
     userRoleForDashboard = query_expression()
 
-    @classmethod
     def uri(self):
         return self.dashboardUri
 
