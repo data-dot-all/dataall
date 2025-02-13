@@ -19,13 +19,13 @@ class Organization(Resource, Base):
     userRoleInOrganization = query_expression()
     SamlGroupName = Column(String, nullable=True)
 
-    def get_uri(self):
+    def uri(self):
         return self.organizationUri
 
-    def get_owner(self):
+    def owner_name(self):
         return self.SamlGroupName
 
-    def get_entity_name(self):
+    def entity_name(self):
         return self.label
 
 
@@ -40,13 +40,13 @@ class OrganizationGroup(Base):
     updated = Column(DateTime, onupdate=datetime.datetime.now)
     deleted = Column(DateTime)
 
-    def get_uri(self):
+    def uri(self):
         return f'{self.groupUri}-{self.organizationUri}'
 
-    def get_owner(self):
+    def owner_name(self):
         return self.invitedBy
 
-    def get_entity_name(self):
+    def entity_name(self):
         return f'{self.groupUri}-{self.organizationUri}'
 
 

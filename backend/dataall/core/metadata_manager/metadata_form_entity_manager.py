@@ -24,13 +24,13 @@ class MetadataFormEntityTypes(GraphQLEnumMapper):
 
 
 class MetadataFormEntity(ABC):
-    def get_owner(self):
+    def owner_name(self):
         pass
 
-    def get_entity_name(self):
+    def entity_name(self):
         pass
 
-    def get_uri(self):
+    def uri(self):
         pass
 
 

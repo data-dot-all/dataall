@@ -126,7 +126,6 @@ class MetadataFormService:
                 session.delete(form)
                 raise e
 
-    # toDo: add permission check
     @staticmethod
     def get_metadata_form_by_uri(uri):
         with get_context().db_engine.scoped_session() as session:
@@ -135,7 +134,6 @@ class MetadataFormService:
                 mf.versions = MetadataFormRepository.get_metadata_form_versions_numbers(session, uri)
             return mf
 
-    # toDo: deletion logic
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_METADATA_FORMS)
     @MetadataFormAccessService.can_perform(DELETE_METADATA_FORM)

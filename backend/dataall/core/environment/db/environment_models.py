@@ -42,13 +42,13 @@ class Environment(Resource, Base):
     subscriptionsConsumersTopicName = Column(String)
     subscriptionsConsumersTopicImported = Column(Boolean, default=False)
 
-    def get_uri(self):
+    def uri(self):
         return self.environmentUri
 
-    def get_owner(self):
+    def owner_name(self):
         return self.SamlGroupName
 
-    def get_entity_name(self):
+    def entity_name(self):
         return self.label
 
 
@@ -70,13 +70,13 @@ class EnvironmentGroup(Base):
     # environmentRole is the role of the entity (group or user) in the Environment
     groupRoleInEnvironment = Column(String, nullable=False, default=EnvironmentPermission.Invited.value)
 
-    def get_uri(self):
+    def uri(self):
         return f'{self.groupUri}-{self.environmentUri}'
 
-    def get_owner(self):
+    def owner_name(self):
         return self.invitedBy
 
-    def get_entity_name(self):
+    def entity_name(self):
         return f'{self.groupUri}-{self.environmentUri}'
 
 
@@ -112,13 +112,13 @@ class ConsumptionRole(Base):
     updated = Column(DateTime, onupdate=datetime.datetime.now)
     deleted = Column(DateTime)
 
-    def get_uri(self):
+    def uri(self):
         return self.consumptionRoleUri
 
-    def get_owner(self):
+    def owner_name(self):
         return self.groupUri
 
-    def get_entity_name(self):
+    def entity_name(self):
         return f'{self.consumptionRoleName}-{self.environmentUri}'
 
 
