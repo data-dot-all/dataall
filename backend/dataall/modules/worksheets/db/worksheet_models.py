@@ -27,14 +27,17 @@ class Worksheet(Resource, Base):
     lastSavedAthenaQueryIdForQuery = Column(String, nullable=True)
     lastSavedAthenaQueryIdForChart = Column(String, nullable=True)
 
-    def owner_name(self):
-        return self.SamlAdminGroupName
+    @classmethod
+    def owner_name(cls):
+        return cls.SamlAdminGroupName
 
-    def entity_name(self):
-        return self.label
+    @classmethod
+    def entity_name(cls):
+        return cls.label
 
-    def uri(self):
-        return self.worksheetUri
+    @classmethod
+    def uri(cls):
+        return cls.worksheetUri
 
 
 class WorksheetQueryResult(Base):

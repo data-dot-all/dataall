@@ -36,11 +36,14 @@ class Dashboard(Resource, Base):
 
     userRoleForDashboard = query_expression()
 
-    def uri(self):
-        return self.dashboardUri
+    @classmethod
+    def uri(cls):
+        return cls.dashboardUri
 
-    def owner_name(self):
-        return self.SamlGroupName
+    @classmethod
+    def owner_name(cls):
+        return cls.SamlGroupName
 
-    def entity_name(self):
-        return self.label
+    @classmethod
+    def entity_name(cls):
+        return cls.label

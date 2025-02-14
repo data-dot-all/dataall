@@ -26,11 +26,14 @@ class SagemakerNotebook(Resource, Base):
     VolumeSizeInGB = Column(Integer, nullable=True)
     InstanceType = Column(String, nullable=True)
 
-    def owner_name(self):
-        return self.SamlAdminGroupName
+    @classmethod
+    def owner_name(cls):
+        return cls.SamlAdminGroupName
 
-    def entity_name(self):
-        return self.NotebookInstanceName
+    @classmethod
+    def entity_name(cls):
+        return cls.NotebookInstanceName
 
-    def uri(self):
-        return self.notebookUri
+    @classmethod
+    def uri(cls):
+        return cls.notebookUri

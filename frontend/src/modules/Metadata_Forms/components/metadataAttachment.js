@@ -232,12 +232,11 @@ export const MetadataAttachment = (props) => {
               <Divider />
             </>
           )}
-          {addNewForm && !editMode && (
+          {addNewForm  && !editMode && (
             <CardContent>
               <Autocomplete
                 disablePortal
                 options={availableForms}
-                value={selectedForm.name}
                 onChange={async (event, value) => {
                   if (value) {
                     setSelectedForm(value.form);
