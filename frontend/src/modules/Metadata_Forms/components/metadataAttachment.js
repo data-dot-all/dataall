@@ -237,7 +237,6 @@ export const MetadataAttachment = (props) => {
               <Autocomplete
                 disablePortal
                 options={availableForms}
-                value={selectedForm.name}
                 onChange={async (event, value) => {
                   if (value) {
                     setSelectedForm(value.form);

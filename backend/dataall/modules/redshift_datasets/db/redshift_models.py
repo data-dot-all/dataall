@@ -39,5 +39,5 @@ class RedshiftTable(Base, Resource):
     topics = Column(ARRAY(String), nullable=True)
 
     @classmethod
-    def uri(cls):
+    def uri_column(cls):
         return cls.rsTableUri
