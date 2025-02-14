@@ -27,14 +27,17 @@ class SagemakerStudioDomain(Resource, Base):
     vpcId = Column(String, nullable=True)
     subnetIds = Column(ARRAY(String), nullable=True)
 
-    def owner_name(self):
-        return self.SamlGroupName
+    @classmethod
+    def owner_name(cls):
+        return cls.SamlGroupName
 
-    def entity_name(self):
-        return self.sagemakerStudioDomainName
+    @classmethod
+    def entity_name(cls):
+        return cls.sagemakerStudioDomainName
 
-    def uri(self):
-        return self.sagemakerStudioUri
+    @classmethod
+    def uri(cls):
+        return cls.sagemakerStudioUri
 
 
 class SagemakerStudioUser(Resource, Base):

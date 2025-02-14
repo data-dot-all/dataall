@@ -391,5 +391,5 @@ class MetadataFormRepository:
 
     @staticmethod
     def delete_rule(session, rule_uri):
-        session.query(MetadataFormEnforcementRule).filter(uri=rule_uri).delete()
+        session.query(MetadataFormEnforcementRule).filter(MetadataFormEnforcementRule.uri == rule_uri).delete()
         session.commit()

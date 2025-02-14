@@ -19,14 +19,17 @@ class Organization(Resource, Base):
     userRoleInOrganization = query_expression()
     SamlGroupName = Column(String, nullable=True)
 
-    def uri(self):
-        return self.organizationUri
+    @classmethod
+    def uri(cls):
+        return cls.organizationUri
 
-    def owner_name(self):
-        return self.SamlGroupName
+    @classmethod
+    def owner_name(cls):
+        return cls.SamlGroupName
 
-    def entity_name(self):
-        return self.label
+    @classmethod
+    def entity_name(cls):
+        return cls.label
 
 
 class OrganizationGroup(Base):
@@ -40,14 +43,17 @@ class OrganizationGroup(Base):
     updated = Column(DateTime, onupdate=datetime.datetime.now)
     deleted = Column(DateTime)
 
-    def uri(self):
-        return f'{self.groupUri}-{self.organizationUri}'
+    @classmethod
+    def uri(cls):
+        return f'{cls.groupUri}-{cls.organizationUri}'
 
-    def owner_name(self):
-        return self.invitedBy
+    @classmethod
+    def owner_name(cls):
+        return cls.invitedBy
 
-    def entity_name(self):
-        return f'{self.groupUri}-{self.organizationUri}'
+    @classmethod
+    def entity_name(cls):
+        return f'{cls.groupUri}-{cls.organizationUri}'
 
 
 MetadataFormEntityManager.register(Organization, MetadataFormEntityTypes.Organization.value)
