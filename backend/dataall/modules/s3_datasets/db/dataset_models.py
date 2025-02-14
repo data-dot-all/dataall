@@ -54,17 +54,14 @@ class DatasetStorageLocation(Resource, Base):
     projectPermission = query_expression()
     environmentEndPoint = query_expression()
 
-    @classmethod
-    def owner_name(cls):
+    def owner_name(self):
         return ''
 
-    @classmethod
-    def entity_name(cls):
-        return f'{cls.S3BucketName}/{cls.S3Prefix}'
+    def entity_name(self):
+        return f'{self.S3BucketName}/{self.S3Prefix}'
 
-    @classmethod
-    def uri(cls):
-        return cls.locationUri
+    def uri(self):
+        return self.locationUri
 
 
 class DatasetTable(Resource, Base):
@@ -89,17 +86,14 @@ class DatasetTable(Resource, Base):
     topics = Column(ARRAY(String), nullable=True)
     confidentiality = Column(String, nullable=False, default='C1')
 
-    @classmethod
-    def owner_name(cls):
+    def owner_name(self):
         return ''
 
-    @classmethod
-    def entity_name(cls):
-        return f'{cls.GlueDatabaseName}.{cls.GlueTableName}'
+    def entity_name(self):
+        return f'{self.GlueDatabaseName}.{self.GlueTableName}'
 
-    @classmethod
-    def uri(cls):
-        return cls.tableUri
+    def uri(self):
+        return self.tableUri
 
 
 class S3Dataset(DatasetBase):
@@ -153,17 +147,14 @@ class DatasetBucket(Resource, Base):
     projectPermission = query_expression()
     environmentEndPoint = query_expression()
 
-    @classmethod
-    def owner_name(cls):
+    def owner_name(self):
         return ''
 
-    @classmethod
-    def entity_name(cls):
-        return cls.S3BucketName
+    def entity_name(self):
+        return self.S3BucketName
 
-    @classmethod
-    def uri(cls):
-        return cls.bucketUri
+    def uri(self):
+        return self.bucketUri
 
 
 class DatasetTableDataFilter(Resource, Base):

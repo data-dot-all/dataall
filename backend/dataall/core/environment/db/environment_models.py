@@ -42,17 +42,14 @@ class Environment(Resource, Base):
     subscriptionsConsumersTopicName = Column(String)
     subscriptionsConsumersTopicImported = Column(Boolean, default=False)
 
-    @classmethod
-    def uri(cls):
-        return cls.environmentUri
+    def uri(self):
+        return self.environmentUri
 
-    @classmethod
-    def owner_name(cls):
-        return cls.SamlGroupName
+    def owner_name(self):
+        return self.SamlGroupName
 
-    @classmethod
-    def entity_name(cls):
-        return cls.label
+    def entity_name(self):
+        return self.label
 
 
 class EnvironmentGroup(Base):
@@ -73,17 +70,14 @@ class EnvironmentGroup(Base):
     # environmentRole is the role of the entity (group or user) in the Environment
     groupRoleInEnvironment = Column(String, nullable=False, default=EnvironmentPermission.Invited.value)
 
-    @classmethod
-    def uri(cls):
-        return f'{cls.groupUri}-{cls.environmentUri}'
+    def uri(self):
+        return f'{self.groupUri}-{self.environmentUri}'
 
-    @classmethod
-    def owner_name(cls):
-        return cls.invitedBy
+    def owner_name(self):
+        return self.invitedBy
 
-    @classmethod
-    def entity_name(cls):
-        return f'{cls.groupUri}-{cls.environmentUri}'
+    def entity_name(self):
+        return f'{self.groupUri}-{self.environmentUri}'
 
 
 class EnvironmentParameter(Base):
@@ -118,17 +112,14 @@ class ConsumptionRole(Base):
     updated = Column(DateTime, onupdate=datetime.datetime.now)
     deleted = Column(DateTime)
 
-    @classmethod
-    def uri(cls):
-        return cls.consumptionRoleUri
+    def uri(self):
+        return self.consumptionRoleUri
 
-    @classmethod
-    def owner_name(cls):
-        return cls.groupUri
+    def owner_name(self):
+        return self.groupUri
 
-    @classmethod
-    def entity_name(cls):
-        return f'{cls.consumptionRoleName}-{cls.environmentUri}'
+    def entity_name(self):
+        return f'{self.consumptionRoleName}-{self.environmentUri}'
 
 
 MetadataFormEntityManager.register(Environment, MetadataFormEntityTypes.Environment.value)
