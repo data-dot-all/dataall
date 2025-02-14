@@ -232,7 +232,7 @@ export const MetadataAttachment = (props) => {
               <Divider />
             </>
           )}
-          {addNewForm  && !editMode && (
+          {addNewForm && !editMode && (
             <CardContent>
               <Autocomplete
                 disablePortal
