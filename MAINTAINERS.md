@@ -12,4 +12,6 @@ doing it, and how to become one. If you're interested in becoming a maintainer, 
 | Anmol Gandhi         | [anmolsgandhi](https://github.com/anmolsgandhi) | Amazon      |
 | Adriana Lopez        | [dlpzx](https://github.com/dlpzx)             | Amazon      |
 | Noah Paige           | [noah-paige](https://github.com/noah-paige)   | Amazon      |
-| Nikita Podshivalov   | [nikpodsh](https://github.com/nikpodsh)       | Amazon      |
+| Anushka Singh        | [anushka-singh](https://github.com/anushka-singh) | Yahoo      |
+| Rick Bernotas        | [rbernotas](https://github.com/rbernotas)       | Yahoo      |
+| Tejas Rajopadhye     | [TejasRGitHub](https://github.com/TejasRGitHub) | Yahoo      |
