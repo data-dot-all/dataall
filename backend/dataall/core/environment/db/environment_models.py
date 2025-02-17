@@ -2,7 +2,7 @@
 
 import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, String, ForeignKey
+from sqlalchemy import Boolean, Column, DateTime, String, ForeignKey, Enum
 from sqlalchemy.orm import query_expression
 from dataall.base.db import Resource, Base, utils
 
@@ -107,7 +107,7 @@ class ConsumptionRole(Base):
     groupUri = Column(String, nullable=False)
     IAMRoleName = Column(String, nullable=False)
     IAMRoleArn = Column(String, nullable=False)
-    dataallManaged = Column(Boolean, nullable=False, default=True)
+    dataallManaged = Column(String, nullable=False)
     created = Column(DateTime, default=datetime.datetime.now)
     updated = Column(DateTime, onupdate=datetime.datetime.now)
     deleted = Column(DateTime)
