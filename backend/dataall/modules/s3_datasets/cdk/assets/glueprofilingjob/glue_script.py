@@ -100,7 +100,7 @@ def run_table_profiling(
         logger.debug('Profiling table for %s %s ', database, table)
         logger.debug('using %s', database)
         spark.sql('use `{}`'.format(database))
-        df = spark.sql('select * from {}'.format(table))
+        df = spark.sql('select * from `{}`'.format(table))
         total = df.count()
         logger.debug('Retrieved count for %s %s', table, total)
 
