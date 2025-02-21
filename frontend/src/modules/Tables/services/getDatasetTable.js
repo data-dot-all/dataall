@@ -13,17 +13,9 @@ export const getDatasetTable = (tableUri) => ({
           userRoleForDataset
           SamlAdminGroupName
           owner
-          organization {
-            label
-          }
           environment {
             label
             region
-            subscriptionsEnabled
-            subscriptionsProducersTopicImported
-            subscriptionsConsumersTopicImported
-            subscriptionsConsumersTopicName
-            subscriptionsProducersTopicName
           }
         }
         datasetUri
