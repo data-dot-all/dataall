@@ -68,4 +68,4 @@ def list_shared_databases_tables_with_env_group(context: Context, source, enviro
 
 
 def resolve_shared_db_name(context: Context, source, **kwargs):
-    return S3ShareService.resolve_shared_db_name(source.GlueDatabaseName, source.shareUri)
+    return S3ShareService.resolve_shared_db_name(source.GlueDatabaseName, source.shareUri, source.targetEnvAwsAccountId, source.targetEnvRegion)
