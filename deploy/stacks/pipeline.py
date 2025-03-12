@@ -426,7 +426,6 @@ class PipelineStack(Stack):
                     or 'client_id' not in custom_auth_configs
                     or 'response_types' not in custom_auth_configs
                     or 'scopes' not in custom_auth_configs
-                    or 'jwks_url' not in custom_auth_configs
                     or 'claims_mapping' not in custom_auth_configs
                     or 'user_id' not in custom_auth_configs['claims_mapping']
                     or 'email' not in custom_auth_configs['claims_mapping']
@@ -442,7 +441,6 @@ class PipelineStack(Stack):
                     or not isinstance(custom_auth_configs['client_id'], str)
                     or not isinstance(custom_auth_configs['response_types'], str)
                     or not isinstance(custom_auth_configs['scopes'], str)
-                    or not isinstance(custom_auth_configs['jwks_url'], str)
                     or not isinstance(custom_auth_configs['claims_mapping']['user_id'], str)
                     or not isinstance(custom_auth_configs['claims_mapping']['email'], str)
                 ):
