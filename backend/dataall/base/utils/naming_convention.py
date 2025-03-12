@@ -14,10 +14,10 @@ class NamingConventionPattern(Enum):
     IAM = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 63}  # Role names up to 64 chars
     IAM_POLICY = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 128}  # Policy names up to 128 chars
     GLUE = {
-        'regex': '[^a-zA-Z0-9_]',
+        'regex': '[^a-zA-Z0-9_-]',
         'separator': '_',
         'max_length': 240,
-        'valid_external_regex': '^[a-zA-Z0-9_]+$',
+        'valid_external_regex': '^[a-zA-Z0-9_-]+$',
     }  # Limit 255 - 15 extra chars buffer
     GLUE_ETL = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 52}
     NOTEBOOK = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 63}
