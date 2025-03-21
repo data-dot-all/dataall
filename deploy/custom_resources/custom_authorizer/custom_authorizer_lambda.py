@@ -1,6 +1,7 @@
 import logging
 import os
 import json
+from urllib.error import HTTPError
 
 from auth_services import AuthServices
 from jwt_services import JWTServices
@@ -26,16 +27,23 @@ def lambda_handler(incoming_event, context):
     logger.debug(incoming_event)
     auth_token = incoming_event['headers']['Authorization']
     if not auth_token:
-        raise Exception('Unauthorized. Missing JWT')
+        raise Exception('Unauthorized') # Missing JWT
 
     # Validate User is Active with Proper Access Token
-    user_info = JWT_SERVICE.validate_access_token(auth_token)
+    try:
+        user_info = JWT_SERVICE.validate_access_token(auth_token)
+    except HTTPError as e:
+        if e.code == 401:
+            raise Exception('Unauthorized') # Cognito didn't validate the auth token
+        else:
+            raise e # Unexpected exceptions
+
 
     # Validate JWT
     # Note: Removing the 7 Prefix Chars for 'Bearer ' from JWT
     verified_claims = JWT_SERVICE.validate_jwt_token(auth_token[7:])
     if not verified_claims:
-        raise Exception('Unauthorized. Token is not valid')
+        raise Exception('Unauthorized') # Token is not valid
     logger.debug(verified_claims)
 
     # Generate Allow Policy w/ Context
