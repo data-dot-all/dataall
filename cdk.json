@@ -4,8 +4,6 @@
     "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": false,
     "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": true,
     "@aws-cdk/aws-rds:lowercaseDbIdentifier": false,
-    "@aws-cdk/core:stackRelativeExports": false,
-    "tooling_region": "eu-west-2",
-    "quality_gate": false
+    "@aws-cdk/core:stackRelativeExports": false
   }
 }
