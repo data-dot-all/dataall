@@ -11,8 +11,8 @@ import {
   Dialog,
   CircularProgress
 } from '@mui/material';
-import { useClient } from '../../services';
-import { useDispatch } from '../../globalErrors';
+import { useClient } from 'services';
+import { useDispatch } from 'globalErrors';
 import { listUserForGroup } from '../../services/graphql/Groups/listUserForGroup';
 
 const UserModal = ({ team, open, onClose }) => {
