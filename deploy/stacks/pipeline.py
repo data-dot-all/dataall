@@ -7,11 +7,12 @@ from aws_cdk import aws_codebuild as codebuild
 from aws_cdk import aws_codecommit as codecommit
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
-from aws_cdk import aws_logs as logs
 from aws_cdk import aws_kms as kms
+from aws_cdk import aws_logs as logs
 from aws_cdk import aws_s3 as s3
 from aws_cdk import pipelines
 from aws_cdk.pipelines import CodePipelineSource
+from cdk_nag import NagSuppressions, NagPackSuppression
 
 from .albfront_stage import AlbFrontStage
 from .aurora import AuroraServerlessStack
@@ -19,15 +20,15 @@ from .backend_stage import BackendStage
 from .cloudfront_stage import CloudfrontStage
 from .codeartifact import CodeArtifactStack
 from .ecr_stage import ECRStage
-from .vpc import VpcStack
 from .iam_utils import get_tooling_account_external_id
+from .vpc import VpcStack
 
 
 class PipelineStack(Stack):
     def __init__(
         self,
-        id,
         scope,
+        id,
         repo_connection_arn,
         target_envs: List = None,
         git_branch='main',
@@ -36,7 +37,7 @@ class PipelineStack(Stack):
         repo_string='awslabs/aws-dataall',
         **kwargs,
     ):
-        super().__init__(id, scope, **kwargs)
+        super().__init__(scope, id, **kwargs)
         self.validate_deployment_params(source, repo_connection_arn, git_branch, resource_prefix, target_envs)
         self.git_branch = git_branch
         self.source = source
@@ -222,6 +223,20 @@ class PipelineStack(Stack):
                 )
             else:
                 self.set_albfront_stage(target_env, repository_name)
+
+        self.pipeline.build_pipeline()
+
+        for construct in scope.node.find_all():
+            if construct.node.path.endswith('CrossRegionCodePipelineReplicationBucket/Resource'):
+                NagSuppressions.add_resource_suppressions(
+                    construct,
+                    [
+                        NagPackSuppression(
+                            id='AwsSolutions-S1',
+                            reason='Stack and Bucket created by CodePipeline construct',
+                        ),
+                    ],
+                )
 
         Tags.of(self).add('Application', f'{resource_prefix}-{git_branch}')
 
