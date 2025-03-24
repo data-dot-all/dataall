@@ -36,6 +36,10 @@ class DatasetBase(Resource, Base):
     expiryMaxDuration = Column(Integer, nullable=True)
     __mapper_args__ = {'polymorphic_identity': 'dataset', 'polymorphic_on': datasetType}
 
+    @classmethod
+    def uri_column(cls):
+        return cls.datasetUri
+
     def owner_name(self):
         return self.SamlAdminGroupName
 

@@ -88,7 +88,7 @@ class DatasetLock(Base):
     acquiredBy = Column(String, nullable=True)
 
     @classmethod
-    def uri(cls):
+    def uri_column(cls):
         return cls.datasetUri
 
 

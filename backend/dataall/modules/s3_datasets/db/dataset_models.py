@@ -21,7 +21,7 @@ class DatasetTableColumn(Resource, Base):
     columnType = Column(String, default='column')  # can be either "column" or "partition"
 
     @classmethod
-    def uri(cls):
+    def uri_column(cls):
         return cls.columnUri
 
 
@@ -63,6 +63,10 @@ class DatasetStorageLocation(Resource, Base):
     def uri(self):
         return self.locationUri
 
+    @classmethod
+    def uri_column(cls):
+        return cls.locationUri
+
 
 class DatasetTable(Resource, Base):
     __metaclass__ = MetadataFormEntity
@@ -94,6 +98,10 @@ class DatasetTable(Resource, Base):
 
     def uri(self):
         return self.tableUri
+
+    @classmethod
+    def uri_column(cls):
+        return cls.tableUri
 
 
 class S3Dataset(DatasetBase):
@@ -155,6 +163,10 @@ class DatasetBucket(Resource, Base):
 
     def uri(self):
         return self.bucketUri
+
+    @classmethod
+    def uri_column(cls):
+        return cls.bucketUri
 
 
 class DatasetTableDataFilter(Resource, Base):
