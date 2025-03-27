@@ -24,7 +24,9 @@ class AuthServices:
 
     @staticmethod
     def generate_deny_policy(incoming_resource_str: str):
-        return AuthServices.generate_policy({'sub': None, EMAIL_CLAIM: None}, 'Deny', incoming_resource_str)
+        return AuthServices.generate_policy(
+            {'sub': None, EMAIL_CLAIM: None, USER_ID_CLAIM: None}, 'Deny', incoming_resource_str
+        )
 
     # Generates Policy document containing policy to allow the API invocation for allowed API Endpoints
     # Also attaches the claims which are present in the token
