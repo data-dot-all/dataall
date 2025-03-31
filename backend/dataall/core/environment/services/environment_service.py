@@ -852,6 +852,11 @@ class EnvironmentService:
             return EnvironmentService.get_environment_by_uri(session, uri)
 
     @staticmethod
+    def find_environment_by_simplified(uri):
+        with get_context().db_engine.scoped_session() as session:
+            return EnvironmentService.get_environment_by_uri(session, uri)
+
+    @staticmethod
     def list_all_active_environments(session) -> List[Environment]:
         """
         Lists all active dataall environments
