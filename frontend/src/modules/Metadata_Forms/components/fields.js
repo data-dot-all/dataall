@@ -37,7 +37,9 @@ export const BooleanField = (props) => {
       control={
         <Checkbox
           id={field.name}
-          defaultChecked={JSON.parse(field.value)}
+          defaultChecked={
+            field.value !== undefined ? JSON.parse(field.value) : false
+          }
           onChange={(event, checked) => onChange(checked)}
         />
       }

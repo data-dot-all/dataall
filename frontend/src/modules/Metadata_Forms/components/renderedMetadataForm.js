@@ -48,16 +48,24 @@ export const RenderedMetadataForm = (props) => {
     metadataForm.versions ? metadataForm.versions[0] : 0
   );
 
-  localFields.forEach((field, index) => {
-    if (field.type === 'Boolean' && field.value === undefined) {
-      field.value = false;
+  useEffect(() => {
+    if (fields) {
+      updateFieldValues();
     }
-    if (field.type === 'Boolean' || field.type === 'Integer') {
-      if (field.value) {
-        field.value = JSON.parse(field.value);
+  }, [fields]);
+
+  const updateFieldValues = () => {
+    localFields.forEach((field, index) => {
+      if (field.type === 'Boolean' && field.value === undefined) {
+        field.value = false;
       }
-    }
-  });
+      if (field.type === 'Boolean' || field.type === 'Integer') {
+        if (field.value) {
+          field.value = JSON.parse(field.value);
+        }
+      }
+    });
+  };
 
   const updateFields = (index, value) => {
     const updatedFields = [...localFields];
@@ -140,7 +148,6 @@ export const RenderedMetadataForm = (props) => {
       }))
     };
     if (attachedUri && attachedUri !== -1) input.attachedUri = attachedUri;
-
     const response = await client.mutate(
       createAttachedMetadataForm(metadataForm.uri, input)
     );

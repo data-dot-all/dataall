@@ -18,7 +18,11 @@ import {
   Tabs,
   Typography
 } from '@mui/material';
-import { ChevronRightIcon, useSettings } from 'design';
+import {
+  ChevronRightIcon,
+  DeleteObjectWithFrictionModal,
+  useSettings
+} from 'design';
 import { FaTrash } from 'react-icons/fa';
 import {
   MetadataFormInfo,
@@ -49,6 +53,7 @@ const MetadataFormView = () => {
   const [visibilityDict, setVisibilityDict] = useState({});
   const [fieldTypeOptions, setFieldTypeOptions] = useState([]);
   const [userRolesMF, setUserRolesMFDict] = useState({});
+  const [isDeleteRoleModalOpen, setIsDeleteRoleModalOpen] = useState(false);
 
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);
@@ -115,6 +120,13 @@ const MetadataFormView = () => {
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
     }
+  };
+
+  const handleDeleteRoleModalOpen = () => {
+    setIsDeleteRoleModalOpen(true);
+  };
+  const handleDeleteRoleModalClosed = () => {
+    setIsDeleteRoleModalOpen(false);
   };
 
   useEffect(() => {
@@ -208,12 +220,34 @@ const MetadataFormView = () => {
                     color="primary"
                     startIcon={<FaTrash size={15} />}
                     sx={{ mt: 1 }}
-                    onClick={deleteForm}
+                    onClick={handleDeleteRoleModalOpen}
                     type="button"
                     variant="outlined"
                   >
                     Delete
                   </Button>
+                  <DeleteObjectWithFrictionModal
+                    objectName={metadataForm.name}
+                    onApply={() => handleDeleteRoleModalClosed(false)}
+                    onClose={() => handleDeleteRoleModalClosed(false)}
+                    deleteMessage={
+                      <>
+                        <Typography
+                          align={'center'}
+                          variant="subtitle2"
+                          color="error"
+                        >
+                          Are you sure you want to delete this Metadata form ?
+                          Deleting a metadata form will remove the attached
+                          form, from all the entities. Once deleted, attached
+                          metadata forms cannot be recovered.
+                        </Typography>
+                      </>
+                    }
+                    open={isDeleteRoleModalOpen}
+                    isAWSResource={false}
+                    deleteFunction={deleteForm}
+                  />
                 </Box>
               </Grid>
             )}

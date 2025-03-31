@@ -15,7 +15,12 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { Defaults, Label, PlusIcon } from 'design';
+import {
+  Defaults,
+  DeleteObjectWithFrictionModal,
+  Label,
+  PlusIcon
+} from 'design';
 import React, { useEffect, useState } from 'react';
 import DoNotDisturbAltOutlinedIcon from '@mui/icons-material/DoNotDisturbAltOutlined';
 import { fetchEnums, listValidEnvironments, useClient } from 'services';
@@ -434,6 +439,8 @@ export const MetadataFormEnforcement = (props) => {
     pageSize: 5,
     page: 0
   });
+  const [selectedRuleUri, setSelectedRuleUri] = useState(null);
+  const [isDeleteRoleModalOpen, setIsDeleteRoleModalOpen] = useState(false);
   const [selectedEntity, setSelectedEntity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingAffected, setLoadingAffected] = useState(true);
@@ -456,6 +463,15 @@ export const MetadataFormEnforcement = (props) => {
       }
     }
   ];
+
+  const handleDeleteRoleModalOpen = (uri) => {
+    setIsDeleteRoleModalOpen(true);
+    setSelectedRuleUri(uri);
+  };
+  const handleDeleteRoleModalClosed = () => {
+    setIsDeleteRoleModalOpen(false);
+    setSelectedRuleUri(null);
+  };
 
   const fetchEntityTypesWithScope = async () => {
     const response = await client.query(listEntityTypesWithScope());
@@ -495,11 +511,13 @@ export const MetadataFormEnforcement = (props) => {
     setLoading(false);
   };
 
-  const deleteRule = async (rule_uri) => {
+  const deleteRule = async () => {
+    const rule_uri = selectedRuleUri;
     const response = await client.mutate(
       deleteMetadataFormEnforcementRule(metadataForm.uri, rule_uri)
     );
     if (!response.errors) {
+      handleDeleteRoleModalClosed();
       if (selectedRule.uri === rule_uri) {
         setSelectedRule(null);
         setAffectedEntities([]);
@@ -673,19 +691,21 @@ export const MetadataFormEnforcement = (props) => {
                     </Grid>
                     <Grid item lg={1} xl={1}>
                       {canEdit && (
-                        <DeleteIcon
-                          sx={{ color: 'primary.main', opacity: 0.5 }}
-                          onMouseOver={(e) => {
-                            e.currentTarget.style.opacity = 1;
-                          }}
-                          onMouseOut={(e) => {
-                            e.currentTarget.style.opacity = 0.5;
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteRule(rule.uri);
-                          }}
-                        />
+                        <>
+                          <DeleteIcon
+                            sx={{ color: 'primary.main', opacity: 0.5 }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.opacity = 1;
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.opacity = 0.5;
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteRoleModalOpen(rule.uri);
+                            }}
+                          />
+                        </>
                       )}
                     </Grid>
                   </Grid>
@@ -716,18 +736,16 @@ export const MetadataFormEnforcement = (props) => {
                 <DataGrid
                   rows={affectedEntities.nodes}
                   columns={header}
+                  paginationMode="server"
                   pageSize={paginationModel.pageSize}
                   rowsPerPageOptions={[5, 10, 20]}
                   onPageSizeChange={async (newPageSize) => {
                     setPaginationModel({
                       ...paginationModel,
-                      pageSize: newPageSize
+                      pageSize: newPageSize,
+                      page: 0
                     });
-                    await fetchAffectedEntities(
-                      selectedRule,
-                      paginationModel.page,
-                      newPageSize
-                    );
+                    await fetchAffectedEntities(selectedRule, 0, newPageSize);
                   }}
                   page={paginationModel.page}
                   onPageChange={async (newPage) => {
@@ -776,6 +794,23 @@ export const MetadataFormEnforcement = (props) => {
           onCancel={() => setShowCreateRuleModal(false)}
         />
       )}
+      <div>
+        <DeleteObjectWithFrictionModal
+          objectName={metadataForm.name}
+          onApply={handleDeleteRoleModalClosed}
+          onClose={handleDeleteRoleModalClosed}
+          deleteMessage={
+            <>
+              <Typography align={'center'} variant="subtitle2" color="error">
+                Are you sure you want to delete this enforcement rule ?{' '}
+              </Typography>
+            </>
+          }
+          open={isDeleteRoleModalOpen}
+          isAWSResource={false}
+          deleteFunction={deleteRule}
+        />
+      </div>
     </Box>
   );
 };

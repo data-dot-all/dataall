@@ -95,7 +95,7 @@ const EditTable = (props) => {
   const addField = () => {
     localFields.push({
       id: uuidv4(),
-      name: 'New Field',
+      name: '',
       required: false,
       metadataFormUri: formUri,
       type: fieldTypeOptions[0].value,
@@ -178,8 +178,8 @@ const EditTable = (props) => {
                 <TableCell>
                   <TextField
                     disabled={field.deleted}
-                    defaultValue={field.name}
-                    onKeyUp={(event) => {
+                    value={field.name}
+                    onChange={(event) => {
                       updateField(index, 'name', event.target.value);
                     }}
                     sx={{ width: '100%' }}
@@ -211,9 +211,9 @@ const EditTable = (props) => {
                 <TableCell>
                   <TextField
                     disabled={field.deleted}
-                    defaultValue={field.description}
+                    value={field?.description}
                     sx={{ width: '100%' }}
-                    onKeyUp={(event) => {
+                    onChange={(event) => {
                       updateField(index, 'description', event.target.value);
                     }}
                   />
