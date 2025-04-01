@@ -532,7 +532,7 @@ class LambdaApiStack(pyNestedClass):
             throttling_burst_limit=5000,
             logging_level=apigw.MethodLoggingLevel.INFO,
             tracing_enabled=True,
-            data_trace_enabled=True,
+            data_trace_enabled=False,
             metrics_enabled=True,
         )
 
