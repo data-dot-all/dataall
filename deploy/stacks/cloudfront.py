@@ -336,6 +336,7 @@ class CloudfrontDistro(pyNestedClass):
                 ),
             ),
             runtime=_lambda.Runtime.NODEJS_18_X,
+            logging_format=_lambda.LoggingFormat.JSON,
         )
 
         http_header_func_version = http_header_func.current_version

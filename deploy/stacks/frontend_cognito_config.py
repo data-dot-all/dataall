@@ -116,4 +116,5 @@ class FrontendCognitoConfig(pyNestedClass):
             handler='cognito_urls.handler',
             execute_after=execute_after,
             execute_on_handler_change=True,
+            logging_format=_lambda.LoggingFormat.JSON,
         )
