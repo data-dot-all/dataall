@@ -66,6 +66,7 @@ class LambdaApiStack(pyNestedClass):
         custom_auth=None,
         allowed_origins='*',
         log_retention_duration=None,
+        throttling_config=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -355,6 +356,7 @@ class LambdaApiStack(pyNestedClass):
             vpc,
             user_pool,
             custom_auth,
+            throttling_config,
         )
 
         self.create_sns_topic(
@@ -526,10 +528,11 @@ class LambdaApiStack(pyNestedClass):
         vpc,
         user_pool,
         custom_auth,
+        throttling_config,
     ):
         api_deploy_options = apigw.StageOptions(
-            throttling_rate_limit=10000,
-            throttling_burst_limit=5000,
+            throttling_rate_limit=throttling_config.get('global_rate_limit', 10000),
+            throttling_burst_limit=throttling_config.get('global_burst_limit', 5000),
             logging_level=apigw.MethodLoggingLevel.INFO,
             tracing_enabled=True,
             data_trace_enabled=False,

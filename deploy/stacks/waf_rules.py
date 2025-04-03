@@ -163,7 +163,11 @@ def get_waf_rules(envname, name, custom_waf_rules=None, ip_set_regional=None):
             wafv2.CfnWebACL.RuleProperty(
                 name=f'{name}RateLimit',
                 statement=wafv2.CfnWebACL.StatementProperty(
-                    rate_based_statement=wafv2.CfnWebACL.RateBasedStatementProperty(aggregate_key_type='IP', limit=1000)
+                    rate_based_statement=wafv2.CfnWebACL.RateBasedStatementProperty(
+                        aggregate_key_type='IP',
+                        limit=(custom_waf_rules or {}).get('rate_limit', 1000),
+                        evaluation_window_sec=(custom_waf_rules or {}).get('rate_limit_window'),
+                    )
                 ),
                 action=wafv2.CfnWebACL.RuleActionProperty(block={}),
                 visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(

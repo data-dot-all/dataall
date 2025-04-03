@@ -39,6 +39,7 @@ class BackendStage(Stage):
         with_approval_tests=False,
         allowed_origins='*',
         log_retention_duration=None,
+        throttling_config=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -75,6 +76,7 @@ class BackendStage(Stage):
             with_approval_tests=with_approval_tests,
             allowed_origins=allowed_origins,
             log_retention_duration=log_retention_duration,
+            throttling_config=throttling_config,
             **kwargs,
         )
 
