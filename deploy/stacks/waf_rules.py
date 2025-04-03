@@ -1,5 +1,7 @@
 from aws_cdk import aws_wafv2 as wafv2
 
+DEFAULT_WAF_RATE_LIMIT = 1000
+
 
 def get_waf_rules(envname, name, custom_waf_rules=None, ip_set_regional=None):
     waf_rules = []
@@ -165,7 +167,7 @@ def get_waf_rules(envname, name, custom_waf_rules=None, ip_set_regional=None):
                 statement=wafv2.CfnWebACL.StatementProperty(
                     rate_based_statement=wafv2.CfnWebACL.RateBasedStatementProperty(
                         aggregate_key_type='IP',
-                        limit=(custom_waf_rules or {}).get('rate_limit', 1000),
+                        limit=(custom_waf_rules or {}).get('rate_limit', DEFAULT_WAF_RATE_LIMIT),
                         evaluation_window_sec=(custom_waf_rules or {}).get('rate_limit_window'),
                     )
                 ),

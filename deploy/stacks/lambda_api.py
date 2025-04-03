@@ -36,6 +36,9 @@ from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling
 from .waf_rules import get_waf_rules
 
+DEFAULT_API_RATE_LIMIT = 10000
+DEFAULT_API_BURST_LIMIT = 5000
+
 
 class LambdaApiStack(pyNestedClass):
     def __init__(
@@ -531,8 +534,8 @@ class LambdaApiStack(pyNestedClass):
         throttling_config,
     ):
         api_deploy_options = apigw.StageOptions(
-            throttling_rate_limit=throttling_config.get('global_rate_limit', 10000),
-            throttling_burst_limit=throttling_config.get('global_burst_limit', 5000),
+            throttling_rate_limit=throttling_config.get('global_rate_limit', DEFAULT_API_RATE_LIMIT),
+            throttling_burst_limit=throttling_config.get('global_burst_limit', DEFAULT_API_BURST_LIMIT),
             logging_level=apigw.MethodLoggingLevel.INFO,
             tracing_enabled=True,
             data_trace_enabled=False,
