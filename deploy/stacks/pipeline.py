@@ -681,6 +681,7 @@ class PipelineStack(Stack):
                 with_approval_tests=target_env.get('with_approval_tests', False),
                 allowed_origins=target_env.get('allowed_origins', '*'),
                 log_retention_duration=self.log_retention_duration,
+                throttling_config=target_env.get('throttling', {}),
             )
         )
         return backend_stage
