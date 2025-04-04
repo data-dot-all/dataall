@@ -140,6 +140,8 @@ class LambdaApiStack(pyNestedClass):
             dead_letter_queue=self.esproxy_dlq,
             on_failure=lambda_destination.SqsDestination(self.esproxy_dlq),
             tracing=_lambda.Tracing.ACTIVE,
+            logging_format=_lambda.LoggingFormat.JSON,
+            application_log_level_v2=getattr(_lambda.ApplicationLogLevel, log_level),
         )
 
         self.api_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-graphql-dlq')
@@ -181,6 +183,8 @@ class LambdaApiStack(pyNestedClass):
             dead_letter_queue=self.api_handler_dlq,
             on_failure=lambda_destination.SqsDestination(self.api_handler_dlq),
             tracing=_lambda.Tracing.ACTIVE,
+            logging_format=_lambda.LoggingFormat.JSON,
+            application_log_level_v2=getattr(_lambda.ApplicationLogLevel, log_level),
         )
 
         self.aws_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-awsworker-dlq')
@@ -215,6 +219,8 @@ class LambdaApiStack(pyNestedClass):
             dead_letter_queue=self.aws_handler_dlq,
             on_failure=lambda_destination.SqsDestination(self.aws_handler_dlq),
             tracing=_lambda.Tracing.ACTIVE,
+            logging_format=_lambda.LoggingFormat.JSON,
+            application_log_level_v2=getattr(_lambda.ApplicationLogLevel, log_level),
         )
         self.aws_handler.add_event_source(
             lambda_event_sources.SqsEventSource(
@@ -310,6 +316,8 @@ class LambdaApiStack(pyNestedClass):
             security_groups=[authorizer_fn_sg],
             runtime=runtime,
             layers=[cryptography_layer],
+            logging_format=_lambda.LoggingFormat.JSON,
+            application_log_level_v2=getattr(_lambda.ApplicationLogLevel, log_level),
         )
 
         # Add NAT Connectivity For Custom Authorizer Lambda
