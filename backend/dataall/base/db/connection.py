@@ -11,7 +11,6 @@ from dataall.base.aws.secrets_manager import SecretsManager
 from dataall.base.db import Base
 from dataall.base.db.dbconfig import DbConfig
 from dataall.base.utils import Parameter
-from dataall.base.aws.sts import SessionHelper
 
 try:
     from urllib import quote_plus, unquote_plus
@@ -41,6 +40,7 @@ class Engine:
 
         self.sessions = {}
         self._session = None
+        self._active_sessions = 0
 
     def session(self):
         if self._session is None:
@@ -52,13 +52,17 @@ class Engine:
     def scoped_session(self):
         s = self.session()
         try:
+            self._active_sessions += 1
             yield s
             s.commit()
         except Exception as e:
             s.rollback()
             raise e
         finally:
-            s.close()
+            self._active_sessions -= 1
+            if self._active_sessions == 0:
+                s.close()
+                self._session = None
 
     def dispose(self):
         self.engine.dispose()
