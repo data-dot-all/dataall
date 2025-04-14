@@ -1,8 +1,10 @@
 import logging
 from datetime import datetime
-from logging import exception
 from typing import List
 
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
+from dataall.core.environment.db.environment_models import ConsumptionRole
+from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers import S3BucketShareManager
 from dataall.modules.s3_datasets_shares.services.s3_share_service import S3ShareService
@@ -11,6 +13,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemStatus,
     ShareObjectActions,
     ShareItemActions,
+    PrincipalType,
 )
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository

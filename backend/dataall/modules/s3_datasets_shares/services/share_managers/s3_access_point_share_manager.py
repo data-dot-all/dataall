@@ -6,6 +6,9 @@ from typing import List
 from warnings import warn
 
 from dataall.base.db.exceptions import AWSServiceQuotaExceeded
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
+from dataall.core.environment.db.environment_models import ConsumptionRole
+from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.db import utils
 from dataall.base.aws.sts import SessionHelper
@@ -164,6 +167,15 @@ class S3AccessPointShareManager:
         """
         logger.info(f'Check target role {self.target_requester_IAMRoleName} access policy')
 
+        is_managed_role: bool = True
+        if self.share.principalType == PrincipalType.ConsumptionRole.value:
+            # When principalType is a consumptionRole type then principalId contains the uri of the consumption role
+            consumption_role: ConsumptionRole = EnvironmentRepository.get_consumption_role(
+                self.session, self.share.principalId
+            )
+            if consumption_role.dataallManaged == PolicyManagementOptions.EXTERNALLY_MANAGED.value:
+                is_managed_role = False
+
         key_alias = f'alias/{self.dataset.KmsAlias}'
         kms_client = KmsClient(self.dataset_account_id, self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
@@ -201,13 +213,14 @@ class S3AccessPointShareManager:
                 self.folder_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
                 return
 
-        unattached_policies: List[str] = share_policy_service.get_policies_unattached_to_role()
-        if len(unattached_policies) > 0:
-            logger.info(
-                f'IAM Policies {unattached_policies} exists but are not attached to role {self.share.principalRoleName}'
-            )
-            self.folder_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy attached', unattached_policies))
-            return
+        if is_managed_role:
+            unattached_policies: List[str] = share_policy_service.get_policies_unattached_to_role()
+            if len(unattached_policies) > 0:
+                logger.info(
+                    f'IAM Policies {unattached_policies} exists but are not attached to role {self.share.principalRoleName}'
+                )
+                self.folder_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy attached', unattached_policies))
+                return
 
         s3_target_resources = [
             f'arn:aws:s3:::{self.bucket_name}',
@@ -399,7 +412,7 @@ class S3AccessPointShareManager:
                 consumption_role = EnvironmentService.get_consumption_role(
                     session=self.session, uri=self.share.principalId
                 )
-                if consumption_role.dataallManaged:
+                if consumption_role.dataallManaged == PolicyManagementOptions.FULLY_MANAGED.value:
                     share_managed_policies = share_policy_service.get_managed_policies()
                     share_policy_service.attach_policies(share_managed_policies)
 
