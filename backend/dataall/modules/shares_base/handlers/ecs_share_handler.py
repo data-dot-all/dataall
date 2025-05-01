@@ -42,10 +42,10 @@ class EcsShareHandler:
     def reapply_shares_of_dataset(engine, task: Task):
         envname = os.environ.get('envname', 'local')
         if envname in ['local', 'dkrcompose']:
-            EcsBulkShareRepplyService.process_reapply_shares_for_dataset(engine, task.targetUri)
+            EcsBulkShareRepplyService.process_reapply_shares_for_dataset(engine, [task.targetUri])
         else:
             context = [
-                {'name': 'datasetUri', 'value': task.targetUri},
+                {'name': 'datasetUris', 'value': [task.targetUri]},
             ]
             return EcsShareHandler._run_share_management_ecs_task(
                 task_definition_param_str='ecs/task_def_arn/share_reapplier',
