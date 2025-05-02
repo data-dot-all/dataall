@@ -38,7 +38,7 @@ def verify_shares(engine):
 
 
 def trigger_reapply_task(engine):
-    with engine.scoped_session as session:
+    with engine.scoped_session() as session:
         unhealthy_share_objects: List[ShareObject] = ShareObjectRepository.get_share_object_with_health_status(
             session, ShareItemHealthStatus.Unhealthy.value
         )
