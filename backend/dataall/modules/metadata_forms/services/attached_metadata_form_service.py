@@ -6,7 +6,6 @@ from dataall.modules.metadata_forms.services.metadata_form_access_service import
 from dataall.modules.metadata_forms.services.metadata_form_permissions import ATTACH_METADATA_FORM
 
 
-
 class AttachedMetadataFormValidationService:
     @staticmethod
     def validate_filled_form_params(uri, data):
