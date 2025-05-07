@@ -479,11 +479,11 @@ class EnvironmentService:
 
             PolicyManager(
                 session=session,
+                role_name=group_membership.environmentIAMRoleName,
+                environmentUri=environment.environmentUri,
                 account=environment.AwsAccountId,
                 region=environment.region,
-                environmentUri=environment.environmentUri,
-                resource_prefix=environment.resourcePrefix,
-                role_name=group_membership.environmentIAMRoleName,
+                resource_prefix=environment.resourcePrefix
             ).delete_all_policies()
 
             if group_membership:
@@ -604,11 +604,11 @@ class EnvironmentService:
 
             PolicyManager(
                 session=session,
+                role_name=consumption_role.IAMRoleName,
+                environmentUri=environment.environmentUri,
                 account=environment.AwsAccountId,
                 region=environment.region,
-                environmentUri=environment.environmentUri,
                 resource_prefix=environment.resourcePrefix,
-                role_name=consumption_role.IAMRoleName,
             ).create_all_policies(policy_management=consumption_role.dataallManaged)
 
             session.add(consumption_role)
