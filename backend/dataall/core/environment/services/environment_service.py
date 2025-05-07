@@ -408,11 +408,11 @@ class EnvironmentService:
             )
             PolicyManager(
                 session=session,
+                role_name=env_group_iam_role_name,
+                environmentUri=environment.environmentUri,
                 account=environment.AwsAccountId,
                 region=environment.region,
-                environmentUri=environment.environmentUri,
                 resource_prefix=environment.resourcePrefix,
-                role_name=env_group_iam_role_name,
             ).create_all_policies(policy_management=policy_management)
 
             athena_workgroup = NamingConventionService(
@@ -483,7 +483,7 @@ class EnvironmentService:
                 environmentUri=environment.environmentUri,
                 account=environment.AwsAccountId,
                 region=environment.region,
-                resource_prefix=environment.resourcePrefix
+                resource_prefix=environment.resourcePrefix,
             ).delete_all_policies()
 
             if group_membership:
@@ -641,11 +641,11 @@ class EnvironmentService:
             if consumption_role:
                 PolicyManager(
                     session=session,
+                    role_name=consumption_role.IAMRoleName,
+                    environmentUri=environment.environmentUri,
                     account=environment.AwsAccountId,
                     region=environment.region,
-                    environmentUri=environment.environmentUri,
                     resource_prefix=environment.resourcePrefix,
-                    role_name=consumption_role.IAMRoleName,
                 ).delete_all_policies()
 
                 ResourcePolicyService.delete_resource_policy(
@@ -934,11 +934,11 @@ class EnvironmentService:
                 ]:
                     PolicyManager(
                         session=session,
+                        role_name=environment.EnvironmentDefaultIAMRoleName,
+                        environmentUri=environment.environmentUri,
                         account=environment.AwsAccountId,
                         region=environment.region,
-                        environmentUri=environment.environmentUri,
                         resource_prefix=environment.resourcePrefix,
-                        role_name=environment.EnvironmentDefaultIAMRoleName,
                     ).delete_all_policies()
 
                 KeyValueTagRepository.delete_key_value_tags(session, environment.environmentUri, 'environment')
