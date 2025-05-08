@@ -127,11 +127,11 @@ class S3ShareValidator(SharesValidatorInterface):
         log.info('Verifying data.all managed share IAM policy is attached to IAM role...')
         share_policy_manager = PolicyManager(
             session=session,
+            role_name=principal_role_name,
+            environmentUri=environment.environmentUri,
             account=environment.AwsAccountId,
             region=environment.region,
-            environmentUri=environment.environmentUri,
             resource_prefix=environment.resourcePrefix,
-            role_name=principal_role_name,
         )
         for policy_manager in [
             Policy for Policy in share_policy_manager.initializedPolicies if Policy.policy_type == 'SharePolicy'

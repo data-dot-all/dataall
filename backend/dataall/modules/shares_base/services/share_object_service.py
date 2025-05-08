@@ -8,7 +8,6 @@ from typing import Dict, List
 from dataall.base.context import get_context
 from dataall.base.db.exceptions import UnauthorizedOperation, InvalidInput
 from dataall.core.activity.db.activity_models import Activity
-from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
