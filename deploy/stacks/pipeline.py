@@ -274,6 +274,12 @@ class PipelineStack(Stack):
             statements=[
                 iam.PolicyStatement(
                     actions=[
+                        'codestar-connections:UseConnection',
+                    ],
+                    resources=[self.repo_connection_arn],
+                ),
+                iam.PolicyStatement(
+                    actions=[
                         'sts:AssumeRole',
                     ],
                     resources=['arn:aws:iam::*:role/cdk-hnb659fds-lookup-role*'],
