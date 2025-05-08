@@ -49,7 +49,7 @@ class CloudfrontDistro(pyNestedClass):
         )
 
         """
-        In case cloudfront (always us-east-1) and backend are in different regions create a specific trailf or us-east-1 
+        In case cloudfront (always us-east-1) and backend are in different regions create a trail in us-east-1 
         """
         if self.region != backend_region:
             setup_cdk_asset_trail(self, self.server_access_logs_bucket)
