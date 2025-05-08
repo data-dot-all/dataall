@@ -21,6 +21,7 @@ from .codeartifact import CodeArtifactStack
 from .ecr_stage import ECRStage
 from .vpc import VpcStack
 from .iam_utils import get_tooling_account_external_id
+from .cdk_asset_trail import setup_cdk_asset_trail
 
 
 class PipelineStack(Stack):
@@ -94,6 +95,19 @@ class PipelineStack(Stack):
 
         self.set_codebuild_iam_roles()
 
+        self.server_access_logs_bucket = s3.Bucket(
+            self,
+            f'{resource_prefix}-access-logs',
+            encryption=s3.BucketEncryption.S3_MANAGED,
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            enforce_ssl=True,
+            removal_policy=RemovalPolicy.DESTROY,
+            versioned=True,
+            auto_delete_objects=True,
+        )
+
+        setup_cdk_asset_trail(self, self.server_access_logs_bucket)
+
         self.pipeline_bucket_name = f'{self.resource_prefix}-{self.git_branch}-code-{self.account}-{self.region}'
         self.pipeline_bucket = s3.Bucket(
             self,
@@ -119,6 +133,8 @@ class PipelineStack(Stack):
             versioned=True,
             enforce_ssl=True,
             auto_delete_objects=True,
+            server_access_logs_bucket=self.server_access_logs_bucket,
+            server_access_logs_prefix=self.pipeline_bucket_name,
         )
         self.pipeline_bucket.grant_read_write(iam.AccountPrincipal(self.account))
 
@@ -133,13 +149,15 @@ class PipelineStack(Stack):
         self.artifact_bucket = s3.Bucket(
             self,
             'pipeline-artifacts-bucket',
-            bucket_name=f'{self.resource_prefix}-{self.git_branch}-artifacts-{self.account}-{self.region}',
+            bucket_name=self.artifact_bucket_name,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             removal_policy=RemovalPolicy.DESTROY,
             versioned=True,
             encryption_key=self.artifact_bucket_key,
             enforce_ssl=True,
             auto_delete_objects=True,
+            server_access_logs_bucket=self.server_access_logs_bucket,
+            server_access_logs_prefix=self.artifact_bucket_name,
         )
 
         if self.source == 'codestar_connection':

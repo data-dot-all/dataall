@@ -1,0 +1,1 @@
+../../backend/dataall/core/environment/cdk/cdk_asset_trail.py
