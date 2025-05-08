@@ -266,119 +266,125 @@ class PipelineStack(Stack):
             assumed_by=iam.ServicePrincipal('codebuild.amazonaws.com'),
         )
 
-        self.baseline_codebuild_policy = iam.ManagedPolicy(
-            self,
-            'BaselineCodeBuildManagedPolicy',
-            managed_policy_name=f'{self.resource_prefix}-{self.git_branch}-baseline-cb-policy',
-            roles=[self.baseline_codebuild_role, self.expanded_codebuild_role],
-            statements=[
+        baseline_policy_statements = [
+            iam.PolicyStatement(
+                actions=[
+                    'sts:AssumeRole',
+                ],
+                resources=['arn:aws:iam::*:role/cdk-hnb659fds-lookup-role*'],
+            ),
+            iam.PolicyStatement(
+                actions=[
+                    'sts:GetServiceBearerToken',
+                ],
+                resources=['*'],
+                conditions={'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}},
+            ),
+            iam.PolicyStatement(
+                actions=[
+                    'ecr:GetAuthorizationToken',
+                    'ec2:DescribePrefixLists',
+                    'ec2:DescribeManagedPrefixLists',
+                    'ec2:DescribeNetworkInterfaces',
+                    'ec2:DescribeSubnets',
+                    'ec2:DescribeSecurityGroups',
+                    'ec2:DescribeDhcpOptions',
+                    'ec2:DescribeVpcs',
+                ],
+                resources=['*'],
+            ),
+            iam.PolicyStatement(
+                actions=[
+                    'ec2:CreateNetworkInterface',
+                    'ec2:DeleteNetworkInterface',
+                ],
+                resources=[
+                    f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                ],
+            ),
+            iam.PolicyStatement(
+                actions=[
+                    'ec2:AssignPrivateIpAddresses',
+                    'ec2:UnassignPrivateIpAddresses',
+                ],
+                resources=[
+                    f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                ],
+                conditions={'StringEquals': {'ec2:Vpc': f'{self.vpc.vpc_id}'}},
+            ),
+            iam.PolicyStatement(
+                actions=[
+                    'codeartifact:GetAuthorizationToken',
+                    'codeartifact:GetRepositoryEndpoint',
+                    'codeartifact:ReadFromRepository',
+                    'ecr:GetDownloadUrlForLayer',
+                    'ecr:BatchGetImage',
+                    'ecr:BatchCheckLayerAvailability',
+                    'ecr:PutImage',
+                    'ecr:InitiateLayerUpload',
+                    'ecr:UploadLayerPart',
+                    'ecr:CompleteLayerUpload',
+                    'ecr:GetDownloadUrlForLayer',
+                    'kms:Decrypt',
+                    'kms:Encrypt',
+                    'kms:GenerateDataKey',
+                    'kms:ReEncrypt*',
+                    'kms:DescribeKey',
+                    'secretsmanager:GetSecretValue',
+                    'secretsmanager:DescribeSecret',
+                    'ssm:GetParametersByPath',
+                    'ssm:GetParameters',
+                    'ssm:GetParameter',
+                    's3:Get*',
+                    's3:Put*',
+                    's3:List*',
+                    'codebuild:CreateReportGroup',
+                    'codebuild:CreateReport',
+                    'codebuild:UpdateReport',
+                    'codebuild:BatchPutTestCases',
+                    'codebuild:BatchPutCodeCoverages',
+                    'ec2:GetManagedPrefixListEntries',
+                    'ec2:CreateNetworkInterfacePermission',
+                    'logs:CreateLogGroup',
+                    'logs:CreateLogStream',
+                    'logs:PutLogEvents',
+                ],
+                resources=[
+                    f'arn:aws:s3:::{self.resource_prefix}*',
+                    f'arn:aws:s3:::{self.resource_prefix}*/*',
+                    f'arn:aws:codebuild:{self.region}:{self.account}:project/*{self.resource_prefix}*',
+                    f'arn:aws:codebuild:{self.region}:{self.account}:report-group/{self.resource_prefix}*',
+                    f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*{self.resource_prefix}*',
+                    f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*',
+                    f'arn:aws:kms:{self.region}:{self.account}:key/*',
+                    f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
+                    f'arn:aws:ssm:*:{self.account}:parameter/*{self.resource_prefix}*',
+                    f'arn:aws:ecr:{self.region}:{self.account}:repository/{self.resource_prefix}*',
+                    f'arn:aws:codeartifact:{self.region}:{self.account}:repository/{self.resource_prefix}*',
+                    f'arn:aws:codeartifact:{self.region}:{self.account}:domain/{self.resource_prefix}*',
+                    f'arn:aws:ec2:{self.region}:{self.account}:prefix-list/*',
+                    f'arn:aws:ec2:{self.region}:{self.account}:network-interface/*',
+                    f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws/codebuild/{self.resource_prefix}*',
+                ],
+            ),
+        ]
+
+        if self.repo_connection_arn:
+            baseline_policy_statements.append(
                 iam.PolicyStatement(
                     actions=[
                         'codestar-connections:UseConnection',
                     ],
                     resources=[self.repo_connection_arn],
                 ),
-                iam.PolicyStatement(
-                    actions=[
-                        'sts:AssumeRole',
-                    ],
-                    resources=['arn:aws:iam::*:role/cdk-hnb659fds-lookup-role*'],
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        'sts:GetServiceBearerToken',
-                    ],
-                    resources=['*'],
-                    conditions={'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}},
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        'ecr:GetAuthorizationToken',
-                        'ec2:DescribePrefixLists',
-                        'ec2:DescribeManagedPrefixLists',
-                        'ec2:DescribeNetworkInterfaces',
-                        'ec2:DescribeSubnets',
-                        'ec2:DescribeSecurityGroups',
-                        'ec2:DescribeDhcpOptions',
-                        'ec2:DescribeVpcs',
-                    ],
-                    resources=['*'],
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        'ec2:CreateNetworkInterface',
-                        'ec2:DeleteNetworkInterface',
-                    ],
-                    resources=[
-                        f'arn:aws:ec2:{self.region}:{self.account}:*/*',
-                    ],
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        'ec2:AssignPrivateIpAddresses',
-                        'ec2:UnassignPrivateIpAddresses',
-                    ],
-                    resources=[
-                        f'arn:aws:ec2:{self.region}:{self.account}:*/*',
-                    ],
-                    conditions={'StringEquals': {'ec2:Vpc': f'{self.vpc.vpc_id}'}},
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        'codeartifact:GetAuthorizationToken',
-                        'codeartifact:GetRepositoryEndpoint',
-                        'codeartifact:ReadFromRepository',
-                        'ecr:GetDownloadUrlForLayer',
-                        'ecr:BatchGetImage',
-                        'ecr:BatchCheckLayerAvailability',
-                        'ecr:PutImage',
-                        'ecr:InitiateLayerUpload',
-                        'ecr:UploadLayerPart',
-                        'ecr:CompleteLayerUpload',
-                        'ecr:GetDownloadUrlForLayer',
-                        'kms:Decrypt',
-                        'kms:Encrypt',
-                        'kms:GenerateDataKey',
-                        'kms:ReEncrypt*',
-                        'kms:DescribeKey',
-                        'secretsmanager:GetSecretValue',
-                        'secretsmanager:DescribeSecret',
-                        'ssm:GetParametersByPath',
-                        'ssm:GetParameters',
-                        'ssm:GetParameter',
-                        's3:Get*',
-                        's3:Put*',
-                        's3:List*',
-                        'codebuild:CreateReportGroup',
-                        'codebuild:CreateReport',
-                        'codebuild:UpdateReport',
-                        'codebuild:BatchPutTestCases',
-                        'codebuild:BatchPutCodeCoverages',
-                        'ec2:GetManagedPrefixListEntries',
-                        'ec2:CreateNetworkInterfacePermission',
-                        'logs:CreateLogGroup',
-                        'logs:CreateLogStream',
-                        'logs:PutLogEvents',
-                    ],
-                    resources=[
-                        f'arn:aws:s3:::{self.resource_prefix}*',
-                        f'arn:aws:s3:::{self.resource_prefix}*/*',
-                        f'arn:aws:codebuild:{self.region}:{self.account}:project/*{self.resource_prefix}*',
-                        f'arn:aws:codebuild:{self.region}:{self.account}:report-group/{self.resource_prefix}*',
-                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*{self.resource_prefix}*',
-                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*',
-                        f'arn:aws:kms:{self.region}:{self.account}:key/*',
-                        f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
-                        f'arn:aws:ssm:*:{self.account}:parameter/*{self.resource_prefix}*',
-                        f'arn:aws:ecr:{self.region}:{self.account}:repository/{self.resource_prefix}*',
-                        f'arn:aws:codeartifact:{self.region}:{self.account}:repository/{self.resource_prefix}*',
-                        f'arn:aws:codeartifact:{self.region}:{self.account}:domain/{self.resource_prefix}*',
-                        f'arn:aws:ec2:{self.region}:{self.account}:prefix-list/*',
-                        f'arn:aws:ec2:{self.region}:{self.account}:network-interface/*',
-                        f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws/codebuild/{self.resource_prefix}*',
-                    ],
-                ),
-            ],
+            )
+
+        self.baseline_codebuild_policy = iam.ManagedPolicy(
+            self,
+            'BaselineCodeBuildManagedPolicy',
+            managed_policy_name=f'{self.resource_prefix}-{self.git_branch}-baseline-cb-policy',
+            roles=[self.baseline_codebuild_role, self.expanded_codebuild_role],
+            statements=baseline_policy_statements,
         )
         self.expanded_codebuild_policy = iam.ManagedPolicy(
             self,
