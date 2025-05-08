@@ -144,13 +144,15 @@ class PipelineStack(Stack):
 
         if self.source == 'codestar_connection':
             source = CodePipelineSource.connection(
-                repo_string=repo_string, branch=self.git_branch, connection_arn=repo_connection_arn
+                repo_string=repo_string, branch=self.git_branch, connection_arn=repo_connection_arn,
+                code_build_clone_output = True
             )
 
         else:
             source = CodePipelineSource.code_commit(
                 repository=codecommit.Repository.from_repository_name(self, 'sourcerepo', repository_name='dataall'),
                 branch=self.git_branch,
+                code_build_clone_output=True
             )
 
         self.pipeline = pipelines.CodePipeline(
