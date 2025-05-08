@@ -6,7 +6,9 @@ from warnings import warn
 from dataall.base.aws.iam import IAM
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.db.exceptions import AWSServiceQuotaExceeded
-from dataall.core.environment.db.environment_models import Environment
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
+from dataall.core.environment.db.environment_models import Environment, ConsumptionRole
+from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.s3_datasets.db.dataset_models import DatasetBucket
 from dataall.modules.s3_datasets_shares.aws.kms_client import (
@@ -74,6 +76,15 @@ class S3BucketShareManager:
         """
         logger.info(f'Check target role {self.target_requester_IAMRoleName} access policy')
 
+        is_managed_role: bool = True
+        if self.share.principalType == PrincipalType.ConsumptionRole.value:
+            # When principalType is a consumptionRole type then principalId contains the uri of the consumption role
+            consumption_role: ConsumptionRole = EnvironmentRepository.get_consumption_role(
+                self.session, self.share.principalId
+            )
+            if consumption_role.dataallManaged == PolicyManagementOptions.EXTERNALLY_MANAGED.value:
+                is_managed_role = False
+
         key_alias = f'alias/{self.target_bucket.KmsAlias}'
         kms_client = KmsClient(self.source_account_id, self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
@@ -113,13 +124,14 @@ class S3BucketShareManager:
                 self.bucket_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
                 return
 
-        unattached_policies: List[str] = share_policy_service.get_policies_unattached_to_role()
-        if len(unattached_policies) > 0:
-            logger.info(
-                f'IAM Policies {unattached_policies} exists but are not attached to role {self.share.principalRoleName}'
-            )
-            self.bucket_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy attached', unattached_policies))
-            return
+        if is_managed_role:
+            unattached_policies: List[str] = share_policy_service.get_policies_unattached_to_role()
+            if len(unattached_policies) > 0:
+                logger.info(
+                    f'IAM Policies {unattached_policies} exists but are not attached to role {self.share.principalRoleName}'
+                )
+                self.bucket_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy attached', unattached_policies))
+                return
 
         s3_target_resources = [f'arn:aws:s3:::{self.bucket_name}', f'arn:aws:s3:::{self.bucket_name}/*']
 
@@ -304,7 +316,7 @@ class S3BucketShareManager:
                 consumption_role = EnvironmentService.get_consumption_role(
                     session=self.session, uri=self.share.principalId
                 )
-                if consumption_role.dataallManaged:
+                if consumption_role.dataallManaged == PolicyManagementOptions.FULLY_MANAGED.value:
                     share_managed_policies = share_policy_service.get_managed_policies()
                     share_policy_service.attach_policies(share_managed_policies)
 

@@ -720,7 +720,9 @@ export const RequestAccessModal = (props) => {
                       </Box>
                     )}
                     {!values.consumptionRole ||
-                    values.consumptionRole.dataallManaged ||
+                    values.consumptionRole.dataallManaged === 'Fully-Managed' ||
+                    values.consumptionRole.dataallManaged ===
+                      'Externally-Managed' ||
                     isSharePolicyAttached ? (
                       <Box />
                     ) : (
@@ -742,25 +744,24 @@ export const RequestAccessModal = (props) => {
                                 color="textSecondary"
                                 component="p"
                                 variant="caption"
-                              ></Typography>
-                              {values.consumptionRole &&
-                              !(
-                                values.consumptionRole.dataallManaged ||
-                                isSharePolicyAttached ||
-                                values.attachMissingPolicies
-                              ) ? (
-                                <FormHelperText error>
-                                  Selected consumption role is managed by
-                                  customer, but the share policy{' '}
-                                  <strong>{unAttachedPolicyNames}</strong> is
-                                  not attached.
-                                  <br />
-                                  Please attach it or let Data.all attach it for
-                                  you.
-                                </FormHelperText>
-                              ) : (
-                                ''
-                              )}
+                              >
+                                {values.consumptionRole &&
+                                values.consumptionRole.dataallManaged ===
+                                  'Partially-Managed' &&
+                                !isSharePolicyAttached ? (
+                                  <FormHelperText error>
+                                    Selected consumption role is partially
+                                    managed by customer and the share policy{' '}
+                                    <strong>{unAttachedPolicyNames}</strong> is
+                                    not attached.
+                                    <br />
+                                    Please attach it or let Data.all attach it
+                                    for you.
+                                  </FormHelperText>
+                                ) : (
+                                  ''
+                                )}
+                              </Typography>
                             </div>
                           }
                         />

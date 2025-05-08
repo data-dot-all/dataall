@@ -7,6 +7,7 @@ from sqlalchemy.orm import query_expression
 from dataall.base.db import Resource, Base, utils
 
 from dataall.core.environment.api.enums import EnvironmentPermission, EnvironmentType
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 from dataall.core.metadata_manager import MetadataFormEntityManager, MetadataFormEntity, MetadataFormEntityTypes
 
 
@@ -107,7 +108,7 @@ class ConsumptionRole(Base):
     groupUri = Column(String, nullable=False)
     IAMRoleName = Column(String, nullable=False)
     IAMRoleArn = Column(String, nullable=False)
-    dataallManaged = Column(Boolean, nullable=False, default=True)
+    dataallManaged = Column(String, nullable=False)
     created = Column(DateTime, default=datetime.datetime.now)
     updated = Column(DateTime, onupdate=datetime.datetime.now)
     deleted = Column(DateTime)

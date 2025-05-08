@@ -8,7 +8,7 @@ from dataall.core.environment.api.resolvers import (
     resolve_user_role,
 )
 from dataall.core.environment.api.enums import EnvironmentPermission
-
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 
 EnvironmentUserPermission = gql.ObjectType(
     name='EnvironmentUserPermission',
@@ -163,7 +163,7 @@ RoleManagedPolicy = gql.ObjectType(
         gql.Field(name='policy_name', type=gql.String),
         gql.Field(name='policy_type', type=gql.String),
         gql.Field(name='exists', type=gql.Boolean),
-        gql.Field(name='attached', type=gql.Boolean),
+        gql.Field(name='attached', type=gql.String),
     ],
 )
 
@@ -176,7 +176,7 @@ ConsumptionRole = gql.ObjectType(
         gql.Field(name='environmentUri', type=gql.String),
         gql.Field(name='IAMRoleArn', type=gql.String),
         gql.Field(name='IAMRoleName', type=gql.String),
-        gql.Field(name='dataallManaged', type=gql.Boolean),
+        gql.Field(name='dataallManaged', type=gql.NonNullableType(PolicyManagementOptions.toGraphQLEnum())),
         gql.Field(name='created', type=gql.String),
         gql.Field(name='updated', type=gql.String),
         gql.Field(name='deleted', type=gql.String),
