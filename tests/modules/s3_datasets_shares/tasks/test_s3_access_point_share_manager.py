@@ -9,7 +9,7 @@ from typing import Callable
 from assertpy import assert_that
 
 from dataall.core.groups.db.group_models import Group
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionRole
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionPrincipal
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.s3_datasets_shares.aws.s3_client import S3ControlClient
 from dataall.modules.shares_base.db.share_object_models import ShareObject, ShareObjectItem

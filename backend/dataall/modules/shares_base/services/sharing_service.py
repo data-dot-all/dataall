@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 from dataall.core.resource_lock.db.resource_lock_repositories import ResourceLockRepository
 from dataall.base.db import Engine
-from dataall.core.environment.db.environment_models import ConsumptionRole, Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import ConsumptionPrincipal, Environment, EnvironmentGroup
 from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
     ShareItemSM,
@@ -69,7 +69,7 @@ class SharingService:
 
             resources = [(share_data.dataset.datasetUri, share_data.dataset.__tablename__)]
             resources.append(
-                (share_data.share.principalId, ConsumptionRole.__tablename__)
+                (share_data.share.principalId, ConsumptionPrincipal.__tablename__)
                 if share_data.share.principalType == PrincipalType.ConsumptionRole.value
                 else (
                     f'{share_data.share.principalId}-{share_data.share.environmentUri}',
@@ -166,7 +166,7 @@ class SharingService:
 
             resources = [(share_data.dataset.datasetUri, share_data.dataset.__tablename__)]
             resources.append(
-                (share_data.share.principalId, ConsumptionRole.__tablename__)
+                (share_data.share.principalId, ConsumptionPrincipal.__tablename__)
                 if share_data.share.principalType == PrincipalType.ConsumptionRole.value
                 else (
                     f'{share_data.share.principalId}-{share_data.share.environmentUri}',
@@ -301,7 +301,7 @@ class SharingService:
             )
             resources = [(share_data.dataset.datasetUri, share_data.dataset.__tablename__)]
             resources.append(
-                (share_data.share.principalId, ConsumptionRole.__tablename__)
+                (share_data.share.principalId, ConsumptionPrincipal.__tablename__)
                 if share_data.share.principalType == PrincipalType.ConsumptionRole.value
                 else (
                     f'{share_data.share.principalId}-{share_data.share.environmentUri}',

@@ -9,11 +9,11 @@ export const addConsumptionRoleToEnvironment = (input) => ({
       $input: AddConsumptionRoleToEnvironmentInput!
     ) {
       addConsumptionRoleToEnvironment(input: $input) {
-        consumptionRoleUri
-        consumptionRoleName
+        consumptionPrincipalUri
+        consumptionPrincipalName
         environmentUri
         groupUri
-        IAMRoleArn
+        IAMPrincipalArn
       }
     }
   `

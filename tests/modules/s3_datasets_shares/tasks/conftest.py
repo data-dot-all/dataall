@@ -1,7 +1,7 @@
 import pytest
 
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionRole
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionPrincipal
 from dataall.modules.shares_base.services.shares_enums import (
     ShareableType,
     ShareItemStatus,
@@ -132,20 +132,20 @@ def share(db):
         dataset: S3Dataset,
         environment: Environment,
         env_group: EnvironmentGroup,
-        consumption_role: ConsumptionRole = None,
+        consumption_role: ConsumptionPrincipal = None,
     ) -> ShareObject:
         with db.scoped_session() as session:
             share = ShareObject(
                 datasetUri=dataset.datasetUri,
                 environmentUri=environment.environmentUri,
                 owner='bob',
-                principalId=environment.SamlGroupName if not consumption_role else consumption_role.consumptionRoleUri,
+                principalId=environment.SamlGroupName if not consumption_role else consumption_role.consumptionPrincipalUri,
                 principalType=PrincipalType.Group.value
                 if not consumption_role
                 else PrincipalType.ConsumptionRole.value,
                 principalRoleName=env_group.environmentIAMRoleName
                 if not consumption_role
-                else consumption_role.IAMRoleName,
+                else consumption_role.IAMPrincipalName,
                 status=ShareObjectStatus.Approved.value,
                 groupUri=env_group.groupUri,
                 permissions=[ShareObjectDataPermission.Read.value],

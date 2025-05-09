@@ -295,7 +295,10 @@ TeamRow.propTypes = {
   isTeamEditModalOpenId: PropTypes.string
 };
 
-export const IAMRolePolicyDataGridCell = ({ environmentUri, IAMRoleName }) => {
+export const IAMPrincipalPolicyDataGridCell = ({
+  environmentUri,
+  IAMPrincipalName
+}) => {
   const [isLoading, setLoading] = useState(true);
   const [managedPolicyDetails, setManagedPolicyDetails] = useState(null);
   const dispatch = useDispatch();
@@ -317,7 +320,7 @@ export const IAMRolePolicyDataGridCell = ({ environmentUri, IAMRoleName }) => {
       const response = await client.query(
         getConsumptionRolePolicies({
           environmentUri: environmentUri,
-          IAMRoleName: IAMRoleName
+          IAMRoleName: IAMPrincipalName
         })
       );
       if (!response.errors) {
@@ -391,9 +394,9 @@ export const IAMRolePolicyDataGridCell = ({ environmentUri, IAMRoleName }) => {
   );
 };
 
-IAMRolePolicyDataGridCell.propTypes = {
+IAMPrincipalPolicyDataGridCell.propTypes = {
   environmentUri: PropTypes.any,
-  IAMRoleName: PropTypes.any
+  IAMPrincipalName: PropTypes.any
 };
 
 export const EnvironmentTeams = ({ environment }) => {
@@ -493,12 +496,12 @@ export const EnvironmentTeams = ({ environment }) => {
     }
   }, [client, dispatch, environment, filterRoles]);
 
-  const removeConsumptionRole = async (consumptionGroupUri) => {
+  const removeConsumptionRole = async (consumptionPrincipalUri) => {
     try {
       const response = await client.mutate(
         removeConsumptionRoleFromEnvironment({
           environmentUri: environment.environmentUri,
-          consumptionRoleUri: consumptionGroupUri
+          consumptionPrincipalUri: consumptionPrincipalUri
         })
       );
       if (!response.errors) {
@@ -522,16 +525,16 @@ export const EnvironmentTeams = ({ environment }) => {
     const response = await client.mutate(
       updateConsumptionRole({
         environmentUri: environment.environmentUri,
-        consumptionRoleUri: newRow.consumptionRoleUri,
+        consumptionPrincipalUri: newRow.consumptionPrincipalUri,
         input: {
           groupUri: newRow.groupUri,
-          consumptionRoleName: newRow.consumptionRoleName,
+          consumptionPrincipalName: newRow.consumptionPrincipalName,
           dataallManaged: newRow.dataallManaged
         }
       })
     );
     if (!response.errors) {
-      enqueueSnackbar('Consumption Role was updated', {
+      enqueueSnackbar('Consumption Principal was updated', {
         anchorOrigin: {
           horizontal: 'right',
           vertical: 'top'
@@ -849,24 +852,24 @@ export const EnvironmentTeams = ({ environment }) => {
             <Box sx={{ minWidth: 600 }}>
               <DataGrid
                 autoHeight
-                getRowId={(node) => node.consumptionRoleUri}
+                getRowId={(node) => node.consumptionPrincipalUri}
                 rows={roles.nodes}
                 columns={[
                   { field: 'id', hide: true },
                   {
-                    field: 'consumptionRoleName',
+                    field: 'consumptionPrincipalName',
                     headerName: 'Name',
                     flex: 0.5,
                     editable: true
                   },
                   {
-                    field: 'IAMRoleArn',
-                    headerName: 'IAM Role',
+                    field: 'IAMPrincipalArn',
+                    headerName: 'IAM Principal',
                     flex: 1
                   },
                   {
                     field: 'groupUri',
-                    headerName: 'Role Owner',
+                    headerName: 'Principal Owner',
                     flex: 0.5,
                     editable: true,
                     type: 'singleSelect',
@@ -910,9 +913,9 @@ export const EnvironmentTeams = ({ environment }) => {
                     headerName: 'IAM Policies',
                     flex: 0.5,
                     renderCell: (params: GridRenderCellParams<any, Date>) => (
-                      <IAMRolePolicyDataGridCell
+                      <IAMPrincipalPolicyDataGridCell
                         environmentUri={params.row.environmentUri}
-                        IAMRoleName={params.row.IAMRoleArn.split('/').pop()}
+                        IAMPrincipalName={params.row.IAMPrincipalArn.split('/').pop()}
                       />
                     )
                   },
@@ -923,7 +926,7 @@ export const EnvironmentTeams = ({ environment }) => {
                     type: 'actions',
                     cellClassName: 'actions',
                     getActions: ({ id, ...props }) => {
-                      const name = props.row.consumptionRoleName;
+                      const name = props.row.consumptionPrincipalName;
                       const isInEditMode =
                         rowModesModel[id]?.mode === GridRowModes.Edit;
 

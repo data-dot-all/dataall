@@ -23,12 +23,12 @@ export const listEnvironmentConsumptionRoles = ({
         hasNext
         hasPrevious
         nodes {
-          consumptionRoleUri
-          consumptionRoleName
+          consumptionPrincipalUri
+          consumptionPrincipalName
           environmentUri
           groupUri
-          IAMRoleArn
-          IAMRoleName
+          IAMPrincipalArn
+          IAMPrincipalName
           dataallManaged
         }
       }

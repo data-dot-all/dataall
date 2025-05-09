@@ -2,20 +2,20 @@ import { gql } from 'apollo-boost';
 
 export const removeConsumptionRoleFromEnvironment = ({
   environmentUri,
-  consumptionRoleUri
+  consumptionPrincipalUri
 }) => ({
   variables: {
     environmentUri,
-    consumptionRoleUri
+    consumptionPrincipalUri
   },
   mutation: gql`
     mutation removeConsumptionRoleFromEnvironment(
       $environmentUri: String!
-      $consumptionRoleUri: String!
+      $consumptionPrincipalUri: String!
     ) {
       removeConsumptionRoleFromEnvironment(
         environmentUri: $environmentUri
-        consumptionRoleUri: $consumptionRoleUri
+        consumptionRoleUri: $consumptionPrincipalUri
       )
     }
   `

@@ -11,7 +11,7 @@ from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
-from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
+from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionPrincipal
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.tasks.service_handlers import Worker
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
@@ -764,10 +764,10 @@ class ShareObjectService:
         session, group_uri, environment_uri, principal_id, principal_role_name, principal_type
     ):
         if principal_type == PrincipalType.ConsumptionRole.value:
-            consumption_role: ConsumptionRole = EnvironmentService.get_environment_consumption_role(
-                session, principal_id, environment_uri
-            )
-            return consumption_role.IAMRoleName
+            consumption_role: ConsumptionPrincipal = EnvironmentService.get_environment_consumption_role(session,
+                                                                                                         principal_id,
+                                                                                                         environment_uri)
+            return consumption_role.IAMPrincipalName
         elif principal_type == PrincipalType.Group.value:
             env_group: EnvironmentGroup = EnvironmentService.get_environment_group(session, group_uri, environment_uri)
             return env_group.environmentIAMRoleName

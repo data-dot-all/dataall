@@ -13,12 +13,12 @@ export const listAllConsumptionRoles = ({ filter }) => ({
         hasNext
         hasPrevious
         nodes {
-          consumptionRoleUri
-          consumptionRoleName
+          consumptionPrincipalUri
+          consumptionPrincipalName
           environmentUri
           groupUri
-          IAMRoleArn
-          IAMRoleName
+          IAMPrincipalArn
+          IAMPrincipalName
         }
       }
     }

@@ -2,7 +2,7 @@ from dataall.base.db.exceptions import UnauthorizedOperation, InvalidInput
 from dataall.base.aws.iam import IAM
 from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
+from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionPrincipal
 from dataall.core.environment.services.managed_iam_policies import PolicyManager
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.shares_base.services.share_object_service import SharesValidatorInterface
@@ -102,10 +102,10 @@ class S3ShareValidator(SharesValidatorInterface):
         session, environment, principal_type: str, principal_id: str, group_uri: str, attachMissingPolicies: bool
     ):
         if principal_type == PrincipalType.ConsumptionRole.value:
-            consumption_role: ConsumptionRole = EnvironmentService.get_environment_consumption_role(
-                session, principal_id, environment.environmentUri
-            )
-            principal_role_name = consumption_role.IAMRoleName
+            consumption_role: ConsumptionPrincipal = EnvironmentService.get_environment_consumption_role(session,
+                                                                                                         principal_id,
+                                                                                                         environment.environmentUri)
+            principal_role_name = consumption_role.IAMPrincipalName
             managed = consumption_role.dataallManaged == PolicyManagementOptions.FULLY_MANAGED.value
 
         else:
@@ -125,14 +125,10 @@ class S3ShareValidator(SharesValidatorInterface):
             )
 
         log.info('Verifying data.all managed share IAM policy is attached to IAM role...')
-        share_policy_manager = PolicyManager(
-            session=session,
-            role_name=principal_role_name,
-            environmentUri=environment.environmentUri,
-            account=environment.AwsAccountId,
-            region=environment.region,
-            resource_prefix=environment.resourcePrefix,
-        )
+        share_policy_manager = PolicyManager(session=session, account=environment.AwsAccountId,
+                                             region=environment.region, environmentUri=environment.environmentUri,
+                                             resource_prefix=environment.resourcePrefix,
+                                             principal_name=principal_role_name)
         for policy_manager in [
             Policy for Policy in share_policy_manager.initializedPolicies if Policy.policy_type == 'SharePolicy'
         ]:

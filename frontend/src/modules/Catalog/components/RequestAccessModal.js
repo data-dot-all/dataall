@@ -149,9 +149,9 @@ export const RequestAccessModal = (props) => {
       if (!response.errors) {
         setRoleOptions(
           response.data.listEnvironmentConsumptionRoles.nodes.map((g) => ({
-            value: g.consumptionRoleUri,
-            label: [g.consumptionRoleName, ' [', g.IAMRoleArn, ']'].join(''),
-            IAMRoleName: g.IAMRoleName,
+            value: g.consumptionPrincipalUri,
+            label: [g.consumptionPrincipalName, ' [', g.IAMPrincipalArn, ']'].join(''),
+            IAMPrincipalName: g.IAMPrincipalName,
             dataallManaged: g.dataallManaged
           }))
         );
@@ -165,13 +165,13 @@ export const RequestAccessModal = (props) => {
     }
   };
 
-  const fetchRolePolicies = async (environmentUri, IAMRoleName) => {
+  const fetchRolePolicies = async (environmentUri, IAMPrincipalName) => {
     setLoadingPolicies(true);
     try {
       const response = await client.query(
         getConsumptionRolePolicies({
           environmentUri,
-          IAMRoleName
+          IAMPrincipalName
         })
       );
       if (!response.errors) {
@@ -258,9 +258,9 @@ export const RequestAccessModal = (props) => {
   };
 
   const formRequestObject = (values) => {
-    let type = values.consumptionRole ? 'ConsumptionRole' : 'Group';
-    let principal = values.consumptionRole.value
-      ? values.consumptionRole.value
+    let type = values.consumptionPrincipal ? 'ConsumptionRole' : 'Group';
+    let principal = values.consumptionPrincipal.value
+      ? values.consumptionPrincipal.value
       : values.groupUri;
 
     let inputObject = {
@@ -375,7 +375,7 @@ export const RequestAccessModal = (props) => {
                   '*Environment is required'
                 ),
                 groupUri: Yup.string().required('*Team is required'),
-                consumptionRole: Yup.object(),
+                consumptionPrincipal: Yup.object(),
                 comment: Yup.string().max(5000),
                 shareExpirationPeriod:
                   datasetExpirationDetails.enableExpiration &&
@@ -475,7 +475,7 @@ export const RequestAccessModal = (props) => {
                             options={environmentOptions.map((option) => option)}
                             onChange={(event, value) => {
                               setFieldValue('groupUri', '');
-                              setFieldValue('consumptionRole', '');
+                              setFieldValue('consumptionPrincipal', '');
                               if (value && value.environmentUri) {
                                 setFieldValue(
                                   'environmentUri',
@@ -523,7 +523,7 @@ export const RequestAccessModal = (props) => {
                                   disablePortal
                                   options={groupOptions.map((option) => option)}
                                   onChange={(event, value) => {
-                                    setFieldValue('consumptionRole', '');
+                                    setFieldValue('consumptionPrincipal', '');
                                     if (value && value.value) {
                                       setFieldValue('groupUri', value.value);
                                       fetchRoles(
@@ -602,16 +602,16 @@ export const RequestAccessModal = (props) => {
                             <Box>
                               {roleOptions.length > 0 ? (
                                 <Autocomplete
-                                  id="consumptionRole"
+                                  id="consumptionPrincipal"
                                   disablePortal
                                   options={roleOptions.map((option) => option)}
                                   getOptionLabel={(option) => option.label}
                                   onChange={(event, value) => {
-                                    setFieldValue('consumptionRole', value);
-                                    if (value && value.IAMRoleName) {
+                                    setFieldValue('consumptionPrincipal', value);
+                                    if (value && value.IAMPrincipalName) {
                                       fetchRolePolicies(
                                         values.environmentUri,
-                                        value.IAMRoleName
+                                        value.IAMPrincipalName
                                       ).catch((e) =>
                                         dispatch({
                                           type: SET_ERROR,
@@ -619,7 +619,7 @@ export const RequestAccessModal = (props) => {
                                         })
                                       );
                                     } else {
-                                      setFieldValue('consumptionRole', '');
+                                      setFieldValue('consumptionPrincipal', '');
                                       setUnAttachedPolicyNames('');
                                     }
                                   }}
@@ -628,14 +628,14 @@ export const RequestAccessModal = (props) => {
                                       {...params}
                                       fullWidth
                                       error={Boolean(
-                                        touched.consumptionRole &&
-                                          errors.consumptionRole
+                                        touched.consumptionPrincipal &&
+                                          errors.consumptionPrincipal
                                       )}
                                       helperText={
-                                        touched.consumptionRole &&
-                                        errors.consumptionRole
+                                        touched.consumptionPrincipal &&
+                                        errors.consumptionPrincipal
                                       }
-                                      label="Consumption Role (optional)"
+                                      label="Consumption Principal (optional)"
                                       onChange={handleChange}
                                       variant="outlined"
                                     />
@@ -644,17 +644,17 @@ export const RequestAccessModal = (props) => {
                               ) : (
                                 <TextField
                                   error={Boolean(
-                                    touched.consumptionRole &&
-                                      errors.consumptionRole
+                                    touched.consumptionPrincipal &&
+                                      errors.consumptionPrincipal
                                   )}
                                   helperText={
-                                    touched.consumptionRole &&
-                                    errors.consumptionRole
+                                    touched.consumptionPrincipal &&
+                                    errors.consumptionPrincipal
                                   }
                                   fullWidth
                                   disabled
-                                  label="Consumption Role (optional)"
-                                  value="No additional consumption roles owned by this Team in this Environment."
+                                  label="Consumption Principal (optional)"
+                                  value="No additional consumption pricipals are owned by this Team in this Environment."
                                   variant="outlined"
                                 />
                               )}
@@ -719,9 +719,9 @@ export const RequestAccessModal = (props) => {
                         </CardContent>
                       </Box>
                     )}
-                    {!values.consumptionRole ||
-                    values.consumptionRole.dataallManaged === 'Fully-Managed' ||
-                    values.consumptionRole.dataallManaged ===
+                    {!values.consumptionPrincipal ||
+                    values.consumptionPrincipal.dataallManaged === 'Fully-Managed' ||
+                    values.consumptionPrincipal.dataallManaged ===
                       'Externally-Managed' ||
                     isSharePolicyAttached ? (
                       <Box />
@@ -745,8 +745,8 @@ export const RequestAccessModal = (props) => {
                                 component="p"
                                 variant="caption"
                               >
-                                {values.consumptionRole &&
-                                values.consumptionRole.dataallManaged ===
+                                {values.consumptionPrincipal &&
+                                values.consumptionPrincipal.dataallManaged ===
                                   'Partially-Managed' &&
                                 !isSharePolicyAttached ? (
                                   <FormHelperText error>
@@ -781,9 +781,9 @@ export const RequestAccessModal = (props) => {
                         disabled={
                           isSubmitting ||
                           loading ||
-                          (values.consumptionRole &&
+                          (values.consumptionPrincipal &&
                             !(
-                              values.consumptionRole.dataallManaged ||
+                              values.consumptionPrincipal.dataallManaged ||
                               isSharePolicyAttached ||
                               values.attachMissingPolicies
                             ))

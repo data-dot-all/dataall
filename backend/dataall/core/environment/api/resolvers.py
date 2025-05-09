@@ -87,18 +87,18 @@ def remove_group(context: Context, source, environmentUri=None, groupUri=None):
     return environment
 
 
-def remove_consumption_role(context: Context, source, environmentUri=None, consumptionRoleUri=None):
+def remove_consumption_role(context: Context, source, environmentUri=None, consumptionPrincipalUri=None):
     status = EnvironmentService.remove_consumption_role(
-        uri=consumptionRoleUri,
+        uri=consumptionPrincipalUri,
         env_uri=environmentUri,
     )
 
     return status
 
 
-def update_consumption_role(context: Context, source, environmentUri=None, consumptionRoleUri=None, input={}):
+def update_consumption_role(context: Context, source, environmentUri=None, consumptionPrincipalUri=None, input={}):
     consumption_role = EnvironmentService.update_consumption_role(
-        uri=consumptionRoleUri,
+        uri=consumptionPrincipalUri,
         env_uri=environmentUri,
         input=input,
     )

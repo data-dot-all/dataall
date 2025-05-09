@@ -1,6 +1,6 @@
 from dataall.base.api import gql
 from dataall.base.api.constants import GraphQLEnumMapper, SortDirection
-from dataall.core.environment.db.environment_enums import PolicyManagementOptions
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions, ConsumptionPrincipalType
 
 AwsEnvironmentInput = gql.InputType(
     name='AwsEnvironmentInput',
@@ -97,9 +97,9 @@ InviteGroupOnEnvironmentInput = gql.InputType(
 AddConsumptionRoleToEnvironmentInput = gql.InputType(
     name='AddConsumptionRoleToEnvironmentInput',
     arguments=[
-        gql.Argument('consumptionRoleName', gql.NonNullableType(gql.String)),
+        gql.Argument('consumptionPrincipalName', gql.NonNullableType(gql.String)),
         gql.Argument('groupUri', gql.NonNullableType(gql.String)),
-        gql.Argument('IAMRoleArn', gql.NonNullableType(gql.String)),
+        gql.Argument('IAMPrincipalArn', gql.NonNullableType(gql.String)),
         gql.Argument('environmentUri', gql.NonNullableType(gql.String)),
         gql.Argument('dataallManaged', gql.NonNullableType(PolicyManagementOptions.toGraphQLEnum())),
     ],
@@ -118,7 +118,7 @@ ConsumptionRoleFilter = gql.InputType(
 UpdateConsumptionRoleInput = gql.InputType(
     name='UpdateConsumptionRoleInput',
     arguments=[
-        gql.Argument('consumptionRoleName', gql.String),
+        gql.Argument('consumptionPrincipalName', gql.String),
         gql.Argument('groupUri', gql.String),
         gql.Argument('dataallManaged', gql.NonNullableType(PolicyManagementOptions.toGraphQLEnum())),
     ],

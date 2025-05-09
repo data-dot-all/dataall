@@ -10,7 +10,7 @@ from assertpy import assert_that
 from dataall.base.utils.expiration_util import ExpirationUtils
 from dataall.base.utils.naming_convention import NamingConventionPattern, NamingConventionService
 from dataall.core.environment.db.environment_enums import PolicyManagementOptions
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionRole
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionPrincipal
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.shares_base.services.shares_enums import ShareableType, PrincipalType, ShareObjectDataPermission
@@ -1541,13 +1541,13 @@ def test_create_share_object_share_policy_not_attached_attachMissingPolicies_not
     )
     mocker.patch('dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern', return_value=['policy-0'])
 
-    consumption_role = MagicMock(spec_set=ConsumptionRole)
-    consumption_role.IAMRoleName = 'randomName'
-    consumption_role.IAMRoleArn = 'randomArn'
-    consumption_role.dataallManaged = PolicyManagementOptions.PARTIALLY_MANAGED.value
+    consumption_principal = MagicMock(spec_set=ConsumptionPrincipal)
+    consumption_principal.IAMPrincipalName = 'randomName'
+    consumption_principal.IAMPrincipalArn = 'randomArn'
+    consumption_principal.dataallManaged = PolicyManagementOptions.PARTIALLY_MANAGED.value
     mocker.patch(
         'dataall.core.environment.services.environment_service.EnvironmentService.get_environment_consumption_role',
-        return_value=consumption_role,
+        return_value=consumption_principal,
     )
     create_share_object_response = create_share_object(
         mocker=mocker,
@@ -1558,7 +1558,7 @@ def test_create_share_object_share_policy_not_attached_attachMissingPolicies_not
         environmentUri=env2.environmentUri,
         datasetUri=dataset1.datasetUri,
         attachMissingPolicies=False,
-        principalId=consumption_role.IAMRoleName,
+        principalId=consumption_principal.IAMPrincipalName,
         principalType=PrincipalType.ConsumptionRole.value,
     )
 
@@ -1590,13 +1590,13 @@ def test_create_share_object_share_policy_not_attached_attachMissingPolicies_ful
     )
     mocker.patch('dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern', return_value=['policy-0'])
 
-    consumption_role = MagicMock(spec_set=ConsumptionRole)
-    consumption_role.IAMRoleName = 'randomName'
-    consumption_role.IAMRoleArn = 'randomArn'
-    consumption_role.dataallManaged = PolicyManagementOptions.FULLY_MANAGED.value
+    consumption_principal = MagicMock(spec_set=ConsumptionPrincipal)
+    consumption_principal.IAMPrincipalName = 'randomName'
+    consumption_principal.IAMPrincipalArn = 'randomArn'
+    consumption_principal.dataallManaged = PolicyManagementOptions.FULLY_MANAGED.value
     mocker.patch(
         'dataall.core.environment.services.environment_service.EnvironmentService.get_environment_consumption_role',
-        return_value=consumption_role,
+        return_value=consumption_principal,
     )
     create_share_object_response = create_share_object(
         mocker=mocker,
@@ -1607,7 +1607,7 @@ def test_create_share_object_share_policy_not_attached_attachMissingPolicies_ful
         environmentUri=env2.environmentUri,
         datasetUri=dataset1.datasetUri,
         attachMissingPolicies=False,
-        principalId=consumption_role.IAMRoleName,
+        principalId=consumption_principal.IAMPrincipalName,
         principalType=PrincipalType.ConsumptionRole.value,
     )
 

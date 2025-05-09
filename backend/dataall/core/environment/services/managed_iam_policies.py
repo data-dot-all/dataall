@@ -95,9 +95,9 @@ class ManagedPolicy(ABC):
 
 
 class PolicyManager(object):
-    def __init__(self, session, account, region, environmentUri, resource_prefix, role_name):
+    def __init__(self, session, account, region, environmentUri, resource_prefix, principal_name):
         self.session = session
-        self.role_name = role_name
+        self.principal_name = principal_name
         self.account = account
         self.region = region
         self.environmentUri = environmentUri
@@ -108,7 +108,7 @@ class PolicyManager(object):
 
     def _initialize_policy(self, managedPolicy):
         return managedPolicy(
-            role_name=self.role_name,
+            role_name=self.principal_name,
             account=self.account,
             region=self.region,
             environmentUri=self.environmentUri,
@@ -136,7 +136,7 @@ class PolicyManager(object):
                     IAM.attach_role_policy(
                         account_id=self.account,
                         region=self.region,
-                        role_name=self.role_name,
+                        role_name=self.principal_name,
                         policy_arn=f'arn:aws:iam::{self.account}:policy/{policy_name}',
                     )
             except Exception as e:
@@ -165,7 +165,7 @@ class PolicyManager(object):
                         IAM.detach_policy_from_role(
                             account_id=self.account,
                             region=self.region,
-                            role_name=self.role_name,
+                            role_name=self.principal_name,
                             policy_name=policy_name,
                         )
                     if policy_manager.check_if_policy_exists(policy_name=policy_name):
@@ -198,7 +198,7 @@ class PolicyManager(object):
             # Check if the role_name is registered as a consumption role.
             # If its a consumption role with a "Externally Managed" policy management then 'attached' will be marked as 'N/A'
             externally_managed_role: bool = False
-            role_arn = f'arn:aws:iam::{self.account}:role/{self.role_name}'
+            role_arn = f'arn:aws:iam::{self.account}:role/{self.principal_name}'
             consumption_role_details = EnvironmentRepository.find_consumption_roles_by_IAMArn(
                 session=self.session, uri=self.environmentUri, arn=role_arn
             )
@@ -218,5 +218,5 @@ class PolicyManager(object):
                     else policy_manager.check_if_policy_attached(policy_name=policy_name),
                 }
                 all_policies.append(policy_dict)
-        logger.info(f'All policies currently added to role: {self.role_name} are: {str(all_policies)}')
+        logger.info(f'All policies currently added to role: {self.principal_name} are: {str(all_policies)}')
         return all_policies

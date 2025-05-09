@@ -13,11 +13,11 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 
 from dataall.core.environment.db.environment_enums import PolicyManagementOptions
-from dataall.core.environment.db.environment_models import ConsumptionRole
+from dataall.core.environment.db.environment_models import ConsumptionPrincipal
 
 # revision identifiers, used by Alembic.
 revision = '77c3f1b2bec8'
-down_revision = '5c5e78526cae'
+down_revision = '89c3bfe59cad'
 branch_labels = None
 depends_on = None
 
@@ -31,7 +31,7 @@ def get_session():
 def upgrade():
     # Update the column type to String and also remove the DEFAULT True
     op.alter_column(
-        table_name='consumptionrole',
+        table_name='consumptionprincipals',
         column_name='dataallManaged',
         nullable=False,
         existing_type=sa.Boolean(),
@@ -42,7 +42,7 @@ def upgrade():
     session = get_session()
 
     # For all consumption roles, set the dataallManaged column value with the PolicyManagementOptions types
-    consumption_roles: List[ConsumptionRole] = session.query(ConsumptionRole).all()
+    consumption_roles: List[ConsumptionPrincipal] = session.query(ConsumptionPrincipal).all()
     for consumption_role in consumption_roles:
         if consumption_role.dataallManaged == 'true':
             consumption_role.dataallManaged = PolicyManagementOptions.FULLY_MANAGED.value
@@ -54,26 +54,26 @@ def upgrade():
 
 def downgrade():
     session = get_session()
-    consumption_roles: List[ConsumptionRole] = session.query(ConsumptionRole).all()
+    consumption_roles: List[ConsumptionPrincipal] = session.query(ConsumptionPrincipal).all()
     # For each consumption role, get the policy management options and set value to True if FullyManaged else False
     consumption_role_policy_mgmt_map: Dict[str, str] = {
-        consumption_role.consumptionRoleUri: True
+        consumption_role.consumptionPrincipalUri: True
         if consumption_role.dataallManaged == PolicyManagementOptions.FULLY_MANAGED.value
         else False
         for consumption_role in consumption_roles
     }
 
-    op.drop_column(table_name='consumptionrole', column_name='dataallManaged')
+    op.drop_column(table_name='consumptionprincipals', column_name='dataallManaged')
     op.add_column(
-        'consumptionrole',
+        'consumptionprincipals',
         sa.Column('dataallManaged', sa.Boolean(), nullable=False, server_default=sa.sql.expression.true()),
     )
 
     # Update all the consumption.dataallManaged column with boolean values by using consumption_role_policy_mgmt_map map
-    consumption_roles: List[ConsumptionRole] = session.query(ConsumptionRole).all()
+    consumption_roles: List[ConsumptionPrincipal] = session.query(ConsumptionPrincipal).all()
     for consumption_role in consumption_roles:
         consumption_role.dataallManaged = consumption_role_policy_mgmt_map.get(
-            consumption_role.consumptionRoleUri, True
+            consumption_role.consumptionPrincipalUri, True
         )
     session.add_all(consumption_roles)
     session.commit()

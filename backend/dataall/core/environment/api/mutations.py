@@ -51,7 +51,7 @@ inviteGroupOnEnvironment = gql.MutationField(
 addConsumptionRoleToEnvironment = gql.MutationField(
     name='addConsumptionRoleToEnvironment',
     args=[gql.Argument(name='input', type=gql.NonNullableType(AddConsumptionRoleToEnvironmentInput))],
-    type=gql.Ref('ConsumptionRole'),
+    type=gql.Ref('ConsumptionPrincipal'),
     resolver=add_consumption_role,
 )
 
@@ -76,7 +76,7 @@ removeConsumptionRoleFromEnvironment = gql.MutationField(
     name='removeConsumptionRoleFromEnvironment',
     args=[
         gql.Argument('environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument('consumptionRoleUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument('consumptionPrincipalUri', type=gql.NonNullableType(gql.String)),
     ],
     type=gql.Boolean,
     resolver=remove_consumption_role,
@@ -116,9 +116,9 @@ updateConsumptionRole = gql.MutationField(
     name='updateConsumptionRole',
     args=[
         gql.Argument('environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument('consumptionRoleUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument('consumptionPrincipalUri', type=gql.NonNullableType(gql.String)),
         gql.Argument('input', type=UpdateConsumptionRoleInput),
     ],
-    type=gql.Ref('ConsumptionRole'),
+    type=gql.Ref('ConsumptionPrincipal'),
     resolver=update_consumption_role,
 )

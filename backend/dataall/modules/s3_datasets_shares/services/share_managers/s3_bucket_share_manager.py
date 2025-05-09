@@ -7,7 +7,7 @@ from dataall.base.aws.iam import IAM
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.db.exceptions import AWSServiceQuotaExceeded
 from dataall.core.environment.db.environment_enums import PolicyManagementOptions
-from dataall.core.environment.db.environment_models import Environment, ConsumptionRole
+from dataall.core.environment.db.environment_models import Environment, ConsumptionPrincipal
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.s3_datasets.db.dataset_models import DatasetBucket
@@ -79,7 +79,7 @@ class S3BucketShareManager:
         is_managed_role: bool = True
         if self.share.principalType == PrincipalType.ConsumptionRole.value:
             # When principalType is a consumptionRole type then principalId contains the uri of the consumption role
-            consumption_role: ConsumptionRole = EnvironmentRepository.get_consumption_role(
+            consumption_role: ConsumptionPrincipal = EnvironmentRepository.get_consumption_role(
                 self.session, self.share.principalId
             )
             if consumption_role.dataallManaged == PolicyManagementOptions.EXTERNALLY_MANAGED.value:

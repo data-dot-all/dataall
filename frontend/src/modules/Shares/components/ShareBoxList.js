@@ -91,8 +91,8 @@ export const ShareBoxList = (props) => {
       setFilter({ ...filter, dataset_owners: values });
     } else if (filterLabel === 'RequestOwners') {
       setFilter({ ...filter, share_requesters: values });
-    } else if (filterLabel === 'RequestIAMRole') {
-      setFilter({ ...filter, share_iam_roles: values });
+    } else if (filterLabel === 'RequestIAMPrincipal') {
+      setFilter({ ...filter, share_iam_principals: values });
     }
   };
 
@@ -159,7 +159,7 @@ export const ShareBoxList = (props) => {
           setRoleOptions(
             groupRoleOptions.concat(
               response2.data.listAllConsumptionRoles.nodes.map(
-                (node) => node.IAMRoleName
+                (node) => node.IAMPrincipalName
               )
             )
           );
@@ -459,13 +459,13 @@ export const ShareBoxList = (props) => {
               </Grid>
               <Grid item md={2.5} xs={12}>
                 <Autocomplete
-                  id={'RequestIAMRole-' + tab}
+                  id={'RequestIAMPrincipal-' + tab}
                   multiple
                   fullWidth
                   loading={loading}
                   options={roleOptions}
                   onChange={(event, value) =>
-                    handleFilterChange('RequestIAMRole', value)
+                    handleFilterChange('RequestIAMPrincipal', value)
                   }
                   renderOption={(props, option, { selected }) => (
                     <li {...props}>
@@ -481,7 +481,7 @@ export const ShareBoxList = (props) => {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label={'Request Role name'}
+                      label={'Request Principal name'}
                       fullWidth
                       variant="outlined"
                     />

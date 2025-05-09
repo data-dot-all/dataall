@@ -6,7 +6,7 @@ from typing import Callable
 
 from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 from dataall.core.groups.db.group_models import Group
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionRole
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionPrincipal
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.shares_base.db.share_object_models import ShareObject
 from dataall.modules.s3_datasets_shares.services.share_managers import S3BucketShareManager
@@ -316,7 +316,7 @@ def mock_iam_client(mocker, account_id, role_name):
     return mock_client
 
 
-def convert_role_management_to_type(db_engine, consumption_role: ConsumptionRole, policy_management_type: str):
+def convert_role_management_to_type(db_engine, consumption_role: ConsumptionPrincipal, policy_management_type: str):
     with db_engine.scoped_session() as session:
         consumption_role.dataallManaged = policy_management_type
         session.add(consumption_role)

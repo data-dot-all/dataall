@@ -456,14 +456,11 @@ class EnvironmentSetup(Stack):
 
         with self.engine.scoped_session() as session:
             external_managed_policies = []
-            policy_manager = PolicyManager(
-                session=session,
-                account=self._environment.AwsAccountId,
-                region=self._environment.region,
-                environmentUri=self._environment.environmentUri,
-                resource_prefix=self._environment.resourcePrefix,
-                role_name=group.environmentIAMRoleName,
-            )
+            policy_manager = PolicyManager(session=session, account=self._environment.AwsAccountId,
+                                           region=self._environment.region,
+                                           environmentUri=self._environment.environmentUri,
+                                           resource_prefix=self._environment.resourcePrefix,
+                                           principal_name=group.environmentIAMRoleName)
             try:
                 managed_policies = policy_manager.get_all_policies()
             except Exception as e:

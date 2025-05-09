@@ -38,8 +38,8 @@ export const EnvironmentRoleAddForm = (props) => {
       const response = await client.mutate(
         addConsumptionRoleToEnvironment({
           groupUri: values.groupUri,
-          consumptionRoleName: values.consumptionRoleName,
-          IAMRoleArn: values.IAMRoleArn,
+          consumptionPrincipalName: values.consumptionPrincipalName,
+          IAMPrincipalArn: values.IAMPrincipalArn,
           environmentUri: environment.environmentUri,
           dataallManaged: values.dataallManaged
         })
@@ -108,10 +108,12 @@ export const EnvironmentRoleAddForm = (props) => {
               groupUri: Yup.string()
                 .max(255)
                 .required('*Owners Team is required'),
-              consumptionRoleName: Yup.string()
+              consumptionPrincipalName: Yup.string()
                 .max(255)
                 .required('*Consumption Role Name is required'),
-              IAMRoleArn: Yup.string().required('*IAM Role Arn is required'),
+              IAMPrincipalArn: Yup.string().required(
+                '*IAM Principal Arn is required'
+              ),
               dataallManaged: Yup.string()
                 .required(
                   'Policy Management option required. Please select a valid option'
@@ -138,30 +140,36 @@ export const EnvironmentRoleAddForm = (props) => {
                 <CardContent>
                   <TextField
                     error={Boolean(
-                      touched.consumptionRoleName && errors.consumptionRoleName
+                      touched.consumptionPrincipalName &&
+                        errors.consumptionPrincipalName
                     )}
                     fullWidth
                     helperText={
-                      touched.consumptionRoleName && errors.consumptionRoleName
+                      touched.consumptionPrincipalName &&
+                      errors.consumptionPrincipalName
                     }
                     label="Consumption Role Name"
                     placeholder="Name to identify your IAM role in data.all"
-                    name="consumptionRoleName"
+                    name="consumptionPrincipalName"
                     onChange={handleChange}
-                    value={values.consumptionRoleName}
+                    value={values.consumptionPrincipalName}
                     variant="outlined"
                   />
                 </CardContent>
                 <CardContent>
                   <TextField
-                    error={Boolean(touched.IAMRoleArn && errors.IAMRoleArn)}
+                    error={Boolean(
+                      touched.IAMPrincipalArn && errors.IAMPrincipalArn
+                    )}
                     fullWidth
-                    helperText={touched.IAMRoleArn && errors.IAMRoleArn}
+                    helperText={
+                      touched.IAMPrincipalArn && errors.IAMPrincipalArn
+                    }
                     label="IAM Role ARN"
                     placeholder="IAM Role ARN"
-                    name="IAMRoleArn"
+                    name="IAMPrincipalArn"
                     onChange={handleChange}
-                    value={values.IAMRoleArn}
+                    value={values.IAMPrincipalArn}
                     variant="outlined"
                   />
                 </CardContent>

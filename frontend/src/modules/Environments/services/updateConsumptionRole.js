@@ -2,31 +2,31 @@ import { gql } from 'apollo-boost';
 
 export const updateConsumptionRole = ({
   environmentUri,
-  consumptionRoleUri,
+  consumptionPrincipalUri,
   input
 }) => ({
   variables: {
     environmentUri,
-    consumptionRoleUri,
+    consumptionPrincipalUri,
     input
   },
   mutation: gql`
     mutation updateConsumptionRole(
       $environmentUri: String!
-      $consumptionRoleUri: String!
+      $consumptionPrincipalUri: String!
       $input: UpdateConsumptionRoleInput!
     ) {
       updateConsumptionRole(
         environmentUri: $environmentUri
-        consumptionRoleUri: $consumptionRoleUri
+        consumptionPrincipalUri: $consumptionPrincipalUri
         input: $input
       ) {
-        consumptionRoleUri
-        consumptionRoleName
+        consumptionPrincipalUri
+        consumptionPrincipalName
         environmentUri
         groupUri
-        IAMRoleName
-        IAMRoleArn
+        IAMPrincipalName
+        IAMPrincipalArn
       }
     }
   `
