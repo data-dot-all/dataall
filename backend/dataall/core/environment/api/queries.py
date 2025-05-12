@@ -215,7 +215,7 @@ getConsumptionRolePolicies = gql.QueryField(
     name='getConsumptionRolePolicies',
     args=[
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='IAMRoleName', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='IAMPrincipalName', type=gql.NonNullableType(gql.String)),
     ],
     type=gql.ArrayType(RoleManagedPolicy),
     resolver=get_consumption_role_policies,

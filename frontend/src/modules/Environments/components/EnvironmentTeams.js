@@ -320,7 +320,7 @@ export const IAMPrincipalPolicyDataGridCell = ({
       const response = await client.query(
         getConsumptionRolePolicies({
           environmentUri: environmentUri,
-          IAMRoleName: IAMPrincipalName
+          IAMPrincipalName: IAMPrincipalName
         })
       );
       if (!response.errors) {
