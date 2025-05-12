@@ -42,10 +42,15 @@ class CloudfrontDistro(pyNestedClass):
     ):
         super().__init__(scope, id, **kwargs)
 
-        self.server_access_logs_bucket = s3.Bucket.from_bucket_name(
+        self.server_access_logs_bucket = s3.Bucket(
             self,
-            'AccessLogsBucket',
-            Fn.import_value(f'{resource_prefix}-{envname}-access-logs-bucket'),
+            f'{resource_prefix}-{envname}-cloudfront-access-logs',
+            encryption=s3.BucketEncryption.S3_MANAGED,
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            enforce_ssl=True,
+            removal_policy=RemovalPolicy.DESTROY,
+            versioned=True,
+            auto_delete_objects=True,
         )
 
         """
