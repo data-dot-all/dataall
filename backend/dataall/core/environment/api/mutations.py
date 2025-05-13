@@ -5,11 +5,11 @@ from dataall.core.environment.api.input_types import (
     NewEnvironmentInput,
     EnableDataSubscriptionsInput,
     InviteGroupOnEnvironmentInput,
-    AddConsumptionRoleToEnvironmentInput,
+    AddConsumptionPrincipalToEnvironmentInput,
     UpdateConsumptionRoleInput,
 )
 from dataall.core.environment.api.resolvers import (
-    add_consumption_role,
+    add_consumption_principal,
     create_environment,
     delete_environment,
     disable_subscriptions,
@@ -48,11 +48,11 @@ inviteGroupOnEnvironment = gql.MutationField(
     resolver=invite_group,
 )
 
-addConsumptionRoleToEnvironment = gql.MutationField(
-    name='addConsumptionRoleToEnvironment',
-    args=[gql.Argument(name='input', type=gql.NonNullableType(AddConsumptionRoleToEnvironmentInput))],
+addConsumptionPrincipalToEnvironment = gql.MutationField(
+    name='addConsumptionPrincipalToEnvironment',
+    args=[gql.Argument(name='input', type=gql.NonNullableType(AddConsumptionPrincipalToEnvironmentInput))],
     type=gql.Ref('ConsumptionPrincipal'),
-    resolver=add_consumption_role,
+    resolver=add_consumption_principal,
 )
 
 updateGroupPermission = gql.MutationField(

@@ -32,8 +32,9 @@ DEFAULT_MAX_ATTACHABLE_MANAGED_POLICIES_ACCOUNT = 10
 
 
 class S3SharePolicyService(ManagedPolicy):
-    def __init__(self, role_name, account, region, environmentUri, resource_prefix):
-        self.role_name = role_name
+    def __init__(self, principal_name, account, region, environmentUri, resource_prefix, principal_type='ROLE'):
+        self.principal_name = principal_name
+        self.principal_type = principal_type
         self.account = account
         self.region = region
         self.environmentUri = environmentUri
@@ -74,7 +75,7 @@ class S3SharePolicyService(ManagedPolicy):
         # This function should be deprecated and removed in the future
         return NamingConventionService(
             target_label=f'env-{self.environmentUri}-share-policy',
-            target_uri=self.role_name,
+            target_uri=self.principal_name,
             pattern=NamingConventionPattern.IAM_POLICY,
             resource_prefix=self.resource_prefix,
         ).build_compliant_name()
@@ -86,7 +87,7 @@ class S3SharePolicyService(ManagedPolicy):
         """
         return NamingConventionService(
             target_label=f'env-{self.environmentUri}-share-policy',
-            target_uri=self.role_name,
+            target_uri=self.principal_name,
             pattern=NamingConventionPattern.IAM_POLICY,
             resource_prefix=self.resource_prefix,
         ).build_compliant_name_with_index()
@@ -94,7 +95,7 @@ class S3SharePolicyService(ManagedPolicy):
     def generate_indexed_policy_name(self, index: int = 0) -> str:
         return NamingConventionService(
             target_label=f'env-{self.environmentUri}-share-policy',
-            target_uri=self.role_name,
+            target_uri=self.principal_name,
             pattern=NamingConventionPattern.IAM_POLICY,
             resource_prefix=self.resource_prefix,
         ).build_compliant_name_with_index(index)
@@ -230,7 +231,7 @@ class S3SharePolicyService(ManagedPolicy):
             IAM.detach_policy_from_role(
                 account_id=self.account,
                 region=self.region,
-                role_name=self.role_name,
+                role_name=self.principal_name,
                 policy_name=old_managed_policy_name,
             )
 
@@ -353,7 +354,7 @@ class S3SharePolicyService(ManagedPolicy):
             if self.check_if_policy_exists(policy_name=policy_name):
                 if self.check_if_policy_attached(policy_name=policy_name):
                     IAM.detach_policy_from_role(
-                        account_id=self.account, region=self.region, role_name=self.role_name, policy_name=policy_name
+                        account_id=self.account, region=self.region, role_name=self.principal_name, policy_name=policy_name
                     )
                 IAM.delete_managed_policy_non_default_versions(
                     account_id=self.account, region=self.region, policy_name=policy_name
@@ -398,7 +399,7 @@ class S3SharePolicyService(ManagedPolicy):
         number_of_policies_needed = len(policy_document_chunks)
         policies_present = self.get_managed_policies()
         managed_policies_attached_to_role = IAM.get_attached_managed_policies_to_role(
-            account_id=self.account, region=self.region, role_name=self.role_name
+            account_id=self.account, region=self.region, role_name=self.principal_name
         )
         number_of_non_share_managed_policies_attached_to_role = len(
             [policy for policy in managed_policies_attached_to_role if policy not in policies_present]
@@ -418,7 +419,7 @@ class S3SharePolicyService(ManagedPolicy):
                 message=f'Number of policies which can be attached to the role is more than the service quota limit: {managed_iam_policy_quota}',
             )
 
-        log.info(f'Role: {self.role_name} has capacity to attach managed policies')
+        log.info(f'Role: {self.principal_name} has capacity to attach managed policies')
 
     def _get_managed_policy_quota(self):
         # Get the number of managed policies which can be attached to the IAM role
@@ -642,7 +643,7 @@ class S3SharePolicyService(ManagedPolicy):
         # This function can only be used for backwards compatibility where policies had statement[0] for s3
         # and statement[1] for KMS permissions
         try:
-            existing_policy = IAM.get_role_policy(self.account, self.region, self.role_name, policy_name)
+            existing_policy = IAM.get_role_policy(self.account, self.region, self.principal_name, policy_name)
             if existing_policy is not None:
                 kms_resources = (
                     existing_policy['Statement'][1]['Resource'] if len(existing_policy['Statement']) > 1 else []
@@ -657,10 +658,10 @@ class S3SharePolicyService(ManagedPolicy):
     def _delete_old_inline_policies(self):
         for policy_name in [OLD_IAM_S3BUCKET_ROLE_POLICY, OLD_IAM_ACCESS_POINT_ROLE_POLICY]:
             try:
-                existing_policy = IAM.get_role_policy(self.account, self.region, self.role_name, policy_name)
+                existing_policy = IAM.get_role_policy(self.account, self.region, self.principal_name, policy_name)
                 if existing_policy is not None:
                     log.info(f'Deleting inline policy: {policy_name}')
-                    IAM.delete_role_policy(self.account, self.region, self.role_name, policy_name)
+                    IAM.delete_role_policy(self.account, self.region, self.principal_name, policy_name)
                 else:
                     pass
             except Exception as e:

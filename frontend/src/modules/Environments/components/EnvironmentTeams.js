@@ -54,13 +54,13 @@ import {
 import {
   generateEnvironmentAccessToken,
   getEnvironmentAssumeRoleUrl,
-  listAllEnvironmentConsumptionRoles,
+  listAllEnvironmentConsumptionPrincipals,
   listAllEnvironmentGroups,
   removeConsumptionRoleFromEnvironment,
   removeGroupFromEnvironment,
   updateConsumptionRole
 } from '../services';
-import { EnvironmentRoleAddForm } from './EnvironmentRoleAddForm';
+import { EnvironmentPrincipalAddForm } from './EnvironmentPrincipalAddForm';
 import { EnvironmentTeamInviteEditForm } from './EnvironmentTeamInviteEditForm';
 import { EnvironmentTeamInviteForm } from './EnvironmentTeamInviteForm';
 import { DataGrid, GridActionsCellItem, GridRowModes } from '@mui/x-data-grid';
@@ -297,7 +297,8 @@ TeamRow.propTypes = {
 
 export const IAMPrincipalPolicyDataGridCell = ({
   environmentUri,
-  IAMPrincipalName
+  IAMPrincipalName,
+  IAMPrincipalType
 }) => {
   const [isLoading, setLoading] = useState(true);
   const [managedPolicyDetails, setManagedPolicyDetails] = useState(null);
@@ -320,7 +321,8 @@ export const IAMPrincipalPolicyDataGridCell = ({
       const response = await client.query(
         getConsumptionRolePolicies({
           environmentUri: environmentUri,
-          IAMPrincipalName: IAMPrincipalName
+          IAMPrincipalName: IAMPrincipalName,
+          IAMPrincipalType: IAMPrincipalType
         })
       );
       if (!response.errors) {
@@ -475,17 +477,17 @@ export const EnvironmentTeams = ({ environment }) => {
     }
   }, [client, dispatch, environment, filter]);
 
-  const fetchRoles = useCallback(async () => {
+  const fetchPrincipals = useCallback(async () => {
     try {
       setLoadingRoles(true);
       const response = await client.query(
-        listAllEnvironmentConsumptionRoles({
+        listAllEnvironmentConsumptionPrincipals({
           environmentUri: environment.environmentUri,
           filter: filterRoles
         })
       );
       if (!response.errors) {
-        setRoles({ ...response.data.listAllEnvironmentConsumptionRoles });
+        setRoles({ ...response.data.listAllEnvironmentConsumptionPrincipals });
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -512,7 +514,7 @@ export const EnvironmentTeams = ({ environment }) => {
           },
           variant: 'success'
         });
-        fetchRoles();
+        fetchPrincipals();
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -541,7 +543,7 @@ export const EnvironmentTeams = ({ environment }) => {
         },
         variant: 'success'
       });
-      fetchRoles();
+      fetchPrincipals();
     } else {
       throw new Error(response.errors[0].message);
     }
@@ -571,14 +573,21 @@ export const EnvironmentTeams = ({ environment }) => {
       fetchItems().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
-      fetchRoles().catch((e) =>
+      fetchPrincipals().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
       fetchPolicyManagementOptions().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, filter.page, filterRoles.page, fetchItems, fetchRoles, dispatch]);
+  }, [
+    client,
+    filter.page,
+    filterRoles.page,
+    fetchItems,
+    fetchPrincipals,
+    dispatch
+  ]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -606,7 +615,7 @@ export const EnvironmentTeams = ({ environment }) => {
 
   const handleInputKeyupRoles = (event) => {
     if (event.code === 'Enter') {
-      fetchRoles().catch((e) =>
+      fetchPrincipals().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
@@ -784,11 +793,16 @@ export const EnvironmentTeams = ({ environment }) => {
       <Box sx={{ mt: 3 }}>
         <Card>
           <CardHeader
-            action={<RefreshTableMenu refresh={fetchRoles} />}
+            action={<RefreshTableMenu refresh={fetchPrincipals} />}
             title={
               <Box>
                 <SupervisedUserCircleRounded style={{ marginRight: '10px' }} />{' '}
-                Environment Consumption IAM roles
+                Environment Consumption IAM Principals
+                <InfoIconWithToolTip
+                  title={
+                    'Bring you own IAM Role/User (IAM Principals) and onboard it on data.all. You can use this IAM Role/User to create share on datasets in data.all'
+                  }
+                />
               </Box>
             }
           />
@@ -835,13 +849,13 @@ export const EnvironmentTeams = ({ environment }) => {
                 onClick={handleAddRoleModalOpen}
                 variant="contained"
               >
-                Add Consumption Role
+                Add Consumption Principal
               </Button>
               {isAddRoleModalOpen && (
-                <EnvironmentRoleAddForm
+                <EnvironmentPrincipalAddForm
                   environment={environment}
                   open
-                  reloadRoles={fetchRoles}
+                  reloadPrincipals={fetchPrincipals}
                   onClose={handleAddRoleModalClose}
                   policyManagementOptions={policyManagementOptions}
                 />
@@ -866,6 +880,19 @@ export const EnvironmentTeams = ({ environment }) => {
                     field: 'IAMPrincipalArn',
                     headerName: 'IAM Principal',
                     flex: 1
+                  },
+                  {
+                    field: 'consumptionPrincipalType',
+                    headerName: 'IAM Principal Type',
+                    renderCell: (params) => {
+                      return (
+                        params.row.consumptionPrincipalType.charAt(0) +
+                        params.row.consumptionPrincipalType
+                          .slice(1)
+                          .toLowerCase()
+                      );
+                    },
+                    flex: 0.5
                   },
                   {
                     field: 'groupUri',
@@ -915,7 +942,10 @@ export const EnvironmentTeams = ({ environment }) => {
                     renderCell: (params: GridRenderCellParams<any, Date>) => (
                       <IAMPrincipalPolicyDataGridCell
                         environmentUri={params.row.environmentUri}
-                        IAMPrincipalName={params.row.IAMPrincipalArn.split('/').pop()}
+                        IAMPrincipalName={params.row.IAMPrincipalArn.split(
+                          '/'
+                        ).pop()}
+                        IAMPrincipalType={params.row.consumptionPrincipalType}
                       />
                     )
                   },

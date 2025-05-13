@@ -1,14 +1,14 @@
 import { gql } from 'apollo-boost';
 
-export const addConsumptionRoleToEnvironment = (input) => ({
+export const addConsumptionPrincipalToEnvironment = (input) => ({
   variables: {
     input
   },
   mutation: gql`
-    mutation addConsumptionRoleToEnvironment(
-      $input: AddConsumptionRoleToEnvironmentInput!
+    mutation addConsumptionPrincipalToEnvironment(
+      $input: AddConsumptionPrincipalToEnvironmentInput!
     ) {
-      addConsumptionRoleToEnvironment(input: $input) {
+      addConsumptionPrincipalToEnvironment(input: $input) {
         consumptionPrincipalUri
         consumptionPrincipalName
         environmentUri

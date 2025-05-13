@@ -77,7 +77,7 @@ class EnvironmentRepository:
         return environment
 
     @staticmethod
-    def get_environment_consumption_role(session, principal_uri, environment_uri) -> ConsumptionPrincipal:
+    def get_environment_consumption_principal(session, principal_uri, environment_uri) -> ConsumptionPrincipal:
         return (
             session.query(ConsumptionPrincipal)
             .filter(
@@ -119,7 +119,7 @@ class EnvironmentRepository:
         )
 
     @staticmethod
-    def find_consumption_roles_by_IAMArn(session, uri, arn):
+    def find_consumption_principals_by_IAMArn(session, uri, arn):
         return (
             session.query(ConsumptionPrincipal)
             .filter(and_(ConsumptionPrincipal.environmentUri == uri, ConsumptionPrincipal.IAMPrincipalArn == arn))
@@ -127,7 +127,7 @@ class EnvironmentRepository:
         )
 
     @staticmethod
-    def query_all_environment_consumption_roles(session, uri, filter) -> Query:
+    def query_all_environment_consumption_principals(session, uri, filter) -> Query:
         query = session.query(ConsumptionPrincipal).filter(ConsumptionPrincipal.environmentUri == uri)
         if filter and filter.get('term'):
             term = filter['term']

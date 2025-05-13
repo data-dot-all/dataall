@@ -30,6 +30,7 @@ export const listEnvironmentConsumptionRoles = ({
           IAMPrincipalArn
           IAMPrincipalName
           dataallManaged
+          consumptionPrincipalType
         }
       }
     }

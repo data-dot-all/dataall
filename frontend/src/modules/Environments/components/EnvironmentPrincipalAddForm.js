@@ -16,16 +16,16 @@ import PropTypes from 'prop-types';
 import * as Yup from 'yup';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient, useFetchGroups } from 'services';
-import { addConsumptionRoleToEnvironment } from '../services';
+import { addConsumptionPrincipalToEnvironment } from '../services';
 import { policyManagementInfoMap } from '../../constants';
 import { InfoIconWithToolTip } from '../../../design';
 
-export const EnvironmentRoleAddForm = (props) => {
+export const EnvironmentPrincipalAddForm = (props) => {
   const {
     environment,
     onClose,
     open,
-    reloadRoles,
+    reloadPrincipals,
     policyManagementOptions,
     ...other
   } = props;
@@ -36,7 +36,7 @@ export const EnvironmentRoleAddForm = (props) => {
   async function submit(values, setStatus, setSubmitting, setErrors) {
     try {
       const response = await client.mutate(
-        addConsumptionRoleToEnvironment({
+        addConsumptionPrincipalToEnvironment({
           groupUri: values.groupUri,
           consumptionPrincipalName: values.consumptionPrincipalName,
           IAMPrincipalArn: values.IAMPrincipalArn,
@@ -47,15 +47,15 @@ export const EnvironmentRoleAddForm = (props) => {
       if (!response.errors) {
         setStatus({ success: true });
         setSubmitting(false);
-        enqueueSnackbar('IAM role added to environment', {
+        enqueueSnackbar('IAM principal added to the environment', {
           anchorOrigin: {
             horizontal: 'right',
             vertical: 'top'
           },
           variant: 'success'
         });
-        if (reloadRoles) {
-          reloadRoles();
+        if (reloadPrincipals) {
+          reloadPrincipals();
         }
         if (onClose) {
           onClose();
@@ -91,11 +91,11 @@ export const EnvironmentRoleAddForm = (props) => {
           gutterBottom
           variant="h4"
         >
-          Add a consumption IAM role to environment {environment.label}
+          Add Consumption IAM Principal to environment {environment.label}
         </Typography>
         <Typography align="center" color="textSecondary" variant="subtitle2">
-          An IAM consumption role is owned by the selected Team. The owners team
-          request access on behalf of this IAM role, which can be used by
+          An IAM Consumption Principal - an IAM Role/User - is owned by the selected Team. The owners team
+          request access on behalf of this IAM Principal, which can be used by
           downstream applications.
         </Typography>
         <Box sx={{ p: 3 }}>
@@ -110,7 +110,7 @@ export const EnvironmentRoleAddForm = (props) => {
                 .required('*Owners Team is required'),
               consumptionPrincipalName: Yup.string()
                 .max(255)
-                .required('*Consumption Role Name is required'),
+                .required('*Consumption Principal Name is required'),
               IAMPrincipalArn: Yup.string().required(
                 '*IAM Principal Arn is required'
               ),
@@ -148,8 +148,8 @@ export const EnvironmentRoleAddForm = (props) => {
                       touched.consumptionPrincipalName &&
                       errors.consumptionPrincipalName
                     }
-                    label="Consumption Role Name"
-                    placeholder="Name to identify your IAM role in data.all"
+                    label="Consumption Principal Name"
+                    placeholder="Name to identify your IAM Principal in data.all"
                     name="consumptionPrincipalName"
                     onChange={handleChange}
                     value={values.consumptionPrincipalName}
@@ -165,8 +165,8 @@ export const EnvironmentRoleAddForm = (props) => {
                     helperText={
                       touched.IAMPrincipalArn && errors.IAMPrincipalArn
                     }
-                    label="IAM Role ARN"
-                    placeholder="IAM Role ARN"
+                    label="IAM Principal ARN"
+                    placeholder="IAM Principal ARN"
                     name="IAMPrincipalArn"
                     onChange={handleChange}
                     value={values.IAMPrincipalArn}
@@ -254,10 +254,10 @@ export const EnvironmentRoleAddForm = (props) => {
                     <Alert severity="error" sx={{ mr: 1 }}>
                       With "Externally-Managed" policy management, you are
                       completely responsible for attaching / giving your
-                      consumption role appropriate permissions. Please select
-                      "Externally-Managed" if you know that your role has some
+                      consumption principal (IAM Role/User) appropriate permissions. Please select
+                      "Externally-Managed" if you know that your consumption principal has some
                       super-user permissions or if you are completely managing
-                      the role and its policies.
+                      the principal and its policies.
                     </Alert>
                   </CardContent>
                 ) : (
@@ -273,7 +273,7 @@ export const EnvironmentRoleAddForm = (props) => {
                       type="submit"
                       variant="contained"
                     >
-                      Add Consumption Role
+                      Add Consumption Principal
                     </LoadingButton>
                   </CardContent>
                 </Box>
@@ -286,9 +286,9 @@ export const EnvironmentRoleAddForm = (props) => {
   );
 };
 
-EnvironmentRoleAddForm.propTypes = {
+EnvironmentPrincipalAddForm.propTypes = {
   environment: PropTypes.object.isRequired,
   onClose: PropTypes.func,
   open: PropTypes.bool.isRequired,
-  reloadRoles: PropTypes.func
+  reloadPrincipals: PropTypes.func
 };

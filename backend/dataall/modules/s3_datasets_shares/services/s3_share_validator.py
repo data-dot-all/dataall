@@ -1,6 +1,6 @@
 from dataall.base.db.exceptions import UnauthorizedOperation, InvalidInput
 from dataall.base.aws.iam import IAM
-from dataall.core.environment.db.environment_enums import PolicyManagementOptions
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions, ConsumptionPrincipalType
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionPrincipal
 from dataall.core.environment.services.managed_iam_policies import PolicyManager
@@ -63,28 +63,38 @@ class S3ShareValidator(SharesValidatorInterface):
 
     @staticmethod
     def validate_share_object_submit(session, dataset, share) -> bool:
-        if not S3ShareValidator._validate_iam_role(session, share):
+        if not S3ShareValidator._validate_requestor_principals(session, share):
             raise PrincipalRoleNotFound(
                 action=SUBMIT_SHARE_OBJECT,
-                message=f'The principal role {share.principalRoleName} is not found.',
+                message=f'The principal {share.principalRoleName} is not found.',
             )
         return True
 
     @staticmethod
     def validate_share_object_approve(session, dataset, share) -> bool:
-        if not S3ShareValidator._validate_iam_role(session, share):
+        if not S3ShareValidator._validate_requestor_principals(session, share):
             raise PrincipalRoleNotFound(
                 action=APPROVE_SHARE_OBJECT,
-                message=f'The principal role {share.principalRoleName} is not found.',
+                message=f'The principal {share.principalRoleName} is not found.',
             )
         return True
 
     @staticmethod
-    def _validate_iam_role(session, share: ShareObject) -> bool:
+    def _validate_requestor_principals(session, share: ShareObject) -> bool:
         log.info('Verifying principal IAM role...')
-        role_name = share.principalRoleName
+        principal_name = share.principalRoleName
         env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
-        principal_role = IAM.get_role_arn_by_name(account_id=env.AwsAccountId, region=env.region, role_name=role_name)
+        return S3ShareValidator._validate_iam_principals(env, principal_name, share.principalType)
+
+    @staticmethod
+    def _validate_iam_principals(environment, principal_name, principal_type):
+        if principal_type == PrincipalType.ConsumptionUser.value:
+            principal_user = IAM.get_user_arn_by_name(account_id=environment.AwsAccountId, region=environment.region,
+                                                      user_name=principal_name)
+            return principal_user is not None
+
+        principal_role = IAM.get_role_arn_by_name(account_id=environment.AwsAccountId, region=environment.region,
+                                                  role_name=principal_name)
         return principal_role is not None
 
     @staticmethod
@@ -101,34 +111,38 @@ class S3ShareValidator(SharesValidatorInterface):
     def _validate_iam_role_and_policy(
         session, environment, principal_type: str, principal_id: str, group_uri: str, attachMissingPolicies: bool
     ):
-        if principal_type == PrincipalType.ConsumptionRole.value:
-            consumption_role: ConsumptionPrincipal = EnvironmentService.get_environment_consumption_role(session,
-                                                                                                         principal_id,
-                                                                                                         environment.environmentUri)
-            principal_role_name = consumption_role.IAMPrincipalName
-            managed = consumption_role.dataallManaged == PolicyManagementOptions.FULLY_MANAGED.value
+        share_consumption_principal = None
+        if principal_type == PrincipalType.ConsumptionRole.value or principal_type == PrincipalType.ConsumptionUser.value:
+            share_consumption_principal: ConsumptionPrincipal = EnvironmentService.get_environment_consumption_principal(session,
+                                                                                                              principal_id,
+                                                                                                              environment.environmentUri)
+            principal_name = share_consumption_principal.IAMPrincipalName
+            managed = share_consumption_principal.dataallManaged == PolicyManagementOptions.FULLY_MANAGED.value
 
         else:
             env_group: EnvironmentGroup = EnvironmentService.get_environment_group(
                 session, group_uri, environment.environmentUri
             )
-            principal_role_name = env_group.environmentIAMRoleName
+            principal_name = env_group.environmentIAMRoleName
             managed = True
 
-        log.info(f'Verifying request IAM role {principal_role_name} exists...')
-        if not IAM.get_role_arn_by_name(
-            account_id=environment.AwsAccountId, region=environment.region, role_name=principal_role_name
-        ):
+        log.info(f'Verifying request IAM role {principal_name} exists...')
+
+        if not S3ShareValidator._validate_iam_principals(environment, principal_name, principal_type):
             raise PrincipalRoleNotFound(
                 action=principal_type,
-                message=f'The principal role {principal_role_name} is not found.',
+                message=f'The principal IAM {principal_type} {principal_name} not found.',
             )
 
         log.info('Verifying data.all managed share IAM policy is attached to IAM role...')
+        if share_consumption_principal:
+            consumption_principal_type = share_consumption_principal.consumptionPrincipalType
+        else:
+            consumption_principal_type = ConsumptionPrincipalType.ROLE.value
         share_policy_manager = PolicyManager(session=session, account=environment.AwsAccountId,
                                              region=environment.region, environmentUri=environment.environmentUri,
                                              resource_prefix=environment.resourcePrefix,
-                                             principal_name=principal_role_name)
+                                             principal_name=principal_name, principal_type=consumption_principal_type)
         for policy_manager in [
             Policy for Policy in share_policy_manager.initializedPolicies if Policy.policy_type == 'SharePolicy'
         ]:
@@ -153,7 +167,7 @@ class S3ShareValidator(SharesValidatorInterface):
                 policy_manager.create_managed_indexed_policy_from_managed_policy_delete_old_policy()
             # End of backwards compatibility
 
-            unattached = policy_manager.get_policies_unattached_to_role()
+            unattached = policy_manager.get_policies_unattached_to_principal()
             if unattached and (managed or attachMissingPolicies):
-                managed_policy_list = policy_manager.get_policies_unattached_to_role()
+                managed_policy_list = policy_manager.get_policies_unattached_to_principal()
                 policy_manager.attach_policies(managed_policy_list)

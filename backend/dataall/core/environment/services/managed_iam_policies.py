@@ -3,7 +3,7 @@ import logging
 import json
 from abc import ABC, abstractmethod
 from dataall.base.aws.iam import IAM
-from dataall.core.environment.db.environment_enums import PolicyManagementOptions
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions, ConsumptionPrincipalType
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 
 logger = logging.getLogger(__name__)
@@ -15,8 +15,9 @@ class ManagedPolicy(ABC):
     """
 
     @abstractmethod
-    def __init__(self, role_name, account, region, environmentUri, resource_prefix):
-        self.role_name = role_name
+    def __init__(self, principal_name, account, region, environmentUri, resource_prefix, principal_type='ROLE'):
+        self.principal_name = principal_name
+        self.principal_type = principal_type
         self.account = account
         self.region = region
         self.environmentUri = environmentUri
@@ -68,10 +69,10 @@ class ManagedPolicy(ABC):
         return policies
 
     def check_if_policy_attached(self, policy_name):
-        is_policy_attached = IAM.is_policy_attached(self.account, self.region, policy_name, self.role_name)
+        is_policy_attached = IAM.is_policy_attached(self.account, self.region, policy_name, self.principal_name, self.principal_type)
         return is_policy_attached
 
-    def get_policies_unattached_to_role(self):
+    def get_policies_unattached_to_principal(self):
         policy_pattern = self.generate_base_policy_name()
         policies = self._get_policy_names(policy_pattern)
         unattached_policies = []
@@ -84,7 +85,10 @@ class ManagedPolicy(ABC):
         for policy_name in managed_policies_list:
             policy_arn = f'arn:aws:iam::{self.account}:policy/{policy_name}'
             try:
-                IAM.attach_role_policy(self.account, self.region, self.role_name, policy_arn)
+                if self.principal_type == ConsumptionPrincipalType.ROLE.value:
+                    IAM.attach_role_policy(self.account, self.region, self.principal_name, policy_arn)
+                elif self.principal_type == ConsumptionPrincipalType.USER.value:
+                    IAM.attach_user_policy(self.account, self.region, self.principal_name, policy_arn)
             except Exception as e:
                 raise Exception(f"Required customer managed policy {policy_arn} can't be attached: {e}")
 
@@ -95,9 +99,10 @@ class ManagedPolicy(ABC):
 
 
 class PolicyManager(object):
-    def __init__(self, session, account, region, environmentUri, resource_prefix, principal_name):
+    def __init__(self, session, account, region, environmentUri, resource_prefix, principal_name, principal_type='ROLE'):
         self.session = session
         self.principal_name = principal_name
+        self.principal_type = principal_type
         self.account = account
         self.region = region
         self.environmentUri = environmentUri
@@ -108,7 +113,8 @@ class PolicyManager(object):
 
     def _initialize_policy(self, managedPolicy):
         return managedPolicy(
-            role_name=self.principal_name,
+            principal_name=self.principal_name,
+            principal_type=self.principal_type,
             account=self.account,
             region=self.region,
             environmentUri=self.environmentUri,
@@ -133,12 +139,21 @@ class PolicyManager(object):
                 )
 
                 if policy_management == PolicyManagementOptions.FULLY_MANAGED.value:
-                    IAM.attach_role_policy(
-                        account_id=self.account,
-                        region=self.region,
-                        role_name=self.principal_name,
-                        policy_arn=f'arn:aws:iam::{self.account}:policy/{policy_name}',
-                    )
+                    if self.principal_type == ConsumptionPrincipalType.ROLE.value:
+                        IAM.attach_role_policy(
+                            account_id=self.account,
+                            region=self.region,
+                            role_name=self.principal_name,
+                            policy_arn=f'arn:aws:iam::{self.account}:policy/{policy_name}',
+                        )
+                    elif self.principal_type == ConsumptionPrincipalType.USER.value:
+                        IAM.attach_user_policy(
+                            account_id=self.account,
+                            region=self.region,
+                            user_name=self.principal_name,
+                            policy_arn=f'arn:aws:iam::{self.account}:policy/{policy_name}',
+                        )
+
             except Exception as e:
                 logger.error(f'Error while creating and attaching policies due to: {e}')
                 raise e
@@ -199,12 +214,12 @@ class PolicyManager(object):
             # If its a consumption role with a "Externally Managed" policy management then 'attached' will be marked as 'N/A'
             externally_managed_role: bool = False
             role_arn = f'arn:aws:iam::{self.account}:role/{self.principal_name}'
-            consumption_role_details = EnvironmentRepository.find_consumption_roles_by_IAMArn(
+            consumption_principal_details = EnvironmentRepository.find_consumption_principals_by_IAMArn(
                 session=self.session, uri=self.environmentUri, arn=role_arn
             )
             if (
-                consumption_role_details
-                and consumption_role_details.dataallManaged == PolicyManagementOptions.EXTERNALLY_MANAGED.value
+                consumption_principal_details
+                and consumption_principal_details.dataallManaged == PolicyManagementOptions.EXTERNALLY_MANAGED.value
             ):
                 externally_managed_role = True
 

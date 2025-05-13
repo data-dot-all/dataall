@@ -250,8 +250,12 @@ def resolve_principal(context: Context, source: ShareObject, **kwargs):
         if source.principalType in set(item.value for item in PrincipalType):
             environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)
             if source.principalType == PrincipalType.ConsumptionRole.value:
-                principal = EnvironmentService.get_environment_consumption_role(session, source.principalId,
-                                                                                source.environmentUri)
+                principal = EnvironmentService.get_environment_consumption_principal(session, source.principalId,
+                                                                                     source.environmentUri)
+                principalName = f'{principal.consumptionPrincipalName} [{principal.IAMPrincipalArn}]'
+            elif source.principalType == PrincipalType.ConsumptionUser.value:
+                principal = EnvironmentService.get_environment_consumption_principal(session, source.principalId,
+                                                                                     source.environmentUri)
                 principalName = f'{principal.consumptionPrincipalName} [{principal.IAMPrincipalArn}]'
             elif source.principalType == PrincipalType.Group.value:
                 principal = EnvironmentService.get_environment_group(session, source.groupUri, source.environmentUri)

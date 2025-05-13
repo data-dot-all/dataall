@@ -10,7 +10,7 @@ from dataall.core.environment.api.resolvers import (
     get_pivot_role_name,
     get_pivot_role_template,
     get_trust_account,
-    list_all_environment_consumption_roles,
+    list_all_environment_consumption_principals,
     list_all_environment_groups,
     list_consumption_roles,
     list_environment_consumption_roles,
@@ -142,7 +142,7 @@ listAllGroups = gql.QueryField(
 
 listAllConsumptionRoles = gql.QueryField(
     name='listAllConsumptionRoles',
-    type=gql.Ref('ConsumptionRoleSearchResult'),
+    type=gql.Ref('ConsumptionPrincipalSearchResult'),
     args=[
         gql.Argument(name='filter', type=gql.Ref('ConsumptionRoleFilter')),
     ],
@@ -151,7 +151,7 @@ listAllConsumptionRoles = gql.QueryField(
 
 listEnvironmentConsumptionRoles = gql.QueryField(
     name='listEnvironmentConsumptionRoles',
-    type=gql.Ref('ConsumptionRoleSearchResult'),
+    type=gql.Ref('ConsumptionPrincipalSearchResult'),
     args=[
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='filter', type=gql.Ref('ConsumptionRoleFilter')),
@@ -160,14 +160,14 @@ listEnvironmentConsumptionRoles = gql.QueryField(
 )
 
 
-listAllEnvironmentConsumptionRoles = gql.QueryField(
-    name='listAllEnvironmentConsumptionRoles',
-    type=gql.Ref('ConsumptionRoleSearchResult'),
+listAllEnvironmentConsumptionPrincipals = gql.QueryField(
+    name='listAllEnvironmentConsumptionPrincipals',
+    type=gql.Ref('ConsumptionPrincipalSearchResult'),
     args=[
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='filter', type=gql.Ref('ConsumptionRoleFilter')),
     ],
-    resolver=list_all_environment_consumption_roles,
+    resolver=list_all_environment_consumption_principals,
 )
 
 listEnvironmentGroupInvitationPermissions = gql.QueryField(
@@ -216,6 +216,7 @@ getConsumptionRolePolicies = gql.QueryField(
     args=[
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='IAMPrincipalName', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='IAMPrincipalType', type=gql.NonNullableType(gql.String)),
     ],
     type=gql.ArrayType(RoleManagedPolicy),
     resolver=get_consumption_role_policies,

@@ -7,7 +7,7 @@ export const InfoIconWithToolTip = (props) => {
 
   return (
     <Tooltip title={title} placement={placement}>
-      <InfoIcon sx={{ fontSize: `${size}rem` }}></InfoIcon>
+      <InfoIcon sx={{ fontSize: `${size}rem`, marginLeft: '5px' }}></InfoIcon>
     </Tooltip>
   );
 };

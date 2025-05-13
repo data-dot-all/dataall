@@ -763,11 +763,11 @@ class ShareObjectService:
     def _resolve_principal_role_name(
         session, group_uri, environment_uri, principal_id, principal_role_name, principal_type
     ):
-        if principal_type == PrincipalType.ConsumptionRole.value:
-            consumption_role: ConsumptionPrincipal = EnvironmentService.get_environment_consumption_role(session,
-                                                                                                         principal_id,
-                                                                                                         environment_uri)
-            return consumption_role.IAMPrincipalName
+        if principal_type == PrincipalType.ConsumptionRole.value or principal_type == PrincipalType.ConsumptionUser.value:
+            consumption_principal: ConsumptionPrincipal = EnvironmentService.get_environment_consumption_principal(session,
+                                                                                                                   principal_id,
+                                                                                                                   environment_uri)
+            return consumption_principal.IAMPrincipalName
         elif principal_type == PrincipalType.Group.value:
             env_group: EnvironmentGroup = EnvironmentService.get_environment_group(session, group_uri, environment_uri)
             return env_group.environmentIAMRoleName

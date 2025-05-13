@@ -150,9 +150,15 @@ export const RequestAccessModal = (props) => {
         setRoleOptions(
           response.data.listEnvironmentConsumptionRoles.nodes.map((g) => ({
             value: g.consumptionPrincipalUri,
-            label: [g.consumptionPrincipalName, ' [', g.IAMPrincipalArn, ']'].join(''),
+            label: [
+              g.consumptionPrincipalName,
+              ' [',
+              g.IAMPrincipalArn,
+              ']'
+            ].join(''),
             IAMPrincipalName: g.IAMPrincipalName,
-            dataallManaged: g.dataallManaged
+            dataallManaged: g.dataallManaged,
+            consumptionPrincipalType: g.consumptionPrincipalType
           }))
         );
       } else {
@@ -165,13 +171,18 @@ export const RequestAccessModal = (props) => {
     }
   };
 
-  const fetchRolePolicies = async (environmentUri, IAMPrincipalName) => {
+  const fetchRolePolicies = async (
+    environmentUri,
+    IAMPrincipalName,
+    IAMPrincipalType
+  ) => {
     setLoadingPolicies(true);
     try {
       const response = await client.query(
         getConsumptionRolePolicies({
           environmentUri,
-          IAMPrincipalName
+          IAMPrincipalName,
+          IAMPrincipalType
         })
       );
       if (!response.errors) {
@@ -258,7 +269,11 @@ export const RequestAccessModal = (props) => {
   };
 
   const formRequestObject = (values) => {
-    let type = values.consumptionPrincipal ? 'ConsumptionRole' : 'Group';
+    let type = values.consumptionPrincipal
+      ? values.consumptionPrincipal.consumptionPrincipalType === 'USER'
+        ? 'ConsumptionUser'
+        : 'ConsumptionRole'
+      : 'Group';
     let principal = values.consumptionPrincipal.value
       ? values.consumptionPrincipal.value
       : values.groupUri;
@@ -357,7 +372,7 @@ export const RequestAccessModal = (props) => {
           </Typography>
           <Typography align="center" color="textSecondary" variant="subtitle2">
             Data access is requested for the whole requester Team or for the
-            selected Consumption role. The request will be submitted to the data
+            selected Consumption Principal. The request will be submitted to the data
             owners, track its progress in the Shares menu on the left.
           </Typography>
           <Box sx={{ p: 3 }}>
@@ -607,11 +622,15 @@ export const RequestAccessModal = (props) => {
                                   options={roleOptions.map((option) => option)}
                                   getOptionLabel={(option) => option.label}
                                   onChange={(event, value) => {
-                                    setFieldValue('consumptionPrincipal', value);
+                                    setFieldValue(
+                                      'consumptionPrincipal',
+                                      value
+                                    );
                                     if (value && value.IAMPrincipalName) {
                                       fetchRolePolicies(
                                         values.environmentUri,
-                                        value.IAMPrincipalName
+                                        value.IAMPrincipalName,
+                                        value.consumptionPrincipalType
                                       ).catch((e) =>
                                         dispatch({
                                           type: SET_ERROR,
@@ -720,7 +739,8 @@ export const RequestAccessModal = (props) => {
                       </Box>
                     )}
                     {!values.consumptionPrincipal ||
-                    values.consumptionPrincipal.dataallManaged === 'Fully-Managed' ||
+                    values.consumptionPrincipal.dataallManaged ===
+                      'Fully-Managed' ||
                     values.consumptionPrincipal.dataallManaged ===
                       'Externally-Managed' ||
                     isSharePolicyAttached ? (

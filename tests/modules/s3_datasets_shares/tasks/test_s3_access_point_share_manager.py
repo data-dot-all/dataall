@@ -393,13 +393,12 @@ def test_grant_target_role_access_policy_test_empty_policy(
     # When
     share_manager.grant_target_role_access_policy()
 
-    expected_policy_name = S3SharePolicyService(
-        role_name=share1.principalRoleName,
-        account=target_environment.AwsAccountId,
-        region=target_environment.region,
-        environmentUri=target_environment.environmentUri,
-        resource_prefix=target_environment.resourcePrefix,
-    ).generate_indexed_policy_name(index=0)
+    expected_policy_name = S3SharePolicyService(principal_name=share1.principalRoleName,
+                                                account=target_environment.AwsAccountId,
+                                                region=target_environment.region,
+                                                environmentUri=target_environment.environmentUri,
+                                                resource_prefix=target_environment.resourcePrefix,
+                                                principal_type='ROLE').generate_indexed_policy_name(index=0)
     # Then
     iam_update_role_policy_mock.assert_called_with(
         target_environment.AwsAccountId,
@@ -1003,13 +1002,12 @@ def test_delete_target_role_access_policy_no_remaining_statement(
     # When we revoke IAM access to the target IAM role
     share_manager.revoke_target_role_access_policy()
 
-    expected_policy_name = S3SharePolicyService(
-        role_name=share1.principalRoleName,
-        account=target_environment.AwsAccountId,
-        region=target_environment.region,
-        environmentUri=target_environment.environmentUri,
-        resource_prefix=target_environment.resourcePrefix,
-    ).generate_indexed_policy_name(index=0)
+    expected_policy_name = S3SharePolicyService(principal_name=share1.principalRoleName,
+                                                account=target_environment.AwsAccountId,
+                                                region=target_environment.region,
+                                                environmentUri=target_environment.environmentUri,
+                                                resource_prefix=target_environment.resourcePrefix,
+                                                principal_type='ROLE').generate_indexed_policy_name(index=0)
 
     iam_update_role_policy_mock.assert_called_with(
         target_environment.AwsAccountId,
@@ -1121,13 +1119,12 @@ def test_delete_target_role_access_policy_with_remaining_statement(
     share_manager.revoke_target_role_access_policy()
 
     # Then
-    expected_policy_name = S3SharePolicyService(
-        role_name=share1.principalRoleName,
-        account=target_environment.AwsAccountId,
-        region=target_environment.region,
-        environmentUri=target_environment.environmentUri,
-        resource_prefix=target_environment.resourcePrefix,
-    ).generate_indexed_policy_name(index=0)
+    expected_policy_name = S3SharePolicyService(principal_name=share1.principalRoleName,
+                                                account=target_environment.AwsAccountId,
+                                                region=target_environment.region,
+                                                environmentUri=target_environment.environmentUri,
+                                                resource_prefix=target_environment.resourcePrefix,
+                                                principal_type='ROLE').generate_indexed_policy_name(index=0)
 
     iam_update_role_policy_mock.assert_called_with(
         target_environment.AwsAccountId,

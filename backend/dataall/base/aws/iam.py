@@ -3,6 +3,7 @@ from botocore.exceptions import ClientError
 import re
 
 from .sts import SessionHelper
+from ...core.environment.db.environment_enums import ConsumptionPrincipalType
 
 log = logging.getLogger(__name__)
 
@@ -31,8 +32,26 @@ class IAM:
             return response['Role']
 
     @staticmethod
+    def get_user(account_id: str, region: str, user_arn: str, role=None):
+        log.info(f'Getting IAM user = {user_arn}')
+        user_name = user_arn.split('/')[-1]
+        try:
+            client = IAM.client(account_id=account_id, region=region, role=role)
+            response = client.get_user(UserName=user_name)
+            assert response['User']['Arn'] == user_arn, "Arn doesn't match the role name. Check Arn and try again."
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(
+                    f'Data.all Environment Pivot Role does not have permissions to get user {user_arn}: {e}'
+                )
+            log.error(f'Failed to get user {user_arn} due to: {e}')
+            return None
+        else:
+            return response['User']
+
+    @staticmethod
     def get_role_arn_by_name(account_id: str, region: str, role_name: str, role=None):
-        log.info(f'Getting IAM role name= {role_name}')
+        log.info(f'Getting IAM role = {role_name}')
         try:
             client = IAM.client(account_id=account_id, region=region, role=role)
             response = client.get_role(RoleName=role_name)
@@ -43,6 +62,21 @@ class IAM:
                     f'Data.all Environment Pivot Role does not have permissions to get role {role_name}: {e}'
                 )
             log.error(f'Failed to get role {role_name} due to: {e}')
+            return None
+
+    @staticmethod
+    def get_user_arn_by_name(account_id: str, region: str, user_name: str, role=None):
+        log.info(f'Getting IAM User name= {user_name}')
+        try:
+            client = IAM.client(account_id=account_id, region=region, role=role)
+            response = client.get_user(UserName=user_name)
+            return response['User']['Arn']
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(
+                    f'Data.all Environment Pivot Role does not have permissions to get IAM User {user_name}: {e}'
+                )
+            log.error(f'Failed to get IAM user {user_name} due to: {e}')
             return None
 
     @staticmethod
@@ -237,11 +271,17 @@ class IAM:
             return None, None
 
     @staticmethod
-    def is_policy_attached(account_id: str, region: str, policy_name: str, role_name: str):
+    def is_policy_attached(account_id: str, region: str, policy_name: str, principal_name: str, principal_type: str):
         try:
             client = IAM.client(account_id, region)
-            paginator = client.get_paginator('list_attached_role_policies')
-            pages = paginator.paginate(RoleName=role_name)
+            if principal_type == ConsumptionPrincipalType.ROLE.value:
+                paginator = client.get_paginator('list_attached_role_policies')
+                pages = paginator.paginate(RoleName=principal_name)
+            elif principal_type == ConsumptionPrincipalType.USER.value:
+                paginator = client.get_paginator('list_attached_user_policies')
+                pages = paginator.paginate(UserName=principal_name)
+            else:
+                raise Exception('Unknown principal type while checking if policy is attached')
             policies = []
             for page in pages:
                 policies += page['AttachedPolicies']
@@ -249,10 +289,11 @@ class IAM:
         except ClientError as e:
             if e.response['Error']['Code'] == 'AccessDenied':
                 raise Exception(
-                    f'Data.all Environment Pivot Role does not have permissions to to get the list of attached policies to the role {role_name}: {e}'
+                    f'Data.all Environment Pivot Role does not have permissions to to get the list of attached policies to the IAM {principal_type} {principal_name} : {e}'
                 )
-            log.error(f'Failed to get the list of attached policies to the role {role_name}: {e}')
+            log.error(f'Failed to get the list of attached policies to the IAM {principal_type} {principal_name}: {e}')
             return False
+
 
     @staticmethod
     def attach_role_policy(account_id, region: str, role_name, policy_arn):
@@ -266,6 +307,20 @@ class IAM:
                     f'Data.all Environment Pivot Role does not have permissions to to attach policy {policy_arn} to the role {role_name}: {e}'
                 )
             log.error(f'Failed to attach policy {policy_arn} to the role {role_name}: {e}')
+            raise e
+
+    @staticmethod
+    def attach_user_policy(account_id, region: str, user_name, policy_arn):
+        try:
+            client = IAM.client(account_id, region)
+            response = client.attach_user_policy(UserName=user_name, PolicyArn=policy_arn)
+            return True
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(
+                    f'Data.all Environment Pivot Role does not have permissions to to attach policy {policy_arn} to the IAM user {user_name}: {e}'
+                )
+            log.error(f'Failed to attach policy {policy_arn} to the IAM user {user_name}: {e}')
             raise e
 
     @staticmethod

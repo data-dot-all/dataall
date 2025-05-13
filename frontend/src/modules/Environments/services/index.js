@@ -1,5 +1,5 @@
 export * from './addConnectionGroupPermission';
-export * from './addConsumptionRoleToEnvironment';
+export * from './addConsumptionPrincipalToEnvironment';
 export * from './archiveEnvironment';
 export * from './createEnvironment';
 export * from './createNetwork';
@@ -18,7 +18,7 @@ export * from './getPivotRolePresignedUrl';
 export * from './getCDKExecPolicyPresignedUrl.js';
 export * from './getTrustAccount';
 export * from './inviteGroup';
-export * from './listAllEnvironmentConsumptionRoles';
+export * from './listAllEnvironmentConsumptionPrincipals';
 export * from './listAllEnvironmentGroups';
 export * from './listConnectionGroupNoPermissions';
 export * from './listConnectionGroupPermissions';

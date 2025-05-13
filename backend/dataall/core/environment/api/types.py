@@ -184,8 +184,8 @@ ConsumptionPrincipal = gql.ObjectType(
     ],
 )
 
-ConsumptionRoleSearchResult = gql.ObjectType(
-    name='ConsumptionRoleSearchResult',
+ConsumptionPrincipalSearchResult = gql.ObjectType(
+    name='ConsumptionPrincipalSearchResult',
     fields=[
         gql.Field(name='count', type=gql.Integer),
         gql.Field(name='page', type=gql.Integer),

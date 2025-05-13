@@ -94,8 +94,8 @@ InviteGroupOnEnvironmentInput = gql.InputType(
     ],
 )
 
-AddConsumptionRoleToEnvironmentInput = gql.InputType(
-    name='AddConsumptionRoleToEnvironmentInput',
+AddConsumptionPrincipalToEnvironmentInput = gql.InputType(
+    name='AddConsumptionPrincipalToEnvironmentInput',
     arguments=[
         gql.Argument('consumptionPrincipalName', gql.NonNullableType(gql.String)),
         gql.Argument('groupUri', gql.NonNullableType(gql.String)),

@@ -89,13 +89,12 @@ class S3BucketShareManager:
         kms_client = KmsClient(self.source_account_id, self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
 
-        share_policy_service = S3SharePolicyService(
-            role_name=self.target_requester_IAMRoleName,
-            account=self.target_environment.AwsAccountId,
-            region=self.target_environment.region,
-            environmentUri=self.target_environment.environmentUri,
-            resource_prefix=self.target_environment.resourcePrefix,
-        )
+        share_policy_service = S3SharePolicyService(principal_name=self.target_requester_IAMRoleName,
+                                                    account=self.target_environment.AwsAccountId,
+                                                    region=self.target_environment.region,
+                                                    environmentUri=self.target_environment.environmentUri,
+                                                    resource_prefix=self.target_environment.resourcePrefix,
+                                                    principal_type='ROLE')
 
         # Parses all policy documents and extracts s3 and kms statements
         share_policy_service.initialize_statements()
@@ -125,7 +124,7 @@ class S3BucketShareManager:
                 return
 
         if is_managed_role:
-            unattached_policies: List[str] = share_policy_service.get_policies_unattached_to_role()
+            unattached_policies: List[str] = share_policy_service.get_policies_unattached_to_principal()
             if len(unattached_policies) > 0:
                 logger.info(
                     f'IAM Policies {unattached_policies} exists but are not attached to role {self.share.principalRoleName}'
@@ -242,13 +241,12 @@ class S3BucketShareManager:
         """
         logger.info(f'Grant target role {self.target_requester_IAMRoleName} access policy')
 
-        share_policy_service = S3SharePolicyService(
-            role_name=self.target_requester_IAMRoleName,
-            account=self.target_environment.AwsAccountId,
-            region=self.target_environment.region,
-            environmentUri=self.target_environment.environmentUri,
-            resource_prefix=self.target_environment.resourcePrefix,
-        )
+        share_policy_service = S3SharePolicyService(principal_name=self.target_requester_IAMRoleName,
+                                                    account=self.target_environment.AwsAccountId,
+                                                    region=self.target_environment.region,
+                                                    environmentUri=self.target_environment.environmentUri,
+                                                    resource_prefix=self.target_environment.resourcePrefix,
+                                                    principal_type='ROLE')
         # Process all backwards compatibility tasks and convert to indexed policies
         share_policy_service.process_backwards_compatibility_for_target_iam_roles()
 
@@ -304,7 +302,7 @@ class S3BucketShareManager:
             finally:
                 raise Exception(error_message)
 
-        is_unattached_policies = share_policy_service.get_policies_unattached_to_role()
+        is_unattached_policies = share_policy_service.get_policies_unattached_to_principal()
         if is_unattached_policies:
             logger.info(
                 f'Found some policies are not attached to the target IAM role: {self.target_requester_IAMRoleName}. Attaching policies now'
@@ -553,13 +551,12 @@ class S3BucketShareManager:
     ):
         logger.info('Deleting target role IAM statements...')
 
-        share_policy_service = S3SharePolicyService(
-            role_name=share.principalRoleName,
-            account=target_environment.AwsAccountId,
-            region=self.target_environment.region,
-            environmentUri=target_environment.environmentUri,
-            resource_prefix=target_environment.resourcePrefix,
-        )
+        share_policy_service = S3SharePolicyService(principal_name=share.principalRoleName,
+                                                    account=target_environment.AwsAccountId,
+                                                    region=self.target_environment.region,
+                                                    environmentUri=target_environment.environmentUri,
+                                                    resource_prefix=target_environment.resourcePrefix,
+                                                    principal_type='ROLE')
         # Process all backwards compatibility tasks and convert to indexed policies
         share_policy_service.process_backwards_compatibility_for_target_iam_roles()
 
