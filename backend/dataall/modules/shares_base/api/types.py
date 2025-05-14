@@ -1,4 +1,5 @@
 from dataall.base.api import gql
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 from dataall.modules.shares_base.services.shares_enums import (
     ShareableType,
     PrincipalType,
@@ -14,6 +15,7 @@ from dataall.modules.shares_base.api.resolvers import (
     list_shareable_objects,
     resolve_user_role,
     resolve_can_view_logs,
+    resolve_role_policy_management,
 )
 from dataall.core.environment.api.resolvers import resolve_environment
 
@@ -171,6 +173,11 @@ ShareObject = gql.ObjectType(
             resolver=resolve_user_role,
         ),
         gql.Field('permissions', gql.ArrayType(ShareObjectDataPermission.toGraphQLEnum())),
+        gql.Field(
+            name='policyManagement',
+            type=gql.NonNullableType(PolicyManagementOptions.toGraphQLEnum()),
+            resolver=resolve_role_policy_management,
+        ),
     ],
 )
 
