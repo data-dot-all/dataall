@@ -19,7 +19,7 @@ import SecurityIcon from '@mui/icons-material/Security';
 import { LoadingButton } from '@mui/lab';
 import {
   listAllGroups,
-  listAllConsumptionRoles,
+  listAllConsumptionPrincipals,
   getShareRequestsToMe,
   useClient
 } from 'services';
@@ -151,14 +151,14 @@ export const ShareBoxList = (props) => {
           (node) => node.environmentIAMRoleName
         );
         const response2 = await client.query(
-          listAllConsumptionRoles({
+          listAllConsumptionPrincipals({
             filter: Defaults.selectListFilter
           })
         );
         if (!response2.errors) {
           setRoleOptions(
             groupRoleOptions.concat(
-              response2.data.listAllConsumptionRoles.nodes.map(
+              response2.data.listAllConsumptionPrincipals.nodes.map(
                 (node) => node.IAMPrincipalName
               )
             )

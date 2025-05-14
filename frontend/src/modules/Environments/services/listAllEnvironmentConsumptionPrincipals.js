@@ -10,7 +10,7 @@ export const listAllEnvironmentConsumptionPrincipals = ({
   },
   query: gql`
     query listAllEnvironmentConsumptionPrincipals(
-      $filter: ConsumptionRoleFilter
+      $filter: ConsumptionPrincipalFilter
       $environmentUri: String!
     ) {
       listAllEnvironmentConsumptionPrincipals(

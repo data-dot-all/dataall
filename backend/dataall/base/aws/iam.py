@@ -3,7 +3,7 @@ from botocore.exceptions import ClientError
 import re
 
 from .sts import SessionHelper
-from ...core.environment.db.environment_enums import ConsumptionPrincipalType
+from ...core.environment.db.environment_enums import EnvironmentPrincipalType
 
 log = logging.getLogger(__name__)
 
@@ -274,10 +274,10 @@ class IAM:
     def is_policy_attached(account_id: str, region: str, policy_name: str, principal_name: str, principal_type: str):
         try:
             client = IAM.client(account_id, region)
-            if principal_type == ConsumptionPrincipalType.ROLE.value:
+            if principal_type == EnvironmentPrincipalType.ROLE.value:
                 paginator = client.get_paginator('list_attached_role_policies')
                 pages = paginator.paginate(RoleName=principal_name)
-            elif principal_type == ConsumptionPrincipalType.USER.value:
+            elif principal_type == EnvironmentPrincipalType.USER.value:
                 paginator = client.get_paginator('list_attached_user_policies')
                 pages = paginator.paginate(UserName=principal_name)
             else:
@@ -337,6 +337,19 @@ class IAM:
             raise Exception(f'Failed to detach policy {policy_name} from role {role_name}: {e}')
 
     @staticmethod
+    def detach_policy_from_user(account_id: str, region: str, user_name: str, policy_name: str):
+        try:
+            arn = f'arn:aws:iam::{account_id}:policy/{policy_name}'
+            client = IAM.client(account_id, region)
+            client.detach_user_policy(UserName=user_name, PolicyArn=arn)
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(
+                    f'Data.all Environment Pivot Role does not have permissions to detach policy {policy_name} from IAM User {user_name}: {e}'
+                )
+            raise Exception(f'Failed to detach policy {policy_name} from IAM user {user_name}: {e}')
+
+    @staticmethod
     def get_all_role_ids(account_id: str, region: str):
         """
         Get all role ids of an account. Without any filter, it's not supported by boto3
@@ -380,3 +393,16 @@ class IAM:
                     f'Data.all Environment Pivot Role does not have permissions to get attached managed policies for {role_name}: {e}'
                 )
             raise Exception(f'Failed to get attached managed policies for {role_name}: {e}')
+
+    @staticmethod
+    def get_attached_managed_policies_to_user(account_id: str, region: str, user_name: str):
+        try:
+            client = IAM.client(account_id, region)
+            response = client.list_attached_user_policies(UserName=user_name)
+            return [policy.get('PolicyName') for policy in response['AttachedPolicies']]
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AccessDenied':
+                raise Exception(
+                    f'Data.all Environment Pivot Role does not have permissions to get attached managed policies for {user_name}: {e}'
+                )
+            raise Exception(f'Failed to get attached managed policies for {user_name}: {e}')

@@ -8,7 +8,7 @@ from dataall.core.environment.api.resolvers import (
     resolve_user_role,
 )
 from dataall.core.environment.api.enums import EnvironmentPermission
-from dataall.core.environment.db.environment_enums import PolicyManagementOptions, ConsumptionPrincipalType
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions, EnvironmentPrincipalType
 
 EnvironmentUserPermission = gql.ObjectType(
     name='EnvironmentUserPermission',
@@ -180,7 +180,7 @@ ConsumptionPrincipal = gql.ObjectType(
         gql.Field(name='created', type=gql.String),
         gql.Field(name='updated', type=gql.String),
         gql.Field(name='deleted', type=gql.String),
-        gql.Field(name='consumptionPrincipalType', type=gql.NonNullableType(ConsumptionPrincipalType.toGraphQLEnum()))
+        gql.Field(name='consumptionPrincipalType', type=gql.NonNullableType(EnvironmentPrincipalType.toGraphQLEnum()))
     ],
 )
 

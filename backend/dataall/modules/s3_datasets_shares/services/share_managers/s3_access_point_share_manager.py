@@ -6,7 +6,7 @@ from typing import List
 from warnings import warn
 
 from dataall.base.db.exceptions import AWSServiceQuotaExceeded
-from dataall.core.environment.db.environment_enums import PolicyManagementOptions
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions, EnvironmentPrincipalType
 from dataall.core.environment.db.environment_models import ConsumptionPrincipal
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
@@ -72,7 +72,10 @@ class S3AccessPointShareManager:
         self.source_account_id = share_data.dataset.AwsAccountId
         self.target_account_id = share_data.target_environment.AwsAccountId
         self.source_env_admin = share_data.source_env_group.environmentIAMRoleArn
-        self.target_requester_IAMRoleName = share_data.share.principalRoleName
+        self.target_requester_IAMPrincipalName = share_data.share.principalRoleName
+        self.target_requestor_principal_type = EnvironmentPrincipalType.ROLE.value if share_data.share.principalType in [
+            PrincipalType.ConsumptionRole.value, PrincipalType.Group.value,
+            PrincipalType.RedshiftRole.value] else EnvironmentPrincipalType.USER.value
         self.bucket_name = target_folder.S3BucketName
         self.dataset_admin = share_data.dataset.IAMDatasetAdminRoleArn
         self.dataset_account_id = share_data.dataset.AwsAccountId
@@ -165,7 +168,7 @@ class S3AccessPointShareManager:
         and add to folder errors if check fails
         :return: None
         """
-        logger.info(f'Check target role {self.target_requester_IAMRoleName} access policy')
+        logger.info(f'Check target principal {self.target_requester_IAMPrincipalName} access policy')
 
         is_managed_role: bool = True
         if self.share.principalType == PrincipalType.ConsumptionRole.value:
@@ -179,12 +182,12 @@ class S3AccessPointShareManager:
         key_alias = f'alias/{self.dataset.KmsAlias}'
         kms_client = KmsClient(self.dataset_account_id, self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
-        share_policy_service = S3SharePolicyService(principal_name=self.target_requester_IAMRoleName,
+        share_policy_service = S3SharePolicyService(principal_name=self.target_requester_IAMPrincipalName,
                                                     account=self.target_environment.AwsAccountId,
                                                     region=self.target_environment.region,
                                                     environmentUri=self.target_environment.environmentUri,
                                                     resource_prefix=self.target_environment.resourcePrefix,
-                                                    principal_type='ROLE')
+                                                    principal_type=self.target_requestor_principal_type)
         share_policy_service.initialize_statements()
 
         share_resource_policy_name = share_policy_service.generate_indexed_policy_name(index=0)
@@ -201,13 +204,13 @@ class S3AccessPointShareManager:
             old_policy_exist = share_policy_service.check_if_policy_exists(policy_name=old_managed_policy_name)
             if not old_policy_exist:
                 logger.info(
-                    f'No managed policy exists for the role: {self.target_requester_IAMRoleName}, Reapply share to create indexed managed policies.'
+                    f'No managed policy exists for the principal: {self.target_requester_IAMPrincipalName} (type: {self.target_requestor_principal_type}), Reapply share to create indexed managed policies.'
                 )
                 self.folder_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
                 return
             else:
                 logger.info(
-                    f'Old managed policy exists for the role: {self.target_requester_IAMRoleName}. Reapply share to create indexed managed policies.'
+                    f'Old managed policy exists for the role: {self.target_requester_IAMPrincipalName}. Reapply share to create indexed managed policies.'
                 )
                 self.folder_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy', share_resource_policy_name))
                 return
@@ -216,7 +219,7 @@ class S3AccessPointShareManager:
             unattached_policies: List[str] = share_policy_service.get_policies_unattached_to_principal()
             if len(unattached_policies) > 0:
                 logger.info(
-                    f'IAM Policies {unattached_policies} exists but are not attached to role {self.share.principalRoleName}'
+                    f'IAM Policies {unattached_policies} exists but are not attached to IAM principal {self.share.principalRoleName} (type: {self.target_requestor_principal_type})'
                 )
                 self.folder_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy attached', unattached_policies))
                 return
@@ -236,7 +239,7 @@ class S3AccessPointShareManager:
             )
             self.folder_errors.append(
                 ShareErrorFormatter.missing_permission_error_msg(
-                    self.target_requester_IAMRoleName,
+                    self.target_requester_IAMPrincipalName,
                     'IAM Policy Statement Sid',
                     f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3<index>',
                     'S3 Bucket',
@@ -252,7 +255,7 @@ class S3AccessPointShareManager:
             )
             self.folder_errors.append(
                 ShareErrorFormatter.missing_permission_error_msg(
-                    self.target_requester_IAMRoleName,
+                    self.target_requester_IAMPrincipalName,
                     'IAM Policy Resource(s)',
                     f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S3<index>',
                     'S3 Bucket',
@@ -273,7 +276,7 @@ class S3AccessPointShareManager:
                     if missing_permissions:
                         self.folder_errors.append(
                             ShareErrorFormatter.missing_permission_error_msg(
-                                self.target_requester_IAMRoleName,
+                                self.target_requester_IAMPrincipalName,
                                 'IAM Policy Action',
                                 missing_permissions,
                                 'S3 Bucket',
@@ -283,7 +286,7 @@ class S3AccessPointShareManager:
                     if extra_permissions:
                         self.folder_errors.append(
                             ShareErrorFormatter.not_allowed_permission_error_msg(
-                                self.target_requester_IAMRoleName,
+                                self.target_requester_IAMPrincipalName,
                                 'IAM Policy Action',
                                 extra_permissions,
                                 'S3 Bucket',
@@ -302,7 +305,7 @@ class S3AccessPointShareManager:
                 )
                 self.folder_errors.append(
                     ShareErrorFormatter.missing_permission_error_msg(
-                        self.target_requester_IAMRoleName,
+                        self.target_requester_IAMPrincipalName,
                         'IAM Policy Statement',
                         f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS<index>',
                         'KMS Key',
@@ -318,7 +321,7 @@ class S3AccessPointShareManager:
                 )
                 self.folder_errors.append(
                     ShareErrorFormatter.missing_permission_error_msg(
-                        self.target_requester_IAMRoleName,
+                        self.target_requester_IAMPrincipalName,
                         'IAM Policy Resource',
                         f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}KMS<index>',
                         'KMS Key',
@@ -331,16 +334,16 @@ class S3AccessPointShareManager:
         Updates requester IAM role policy to include requested S3 bucket and access point
         :returns: None or raises exception if something fails
         """
-        logger.info(f'Grant target role {self.target_requester_IAMRoleName} access policy')
+        logger.info(f'Grant target principal {self.target_requester_IAMPrincipalName} (type: {self.target_requestor_principal_type}) access policy')
 
-        share_policy_service = S3SharePolicyService(principal_name=self.target_requester_IAMRoleName,
+        share_policy_service = S3SharePolicyService(principal_name=self.target_requester_IAMPrincipalName,
                                                     account=self.target_environment.AwsAccountId,
                                                     region=self.target_environment.region,
                                                     environmentUri=self.target_environment.environmentUri,
                                                     resource_prefix=self.target_environment.resourcePrefix,
-                                                    principal_type='ROLE')
+                                                    principal_type=self.target_requestor_principal_type)
         # Process all backwards compatibility tasks and convert to indexed policies
-        share_policy_service.process_backwards_compatibility_for_target_iam_roles()
+        share_policy_service.process_backwards_compatibility_for_target_iam_roles() if self.target_requestor_principal_type == EnvironmentPrincipalType.ROLE.value else None
 
         # Parses all policy documents and extracts s3 and kms statements
         share_policy_service.initialize_statements()
@@ -401,7 +404,7 @@ class S3AccessPointShareManager:
         is_unattached_policies = share_policy_service.get_policies_unattached_to_principal()
         if is_unattached_policies:
             logger.info(
-                f'Found some policies are not attached to the target IAM role: {self.target_requester_IAMRoleName}. Attaching policies now'
+                f'Found some policies are not attached to the target IAM role: {self.target_requester_IAMPrincipalName}. Attaching policies now'
             )
             if self.share.principalType == PrincipalType.Group.value:
                 share_managed_policies = share_policy_service.get_managed_policies()
@@ -433,9 +436,7 @@ class S3AccessPointShareManager:
 
         existing_policy = json.loads(existing_policy)
         statements = {item['Sid']: item for item in existing_policy['Statement']}
-        target_requester_id = SessionHelper.get_role_id(
-            self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
-        )
+        target_requester_id = self._get_target_requestor_id()
         error = False
         if f'{target_requester_id}0' not in statements.keys():
             error = True
@@ -450,7 +451,7 @@ class S3AccessPointShareManager:
         if error:
             self.folder_errors.append(
                 ShareErrorFormatter.missing_permission_error_msg(
-                    self.target_requester_IAMRoleName,
+                    self.target_requester_IAMPrincipalName,
                     'Policy',
                     f'{target_requester_id}0',
                     'Access Point',
@@ -470,7 +471,7 @@ class S3AccessPointShareManager:
         if error1:
             self.folder_errors.append(
                 ShareErrorFormatter.missing_permission_error_msg(
-                    self.target_requester_IAMRoleName,
+                    self.target_requester_IAMPrincipalName,
                     'Policy',
                     f'{target_requester_id}1',
                     'Access Point',
@@ -489,9 +490,8 @@ class S3AccessPointShareManager:
             raise Exception('Failed to create access point')
         existing_policy = s3_client.get_access_point_policy(self.access_point_name)
         # requester will use this role to access resources
-        target_requester_id = SessionHelper.get_role_id(
-            self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
-        )
+        target_requester_id = self._get_target_requestor_id()
+
         if existing_policy:
             # Update existing access point policy
             logger.info(
@@ -535,6 +535,21 @@ class S3AccessPointShareManager:
             access_point_name=self.access_point_name, policy=json.dumps(access_point_policy)
         )
 
+    def _get_target_requestor_id(self):
+        if self.target_requestor_principal_type == EnvironmentPrincipalType.ROLE.value:
+            target_requester_id = SessionHelper.get_role_id(
+                self.target_account_id, self.target_environment.region, self.target_requester_IAMPrincipalName
+            )
+        elif self.target_requestor_principal_type == EnvironmentPrincipalType.USER.value:
+            target_requester_id = SessionHelper.get_user_id(
+                self.target_account_id, self.target_environment.region, self.target_requester_IAMPrincipalName
+            )
+        else:
+            error = 'Unsuported principal type for processing access point sharing'
+            logger.error(error)
+            raise Exception(error)
+        return target_requester_id
+
     def check_dataset_bucket_key_policy(self) -> None:
         """
         Checks if dataset kms key policy includes read permissions for requestors IAM Role
@@ -551,7 +566,7 @@ class S3AccessPointShareManager:
             return
 
         target_requester_arn = IAM.get_role_arn_by_name(
-            self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
+            self.target_account_id, self.target_environment.region, self.target_requester_IAMPrincipalName
         )
         existing_policy = json.loads(existing_policy)
         counter = count()
@@ -563,7 +578,7 @@ class S3AccessPointShareManager:
             ):
                 self.folder_errors.append(
                     ShareErrorFormatter.missing_permission_error_msg(
-                        self.target_requester_IAMRoleName,
+                        self.target_requester_IAMPrincipalName,
                         'KMS Key Policy',
                         target_sid,
                         'KMS Key',
@@ -578,13 +593,13 @@ class S3AccessPointShareManager:
         kms_key_id = kms_client.get_key_id(key_alias)
         existing_policy = kms_client.get_key_policy(kms_key_id)
         target_requester_arn = IAM.get_role_arn_by_name(
-            self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
+            self.target_account_id, self.target_environment.region, self.target_requester_IAMPrincipalName
         )
 
         if not target_requester_arn:
             raise PrincipalRoleNotFound(
                 'update dataset bucket key policy',
-                f'Principal role {self.target_requester_IAMRoleName} is not found. Failed to update KMS key policy',
+                f'Principal role {self.target_requester_IAMPrincipalName} is not found. Failed to update KMS key policy',
             )
 
         pivot_role_name = SessionHelper.get_delegation_role_name(self.source_environment.region)
@@ -641,9 +656,8 @@ class S3AccessPointShareManager:
         s3_client = S3ControlClient(self.source_account_id, self.source_environment.region)
         access_point_policy = json.loads(s3_client.get_access_point_policy(self.access_point_name))
         access_point_arn = s3_client.get_bucket_access_point_arn(self.access_point_name)
-        target_requester_id = SessionHelper.get_role_id(
-            self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
-        )
+        target_requester_id = self._get_target_requestor_id()
+
         statements = {item['Sid']: item for item in access_point_policy['Statement']}
         if f'{target_requester_id}0' in statements.keys():
             prefix_list = statements[f'{target_requester_id}0']['Condition']['StringLike']['s3:prefix']
@@ -684,12 +698,12 @@ class S3AccessPointShareManager:
     def revoke_target_role_access_policy(self):
         logger.info('Deleting target role IAM statements...')
 
-        share_policy_service = S3SharePolicyService(principal_name=self.target_requester_IAMRoleName,
+        share_policy_service = S3SharePolicyService(principal_name=self.target_requester_IAMPrincipalName,
                                                     account=self.target_environment.AwsAccountId,
                                                     region=self.target_environment.region,
                                                     environmentUri=self.target_environment.environmentUri,
                                                     resource_prefix=self.target_environment.resourcePrefix,
-                                                    principal_type='ROLE')
+                                                    principal_type=self.target_requestor_principal_type)
         # Process all backwards compatibility tasks and convert to indexed policies
         share_policy_service.process_backwards_compatibility_for_target_iam_roles()
 
@@ -753,7 +767,7 @@ class S3AccessPointShareManager:
         kms_key_id = kms_client.get_key_id(key_alias)
         existing_policy = json.loads(kms_client.get_key_policy(kms_key_id))
         target_requester_arn = IAM.get_role_arn_by_name(
-            self.target_account_id, self.target_environment.region, self.target_requester_IAMRoleName
+            self.target_account_id, self.target_environment.region, self.target_requester_IAMPrincipalName
         )
         counter = count()
         statements = {item.get('Sid', next(counter)): item for item in existing_policy.get('Statement', {})}

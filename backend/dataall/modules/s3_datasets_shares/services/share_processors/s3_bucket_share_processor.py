@@ -52,7 +52,7 @@ class ProcessS3BucketShare(SharesProcessorInterface):
         if not self.buckets:
             log.info('No Buckets to share. Skipping...')
             return success
-        if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
+        if not S3ShareService.verify_principal(self.session, self.share_data.share):
             raise PrincipalRoleNotFound(
                 'process approved shares',
                 f'Principal role {self.share_data.share.principalRoleName} is not found. Failed to update KMS key/bucket policy',
@@ -126,7 +126,7 @@ class ProcessS3BucketShare(SharesProcessorInterface):
             new_state = revoked_item_SM.run_transition(ShareObjectActions.Start.value)
             revoked_item_SM.update_state_single_item(self.session, removing_item, new_state)
             try:
-                if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
+                if not S3ShareService.verify_principal(self.session, self.share_data.share):
                     raise PrincipalRoleNotFound(
                         'process revoked shares',
                         f'Principal role {self.share_data.share.principalRoleName} is not found. Failed to update KMS key/bucket policy',
@@ -171,7 +171,7 @@ class ProcessS3BucketShare(SharesProcessorInterface):
                 bucket.bucketUri,
             )
             try:
-                if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
+                if not S3ShareService.verify_principal(self.session, self.share_data.share):
                     raise PrincipalRoleNotFound(
                         'process verify shares',
                         f'Share principal Role {self.share_data.share.principalRoleName} not found. Check the team or consumption IAM role used.',
@@ -216,7 +216,7 @@ class ProcessS3BucketShare(SharesProcessorInterface):
         for bucket in self.buckets:
             log.info(f'Revoking access to bucket {bucket.bucketUri}/{bucket.S3BucketName} ')
             manager = self._initialize_share_manager(bucket)
-            if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
+            if not S3ShareService.verify_principal(self.session, self.share_data.share):
                 log.info(f'Principal role {self.share_data.share.principalRoleName} is not found.')
             execute_and_suppress_exception(func=manager.delete_target_role_bucket_policy)
             execute_and_suppress_exception(

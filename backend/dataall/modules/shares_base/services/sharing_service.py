@@ -70,7 +70,7 @@ class SharingService:
             resources = [(share_data.dataset.datasetUri, share_data.dataset.__tablename__)]
             resources.append(
                 (share_data.share.principalId, ConsumptionPrincipal.__tablename__)
-                if share_data.share.principalType == PrincipalType.ConsumptionRole.value
+                if share_data.share.principalType == PrincipalType.ConsumptionRole.value or share_data.share.principalType == PrincipalType.ConsumptionUser.value
                 else (
                     f'{share_data.share.principalId}-{share_data.share.environmentUri}',
                     EnvironmentGroup.__tablename__,

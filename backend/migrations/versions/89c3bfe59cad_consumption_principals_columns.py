@@ -11,7 +11,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import inspect, orm
 
-from dataall.core.environment.db.environment_enums import ConsumptionPrincipalType
+from dataall.core.environment.db.environment_enums import EnvironmentPrincipalType
 from dataall.core.environment.db.environment_models import ConsumptionPrincipal
 
 # revision identifiers, used by Alembic.
@@ -47,17 +47,17 @@ def upgrade():
     op.alter_column(table_name='consumptionprincipals', column_name='IAMRoleArn',
                     new_column_name='IAMPrincipalArn')
 
-    consumption_type_enum = sa.Enum(ConsumptionPrincipalType, name='consumption_principal_type')
+    consumption_type_enum = sa.Enum(EnvironmentPrincipalType, name='consumption_principal_type')
     consumption_type_enum.create(op.get_bind(), checkfirst=True)
 
-    op.add_column(table_name='consumptionprincipals', column=sa.Column('consumptionPrincipalType', sa.Enum(ConsumptionPrincipalType, name='consumption_principal_type'), nullable=True))
+    op.add_column(table_name='consumptionprincipals', column=sa.Column('consumptionPrincipalType', sa.Enum(EnvironmentPrincipalType, name='consumption_principal_type'), nullable=True))
 
     session = get_session()
 
     # For all consumption roles, set the consumptionPrincipalType column value to ConsumptionPrincipalType.ROLE.value
     consumption_roles: List[ConsumptionPrincipal] = session.query(ConsumptionPrincipal).all()
     for consumption_role in consumption_roles:
-        consumption_role.consumptionPrincipalType = ConsumptionPrincipalType.ROLE.value
+        consumption_role.consumptionPrincipalType = EnvironmentPrincipalType.ROLE.value
     session.add_all(consumption_roles)
     session.commit()
 

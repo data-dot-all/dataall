@@ -1,6 +1,6 @@
 from dataall.base.db.exceptions import UnauthorizedOperation, InvalidInput
 from dataall.base.aws.iam import IAM
-from dataall.core.environment.db.environment_enums import PolicyManagementOptions, ConsumptionPrincipalType
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions, EnvironmentPrincipalType
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionPrincipal
 from dataall.core.environment.services.managed_iam_policies import PolicyManager
@@ -138,7 +138,7 @@ class S3ShareValidator(SharesValidatorInterface):
         if share_consumption_principal:
             consumption_principal_type = share_consumption_principal.consumptionPrincipalType
         else:
-            consumption_principal_type = ConsumptionPrincipalType.ROLE.value
+            consumption_principal_type = EnvironmentPrincipalType.ROLE.value
         share_policy_manager = PolicyManager(session=session, account=environment.AwsAccountId,
                                              region=environment.region, environmentUri=environment.environmentUri,
                                              resource_prefix=environment.resourcePrefix,

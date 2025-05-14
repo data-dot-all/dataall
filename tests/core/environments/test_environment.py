@@ -780,6 +780,6 @@ def test_update_consumption_role(client, org_fixture, env_fixture, user, group, 
     )
 
     assert not response.errors
-    assert response.data.updateConsumptionRole.consumptionPrincipalName == 'testRoleName'
-    assert response.data.updateConsumptionRole.groupUri == 'testGroupUri'
-    assert response.data.updateConsumptionRole.dataallManaged == 'PARTIALLY_MANAGED'
+    assert response.data.updateConsumptionPrincipal.consumptionPrincipalName == 'testRoleName'
+    assert response.data.updateConsumptionPrincipal.groupUri == 'testGroupUri'
+    assert response.data.updateConsumptionPrincipal.dataallManaged == 'PARTIALLY_MANAGED'

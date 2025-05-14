@@ -23,7 +23,7 @@ import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   createShareObject,
-  listEnvironmentConsumptionRoles,
+  listEnvironmentConsumptionPrincipals,
   listEnvironmentGroups,
   listValidEnvironments,
   requestDashboardShare,
@@ -141,14 +141,14 @@ export const RequestAccessModal = (props) => {
     setLoadingRoles(true);
     try {
       const response = await client.query(
-        listEnvironmentConsumptionRoles({
+        listEnvironmentConsumptionPrincipals({
           filter: { ...Defaults.selectListFilter, groupUri: groupUri },
           environmentUri
         })
       );
       if (!response.errors) {
         setRoleOptions(
-          response.data.listEnvironmentConsumptionRoles.nodes.map((g) => ({
+          response.data.listEnvironmentConsumptionPrincipals.nodes.map((g) => ({
             value: g.consumptionPrincipalUri,
             label: [
               g.consumptionPrincipalName,

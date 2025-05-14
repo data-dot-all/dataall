@@ -56,9 +56,9 @@ import {
   getEnvironmentAssumeRoleUrl,
   listAllEnvironmentConsumptionPrincipals,
   listAllEnvironmentGroups,
-  removeConsumptionRoleFromEnvironment,
+  removeConsumptionPrincipalFromEnvironment,
   removeGroupFromEnvironment,
-  updateConsumptionRole
+  updateConsumptionPrincipal
 } from '../services';
 import { EnvironmentPrincipalAddForm } from './EnvironmentPrincipalAddForm';
 import { EnvironmentTeamInviteEditForm } from './EnvironmentTeamInviteEditForm';
@@ -501,7 +501,7 @@ export const EnvironmentTeams = ({ environment }) => {
   const removeConsumptionRole = async (consumptionPrincipalUri) => {
     try {
       const response = await client.mutate(
-        removeConsumptionRoleFromEnvironment({
+        removeConsumptionPrincipalFromEnvironment({
           environmentUri: environment.environmentUri,
           consumptionPrincipalUri: consumptionPrincipalUri
         })
@@ -523,9 +523,9 @@ export const EnvironmentTeams = ({ environment }) => {
     }
   };
 
-  const updateConsumptionRoleHandler = async (newRow) => {
+  const updateConsumptionPrincipalHandler = async (newRow) => {
     const response = await client.mutate(
-      updateConsumptionRole({
+      updateConsumptionPrincipal({
         environmentUri: environment.environmentUri,
         consumptionPrincipalUri: newRow.consumptionPrincipalUri,
         input: {
@@ -654,7 +654,7 @@ export const EnvironmentTeams = ({ environment }) => {
   };
 
   const processRowUpdate = async (newRow) => {
-    await updateConsumptionRoleHandler(newRow);
+    await updateConsumptionPrincipalHandler(newRow);
     return newRow;
   };
 

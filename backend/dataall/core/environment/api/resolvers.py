@@ -87,8 +87,8 @@ def remove_group(context: Context, source, environmentUri=None, groupUri=None):
     return environment
 
 
-def remove_consumption_role(context: Context, source, environmentUri=None, consumptionPrincipalUri=None):
-    status = EnvironmentService.remove_consumption_role(
+def remove_consumption_principal(context: Context, source, environmentUri=None, consumptionPrincipalUri=None):
+    status = EnvironmentService.remove_consumption_principal(
         uri=consumptionPrincipalUri,
         env_uri=environmentUri,
     )
@@ -96,13 +96,13 @@ def remove_consumption_role(context: Context, source, environmentUri=None, consu
     return status
 
 
-def update_consumption_role(context: Context, source, environmentUri=None, consumptionPrincipalUri=None, input={}):
-    consumption_role = EnvironmentService.update_consumption_role(
+def update_consumption_principal(context: Context, source, environmentUri=None, consumptionPrincipalUri=None, input={}):
+    consumption_principal = EnvironmentService.update_consumption_principal(
         uri=consumptionPrincipalUri,
         env_uri=environmentUri,
         input=input,
     )
-    return consumption_role
+    return consumption_principal
 
 
 def list_environment_invited_groups(context: Context, source, environmentUri=None, filter=None):
@@ -126,8 +126,8 @@ def list_all_environment_groups(context: Context, source, environmentUri=None, f
     )
 
 
-def list_environment_consumption_roles(context: Context, source, environmentUri=None, filter=None):
-    return EnvironmentService.paginated_user_environment_consumption_roles(
+def list_environment_consumption_principals(context: Context, source, environmentUri=None, filter=None):
+    return EnvironmentService.paginated_user_environment_consumption_principals(
         uri=environmentUri,
         data=filter,
     )
@@ -159,8 +159,8 @@ def list_groups(context: Context, source, filter=None):
     return EnvironmentService.paginated_user_groups(filter)
 
 
-def list_consumption_roles(context: Context, source, filter=None):
-    return EnvironmentService.paginated_user_consumption_roles(filter)
+def list_consumption_principals(context: Context, source, filter=None):
+    return EnvironmentService.paginated_user_consumption_principals(filter)
 
 
 def list_environment_networks(context: Context, source, environmentUri=None, filter=None):

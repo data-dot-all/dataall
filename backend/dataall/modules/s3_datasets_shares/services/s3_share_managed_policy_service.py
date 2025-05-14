@@ -9,6 +9,7 @@ from dataall.base.utils.iam_policy_utils import (
     split_policy_with_resources_in_statements,
 )
 from dataall.base.utils.naming_convention import NamingConventionService, NamingConventionPattern
+from dataall.core.environment.db.environment_enums import EnvironmentPrincipalType
 from dataall.core.environment.services.managed_iam_policies import ManagedPolicy
 import logging
 
@@ -27,12 +28,13 @@ EMPTY_STATEMENT_SID = 'EmptyStatement'
 
 S3_ALLOWED_ACTIONS = ['s3:List*', 's3:Describe*', 's3:GetObject']
 IAM_SERVICE_NAME = 'AWS Identity and Access Management (IAM)'
-IAM_SERVICE_QUOTA_NAME = 'Managed policies per role'
+IAM_ROLE_SERVICE_QUOTA_NAME = 'Managed policies per role'
+IAM_USER_SERVICE_QUOTA_NAME = 'Managed policies per user'
 DEFAULT_MAX_ATTACHABLE_MANAGED_POLICIES_ACCOUNT = 10
 
 
 class S3SharePolicyService(ManagedPolicy):
-    def __init__(self, principal_name, account, region, environmentUri, resource_prefix, principal_type='ROLE'):
+    def __init__(self, principal_name, account, region, environmentUri, resource_prefix, principal_type=EnvironmentPrincipalType.ROLE.value):
         self.principal_name = principal_name
         self.principal_type = principal_type
         self.account = account
@@ -398,11 +400,19 @@ class S3SharePolicyService(ManagedPolicy):
     def _check_iam_managed_policy_attachment_limit(self, policy_document_chunks):
         number_of_policies_needed = len(policy_document_chunks)
         policies_present = self.get_managed_policies()
-        managed_policies_attached_to_role = IAM.get_attached_managed_policies_to_role(
-            account_id=self.account, region=self.region, role_name=self.principal_name
-        )
+        if self.principal_type == EnvironmentPrincipalType.ROLE.value:
+            managed_policies_attached_to_principal = IAM.get_attached_managed_policies_to_role(
+                account_id=self.account, region=self.region, role_name=self.principal_name
+            )
+        elif self.principal_type == EnvironmentPrincipalType.USER.value:
+            managed_policies_attached_to_principal = IAM.get_attached_managed_policies_to_user(
+                account_id=self.account, region=self.region, user_name=self.principal_name
+            )
+        else:
+            raise Exception('Unsupported Requestor Type detected')
+
         number_of_non_share_managed_policies_attached_to_role = len(
-            [policy for policy in managed_policies_attached_to_role if policy not in policies_present]
+            [policy for policy in managed_policies_attached_to_principal if policy not in policies_present]
         )
         log.info(
             f'number_of_non_share_managed_policies_attached_to_role: {number_of_non_share_managed_policies_attached_to_role}'
@@ -412,14 +422,14 @@ class S3SharePolicyService(ManagedPolicy):
         if number_of_policies_needed + number_of_non_share_managed_policies_attached_to_role > managed_iam_policy_quota:
             # Send an email notification to the requestors to increase the quota
             log.error(
-                f'Number of policies which can be attached to the role is more than the service quota limit: {managed_iam_policy_quota}'
+                f'Number of policies which can be attached to the principal {self.principal_type} is more than the service quota limit: {managed_iam_policy_quota}'
             )
             raise AWSServiceQuotaExceeded(
                 action='_check_iam_managed_policy_attachment_limit',
-                message=f'Number of policies which can be attached to the role is more than the service quota limit: {managed_iam_policy_quota}',
+                message=f'Number of policies which can be attached to the principal {self.principal_type} is more than the service quota limit: {managed_iam_policy_quota}',
             )
 
-        log.info(f'Role: {self.principal_name} has capacity to attach managed policies')
+        log.info(f'Principal: {self.principal_name} has capacity to attach managed policies')
 
     def _get_managed_policy_quota(self):
         # Get the number of managed policies which can be attached to the IAM role
@@ -435,7 +445,10 @@ class S3SharePolicyService(ManagedPolicy):
         if service_code:
             service_quota_codes = service_quota_client.list_service_quota(service_code=service_code)
             for service_quota_cd in service_quota_codes:
-                if service_quota_cd.get('QuotaName') == IAM_SERVICE_QUOTA_NAME:
+                if self.principal_type == EnvironmentPrincipalType.ROLE.value and service_quota_cd.get('QuotaName') == IAM_ROLE_SERVICE_QUOTA_NAME:
+                    service_quota_code = service_quota_cd.get('QuotaCode')
+                    break
+                if self.principal_type == EnvironmentPrincipalType.USER.value and service_quota_cd.get('QuotaName') == IAM_USER_SERVICE_QUOTA_NAME:
                     service_quota_code = service_quota_cd.get('QuotaCode')
                     break
 

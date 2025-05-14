@@ -1,6 +1,6 @@
 from dataall.base.api import gql
 from dataall.base.api.constants import GraphQLEnumMapper, SortDirection
-from dataall.core.environment.db.environment_enums import PolicyManagementOptions, ConsumptionPrincipalType
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions, EnvironmentPrincipalType
 
 AwsEnvironmentInput = gql.InputType(
     name='AwsEnvironmentInput',
@@ -105,8 +105,8 @@ AddConsumptionPrincipalToEnvironmentInput = gql.InputType(
     ],
 )
 
-ConsumptionRoleFilter = gql.InputType(
-    name='ConsumptionRoleFilter',
+ConsumptionPrincipalFilter = gql.InputType(
+    name='ConsumptionPrincipalFilter',
     arguments=[
         gql.Argument('term', gql.String),
         gql.Argument(name='page', type=gql.Integer),
@@ -115,8 +115,8 @@ ConsumptionRoleFilter = gql.InputType(
     ],
 )
 
-UpdateConsumptionRoleInput = gql.InputType(
-    name='UpdateConsumptionRoleInput',
+UpdateConsumptionPrincipalInput = gql.InputType(
+    name='UpdateConsumptionPrincipalInput',
     arguments=[
         gql.Argument('consumptionPrincipalName', gql.String),
         gql.Argument('groupUri', gql.String),

@@ -146,7 +146,7 @@ class EnvironmentRepository:
         return query.order_by(ConsumptionPrincipal.consumptionPrincipalName)
 
     @staticmethod
-    def query_user_environment_consumption_roles(session, groups, uri, filter) -> Query:
+    def query_user_environment_consumption_principals(session, groups, uri, filter) -> Query:
         query = (
             session.query(ConsumptionPrincipal)
             .filter(ConsumptionPrincipal.environmentUri == uri)
@@ -221,7 +221,7 @@ class EnvironmentRepository:
         return query.order_by(EnvironmentGroup.groupUri)
 
     @staticmethod
-    def query_user_consumption_roles(session, username, groups, filter) -> Query:
+    def query_user_consumption_principals(session, username, groups, filter) -> Query:
         query = (
             session.query(ConsumptionPrincipal)
             .filter(ConsumptionPrincipal.groupUri.in_(groups))

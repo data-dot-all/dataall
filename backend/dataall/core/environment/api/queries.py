@@ -12,8 +12,8 @@ from dataall.core.environment.api.resolvers import (
     get_trust_account,
     list_all_environment_consumption_principals,
     list_all_environment_groups,
-    list_consumption_roles,
-    list_environment_consumption_roles,
+    list_consumption_principals,
+    list_environment_consumption_principals,
     list_environment_group_invitation_permissions,
     list_environment_groups,
     list_environment_invited_groups,
@@ -140,23 +140,23 @@ listAllGroups = gql.QueryField(
     resolver=list_groups,
 )
 
-listAllConsumptionRoles = gql.QueryField(
-    name='listAllConsumptionRoles',
+listAllConsumptionPrincipals = gql.QueryField(
+    name='listAllConsumptionPrincipals',
     type=gql.Ref('ConsumptionPrincipalSearchResult'),
     args=[
-        gql.Argument(name='filter', type=gql.Ref('ConsumptionRoleFilter')),
+        gql.Argument(name='filter', type=gql.Ref('ConsumptionPrincipalFilter')),
     ],
-    resolver=list_consumption_roles,
+    resolver=list_consumption_principals,
 )
 
-listEnvironmentConsumptionRoles = gql.QueryField(
-    name='listEnvironmentConsumptionRoles',
+listEnvironmentConsumptionPrincipals = gql.QueryField(
+    name='listEnvironmentConsumptionPrincipals',
     type=gql.Ref('ConsumptionPrincipalSearchResult'),
     args=[
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='filter', type=gql.Ref('ConsumptionRoleFilter')),
+        gql.Argument(name='filter', type=gql.Ref('ConsumptionPrincipalFilter')),
     ],
-    resolver=list_environment_consumption_roles,
+    resolver=list_environment_consumption_principals,
 )
 
 
@@ -165,7 +165,7 @@ listAllEnvironmentConsumptionPrincipals = gql.QueryField(
     type=gql.Ref('ConsumptionPrincipalSearchResult'),
     args=[
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='filter', type=gql.Ref('ConsumptionRoleFilter')),
+        gql.Argument(name='filter', type=gql.Ref('ConsumptionPrincipalFilter')),
     ],
     resolver=list_all_environment_consumption_principals,
 )
