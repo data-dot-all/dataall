@@ -374,6 +374,12 @@
                         "CKV_AWS_116",
                         "CKV_AWS_117"
                     ]
+                },
+                {
+                    "resource": "AWS::S3::Bucket.dataalldevcloudfrontaccesslogsCAF85B96",
+                    "check_ids": [
+                        "CKV_AWS_18"
+                    ]
                 }
             ]
         },
