@@ -3,7 +3,7 @@ from botocore.exceptions import ClientError
 import re
 
 from .sts import SessionHelper
-from ...core.environment.db.environment_enums import EnvironmentPrincipalType
+from ..utils.consumption_principal_utils import EnvironmentIAMPrincipalType
 
 log = logging.getLogger(__name__)
 
@@ -274,10 +274,10 @@ class IAM:
     def is_policy_attached(account_id: str, region: str, policy_name: str, principal_name: str, principal_type: str):
         try:
             client = IAM.client(account_id, region)
-            if principal_type == EnvironmentPrincipalType.ROLE.value:
+            if principal_type == EnvironmentIAMPrincipalType.ROLE.value:
                 paginator = client.get_paginator('list_attached_role_policies')
                 pages = paginator.paginate(RoleName=principal_name)
-            elif principal_type == EnvironmentPrincipalType.USER.value:
+            elif principal_type == EnvironmentIAMPrincipalType.USER.value:
                 paginator = client.get_paginator('list_attached_user_policies')
                 pages = paginator.paginate(UserName=principal_name)
             else:

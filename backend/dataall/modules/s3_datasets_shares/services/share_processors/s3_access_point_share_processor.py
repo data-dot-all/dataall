@@ -232,7 +232,7 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
             log.info(f'Revoking access to folder {folder.locationUri}/{folder.name}')
             manager = self._initialize_share_manager(folder)
             if not S3ShareService.verify_principal(self.session, self.share_data.share):
-                log.info(f'Principal role {self.share_data.share.principalRoleName} is not found.')
+                log.info(f'Principal {self.share_data.share.principalRoleName} (type: {manager.target_requestor_principal_type}) is not found.')
             try:
                 access_point_policy = manager.revoke_access_in_access_point_policy()
                 if len(access_point_policy['Statement']) > 0:

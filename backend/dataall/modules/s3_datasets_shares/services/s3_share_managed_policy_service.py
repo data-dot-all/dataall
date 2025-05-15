@@ -4,12 +4,12 @@ from typing import Any, List, Dict
 from dataall.base.aws.iam import IAM
 from dataall.base.aws.service_quota import ServiceQuota
 from dataall.base.db.exceptions import AWSServiceQuotaExceeded
+from dataall.base.utils.consumption_principal_utils import EnvironmentIAMPrincipalType
 from dataall.base.utils.iam_policy_utils import (
     split_policy_statements_in_chunks,
     split_policy_with_resources_in_statements,
 )
 from dataall.base.utils.naming_convention import NamingConventionService, NamingConventionPattern
-from dataall.core.environment.db.environment_enums import EnvironmentPrincipalType
 from dataall.core.environment.services.managed_iam_policies import ManagedPolicy
 import logging
 
@@ -34,7 +34,7 @@ DEFAULT_MAX_ATTACHABLE_MANAGED_POLICIES_ACCOUNT = 10
 
 
 class S3SharePolicyService(ManagedPolicy):
-    def __init__(self, principal_name, account, region, environmentUri, resource_prefix, principal_type=EnvironmentPrincipalType.ROLE.value):
+    def __init__(self, principal_name, account, region, environmentUri, resource_prefix, principal_type=EnvironmentIAMPrincipalType.ROLE.value):
         self.principal_name = principal_name
         self.principal_type = principal_type
         self.account = account
@@ -303,7 +303,7 @@ class S3SharePolicyService(ManagedPolicy):
             self._create_empty_policies_with_indexes(indexes=missing_policies_indexes)
 
         # Check if managed policies can be attached to target requester role and new service policies do not exceed service quota limit
-        log.info('Checking service quota limit for number of managed policies which can be attached to role')
+        log.info(f'Checking service quota limit for number of managed policies which can be attached to principal: {self.principal_name}')
         self._check_iam_managed_policy_attachment_limit(policy_document_chunks)
 
         # Check if the number of policies required are greater than currently present
@@ -400,11 +400,11 @@ class S3SharePolicyService(ManagedPolicy):
     def _check_iam_managed_policy_attachment_limit(self, policy_document_chunks):
         number_of_policies_needed = len(policy_document_chunks)
         policies_present = self.get_managed_policies()
-        if self.principal_type == EnvironmentPrincipalType.ROLE.value:
+        if self.principal_type == EnvironmentIAMPrincipalType.ROLE.value:
             managed_policies_attached_to_principal = IAM.get_attached_managed_policies_to_role(
                 account_id=self.account, region=self.region, role_name=self.principal_name
             )
-        elif self.principal_type == EnvironmentPrincipalType.USER.value:
+        elif self.principal_type == EnvironmentIAMPrincipalType.USER.value:
             managed_policies_attached_to_principal = IAM.get_attached_managed_policies_to_user(
                 account_id=self.account, region=self.region, user_name=self.principal_name
             )
@@ -445,10 +445,10 @@ class S3SharePolicyService(ManagedPolicy):
         if service_code:
             service_quota_codes = service_quota_client.list_service_quota(service_code=service_code)
             for service_quota_cd in service_quota_codes:
-                if self.principal_type == EnvironmentPrincipalType.ROLE.value and service_quota_cd.get('QuotaName') == IAM_ROLE_SERVICE_QUOTA_NAME:
+                if self.principal_type == EnvironmentIAMPrincipalType.ROLE.value and service_quota_cd.get('QuotaName') == IAM_ROLE_SERVICE_QUOTA_NAME:
                     service_quota_code = service_quota_cd.get('QuotaCode')
                     break
-                if self.principal_type == EnvironmentPrincipalType.USER.value and service_quota_cd.get('QuotaName') == IAM_USER_SERVICE_QUOTA_NAME:
+                if self.principal_type == EnvironmentIAMPrincipalType.USER.value and service_quota_cd.get('QuotaName') == IAM_USER_SERVICE_QUOTA_NAME:
                     service_quota_code = service_quota_cd.get('QuotaCode')
                     break
 

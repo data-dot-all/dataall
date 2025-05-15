@@ -1356,7 +1356,10 @@ const ShareView = () => {
                               color="textSecondary"
                               variant="subtitle2"
                             >
-                              Principal
+                              Principal &nbsp;&nbsp;
+                              <Label color="warning">
+                                IAM {share.principal.IAMPrincipalType}
+                              </Label>
                             </Typography>
                           </ListItem>
                           <ListItem

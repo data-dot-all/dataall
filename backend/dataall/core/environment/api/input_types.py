@@ -1,6 +1,6 @@
 from dataall.base.api import gql
 from dataall.base.api.constants import GraphQLEnumMapper, SortDirection
-from dataall.core.environment.db.environment_enums import PolicyManagementOptions, EnvironmentPrincipalType
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 
 AwsEnvironmentInput = gql.InputType(
     name='AwsEnvironmentInput',

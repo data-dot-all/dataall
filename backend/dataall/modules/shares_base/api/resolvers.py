@@ -259,10 +259,12 @@ def resolve_principal(context: Context, source: ShareObject, **kwargs):
                 principalName = f'{principal.consumptionPrincipalName} [{principal.IAMPrincipalArn}]'
             elif source.principalType == PrincipalType.Group.value:
                 principal = EnvironmentService.get_environment_group(session, source.groupUri, source.environmentUri)
+                principal.__setattr__('consumptionPrincipalType', 'ROLE')
                 principalName = f'{source.groupUri} [{principal.environmentIAMRoleArn}]'
             else:
                 principalName = f'Redshift Role [{source.principalRoleName}]'
 
+            IAMPrincipalType = principal.consumptionPrincipalType
             return {
                 'principalName': principalName,
                 'principalId': source.principalId,
@@ -270,6 +272,7 @@ def resolve_principal(context: Context, source: ShareObject, **kwargs):
                 'principalRoleName': source.principalRoleName,
                 'SamlGroupName': source.groupUri,
                 'environmentName': environment.label,
+                'IAMPrincipalType' :  IAMPrincipalType
             }
 
 

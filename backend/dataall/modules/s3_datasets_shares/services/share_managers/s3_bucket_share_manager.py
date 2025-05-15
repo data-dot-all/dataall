@@ -6,7 +6,8 @@ from warnings import warn
 from dataall.base.aws.iam import IAM
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.db.exceptions import AWSServiceQuotaExceeded
-from dataall.core.environment.db.environment_enums import PolicyManagementOptions, EnvironmentPrincipalType
+from dataall.base.utils.consumption_principal_utils import EnvironmentIAMPrincipalType
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 from dataall.core.environment.db.environment_models import Environment, ConsumptionPrincipal
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
@@ -64,7 +65,7 @@ class S3BucketShareManager:
         self.target_account_id = share_data.target_environment.AwsAccountId
         self.source_env_admin = share_data.source_env_group.environmentIAMRoleArn
         self.target_requester_IAMPrincipalName = share_data.share.principalRoleName
-        self.target_requestor_principal_type = EnvironmentPrincipalType.ROLE.value if share_data.share.principalType in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value, PrincipalType.RedshiftRole.value] else EnvironmentPrincipalType.USER.value
+        self.target_requestor_principal_type = EnvironmentIAMPrincipalType.ROLE.value if share_data.share.principalType in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value, PrincipalType.RedshiftRole.value] else EnvironmentIAMPrincipalType.USER.value
         self.bucket_name = target_bucket.S3BucketName
         self.dataset_admin = share_data.dataset.IAMDatasetAdminRoleArn
         self.bucket_region = target_bucket.region
@@ -241,7 +242,7 @@ class S3BucketShareManager:
         Updates requester IAM role policy to include requested S3 bucket and kms key
         :return:
         """
-        logger.info(f'Grant target role {self.target_requester_IAMPrincipalName} access policy')
+        logger.info(f'Grant target principal {self.target_requester_IAMPrincipalName} (type: {self.target_requestor_principal_type}) access policy')
 
         share_policy_service = S3SharePolicyService(principal_name=self.target_requester_IAMPrincipalName,
                                                     account=self.target_environment.AwsAccountId,
@@ -250,7 +251,7 @@ class S3BucketShareManager:
                                                     resource_prefix=self.target_environment.resourcePrefix,
                                                     principal_type=self.target_requestor_principal_type)
         # Process all backwards compatibility tasks and convert to indexed policies
-        share_policy_service.process_backwards_compatibility_for_target_iam_roles() if self.target_requestor_principal_type == EnvironmentPrincipalType.ROLE.value else None # Only applicable to an IAM role
+        share_policy_service.process_backwards_compatibility_for_target_iam_roles() if self.target_requestor_principal_type == EnvironmentIAMPrincipalType.ROLE.value else None # Only applicable to an IAM role
 
         # Parses all policy documents and extracts s3 and kms statements
         share_policy_service.initialize_statements()

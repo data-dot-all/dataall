@@ -235,6 +235,7 @@ Principal = gql.ObjectType(
         gql.Field(name='principalRoleName', type=gql.String),
         gql.Field(name='SamlGroupName', type=gql.String),
         gql.Field(name='environmentName', type=gql.String),
+        gql.Field(name='IAMPrincipalType', type=gql.String),
     ],
 )
 

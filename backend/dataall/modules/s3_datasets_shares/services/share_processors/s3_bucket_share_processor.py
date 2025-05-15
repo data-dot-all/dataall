@@ -217,7 +217,7 @@ class ProcessS3BucketShare(SharesProcessorInterface):
             log.info(f'Revoking access to bucket {bucket.bucketUri}/{bucket.S3BucketName} ')
             manager = self._initialize_share_manager(bucket)
             if not S3ShareService.verify_principal(self.session, self.share_data.share):
-                log.info(f'Principal role {self.share_data.share.principalRoleName} is not found.')
+                log.info(f'Principal {self.share_data.share.principalRoleName} (type: {manager.target_requestor_principal_type}) is not found.')
             execute_and_suppress_exception(func=manager.delete_target_role_bucket_policy)
             execute_and_suppress_exception(
                 func=manager.delete_target_role_access_policy,

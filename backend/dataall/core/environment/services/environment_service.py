@@ -13,7 +13,8 @@ from dataall.base.utils import Parameter
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.base.db.exceptions import AWSResourceNotFound
-from dataall.core.environment.db.environment_enums import PolicyManagementOptions, EnvironmentPrincipalType
+from dataall.base.utils.consumption_principal_utils import EnvironmentIAMPrincipalType
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.permissions.services.environment_permissions import (
     ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
@@ -567,12 +568,12 @@ class EnvironmentService:
         with get_context().db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
 
-            consumptionType = EnvironmentPrincipalType.get_consumption_type(IAMPrincipalARN=IAMPrincipalArn)
+            consumptionType = EnvironmentIAMPrincipalType.get_consumption_type(IAMPrincipalARN=IAMPrincipalArn)
 
             principal = None
-            if consumptionType == EnvironmentPrincipalType.ROLE.value:
+            if consumptionType == EnvironmentIAMPrincipalType.ROLE.value:
                 principal = IAM.get_role(environment.AwsAccountId, environment.region, IAMPrincipalArn)
-            elif consumptionType == EnvironmentPrincipalType.USER.value:
+            elif consumptionType == EnvironmentIAMPrincipalType.USER.value:
                 principal = IAM.get_user(environment.AwsAccountId, environment.region, IAMPrincipalArn)
 
             if not principal:

@@ -2,7 +2,8 @@ from typing import Dict
 
 import pytest
 
-from dataall.core.environment.db.environment_enums import PolicyManagementOptions, EnvironmentPrincipalType
+from dataall.base.utils.consumption_principal_utils import EnvironmentIAMPrincipalType
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 from dataall.core.environment.db.environment_models import (
     Environment,
     EnvironmentGroup,
@@ -59,7 +60,7 @@ def consumption_role(db):
         group: str,
         consumption_role_name='test123',
         datallManaged=PolicyManagementOptions.FULLY_MANAGED.value,
-        consumptionPrincipalType=EnvironmentPrincipalType.ROLE.value
+        consumptionPrincipalType=EnvironmentIAMPrincipalType.ROLE.value
     ) -> EnvironmentGroup:
         with db.scoped_session() as session:
             IAMRoleArn = f'arn:aws:iam::{environment.AwsAccountId}:role/{consumption_role_name}'

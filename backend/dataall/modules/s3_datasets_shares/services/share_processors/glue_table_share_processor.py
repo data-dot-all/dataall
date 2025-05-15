@@ -83,7 +83,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                 if not S3ShareService.verify_principal(self.session, self.share_data.share):
                     raise PrincipalRoleNotFound(
                         'process approved shares',
-                        f'Principal role {self.share_data.share.principalRoleName} is not found. Failed to update LF policy',
+                        f'Principal {self.share_data.share.principalRoleName} is not found. Failed to update LF policy',
                     )
 
                 if None in [
@@ -265,7 +265,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         if not S3ShareService.verify_principal(self.session, self.share_data.share):
                             raise PrincipalRoleNotFound(
                                 'process revoked shares',
-                                f'Principal role {self.share_data.share.principalRoleName} is not found. Failed to update LF policy',
+                                f'Principal {self.share_data.share.principalRoleName} is not found. Failed to update LF policy',
                             )
                         if None in [
                             manager.source_account_id,
@@ -427,7 +427,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                 if not S3ShareService.verify_principal(self.session, self.share_data.share):
                     raise PrincipalRoleNotFound(
                         'process verify shares',
-                        f'Share principal Role {self.share_data.share.principalRoleName} not found. Check the team or consumption IAM role used.',
+                        f'Share principal {self.share_data.share.principalRoleName} not found. Check the team or consumption IAM principal used.',
                     )
                 if None in [
                     manager.source_account_id,
@@ -527,7 +527,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
             log.info('No tables to revoke. Skipping...')
         else:
             if not S3ShareService.verify_principal(self.session, self.share_data.share):
-                log.info(f'Principal role {self.share_data.share.principalRoleName} is not found.')
+                log.info(f'Principal {self.share_data.share.principalRoleName} (type: {manager.target_principal_type}) is not found.')
             if None in [
                 manager.source_account_id,
                 manager.source_account_region,

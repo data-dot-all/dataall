@@ -3,7 +3,8 @@ import logging
 import json
 from abc import ABC, abstractmethod
 from dataall.base.aws.iam import IAM
-from dataall.core.environment.db.environment_enums import PolicyManagementOptions, EnvironmentPrincipalType
+from dataall.base.utils.consumption_principal_utils import EnvironmentIAMPrincipalType
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 
 logger = logging.getLogger(__name__)
@@ -85,9 +86,9 @@ class ManagedPolicy(ABC):
         for policy_name in managed_policies_list:
             policy_arn = f'arn:aws:iam::{self.account}:policy/{policy_name}'
             try:
-                if self.principal_type == EnvironmentPrincipalType.ROLE.value:
+                if self.principal_type == EnvironmentIAMPrincipalType.ROLE.value:
                     IAM.attach_role_policy(self.account, self.region, self.principal_name, policy_arn)
-                elif self.principal_type == EnvironmentPrincipalType.USER.value:
+                elif self.principal_type == EnvironmentIAMPrincipalType.USER.value:
                     IAM.attach_user_policy(self.account, self.region, self.principal_name, policy_arn)
             except Exception as e:
                 raise Exception(f"Required customer managed policy {policy_arn} can't be attached: {e}")
@@ -139,14 +140,14 @@ class PolicyManager(object):
                 )
 
                 if policy_management == PolicyManagementOptions.FULLY_MANAGED.value:
-                    if self.principal_type == EnvironmentPrincipalType.ROLE.value:
+                    if self.principal_type == EnvironmentIAMPrincipalType.ROLE.value:
                         IAM.attach_role_policy(
                             account_id=self.account,
                             region=self.region,
                             role_name=self.principal_name,
                             policy_arn=f'arn:aws:iam::{self.account}:policy/{policy_name}',
                         )
-                    elif self.principal_type == EnvironmentPrincipalType.USER.value:
+                    elif self.principal_type == EnvironmentIAMPrincipalType.USER.value:
                         IAM.attach_user_policy(
                             account_id=self.account,
                             region=self.region,
@@ -177,14 +178,14 @@ class PolicyManager(object):
                 logger.info(f'Deleting policy {policy_name}')
                 try:
                     if policy_manager.check_if_policy_attached(policy_name=policy_name):
-                        if self.principal_type == EnvironmentPrincipalType.ROLE.value:
+                        if self.principal_type == EnvironmentIAMPrincipalType.ROLE.value:
                             IAM.detach_policy_from_role(
                                 account_id=self.account,
                                 region=self.region,
                                 role_name=self.principal_name,
                                 policy_name=policy_name,
                             )
-                        elif self.principal_type == EnvironmentPrincipalType.USER.value:
+                        elif self.principal_type == EnvironmentIAMPrincipalType.USER.value:
                             IAM.detach_policy_from_user(
                                 account_id=self.account,
                                 region=self.region,

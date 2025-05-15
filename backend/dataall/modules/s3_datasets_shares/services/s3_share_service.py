@@ -4,7 +4,7 @@ from dataall.base.db import utils, exceptions
 from dataall.base.context import get_context
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.aws.iam import IAM
-from dataall.core.environment.db.environment_enums import EnvironmentPrincipalType
+from dataall.base.utils.consumption_principal_utils import EnvironmentIAMPrincipalType
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.environment.services.environment_service import EnvironmentService
@@ -331,12 +331,12 @@ class S3ShareService:
         log.info(f'Verifying principal IAM principal: {share.principalRoleName} (type: {S3ShareService._get_environment_principal_type(share)})')
         principal_name = share.principalRoleName
         env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
-        principal_type: EnvironmentPrincipalType = S3ShareService._get_environment_principal_type(share)
+        principal_type: EnvironmentIAMPrincipalType = S3ShareService._get_environment_principal_type(share)
         return S3ShareService._validate_iam_principals(env, principal_name, principal_type)
 
     @staticmethod
-    def _validate_iam_principals(environment, principal_name, principal_type: EnvironmentPrincipalType):
-        if principal_type == EnvironmentPrincipalType.USER.value:
+    def _validate_iam_principals(environment, principal_name, principal_type: EnvironmentIAMPrincipalType):
+        if principal_type == EnvironmentIAMPrincipalType.USER.value:
             principal_user = IAM.get_user_arn_by_name(account_id=environment.AwsAccountId, region=environment.region,
                                                       user_name=principal_name)
             return principal_user is not None
@@ -347,13 +347,13 @@ class S3ShareService:
 
     @staticmethod
     def _get_environment_principal_type(share):
-        return EnvironmentPrincipalType.ROLE.value if share.principalType in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value, PrincipalType.RedshiftRole.value] else EnvironmentPrincipalType.USER.value
+        return EnvironmentIAMPrincipalType.ROLE.value if share.principalType in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value, PrincipalType.RedshiftRole.value] else EnvironmentIAMPrincipalType.USER.value
 
     @staticmethod
     def get_target_requestor_arn(target_account_id, target_environment_region, target_requester_IAMPrincipalName, principal_type):
-        if principal_type == EnvironmentPrincipalType.ROLE.value:
+        if principal_type == EnvironmentIAMPrincipalType.ROLE.value:
             return IAM.get_role_arn_by_name(target_account_id, target_environment_region, target_requester_IAMPrincipalName)
-        elif principal_type == EnvironmentPrincipalType.USER.value:
+        elif principal_type == EnvironmentIAMPrincipalType.USER.value:
             return IAM.get_user_arn_by_name(target_account_id, target_environment_region, target_requester_IAMPrincipalName)
         else:
             raise Exception('Unsupported principal while returning get_target_requestor_arn')

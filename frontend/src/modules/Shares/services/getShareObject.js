@@ -30,6 +30,7 @@ export const getShareObject = ({ shareUri, filter }) => ({
           principalRoleName
           SamlGroupName
           environmentName
+          IAMPrincipalType
         }
         policyManagement
         items(filter: $filter) {

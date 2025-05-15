@@ -6,7 +6,8 @@ from typing import List
 from warnings import warn
 
 from dataall.base.db.exceptions import AWSServiceQuotaExceeded
-from dataall.core.environment.db.environment_enums import PolicyManagementOptions, EnvironmentPrincipalType
+from dataall.base.utils.consumption_principal_utils import EnvironmentIAMPrincipalType
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 from dataall.core.environment.db.environment_models import ConsumptionPrincipal
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
@@ -73,9 +74,9 @@ class S3AccessPointShareManager:
         self.target_account_id = share_data.target_environment.AwsAccountId
         self.source_env_admin = share_data.source_env_group.environmentIAMRoleArn
         self.target_requester_IAMPrincipalName = share_data.share.principalRoleName
-        self.target_requestor_principal_type = EnvironmentPrincipalType.ROLE.value if share_data.share.principalType in [
+        self.target_requestor_principal_type = EnvironmentIAMPrincipalType.ROLE.value if share_data.share.principalType in [
             PrincipalType.ConsumptionRole.value, PrincipalType.Group.value,
-            PrincipalType.RedshiftRole.value] else EnvironmentPrincipalType.USER.value
+            PrincipalType.RedshiftRole.value] else EnvironmentIAMPrincipalType.USER.value
         self.bucket_name = target_folder.S3BucketName
         self.dataset_admin = share_data.dataset.IAMDatasetAdminRoleArn
         self.dataset_account_id = share_data.dataset.AwsAccountId
@@ -343,7 +344,7 @@ class S3AccessPointShareManager:
                                                     resource_prefix=self.target_environment.resourcePrefix,
                                                     principal_type=self.target_requestor_principal_type)
         # Process all backwards compatibility tasks and convert to indexed policies
-        share_policy_service.process_backwards_compatibility_for_target_iam_roles() if self.target_requestor_principal_type == EnvironmentPrincipalType.ROLE.value else None
+        share_policy_service.process_backwards_compatibility_for_target_iam_roles() if self.target_requestor_principal_type == EnvironmentIAMPrincipalType.ROLE.value else None
 
         # Parses all policy documents and extracts s3 and kms statements
         share_policy_service.initialize_statements()
@@ -536,11 +537,11 @@ class S3AccessPointShareManager:
         )
 
     def _get_target_requestor_id(self):
-        if self.target_requestor_principal_type == EnvironmentPrincipalType.ROLE.value:
+        if self.target_requestor_principal_type == EnvironmentIAMPrincipalType.ROLE.value:
             target_requester_id = SessionHelper.get_role_id(
                 self.target_account_id, self.target_environment.region, self.target_requester_IAMPrincipalName
             )
-        elif self.target_requestor_principal_type == EnvironmentPrincipalType.USER.value:
+        elif self.target_requestor_principal_type == EnvironmentIAMPrincipalType.USER.value:
             target_requester_id = SessionHelper.get_user_id(
                 self.target_account_id, self.target_environment.region, self.target_requester_IAMPrincipalName
             )
@@ -565,9 +566,8 @@ class S3AccessPointShareManager:
             self.folder_errors.append(ShareErrorFormatter.dne_error_msg('KMS Key Policy', kms_key_id))
             return
 
-        target_requester_arn = IAM.get_role_arn_by_name(
-            self.target_account_id, self.target_environment.region, self.target_requester_IAMPrincipalName
-        )
+        target_requester_arn = self._get_target_requestor_id()
+
         existing_policy = json.loads(existing_policy)
         counter = count()
         statements = {item.get('Sid', next(counter)): item for item in existing_policy.get('Statement', {})}
@@ -592,9 +592,7 @@ class S3AccessPointShareManager:
         kms_client = KmsClient(self.source_account_id, self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
         existing_policy = kms_client.get_key_policy(kms_key_id)
-        target_requester_arn = IAM.get_role_arn_by_name(
-            self.target_account_id, self.target_environment.region, self.target_requester_IAMPrincipalName
-        )
+        target_requester_arn = self._get_target_requestor_id()
 
         if not target_requester_arn:
             raise PrincipalRoleNotFound(
@@ -766,9 +764,7 @@ class S3AccessPointShareManager:
         kms_client = KmsClient(dataset.AwsAccountId, dataset.region)
         kms_key_id = kms_client.get_key_id(key_alias)
         existing_policy = json.loads(kms_client.get_key_policy(kms_key_id))
-        target_requester_arn = IAM.get_role_arn_by_name(
-            self.target_account_id, self.target_environment.region, self.target_requester_IAMPrincipalName
-        )
+        target_requester_arn = self._get_target_requestor_id()
         counter = count()
         statements = {item.get('Sid', next(counter)): item for item in existing_policy.get('Statement', {})}
 
