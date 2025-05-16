@@ -68,7 +68,7 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                 if not S3ShareService.verify_principal(self.session, self.share_data.share):
                     raise PrincipalRoleNotFound(
                         'process approved shares',
-                        f'Principal {self.share_data.share.principalRoleName} is not found. Failed to update bucket policy',
+                        f'Principal {self.share_data.share.principalName} is not found. Failed to update bucket policy',
                     )
 
                 manager.manage_bucket_policy()
@@ -134,7 +134,7 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                 if not S3ShareService.verify_principal(self.session, self.share_data.share):
                     raise PrincipalRoleNotFound(
                         'process approved shares',
-                        f'Principal {self.share_data.share.principalRoleName} is not found. Failed to update bucket policy',
+                        f'Principal {self.share_data.share.principalName} is not found. Failed to update bucket policy',
                     )
                 access_point_policy = manager.revoke_access_in_access_point_policy()
 
@@ -190,7 +190,7 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                 if not S3ShareService.verify_principal(self.session, self.share_data.share):
                     raise PrincipalRoleNotFound(
                         'process verify shares',
-                        f'Share principal {self.share_data.share.principalRoleName} not found. Check the team or consumption IAM role used.',
+                        f'Share principal {self.share_data.share.principalName} not found. Check the team or consumption IAM role used.',
                     )
                 manager.check_bucket_policy()
                 manager.check_target_role_access_policy()
@@ -232,7 +232,7 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
             log.info(f'Revoking access to folder {folder.locationUri}/{folder.name}')
             manager = self._initialize_share_manager(folder)
             if not S3ShareService.verify_principal(self.session, self.share_data.share):
-                log.info(f'Principal {self.share_data.share.principalRoleName} (type: {manager.target_requestor_principal_type}) is not found.')
+                log.info(f'Principal {self.share_data.share.principalName} (type: {manager.target_requestor_principal_type}) is not found.')
             try:
                 access_point_policy = manager.revoke_access_in_access_point_policy()
                 if len(access_point_policy['Statement']) > 0:

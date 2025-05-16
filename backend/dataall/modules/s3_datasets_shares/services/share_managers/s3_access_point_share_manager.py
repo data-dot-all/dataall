@@ -73,7 +73,7 @@ class S3AccessPointShareManager:
         self.source_account_id = share_data.dataset.AwsAccountId
         self.target_account_id = share_data.target_environment.AwsAccountId
         self.source_env_admin = share_data.source_env_group.environmentIAMRoleArn
-        self.target_requester_IAMPrincipalName = share_data.share.principalRoleName
+        self.target_requester_IAMPrincipalName = share_data.share.principalName
         self.target_requestor_principal_type = EnvironmentIAMPrincipalType.ROLE.value if share_data.share.principalType in [
             PrincipalType.ConsumptionRole.value, PrincipalType.Group.value,
             PrincipalType.RedshiftRole.value] else EnvironmentIAMPrincipalType.USER.value
@@ -220,7 +220,7 @@ class S3AccessPointShareManager:
             unattached_policies: List[str] = share_policy_service.get_policies_unattached_to_principal()
             if len(unattached_policies) > 0:
                 logger.info(
-                    f'IAM Policies {unattached_policies} exists but are not attached to IAM principal {self.share.principalRoleName} (type: {self.target_requestor_principal_type})'
+                    f'IAM Policies {unattached_policies} exists but are not attached to IAM principal {self.share.principalName} (type: {self.target_requestor_principal_type})'
                 )
                 self.folder_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy attached', unattached_policies))
                 return
@@ -551,6 +551,21 @@ class S3AccessPointShareManager:
             raise Exception(error)
         return target_requester_id
 
+    def _get_target_requestor_arn(self):
+        if self.target_requestor_principal_type == EnvironmentIAMPrincipalType.ROLE.value:
+            target_requester_arn = IAM.get_role_arn_by_name(
+                self.target_account_id, self.target_environment.region, self.target_requester_IAMPrincipalName
+            )
+        elif self.target_requestor_principal_type == EnvironmentIAMPrincipalType.USER.value:
+            target_requester_arn = IAM.get_user_arn_by_name(
+                self.target_account_id, self.target_environment.region, self.target_requester_IAMPrincipalName
+            )
+        else:
+            error = 'Unsuported principal type for processing access point sharing'
+            logger.error(error)
+            raise Exception(error)
+        return target_requester_arn
+
     def check_dataset_bucket_key_policy(self) -> None:
         """
         Checks if dataset kms key policy includes read permissions for requestors IAM Role
@@ -566,7 +581,7 @@ class S3AccessPointShareManager:
             self.folder_errors.append(ShareErrorFormatter.dne_error_msg('KMS Key Policy', kms_key_id))
             return
 
-        target_requester_arn = self._get_target_requestor_id()
+        target_requester_arn = self._get_target_requestor_arn()
 
         existing_policy = json.loads(existing_policy)
         counter = count()
@@ -592,7 +607,7 @@ class S3AccessPointShareManager:
         kms_client = KmsClient(self.source_account_id, self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
         existing_policy = kms_client.get_key_policy(kms_key_id)
-        target_requester_arn = self._get_target_requestor_id()
+        target_requester_arn = self._get_target_requestor_arn()
 
         if not target_requester_arn:
             raise PrincipalRoleNotFound(
@@ -764,7 +779,7 @@ class S3AccessPointShareManager:
         kms_client = KmsClient(dataset.AwsAccountId, dataset.region)
         kms_key_id = kms_client.get_key_id(key_alias)
         existing_policy = json.loads(kms_client.get_key_policy(kms_key_id))
-        target_requester_arn = self._get_target_requestor_id()
+        target_requester_arn = self._get_target_requestor_arn()
         counter = count()
         statements = {item.get('Sid', next(counter)): item for item in existing_policy.get('Statement', {})}
 

@@ -59,7 +59,7 @@ class RedshiftTableValidator(SharesValidatorInterface):
             session=session,
             environment=environment,
             principal_id=share.principalId,
-            principal_role_name=share.principalRoleName,
+            principal_role_name=share.principalName,
             action=SUBMIT_SHARE_OBJECT,
         )
         return True
@@ -71,7 +71,7 @@ class RedshiftTableValidator(SharesValidatorInterface):
             session=session,
             environment=environment,
             principal_id=share.principalId,
-            principal_role_name=share.principalRoleName,
+            principal_role_name=share.principalName,
             action=APPROVE_SHARE_OBJECT,
         )
         return True

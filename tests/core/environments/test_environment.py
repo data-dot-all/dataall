@@ -733,12 +733,12 @@ def test_create_environment(db, client, org_fixture, user, group):
 
 def test_update_consumption_role(client, org_fixture, env_fixture, user, group, db, consumption_role):
     query = """
-        mutation updateConsumptionRole(
+        mutation updateConsumptionPrincipal(
             $environmentUri:String!,
             $consumptionPrincipalUri:String!,
-            $input:UpdateConsumptionRoleInput
+            $input:UpdateConsumptionPrincipalInput
         ){
-            updateConsumptionRole(
+            updateConsumptionPrincipal(
                 environmentUri:$environmentUri,
                 consumptionPrincipalUri: $consumptionPrincipalUri,
                 input:$input
@@ -754,7 +754,7 @@ def test_update_consumption_role(client, org_fixture, env_fixture, user, group, 
         }
     """
 
-    consumption_principal_uri = consumption_role.data.addConsumptionRoleToEnvironment.consumptionPrincipalUri
+    consumption_principal_uri = consumption_role.data.addConsumptionPrincipalToEnvironment.consumptionPrincipalUri
 
     with db.scoped_session() as session:
         ResourcePolicyService.attach_resource_policy(

@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-export const getConsumptionRolePolicies = ({
+export const getConsumptionPrincipalPolicies = ({
   environmentUri,
   IAMPrincipalName,
   IAMPrincipalType
@@ -11,12 +11,12 @@ export const getConsumptionRolePolicies = ({
     IAMPrincipalType
   },
   query: gql`
-    query getConsumptionRolePolicies(
+    query getConsumptionPrincipalPolicies(
       $environmentUri: String!
       $IAMPrincipalName: String!
       $IAMPrincipalType: String!
     ) {
-      getConsumptionRolePolicies(
+      getConsumptionPrincipalPolicies(
         environmentUri: $environmentUri
         IAMPrincipalName: $IAMPrincipalName
         IAMPrincipalType: $IAMPrincipalType

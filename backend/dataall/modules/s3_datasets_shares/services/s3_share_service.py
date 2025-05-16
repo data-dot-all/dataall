@@ -328,8 +328,8 @@ class S3ShareService:
 
     @staticmethod
     def verify_principal(session, share: ShareObject) -> bool:
-        log.info(f'Verifying principal IAM principal: {share.principalRoleName} (type: {S3ShareService._get_environment_principal_type(share)})')
-        principal_name = share.principalRoleName
+        log.info(f'Verifying principal IAM principal: {share.principalName} (type: {S3ShareService._get_environment_principal_type(share)})')
+        principal_name = share.principalName
         env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
         principal_type: EnvironmentIAMPrincipalType = S3ShareService._get_environment_principal_type(share)
         return S3ShareService._validate_iam_principals(env, principal_name, principal_type)

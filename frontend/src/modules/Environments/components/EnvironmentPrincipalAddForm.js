@@ -94,9 +94,9 @@ export const EnvironmentPrincipalAddForm = (props) => {
           Add Consumption IAM Principal to environment {environment.label}
         </Typography>
         <Typography align="center" color="textSecondary" variant="subtitle2">
-          An IAM Consumption Principal - an IAM Role/User - is owned by the selected Team. The owners team
-          request access on behalf of this IAM Principal, which can be used by
-          downstream applications.
+          An IAM Consumption Principal - an IAM Role/User - is owned by the
+          selected Team. The owners team request access on behalf of this IAM
+          Principal, which can be used by downstream applications.
         </Typography>
         <Box sx={{ p: 3 }}>
           <Formik
@@ -254,10 +254,11 @@ export const EnvironmentPrincipalAddForm = (props) => {
                     <Alert severity="error" sx={{ mr: 1 }}>
                       With "Externally-Managed" policy management, you are
                       completely responsible for attaching / giving your
-                      consumption principal (IAM Role/User) appropriate permissions. Please select
-                      "Externally-Managed" if you know that your consumption principal has some
-                      super-user permissions or if you are completely managing
-                      the principal and its policies.
+                      consumption principal (IAM Role/User) appropriate
+                      permissions. Please select "Externally-Managed" if you
+                      know that your consumption principal has some super-user
+                      permissions or if you are completely managing the
+                      principal and its policies.
                     </Alert>
                   </CardContent>
                 ) : (

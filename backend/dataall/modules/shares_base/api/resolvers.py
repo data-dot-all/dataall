@@ -85,7 +85,7 @@ def create_share_object(
         item_type=itemType,
         group_uri=input['groupUri'],
         principal_id=input['principalId'],
-        principal_role_name=input.get('principalRoleName'),
+        principal_name=input.get('principalName'),
         principal_type=input['principalType'],
         requestPurpose=input.get('requestPurpose'),
         attachMissingPolicies=input.get('attachMissingPolicies', False),
@@ -262,14 +262,14 @@ def resolve_principal(context: Context, source: ShareObject, **kwargs):
                 principal.__setattr__('consumptionPrincipalType', 'ROLE')
                 principalName = f'{source.groupUri} [{principal.environmentIAMRoleArn}]'
             else:
-                principalName = f'Redshift Role [{source.principalRoleName}]'
+                principalName = f'Redshift Role [{source.principalName}]'
 
             IAMPrincipalType = principal.consumptionPrincipalType
             return {
                 'principalName': principalName,
                 'principalId': source.principalId,
                 'principalType': source.principalType,
-                'principalRoleName': source.principalRoleName,
+                'principalRoleName': source.principalName,
                 'SamlGroupName': source.groupUri,
                 'environmentName': environment.label,
                 'IAMPrincipalType' :  IAMPrincipalType

@@ -21,13 +21,13 @@ from dataall.core.environment.api.resolvers import (
     list_environments,
     list_groups,
     list_valid_environments,
-    get_consumption_role_policies,
+    get_consumption_principal_policies,
 )
 from dataall.core.environment.api.types import (
     Environment,
     EnvironmentSearchResult,
     EnvironmentSimplifiedSearchResult,
-    RoleManagedPolicy,
+    PrincipalManagedPolicy,
 )
 
 getTrustAccount = gql.QueryField(
@@ -211,14 +211,14 @@ getPivotRoleName = gql.QueryField(
     test_scope='Environment',
 )
 
-getConsumptionRolePolicies = gql.QueryField(
-    name='getConsumptionRolePolicies',
+getConsumptionPrincipalPolicies = gql.QueryField(
+    name='getConsumptionPrincipalPolicies',
     args=[
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='IAMPrincipalName', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='IAMPrincipalType', type=gql.NonNullableType(gql.String)),
     ],
-    type=gql.ArrayType(RoleManagedPolicy),
-    resolver=get_consumption_role_policies,
+    type=gql.ArrayType(PrincipalManagedPolicy),
+    resolver=get_consumption_principal_policies,
     test_scope='Environment',
 )

@@ -27,7 +27,7 @@ import {
   listEnvironmentGroups,
   listValidEnvironments,
   requestDashboardShare,
-  getConsumptionRolePolicies,
+  getConsumptionPrincipalPolicies,
   fetchEnums,
   useClient
 } from 'services';
@@ -179,21 +179,22 @@ export const RequestAccessModal = (props) => {
     setLoadingPolicies(true);
     try {
       const response = await client.query(
-        getConsumptionRolePolicies({
+        getConsumptionPrincipalPolicies({
           environmentUri,
           IAMPrincipalName,
           IAMPrincipalType
         })
       );
       if (!response.errors) {
-        let isSharePoliciesAttached = response.data.getConsumptionRolePolicies
-          .filter((policy) => policy.policy_type === 'SharePolicy')
-          .map((policy) => policy.attached);
+        let isSharePoliciesAttached =
+          response.data.getConsumptionPrincipalPolicies
+            .filter((policy) => policy.policy_type === 'SharePolicy')
+            .map((policy) => policy.attached);
         const isAllPoliciesAttached = isSharePoliciesAttached.every(
           (value) => value === true
         );
         setIsSharePolicyAttached(isAllPoliciesAttached);
-        let policyNameList = response.data.getConsumptionRolePolicies
+        let policyNameList = response.data.getConsumptionPrincipalPolicies
           .filter((policy) => {
             return (
               policy.policy_type === 'SharePolicy' && policy.attached === false
@@ -372,8 +373,8 @@ export const RequestAccessModal = (props) => {
           </Typography>
           <Typography align="center" color="textSecondary" variant="subtitle2">
             Data access is requested for the whole requester Team or for the
-            selected Consumption Principal. The request will be submitted to the data
-            owners, track its progress in the Shares menu on the left.
+            selected Consumption Principal. The request will be submitted to the
+            data owners, track its progress in the Shares menu on the left.
           </Typography>
           <Box sx={{ p: 3 }}>
             <Formik

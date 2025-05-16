@@ -175,7 +175,7 @@ class S3ShareObjectRepository:
         return (
             session.query(ShareObject)
             .join(S3Dataset, S3Dataset.datasetUri == ShareObject.datasetUri)
-            .filter(and_(S3Dataset.GlueDatabaseName == database, ShareObject.principalRoleName == principal))
+            .filter(and_(S3Dataset.GlueDatabaseName == database, ShareObject.principalName == principal))
         )
 
     @staticmethod

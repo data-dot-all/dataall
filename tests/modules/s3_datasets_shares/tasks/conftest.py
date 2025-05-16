@@ -132,20 +132,20 @@ def share(db):
         dataset: S3Dataset,
         environment: Environment,
         env_group: EnvironmentGroup,
-        consumption_role: ConsumptionPrincipal = None,
+        consumption_principal: ConsumptionPrincipal = None,
     ) -> ShareObject:
         with db.scoped_session() as session:
             share = ShareObject(
                 datasetUri=dataset.datasetUri,
                 environmentUri=environment.environmentUri,
                 owner='bob',
-                principalId=environment.SamlGroupName if not consumption_role else consumption_role.consumptionPrincipalUri,
+                principalId=environment.SamlGroupName if not consumption_principal else consumption_principal.consumptionPrincipalUri,
                 principalType=PrincipalType.Group.value
-                if not consumption_role
+                if not consumption_principal
                 else PrincipalType.ConsumptionRole.value,
-                principalRoleName=env_group.environmentIAMRoleName
-                if not consumption_role
-                else consumption_role.IAMPrincipalName,
+                principalName=env_group.environmentIAMRoleName
+                if not consumption_principal
+                else consumption_principal.IAMPrincipalName,
                 status=ShareObjectStatus.Approved.value,
                 groupUri=env_group.groupUri,
                 permissions=[ShareObjectDataPermission.Read.value],

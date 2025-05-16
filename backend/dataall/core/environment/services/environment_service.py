@@ -1133,7 +1133,7 @@ class EnvironmentService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(environment_permissions.GET_ENVIRONMENT)
-    def resolve_consumption_role_policies(uri, IAMPrincipalName, IAMPrincipalType):
+    def resolve_consumption_principal_policies(uri, IAMPrincipalName, IAMPrincipalType):
         environment = EnvironmentService.find_environment_by_uri(uri=uri)
         with get_context().db_engine.scoped_session() as session:
             return PolicyManager(session=session, account=environment.AwsAccountId, region=environment.region,

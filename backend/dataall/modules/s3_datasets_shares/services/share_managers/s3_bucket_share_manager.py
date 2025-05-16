@@ -64,7 +64,7 @@ class S3BucketShareManager:
         self.source_account_id = target_bucket.AwsAccountId
         self.target_account_id = share_data.target_environment.AwsAccountId
         self.source_env_admin = share_data.source_env_group.environmentIAMRoleArn
-        self.target_requester_IAMPrincipalName = share_data.share.principalRoleName
+        self.target_requester_IAMPrincipalName = share_data.share.principalName
         self.target_requestor_principal_type = EnvironmentIAMPrincipalType.ROLE.value if share_data.share.principalType in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value, PrincipalType.RedshiftRole.value] else EnvironmentIAMPrincipalType.USER.value
         self.bucket_name = target_bucket.S3BucketName
         self.dataset_admin = share_data.dataset.IAMDatasetAdminRoleArn
@@ -130,7 +130,7 @@ class S3BucketShareManager:
             unattached_policies: List[str] = share_policy_service.get_policies_unattached_to_principal()
             if len(unattached_policies) > 0:
                 logger.info(
-                    f'IAM Policies {unattached_policies} exists but are not attached to principal {self.share.principalRoleName} (type: {self.target_requestor_principal_type})'
+                    f'IAM Policies {unattached_policies} exists but are not attached to principal {self.share.principalName} (type: {self.target_requestor_principal_type})'
                 )
                 self.bucket_errors.append(ShareErrorFormatter.dne_error_msg('IAM Policy attached', unattached_policies))
                 return
@@ -545,7 +545,7 @@ class S3BucketShareManager:
     ):
         logger.info('Deleting target role IAM statements...')
 
-        share_policy_service = S3SharePolicyService(principal_name=share.principalRoleName,
+        share_policy_service = S3SharePolicyService(principal_name=share.principalName,
                                                     account=target_environment.AwsAccountId,
                                                     region=self.target_environment.region,
                                                     environmentUri=target_environment.environmentUri,

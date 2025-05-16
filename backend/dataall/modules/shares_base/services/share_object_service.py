@@ -118,7 +118,7 @@ class ShareObjectService:
         item_type: str,
         group_uri,
         principal_id,
-        principal_role_name,
+        principal_name,
         principal_type,
         requestPurpose,
         attachMissingPolicies,
@@ -133,8 +133,8 @@ class ShareObjectService:
 
             cls._validate_group_membership(session, group_uri, environment.environmentUri)
 
-            principal_role_name = cls._resolve_principal_role_name(
-                session, group_uri, environment.environmentUri, principal_id, principal_role_name, principal_type
+            principal_name = cls._resolve_principal_role_name(
+                session, group_uri, environment.environmentUri, principal_id, principal_name, principal_type
             )
 
             cls.validate_share_object(
@@ -145,7 +145,7 @@ class ShareObjectService:
                 environment=environment,
                 group_uri=group_uri,
                 principal_id=principal_id,
-                principal_role_name=principal_role_name,
+                principal_role_name=principal_name,
                 principal_type=principal_type,
                 attachMissingPolicies=attachMissingPolicies,
                 permissions=permissions,
@@ -156,7 +156,7 @@ class ShareObjectService:
                 dataset=dataset,
                 env=environment,
                 principal_id=principal_id,
-                principal_role_name=principal_role_name,
+                principal_role_name=principal_name,
                 group_uri=group_uri,
             )
             already_existed = share is not None
@@ -186,7 +186,7 @@ class ShareObjectService:
                     groupUri=group_uri,
                     principalId=principal_id,
                     principalType=principal_type,
-                    principalRoleName=principal_role_name,
+                    principalName=principal_name,
                     status=ShareObjectStatus.Draft.value,
                     requestPurpose=requestPurpose,
                     permissions=permissions,
@@ -354,7 +354,7 @@ class ShareObjectService:
                     action='SHARE_OBJECT:EXTENSION_REQUEST',
                     label='SHARE_OBJECT:EXTENSION_REQUEST',
                     owner=get_context().username,
-                    summary=f'{get_context().username} submitted share extension request for {dataset.name} in environment with URI: {dataset.environmentUri} for the principal: {share.principalRoleName}',
+                    summary=f'{get_context().username} submitted share extension request for {dataset.name} in environment with URI: {dataset.environmentUri} for the principal: {share.principalName}',
                     targetUri=dataset.datasetUri,
                     targetType='dataset',
                 )
@@ -446,7 +446,7 @@ class ShareObjectService:
                 action='SHARE_OBJECT:APPROVE_EXTENSION',
                 label='SHARE_OBJECT:APPROVE_EXTENSION',
                 owner=get_context().username,
-                summary=f'{get_context().username} approved share extension request for {dataset.name} in environment with URI: {dataset.environmentUri} for the principal: {share.principalRoleName}',
+                summary=f'{get_context().username} approved share extension request for {dataset.name} in environment with URI: {dataset.environmentUri} for the principal: {share.principalName}',
                 targetUri=dataset.datasetUri,
                 targetType='dataset',
             )
@@ -527,7 +527,7 @@ class ShareObjectService:
                 action='SHARE_OBJECT:UPDATE_EXTENSION_PERIOD',
                 label='SHARE_OBJECT:UPDATE_EXTENSION_PERIOD',
                 owner=get_context().username,
-                summary=f'{get_context().username} updated share extension period request for {dataset.name} in environment with URI: {dataset.environmentUri} for the principal: {share.principalRoleName}',
+                summary=f'{get_context().username} updated share extension period request for {dataset.name} in environment with URI: {dataset.environmentUri} for the principal: {share.principalName}',
                 targetUri=dataset.datasetUri,
                 targetType='dataset',
             )
@@ -585,7 +585,7 @@ class ShareObjectService:
                 action='SHARE_OBJECT:REJECT',
                 label='SHARE_OBJECT:REJECT',
                 owner=get_context().username,
-                summary=f'{get_context().username} rejected share {"extension" if share.submittedForExtension else ""} request for {dataset.name} in environment with URI: {dataset.environmentUri} for the principal: {share.principalRoleName}',
+                summary=f'{get_context().username} rejected share {"extension" if share.submittedForExtension else ""} request for {dataset.name} in environment with URI: {dataset.environmentUri} for the principal: {share.principalName}',
                 targetUri=dataset.datasetUri,
                 targetType='dataset',
             )
@@ -612,7 +612,7 @@ class ShareObjectService:
                 action='SHARE_OBJECT:CANCEL_EXTENSION',
                 label='SHARE_OBJECT:CANCEL_EXTENSION',
                 owner=get_context().username,
-                summary=f'{get_context().username} cancelled share extension request for {dataset.name} in environment with URI: {dataset.environmentUri} for the principal: {share.principalRoleName}',
+                summary=f'{get_context().username} cancelled share extension request for {dataset.name} in environment with URI: {dataset.environmentUri} for the principal: {share.principalName}',
                 targetUri=dataset.datasetUri,
                 targetType='dataset',
             )

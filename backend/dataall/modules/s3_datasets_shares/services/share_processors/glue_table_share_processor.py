@@ -83,7 +83,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                 if not S3ShareService.verify_principal(self.session, self.share_data.share):
                     raise PrincipalRoleNotFound(
                         'process approved shares',
-                        f'Principal {self.share_data.share.principalRoleName} is not found. Failed to update LF policy',
+                        f'Principal {self.share_data.share.principalName} is not found. Failed to update LF policy',
                     )
 
                 if None in [
@@ -265,7 +265,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                         if not S3ShareService.verify_principal(self.session, self.share_data.share):
                             raise PrincipalRoleNotFound(
                                 'process revoked shares',
-                                f'Principal {self.share_data.share.principalRoleName} is not found. Failed to update LF policy',
+                                f'Principal {self.share_data.share.principalName} is not found. Failed to update LF policy',
                             )
                         if None in [
                             manager.source_account_id,
@@ -370,12 +370,12 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                                 S3ShareObjectRepository.check_existing_shares_on_items_for_principal(
                                     session=self.session,
                                     item_type=ShareableType.Table.value,
-                                    principal=self.share_data.share.principalRoleName,
+                                    principal=self.share_data.share.principalName,
                                     database=s3_dataset.GlueDatabaseName,
                                 )
                             )
                             log.info(
-                                f'Remaining tables shared on the database: {s3_dataset.GlueDatabaseName} and principal: {self.share_data.share.principalRoleName} = {existing_shared_tables_in_shares}'
+                                f'Remaining tables shared on the database: {s3_dataset.GlueDatabaseName} and principal: {self.share_data.share.principalName} = {existing_shared_tables_in_shares}'
                             )
 
                             if not existing_shared_tables_in_shares:
@@ -427,7 +427,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
                 if not S3ShareService.verify_principal(self.session, self.share_data.share):
                     raise PrincipalRoleNotFound(
                         'process verify shares',
-                        f'Share principal {self.share_data.share.principalRoleName} not found. Check the team or consumption IAM principal used.',
+                        f'Share principal {self.share_data.share.principalName} not found. Check the team or consumption IAM principal used.',
                     )
                 if None in [
                     manager.source_account_id,
@@ -527,7 +527,7 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
             log.info('No tables to revoke. Skipping...')
         else:
             if not S3ShareService.verify_principal(self.session, self.share_data.share):
-                log.info(f'Principal {self.share_data.share.principalRoleName} (type: {manager.target_principal_type}) is not found.')
+                log.info(f'Principal {self.share_data.share.principalName} (type: {manager.target_principal_type}) is not found.')
             if None in [
                 manager.source_account_id,
                 manager.source_account_region,

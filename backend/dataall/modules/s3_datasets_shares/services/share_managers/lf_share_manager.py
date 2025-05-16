@@ -120,13 +120,13 @@ class LFShareManager:
             principal_iam_arn = IAM.get_role_arn_by_name(
                                 account_id=self.target_environment.AwsAccountId,
                                 region=self.target_environment.region,
-                                role_name=self.share.principalRoleName,
+                                role_name=self.share.principalName,
                                 )
         elif self.target_principal_type == EnvironmentIAMPrincipalType.USER.value:
             principal_iam_arn = IAM.get_user_arn_by_name(
                 account_id=self.target_environment.AwsAccountId,
                 region=self.target_environment.region,
-                user_name=self.share.principalRoleName,
+                user_name=self.share.principalName,
             )
         else:
             error = 'Unsupported principal type. Cannot proceed with LF sharing'
@@ -135,11 +135,11 @@ class LFShareManager:
 
         if principal_iam_arn is None:
             logger.info(
-                f'Principal IAM {self.target_principal_type} {self.share.principalRoleName} not found in {self.target_environment.AwsAccountId}'
+                f'Principal IAM {self.target_principal_type} {self.share.principalName} not found in {self.target_environment.AwsAccountId}'
             )
             logger.info('Try to build arn. Defaulting to role type')
             principal_iam_arn = (
-                f'arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.share.principalRoleName}'
+                f'arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.share.principalName}'
             )
 
         return [principal_iam_arn]

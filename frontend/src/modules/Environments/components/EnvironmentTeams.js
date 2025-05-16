@@ -47,7 +47,7 @@ import { SET_ERROR, useDispatch } from 'globalErrors';
 import { isFeatureEnabled } from 'utils';
 import {
   fetchEnums,
-  getConsumptionRolePolicies,
+  getConsumptionPrincipalPolicies,
   useClient,
   useFetchGroups
 } from 'services';
@@ -319,17 +319,17 @@ export const IAMPrincipalPolicyDataGridCell = ({
     setLoading(true);
     try {
       const response = await client.query(
-        getConsumptionRolePolicies({
+        getConsumptionPrincipalPolicies({
           environmentUri: environmentUri,
           IAMPrincipalName: IAMPrincipalName,
           IAMPrincipalType: IAMPrincipalType
         })
       );
       if (!response.errors) {
-        setManagedPolicyDetails(response.data.getConsumptionRolePolicies);
+        setManagedPolicyDetails(response.data.getConsumptionPrincipalPolicies);
         setPolicyAttachStatus(
           getIAMPolicyAttachementStatus(
-            response.data.getConsumptionRolePolicies
+            response.data.getConsumptionPrincipalPolicies
           )
         );
       } else {

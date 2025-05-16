@@ -67,7 +67,7 @@ class S3ShareValidator(SharesValidatorInterface):
         if not S3ShareValidator._validate_requestor_principals(session, share):
             raise PrincipalRoleNotFound(
                 action=SUBMIT_SHARE_OBJECT,
-                message=f'The principal {share.principalRoleName} is not found.',
+                message=f'The principal {share.principalName} is not found.',
             )
         return True
 
@@ -76,14 +76,14 @@ class S3ShareValidator(SharesValidatorInterface):
         if not S3ShareValidator._validate_requestor_principals(session, share):
             raise PrincipalRoleNotFound(
                 action=APPROVE_SHARE_OBJECT,
-                message=f'The principal {share.principalRoleName} is not found.',
+                message=f'The principal {share.principalName} is not found.',
             )
         return True
 
     @staticmethod
     def _validate_requestor_principals(session, share: ShareObject) -> bool:
         log.info('Verifying principal ...')
-        principal_name = share.principalRoleName
+        principal_name = share.principalName
         env = EnvironmentService.get_environment_by_uri(session, share.environmentUri)
         return S3ShareValidator._validate_iam_principals(env, principal_name, share.principalType)
 

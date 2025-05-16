@@ -158,8 +158,8 @@ EnvironmentSimplifiedSearchResult = gql.ObjectType(
     ],
 )
 
-RoleManagedPolicy = gql.ObjectType(
-    name='RoleManagedPolicy',
+PrincipalManagedPolicy = gql.ObjectType(
+    name='PrincipalManagedPolicy',
     fields=[
         gql.Field(name='policy_name', type=gql.String),
         gql.Field(name='policy_type', type=gql.String),
