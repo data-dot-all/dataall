@@ -3,7 +3,7 @@ from botocore.exceptions import ClientError
 import re
 
 from .sts import SessionHelper
-from ..utils.consumption_principal_utils import EnvironmentIAMPrincipalType
+from dataall.base.utils.consumption_principal_utils import EnvironmentIAMPrincipalType
 
 log = logging.getLogger(__name__)
 
