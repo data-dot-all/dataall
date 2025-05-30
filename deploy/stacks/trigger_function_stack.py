@@ -61,6 +61,7 @@ class TriggerFunctionStack(pyNestedClass):
             handler=_lambda.Handler.FROM_IMAGE,
             execute_after=execute_after,
             execute_on_handler_change=True,
+            logging_format=_lambda.LoggingFormat.JSON,
         )
 
         for connectable in connectables:

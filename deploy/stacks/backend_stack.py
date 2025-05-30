@@ -65,6 +65,7 @@ class BackendStack(Stack):
         log_retention_duration=None,
         deploy_aurora_migration_stack=False,
         old_aurora_connection_secret_arn=None,
+        throttling_config=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -211,6 +212,7 @@ class BackendStack(Stack):
             custom_waf_rules=custom_waf_rules,
             allowed_origins=allowed_origins,
             log_retention_duration=log_retention_duration,
+            throttling_config=throttling_config,
             **kwargs,
         )
 

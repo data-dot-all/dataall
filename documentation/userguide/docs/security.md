@@ -38,13 +38,20 @@ existing SAML 2.0–based SSO authentication systems.
 
 ### **AWS Web Application Firewall (WAF)**
 Data.all supports the opportunity to add custom rules to AWS WAF. These rules are set in `cdk.json` at the root level of the repository.
-As a custom rules (property `custom_waf_rules`) customer can set two allow lists:
+As a custom rules (property `custom_waf_rules`) customer can the following:
 * The Geo match allow-list (property `allowed_geo_list`) is an array of two-character country codes that you want to match against. 
 If this property is specified, WAF will block web requests from all other countries, otherwise requests from all countries will be allowed.
 * The IP match allow-list (property `allowed_ip_list`) is used to specify zero or more IP addresses or blocks of IP addresses. 
 If this property is specified, WAF will block web requests from all other IP addresses, otherwise requests from all IP addresses will be allowed.
+* The IP based rate limit (`rate_limit`, default 1000) and the rate limit evaluation window (`rate_limit_window`, default 300) in seconds with valid values 60,120,300 
 
-Example of custom WAF rules setting:
+### **ApiGateway Global Throttling**
+
+Data.all supports setting custom global throttling limits (using the token bucket algorithm) in ApiGateway via `cdk.json` with the following parameters
+* `global_rate_limit` (default 10000)  the target maximum number of requests per second that API Gateway will fulfill before returning `429 Too Many Requests`
+* `global_burst_limit` (default 5000) the target maximum number of concurrent request submissions that API Gateway will fulfill before returning `429 Too Many Requests`
+
+Example of `cdk.json` which is setting custom WAF rules and global throttling:
 ```json
 {
   "app": "python ./deploy/app.py",
@@ -55,22 +62,28 @@ Example of custom WAF rules setting:
     "@aws-cdk/core:stackRelativeExports": false,
     "tooling_region": "eu-west-1",
     "DeploymentEnvironments": [
-        {
-            "envname": "dev",
-            "account": "000000000000",
-            "region": "eu-west-1",
-            "custom_waf_rules": {
-                "allowed_geo_list": [
-                  "US",
-                  "CN"
-                ],
-                "allowed_ip_list": [
-                  "192.0.2.44/32",
-                  "192.0.2.0/24",
-                  "192.0.0.0/16"
-                ]
-              }
+      {
+        "envname": "dev",
+        "account": "000000000000",
+        "region": "eu-west-1",
+        "custom_waf_rules": {
+          "allowed_geo_list": [
+            "US",
+            "CN"
+          ],
+          "allowed_ip_list": [
+            "192.0.2.44/32",
+            "192.0.2.0/24",
+            "192.0.0.0/16"
+          ],
+          "rate_limit": 1000,
+          "rate_limit_window": 500
+        },
+        "throttling": {
+          "global_rate_limit": 10000,
+          "global_burst_limit": 5000
         }
+      }
     ]
   }
 }

@@ -414,6 +414,7 @@ class IdpStack(pyNestedClass):
             handler='cognito_users.handler',
             execute_after=[self.client],
             execute_on_handler_change=True,
+            logging_format=_lambda.LoggingFormat.JSON,
         )
 
         CfnOutput(

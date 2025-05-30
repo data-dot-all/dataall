@@ -1,7 +1,14 @@
 import json
+import logging
 import os
 
+EMAIL_CLAIM = os.getenv('email')
+USER_ID_CLAIM = os.getenv('user_id')
+
 ALLOWED_API_RESOURCE_NAMES = ['graphql', 'search']
+
+logger = logging.getLogger(__name__)
+logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
 
 
 class AuthServices:
@@ -15,6 +22,12 @@ class AuthServices:
         resource_list[5] = '/'.join(api_gateway_arn)
         return ':'.join(resource_list)
 
+    @staticmethod
+    def generate_deny_policy(incoming_resource_str: str):
+        return AuthServices.generate_policy(
+            {'sub': None, EMAIL_CLAIM: None, USER_ID_CLAIM: None}, 'Deny', incoming_resource_str
+        )
+
     # Generates Policy document containing policy to allow the API invocation for allowed API Endpoints
     # Also attaches the claims which are present in the token
     # Policy document and principal_id are two required items when using custom authorizer lamda in API gateway
@@ -24,7 +37,7 @@ class AuthServices:
         principal_id = verified_claims['sub']
 
         # Attach a claim called 'email'. This is needed by Api Handler
-        verified_claims['email'] = verified_claims[os.getenv('email')]
+        verified_claims['email'] = verified_claims[EMAIL_CLAIM]
 
         for claim_name, claim_value in verified_claims.items():
             if isinstance(claim_value, list):
@@ -34,7 +47,7 @@ class AuthServices:
 
         context.update(
             {
-                'user_id': verified_claims[os.getenv('user_id')],
+                'user_id': verified_claims[USER_ID_CLAIM],
                 'custom_authorizer': 'true',
             }
         )
@@ -55,5 +68,7 @@ class AuthServices:
             'policyDocument': {'Version': '2012-10-17', 'Statement': policy_statement},
             'context': context,
         }
+
+        logger.debug(f'Generated policy is {json.dumps(policy)}')
 
         return policy

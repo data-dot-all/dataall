@@ -22,13 +22,14 @@ from .codeartifact import CodeArtifactStack
 from .ecr_stage import ECRStage
 from .iam_utils import get_tooling_account_external_id
 from .vpc import VpcStack
+from .cdk_asset_trail import setup_cdk_asset_trail
 
 
 class PipelineStack(Stack):
     def __init__(
         self,
-        scope,
         id,
+        scope,
         repo_connection_arn,
         target_envs: List = None,
         git_branch='main',
@@ -37,7 +38,7 @@ class PipelineStack(Stack):
         repo_string='awslabs/aws-dataall',
         **kwargs,
     ):
-        super().__init__(scope, id, **kwargs)
+        super().__init__(id, scope, **kwargs)
         self.validate_deployment_params(source, repo_connection_arn, git_branch, resource_prefix, target_envs)
         self.git_branch = git_branch
         self.source = source
@@ -95,6 +96,19 @@ class PipelineStack(Stack):
 
         self.set_codebuild_iam_roles()
 
+        self.server_access_logs_bucket = s3.Bucket(
+            self,
+            f'{resource_prefix}-access-logs',
+            encryption=s3.BucketEncryption.S3_MANAGED,
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            enforce_ssl=True,
+            removal_policy=RemovalPolicy.DESTROY,
+            versioned=True,
+            auto_delete_objects=True,
+        )
+
+        setup_cdk_asset_trail(self, self.server_access_logs_bucket)
+
         self.pipeline_bucket_name = f'{self.resource_prefix}-{self.git_branch}-code-{self.account}-{self.region}'
         self.pipeline_bucket = s3.Bucket(
             self,
@@ -120,6 +134,8 @@ class PipelineStack(Stack):
             versioned=True,
             enforce_ssl=True,
             auto_delete_objects=True,
+            server_access_logs_bucket=self.server_access_logs_bucket,
+            server_access_logs_prefix=self.pipeline_bucket_name,
         )
         self.pipeline_bucket.grant_read_write(iam.AccountPrincipal(self.account))
 
@@ -134,24 +150,30 @@ class PipelineStack(Stack):
         self.artifact_bucket = s3.Bucket(
             self,
             'pipeline-artifacts-bucket',
-            bucket_name=f'{self.resource_prefix}-{self.git_branch}-artifacts-{self.account}-{self.region}',
+            bucket_name=self.artifact_bucket_name,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             removal_policy=RemovalPolicy.DESTROY,
             versioned=True,
             encryption_key=self.artifact_bucket_key,
             enforce_ssl=True,
             auto_delete_objects=True,
+            server_access_logs_bucket=self.server_access_logs_bucket,
+            server_access_logs_prefix=self.artifact_bucket_name,
         )
 
         if self.source == 'codestar_connection':
             source = CodePipelineSource.connection(
-                repo_string=repo_string, branch=self.git_branch, connection_arn=repo_connection_arn
+                repo_string=repo_string,
+                branch=self.git_branch,
+                connection_arn=repo_connection_arn,
+                code_build_clone_output=True,
             )
 
         else:
             source = CodePipelineSource.code_commit(
                 repository=codecommit.Repository.from_repository_name(self, 'sourcerepo', repository_name='dataall'),
                 branch=self.git_branch,
+                code_build_clone_output=True,
             )
 
         self.pipeline = pipelines.CodePipeline(
@@ -224,20 +246,6 @@ class PipelineStack(Stack):
             else:
                 self.set_albfront_stage(target_env, repository_name)
 
-        self.pipeline.build_pipeline()
-
-        for construct in scope.node.find_all():
-            if construct.node.path.endswith('CrossRegionCodePipelineReplicationBucket/Resource'):
-                NagSuppressions.add_resource_suppressions(
-                    construct,
-                    [
-                        NagPackSuppression(
-                            id='AwsSolutions-S1',
-                            reason='Stack and Bucket created by CodePipeline construct',
-                        ),
-                    ],
-                )
-
         Tags.of(self).add('Application', f'{resource_prefix}-{git_branch}')
 
     def set_codebuild_iam_roles(self):
@@ -259,113 +267,125 @@ class PipelineStack(Stack):
             assumed_by=iam.ServicePrincipal('codebuild.amazonaws.com'),
         )
 
+        baseline_policy_statements = [
+            iam.PolicyStatement(
+                actions=[
+                    'sts:AssumeRole',
+                ],
+                resources=['arn:aws:iam::*:role/cdk-hnb659fds-lookup-role*'],
+            ),
+            iam.PolicyStatement(
+                actions=[
+                    'sts:GetServiceBearerToken',
+                ],
+                resources=['*'],
+                conditions={'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}},
+            ),
+            iam.PolicyStatement(
+                actions=[
+                    'ecr:GetAuthorizationToken',
+                    'ec2:DescribePrefixLists',
+                    'ec2:DescribeManagedPrefixLists',
+                    'ec2:DescribeNetworkInterfaces',
+                    'ec2:DescribeSubnets',
+                    'ec2:DescribeSecurityGroups',
+                    'ec2:DescribeDhcpOptions',
+                    'ec2:DescribeVpcs',
+                ],
+                resources=['*'],
+            ),
+            iam.PolicyStatement(
+                actions=[
+                    'ec2:CreateNetworkInterface',
+                    'ec2:DeleteNetworkInterface',
+                ],
+                resources=[
+                    f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                ],
+            ),
+            iam.PolicyStatement(
+                actions=[
+                    'ec2:AssignPrivateIpAddresses',
+                    'ec2:UnassignPrivateIpAddresses',
+                ],
+                resources=[
+                    f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                ],
+                conditions={'StringEquals': {'ec2:Vpc': f'{self.vpc.vpc_id}'}},
+            ),
+            iam.PolicyStatement(
+                actions=[
+                    'codeartifact:GetAuthorizationToken',
+                    'codeartifact:GetRepositoryEndpoint',
+                    'codeartifact:ReadFromRepository',
+                    'ecr:GetDownloadUrlForLayer',
+                    'ecr:BatchGetImage',
+                    'ecr:BatchCheckLayerAvailability',
+                    'ecr:PutImage',
+                    'ecr:InitiateLayerUpload',
+                    'ecr:UploadLayerPart',
+                    'ecr:CompleteLayerUpload',
+                    'ecr:GetDownloadUrlForLayer',
+                    'kms:Decrypt',
+                    'kms:Encrypt',
+                    'kms:GenerateDataKey',
+                    'kms:ReEncrypt*',
+                    'kms:DescribeKey',
+                    'secretsmanager:GetSecretValue',
+                    'secretsmanager:DescribeSecret',
+                    'ssm:GetParametersByPath',
+                    'ssm:GetParameters',
+                    'ssm:GetParameter',
+                    's3:Get*',
+                    's3:Put*',
+                    's3:List*',
+                    'codebuild:CreateReportGroup',
+                    'codebuild:CreateReport',
+                    'codebuild:UpdateReport',
+                    'codebuild:BatchPutTestCases',
+                    'codebuild:BatchPutCodeCoverages',
+                    'ec2:GetManagedPrefixListEntries',
+                    'ec2:CreateNetworkInterfacePermission',
+                    'logs:CreateLogGroup',
+                    'logs:CreateLogStream',
+                    'logs:PutLogEvents',
+                ],
+                resources=[
+                    f'arn:aws:s3:::{self.resource_prefix}*',
+                    f'arn:aws:s3:::{self.resource_prefix}*/*',
+                    f'arn:aws:codebuild:{self.region}:{self.account}:project/*{self.resource_prefix}*',
+                    f'arn:aws:codebuild:{self.region}:{self.account}:report-group/{self.resource_prefix}*',
+                    f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*{self.resource_prefix}*',
+                    f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*',
+                    f'arn:aws:kms:{self.region}:{self.account}:key/*',
+                    f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
+                    f'arn:aws:ssm:*:{self.account}:parameter/*{self.resource_prefix}*',
+                    f'arn:aws:ecr:{self.region}:{self.account}:repository/{self.resource_prefix}*',
+                    f'arn:aws:codeartifact:{self.region}:{self.account}:repository/{self.resource_prefix}*',
+                    f'arn:aws:codeartifact:{self.region}:{self.account}:domain/{self.resource_prefix}*',
+                    f'arn:aws:ec2:{self.region}:{self.account}:prefix-list/*',
+                    f'arn:aws:ec2:{self.region}:{self.account}:network-interface/*',
+                    f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws/codebuild/{self.resource_prefix}*',
+                ],
+            ),
+        ]
+
+        if self.repo_connection_arn:
+            baseline_policy_statements.append(
+                iam.PolicyStatement(
+                    actions=[
+                        'codestar-connections:UseConnection',
+                    ],
+                    resources=[self.repo_connection_arn],
+                ),
+            )
+
         self.baseline_codebuild_policy = iam.ManagedPolicy(
             self,
             'BaselineCodeBuildManagedPolicy',
             managed_policy_name=f'{self.resource_prefix}-{self.git_branch}-baseline-cb-policy',
             roles=[self.baseline_codebuild_role, self.expanded_codebuild_role],
-            statements=[
-                iam.PolicyStatement(
-                    actions=[
-                        'sts:AssumeRole',
-                    ],
-                    resources=['arn:aws:iam::*:role/cdk-hnb659fds-lookup-role*'],
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        'sts:GetServiceBearerToken',
-                    ],
-                    resources=['*'],
-                    conditions={'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}},
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        'ecr:GetAuthorizationToken',
-                        'ec2:DescribePrefixLists',
-                        'ec2:DescribeManagedPrefixLists',
-                        'ec2:DescribeNetworkInterfaces',
-                        'ec2:DescribeSubnets',
-                        'ec2:DescribeSecurityGroups',
-                        'ec2:DescribeDhcpOptions',
-                        'ec2:DescribeVpcs',
-                    ],
-                    resources=['*'],
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        'ec2:CreateNetworkInterface',
-                        'ec2:DeleteNetworkInterface',
-                    ],
-                    resources=[
-                        f'arn:aws:ec2:{self.region}:{self.account}:*/*',
-                    ],
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        'ec2:AssignPrivateIpAddresses',
-                        'ec2:UnassignPrivateIpAddresses',
-                    ],
-                    resources=[
-                        f'arn:aws:ec2:{self.region}:{self.account}:*/*',
-                    ],
-                    conditions={'StringEquals': {'ec2:Vpc': f'{self.vpc.vpc_id}'}},
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        'codeartifact:GetAuthorizationToken',
-                        'codeartifact:GetRepositoryEndpoint',
-                        'codeartifact:ReadFromRepository',
-                        'ecr:GetDownloadUrlForLayer',
-                        'ecr:BatchGetImage',
-                        'ecr:BatchCheckLayerAvailability',
-                        'ecr:PutImage',
-                        'ecr:InitiateLayerUpload',
-                        'ecr:UploadLayerPart',
-                        'ecr:CompleteLayerUpload',
-                        'ecr:GetDownloadUrlForLayer',
-                        'kms:Decrypt',
-                        'kms:Encrypt',
-                        'kms:GenerateDataKey',
-                        'kms:ReEncrypt*',
-                        'kms:DescribeKey',
-                        'secretsmanager:GetSecretValue',
-                        'secretsmanager:DescribeSecret',
-                        'ssm:GetParametersByPath',
-                        'ssm:GetParameters',
-                        'ssm:GetParameter',
-                        's3:Get*',
-                        's3:Put*',
-                        's3:List*',
-                        'codebuild:CreateReportGroup',
-                        'codebuild:CreateReport',
-                        'codebuild:UpdateReport',
-                        'codebuild:BatchPutTestCases',
-                        'codebuild:BatchPutCodeCoverages',
-                        'ec2:GetManagedPrefixListEntries',
-                        'ec2:CreateNetworkInterfacePermission',
-                        'logs:CreateLogGroup',
-                        'logs:CreateLogStream',
-                        'logs:PutLogEvents',
-                    ],
-                    resources=[
-                        f'arn:aws:s3:::{self.resource_prefix}*',
-                        f'arn:aws:s3:::{self.resource_prefix}*/*',
-                        f'arn:aws:codebuild:{self.region}:{self.account}:project/*{self.resource_prefix}*',
-                        f'arn:aws:codebuild:{self.region}:{self.account}:report-group/{self.resource_prefix}*',
-                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*{self.resource_prefix}*',
-                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*',
-                        f'arn:aws:kms:{self.region}:{self.account}:key/*',
-                        f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
-                        f'arn:aws:ssm:*:{self.account}:parameter/*{self.resource_prefix}*',
-                        f'arn:aws:ecr:{self.region}:{self.account}:repository/{self.resource_prefix}*',
-                        f'arn:aws:codeartifact:{self.region}:{self.account}:repository/{self.resource_prefix}*',
-                        f'arn:aws:codeartifact:{self.region}:{self.account}:domain/{self.resource_prefix}*',
-                        f'arn:aws:ec2:{self.region}:{self.account}:prefix-list/*',
-                        f'arn:aws:ec2:{self.region}:{self.account}:network-interface/*',
-                        f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws/codebuild/{self.resource_prefix}*',
-                    ],
-                ),
-            ],
+            statements=baseline_policy_statements,
         )
         self.expanded_codebuild_policy = iam.ManagedPolicy(
             self,
@@ -696,6 +716,7 @@ class PipelineStack(Stack):
                 with_approval_tests=target_env.get('with_approval_tests', False),
                 allowed_origins=target_env.get('allowed_origins', '*'),
                 log_retention_duration=self.log_retention_duration,
+                throttling_config=target_env.get('throttling', {}),
                 deploy_aurora_migration_stack=target_env.get('aurora_migration_enabled', False),
                 old_aurora_connection_secret_arn=target_env.get('old_aurora_connection_secret_arn', ''),
             )

@@ -376,19 +376,7 @@
                     ]
                 },
                 {
-                    "resource": "AWS::S3::Bucket.dataalldevfrontend64065639",
-                    "check_ids": [
-                        "CKV_AWS_18"
-                    ]
-                },
-                {
-                    "resource": "AWS::S3::Bucket.dataalldevlogging0F6723EE",
-                    "check_ids": [
-                        "CKV_AWS_18"
-                    ]
-                },
-                {
-                    "resource": "AWS::S3::Bucket.dataalldevuserguide5964DC13",
+                    "resource": "AWS::S3::Bucket.dataalldevcloudfrontaccesslogsCAF85B96",
                     "check_ids": [
                         "CKV_AWS_18"
                     ]
@@ -452,13 +440,7 @@
                     ]
                 },
                 {
-                    "resource": "AWS::S3::Bucket.pipelineartifactsbucketE44F7DE9",
-                    "check_ids": [
-                        "CKV_AWS_18"
-                    ]
-                },
-                {
-                    "resource": "AWS::S3::Bucket.sourcecodebucket464EEFA3",
+                    "resource": "AWS::S3::Bucket.dataallaccesslogsEDA9BC4F",
                     "check_ids": [
                         "CKV_AWS_18"
                     ]
@@ -551,6 +533,12 @@
                         "CKV_AWS_115",
                         "CKV_AWS_116",
                         "CKV_AWS_117"
+                    ]
+                },
+                {
+                    "resource": "AWS::CloudTrail::Trail.S3CloudTrail9B4C955D",
+                    "check_ids": [
+                        "CKV_AWS_35"
                     ]
                 },
                 {

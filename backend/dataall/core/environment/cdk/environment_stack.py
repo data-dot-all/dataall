@@ -25,6 +25,7 @@ from dataall.core.environment.services.managed_iam_policies import PolicyManager
 from dataall.core.environment.api.enums import EnvironmentType
 from dataall.base.cdkproxy.stacks.manager import stack
 from dataall.core.environment.cdk.pivot_role_stack import PivotRole
+from dataall.core.environment.cdk.cdk_asset_trail import setup_cdk_asset_trail
 from dataall.core.environment.cdk.env_role_core_policies.data_policy import S3Policy
 from dataall.core.environment.cdk.env_role_core_policies.service_policy import ServicePolicy
 from dataall.base import db
@@ -186,6 +187,8 @@ class EnvironmentSetup(Stack):
                 resources=[f'{default_environment_log_bucket.bucket_arn}/*'],
             )
         )
+
+        setup_cdk_asset_trail(self, default_environment_log_bucket)
 
         # Environment S3 Bucket
         default_environment_bucket = s3.Bucket(
