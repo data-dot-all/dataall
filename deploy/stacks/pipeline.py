@@ -7,11 +7,12 @@ from aws_cdk import aws_codebuild as codebuild
 from aws_cdk import aws_codecommit as codecommit
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
-from aws_cdk import aws_logs as logs
 from aws_cdk import aws_kms as kms
+from aws_cdk import aws_logs as logs
 from aws_cdk import aws_s3 as s3
 from aws_cdk import pipelines
 from aws_cdk.pipelines import CodePipelineSource
+from cdk_nag import NagSuppressions, NagPackSuppression
 
 from .albfront_stage import AlbFrontStage
 from .aurora import AuroraServerlessStack
@@ -19,8 +20,8 @@ from .backend_stage import BackendStage
 from .cloudfront_stage import CloudfrontStage
 from .codeartifact import CodeArtifactStack
 from .ecr_stage import ECRStage
-from .vpc import VpcStack
 from .iam_utils import get_tooling_account_external_id
+from .vpc import VpcStack
 from .cdk_asset_trail import setup_cdk_asset_trail
 
 
@@ -716,6 +717,8 @@ class PipelineStack(Stack):
                 allowed_origins=target_env.get('allowed_origins', '*'),
                 log_retention_duration=self.log_retention_duration,
                 throttling_config=target_env.get('throttling', {}),
+                deploy_aurora_migration_stack=target_env.get('aurora_migration_enabled', False),
+                old_aurora_connection_secret_arn=target_env.get('old_aurora_connection_secret_arn', ''),
             )
         )
         return backend_stage
