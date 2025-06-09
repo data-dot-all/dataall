@@ -1,6 +1,6 @@
 from dataall.base.api import gql
 from dataall.base.api.constants import GraphQLEnumMapper, SortDirection
-
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 
 AwsEnvironmentInput = gql.InputType(
     name='AwsEnvironmentInput',
@@ -101,7 +101,7 @@ AddConsumptionRoleToEnvironmentInput = gql.InputType(
         gql.Argument('groupUri', gql.NonNullableType(gql.String)),
         gql.Argument('IAMRoleArn', gql.NonNullableType(gql.String)),
         gql.Argument('environmentUri', gql.NonNullableType(gql.String)),
-        gql.Argument('dataallManaged', gql.NonNullableType(gql.Boolean)),
+        gql.Argument('dataallManaged', gql.NonNullableType(PolicyManagementOptions.toGraphQLEnum())),
     ],
 )
 
@@ -120,5 +120,6 @@ UpdateConsumptionRoleInput = gql.InputType(
     arguments=[
         gql.Argument('consumptionRoleName', gql.String),
         gql.Argument('groupUri', gql.String),
+        gql.Argument('dataallManaged', gql.NonNullableType(PolicyManagementOptions.toGraphQLEnum())),
     ],
 )
