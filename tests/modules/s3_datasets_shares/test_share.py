@@ -9,7 +9,8 @@ from assertpy import assert_that
 
 from dataall.base.utils.expiration_util import ExpirationUtils
 from dataall.base.utils.naming_convention import NamingConventionPattern, NamingConventionService
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionRole
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionPrincipal
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.shares_base.services.shares_enums import ShareableType, PrincipalType, ShareObjectDataPermission
@@ -1445,7 +1446,7 @@ def test_create_share_object_share_policy_not_attached_attachMissingPolicies_ena
         return_value=False,
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.get_policies_unattached_to_role',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.get_policies_unattached_to_principal',
         return_value='policy-0',
     )
     attach_mocker = mocker.patch(
@@ -1472,12 +1473,12 @@ def test_create_share_object_share_policy_not_attached_attachMissingPolicies_ena
     assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
 
 
-def test_create_share_object_share_policy_not_attached_attachMissingPolicies_disabled_dataallManaged(
+def test_create_share_object_share_policy_not_attached_attachMissingPolicies_fully_managed_dataallManaged(
     mocker, client, user2, group2, env2group, env2, dataset1
 ):
     # Given
     # Existing dataset, target environment and group
-    # SharePolicy exists and is NOT attached, attachMissingPolicies=True but principal=Group so managed=Trye
+    # SharePolicy exists and is NOT attached, attachMissingPolicies=False but principal=Group so managed=Fully-Managed
     # When a correct user creates request, data.all attaches the policy and the share creates successfully
     mocker.patch(
         'dataall.base.aws.iam.IAM.get_role_arn_by_name',
@@ -1488,7 +1489,7 @@ def test_create_share_object_share_policy_not_attached_attachMissingPolicies_dis
         return_value=False,
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.get_policies_unattached_to_role',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.get_policies_unattached_to_principal',
         return_value='policy-0',
     )
     attach_mocker = mocker.patch(
@@ -1515,13 +1516,13 @@ def test_create_share_object_share_policy_not_attached_attachMissingPolicies_dis
     assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
 
 
-def test_create_share_object_share_policy_not_attached_attachMissingPolicies_disabled_dataallNotManaged(
+def test_create_share_object_share_policy_not_attached_attachMissingPolicies_not_fully_managed_dataallNotManaged(
     mocker, client, user2, group2, env2group, env2, dataset1
 ):
     # Given
     # Existing dataset, target environment and group
-    # SharePolicy exists and is NOT attached, attachMissingPolicies=True
-    # When a correct user creates request, data.all attaches the policy and the share creates successfully
+    # SharePolicy exists and is NOT attached, attachMissingPolicies=False and consumption role policy management = Partially-Managed ( thus managed = false )
+    # When a correct user creates request, data.all doesn't attach the policy and the share creates successfully
     mocker.patch(
         'dataall.base.aws.iam.IAM.get_role_arn_by_name',
         return_value='role_arn',
@@ -1531,18 +1532,22 @@ def test_create_share_object_share_policy_not_attached_attachMissingPolicies_dis
         return_value=False,
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.get_policies_unattached_to_role',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.get_policies_unattached_to_principal',
         return_value='policy-0',
+    )
+    attach_mocker = mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.attach_policies',
+        return_value=True,
     )
     mocker.patch('dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern', return_value=['policy-0'])
 
-    consumption_role = MagicMock(spec_set=ConsumptionRole)
-    consumption_role.IAMRoleName = 'randomName'
-    consumption_role.IAMRoleArn = 'randomArn'
-    consumption_role.dataallManaged = False
+    consumption_principal = MagicMock(spec_set=ConsumptionPrincipal)
+    consumption_principal.IAMPrincipalName = 'randomName'
+    consumption_principal.IAMPrincipalArn = 'randomArn'
+    consumption_principal.dataallManaged = PolicyManagementOptions.PARTIALLY_MANAGED.value
     mocker.patch(
-        'dataall.core.environment.services.environment_service.EnvironmentService.get_environment_consumption_role',
-        return_value=consumption_role,
+        'dataall.core.environment.services.environment_service.EnvironmentService.get_environment_consumption_principal',
+        return_value=consumption_principal,
     )
     create_share_object_response = create_share_object(
         mocker=mocker,
@@ -1553,12 +1558,60 @@ def test_create_share_object_share_policy_not_attached_attachMissingPolicies_dis
         environmentUri=env2.environmentUri,
         datasetUri=dataset1.datasetUri,
         attachMissingPolicies=False,
-        principalId=consumption_role.IAMRoleName,
+        principalId=consumption_principal.IAMPrincipalName,
         principalType=PrincipalType.ConsumptionRole.value,
     )
-    # Then share object is not created and an error appears
-    assert 'Required customer managed policies' in create_share_object_response.errors[0].message
-    assert 'are not attached to role randomName' in create_share_object_response.errors[0].message
+
+    attach_mocker.assert_not_called()
+
+
+def test_create_share_object_share_policy_not_attached_attachMissingPolicies_fully_managed_dataallNotManaged_consumption_role(
+    mocker, client, user2, group2, env2group, env2, dataset1
+):
+    # Given
+    # Existing dataset, target environment and group
+    # SharePolicy exists and is NOT attached, attachMissingPolicies=False and consumption role policy management = Fully-Managed ( thus managed = True )
+    # When a correct user creates request, data.all attaches the policy and the share creates successfully
+    mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='role_arn',
+    )
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
+        return_value=False,
+    )
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.get_policies_unattached_to_principal',
+        return_value='policy-0',
+    )
+    attach_mocker = mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.attach_policies',
+        return_value=True,
+    )
+    mocker.patch('dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern', return_value=['policy-0'])
+
+    consumption_principal = MagicMock(spec_set=ConsumptionPrincipal)
+    consumption_principal.IAMPrincipalName = 'randomName'
+    consumption_principal.IAMPrincipalArn = 'randomArn'
+    consumption_principal.dataallManaged = PolicyManagementOptions.FULLY_MANAGED.value
+    mocker.patch(
+        'dataall.core.environment.services.environment_service.EnvironmentService.get_environment_consumption_principal',
+        return_value=consumption_principal,
+    )
+    create_share_object_response = create_share_object(
+        mocker=mocker,
+        client=client,
+        username=user2.username,
+        group=group2,
+        groupUri=env2group.groupUri,
+        environmentUri=env2.environmentUri,
+        datasetUri=dataset1.datasetUri,
+        attachMissingPolicies=False,
+        principalId=consumption_principal.IAMPrincipalName,
+        principalType=PrincipalType.ConsumptionRole.value,
+    )
+
+    attach_mocker.assert_called_once()
 
 
 def test_create_share_object_with_share_expiration_added(
@@ -1573,7 +1626,7 @@ def test_create_share_object_with_share_expiration_added(
         return_value=False,
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.get_policies_unattached_to_role',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.get_policies_unattached_to_principal',
         return_value='policy-0',
     )
     mocker.patch('dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern', return_value=['policy-0'])
@@ -1619,7 +1672,7 @@ def test_create_share_object_with_non_expiring_share(
         return_value=False,
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.get_policies_unattached_to_role',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.get_policies_unattached_to_principal',
         return_value='policy-0',
     )
     mocker.patch('dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern', return_value=['policy-0'])
@@ -1659,7 +1712,7 @@ def test_create_share_object_with_share_expiration_incorrect_share_expiration(
         return_value=False,
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.get_policies_unattached_to_role',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.get_policies_unattached_to_principal',
         return_value='policy-0',
     )
     mocker.patch('dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern', return_value=['policy-0'])
@@ -1695,7 +1748,7 @@ def test_get_share_object(client, share1_draft, user, group):
     # Then we get the info about the share
     assert get_share_object_response.data.getShareObject.shareUri == share1_draft.shareUri
     assert get_share_object_response.data.getShareObject.get('principal').principalType == PrincipalType.Group.name
-    assert get_share_object_response.data.getShareObject.get('principal').principalRoleName
+    assert get_share_object_response.data.getShareObject.get('principal').principalName
     assert get_share_object_response.data.getShareObject.get('principal').SamlGroupName
 
 
@@ -1757,7 +1810,7 @@ def test_list_shares_to_me_approver(client, user, group, share1_draft):
     # When a user from the Approvers group lists the share objects sent to him
     get_share_requests_to_me_response = get_share_requests_to_me(client=client, user=user, group=group)
     # Then he sees the 2 shares
-    assert get_share_requests_to_me_response.data.getShareRequestsToMe.count == 4
+    assert get_share_requests_to_me_response.data.getShareRequestsToMe.count == 5
 
 
 def test_list_shares_to_me_requester(client, user2, group2, share1_draft):
@@ -1784,7 +1837,7 @@ def test_list_shares_from_me_requester(client, user2, group2, share1_draft):
     # When a user from the Requesters group lists the share objects sent from him
     get_share_requests_from_me_response = get_share_requests_from_me(client=client, user=user2, group=group2)
     # Then he sees the 2 shares
-    assert get_share_requests_from_me_response.data.getShareRequestsFromMe.count == 4
+    assert get_share_requests_from_me_response.data.getShareRequestsFromMe.count == 5
 
 
 def test_add_share_item(client, user2, group2, share1_draft, mock_glue_client):
@@ -2604,7 +2657,7 @@ def test_verify_dataset_share_objects_request(db, client, user, group, share3_pr
         client=client, user=user, group=group, filter={'datasets_uris': [dataset1.datasetUri]}
     )
 
-    assert list_dataset_shares.data.getShareRequestsToMe.count == 2
+    assert list_dataset_shares.data.getShareRequestsToMe.count == 3
     shareUris = [share.shareUri for share in list_dataset_shares.data.getShareRequestsToMe.nodes]
     assert len(shareUris)
     assert share3_processed.shareUri in shareUris

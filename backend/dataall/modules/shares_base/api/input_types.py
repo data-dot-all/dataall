@@ -7,7 +7,7 @@ NewShareObjectInput = gql.InputType(
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='groupUri', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='principalId', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='principalRoleName', type=gql.String),
+        gql.Argument(name='principalName', type=gql.String),
         gql.Argument(name='principalType', type=gql.NonNullableType(gql.String)),
         gql.Argument(name='requestPurpose', type=gql.String),
         gql.Argument(name='attachMissingPolicies', type=gql.Boolean),
@@ -54,7 +54,7 @@ ShareObjectFilter = gql.InputType(
         gql.Argument('dataset_owners', gql.ArrayType(gql.String)),
         gql.Argument('datasets_uris', gql.ArrayType(gql.String)),
         gql.Argument('share_requesters', gql.ArrayType(gql.String)),
-        gql.Argument('share_iam_roles', gql.ArrayType(gql.String)),
+        gql.Argument('share_iam_principals', gql.ArrayType(gql.String)),
     ],
 )
 
