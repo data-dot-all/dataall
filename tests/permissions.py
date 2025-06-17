@@ -247,7 +247,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('DataPipeline', 'userRoleForPipeline'): TestData(
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
-    field_id('Dataset', 'environment'): TestData(resource_perm=GET_ENVIRONMENT, tenant_ignore=IgnoreReason.NOTREQUIRED),
+    field_id('Dataset', 'environment'): TestData(resource_ignore=IgnoreReason.SIMPLIFIED, tenant_ignore=IgnoreReason.NOTREQUIRED),
     field_id('Dataset', 'locations'): TestData(
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),

@@ -85,7 +85,7 @@ def get_dataset_organization(context, source: S3Dataset, **kwargs):
 def get_dataset_environment_simplified(context, source: S3Dataset, **kwargs):
     if not source:
         return None
-    return EnvironmentService.find_environment_by_simplified(uri=source.environmentUri)
+    return EnvironmentService.find_environment_by_uri_simplified(uri=source.environmentUri)
 
 
 def get_dataset_owners_group(context, source: S3Dataset, **kwargs):
