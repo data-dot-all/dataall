@@ -848,6 +848,10 @@ class EnvironmentService:
     @staticmethod
     @ResourcePolicyService.has_resource_permission(environment_permissions.GET_ENVIRONMENT)
     def find_environment_by_uri(uri) -> Environment:
+        return EnvironmentService.find_environment_by_uri_simplified(uri)
+
+    @staticmethod
+    def find_environment_by_uri_simplified(uri):
         with get_context().db_engine.scoped_session() as session:
             return EnvironmentService.get_environment_by_uri(session, uri)
 
