@@ -9,7 +9,7 @@ from dataall.modules.catalog.indexers.base_indexer import BaseIndexer
 
 class Identifiable(Protocol):
     @classmethod
-    def uri(cls): ...
+    def uri_column(cls): ...
 
 
 @dataclass
@@ -22,7 +22,7 @@ class GlossaryDefinition:
     reindexer: Type[BaseIndexer] = None  # a callback to reindex glossaries in open search
 
     def target_uri(self):
-        return self.model.uri()
+        return self.model.uri_column()
 
 
 class GlossaryRegistry(UnionTypeRegistry):

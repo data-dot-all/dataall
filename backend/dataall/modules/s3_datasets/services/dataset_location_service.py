@@ -8,7 +8,7 @@ from dataall.core.permissions.services.tenant_policy_service import TenantPolicy
 ##TODO
 ##from dataall.core.resource_threshold.services.resource_threshold_service import ResourceThresholdService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
-from dataall.base.db.exceptions import ResourceShared, ResourceAlreadyExists
+from dataall.base.db.exceptions import ResourceAlreadyExists
 from dataall.modules.s3_datasets.services.dataset_service import DatasetService
 from dataall.modules.s3_datasets.aws.s3_location_client import S3LocationClient
 from dataall.modules.s3_datasets.db.dataset_location_repositories import DatasetLocationRepository
@@ -68,7 +68,6 @@ class DatasetLocationService:
             return DatasetLocationRepository.list_dataset_locations(session=session, uri=uri, data=filter)
 
     @staticmethod
-    @ResourcePolicyService.has_resource_permission(GET_DATASET_FOLDER)
     def get_storage_location(uri):
         with get_context().db_engine.scoped_session() as session:
             return DatasetLocationRepository.get_location_by_uri(session, uri)
@@ -144,6 +143,13 @@ class DatasetLocationService:
         }
         for group in permission_group:
             ResourcePolicyService.delete_resource_policy(session=session, group=group, resource_uri=location_uri)
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(GET_DATASET_FOLDER)
+    def get_folder_restricted_information(uri: str, folder: DatasetStorageLocation):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            return DatasetRepository.get_dataset_by_uri(session, folder.datasetUri)
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(UPDATE_DATASET_FOLDER)

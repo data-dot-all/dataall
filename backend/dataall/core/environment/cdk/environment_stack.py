@@ -25,6 +25,7 @@ from dataall.core.environment.services.managed_iam_policies import PolicyManager
 from dataall.core.environment.api.enums import EnvironmentType
 from dataall.base.cdkproxy.stacks.manager import stack
 from dataall.core.environment.cdk.pivot_role_stack import PivotRole
+from dataall.core.environment.cdk.cdk_asset_trail import setup_cdk_asset_trail
 from dataall.core.environment.cdk.env_role_core_policies.data_policy import S3Policy
 from dataall.core.environment.cdk.env_role_core_policies.service_policy import ServicePolicy
 from dataall.base import db
@@ -124,7 +125,7 @@ class EnvironmentSetup(Stack):
 
         pivot_role_as_part_of_environment_stack = ParameterStoreManager.get_parameter_value(
             region=os.getenv('AWS_REGION', 'eu-west-1'),
-            parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/enablePivotRoleAutoCreate",
+            parameter_path=f'/dataall/{os.getenv("envname", "local")}/pivotRole/enablePivotRoleAutoCreate',
         )
         self.create_pivot_role = True if pivot_role_as_part_of_environment_stack == 'True' else False
         self.engine = self.get_engine()
@@ -165,6 +166,30 @@ class EnvironmentSetup(Stack):
                 f'arn:aws:iam::{self._environment.AwsAccountId}:role/{self.pivot_role_name}',
             )
 
+        # Environment Logging S3 Bucket
+        default_environment_log_bucket = s3.Bucket(
+            self,
+            'EnvironmentDefaultLogBucket',
+            bucket_name=self._environment.EnvironmentLogsBucketName,
+            encryption=s3.BucketEncryption.S3_MANAGED,
+            removal_policy=RemovalPolicy.RETAIN,
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            versioned=True,
+            enforce_ssl=True,
+        )
+        default_environment_log_bucket.policy.apply_removal_policy(RemovalPolicy.RETAIN)
+        default_environment_log_bucket.add_to_resource_policy(
+            iam.PolicyStatement(
+                sid='AWSLogDeliveryWrite',
+                effect=iam.Effect.ALLOW,
+                principals=[iam.ServicePrincipal('logging.s3.amazonaws.com')],
+                actions=['s3:PutObject', 's3:PutObjectAcl'],
+                resources=[f'{default_environment_log_bucket.bucket_arn}/*'],
+            )
+        )
+
+        setup_cdk_asset_trail(self, default_environment_log_bucket)
+
         # Environment S3 Bucket
         default_environment_bucket = s3.Bucket(
             self,
@@ -175,19 +200,11 @@ class EnvironmentSetup(Stack):
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             versioned=True,
             enforce_ssl=True,
+            server_access_logs_bucket=default_environment_log_bucket,
+            server_access_logs_prefix=f'access_logs/{self._environment.EnvironmentDefaultBucketName}/',
         )
         default_environment_bucket.policy.apply_removal_policy(RemovalPolicy.RETAIN)
         self.default_environment_bucket = default_environment_bucket
-
-        default_environment_bucket.add_to_resource_policy(
-            iam.PolicyStatement(
-                sid='AWSLogDeliveryWrite',
-                effect=iam.Effect.ALLOW,
-                principals=[iam.ServicePrincipal('logging.s3.amazonaws.com')],
-                actions=['s3:PutObject', 's3:PutObjectAcl'],
-                resources=[f'{default_environment_bucket.bucket_arn}/*'],
-            )
-        )
 
         default_environment_bucket.add_lifecycle_rule(
             abort_incomplete_multipart_upload_after=Duration.days(7),
@@ -568,7 +585,7 @@ class EnvironmentSetup(Stack):
     def create_integration_tests_role(self):
         toolingAccount = ParameterStoreManager.get_parameter_value(
             region=os.getenv('AWS_REGION', 'eu-west-1'),
-            parameter_path=f"/dataall/{os.getenv('envname', 'local')}/toolingAccount",
+            parameter_path=f'/dataall/{os.getenv("envname", "local")}/toolingAccount',
         )
         self.test_role = iam.Role(
             self,
@@ -596,6 +613,7 @@ class EnvironmentSetup(Stack):
                     'arn:aws:s3:::dataall-test-session*/*',
                     'arn:aws:s3:::dataall-temp*',
                     'arn:aws:s3:::dataall-temp*/*',
+                    'arn:aws:s3:::dataall-env-access-logs*',
                 ],
             )
         )
@@ -682,7 +700,7 @@ class EnvironmentSetup(Stack):
                 ],
                 effect=iam.Effect.ALLOW,
                 resources=[
-                    f'arn:aws:iam::{self.account}:role/dataall-test-*',
+                    f'arn:aws:iam::{self.account}:role/dataall-test*',
                     f'arn:aws:iam::{self.account}:role/dataall-session*',
                 ],
             ),

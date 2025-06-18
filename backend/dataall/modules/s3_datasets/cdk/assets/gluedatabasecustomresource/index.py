@@ -58,10 +58,10 @@ def on_create(event):
             )
         except ClientError as e:
             log.exception(
-                f"Could not create Glue Database {props['DatabaseInput']['Name']} in aws://{AWS_ACCOUNT}/{AWS_REGION}, received {str(e)}"
+                f'Could not create Glue Database {props["DatabaseInput"]["Name"]} in aws://{AWS_ACCOUNT}/{AWS_REGION}, received {str(e)}'
             )
             raise Exception(
-                f"Could not create Glue Database {props['DatabaseInput']['Name']} in aws://{AWS_ACCOUNT}/{AWS_REGION}, received {str(e)}"
+                f'Could not create Glue Database {props["DatabaseInput"]["Name"]} in aws://{AWS_ACCOUNT}/{AWS_REGION}, received {str(e)}'
             )
 
     Entries = []

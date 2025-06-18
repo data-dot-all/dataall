@@ -15,6 +15,7 @@ from dataall.base.utils.api_handler_utils import (
     attach_tenant_policy_for_groups,
     check_reauth,
     validate_and_block_if_maintenance_window,
+    redact_creds,
 )
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.aws.sqs import SqsQueue
@@ -22,6 +23,7 @@ from dataall.base.context import set_context, dispose_context, RequestContext
 from dataall.base.db import get_engine
 from dataall.base.loader import load_modules, ImportMode
 
+from graphql.pyutils import did_you_mean
 
 logger = logging.getLogger()
 logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
@@ -30,6 +32,11 @@ log = logging.getLogger(__name__)
 start = perf_counter()
 for name in ['boto3', 's3transfer', 'botocore', 'boto']:
     logging.getLogger(name).setLevel(logging.ERROR)
+
+ALLOW_INTROSPECTION = True if os.getenv('ALLOW_INTROSPECTION') == 'True' else False
+
+if not ALLOW_INTROSPECTION:
+    did_you_mean.__globals__['MAX_LENGTH'] = 0
 
 load_modules(modes={ImportMode.API})
 SCHEMA = bootstrap_schema()
@@ -59,7 +66,7 @@ def resolver_adapter(resolver):
 
 executable_schema = get_executable_schema()
 end = perf_counter()
-print(f'Lambda Context ' f'Initialization took: {end - start:.3f} sec')
+print(f'Lambda Context Initialization took: {end - start:.3f} sec')
 
 
 def handler(event, context):
@@ -84,6 +91,7 @@ def handler(event, context):
         Return doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
     """
 
+    event = redact_creds(event)
     log.info('Lambda Event %s', event)
     log.debug('Env name %s', ENVNAME)
     log.debug('Engine %s', ENGINE.engine.url)
@@ -136,7 +144,9 @@ def handler(event, context):
     else:
         raise Exception(f'Could not initialize user context from event {event}')
 
-    success, response = graphql_sync(schema=executable_schema, data=query, context_value=app_context)
+    success, response = graphql_sync(
+        schema=executable_schema, data=query, context_value=app_context, introspection=ALLOW_INTROSPECTION
+    )
 
     dispose_context()
     response = json.dumps(response)

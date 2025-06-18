@@ -4,6 +4,7 @@ from sqlalchemy import and_, or_
 
 from dataall.base.db import exceptions
 from dataall.core.vpc.db.vpc_models import Vpc
+from dataall.base.utils.naming_convention import NamingConventionPattern, NamingConventionService
 
 log = logging.getLogger(__name__)
 
@@ -48,7 +49,9 @@ class VpcRepository:
                 or_(
                     Vpc.label.ilike('%' + term + '%'),
                     Vpc.VpcId.ilike('%' + term + '%'),
-                    Vpc.tags.contains(f'{{{term}}}'),
+                    Vpc.tags.contains(
+                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, target_label=term).sanitize()}}}'
+                    ),
                 )
             )
         return query.order_by(Vpc.label)

@@ -23,9 +23,10 @@ class NamingConventionPattern(Enum):
     NOTEBOOK = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 63}
     MLSTUDIO_DOMAIN = {'regex': '[^a-zA-Z0-9-]', 'separator': '-', 'max_length': 63}
     DEFAULT = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 63}
+    DEFAULT_SEARCH = {'regex': '[^a-zA-Z0-9-_:. ]'}
     OPENSEARCH = {'regex': '[^a-z0-9-]', 'separator': '-', 'max_length': 27}
     OPENSEARCH_SERVERLESS = {'regex': '[^a-z0-9-]', 'separator': '-', 'max_length': 31}
-    DATA_FILTERS = {'regex': '^[a-z0-9_]*$', 'separator': '_', 'max_length': 31}
+    DATA_FILTERS = {'regex': '[^a-z0-9_]', 'separator': '_', 'max_length': 31}
     REDSHIFT_DATASHARE = {
         'regex': '[^a-zA-Z0-9_]',
         'separator': '_',
@@ -54,14 +55,26 @@ class NamingConventionService:
         separator = NamingConventionPattern[self.service].value['separator']
         max_length = NamingConventionPattern[self.service].value['max_length']
         suffix = f'-{self.target_uri}' if len(self.target_uri) else ''
-        return f"{slugify(self.resource_prefix + '-' + self.target_label[:(max_length - len(self.resource_prefix + self.target_uri))] + suffix, regex_pattern=fr'{regex}', separator=separator, lowercase=True)}"
+        return f'{slugify(self.resource_prefix + "-" + self.target_label[: (max_length - len(self.resource_prefix + self.target_uri))] + suffix, regex_pattern=rf"{regex}", separator=separator, lowercase=True)}'
+
+    def build_compliant_name_with_index(self, index: int = None) -> str:
+        """
+        Builds a compliant AWS resource name with an index at the end of the policy name
+        IMP - If no index is provided, then this method provides a base policy name without index. Base policy name is calculated by considering the length of string required for index
+        This is done so that the base policy name doesn't change when an index is added to the string.
+        """
+        regex = NamingConventionPattern[self.service].value['regex']
+        separator = NamingConventionPattern[self.service].value['separator']
+        max_length = NamingConventionPattern[self.service].value['max_length']
+        index_string_length = 2  # This is added to adjust the target label string even if the index is set to None. This helps in getting the base policy name when index is None
+        index_string = f'-{index}' if index is not None else ''
+        suffix = f'-{self.target_uri}' if len(self.target_uri) else ''
+        return f'{slugify(self.resource_prefix + "-" + self.target_label[: (max_length - len(self.resource_prefix + self.target_uri) - index_string_length)] + suffix + index_string, regex_pattern=rf"{regex}", separator=separator, lowercase=True)}'
 
     def validate_name(self):
         regex = NamingConventionPattern[self.service].value['regex']
         max_length = NamingConventionPattern[self.service].value['max_length']
-        if 'arn:aws:' in self.target_label:
-            raise Exception(f'An error occurred (InvalidInput): name expected, arn-like string received: {regex}')
-        if not re.search(regex, self.target_label):
+        if re.search(regex, self.target_label):
             raise Exception(
                 f'An error occurred (InvalidInput): label value {self.target_label} must match the pattern {regex}'
             )
@@ -69,6 +82,10 @@ class NamingConventionService:
             raise Exception(
                 f'An error occurred (InvalidInput): label value {self.target_label} must be less than {max_length} characters'
             )
+
+    def sanitize(self):
+        regex = NamingConventionPattern[self.service].value['regex']
+        return re.sub(regex, '', self.target_label)
 
     def validate_imported_name(self):
         max_length = NamingConventionPattern[self.service].value['max_length']

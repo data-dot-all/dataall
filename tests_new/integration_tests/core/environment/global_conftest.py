@@ -1,7 +1,7 @@
+import pytest
 import logging
 from contextlib import contextmanager
 
-import pytest
 from assertpy import assert_that
 
 from integration_tests.aws_clients.sts import STSClient
@@ -13,7 +13,11 @@ from integration_tests.core.environment.queries import (
     list_environments,
     invite_group_on_env,
 )
-from integration_tests.core.organizations.queries import create_organization
+from integration_tests.core.organizations.queries import (
+    create_organization,
+    list_organizations,
+    invite_team_to_organization,
+)
 from integration_tests.core.stack.utils import check_stack_ready
 from tests_new.integration_tests.aws_clients.s3 import S3Client
 from tests_new.integration_tests.core.environment.utils import update_env_stack
@@ -48,6 +52,9 @@ def create_env(client, env_name, group, org_uri, account_id, region, tags=[], re
             session = STSClient(role_arn=role, region=env.region, session_name='Session_1').get_refreshable_session()
             S3Client(session=session, account=env.AwsAccountId, region=env.region).delete_bucket(
                 env.EnvironmentDefaultBucketName
+            )
+            S3Client(session=session, account=env.AwsAccountId, region=env.region).delete_bucket(
+                env.EnvironmentLogsBucketName
             )
             delete_env(client, env)
 
@@ -189,8 +196,29 @@ def persistent_env1(client1, group1, testdata):
 
 
 @pytest.fixture(scope='session')
-def persistent_cross_acc_env_1(client5, group5, testdata):
+def persistent_cross_acc_env_1(client5, group5, client6, group6, testdata):
     with get_or_create_persistent_env('persistent_cross_acc_env_1', client5, group5, testdata) as env:
+        orgs = [org.organizationUri for org in list_organizations(client6).nodes]
+        envs = [org.environmentUri for org in list_environments(client6).nodes]
+        if env.organization.organizationUri not in orgs:
+            invite_team_to_organization(client5, env.organization.organizationUri, group6)
+        if env.environmentUri not in envs:
+            invite_group_on_env(
+                client5,
+                env.environmentUri,
+                group6,
+                [
+                    'UPDATE_ENVIRONMENT',
+                    'GET_ENVIRONMENT',
+                    'ADD_ENVIRONMENT_CONSUMPTION_ROLES',
+                    'LIST_ENVIRONMENT_CONSUMPTION_ROLES',
+                    'LIST_ENVIRONMENT_GROUPS',
+                    'CREDENTIALS_ENVIRONMENT',
+                    'CREATE_SHARE_OBJECT',
+                    'LIST_ENVIRONMENT_SHARED_WITH_OBJECTS',
+                ],
+            )
+            update_env_stack(client5, env)
         yield env
 
 

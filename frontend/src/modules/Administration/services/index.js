@@ -1,7 +1,6 @@
 export * from './createQuicksightDataSourceSet';
 export * from './getMonitoringDashboardId';
 export * from './getMonitoringVPCConnectionId';
-export * from './getPlatformAuthorSession';
 export * from './getPlatformReaderSession';
 export * from './listTenantGroups';
 export * from './listTenantPermissions';

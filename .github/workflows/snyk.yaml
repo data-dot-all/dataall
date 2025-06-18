@@ -1,0 +1,31 @@
+name: Snyk
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    - cron: "0 9 * * 1"  # runs each Monday at 9:00 UTC
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  security:
+    strategy:
+      matrix:
+        python-version: [3.9]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: snyk/actions/setup@master
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install All Requirements
+        run: make install
+      - name: Run Snyk to check for vulnerabilities
+        run: snyk test --all-projects --detection-depth=5 --severity-threshold=high
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}

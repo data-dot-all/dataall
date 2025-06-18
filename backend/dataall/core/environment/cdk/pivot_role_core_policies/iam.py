@@ -13,7 +13,7 @@ class IAMPivotRole(PivotRoleStatementSet):
         statements = [
             # IAM - needed for consumption roles and for S3 sharing
             iam.PolicyStatement(
-                sid='IAMListGet', effect=iam.Effect.ALLOW, actions=['iam:ListRoles', 'iam:Get*'], resources=['*']
+                sid='IAMListGet', effect=iam.Effect.ALLOW, actions=['iam:List*', 'iam:Get*'], resources=['*']
             ),
             iam.PolicyStatement(
                 sid='PassRole',
@@ -23,6 +23,13 @@ class IAMPivotRole(PivotRoleStatementSet):
                 resources=[
                     f'arn:aws:iam::{self.account}:role/{self.role_name}',
                 ],
+            ),
+            # DENY to prevent pivot role to grant itself permissions
+            iam.PolicyStatement(
+                sid='IAMDenyForPivotRole',
+                effect=iam.Effect.DENY,
+                actions=['iam:Put*', 'iam:Delete*', 'iam:Update*', 'iam:AttachRolePolicy', 'iam:DetachRolePolicy'],
+                resources=[f'arn:aws:iam::{self.account}:role/{self.role_name}'],
             ),
         ]
         return statements

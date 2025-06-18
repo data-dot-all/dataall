@@ -135,7 +135,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
             CommandSanitizer(input_args)
 
             cmd = [
-                '' '. ~/.nvm/nvm.sh &&',
+                '. ~/.nvm/nvm.sh &&',
                 'cdk',
                 'deploy --all',
                 '--require-approval',
@@ -161,7 +161,7 @@ def deploy_cdk_stack(engine: Engine, stackid: str, app_path: str = None, path: s
                 f'"{sys.executable} {app_path}"',
                 '--verbose',
             ]
-            logger.info(f"Running command : \n {' '.join(cmd)}")
+            logger.info(f'Running command : \n {" ".join(cmd)}')
 
             # This command is too complex to be executed as a list of commands. We need to run it with shell=True
             # However, the input arguments have to be sanitized with the CommandSanitizer
@@ -217,7 +217,7 @@ def describe_stack(stack, engine: Engine = None, stackid: str = None):
 
 def cdk_installed():
     cmd1 = ['.', '~/.nvm/nvm.sh']
-    logger.info(f"Running command {' '.join(cmd1)}")
+    logger.info(f'Running command {" ".join(cmd1)}')
     subprocess.run(
         cmd1,
         text=True,
@@ -229,7 +229,7 @@ def cdk_installed():
     )
 
     cmd2 = ['cdk', '--version']
-    logger.info(f"Running command {' '.join(cmd2)}")
+    logger.info(f'Running command {" ".join(cmd2)}')
     subprocess.run(
         cmd2,
         text=True,

@@ -21,6 +21,7 @@ class BackendStage(Stage):
         vpc_endpoints_sg=None,
         internet_facing=True,
         custom_domain=None,
+        apigw_custom_domain=None,
         ip_ranges=None,
         apig_vpce=None,
         prod_sizing=False,
@@ -38,6 +39,9 @@ class BackendStage(Stage):
         with_approval_tests=False,
         allowed_origins='*',
         log_retention_duration=None,
+        deploy_aurora_migration_stack=False,
+        old_aurora_connection_secret_arn=None,
+        throttling_config=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -56,6 +60,7 @@ class BackendStage(Stage):
             vpc_endpoints_sg=vpc_endpoints_sg,
             internet_facing=internet_facing,
             custom_domain=custom_domain,
+            apigw_custom_domain=apigw_custom_domain,
             ip_ranges=ip_ranges,
             apig_vpce=apig_vpce,
             prod_sizing=prod_sizing,
@@ -73,6 +78,9 @@ class BackendStage(Stage):
             with_approval_tests=with_approval_tests,
             allowed_origins=allowed_origins,
             log_retention_duration=log_retention_duration,
+            deploy_aurora_migration_stack=deploy_aurora_migration_stack,
+            old_aurora_connection_secret_arn=old_aurora_connection_secret_arn,
+            throttling_config=throttling_config,
             **kwargs,
         )
 

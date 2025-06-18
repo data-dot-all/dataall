@@ -11,7 +11,7 @@ import { PencilAltIcon } from 'design';
 import React from 'react';
 
 export const AttachedFormCard = (props) => {
-  const { fields, attachedForm, onEdit } = props;
+  const { fields, attachedForm, onEdit, editable } = props;
 
   return (
     <Card sx={{ maxWidth: '600px' }}>
@@ -30,16 +30,18 @@ export const AttachedFormCard = (props) => {
           xs={4}
           sx={{ textAlign: 'right', pr: 2, mt: 2 }}
         >
-          <PencilAltIcon
-            sx={{ color: 'primary.main', opacity: 0.5 }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.opacity = 1;
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.opacity = 0.5;
-            }}
-            onClick={onEdit}
-          />
+          {editable && (
+            <PencilAltIcon
+              sx={{ color: 'primary.main', opacity: 0.5 }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.opacity = 1;
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.opacity = 0.5;
+              }}
+              onClick={onEdit}
+            />
+          )}
         </Grid>
       </Grid>
 
