@@ -288,6 +288,12 @@ def resolve_existing_shared_items(context: Context, source: ShareObject, **kwarg
     return ShareItemService.check_existing_shared_items(source)
 
 
+def resolve_role_policy_management(context, source: ShareObject):
+    if not source:
+        return 'Not Available'
+    return EnvironmentService.get_role_policy_management_type(source.principalType, source.principalId)
+
+
 def list_shareable_objects(context: Context, source: ShareObject, filter: dict = None):
     if not source:
         return None

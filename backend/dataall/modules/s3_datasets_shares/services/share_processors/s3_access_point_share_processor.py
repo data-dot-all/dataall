@@ -11,6 +11,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemStatus,
     ShareObjectActions,
     ShareItemActions,
+    PrincipalType,
 )
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
