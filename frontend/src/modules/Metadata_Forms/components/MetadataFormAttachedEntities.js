@@ -25,6 +25,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import { AttachedFormCard } from './AttachedFormCard';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useTheme } from '@mui/styles';
+import { DeleteObjectWithFrictionModal } from '../../../design';
 
 export const MetadataFormAttachedEntities = (props) => {
   const { metadataForm, userRolesMF } = props;
@@ -44,12 +45,22 @@ export const MetadataFormAttachedEntities = (props) => {
     page: 0
   });
   const [selectedEntity, setSelectedEntity] = useState(null);
+  const [isDeleteRoleModalOpen, setIsDeleteRoleModalOpen] = useState(false);
 
   const header = [
     { field: 'entityType', width: 200, headerName: 'Type', editable: false },
     { field: 'entityName', width: 200, headerName: 'Name', editable: false },
     { field: 'entityOwner', width: 200, headerName: 'Owner', editable: false }
   ];
+
+  const handleDeleteRoleModalOpen = (uri) => {
+    setIsDeleteRoleModalOpen(true);
+    setSelectedVersion(uri);
+  };
+  const handleDeleteRoleModalClosed = () => {
+    setIsDeleteRoleModalOpen(false);
+    setSelectedVersion(null);
+  };
 
   const fetchVersions = async () => {
     setLoadingVersions(true);
@@ -99,7 +110,8 @@ export const MetadataFormAttachedEntities = (props) => {
     }
   }, [client, dispatch]);
 
-  const deleteVersion = async (version) => {
+  const deleteVersion = async () => {
+    const version = selectedVersion;
     setLoading(true);
     const response = await client.mutate(
       deleteMetadataFormVersion(version.metadataFormUri, version.version)
@@ -109,6 +121,7 @@ export const MetadataFormAttachedEntities = (props) => {
       response.data &&
       response.data.deleteMetadataFormVersion !== null
     ) {
+      handleDeleteRoleModalClosed();
       await fetchVersions();
       enqueueSnackbar('Version deleted', {
         anchorOrigin: {
@@ -243,7 +256,7 @@ export const MetadataFormAttachedEntities = (props) => {
                           onMouseOut={(e) => {
                             e.currentTarget.style.opacity = 0.5;
                           }}
-                          onClick={() => deleteVersion(version)}
+                          onClick={() => handleDeleteRoleModalOpen(version)}
                         />
                       )}
                     </Grid>
@@ -341,6 +354,23 @@ export const MetadataFormAttachedEntities = (props) => {
             ))}
         </Grid>
       </Grid>
+      <div>
+        <DeleteObjectWithFrictionModal
+          objectName={metadataForm.name}
+          onApply={handleDeleteRoleModalClosed}
+          onClose={handleDeleteRoleModalClosed}
+          deleteMessage={
+            <>
+              <Typography align={'center'} variant="subtitle2" color="error">
+                Are you sure you want to delete this version of metadata form ?{' '}
+              </Typography>
+            </>
+          }
+          open={isDeleteRoleModalOpen}
+          isAWSResource={false}
+          deleteFunction={deleteVersion}
+        />
+      </div>
     </Box>
   );
 };
