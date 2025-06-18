@@ -32,7 +32,6 @@ from dataall.modules.s3_datasets.db.dataset_location_repositories import Dataset
 from dataall.modules.s3_datasets.db.dataset_table_repositories import DatasetTableRepository
 from dataall.modules.s3_datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.modules.s3_datasets.services.dataset_permissions import (
-    GET_DATASET,
     CREDENTIALS_DATASET,
     CRAWL_DATASET,
     DELETE_DATASET,
