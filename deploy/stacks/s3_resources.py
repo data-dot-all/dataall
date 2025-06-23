@@ -8,6 +8,7 @@ from aws_cdk import (
     CfnOutput,
 )
 
+from .cdk_asset_trail import setup_cdk_asset_trail
 from .pyNestedStack import pyNestedClass
 
 
@@ -25,6 +26,8 @@ class S3ResourcesStack(pyNestedClass):
             versioned=True,
             auto_delete_objects=True,
         )
+        setup_cdk_asset_trail(self, self.logs_bucket)
+
         self.bucket_name = f'{resource_prefix}-{envname}-{self.account}-{self.region}-resources'
         self.bucket = s3.Bucket(
             self,
@@ -96,5 +99,13 @@ class S3ResourcesStack(pyNestedClass):
             f'{resource_prefix}-{envname}-access-logs-bucket-name',
             export_name=f'{resource_prefix}-{envname}-access-logs-bucket-name',
             value=self.bucket.bucket_name,
-            description=f'{resource_prefix}-{envname}-access-logs-bucket-name',
+            description=f'DO NOT USE {resource_prefix}-{envname}-access-logs-bucket-name',
+        )
+
+        CfnOutput(
+            self,
+            f'{resource_prefix}-{envname}-access-logs-bucket',
+            export_name=f'{resource_prefix}-{envname}-access-logs-bucket',
+            value=self.logs_bucket.bucket_name,
+            description=f'{resource_prefix}-{envname}-access-logs-bucket',
         )

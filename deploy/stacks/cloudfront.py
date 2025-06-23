@@ -15,11 +15,10 @@ from aws_cdk import (
     RemovalPolicy,
     CfnOutput,
     BundlingOptions,
-    aws_kms,
+    Fn,
 )
-from aws_cdk.triggers import TriggerFunction
 
-from custom_resources.utils import get_lambda_code
+from .cdk_asset_trail import setup_cdk_asset_trail
 from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling
 from .waf_rules import get_waf_rules
@@ -42,6 +41,23 @@ class CloudfrontDistro(pyNestedClass):
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
+
+        self.server_access_logs_bucket = s3.Bucket(
+            self,
+            f'{resource_prefix}-{envname}-cloudfront-access-logs',
+            encryption=s3.BucketEncryption.S3_MANAGED,
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            enforce_ssl=True,
+            removal_policy=RemovalPolicy.DESTROY,
+            versioned=True,
+            auto_delete_objects=True,
+        )
+
+        """
+        In case cloudfront (always us-east-1) and backend are in different regions create a trail in us-east-1 
+        """
+        if self.region != backend_region:
+            setup_cdk_asset_trail(self, self.server_access_logs_bucket)
 
         # Create IP set if IP filtering enabled
         ip_set_cloudfront = None
@@ -78,6 +94,8 @@ class CloudfrontDistro(pyNestedClass):
             enforce_ssl=True,
             versioned=True,
             object_ownership=s3.ObjectOwnership.OBJECT_WRITER,
+            server_access_logs_bucket=self.server_access_logs_bucket,
+            server_access_logs_prefix=f'{resource_prefix}-{envname}-logging',
         )
 
         frontend_alternate_domain = None
@@ -99,6 +117,8 @@ class CloudfrontDistro(pyNestedClass):
             enforce_ssl=True,
             versioned=True,
             object_ownership=s3.ObjectOwnership.OBJECT_WRITER,
+            server_access_logs_bucket=self.server_access_logs_bucket,
+            server_access_logs_prefix=f'{resource_prefix}-{envname}-frontend',
         )
 
         origin_access_identity = cloudfront.OriginAccessIdentity(
@@ -391,6 +411,8 @@ class CloudfrontDistro(pyNestedClass):
             enforce_ssl=True,
             versioned=True,
             object_ownership=s3.ObjectOwnership.OBJECT_WRITER,
+            server_access_logs_bucket=self.server_access_logs_bucket,
+            server_access_logs_prefix=f'{resource_prefix}-{envname}-{construct_id}',
         )
 
         origin_access_identity = cloudfront.OriginAccessIdentity(
