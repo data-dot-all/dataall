@@ -1,0 +1,26 @@
+<div class="toc">
+  <h4>Table of Contents</h4>
+  <ul id="toc-list"></ul>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+  const tocList = document.getElementById('toc-list');
+  
+  headings.forEach(function(heading, index) {
+    const id = 'heading-' + index;
+    heading.id = id;
+    
+    const li = document.createElement('li');
+    li.className = 'toc-' + heading.tagName.toLowerCase();
+    
+    const a = document.createElement('a');
+    a.href = '#' + id;
+    a.textContent = heading.textContent;
+    
+    li.appendChild(a);
+    tocList.appendChild(li);
+  });
+});
+</script>
