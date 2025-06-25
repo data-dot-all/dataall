@@ -25,7 +25,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import { AttachedFormCard } from './AttachedFormCard';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useTheme } from '@mui/styles';
-import { DeleteObjectWithFrictionModal } from '../../../design';
+import { DeleteObjectWithFrictionModal } from 'design';
 
 export const MetadataFormAttachedEntities = (props) => {
   const { metadataForm, userRolesMF } = props;
