@@ -4,8 +4,6 @@ An open source development framework to help you build a data marketplace on AWS
 workspace that makes collaboration among diverse users (like business, analysts and engineers) easier, increasing
 efficiency and agility in data projects ✨
 
-![data.all_catalog](documentation/userguide/docs/pictures/catalog/catalog.png)
-
 ## **Why we built data.all**
 
 Data teams can be diverse: analysts, scientists, engineers, business users. Diverse people, with diverse tools and
