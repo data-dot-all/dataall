@@ -21,7 +21,7 @@ import {
   listAttachedMetadataForms,
   listEntityMetadataForms
 } from '../services';
-import { Defaults, PlusIcon } from 'design';
+import { Defaults, DeleteObjectWithFrictionModal, PlusIcon } from 'design';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useClient } from 'services';
 import { RenderedMetadataForm } from './renderedMetadataForm';
@@ -46,6 +46,7 @@ export const MetadataAttachment = (props) => {
   const [editMode, setEditMode] = useState(false);
   const [values, setValues] = useState({});
   const [attachedMFUri, setAttachedMFUri] = useState(-1);
+  const [isDeleteRoleModalOpenId, setIsDeleteRoleModalOpen] = useState(0);
   const [filter] = useState({
     ...Defaults.filter,
     pageSize: 20,
@@ -59,7 +60,7 @@ export const MetadataAttachment = (props) => {
   const fetchAvailableForms = async () => {
     const response = await client.query(
       listEntityMetadataForms({
-        ...Defaults.filter,
+        ...Defaults.selectListFilter,
         entityType: entityType,
         entityUri: entityUri,
         hideAttached: true
@@ -125,6 +126,11 @@ export const MetadataAttachment = (props) => {
       response.data &&
       response.data.getMetadataForm !== null
     ) {
+      if (response.data.getMetadataForm.fields.length === 0) {
+        const error = 'Metadata form with no fields cannot be attached';
+        dispatch({ type: SET_ERROR, error });
+        setSelectedForm(null);
+      }
       setFields(response.data.getMetadataForm.fields);
     } else {
       const error = response.errors
@@ -134,6 +140,16 @@ export const MetadataAttachment = (props) => {
     }
     setLoadingFields(false);
   };
+
+  const conditionAndSetFields = (fieldsData) => {
+    fieldsData.forEach((field, index) => {
+      if (field.field.type === 'Boolean' && field.value !== undefined) {
+        field.value = JSON.parse(field.value);
+      }
+    });
+    setFields(fieldsData);
+  };
+
   const fetchAttachedFields = async (uri) => {
     setLoadingFields(true);
     const response = await client.query(getAttachedMetadataForm(uri));
@@ -142,7 +158,7 @@ export const MetadataAttachment = (props) => {
       response.data &&
       response.data.getAttachedMetadataForm !== null
     ) {
-      setFields(response.data.getAttachedMetadataForm.fields);
+      conditionAndSetFields(response.data.getAttachedMetadataForm.fields);
     } else {
       const error = response.errors
         ? response.errors[0].message
@@ -179,6 +195,13 @@ export const MetadataAttachment = (props) => {
         )
       );
     }
+  };
+
+  const handleDeleteRoleModalOpen = (id) => {
+    setIsDeleteRoleModalOpen(id);
+  };
+  const handleDeleteRoleModalClosed = (id) => {
+    setIsDeleteRoleModalOpen(0);
   };
 
   useEffect(() => {
@@ -389,11 +412,41 @@ export const MetadataAttachment = (props) => {
                         onMouseOut={(e) => {
                           e.currentTarget.style.opacity = 0.5;
                         }}
-                        onClick={() => deleteAttachedForm(attachedForm.uri)}
+                        onClick={() =>
+                          handleDeleteRoleModalOpen(attachedForm.uri)
+                        }
                       />
                     )}
                   </Grid>
                 </Grid>
+                <>
+                  <DeleteObjectWithFrictionModal
+                    objectName={attachedForm.metadataForm.name}
+                    onApply={() =>
+                      handleDeleteRoleModalClosed(attachedForm.uri)
+                    }
+                    onClose={() =>
+                      handleDeleteRoleModalClosed(attachedForm.uri)
+                    }
+                    deleteMessage={
+                      <>
+                        <Typography
+                          align={'center'}
+                          variant="subtitle2"
+                          color="error"
+                        >
+                          Are you sure you want to delete this Metadata form ?{' '}
+                          Deleting attached form will permanently delete the
+                          data on this form. Once deleted, data on this attached
+                          metadata form cannot be recovered.
+                        </Typography>
+                      </>
+                    }
+                    open={isDeleteRoleModalOpenId === attachedForm.uri}
+                    isAWSResource={false}
+                    deleteFunction={() => deleteAttachedForm(attachedForm.uri)}
+                  />
+                </>
               </CardContent>
             ))
           ) : (
@@ -430,9 +483,7 @@ export const MetadataAttachment = (props) => {
             onCancel={() => {
               setAddNewForm(false);
               setSelectedForm(null);
-              setFields([]);
               setEditMode(false);
-              setValues({});
               setAttachedMFUri(-1);
             }}
             entityUri={entityUri}
@@ -442,7 +493,7 @@ export const MetadataAttachment = (props) => {
               setSelectedAttachedForm(attachedForm);
               setEditMode(false);
               setValues({});
-              setFields(attachedForm.fields);
+              conditionAndSetFields(attachedForm.fields);
               fetchList().catch((e) =>
                 dispatch({ type: SET_ERROR, error: e.message })
               );

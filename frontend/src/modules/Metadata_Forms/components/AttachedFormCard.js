@@ -72,7 +72,7 @@ export const AttachedFormCard = (props) => {
                   ml: 5
                 }}
               >
-                {field.value}
+                {field.value?.toString()}
               </Typography>
             </ListItem>
           ))}
