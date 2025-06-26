@@ -61,6 +61,7 @@ class TriggerFunctionStack(pyNestedClass):
             handler=_lambda.Handler.FROM_IMAGE,
             execute_after=execute_after,
             execute_on_handler_change=True,
+            logging_format=_lambda.LoggingFormat.JSON,
         )
 
         for connectable in connectables:
@@ -81,6 +82,7 @@ class TriggerFunctionStack(pyNestedClass):
         self.trigger_function.connections.allow_to(
             ec2.Peer.any_ipv4(), ec2.Port.tcp(443), 'Allow NAT Internet Access SG Egress'
         )
+        self.security_group = function_sgs
 
     def get_policy_statements(self, resource_prefix) -> List[iam.PolicyStatement]:
         return [

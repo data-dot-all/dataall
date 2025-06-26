@@ -36,6 +36,9 @@ from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling
 from .waf_rules import get_waf_rules
 
+DEFAULT_API_RATE_LIMIT = 10000
+DEFAULT_API_BURST_LIMIT = 5000
+
 
 class LambdaApiStack(pyNestedClass):
     def __init__(
@@ -66,6 +69,7 @@ class LambdaApiStack(pyNestedClass):
         custom_auth=None,
         allowed_origins='*',
         log_retention_duration=None,
+        throttling_config=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -136,6 +140,8 @@ class LambdaApiStack(pyNestedClass):
             dead_letter_queue=self.esproxy_dlq,
             on_failure=lambda_destination.SqsDestination(self.esproxy_dlq),
             tracing=_lambda.Tracing.ACTIVE,
+            logging_format=_lambda.LoggingFormat.JSON,
+            application_log_level_v2=getattr(_lambda.ApplicationLogLevel, log_level),
         )
 
         self.api_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-graphql-dlq')
@@ -177,6 +183,8 @@ class LambdaApiStack(pyNestedClass):
             dead_letter_queue=self.api_handler_dlq,
             on_failure=lambda_destination.SqsDestination(self.api_handler_dlq),
             tracing=_lambda.Tracing.ACTIVE,
+            logging_format=_lambda.LoggingFormat.JSON,
+            application_log_level_v2=getattr(_lambda.ApplicationLogLevel, log_level),
         )
 
         self.aws_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-awsworker-dlq')
@@ -211,6 +219,8 @@ class LambdaApiStack(pyNestedClass):
             dead_letter_queue=self.aws_handler_dlq,
             on_failure=lambda_destination.SqsDestination(self.aws_handler_dlq),
             tracing=_lambda.Tracing.ACTIVE,
+            logging_format=_lambda.LoggingFormat.JSON,
+            application_log_level_v2=getattr(_lambda.ApplicationLogLevel, log_level),
         )
         self.aws_handler.add_event_source(
             lambda_event_sources.SqsEventSource(
@@ -306,6 +316,8 @@ class LambdaApiStack(pyNestedClass):
             security_groups=[authorizer_fn_sg],
             runtime=runtime,
             layers=[cryptography_layer],
+            logging_format=_lambda.LoggingFormat.JSON,
+            application_log_level_v2=getattr(_lambda.ApplicationLogLevel, log_level),
         )
 
         # Add NAT Connectivity For Custom Authorizer Lambda
@@ -355,6 +367,7 @@ class LambdaApiStack(pyNestedClass):
             vpc,
             user_pool,
             custom_auth,
+            throttling_config,
         )
 
         self.create_sns_topic(
@@ -526,13 +539,14 @@ class LambdaApiStack(pyNestedClass):
         vpc,
         user_pool,
         custom_auth,
+        throttling_config,
     ):
         api_deploy_options = apigw.StageOptions(
-            throttling_rate_limit=10000,
-            throttling_burst_limit=5000,
+            throttling_rate_limit=throttling_config.get('global_rate_limit', DEFAULT_API_RATE_LIMIT),
+            throttling_burst_limit=throttling_config.get('global_burst_limit', DEFAULT_API_BURST_LIMIT),
             logging_level=apigw.MethodLoggingLevel.INFO,
             tracing_enabled=True,
-            data_trace_enabled=True,
+            data_trace_enabled=False,
             metrics_enabled=True,
         )
 

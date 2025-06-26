@@ -39,6 +39,9 @@ class BackendStage(Stage):
         with_approval_tests=False,
         allowed_origins='*',
         log_retention_duration=None,
+        deploy_aurora_migration_stack=False,
+        old_aurora_connection_secret_arn=None,
+        throttling_config=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -75,6 +78,9 @@ class BackendStage(Stage):
             with_approval_tests=with_approval_tests,
             allowed_origins=allowed_origins,
             log_retention_duration=log_retention_duration,
+            deploy_aurora_migration_stack=deploy_aurora_migration_stack,
+            old_aurora_connection_secret_arn=old_aurora_connection_secret_arn,
+            throttling_config=throttling_config,
             **kwargs,
         )
 

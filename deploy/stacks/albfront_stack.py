@@ -126,7 +126,7 @@ class AlbFrontStack(Stack):
             server_access_logs_bucket=s3.Bucket.from_bucket_name(
                 self,
                 'AccessLogsBucket',
-                Fn.import_value(f'{resource_prefix}-{envname}-access-logs-bucket-name'),
+                Fn.import_value(f'{resource_prefix}-{envname}-access-logs-bucket'),
             ),
             server_access_logs_prefix='elb_access_logs',
             versioned=True,
