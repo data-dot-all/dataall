@@ -1,5 +1,5 @@
 ---
-layout: home
+layout: default
 homePage: true
 title: About
 order: 1

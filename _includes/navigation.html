@@ -1,0 +1,86 @@
+<ul class="sidebar-nav">
+  <!-- Basic Concepts -->
+  <li><a class="nav-item" href="{{ '/' | relative_url }}">Getting Started</a></li>
+  <li><a class="nav-item" href="{{ '/concepts' | relative_url }}">Basic Concepts</a></li>
+  <li><a class="nav-item" href="{{ '/architecture' | relative_url }}">Architecture</a></li>
+  <li><a class="nav-item" href="{{ '/code' | relative_url }}">Code Walkthrough</a></li>
+
+  <!-- User Guide -->
+  <li>
+    <span class="nav-item">User Guide</span>
+    <ul class="dropdown">
+      <li><a class="nav-item" href="{{ '/userguide' | relative_url }}">Introduction</a></li>
+
+      <!-- Getting Started -->
+      <li>
+        <span class="nav-item">Getting Started</span>
+        <ul class="dropdown">
+          <li><a class="nav-item" href="{{ '/userguide/organizations' | relative_url }}">Organizations</a></li>
+          <li><a class="nav-item" href="{{ '/userguide/environments' | relative_url }}">Environments</a></li>
+          <li><a class="nav-item" href="{{ '/userguide/security' | relative_url }}">Security</a></li>
+        </ul>
+      </li>
+
+      <!-- Datasets -->
+      <li>
+        <span class="nav-item">Datasets</span>
+        <ul class="dropdown">
+          <li><a class="nav-item" href="{{ '/userguide/s3_datasets' | relative_url }}">S3 Datasets</a></li>
+          <li><a class="nav-item" href="{{ '/userguide/redshift_datasets' | relative_url }}">Redshift Datasets</a></li>
+          <li><a class="nav-item" href="{{ '/userguide/tables' | relative_url }}">Tables</a></li>
+        </ul>
+      </li>
+
+      <!-- Collaboration -->
+      <li>
+        <span class="nav-item">Collaboration</span>
+        <ul class="dropdown">
+          <li><a class="nav-item" href="{{ '/userguide/shares' | relative_url }}">Shares</a></li>
+          <li><a class="nav-item" href="{{ '/userguide/catalog' | relative_url }}">Catalog</a></li>
+          <li><a class="nav-item" href="{{ '/userguide/worksheets' | relative_url }}">Worksheets</a></li>
+        </ul>
+      </li>
+
+      <!-- Advanced Features -->
+      <li>
+        <span class="nav-item">Advanced Features</span>
+        <ul class="dropdown">
+          <li><a class="nav-item" href="{{ '/userguide/notebooks' | relative_url }}">Notebooks</a></li>
+          <li><a class="nav-item" href="{{ '/userguide/dashboards' | relative_url }}">Dashboards</a></li>
+          <li><a class="nav-item" href="{{ '/userguide/mlstudio' | relative_url }}">ML Studio</a></li>
+          <li><a class="nav-item" href="{{ '/userguide/metadata_forms' | relative_url }}">Metadata Forms</a></li>
+          <li><a class="nav-item" href="{{ '/userguide/components' | relative_url }}">Components</a></li>
+        </ul>
+      </li>
+
+      <!-- Administration -->
+      <li>
+        <span class="nav-item">Administration</span>
+        <ul class="dropdown">
+          <li><a class="nav-item" href="{{ '/userguide/maintenance' | relative_url }}">Maintenance</a></li>
+          <li><a class="nav-item" href="{{ '/userguide/monitoring' | relative_url }}">Monitoring</a></li>
+        </ul>
+      </li>
+
+      <!-- Labs -->
+      <li>
+        <span class="nav-item">Labs</span>
+        <ul class="dropdown">
+          <li><a class="nav-item" href="{{ '/userguide/lab1' | relative_url }}">Lab 1: Data Access Management</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+
+  <!-- Deploy -->
+  <li>
+    <span class="nav-item">Deploy</span>
+    <ul class="dropdown">
+      <li><a class="nav-item" href="{{ '/deploy-aws' | relative_url }}">Deploy to AWS</a></li>
+      <li><a class="nav-item" href="{{ '/deploy-locally' | relative_url }}">Deploy Locally</a></li>
+    </ul>
+  </li>
+  
+  <!-- Workshop -->
+  <li><a class="nav-item" href="{{ site.workshop_url }}" target="_blank">Workshop <span class="external-link">↗</span></a></li>
+</ul>
