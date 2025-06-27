@@ -749,6 +749,7 @@ def test_update_consumption_role(client, org_fixture, env_fixture, user, group, 
                 groupUri
                 IAMRoleName
                 IAMRoleArn
+                dataallManaged
             }
         }
     """
@@ -770,9 +771,15 @@ def test_update_consumption_role(client, org_fixture, env_fixture, user, group, 
         groups=[group.name],
         environmentUri=env_fixture.environmentUri,
         consumptionRoleUri=consumption_role_uri,
-        input={'consumptionRoleName': 'testRoleName', 'groupUri': 'testGroupUri'},
+        # Update consumptionRoleName, groupUri and also the policy management ( dataallManaged )
+        input={
+            'consumptionRoleName': 'testRoleName',
+            'groupUri': 'testGroupUri',
+            'dataallManaged': 'PARTIALLY_MANAGED',
+        },
     )
 
     assert not response.errors
     assert response.data.updateConsumptionRole.consumptionRoleName == 'testRoleName'
     assert response.data.updateConsumptionRole.groupUri == 'testGroupUri'
+    assert response.data.updateConsumptionRole.dataallManaged == 'PARTIALLY_MANAGED'
