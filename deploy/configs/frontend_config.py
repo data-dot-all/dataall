@@ -38,28 +38,18 @@ def create_react_env_file(
     ]['Value']
     print(f'PivotRole auto-create is enabled: {pivot_role_auto_create}')
 
-    user_guide_link = ''
     if custom_domain == 'False' and internet_facing == 'True':
         print('Switching to us-east-1 region...')
         ssm = boto3.client('ssm', region_name='us-east-1')
         signin_singout_link = ssm.get_parameter(Name=f'/dataall/{envname}/CloudfrontDistributionDomainName')[
             'Parameter'
         ]['Value']
-        if not custom_auth:
-            user_guide_link = ssm.get_parameter(
-                Name=f'/dataall/{envname}/cloudfront/docs/user/CloudfrontDistributionDomainName'
-            )['Parameter']['Value']
     else:
         signin_singout_link = ssm.get_parameter(Name=f'/dataall/{envname}/frontend/custom_domain_name')['Parameter'][
             'Value'
         ]
-        if not custom_auth:
-            user_guide_link = ssm.get_parameter(Name=f'/dataall/{envname}/userguide/custom_domain_name')['Parameter'][
-                'Value'
-            ]
 
     print(f'UI: {signin_singout_link}')
-    print(f'USERGUIDE: {user_guide_link}')
 
     with open('frontend/.env', 'w') as f:
         file_content = f"""GENERATE_SOURCEMAP=false
@@ -89,7 +79,6 @@ REACT_APP_COGNITO_APP_CLIENT_ID={app_client}
 REACT_APP_COGNITO_DOMAIN={domain}
 REACT_APP_COGNITO_REDIRECT_SIGNIN=https://{signin_singout_link}
 REACT_APP_COGNITO_REDIRECT_SIGNOUT=https://{signin_singout_link}
-REACT_APP_USERGUIDE_LINK=https://{user_guide_link}
 """
             )
 
