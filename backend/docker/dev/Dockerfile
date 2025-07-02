@@ -1,6 +1,6 @@
 FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 
-ARG NODE_VERSION=18
+ARG NODE_VERSION=22
 ARG NVM_VERSION=v0.37.2
 ARG PYTHON_VERSION=python3.9
 ARG CONTAINER_USER=cuser
