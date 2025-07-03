@@ -1,0 +1,56 @@
+<div class="search-container">
+  <input type="text" id="search-input" placeholder="Search site..." />
+  <div id="search-results"></div>
+</div>
+
+<script src="{{ '/assets/js/search-data.js' | relative_url }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('search-input');
+  const searchResults = document.getElementById('search-results');
+  
+  searchInput.addEventListener('input', function() {
+    const query = this.value.toLowerCase();
+    if (query.length < 2) {
+      searchResults.innerHTML = '';
+      return;
+    }
+    
+    let results = [];
+    window.searchData.forEach(page => {
+      if (page.title.toLowerCase().includes(query) || 
+          page.content.toLowerCase().includes(query)) {
+        const snippet = page.content.toLowerCase().indexOf(query);
+        const start = Math.max(0, snippet - 50);
+        const end = Math.min(page.content.length, snippet + 100);
+        const preview = page.content.substring(start, end);
+        
+        results.push({
+          title: page.title,
+          url: page.url,
+          preview: preview
+        });
+      }
+    });
+    
+    if (results.length > 0) {
+      searchResults.innerHTML = results.slice(0, 10).map(result => 
+        `<div class="search-result">
+          <a href="${result.url}">
+            <div class="result-title">${result.title}</div>
+            <div class="result-preview">${result.preview}...</div>
+          </a>
+        </div>`
+      ).join('');
+    } else {
+      searchResults.innerHTML = '<div class="search-result">No results found</div>';
+    }
+  });
+  
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.search-container')) {
+      searchResults.innerHTML = '';
+    }
+  });
+});
+</script>

@@ -1,5 +1,6 @@
 ---
-layout: default_sublevel
+layout: default
+sublevel: true
 title: Deploy to AWS
 permalink: /deploy-aws/
 ---
