@@ -84,6 +84,7 @@ class ShareItemActions(GraphQLEnumMapper):
 class PrincipalType(GraphQLEnumMapper):
     Group = 'Group'
     ConsumptionRole = 'ConsumptionRole'
+    ConsumptionUser = 'ConsumptionUser'
     RedshiftRole = 'RedshiftRole'
 
 

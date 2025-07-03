@@ -393,7 +393,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Mutation', 'addConnectionGroupPermission'): TestData(
         tenant_perm=MANAGE_REDSHIFT_CONNECTIONS, resource_perm=GET_REDSHIFT_CONNECTION
     ),
-    field_id('Mutation', 'addConsumptionRoleToEnvironment'): TestData(
+    field_id('Mutation', 'addConsumptionPrincipalToEnvironment'): TestData(
         tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=ADD_ENVIRONMENT_CONSUMPTION_ROLES
     ),
     field_id('Mutation', 'addRedshiftDatasetTables'): TestData(
@@ -572,7 +572,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
         tenant_perm=MANAGE_DASHBOARDS, resource_perm=SHARE_DASHBOARD
     ),
     field_id('Mutation', 'rejectShareObject'): TestData(tenant_perm=MANAGE_SHARES, resource_perm=REJECT_SHARE_OBJECT),
-    field_id('Mutation', 'removeConsumptionRoleFromEnvironment'): TestData(
+    field_id('Mutation', 'removeConsumptionPrincipalFromEnvironment'): TestData(
         tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=REMOVE_ENVIRONMENT_CONSUMPTION_ROLE
     ),
     field_id('Mutation', 'removeGroupFromEnvironment'): TestData(
@@ -620,7 +620,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Mutation', 'updateCategory'): TestData(
         tenant_perm=MANAGE_GLOSSARIES, resource_ignore=IgnoreReason.CUSTOM, glossary_owner_perm=True
     ),
-    field_id('Mutation', 'updateConsumptionRole'): TestData(
+    field_id('Mutation', 'updateConsumptionPrincipal'): TestData(
         tenant_perm=MANAGE_ENVIRONMENTS, resource_perm=REMOVE_ENVIRONMENT_CONSUMPTION_ROLE
     ),
     field_id('Mutation', 'updateDashboard'): TestData(tenant_perm=MANAGE_DASHBOARDS, resource_perm=UPDATE_DASHBOARD),
@@ -740,7 +740,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Query', 'getCDKExecPolicyPresignedUrl'): TestData(
         resource_perm=LINK_ENVIRONMENT, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
-    field_id('Query', 'getConsumptionRolePolicies'): TestData(
+    field_id('Query', 'getConsumptionPrincipalPolicies'): TestData(
         resource_perm=GET_ENVIRONMENT, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'getDashboard'): TestData(
@@ -872,10 +872,10 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     ),
     field_id('Query', 'getVote'): TestData(resource_ignore=IgnoreReason.PUBLIC, tenant_ignore=IgnoreReason.PUBLIC),
     field_id('Query', 'getWorksheet'): TestData(resource_perm=GET_WORKSHEET, tenant_ignore=IgnoreReason.NOTREQUIRED),
-    field_id('Query', 'listAllConsumptionRoles'): TestData(
+    field_id('Query', 'listAllConsumptionPrincipals'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
-    field_id('Query', 'listAllEnvironmentConsumptionRoles'): TestData(
+    field_id('Query', 'listAllEnvironmentConsumptionPrincipals'): TestData(
         resource_perm=LIST_ENVIRONMENT_CONSUMPTION_ROLES, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listAllEnvironmentGroups'): TestData(
@@ -917,7 +917,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Query', 'listEntityMetadataForms'): TestData(
         resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.TENANT, tenant_admin_perm=True
     ),
-    field_id('Query', 'listEnvironmentConsumptionRoles'): TestData(
+    field_id('Query', 'listEnvironmentConsumptionPrincipals'): TestData(
         resource_perm=LIST_ENVIRONMENT_CONSUMPTION_ROLES, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('Query', 'listEnvironmentGroupInvitationPermissions'): TestData(
@@ -1128,6 +1128,9 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     ),
     field_id('ShareObject', 'userRoleForShareObject'): TestData(
         resource_ignore=IgnoreReason.USERROLEINRESOURCE, tenant_ignore=IgnoreReason.NOTREQUIRED
+    ),
+    field_id('ShareObject', 'policyManagement'): TestData(
+        resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
     field_id('SharedDatabaseTableItem', 'sharedGlueDatabaseName'): TestData(
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
