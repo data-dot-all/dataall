@@ -4,7 +4,7 @@ boto3-stubs==1.35.26
 cdk-nag==2.7.2
 fastapi == 0.115.5
 PyYAML==6.0
-requests==2.32.2
+requests==2.32.4
 tabulate==0.8.9
 uvicorn==0.15.0
 werkzeug==3.0.6
