@@ -878,28 +878,6 @@ class PipelineStack(Stack):
         self.pipeline.add_wave(f'{self.resource_prefix}-{target_env["envname"]}-frontend-stage').add_post(
             *front_stage_actions
         )
-        if target_env.get('custom_auth', None) is None:
-            self.pipeline.add_wave(f'{self.resource_prefix}-{target_env["envname"]}-docs-stage').add_post(
-                pipelines.CodeBuildStep(
-                    id='UpdateDocumentation',
-                    commands=[
-                        f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
-                        f'make assume-role REMOTE_ACCOUNT_ID={target_env["account"]} REMOTE_ROLE={self.resource_prefix}-{target_env["envname"]}-S3DeploymentRole EXTERNAL_ID={get_tooling_account_external_id(target_env["account"])}',
-                        '. ./.env.assumed_role',
-                        'aws sts get-caller-identity',
-                        'export AWS_DEFAULT_REGION=us-east-1',
-                        f"export distributionId=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/cloudfront/docs/user/CloudfrontDistributionId --output text --query 'Parameter.Value')",
-                        f"export bucket=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/cloudfront/docs/user/CloudfrontDistributionBucket --output text --query 'Parameter.Value')",
-                        'cd documentation/userguide',
-                        'pip install -r requirements.txt',
-                        'mkdocs build',
-                        'aws s3 sync site/ s3://$bucket',
-                        "aws cloudfront create-invalidation --distribution-id $distributionId --paths '/*'",
-                    ],
-                    role=self.expanded_codebuild_role.without_policy_updates(),
-                    vpc=self.vpc,
-                ),
-            )
 
     def cw_rum_config_action(self, target_env):
         return pipelines.CodeBuildStep(
@@ -999,33 +977,6 @@ class PipelineStack(Stack):
                 )
             ],
         )
-        if target_env.get('custom_auth') is None:
-            albfront_stage.add_pre(self.user_guide_pre_build_alb(repository_name))
 
         if target_env.get('enable_cw_rum', False) and target_env.get('custom_auth', None) is None:
             albfront_stage.add_post(self.cw_rum_config_action(target_env))
-
-    def user_guide_pre_build_alb(self, repository_name):
-        return pipelines.CodeBuildStep(
-            id='UserGuideImage',
-            build_environment=codebuild.BuildEnvironment(
-                compute_type=codebuild.ComputeType.LARGE,
-                privileged=True,
-                environment_variables={
-                    'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
-                        value=f'{self.account}.dkr.ecr.{self.region}.amazonaws.com/{repository_name}'
-                    ),
-                    'IMAGE_TAG': codebuild.BuildEnvironmentVariable(value=f'userguide-{self.image_tag}'),
-                },
-            ),
-            commands=[
-                f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
-                'cd documentation/userguide',
-                'docker build -f docker/prod/Dockerfile -t $IMAGE_TAG:$IMAGE_TAG .',
-                f'aws ecr get-login-password --region {self.region} | docker login --username AWS --password-stdin {self.account}.dkr.ecr.{self.region}.amazonaws.com',
-                'docker tag $IMAGE_TAG:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG',
-                'docker push $REPOSITORY_URI:$IMAGE_TAG',
-            ],
-            role=self.expanded_codebuild_role.without_policy_updates(),
-            vpc=self.vpc,
-        )

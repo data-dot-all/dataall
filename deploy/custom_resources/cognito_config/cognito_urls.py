@@ -24,19 +24,12 @@ def setup_cognito(
         signin_singout_link = ssm.get_parameter(Name=f'/dataall/{envname}/CloudfrontDistributionDomainName')[
             'Parameter'
         ]['Value']
-        user_guide_link = ssm.get_parameter(
-            Name=f'/dataall/{envname}/cloudfront/docs/user/CloudfrontDistributionDomainName'
-        )['Parameter']['Value']
     else:
         signin_singout_link = ssm.get_parameter(Name=f'/dataall/{envname}/frontend/custom_domain_name')['Parameter'][
             'Value'
         ]
-        user_guide_link = ssm.get_parameter(Name=f'/dataall/{envname}/userguide/custom_domain_name')['Parameter'][
-            'Value'
-        ]
 
     log.info(f'UI: {signin_singout_link}')
-    log.info(f'USERGUIDE: {user_guide_link}')
 
     cognito = boto3.client('cognito-idp', region_name=region)
     user_pool = cognito.describe_user_pool_client(UserPoolId=user_pool_id, ClientId=app_client)
@@ -46,7 +39,6 @@ def setup_cognito(
 
     config_callbacks = [
         f'https://{signin_singout_link}',
-        f'https://{user_guide_link}/parseauth',
     ]
     existing_callbacks = user_pool['UserPoolClient'].get('CallbackURLs', [])
     if 'https://example.com' in existing_callbacks:
@@ -54,7 +46,7 @@ def setup_cognito(
     updated_callbacks = existing_callbacks + list(set(config_callbacks) - set(existing_callbacks))
     log.info(f'Updated CallBackUrls: {updated_callbacks}')
 
-    config_logout_urls = [f'https://{signin_singout_link}', f'https://{user_guide_link}/']
+    config_logout_urls = [f'https://{signin_singout_link}']
     existing_logout_urls = user_pool['UserPoolClient'].get('LogoutURLs', [])
     updated_logout_urls = existing_logout_urls + list(set(config_logout_urls) - set(existing_logout_urls))
     log.info(f'Updated LogOutUrls: {updated_logout_urls}')
