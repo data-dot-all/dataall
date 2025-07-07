@@ -52,12 +52,19 @@ def _get_affected_entities_per_user(session) -> DefaultDict[str, Dict[str, Dict[
             for entity in affected_entities:
                 if entity['attached'] is None:
                     if entity['owner']:
-                        owner_group = entity["owner"]
-                        log.info(f'Fetching members from entity owner group {owner_group}')
+                        owner = entity["owner"]
+                        log.info(f'Fetching members from entity owner {owner}')
 
-                        user_email_ids = identityProvider.get_user_emailids_from_group(groupName=owner_group)
-                        for email_id in user_email_ids:
-                            user_to_entities[email_id][entity['uri']] = entity
+                        try:
+                            user_email_ids = identityProvider.get_user_emailids_from_group(groupName=owner)
+                        except Exception as e:
+                            # We consider individual owner as invalid for now
+                            log.warning(f"Skipping invalid or missing owner group {owner}: {e}")
+                            continue
+
+                        if user_email_ids:
+                            for email_id in user_email_ids:
+                                user_to_entities[email_id][entity['uri']] = entity
 
     return user_to_entities
 
