@@ -65,3 +65,17 @@ ENTITY_SCOPE_BY_TYPE = {
     MetadataFormEntityTypes.Bucket.value: MetadataFormEnforcementScope.Dataset,
     MetadataFormEntityTypes.Share.value: MetadataFormEnforcementScope.Dataset,
 }
+
+ENTITY_LINK_MAP = {
+    MetadataFormEntityTypes.Organization.value: 'organizations',
+    MetadataFormEntityTypes.Environment.value: 'environments',
+    MetadataFormEntityTypes.S3Dataset.value: 's3-datasets',
+    MetadataFormEntityTypes.Worksheet.value: 'worksheets',
+    MetadataFormEntityTypes.Dashboard.value: 'dashboards',
+    MetadataFormEntityTypes.Notebook.value: 'notebooks',
+    MetadataFormEntityTypes.MLStudioUser.value: 'mlstudio',
+    MetadataFormEntityTypes.Pipeline.value: 'pipelines',
+    MetadataFormEntityTypes.Table.value: 's3-datasets/table',
+    MetadataFormEntityTypes.Folder.value: 's3-datasets/folder',
+    MetadataFormEntityTypes.Share.value: 'shares',
+}
