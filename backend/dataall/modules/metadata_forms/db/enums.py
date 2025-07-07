@@ -70,6 +70,7 @@ ENTITY_LINK_MAP = {
     MetadataFormEntityTypes.Organization.value: 'organizations',
     MetadataFormEntityTypes.Environment.value: 'environments',
     MetadataFormEntityTypes.S3Dataset.value: 's3-datasets',
+    MetadataFormEntityTypes.RDDataset.value: 'redshift-datasets',
     MetadataFormEntityTypes.Worksheet.value: 'worksheets',
     MetadataFormEntityTypes.Dashboard.value: 'dashboards',
     MetadataFormEntityTypes.Notebook.value: 'notebooks',
