@@ -526,8 +526,7 @@ If a module depends on other modules we do not need to explicitly define it as a
 `config.json`.
 
 The following table contains a list of the available modules and their dependencies with a very brief explanation of the
-functionality. If you want to know more about each module, 
-check the [UserGuide](https://github.com/data-dot-all/dataall/blob/main/UserGuide.pdf) available as PDF in the repository.
+functionality. If you want to know more about each module, check the [UserGuide](https://data-dot-all.github.io/dataall/userguide/).
 
 | **Module**      | **depends on**                                           | **Description**                                                                                                                                                                         |   
 |-----------------|----------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
