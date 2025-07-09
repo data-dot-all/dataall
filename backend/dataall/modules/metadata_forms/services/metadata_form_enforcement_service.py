@@ -413,7 +413,7 @@ class MetadataFormEnforcementService:
                 )
 
             subject = (
-                f'ACTION REQUIRED: Data.all | Metadata form "{mf_name}" required for {entity["uri"]}'
+                f'ACTION REQUIRED: Data.all | Metadata form "{mf_name}" required for {entity["type"]} {entity["uri"]}'
             )
 
             msg_intro = f"""Dear User, <br><br>
