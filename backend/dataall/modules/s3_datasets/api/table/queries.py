@@ -1,6 +1,11 @@
 from dataall.base.api import gql
 from dataall.modules.s3_datasets.api.table.input_types import DatasetTableFilter
-from dataall.modules.s3_datasets.api.table.resolvers import get_table, preview, list_table_data_filters
+from dataall.modules.s3_datasets.api.table.resolvers import (
+    get_table,
+    preview,
+    read_sample_data,
+    list_table_data_filters,
+)
 from dataall.modules.s3_datasets.api.table.types import (
     DatasetTable,
     DatasetTableSearchResult,
@@ -36,6 +41,13 @@ previewTable = gql.QueryField(
     args=[gql.Argument(name='tableUri', type=gql.NonNullableType(gql.String))],
     resolver=preview,
     type=gql.Ref('QueryPreviewResult'),
+)
+
+listTableSampleData = gql.QueryField(
+    name='listTableSampleData',
+    args=[gql.Argument(name='tableUri', type=gql.NonNullableType(gql.String))],
+    type=gql.Ref('QueryPreviewResult'),
+    resolver=read_sample_data,
 )
 
 listTableDataFilters = gql.QueryField(

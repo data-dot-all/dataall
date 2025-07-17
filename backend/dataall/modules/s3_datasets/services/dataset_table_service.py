@@ -118,6 +118,17 @@ class DatasetTableService:
             return AthenaTableClient(env, table).get_table()
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
+    @ResourcePolicyService.has_resource_permission(UPDATE_DATASET_TABLE, parent_resource=_get_dataset_uri)
+    def read_table_sample(uri: str):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            table: DatasetTable = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, table.datasetUri)
+            env = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
+            return AthenaTableClient(env, table).get_table()
+
+    @staticmethod
     @ResourcePolicyService.has_resource_permission(GET_DATASET_TABLE)
     def get_glue_table_properties(uri: str):
         with get_context().db_engine.scoped_session() as session:
@@ -190,7 +201,8 @@ class DatasetTableService:
         )
 
     @staticmethod
-    @ResourcePolicyService.has_resource_permission(UPDATE_DATASET_TABLE)
+    @ResourcePolicyService.has_resource_permission(UPDATE_DATASET_TABLE, parent_resource=_get_dataset_uri)
+    ##TODO Uncomment the following to use the ResourceThresholdService once https://github.com/data-dot-all/dataall/pull/1653 is merged
     # @ResourceThresholdService.check_invocation_count(
     #     'metadata', 'modules.s3_datasets.features.generate_metadata_ai.max_count_per_day'
     # )
@@ -198,14 +210,34 @@ class DatasetTableService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             table = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
-            table_columns = DatasetColumnRepository.get_table_info_metadata_generation(session, table.tableUri)
+            table_columns = DatasetColumnRepository.list_active_columns_for_table(session, table.tableUri)
             metadata = BedrockClient().invoke_model_table_metadata(
                 table=table, columns=table_columns, metadata_types=metadata_types, sample_data=sample_data
             )
-            columns_metadata = metadata.get('columns_metadata')
-            table_metadata = metadata.pop('columns_metadata')
+            columns_metadata = metadata.get('subitem_descriptions', [])
 
-            return [{'targetUri': uri, 'targetType': 'Table' | table_metadata}] + [
-                {'targetUri': key, 'targetType': 'Table_Column', 'description': value}
-                for key, value in columns_metadata.items()
-            ]
+            # Create a copy of metadata without subitem_descriptions
+            table_metadata = {k: v for k, v in metadata.items() if k != 'subitem_descriptions'}
+
+            result = [{'targetUri': uri, 'targetType': 'Table', **table_metadata}]
+
+            # Add column metadata if available
+            if columns_metadata and isinstance(columns_metadata, list):
+                for item in columns_metadata:
+                    # Find the column URI based on the label
+                    column_uri = None
+                    for col in table_columns:
+                        if col.label == item.get('label'):
+                            column_uri = col.columnUri
+                            break
+
+                    if column_uri:
+                        result.append(
+                            {
+                                'targetUri': column_uri,
+                                'targetType': 'Table_Column',
+                                'description': item.get('description', ''),
+                            }
+                        )
+
+            return result

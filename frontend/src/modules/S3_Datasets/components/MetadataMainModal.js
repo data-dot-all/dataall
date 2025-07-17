@@ -57,6 +57,7 @@ export const MetadataMainModal = (props) => {
           targets={targets}
           setTargets={setTargets}
           selectedMetadataTypes={selectedMetadataTypes}
+          onClose={onClose}
         />
       )}
     </Dialog>

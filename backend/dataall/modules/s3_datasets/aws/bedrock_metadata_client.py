@@ -1,12 +1,11 @@
 import logging
 import os
 
-from dataall.base.db import exceptions
 from dataall.base.aws.sts import SessionHelper
 from typing import List, Optional
 from langchain_core.prompts import PromptTemplate
-from langchain_core.pydantic_v1 import BaseModel
-from langchain_aws import ChatBedrock as BedrockChat
+from pydantic import BaseModel
+from langchain_aws import ChatBedrockConverse
 from langchain_core.output_parsers import JsonOutputParser
 
 log = logging.getLogger(__name__)
@@ -22,12 +21,17 @@ METADATA_GENERATION_FOLDER_TEMPLATE_PATH = os.path.join(
 )
 
 
+class ColumnMetadata(BaseModel):
+    label: str
+    description: str
+
+
 class MetadataOutput(BaseModel):
     tags: Optional[List[str]] = None
     description: Optional[str] = None
     label: Optional[str] = None
     topics: Optional[List[str]] = None
-    columns_metadata: Optional[List[dict]] = None
+    subitem_descriptions: Optional[List[ColumnMetadata]] = None
 
 
 class BedrockClient:
@@ -39,10 +43,9 @@ class BedrockClient:
             'max_tokens': 4096,
             'temperature': 0.5,
             'top_k': 250,
-            'top_p': 0.5,
-            'stop_sequences': ['\n\nHuman'],
+            'stop_sequences': [],
         }
-        self._model = BedrockChat(client=self._client, model_id=model_id, model_kwargs=model_kwargs)
+        self._model = ChatBedrockConverse(client=self._client, model_id=model_id, **model_kwargs)
 
     def invoke_model_dataset_metadata(self, metadata_types, dataset, tables, folders):
         try:
@@ -63,18 +66,20 @@ class BedrockClient:
         except Exception as e:
             raise e
 
-    def invoke_model_table_metadata(self, metadata_types, table, columns, sample_data, generate_columns_metadata=False):
+    def invoke_model_table_metadata(self, metadata_types, table, columns, sample_data):
         try:
             prompt_template = PromptTemplate.from_file(METADATA_GENERATION_TABLE_TEMPLATE_PATH)
             parser = JsonOutputParser(pydantic_object=MetadataOutput)
             chain = prompt_template | self._model | parser
+
+            # Check if subitem_descriptions is in the requested metadata types
+            generate_columns = 'subitem_descriptions' in metadata_types
             context = {
                 'metadata_types': metadata_types,
-                'generate_columns_metadata': generate_columns_metadata,
+                'generate_columns_metadata': generate_columns,
                 'label': table.label,
                 'description': table.description,
                 'tags': table.tags,
-                'topics': table.topics,
                 'column_labels': [c.label for c in columns],
                 'column_descriptions': [c.description for c in columns],
                 'sample_data': sample_data,
@@ -93,7 +98,6 @@ class BedrockClient:
                 'label': folder.label,
                 'description': folder.description,
                 'tags': folder.tags,
-                'topics': folder.topics,
                 'file_names': files,
             }
             return chain.invoke(context)

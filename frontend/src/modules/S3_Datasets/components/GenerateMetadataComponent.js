@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   Avatar,
   Box,
@@ -12,6 +12,7 @@ import {
   FormLabel,
   Grid,
   InputLabel,
+  LinearProgress,
   MenuItem,
   Select,
   Switch,
@@ -49,6 +50,8 @@ export const GenerateMetadataComponent = (props) => {
   const client = useClient();
   const [loadingTableFolder, setLoadingTableFolder] = useState(false);
   const [tableFolderFilter, setTableFolderFilter] = useState(Defaults.filter);
+  const [generatingTargets, setGeneratingTargets] = useState(new Set());
+  const [progress, setProgress] = useState(0);
   const handleChange = useCallback(
     async (event) => {
       setTargetType(event.target.value);
@@ -84,9 +87,12 @@ export const GenerateMetadataComponent = (props) => {
   );
 
   const handleMetadataChange = (event) => {
+    const { name, checked } = event.target;
+
+    // Update the state with the new value
     setSelectedMetadataTypes({
       ...selectedMetadataTypes,
-      [event.target.name]: event.target.checked
+      [name]: checked
     });
   };
 
@@ -97,74 +103,150 @@ export const GenerateMetadataComponent = (props) => {
     }
   };
 
+  // Uncheck Column Descriptions when no tables are selected
+  useEffect(() => {
+    const hasSelectedTables = targets.some(
+      (target) => target.targetType === 'Table'
+    );
+    if (!hasSelectedTables && selectedMetadataTypes.columnDescriptions) {
+      setSelectedMetadataTypes({
+        ...selectedMetadataTypes,
+        columnDescriptions: false
+      });
+    }
+  }, [targets, selectedMetadataTypes]);
+
   const generateMetadata = async () => {
-    for (let target of targets) {
-      let response = await client.mutate(
-        generateMetadataBedrock({
-          resourceUri: target.targetUri,
-          targetType: target.targetType,
-          metadataTypes: Object.entries(selectedMetadataTypes)
-            .filter(([key, value]) => value === true)
-            .map(([key]) => key),
-          tableSampleData: {}
-        })
-      );
-      if (!response.errors) {
-        const matchingResponse = response.data.generateMetadata.find(
-          (item) =>
-            item.targetUri === target.targetUri &&
-            item.targetType === target.targetType
+    try {
+      setProgress(0);
+      const totalTargets = targets.length;
+
+      for (let i = 0; i < targets.length; i++) {
+        const target = targets[i];
+        setGeneratingTargets((prev) => new Set([...prev, target.targetUri]));
+
+        // Map columnDescriptions to topics for the API call if needed
+        const metadataTypesForApi = Object.entries(selectedMetadataTypes)
+          .filter(([key, value]) => value === true)
+          .map(([key]) => (key === 'columnDescriptions' ? 'topics' : key));
+
+        let response = await client.mutate(
+          generateMetadataBedrock({
+            resourceUri: target.targetUri,
+            targetType: target.targetType,
+            metadataTypes: metadataTypesForApi,
+            tableSampleData: {}
+          })
         );
 
-        if (matchingResponse) {
-          target.description = matchingResponse.description;
-          target.label = matchingResponse.label;
-          target.tags = matchingResponse.tags;
-          target.topics = matchingResponse.topics;
-        }
-        const hasNotEnoughData = [
-          target.description,
-          target.label,
-          target.tags,
-          target.topics
-        ].some((value) => value === 'NotEnoughData');
+        if (!response.errors) {
+          const matchingResponse = response.data.generateMetadata.find(
+            (item) =>
+              item.targetUri === target.targetUri &&
+              item.targetType === target.targetType
+          );
 
-        if (hasNotEnoughData) {
-          enqueueSnackbar(
-            `Not enough data to generate metadata for ${target.name}`,
-            {
-              anchorOrigin: {
-                horizontal: 'right',
-                vertical: 'top'
-              },
-              variant: 'warning'
-            }
-          );
+          if (matchingResponse) {
+            target.description = matchingResponse.description;
+            target.label = matchingResponse.label;
+            target.tags = matchingResponse.tags;
+            target.topics = matchingResponse.topics;
+          }
+          const hasNotEnoughData = [
+            target.description,
+            target.label,
+            target.tags,
+            target.topics
+          ].some((value) => value === 'NotEnoughData');
+
+          if (hasNotEnoughData) {
+            enqueueSnackbar(
+              `Not enough data to generate metadata for ${target.name}`,
+              {
+                anchorOrigin: {
+                  horizontal: 'right',
+                  vertical: 'top'
+                },
+                variant: 'warning'
+              }
+            );
+          } else {
+            enqueueSnackbar(
+              `Metadata generation is successful for ${target.name}`,
+              {
+                anchorOrigin: {
+                  horizontal: 'right',
+                  vertical: 'top'
+                },
+                variant: 'success'
+              }
+            );
+          }
         } else {
-          enqueueSnackbar(
-            `Metadata generation is successful for ${target.name}`,
-            {
-              anchorOrigin: {
-                horizontal: 'right',
-                vertical: 'top'
-              },
-              variant: 'success'
-            }
-          );
+          target.description = 'Error';
+          target.label = 'Error';
+          target.tags = 'Error';
+          target.topics = 'Error';
+          dispatch({
+            type: SET_ERROR,
+            error: response.errors[0].message + dataset.datasetUri
+          });
         }
-      } else {
-        target.description = 'Error';
-        target.label = 'Error';
-        target.tags = 'Error';
-        target.topics = 'Error';
-        dispatch({
-          type: SET_ERROR,
-          error: response.errors[0].message + dataset.datasetUri
+
+        setGeneratingTargets((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(target.targetUri);
+          return newSet;
         });
+
+        // Update progress after each target is processed
+        setProgress(Math.round(((i + 1) / totalTargets) * 100));
       }
+      setProgress(100);
+      setCurrentView('REVIEW_METADATA');
+    } catch (error) {
+      dispatch({
+        type: SET_ERROR,
+        error: error.message
+      });
+      setGeneratingTargets(new Set()); // Clear generating state on error
+      setProgress(0); // Reset progress on error
     }
-    setCurrentView('REVIEW_METADATA');
   };
+  // If metadata is being generated, only show the progress bar
+  if (generatingTargets.size > 0) {
+    return (
+      <Box
+        sx={{
+          width: '100%',
+          p: 4,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        <Box sx={{ width: '80%', maxWidth: 600 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Box sx={{ width: '100%', mr: 1 }}>
+              <LinearProgress variant="determinate" value={progress} />
+            </Box>
+            <Box sx={{ minWidth: 35 }}>
+              <Typography variant="body2" color="text.secondary">
+                {`${progress}%`}
+              </Typography>
+            </Box>
+          </Box>
+          <Typography align="center" variant="h6" color="text.secondary">
+            Generating metadata for {generatingTargets.size} of {targets.length}{' '}
+            targets
+          </Typography>
+        </Box>
+      </Box>
+    );
+  }
+
+  // Normal UI when not generating metadata
   return (
     <>
       <Grid
@@ -203,7 +285,7 @@ export const GenerateMetadataComponent = (props) => {
           )}
         </Grid>
       </Grid>
-      <Divider></Divider>
+      <Divider />
       <Grid
         container
         sx={{ mt: 1 }}
@@ -330,6 +412,10 @@ export const GenerateMetadataComponent = (props) => {
                     name="label"
                     checked={selectedMetadataTypes.label}
                     onChange={handleMetadataChange}
+                    disabled={
+                      targets.length > 0 &&
+                      targets.every((target) => target.targetType === 'Table')
+                    }
                   />
                 }
                 label="Label"
@@ -355,23 +441,34 @@ export const GenerateMetadataComponent = (props) => {
                 label="Tags"
               />
               {targetType !== 'Dataset' && (
-                <FormControlLabel
-                  control={
-                    <Switch
-                      name="subitem descriptions (e.g. column descriptions)"
-                      checked={selectedMetadataTypes.subitem_descriptions}
-                      onChange={handleMetadataChange}
-                      disabled={targetType === 'Dataset'}
-                    />
-                  }
-                  label="Subitem Descriptions"
-                />
+                <>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        name="columnDescriptions"
+                        checked={selectedMetadataTypes.columnDescriptions}
+                        onChange={handleMetadataChange}
+                        disabled={
+                          targetType === 'Dataset' ||
+                          !targets.some(
+                            (target) => target.targetType === 'Table'
+                          )
+                        }
+                      />
+                    }
+                    label="Column Descriptions (Tables)"
+                  />
+                </>
               )}
               <FormControlLabel
                 control={
                   <Switch
                     name="topics"
-                    checked={selectedMetadataTypes.topics}
+                    checked={
+                      targetType === 'TablesAndFolders'
+                        ? false
+                        : selectedMetadataTypes.topics
+                    }
                     onChange={handleMetadataChange}
                     disabled={targetType === 'TablesAndFolders'}
                   />

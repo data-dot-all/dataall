@@ -22,10 +22,27 @@ const SampleDataPopup = ({
         }}
       >
         <SampleDataTableComponent data={sampleData} />
-        <Typography variant="body1" color="textSecondary" gutterBottom>
-          By clicking the button below, you agree to share this sample data with
-          a third-party language model.
-        </Typography>
+
+        <Box
+          sx={{
+            mt: 3,
+            mb: 2,
+            p: 2,
+            backgroundColor: 'rgba(0, 0, 0, 0.03)',
+            borderRadius: 1,
+            border: '1px solid rgba(0, 0, 0, 0.1)'
+          }}
+        >
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            fontWeight="medium"
+          >
+            By clicking the button below, you agree to share this sample data
+            with a third-party language model.
+          </Typography>
+        </Box>
+
         <Box display="flex" justifyContent="flex-end">
           <Button
             variant="contained"

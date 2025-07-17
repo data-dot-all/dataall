@@ -193,11 +193,6 @@ def generate_metadata(
         raise Exception('Unsupported target type for metadata generation')
 
 
-def read_sample_data(context: Context, source: S3Dataset, tableUri: str):
-    RequestValidator.validate_uri(param_name='tableUri', param_value=tableUri)
-    return DatasetTableService.preview(uri=tableUri)
-
-
 def update_dataset_metadata(context: Context, source: S3Dataset, resourceUri: str):
     return DatasetService.update_dataset(uri=resourceUri, data=input)
 

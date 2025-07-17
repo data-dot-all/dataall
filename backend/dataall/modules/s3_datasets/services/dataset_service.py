@@ -592,6 +592,7 @@ class DatasetService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(UPDATE_DATASET)
+    ##TODO Uncomment the following to use the ResourceThresholdService once https://github.com/data-dot-all/dataall/pull/1653 is merged
     # @ResourceThresholdService.check_invocation_count(
     #     'metadata', 'modules.s3_datasets.features.generate_metadata_ai.max_count_per_day'
     # )
@@ -607,4 +608,4 @@ class DatasetService:
                 tables=tables,
                 folders=folders,
             )
-            return [{'targetUri': uri, 'targetType': 'S3_Dataset'} | metadata]
+            return [{'targetUri': uri, 'targetType': 'S3_Dataset', **metadata}]

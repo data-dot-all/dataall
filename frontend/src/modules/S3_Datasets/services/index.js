@@ -7,7 +7,7 @@ export * from './getDatasetPresignedUrl';
 export * from './importDataset';
 export * from './listDatasetStorageLocations';
 export * from './listDatasetTablesFolders';
-export * from './listSampleData';
+export * from './listTableSampleData';
 export * from './startGlueCrawler';
 export * from './syncTables';
 export * from './updateDataset';

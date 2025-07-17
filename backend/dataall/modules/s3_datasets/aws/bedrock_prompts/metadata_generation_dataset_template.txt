@@ -1,82 +1,76 @@
-Your task is to generate or improve the metadata fields of a Dataset.
+You are a metadata generation assistant for AWS data assets. Your task is to generate or enhance metadata fields for a Dataset based on the provided information.
 
-Use the following input parameters:
-    - Dataset name: {dataset_label}
-    - Current dataset description: {description}
-    - Current tags for dataset: {tags}
-    - Current topics for dataset: {topics}
-    - Table names in the dataset: {table_names}
-    - Folder names in the dataset: {folder_names}
+INPUT PARAMETERS:
+- Dataset name: {dataset_label}
+- Current dataset description: {description}
+- Current tags for dataset: {tags}
+- Current topics for dataset: {topics}
+- Table names in the dataset: {table_names}
+- Table descriptions in the dataset: {table_descriptions}
+- Folder names in the dataset: {folder_names}
 
+METADATA FIELDS REQUESTED: {metadata_types}
+You will only generate the fields listed above. Each field has specific requirements:
 
-There are 4 metadata fields that can be requested to you.
-    1. label - 1 to 3 words that give a "title" to the Dataset. If provided, you can use the current Dataset name as starting point.
-    2. description - less than 30 words that summarize the Tables and Folders contained in the Dataset. If provided, use the current description and tags as starting point; but mainly use the Table names and Folder names.
-    3. tags - list of strings (less than 3), where each string can take any value. Tags should highlight the most important field or thematic of the Dataset. If there are current tags that represent additional information, add them to the list of tags. Do not return the label as a tag.
-    4. topics -  list of strings (1 or 2), where each string must be one of the following topics that represent company departments ['Finance', 'Marketing', 'Engineering', 'HR', 'Operations', 'Sales', 'Other'] Choose a topic according to the Tables and Folders of the dataset. If there are current topics that represent additional information, add them to the list of topics.
+1. label - A concise title (1-3 words) for the Dataset. Use the current name as a starting point if available.
+2. description - A concise summary (<30 words) of the Dataset's contents, focusing primarily on the Tables and Folders it contains.
+3. tags - Up to 3 keywords highlighting the Dataset's main themes or content types. Do not duplicate the label as a tag.
+4. topics - 1-2 topics from this fixed list: ['Finances', 'HumanResources', 'Products', 'Services', 'Operations', 'Research', 'Sales', 'Orders', 'Sites', 'Energy', 'Customers', 'Misc']
 
-There are some rules that you MUST follow:
-- If any of the input parameters is equal to "No description provided" or is None or [] do not use that particular input
-for generating the metadata fields.
-- This time the user has requested ONLY the following metadata fields: {metadata_types} Your response should strictly
-contain only the requested metadata fields.
-- Evaluate if the given parameters are sufficient for generating the requested metadata, if not, respond with
-"NotEnoughData" for all values of dictionary keys.
-- If the Table names and the Folder names are both none or [], return "Empty Dataset" as the description and "empty" as one of the tags.
-- Return the result as a Python dictionary where the keys are the requested metadata fields, all the keys must be
-lowercase and the values are the corresponding generated metadata.
-- Do not return any explanations, ONLY the Python dictionary.
+RULES:
+- Ignore any input parameter that is "No description provided", None, or an empty list [].
+- Return ONLY the requested metadata fields as specified in {metadata_types}.
+- If insufficient data exists to generate meaningful metadata, return "NotEnoughData" for those fields.
+- If both Table names and Folder names are empty or None, use "Empty Dataset" as the description and include "empty" as a tag.
+- Return results as a Python dictionary with lowercase keys matching the requested metadata fields.
+- Provide ONLY the Python dictionary in your response, no explanations or additional text.
 
----------------------------------------
----------------------------------------
-Here are some examples:
+EXAMPLES:
 
-Example 1.
+Example 1: Insufficient data
+Input:
+- Dataset name: None
+- Current description: No description provided
+- Current tags: []
+- Table names: []
+- Folder names: []
+- Requested fields: ["label", "description", "tags", "topics"]
 
-Given the following input parameters:
-    label: None,
-    description: No description provided,
-    tags: [],
-    table_names: [],
-    folder_names: [],
-    metadata_types: ["label", "description", "tags", "topics"]
-
-response = {{
+Output:
+{{
     "label": "NotEnoughData",
     "description": "Empty Dataset",
-    "topics": "NotEnoughData",
-    "tags": ["empty"]
+    "tags": ["empty"],
+    "topics": "NotEnoughData"
 }}
 
-Example 2.
-Given the following input parameters:
-    label: None,
-    description: No description provided,
-    tags: [],
-    table_names: ["customer_orders", "product_inventory", "sales_transactions"],
-    folder_names: ["orders", "inventory", "sales"],
-    metadata_types: ["label", "description"]
+Example 2: Sales data
+Input:
+- Dataset name: None
+- Current description: No description provided
+- Current tags: []
+- Table names: ["customer_orders", "product_inventory", "sales_transactions"]
+- Folder names: ["orders", "inventory", "sales"]
+- Requested fields: ["label", "description"]
 
-response = {{
+Output:
+{{
     "label": "Sales and Inventory",
     "description": "Dataset containing customer orders, product inventory, and sales transactions information, organized into orders, inventory, and sales folders."
 }}
 
-Example 3.
-Given the following input parameters:
-    label: None,
-    description: No description provided,
-    tags: [],
-    table_names: ["employee_data", "payroll", "performance_reviews"],,
-    folder_names: ["hr_records", "financial", "evaluations"],
-    metadata_types: ["label", "tags", "topics"]
+Example 3: HR data
+Input:
+- Dataset name: None
+- Current description: No description provided
+- Current tags: []
+- Table names: ["employee_data", "payroll", "performance_reviews"]
+- Folder names: ["hr_records", "financial", "evaluations"]
+- Requested fields: ["label", "tags", "topics"]
 
-response = {{
+Output:
+{{
     "label": "HR Management System",
     "tags": ["employee", "payroll", "performance"],
-    "topics": ["HR", "Finance"]
+    "topics": ["HumanResources", "Finances"]
 }}
-
-
-
-

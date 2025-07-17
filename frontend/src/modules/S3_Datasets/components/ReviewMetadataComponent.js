@@ -1,9 +1,17 @@
-import React, { useState } from 'react';
-import { Button, Box, Chip, Typography, CircularProgress } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import {
+  Button,
+  Box,
+  Chip,
+  Typography,
+  CircularProgress,
+  Backdrop
+} from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useSnackbar } from 'notistack';
 import PropTypes from 'prop-types';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
+import SaveIcon from '@mui/icons-material/Save';
 import { Scrollbar } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
@@ -11,7 +19,7 @@ import { updateDatasetTable } from 'modules/Tables/services';
 import { updateDatasetStorageLocation } from 'modules/Folders/services';
 import {
   BatchUpdateDatasetTableColumn,
-  listSampleData,
+  listTableSampleData,
   updateDataset,
   generateMetadataBedrock
 } from '../services';
@@ -19,17 +27,24 @@ import SampleDataPopup from './SampleDataPopup';
 import SubitemDescriptionsGrid from './SubitemDescriptionsGrid';
 
 export const ReviewMetadataComponent = (props) => {
-  const { dataset, targets, setTargets, selectedMetadataTypes } = props;
-  /* eslint-disable no-console */
-  console.log(targets);
+  const { dataset, targets, setTargets, selectedMetadataTypes, onClose } =
+    props;
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   const client = useClient();
   const [popupOpen, setPopupOpen] = useState(false);
   const [sampleData, setSampleData] = useState(null);
   const [targetUri, setTargetUri] = useState(null);
-  const [showPopup, setShowPopup] = React.useState(false);
-  const [subitemDescriptions, setSubitemDescriptions] = React.useState([]);
+  const [showPopup, setShowPopup] = useState(false);
+  const [subitemDescriptions, setSubitemDescriptions] = useState([]);
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [generatingTargets, setGeneratingTargets] = useState(new Set());
+  const [loadingSampleData, setLoadingSampleData] = useState(false);
+
+  // Check for errors in targets data when component mounts or targets change
+  useEffect(() => {
+    // This effect is no longer needed
+  }, [targets]);
 
   const showSubItemsPopup = (subitemDescriptions) => {
     setSubitemDescriptions(subitemDescriptions);
@@ -72,14 +87,15 @@ export const ReviewMetadataComponent = (props) => {
 
   async function handleRegenerate(table) {
     try {
+      setLoadingSampleData(true);
       const response = await client.query(
-        listSampleData({
+        listTableSampleData({
           tableUri: table.targetUri
         })
       );
-      openSampleDataPopup(response.data.listSampleData);
-      setTargetUri(table.targetUri);
       if (!response.errors) {
+        openSampleDataPopup(response.data.listTableSampleData);
+        setTargetUri(table.targetUri);
         enqueueSnackbar('Successfully read sample data', {
           variant: 'success'
         });
@@ -88,34 +104,36 @@ export const ReviewMetadataComponent = (props) => {
       }
     } catch (err) {
       dispatch({ type: SET_ERROR, error: err.message });
+    } finally {
+      setLoadingSampleData(false);
     }
   }
-  const handleAcceptAndRegenerate = async () => {
-    try {
-      const targetIndex = targets.findIndex((t) => t.targetUri === targetUri);
-      if (targetIndex !== -1) {
-        const { __typename, ...sampleDataWithoutTypename } = sampleData;
-        const response = await client.mutate(
-          generateMetadataBedrock({
-            resourceUri: targets[targetIndex].targetUri,
-            targetType: targets[targetIndex].targetType,
-            metadataTypes: Object.entries(selectedMetadataTypes)
-              .filter(([key, value]) => value === true)
-              .map(([key]) => key),
-            sampleData: sampleDataWithoutTypename
-          })
-        );
 
-        if (!response.errors) {
+  async function handleRegenerateMetadata(target) {
+    try {
+      setGeneratingTargets((prev) => new Set([...prev, target.targetUri]));
+      const response = await client.mutate(
+        generateMetadataBedrock({
+          resourceUri: target.targetUri,
+          targetType: target.targetType,
+          metadataTypes: Object.entries(selectedMetadataTypes)
+            .filter(([key, value]) => value === true)
+            .map(([key]) => key)
+        })
+      );
+
+      if (!response.errors) {
+        const targetIndex = targets.findIndex(
+          (t) => t.targetUri === target.targetUri
+        );
+        if (targetIndex !== -1) {
           const updatedTarget = {
             ...targets[targetIndex],
-            description: response.data.generateMetadata.description,
-            label: response.data.generateMetadata.label,
-            name: response.data.generateMetadata.name,
-            tags: response.data.generateMetadata.tags,
-            topics: response.data.generateMetadata.topics,
-            subitem_descriptions:
-              response.data.generateMetadata.subitem_descriptions
+            description: response.data.generateMetadata[0].description,
+            label: response.data.generateMetadata[0].label,
+            tags: response.data.generateMetadata[0].tags,
+            topics: response.data.generateMetadata[0].topics,
+            subitem_descriptions: response.data.generateMetadata[0].topics || []
           };
 
           const updatedTargets = [...targets];
@@ -135,7 +153,23 @@ export const ReviewMetadataComponent = (props) => {
           );
         }
       } else {
-        console.error(`Target with targetUri not found`);
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (err) {
+      dispatch({ type: SET_ERROR, error: err.message });
+    } finally {
+      setGeneratingTargets((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(target.targetUri);
+        return newSet;
+      });
+    }
+  }
+  const handleAcceptAndRegenerate = async () => {
+    try {
+      const target = targets.find((t) => t.targetUri === targetUri);
+      if (!target) {
+        console.error(`Target with targetUri ${targetUri} not found`);
         enqueueSnackbar(`Metadata generation is unsuccessful`, {
           anchorOrigin: {
             horizontal: 'right',
@@ -143,6 +177,50 @@ export const ReviewMetadataComponent = (props) => {
           },
           variant: 'error'
         });
+        return;
+      }
+      const { __typename, ...sampleDataWithoutTypename } = sampleData;
+      const response = await client.mutate(
+        generateMetadataBedrock({
+          resourceUri: target.targetUri,
+          targetType: target.targetType,
+          metadataTypes: Object.entries(selectedMetadataTypes)
+            .filter(([key, value]) => value === true)
+            .map(([key]) => key),
+          sampleData: sampleDataWithoutTypename
+        })
+      );
+
+      if (!response.errors) {
+        const targetIndex = targets.findIndex((t) => t.targetUri === targetUri);
+        if (targetIndex !== -1) {
+          const updatedTarget = {
+            ...targets[targetIndex],
+            description: response.data.generateMetadata[0].description,
+            label: response.data.generateMetadata[0].label,
+            tags: response.data.generateMetadata[0].tags,
+            topics: response.data.generateMetadata[0].topics,
+            subitem_descriptions: response.data.generateMetadata[0].topics || []
+          };
+
+          const updatedTargets = [...targets];
+          updatedTargets[targetIndex] = updatedTarget;
+
+          setTargets(updatedTargets);
+
+          enqueueSnackbar(
+            `Metadata generation is successful for ${updatedTarget.name}`,
+            {
+              anchorOrigin: {
+                horizontal: 'right',
+                vertical: 'top'
+              },
+              variant: 'success'
+            }
+          );
+        }
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
 
       closeSampleDataPopup();
@@ -164,7 +242,7 @@ export const ReviewMetadataComponent = (props) => {
           }
         );
         if (target.targetType === 'S3_Dataset') {
-          updatedMetadata.KmsAlias = dataset.KmsAlias;
+          updatedMetadata.KmsAlias = dataset.restricted.KmsAlias;
           const response = await client.mutate(
             updateDataset({
               datasetUri: target.targetUri,
@@ -229,6 +307,11 @@ export const ReviewMetadataComponent = (props) => {
             variant: 'success'
           }
         );
+
+        // Close the modal when any update is successful
+        if (onClose) {
+          onClose();
+        }
       }
 
       if (failedTargets.length > 0) {
@@ -248,14 +331,56 @@ export const ReviewMetadataComponent = (props) => {
   return (
     <>
       {Array.isArray(targets) && targets.length > 0 ? (
-        <Box>
+        <Box sx={{ margin: 2 }}>
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
+            <Button
+              color="primary"
+              size="small"
+              onClick={() =>
+                saveMetadata(
+                  selectedRows.map((id) =>
+                    targets.find((t) => t.targetUri === id)
+                  )
+                )
+              }
+              type="button"
+              variant="contained"
+              disabled={selectedRows.length === 0}
+              startIcon={<SaveIcon />}
+            >
+              Save Selected ({selectedRows.length})
+            </Button>
+          </Box>
           <Scrollbar>
-            <Box sx={{ minWidth: 900 }}>
+            <Box sx={{ minWidth: 900, padding: 2 }}>
               <DataGrid
                 autoHeight
                 rows={targets}
                 getRowId={(node) => node.targetUri}
-                rowHeight={80}
+                getRowHeight={() => 'auto'}
+                getEstimatedRowHeight={() => 100}
+                checkboxSelection
+                onSelectionModelChange={(newSelectionModel) => {
+                  setSelectedRows(newSelectionModel);
+                }}
+                selectionModel={selectedRows}
+                isRowSelectable={(params) => {
+                  const metadataFields = [
+                    'label',
+                    'description',
+                    'tags',
+                    'topics'
+                  ];
+                  return !metadataFields.some((field) => {
+                    const value = params.row[field];
+                    return (
+                      value === 'Error' ||
+                      value === 'NotEnoughData' ||
+                      (Array.isArray(value) && value.includes('Error')) ||
+                      (Array.isArray(value) && value.includes('NotEnoughData'))
+                    );
+                  });
+                }}
                 columns={[
                   { field: 'targetUri', hide: true },
                   {
@@ -276,9 +401,11 @@ export const ReviewMetadataComponent = (props) => {
                     flex: 2,
                     editable: true,
                     renderCell: (params) =>
-                      params.value === undefined ? (
-                        <CircularProgress color="primary" />
-                      ) : ['NotEnoughData', 'Error'].includes(params.value) ? (
+                      generatingTargets.has(params.row.targetUri) ? (
+                        <CircularProgress color="primary" size={20} />
+                      ) : params.value === 'NotEnoughData' ? (
+                        <Chip label={params.value} color="warning" />
+                      ) : params.value === 'Error' ? (
                         <Chip label={params.value} color="error" />
                       ) : (
                         <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
@@ -292,9 +419,11 @@ export const ReviewMetadataComponent = (props) => {
                     flex: 3,
                     editable: true,
                     renderCell: (params) =>
-                      params.value === undefined ? (
-                        <CircularProgress color="primary" />
-                      ) : ['NotEnoughData', 'Error'].includes(params.value) ? (
+                      generatingTargets.has(params.row.targetUri) ? (
+                        <CircularProgress color="primary" size={20} />
+                      ) : params.value === 'NotEnoughData' ? (
+                        <Chip label={params.value} color="warning" />
+                      ) : params.value === 'Error' ? (
                         <Chip label={params.value} color="error" />
                       ) : (
                         <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
@@ -316,10 +445,28 @@ export const ReviewMetadataComponent = (props) => {
                       return { ...row, tags };
                     },
                     renderCell: (params) =>
-                      params.value === undefined ? (
-                        <CircularProgress color="primary" />
-                      ) : ['NotEnoughData', 'Error'].includes(params.value) ? (
-                        <Chip label={params.value} color="error" />
+                      generatingTargets.has(params.row.targetUri) ? (
+                        <CircularProgress color="primary" size={20} />
+                      ) : params.value === 'NotEnoughData' ||
+                        (Array.isArray(params.value) &&
+                          params.value.includes('NotEnoughData')) ? (
+                        <Chip
+                          label={
+                            Array.isArray(params.value)
+                              ? 'NotEnoughData'
+                              : params.value
+                          }
+                          color="warning"
+                        />
+                      ) : params.value === 'Error' ||
+                        (Array.isArray(params.value) &&
+                          params.value.includes('Error')) ? (
+                        <Chip
+                          label={
+                            Array.isArray(params.value) ? 'Error' : params.value
+                          }
+                          color="error"
+                        />
                       ) : (
                         <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
                           {Array.isArray(params.value)
@@ -334,9 +481,11 @@ export const ReviewMetadataComponent = (props) => {
                     flex: 2,
                     editable: true,
                     renderCell: (params) =>
-                      params.value === undefined ? (
-                        <CircularProgress color="primary" />
-                      ) : ['NotEnoughData', 'Error'].includes(params.value) ? (
+                      generatingTargets.has(params.row.targetUri) ? (
+                        <CircularProgress color="primary" size={20} />
+                      ) : params.value === 'NotEnoughData' ? (
+                        <Chip label={params.value} color="warning" />
+                      ) : params.value === 'Error' ? (
                         <Chip label={params.value} color="error" />
                       ) : (
                         <div style={{ whiteSpace: 'pre-wrap', padding: '8px' }}>
@@ -353,7 +502,7 @@ export const ReviewMetadataComponent = (props) => {
                       params.value === undefined ? (
                         <CircularProgress color="primary" />
                       ) : params.value[0] === 'NotEnoughData' ? (
-                        <Chip label={params.value} color="error" />
+                        <Chip label={params.value} color="warning" />
                       ) : (
                         <Button
                           color="primary"
@@ -368,26 +517,64 @@ export const ReviewMetadataComponent = (props) => {
                       )
                   },
                   {
-                    field: 'regenerate',
-                    headerName: 'Regenerate',
-                    flex: 3,
+                    field: 'actions',
+                    headerName: 'Actions',
+                    flex: 4,
+                    minWidth: 300,
                     type: 'boolean',
-                    renderCell: (params) =>
-                      params.row.targetType === 'Table' ? (
+                    renderCell: (params) => (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          gap: 1,
+                          flexDirection: 'column',
+                          width: '100%'
+                        }}
+                      >
                         <Button
-                          color="primary"
+                          color="secondary"
                           size="small"
-                          startIcon={<AutoModeIcon size={15} />}
-                          sx={{ m: 4 }}
-                          onClick={() => handleRegenerate(params.row)}
+                          fullWidth
+                          startIcon={
+                            generatingTargets.has(params.row.targetUri) ? (
+                              <CircularProgress size={16} color="inherit" />
+                            ) : (
+                              <AutoModeIcon size={15} />
+                            )
+                          }
+                          onClick={() => handleRegenerateMetadata(params.row)}
                           type="button"
                           variant="outlined"
+                          disabled={generatingTargets.has(params.row.targetUri)}
                         >
-                          Read Sample Data
+                          {generatingTargets.has(params.row.targetUri)
+                            ? 'Generating...'
+                            : 'Regenerate'}
                         </Button>
-                      ) : (
-                        '-'
-                      )
+                        {params.row.targetType === 'Table' && (
+                          <Button
+                            color="primary"
+                            size="small"
+                            fullWidth
+                            startIcon={
+                              loadingSampleData ? (
+                                <CircularProgress size={16} color="inherit" />
+                              ) : (
+                                <AutoModeIcon size={15} />
+                              )
+                            }
+                            onClick={() => handleRegenerate(params.row)}
+                            type="button"
+                            variant="outlined"
+                            disabled={loadingSampleData}
+                          >
+                            {loadingSampleData
+                              ? 'Loading...'
+                              : 'Read Sample Data'}
+                          </Button>
+                        )}
+                      </Box>
+                    )
                   }
                 ]}
                 columnVisibilityModel={{
@@ -404,11 +591,7 @@ export const ReviewMetadataComponent = (props) => {
                   topics: selectedMetadataTypes['topics']
                     ? selectedMetadataTypes['topics']
                     : false,
-                  subitem_descriptions: selectedMetadataTypes[
-                    'subitem_descriptions'
-                  ]
-                    ? selectedMetadataTypes['subitem_descriptions']
-                    : false
+                  subitem_descriptions: false
                 }}
                 pageSize={10}
                 rowsPerPageOptions={[5, 10, 20]}
@@ -434,7 +617,17 @@ export const ReviewMetadataComponent = (props) => {
                     borderBottom: '1px solid rgba(145, 158, 171, 0.24)'
                   },
                   '& .MuiDataGrid-columnHeaders': {
-                    borderBottom: 0.5
+                    borderBottom: 0.5,
+                    padding: '0 8px'
+                  },
+                  '& .MuiDataGrid-cell': {
+                    whiteSpace: 'normal !important',
+                    wordBreak: 'break-word',
+                    padding: '16px 8px',
+                    lineHeight: 1.5
+                  },
+                  '& .MuiDataGrid-main': {
+                    margin: '0 8px'
                   }
                 }}
               />
@@ -451,21 +644,16 @@ export const ReviewMetadataComponent = (props) => {
           onSave={handleSaveSubitemDescriptions}
         />
       )}
-      <Button
-        color="primary"
-        size="small"
-        sx={{ m: 2 }}
-        onClick={() => saveMetadata(targets)}
-        type="button"
-        variant="contained"
-        // disabled={targets
-        //   .filter((target) =>
-        //     ['label', 'description', 'tags', 'topics'].includes(target.key)
-        //   )
-        //   .every((target) => ['Error', 'NotEnoughData'].includes(target.value))}
-      >
-        Save
-      </Button>
+
+      {loadingSampleData && (
+        <Backdrop
+          sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+          open={loadingSampleData}
+        >
+          <CircularProgress color="inherit" size={60} />
+        </Backdrop>
+      )}
+
       <SampleDataPopup
         open={popupOpen}
         sampleData={sampleData}
@@ -478,7 +666,6 @@ export const ReviewMetadataComponent = (props) => {
 
 ReviewMetadataComponent.propTypes = {
   dataset: PropTypes.object.isRequired,
-  targetType: PropTypes.string.isRequired,
   targets: PropTypes.array.isRequired,
   setTargets: PropTypes.func.isRequired,
   selectedMetadataTypes: PropTypes.object.isRequired
