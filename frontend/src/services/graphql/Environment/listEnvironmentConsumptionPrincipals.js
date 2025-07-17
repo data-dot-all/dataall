@@ -1,6 +1,6 @@
 import { gql } from 'apollo-boost';
 
-export const listAllEnvironmentConsumptionRoles = ({
+export const listEnvironmentConsumptionPrincipals = ({
   filter,
   environmentUri
 }) => ({
@@ -9,11 +9,11 @@ export const listAllEnvironmentConsumptionRoles = ({
     filter
   },
   query: gql`
-    query listAllEnvironmentConsumptionRoles(
-      $filter: ConsumptionRoleFilter
+    query listEnvironmentConsumptionPrincipals(
+      $filter: ConsumptionPrincipalFilter
       $environmentUri: String!
     ) {
-      listAllEnvironmentConsumptionRoles(
+      listEnvironmentConsumptionPrincipals(
         environmentUri: $environmentUri
         filter: $filter
       ) {
@@ -23,12 +23,14 @@ export const listAllEnvironmentConsumptionRoles = ({
         hasNext
         hasPrevious
         nodes {
-          consumptionRoleUri
-          consumptionRoleName
+          consumptionPrincipalUri
+          consumptionPrincipalName
           environmentUri
           groupUri
-          IAMRoleArn
+          IAMPrincipalArn
+          IAMPrincipalName
           dataallManaged
+          consumptionPrincipalType
         }
       }
     }

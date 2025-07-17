@@ -35,7 +35,7 @@ class ShareObjectRepository:
                 and_(
                     ShareObject.datasetUri == dataset.datasetUri,
                     ShareObject.principalId == principal_id,
-                    ShareObject.principalRoleName == principal_role_name,
+                    ShareObject.principalName == principal_role_name,
                     ShareObject.environmentUri == env.environmentUri,
                     ShareObject.groupUri == group_uri,
                 )
@@ -250,9 +250,9 @@ class ShareObjectRepository:
         if data and data.get('share_requesters'):
             if len(data.get('share_requesters')) > 0:
                 query = query.filter(ShareObject.groupUri.in_(data.get('share_requesters')))
-        if data and data.get('share_iam_roles'):
-            if len(data.get('share_iam_roles')) > 0:
-                query = query.filter(ShareObject.principalRoleName.in_(data.get('share_iam_roles')))
+        if data and data.get('share_iam_principals'):
+            if len(data.get('share_iam_principals')) > 0:
+                query = query.filter(ShareObject.principalName.in_(data.get('share_iam_principals')))
         return paginate(query.order_by(ShareObject.shareUri), data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
     @staticmethod
@@ -289,9 +289,9 @@ class ShareObjectRepository:
         if data and data.get('share_requesters'):
             if len(data.get('share_requesters')) > 0:
                 query = query.filter(ShareObject.groupUri.in_(data.get('share_requesters')))
-        if data and data.get('share_iam_roles'):
-            if len(data.get('share_iam_roles')) > 0:
-                query = query.filter(ShareObject.principalRoleName.in_(data.get('share_iam_roles')))
+        if data and data.get('share_iam_principals'):
+            if len(data.get('share_iam_principals')) > 0:
+                query = query.filter(ShareObject.principalName.in_(data.get('share_iam_principals')))
         return paginate(query.order_by(ShareObject.shareUri), data.get('page', 1), data.get('pageSize', 10)).to_dict()
 
     @staticmethod

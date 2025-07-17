@@ -53,7 +53,7 @@ class ProcessRedshiftShare(SharesProcessorInterface):
         self.cross_account = (
             self.share_data.target_environment.AwsAccountId != self.share_data.source_environment.AwsAccountId
         )
-        self.redshift_role = share_data.share.principalRoleName
+        self.redshift_role = share_data.share.principalName
 
         # There is a unique datashare per dataset per target namespace
         # To restrict pivot role permissions on the datashares both in source and target we prefix them with dataall prefix
