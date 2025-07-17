@@ -1,8 +1,7 @@
 from dataall.base.api import gql
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
 from dataall.modules.s3_datasets.api.dataset.resolvers import (
-    get_dataset_environment,
-    get_dataset_organization,
+    get_dataset_environment_simplified,
     get_dataset_owners_group,
     get_dataset_stewards_group,
     list_tables,
@@ -63,7 +62,7 @@ Dataset = gql.ObjectType(
         gql.Field(
             name='environment',
             type=gql.Ref('EnvironmentSimplified'),
-            resolver=get_dataset_environment,
+            resolver=get_dataset_environment_simplified,
         ),
         gql.Field(
             name='owners',

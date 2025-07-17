@@ -11,18 +11,19 @@ from aws_cdk import aws_kms as kms
 from aws_cdk import aws_logs as logs
 from aws_cdk import aws_s3 as s3
 from aws_cdk import pipelines
+from aws_cdk.aws_codebuild import BuildSpec
 from aws_cdk.pipelines import CodePipelineSource
 from cdk_nag import NagSuppressions, NagPackSuppression
 
 from .albfront_stage import AlbFrontStage
 from .aurora import AuroraServerlessStack
 from .backend_stage import BackendStage
+from .cdk_asset_trail import setup_cdk_asset_trail
 from .cloudfront_stage import CloudfrontStage
 from .codeartifact import CodeArtifactStack
 from .ecr_stage import ECRStage
 from .iam_utils import get_tooling_account_external_id
 from .vpc import VpcStack
-from .cdk_asset_trail import setup_cdk_asset_trail
 
 
 class PipelineStack(Stack):
@@ -187,9 +188,6 @@ class PipelineStack(Stack):
             synth=pipelines.CodeBuildStep(
                 'Synth',
                 input=source,
-                build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-                ),
                 commands=[
                     f'aws codeartifact login --tool npm --repository {self.codeartifact.codeartifact_npm_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                     'npm install -g aws-cdk',
@@ -201,12 +199,17 @@ class PipelineStack(Stack):
                 role=self.baseline_codebuild_role.without_policy_updates(),
                 vpc=self.vpc,
             ),
+            # all codebuild steps in the pipeline will use these defaults
             code_build_defaults=pipelines.CodeBuildOptions(
                 build_environment=codebuild.BuildEnvironment(
                     environment_variables={
                         'DATAALL_REPO_BRANCH': codebuild.BuildEnvironmentVariable(value=git_branch),
-                    }
-                )
+                    },
+                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
+                ),
+                partial_build_spec=BuildSpec.from_object(
+                    {'phases': {'install': {'runtime-versions': {'nodejs': '22'}}}}
+                ),
             ),
         )
 
@@ -475,7 +478,6 @@ class PipelineStack(Stack):
                     or 'client_id' not in custom_auth_configs
                     or 'response_types' not in custom_auth_configs
                     or 'scopes' not in custom_auth_configs
-                    or 'jwks_url' not in custom_auth_configs
                     or 'claims_mapping' not in custom_auth_configs
                     or 'user_id' not in custom_auth_configs['claims_mapping']
                     or 'email' not in custom_auth_configs['claims_mapping']
@@ -491,7 +493,6 @@ class PipelineStack(Stack):
                     or not isinstance(custom_auth_configs['client_id'], str)
                     or not isinstance(custom_auth_configs['response_types'], str)
                     or not isinstance(custom_auth_configs['scopes'], str)
-                    or not isinstance(custom_auth_configs['jwks_url'], str)
                     or not isinstance(custom_auth_configs['claims_mapping']['user_id'], str)
                     or not isinstance(custom_auth_configs['claims_mapping']['email'], str)
                 ):
@@ -506,9 +507,6 @@ class PipelineStack(Stack):
             gate_quality_wave.add_pre(
                 pipelines.CodeBuildStep(
                     id='ValidateDBMigrations',
-                    build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-                    ),
                     commands=[
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         f'export envname={self.git_branch}',
@@ -523,9 +521,6 @@ class PipelineStack(Stack):
                 ),
                 pipelines.CodeBuildStep(
                     id='SecurityChecks',
-                    build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-                    ),
                     commands=[
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'pip install --upgrade pip',
@@ -538,9 +533,6 @@ class PipelineStack(Stack):
                 ),
                 pipelines.CodeBuildStep(
                     id='Lint',
-                    build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-                    ),
                     commands=[
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'pip install --upgrade pip',
@@ -561,9 +553,6 @@ class PipelineStack(Stack):
             gate_quality_wave.add_post(
                 pipelines.CodeBuildStep(
                     id='IntegrationTests',
-                    build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-                    ),
                     partial_build_spec=codebuild.BuildSpec.from_object(
                         dict(
                             version='0.2',
@@ -596,9 +585,6 @@ class PipelineStack(Stack):
                 ),
                 pipelines.CodeBuildStep(
                     id='UploadCodeToS3',
-                    build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-                    ),
                     commands=[
                         'mkdir -p source_build',
                         'mv backend ./source_build/',
@@ -616,9 +602,6 @@ class PipelineStack(Stack):
             gate_quality_wave.add_pre(
                 pipelines.CodeBuildStep(
                     id='UploadCodeToS3',
-                    build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-                    ),
                     commands=[
                         'mkdir -p source_build',
                         'mv backend ./source_build/',
@@ -655,7 +638,6 @@ class PipelineStack(Stack):
             pipelines.CodeBuildStep(
                 id='LambdaImage',
                 build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                     privileged=True,
                     environment_variables={
                         'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
@@ -673,7 +655,6 @@ class PipelineStack(Stack):
             pipelines.CodeBuildStep(
                 id='ECSImage',
                 build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                     privileged=True,
                     environment_variables={
                         'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
@@ -750,9 +731,6 @@ class PipelineStack(Stack):
         backend_stage.add_post(
             pipelines.CodeBuildStep(
                 id='ApprovalTests',
-                build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-                ),
                 partial_build_spec=codebuild.BuildSpec.from_object(
                     dict(
                         version='0.2',
@@ -805,9 +783,6 @@ class PipelineStack(Stack):
         wave.add_post(
             pipelines.CodeBuildStep(
                 id='StacksUpdater',
-                build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-                ),
                 commands=[
                     'mkdir ~/.aws/ && touch ~/.aws/config',
                     'echo "[profile buildprofile]" > ~/.aws/config',
@@ -850,7 +825,6 @@ class PipelineStack(Stack):
             pipelines.CodeBuildStep(
                 id='DeployFrontEnd',
                 build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                     compute_type=codebuild.ComputeType.LARGE,
                 ),
                 commands=[
@@ -904,38 +878,10 @@ class PipelineStack(Stack):
         self.pipeline.add_wave(f'{self.resource_prefix}-{target_env["envname"]}-frontend-stage').add_post(
             *front_stage_actions
         )
-        if target_env.get('custom_auth', None) is None:
-            self.pipeline.add_wave(f'{self.resource_prefix}-{target_env["envname"]}-docs-stage').add_post(
-                pipelines.CodeBuildStep(
-                    id='UpdateDocumentation',
-                    build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
-                    ),
-                    commands=[
-                        f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
-                        f'make assume-role REMOTE_ACCOUNT_ID={target_env["account"]} REMOTE_ROLE={self.resource_prefix}-{target_env["envname"]}-S3DeploymentRole EXTERNAL_ID={get_tooling_account_external_id(target_env["account"])}',
-                        '. ./.env.assumed_role',
-                        'aws sts get-caller-identity',
-                        'export AWS_DEFAULT_REGION=us-east-1',
-                        f"export distributionId=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/cloudfront/docs/user/CloudfrontDistributionId --output text --query 'Parameter.Value')",
-                        f"export bucket=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/cloudfront/docs/user/CloudfrontDistributionBucket --output text --query 'Parameter.Value')",
-                        'cd documentation/userguide',
-                        'pip install -r requirements.txt',
-                        'mkdocs build',
-                        'aws s3 sync site/ s3://$bucket',
-                        "aws cloudfront create-invalidation --distribution-id $distributionId --paths '/*'",
-                    ],
-                    role=self.expanded_codebuild_role.without_policy_updates(),
-                    vpc=self.vpc,
-                ),
-            )
 
     def cw_rum_config_action(self, target_env):
         return pipelines.CodeBuildStep(
             id='ConfigureRUM',
-            build_environment=codebuild.BuildEnvironment(
-                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-            ),
             commands=[
                 f'export envname={target_env["envname"]}',
                 f'export internet_facing={target_env.get("internet_facing", True)}',
@@ -983,7 +929,6 @@ class PipelineStack(Stack):
                 pipelines.CodeBuildStep(
                     id='FrontendImage',
                     build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                         compute_type=codebuild.ComputeType.LARGE,
                         privileged=True,
                         environment_variables={
@@ -1032,34 +977,6 @@ class PipelineStack(Stack):
                 )
             ],
         )
-        if target_env.get('custom_auth') is None:
-            albfront_stage.add_pre(self.user_guide_pre_build_alb(repository_name))
 
         if target_env.get('enable_cw_rum', False) and target_env.get('custom_auth', None) is None:
             albfront_stage.add_post(self.cw_rum_config_action(target_env))
-
-    def user_guide_pre_build_alb(self, repository_name):
-        return pipelines.CodeBuildStep(
-            id='UserGuideImage',
-            build_environment=codebuild.BuildEnvironment(
-                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
-                compute_type=codebuild.ComputeType.LARGE,
-                privileged=True,
-                environment_variables={
-                    'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
-                        value=f'{self.account}.dkr.ecr.{self.region}.amazonaws.com/{repository_name}'
-                    ),
-                    'IMAGE_TAG': codebuild.BuildEnvironmentVariable(value=f'userguide-{self.image_tag}'),
-                },
-            ),
-            commands=[
-                f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
-                'cd documentation/userguide',
-                'docker build -f docker/prod/Dockerfile -t $IMAGE_TAG:$IMAGE_TAG .',
-                f'aws ecr get-login-password --region {self.region} | docker login --username AWS --password-stdin {self.account}.dkr.ecr.{self.region}.amazonaws.com',
-                'docker tag $IMAGE_TAG:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG',
-                'docker push $REPOSITORY_URI:$IMAGE_TAG',
-            ],
-            role=self.expanded_codebuild_role.without_policy_updates(),
-            vpc=self.vpc,
-        )
