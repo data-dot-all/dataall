@@ -18,7 +18,7 @@ import { useClient } from 'services';
 import { updateDatasetTable } from 'modules/Tables/services';
 import { updateDatasetStorageLocation } from 'modules/Folders/services';
 import {
-  listTableSampleData,
+  readTableSampleData,
   updateDataset,
   generateMetadataBedrock
 } from '../services';
@@ -55,12 +55,12 @@ export const ReviewMetadataComponent = (props) => {
     try {
       setLoadingSampleData(true);
       const response = await client.query(
-        listTableSampleData({
+        readTableSampleData({
           tableUri: table.targetUri
         })
       );
       if (!response.errors) {
-        openSampleDataPopup(response.data.listTableSampleData);
+        openSampleDataPopup(response.data.readTableSampleData);
         setTargetUri(table.targetUri);
         enqueueSnackbar('Successfully read sample data', {
           variant: 'success'
@@ -152,7 +152,7 @@ export const ReviewMetadataComponent = (props) => {
           metadataTypes: Object.entries(selectedMetadataTypes)
             .filter(([key, value]) => value === true)
             .map(([key]) => key),
-          sampleData: sampleDataWithoutTypename
+          tableSampleData: sampleDataWithoutTypename
         })
       );
 

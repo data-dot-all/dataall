@@ -591,6 +591,7 @@ class DatasetService:
             return DatasetRepository.paginated_dataset_tables_folders(session, uri, filter)
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(UPDATE_DATASET)
     ##TODO Uncomment the following to use the ResourceThresholdService once https://github.com/data-dot-all/dataall/pull/1653 is merged
     # @ResourceThresholdService.check_invocation_count(

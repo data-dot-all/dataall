@@ -175,6 +175,7 @@ def generate_metadata(
     tableSampleData: dict = {},
 ):
     RequestValidator.validate_uri(param_name='resourceUri', param_value=resourceUri)
+    RequestValidator.validate_table_sample_data(tableSampleData)
     if any(metadata_type not in [item.value for item in MetadataGenerationTypes] for metadata_type in metadataTypes):
         raise InvalidInput(
             'metadataType',
@@ -264,3 +265,92 @@ class RequestValidator:
         RequestValidator.validate_creation_request(data)
         if not data.get('bucketName'):
             raise RequiredParameter('bucketName')
+
+    @staticmethod
+    def validate_table_sample_data(table_sample_data: dict):
+        """
+        Validates tableSampleData parameter structure to match readTableSampleData API output.
+        Expected structure:
+        {
+            "fields": [JSON string objects with "name" property],
+            "rows": [JSON array strings matching field count]
+        }
+        """
+        if not table_sample_data:
+            return  # Empty dict is allowed as default parameter
+
+        if not isinstance(table_sample_data, dict):
+            raise InvalidInput(
+                param_name='tableSampleData',
+                param_value=str(table_sample_data),
+                constraint='must be a dictionary object',
+            )
+
+        # Validate fields array
+        fields = table_sample_data.get('fields')
+        if fields is not None:
+            if not isinstance(fields, list):
+                raise InvalidInput(
+                    param_name='tableSampleData.fields', param_value=str(fields), constraint='must be an array'
+                )
+
+            for i, field in enumerate(fields):
+                if not isinstance(field, str):
+                    raise InvalidInput(
+                        param_name=f'tableSampleData.fields[{i}]',
+                        param_value=str(field),
+                        constraint='must be a JSON string',
+                    )
+
+                try:
+                    import json
+
+                    field_obj = json.loads(field)
+                    if not isinstance(field_obj, dict) or 'name' not in field_obj:
+                        raise InvalidInput(
+                            param_name=f'tableSampleData.fields[{i}]',
+                            param_value=field,
+                            constraint='must be a JSON object with "name" property',
+                        )
+                except json.JSONDecodeError:
+                    raise InvalidInput(
+                        param_name=f'tableSampleData.fields[{i}]', param_value=field, constraint='must be valid JSON'
+                    )
+
+        # Validate rows array
+        rows = table_sample_data.get('rows')
+        if rows is not None:
+            if not isinstance(rows, list):
+                raise InvalidInput(
+                    param_name='tableSampleData.rows', param_value=str(rows), constraint='must be an array'
+                )
+
+            expected_field_count = len(fields) if fields else 0
+
+            for i, row in enumerate(rows):
+                if not isinstance(row, str):
+                    raise InvalidInput(
+                        param_name=f'tableSampleData.rows[{i}]',
+                        param_value=str(row),
+                        constraint='must be a JSON string',
+                    )
+
+                try:
+                    import json
+
+                    row_array = json.loads(row)
+                    if not isinstance(row_array, list):
+                        raise InvalidInput(
+                            param_name=f'tableSampleData.rows[{i}]', param_value=row, constraint='must be a JSON array'
+                        )
+
+                    if expected_field_count > 0 and len(row_array) != expected_field_count:
+                        raise InvalidInput(
+                            param_name=f'tableSampleData.rows[{i}]',
+                            param_value=row,
+                            constraint=f'must contain {expected_field_count} elements to match fields count',
+                        )
+                except json.JSONDecodeError:
+                    raise InvalidInput(
+                        param_name=f'tableSampleData.rows[{i}]', param_value=row, constraint='must be valid JSON'
+                    )

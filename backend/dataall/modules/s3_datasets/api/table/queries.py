@@ -43,8 +43,8 @@ previewTable = gql.QueryField(
     type=gql.Ref('QueryPreviewResult'),
 )
 
-listTableSampleData = gql.QueryField(
-    name='listTableSampleData',
+readTableSampleData = gql.QueryField(
+    name='readTableSampleData',
     args=[gql.Argument(name='tableUri', type=gql.NonNullableType(gql.String))],
     type=gql.Ref('QueryPreviewResult'),
     resolver=read_sample_data,

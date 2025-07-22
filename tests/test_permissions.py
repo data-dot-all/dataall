@@ -55,6 +55,10 @@ def setup_networks(mock_storage, **kwargs):
     mock_storage.context.db_engine.scoped_session().__enter__().query().filter().all.return_value = [MagicMock()]
 
 
+def setup_Mutation_generateMetadata(iargs, **kwargs):
+    iargs['targetType'] = 'S3_Dataset'
+
+
 setup_EnvironmentSimplified_networks = setup_networks
 setup_Environment_networks = setup_networks
 
