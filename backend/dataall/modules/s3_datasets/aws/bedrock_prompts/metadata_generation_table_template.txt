@@ -7,21 +7,19 @@ INPUT PARAMETERS:
 - Column names: {column_labels}
 - Column Descriptions: {column_descriptions}
 - Sample data: {sample_data}
-- Generate columns metadata: {generate_columns_metadata}
+
 
 METADATA FIELDS REQUESTED: {metadata_types}
 You will only generate the fields listed above. Each field has specific requirements:
 
 1. description - A concise summary (<30 words) of the Table's contents, focusing primarily on the sample data, column names, and descriptions.
 2. tags - Up to 3 keywords highlighting the Table's main themes or content types.
-3. subitem_descriptions - If Generate columns metadata=True, provide descriptions for each column based on sample data and column names.
 
 RULES:
 - Ignore any input parameter that is "No description provided", None, or an empty list [].
 - Return ONLY the requested metadata fields as specified in {metadata_types}.
 - If insufficient data exists to generate meaningful metadata, return "NotEnoughData" for those fields.
 - Return results as a Python dictionary with lowercase keys matching the requested metadata fields.
-- If Generate columns metadata=True, include a "subitem_descriptions" key with a list of objects containing the unmodified column name {column_labels} and "description" (generated description).
 - Provide ONLY the Python dictionary in your response, no explanations or additional text.
 
 EXAMPLES:
@@ -34,7 +32,6 @@ Input:
 - Column names: []
 - Column Descriptions: []
 - Sample data: None
-- Generate columns metadata: False
 - Requested fields: ["description"]
 
 Output:
@@ -50,7 +47,6 @@ Input:
 - Column names: ['author', 'year', 'avg_rating', 'pages', 'genre', 'count']
 - Column Descriptions: ['Author that wrote the book', 'Year of publication', 'Average rating in Amazon.com', 'pages', 'genre', 'books sold in Amazon.com']
 - Sample data: None
-- Generate columns metadata: False
 - Requested fields: ["description", "tags"]
 
 Output:
@@ -67,19 +63,10 @@ Input:
 - Column names: ['author', 'year', 'avg_rating_amzn', 'pages', 'genre', 'sales_amzn']
 - Column Descriptions: []
 - Sample data: {{"rows": ["[\"\\\"JK Rowling\\\"\", \"\\\"1995\\\"\", \"\\\"8\\\"\", \"\\\"419\\\"\", \"\\\"Science Fiction\\\"\", \"\\\"225890345\\\"\"]", [\"\\\"Gabriel Garcia Marquez\\\"\", \"\\\"1913\\\"\", \"\\\"9\\\"\", \"\\\"337\\\"\", \"\\\"Magical Realism\\\"\", \"\\\"221133\\\"\"]], "fields": [{{"name": "author"}}, {{"name": "year"}}, {{"name": "avg_rating"}}, {{"name": "pages"}}, {{"name": "genre"}}, {{"name": "count"}}], "__typename": "QueryPreviewResult"}}
-- Generate columns metadata: True
-- Requested fields: ["description", "tags", "subitem_descriptions"]
+- Requested fields: ["description", "tags"]
 
 Output:
 {{
     "description": "Table tracking literary works by authors like JK Rowling and Gabriel Garcia Marquez, including publication years, Amazon ratings, page counts, genres, and sales figures.",
-    "tags": ["books", "sales", "ratings"],
-    "subitem_descriptions": [
-        {{"label": "author", "description": "Name of the book's author (e.g., JK Rowling, Gabriel Garcia Marquez)"}},
-        {{"label": "year", "description": "Year when the book was published (e.g., 1995, 1913)"}},
-        {{"label": "avg_rating_amzn", "description": "Average customer rating on Amazon on a scale of 1-10"}},
-        {{"label": "pages", "description": "Total number of pages in the book"}},
-        {{"label": "genre", "description": "Literary category of the book (e.g., Science Fiction, Magical Realism)"}},
-        {{"label": "sales_amzn", "description": "Number of copies sold on Amazon.com"}}
-    ]
+    "tags": ["books", "sales", "ratings"]
 }}

@@ -21,17 +21,11 @@ METADATA_GENERATION_FOLDER_TEMPLATE_PATH = os.path.join(
 )
 
 
-class ColumnMetadata(BaseModel):
-    label: str
-    description: str
-
-
 class MetadataOutput(BaseModel):
     tags: Optional[List[str]] = None
     description: Optional[str] = None
     label: Optional[str] = None
     topics: Optional[List[str]] = None
-    subitem_descriptions: Optional[List[ColumnMetadata]] = None
 
 
 class BedrockClient:
@@ -72,11 +66,8 @@ class BedrockClient:
             parser = JsonOutputParser(pydantic_object=MetadataOutput)
             chain = prompt_template | self._model | parser
 
-            # Check if subitem_descriptions is in the requested metadata types
-            generate_columns = 'subitem_descriptions' in metadata_types
             context = {
                 'metadata_types': metadata_types,
-                'generate_columns_metadata': generate_columns,
                 'label': table.label,
                 'description': table.description,
                 'tags': table.tags,

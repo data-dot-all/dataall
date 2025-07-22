@@ -214,30 +214,7 @@ class DatasetTableService:
             metadata = BedrockClient().invoke_model_table_metadata(
                 table=table, columns=table_columns, metadata_types=metadata_types, sample_data=sample_data
             )
-            columns_metadata = metadata.get('subitem_descriptions', [])
 
-            # Create a copy of metadata without subitem_descriptions
-            table_metadata = {k: v for k, v in metadata.items() if k != 'subitem_descriptions'}
-
-            result = [{'targetUri': uri, 'targetType': 'Table', **table_metadata}]
-
-            # Add column metadata if available
-            if columns_metadata and isinstance(columns_metadata, list):
-                for item in columns_metadata:
-                    # Find the column URI based on the label
-                    column_uri = None
-                    for col in table_columns:
-                        if col.label == item.get('label'):
-                            column_uri = col.columnUri
-                            break
-
-                    if column_uri:
-                        result.append(
-                            {
-                                'targetUri': column_uri,
-                                'targetType': 'Table_Column',
-                                'description': item.get('description', ''),
-                            }
-                        )
+            result = [{'targetUri': uri, 'targetType': 'Table', **metadata}]
 
             return result

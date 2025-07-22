@@ -18,13 +18,11 @@ import { useClient } from 'services';
 import { updateDatasetTable } from 'modules/Tables/services';
 import { updateDatasetStorageLocation } from 'modules/Folders/services';
 import {
-  BatchUpdateDatasetTableColumn,
   listTableSampleData,
   updateDataset,
   generateMetadataBedrock
 } from '../services';
 import SampleDataPopup from './SampleDataPopup';
-import SubitemDescriptionsGrid from './SubitemDescriptionsGrid';
 
 export const ReviewMetadataComponent = (props) => {
   const { dataset, targets, setTargets, selectedMetadataTypes, onClose } =
@@ -35,8 +33,6 @@ export const ReviewMetadataComponent = (props) => {
   const [popupOpen, setPopupOpen] = useState(false);
   const [sampleData, setSampleData] = useState(null);
   const [targetUri, setTargetUri] = useState(null);
-  const [showPopup, setShowPopup] = useState(false);
-  const [subitemDescriptions, setSubitemDescriptions] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [generatingTargets, setGeneratingTargets] = useState(new Set());
   const [loadingSampleData, setLoadingSampleData] = useState(false);
@@ -46,14 +42,6 @@ export const ReviewMetadataComponent = (props) => {
     // This effect is no longer needed
   }, [targets]);
 
-  const showSubItemsPopup = (subitemDescriptions) => {
-    setSubitemDescriptions(subitemDescriptions);
-    setShowPopup(true);
-  };
-
-  const closeSubItemsPopup = () => {
-    setShowPopup(false);
-  };
   const openSampleDataPopup = (data) => {
     setSampleData(data);
     setPopupOpen(true);
@@ -62,28 +50,6 @@ export const ReviewMetadataComponent = (props) => {
     setPopupOpen(false);
     setSampleData(null);
   };
-  async function handleSaveSubitemDescriptions() {
-    try {
-      const columns_ = subitemDescriptions.map((item) => ({
-        description: item.description,
-        label: item.label,
-        subitem_id: item.subitem_id
-      }));
-      const response = await client.mutate(
-        BatchUpdateDatasetTableColumn(columns_)
-      );
-      if (!response.errors) {
-        enqueueSnackbar('Successfully updated subitem descriptions', {
-          variant: 'success'
-        });
-        closeSubItemsPopup();
-      } else {
-        dispatch({ type: SET_ERROR, error: response.errors[0].message });
-      }
-    } catch (err) {
-      dispatch({ type: SET_ERROR, error: err.message });
-    }
-  }
 
   async function handleRegenerate(table) {
     try {
@@ -132,8 +98,7 @@ export const ReviewMetadataComponent = (props) => {
             description: response.data.generateMetadata[0].description,
             label: response.data.generateMetadata[0].label,
             tags: response.data.generateMetadata[0].tags,
-            topics: response.data.generateMetadata[0].topics,
-            subitem_descriptions: response.data.generateMetadata[0].topics || []
+            topics: response.data.generateMetadata[0].topics
           };
 
           const updatedTargets = [...targets];
@@ -199,8 +164,7 @@ export const ReviewMetadataComponent = (props) => {
             description: response.data.generateMetadata[0].description,
             label: response.data.generateMetadata[0].label,
             tags: response.data.generateMetadata[0].tags,
-            topics: response.data.generateMetadata[0].topics,
-            subitem_descriptions: response.data.generateMetadata[0].topics || []
+            topics: response.data.generateMetadata[0].topics
           };
 
           const updatedTargets = [...targets];
@@ -494,29 +458,6 @@ export const ReviewMetadataComponent = (props) => {
                       )
                   },
                   {
-                    field: 'subitem_descriptions',
-                    headerName: 'Subitem Descriptions',
-                    flex: 3,
-                    editable: false,
-                    renderCell: (params) =>
-                      params.value === undefined ? (
-                        <CircularProgress color="primary" />
-                      ) : params.value[0] === 'NotEnoughData' ? (
-                        <Chip label={params.value} color="warning" />
-                      ) : (
-                        <Button
-                          color="primary"
-                          type="button"
-                          variant="outlined"
-                          onClick={() =>
-                            showSubItemsPopup(params.row.subitem_descriptions)
-                          }
-                        >
-                          See Generated Subitem Values
-                        </Button>
-                      )
-                  },
-                  {
                     field: 'actions',
                     headerName: 'Actions',
                     flex: 4,
@@ -590,8 +531,7 @@ export const ReviewMetadataComponent = (props) => {
                     : false,
                   topics: selectedMetadataTypes['topics']
                     ? selectedMetadataTypes['topics']
-                    : false,
-                  subitem_descriptions: false
+                    : false
                 }}
                 pageSize={10}
                 rowsPerPageOptions={[5, 10, 20]}
@@ -636,13 +576,6 @@ export const ReviewMetadataComponent = (props) => {
         </Box>
       ) : (
         <Typography variant="body1">No metadata available</Typography>
-      )}
-      {showPopup && (
-        <SubitemDescriptionsGrid
-          subitemDescriptions={subitemDescriptions}
-          onClose={closeSubItemsPopup}
-          onSave={handleSaveSubitemDescriptions}
-        />
       )}
 
       {loadingSampleData && (

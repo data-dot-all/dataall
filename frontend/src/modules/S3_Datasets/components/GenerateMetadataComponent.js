@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import {
   Avatar,
   Box,
@@ -103,19 +103,6 @@ export const GenerateMetadataComponent = (props) => {
     }
   };
 
-  // Uncheck Column Descriptions when no tables are selected
-  useEffect(() => {
-    const hasSelectedTables = targets.some(
-      (target) => target.targetType === 'Table'
-    );
-    if (!hasSelectedTables && selectedMetadataTypes.columnDescriptions) {
-      setSelectedMetadataTypes({
-        ...selectedMetadataTypes,
-        columnDescriptions: false
-      });
-    }
-  }, [targets, selectedMetadataTypes]);
-
   const generateMetadata = async () => {
     try {
       setProgress(0);
@@ -125,10 +112,10 @@ export const GenerateMetadataComponent = (props) => {
         const target = targets[i];
         setGeneratingTargets((prev) => new Set([...prev, target.targetUri]));
 
-        // Map columnDescriptions to topics for the API call if needed
+        // Get metadata types for API call
         const metadataTypesForApi = Object.entries(selectedMetadataTypes)
           .filter(([key, value]) => value === true)
-          .map(([key]) => (key === 'columnDescriptions' ? 'topics' : key));
+          .map(([key]) => key);
 
         let response = await client.mutate(
           generateMetadataBedrock({
@@ -440,26 +427,6 @@ export const GenerateMetadataComponent = (props) => {
                 }
                 label="Tags"
               />
-              {targetType !== 'Dataset' && (
-                <>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        name="columnDescriptions"
-                        checked={selectedMetadataTypes.columnDescriptions}
-                        onChange={handleMetadataChange}
-                        disabled={
-                          targetType === 'Dataset' ||
-                          !targets.some(
-                            (target) => target.targetType === 'Table'
-                          )
-                        }
-                      />
-                    }
-                    label="Column Descriptions (Tables)"
-                  />
-                </>
-              )}
               <FormControlLabel
                 control={
                   <Switch
