@@ -28,12 +28,10 @@ class Engine:
             dbconfig.url,
             echo=False,
             pool_size=1,
-            connect_args={'options': f'-csearch_path={dbconfig.schema}'},
+            connect_args={'options': f'-c search_path={dbconfig.schema}'},
         )
         try:
-            if not self.engine.dialect.has_schema(self.engine, dbconfig.schema):
-                log.info(f'Schema not found - init the schema {dbconfig.schema}')
-                self.engine.execute(sqlalchemy.schema.CreateSchema(dbconfig.schema))
+            create_schema_if_not_exists(self.engine, dbconfig.schema)
             log.info('-- Using schema: %s --', dbconfig.schema)
         except Exception as e:
             log.error(f'Could not create schema: {e}')
@@ -69,15 +67,17 @@ class Engine:
 
 
 def create_schema_if_not_exists(engine, envname):
-    print(f'Creating schema {envname}...')
     try:
-        if not engine.dialect.has_schema(engine.engine, envname):
-            print(f'Schema {envname} not found. Creating it...')
-            engine.execute(sqlalchemy.schema.CreateSchema(envname))
+        with engine.engine.connect() as connection:
+            if not sqlalchemy.inspect(connection).has_schema(envname):
+                print(f'Schema {envname} not found. Creating it...')
+                connection.execute(sqlalchemy.schema.CreateSchema(envname))
+                connection.commit()
+            else:
+                print(f'Schema {envname} already exists')
     except Exception as e:
         print(f'Could not create schema: {e}')
         raise e
-    print(f'Schema {envname} successfully created')
     return True
 
 
@@ -93,8 +93,11 @@ def create_schema_and_tables(engine, envname):
 
 def drop_schema_if_exists(engine, envname):
     try:
-        if engine.dialect.has_schema(engine, envname):
-            engine.execute(sqlalchemy.schema.DropSchema(envname, cascade=True))
+        with engine.engine.connect() as connection:
+            if sqlalchemy.inspect(connection).has_schema(envname):
+                log.warning(f'Dropping schema {envname}')
+                connection.execute(sqlalchemy.schema.DropSchema(envname, cascade=True))
+                connection.commit()
     except Exception as e:
         log.error(f'Failed to drop all schema due to: {e}')
         raise e
@@ -143,3 +146,9 @@ def has_column(schema, table, column, engine):
             continue
         column_exists = True
     return column_exists
+
+
+if __name__ == '__main__':
+    engine = get_engine('dkrcompose')
+    create_schema_and_tables(engine, 'dkrcompose')
+    pass

@@ -30,7 +30,7 @@ class DbConfig:
         self.db = self._sanitize_and_compare(_SANITIZE_WORD_REGEX, db, 'database name')
         self.schema = self._sanitize_and_compare(_SANITIZE_WORD_REGEX, schema, 'schema')
         pwd = self._sanitize_and_compare(_SANITIZE_PWD_REGEX, pwd, 'password')
-        self.url = f'postgresql+pygresql://{self.user}:{pwd}@{self.host}/{self.db}'
+        self.url = f'postgresql+psycopg2://{self.user}:{pwd}@{self.host}/{self.db}'
 
     def __str__(self):
         lines = ['  DbConfig >']

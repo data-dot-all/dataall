@@ -8,7 +8,7 @@ Create Date: 2024-05-07 15:24:09.833007
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy import orm
+from sqlalchemy import orm, text
 from sqlalchemy import Boolean, Column, String, ForeignKey
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import ARRAY
@@ -66,7 +66,9 @@ def upgrade():
     # Read s3_datasets table rows
     conn = op.get_bind()
     res = conn.execute(
-        'select label, name, owner, created, updated, deleted, description, "environmentUri", "organizationUri", "datasetUri", region, "AwsAccountId",  "language", topics, confidentiality, tags, "businessOwnerEmail", "businessOwnerDelegationEmails", stewards, "SamlAdminGroupName", "autoApprovalEnabled", "datasetType", imported  from s3_dataset'
+        text(
+            'select label, name, owner, created, updated, deleted, description, "environmentUri", "organizationUri", "datasetUri", region, "AwsAccountId",  "language", topics, confidentiality, tags, "businessOwnerEmail", "businessOwnerDelegationEmails", stewards, "SamlAdminGroupName", "autoApprovalEnabled", "datasetType", imported  from s3_dataset'
+        )
     )
     results = res.fetchall()
     s3_datasets_info = [
