@@ -33,6 +33,12 @@ def preview(context, source, tableUri: str = None):
     return DatasetTableService.preview(uri=tableUri)
 
 
+def read_sample_data(context: Context, source: S3Dataset, tableUri: str):
+    if not tableUri:
+        return None
+    return DatasetTableService.read_table_sample(uri=tableUri)
+
+
 def get_glue_table_properties(context: Context, source: DatasetTable, **kwargs):
     if not source:
         return None

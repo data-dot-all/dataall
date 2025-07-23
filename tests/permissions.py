@@ -545,6 +545,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Mutation', 'generateDatasetAccessToken'): TestData(
         tenant_perm=MANAGE_DATASETS, resource_perm=CREDENTIALS_DATASET
     ),
+    field_id('Mutation', 'generateMetadata'): TestData(tenant_perm=MANAGE_DATASETS, resource_perm=UPDATE_DATASET),
     field_id('Mutation', 'importDashboard'): TestData(tenant_perm=MANAGE_DASHBOARDS, resource_perm=CREATE_DASHBOARD),
     field_id('Mutation', 'importDataset'): TestData(tenant_perm=MANAGE_DATASETS, resource_perm=CREATE_DATASET),
     field_id('Mutation', 'importRedshiftDataset'): TestData(
@@ -908,6 +909,9 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Query', 'listDatasetTables'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
+    field_id('Query', 'listDatasetTablesFolders'): TestData(
+        resource_perm=GET_DATASET, tenant_ignore=IgnoreReason.NOTREQUIRED
+    ),
     field_id('Query', 'listDatasets'): TestData(
         resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
@@ -1025,6 +1029,7 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Query', 'listWorksheets'): TestData(
         resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.USERLIMITED
     ),
+    field_id('Query', 'readTableSampleData'): TestData(resource_perm=UPDATE_DATASET_TABLE, tenant_perm=MANAGE_DATASETS),
     field_id('Query', 'previewTable'): TestData(resource_ignore=IgnoreReason.CUSTOM, tenant_ignore=IgnoreReason.CUSTOM),
     field_id('Query', 'queryEnums'): TestData(
         resource_ignore=IgnoreReason.NOTREQUIRED, tenant_ignore=IgnoreReason.NOTREQUIRED
