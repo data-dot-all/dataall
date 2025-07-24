@@ -146,9 +146,3 @@ def has_column(schema, table, column, engine):
             continue
         column_exists = True
     return column_exists
-
-
-if __name__ == '__main__':
-    engine = get_engine('dkrcompose')
-    create_schema_and_tables(engine, 'dkrcompose')
-    pass
