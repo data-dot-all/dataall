@@ -52,7 +52,7 @@ check-security: upgrade-pip install-backend install-cdkproxy
 	pip install bandit
 	pip install safety
 	bandit -lll -r backend
-	safety check --ignore=51668,70612,70624
+	safety check --ignore=51668
 
 checkov-synth: upgrade-pip install-backend install-cdkproxy install-tests
 	export PYTHONPATH=./backend:/./tests && \
