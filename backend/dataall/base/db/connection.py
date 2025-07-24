@@ -34,7 +34,7 @@ class Engine:
             create_schema_if_not_exists(self.engine, dbconfig.schema)
             log.info('-- Using schema: %s --', dbconfig.schema)
         except Exception as e:
-            log.error(f'Could not create schema: {e}')
+            log.exception('Could not create schema')
 
         self.sessions = {}
         self._session = None
@@ -70,13 +70,13 @@ def create_schema_if_not_exists(engine, envname):
     try:
         with engine.engine.connect() as connection:
             if not sqlalchemy.inspect(connection).has_schema(envname):
-                print(f'Schema {envname} not found. Creating it...')
+                log.info(f'Schema {envname} not found. Creating it...')
                 connection.execute(sqlalchemy.schema.CreateSchema(envname))
                 connection.commit()
             else:
-                print(f'Schema {envname} already exists')
+                log.info(f'Schema {envname} already exists')
     except Exception as e:
-        print(f'Could not create schema: {e}')
+        log.exception('Could not create schema')
         raise e
     return True
 
@@ -87,7 +87,7 @@ def create_schema_and_tables(engine, envname):
     try:
         Base.metadata.create_all(engine.engine)
     except Exception as e:
-        log.error(f'Failed to create all tables due to: {e}')
+        log.exception('Failed to create all tables')
         raise e
 
 
@@ -99,7 +99,7 @@ def drop_schema_if_exists(engine, envname):
                 connection.execute(sqlalchemy.schema.DropSchema(envname, cascade=True))
                 connection.commit()
     except Exception as e:
-        log.error(f'Failed to drop all schema due to: {e}')
+        log.exception('Failed to drop schema')
         raise e
 
 
