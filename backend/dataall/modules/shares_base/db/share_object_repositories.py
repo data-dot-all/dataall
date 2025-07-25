@@ -401,7 +401,7 @@ class ShareObjectRepository:
                 ShareObjectItem.lastVerificationTime.label('lastVerificationTime'),
                 ShareObjectItem.attachedDataFilterUri.label('attachedDataFilterUri'),
                 case(
-                    [(ShareObjectItem.shareItemUri.isnot(None), True)],
+                    (ShareObjectItem.shareItemUri.isnot(None), True),
                     else_=False,
                 ).label('isShared'),
             )
