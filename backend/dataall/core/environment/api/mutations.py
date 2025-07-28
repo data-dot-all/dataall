@@ -5,19 +5,19 @@ from dataall.core.environment.api.input_types import (
     NewEnvironmentInput,
     EnableDataSubscriptionsInput,
     InviteGroupOnEnvironmentInput,
-    AddConsumptionRoleToEnvironmentInput,
-    UpdateConsumptionRoleInput,
+    AddConsumptionPrincipalToEnvironmentInput,
+    UpdateConsumptionPrincipalInput,
 )
 from dataall.core.environment.api.resolvers import (
-    add_consumption_role,
+    add_consumption_principal,
     create_environment,
     delete_environment,
     disable_subscriptions,
     enable_subscriptions,
     invite_group,
-    remove_consumption_role,
+    remove_consumption_principal,
     remove_group,
-    update_consumption_role,
+    update_consumption_principal,
     update_environment,
     update_group_permissions,
 )
@@ -48,11 +48,11 @@ inviteGroupOnEnvironment = gql.MutationField(
     resolver=invite_group,
 )
 
-addConsumptionRoleToEnvironment = gql.MutationField(
-    name='addConsumptionRoleToEnvironment',
-    args=[gql.Argument(name='input', type=gql.NonNullableType(AddConsumptionRoleToEnvironmentInput))],
-    type=gql.Ref('ConsumptionRole'),
-    resolver=add_consumption_role,
+addConsumptionPrincipalToEnvironment = gql.MutationField(
+    name='addConsumptionPrincipalToEnvironment',
+    args=[gql.Argument(name='input', type=gql.NonNullableType(AddConsumptionPrincipalToEnvironmentInput))],
+    type=gql.Ref('ConsumptionPrincipal'),
+    resolver=add_consumption_principal,
 )
 
 updateGroupPermission = gql.MutationField(
@@ -72,14 +72,14 @@ removeGroupFromEnvironment = gql.MutationField(
     resolver=remove_group,
 )
 
-removeConsumptionRoleFromEnvironment = gql.MutationField(
-    name='removeConsumptionRoleFromEnvironment',
+removeConsumptionPrincipalFromEnvironment = gql.MutationField(
+    name='removeConsumptionPrincipalFromEnvironment',
     args=[
         gql.Argument('environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument('consumptionRoleUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument('consumptionPrincipalUri', type=gql.NonNullableType(gql.String)),
     ],
     type=gql.Boolean,
-    resolver=remove_consumption_role,
+    resolver=remove_consumption_principal,
 )
 
 deleteEnvironment = gql.MutationField(
@@ -112,13 +112,13 @@ DisableDataSubscriptions = gql.MutationField(
     type=gql.Boolean,
 )
 
-updateConsumptionRole = gql.MutationField(
-    name='updateConsumptionRole',
+updateConsumptionPrincipal = gql.MutationField(
+    name='updateConsumptionPrincipal',
     args=[
         gql.Argument('environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument('consumptionRoleUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument('input', type=UpdateConsumptionRoleInput),
+        gql.Argument('consumptionPrincipalUri', type=gql.NonNullableType(gql.String)),
+        gql.Argument('input', type=UpdateConsumptionPrincipalInput),
     ],
-    type=gql.Ref('ConsumptionRole'),
-    resolver=update_consumption_role,
+    type=gql.Ref('ConsumptionPrincipal'),
+    resolver=update_consumption_principal,
 )

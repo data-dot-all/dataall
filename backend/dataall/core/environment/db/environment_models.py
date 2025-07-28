@@ -7,6 +7,7 @@ from sqlalchemy.orm import query_expression
 from dataall.base.db import Resource, Base, utils
 
 from dataall.core.environment.api.enums import EnvironmentPermission, EnvironmentType
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 from dataall.core.metadata_manager import MetadataFormEntityManager, MetadataFormEntity, MetadataFormEntityTypes
 
 
@@ -98,30 +99,31 @@ class EnvironmentParameter(Base):
         return f'EnvironmentParameter(paramKey={self.key}, paramValue={self.value})'
 
 
-class ConsumptionRole(Base):
+class ConsumptionPrincipal(Base):
     __metaclass__ = MetadataFormEntity
-    __tablename__ = 'consumptionrole'
-    consumptionRoleUri = Column(String, primary_key=True, default=utils.uuid('group'))
-    consumptionRoleName = Column(String, nullable=False)
+    __tablename__ = 'consumptionprincipals'
+    consumptionPrincipalUri = Column(String, primary_key=True, default=utils.uuid('group'))
+    consumptionPrincipalName = Column(String, nullable=False)
     environmentUri = Column(String, nullable=False)
     groupUri = Column(String, nullable=False)
-    IAMRoleName = Column(String, nullable=False)
-    IAMRoleArn = Column(String, nullable=False)
-    dataallManaged = Column(Boolean, nullable=False, default=True)
+    IAMPrincipalName = Column(String, nullable=False)
+    IAMPrincipalArn = Column(String, nullable=False)
+    dataallManaged = Column(String, nullable=False)
     created = Column(DateTime, default=datetime.datetime.now)
     updated = Column(DateTime, onupdate=datetime.datetime.now)
     deleted = Column(DateTime)
+    consumptionPrincipalType = Column(String, nullable=False)
 
     def uri(self):
-        return self.consumptionRoleUri
+        return self.consumptionPrincipalUri
 
     def owner_name(self):
         return self.groupUri
 
     def entity_name(self):
-        return f'{self.consumptionRoleName}-{self.environmentUri}'
+        return f'{self.consumptionPrincipalName}-{self.environmentUri}'
 
 
 MetadataFormEntityManager.register(Environment, MetadataFormEntityTypes.Environment.value)
-MetadataFormEntityManager.register(ConsumptionRole, MetadataFormEntityTypes.ConsumptionRole.value)
+MetadataFormEntityManager.register(ConsumptionPrincipal, MetadataFormEntityTypes.ConsumptionRole.value)
 MetadataFormEntityManager.register(EnvironmentGroup, MetadataFormEntityTypes.EnvironmentTeam.value)
