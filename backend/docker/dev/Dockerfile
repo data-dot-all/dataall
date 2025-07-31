@@ -1,8 +1,8 @@
-FROM public.ecr.aws/amazonlinux/amazonlinux:2023
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023 AS base
 
 ARG NODE_VERSION=22
 ARG NVM_VERSION=v0.37.2
-ARG PYTHON_VERSION=python3.9
+ARG PYTHON_VERSION=python3.12
 ARG CONTAINER_USER=cuser
 ARG CONTAINER_USER_GROUP=cuser
 ARG CONTAINER_UID
@@ -17,8 +17,8 @@ RUN dnf -y install -y \
     postgresql-devel gcc unzip tar gzip
 
 # Install Python
-RUN dnf install $PYTHON_VERSION
-RUN dnf -y install python3-pip python3-devel git
+RUN dnf install -y ${PYTHON_VERSION}
+RUN dnf -y install ${PYTHON_VERSION}-pip ${PYTHON_VERSION}-devel
 
 RUN groupadd -r ${CONTAINER_USER_GROUP} && useradd -m -r -u ${CONTAINER_UID} -g ${CONTAINER_USER_GROUP} ${CONTAINER_USER}
 RUN useradd -m app
@@ -37,10 +37,6 @@ RUN touch ~/.bashrc
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 RUN unzip awscliv2.zip
 RUN ./aws/install
-
-COPY --chown=${CONTAINER_USER}:root ./docker/dev/wait-for-it.sh /build/wait-for-it.sh
-RUN chmod +x /build/wait-for-it.sh
-RUN chown -R ${CONTAINER_USER}:root /build/wait-for-it.sh
 
 ## Add source
 WORKDIR /dataall
@@ -69,15 +65,24 @@ COPY ./requirements.txt requirements.txt
 COPY ./dataall/base/cdkproxy/requirements.txt cdk.requirements.txt
 
 # Install App requirements
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install setuptools --prefix /usr/local"
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r requirements.txt --prefix /usr/local"
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r cdk.requirements.txt --prefix /usr/local"
+RUN ${PYTHON_VERSION} -m pip install setuptools --prefix=/usr/local
+RUN ${PYTHON_VERSION} -m pip install -r requirements.txt --prefix=/usr/local
+RUN ${PYTHON_VERSION} -m pip install -r cdk.requirements.txt --prefix /usr/local
 
 # App code
 COPY ./dataall /dataall
-ADD ./cdkproxymain.py /cdkproxymain.py
-ADD ./local_graphql_server.py /local_graphql_server.py
 
 WORKDIR /
 
-ENTRYPOINT [ "/bin/bash", "-c", ". ~/.nvm/nvm.sh && uvicorn cdkproxymain:app --host 0.0.0.0 --port 8080" ]
+COPY --chmod=755 <<EOT /uvicorn.sh
+#!/usr/bin/env bash
+set -e
+${PYTHON_VERSION} -m uvicorn \$@
+EOT
+
+FROM base AS cdkproxy
+ADD ./cdkproxymain.py /cdkproxymain.py
+CMD ["/uvicorn.sh", "cdkproxymain:app", "--host", "0.0.0.0", "--port", "2805"]
+FROM base AS graphql
+ADD ./local_graphql_server.py /local_graphql_server.py
+CMD ["/uvicorn.sh", "local_graphql_server:app", "--host",  "0.0.0.0", "--port", "5000", "--reload"]

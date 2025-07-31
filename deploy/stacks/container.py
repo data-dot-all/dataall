@@ -16,6 +16,7 @@ from .pyNestedStack import pyNestedClass
 from .run_if import run_if
 from .deploy_config import deploy_config
 from .iam_utils import get_tooling_account_external_id
+from .runtime_options import PYTHON_VERSION
 
 
 class ContainerStack(pyNestedClass):
@@ -99,7 +100,7 @@ class ContainerStack(pyNestedClass):
                 ecs.CfnTaskDefinition.ContainerDefinitionProperty(
                     image=cdkproxy_image.image_name,
                     name=cdkproxy_container_name,
-                    command=['python3.9', '-m', 'dataall.core.stacks.tasks.cdkproxy'],
+                    command=[f'python{PYTHON_VERSION}', '-m', 'dataall.core.stacks.tasks.cdkproxy'],
                     environment=[
                         ecs.CfnTaskDefinition.KeyValuePairProperty(name='AWS_REGION', value=self.region),
                         ecs.CfnTaskDefinition.KeyValuePairProperty(name='envname', value=envname),
@@ -158,7 +159,7 @@ class ContainerStack(pyNestedClass):
 
         stacks_updater, stacks_updater_task_def = self.set_scheduled_task(
             cluster=cluster,
-            command=['python3.9', '-m', 'dataall.core.environment.tasks.env_stacks_updater'],
+            command=[f'python{PYTHON_VERSION}', '-m', 'dataall.core.environment.tasks.env_stacks_updater'],
             container_id='container',
             ecr_repository=ecr_repository,
             environment=self._create_env(),
@@ -214,7 +215,7 @@ class ContainerStack(pyNestedClass):
         container_id = 'container'
         catalog_indexer_task, catalog_indexer_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
-            command=['python3.9', '-m', 'dataall.modules.catalog.tasks.catalog_indexer_task'],
+            command=[f'python{PYTHON_VERSION}', '-m', 'dataall.modules.catalog.tasks.catalog_indexer_task'],
             container_id=container_id,
             ecr_repository=self._ecr_repository,
             environment=self._create_env(),
@@ -262,7 +263,7 @@ class ContainerStack(pyNestedClass):
             container_name='container',
             image=ecs.ContainerImage.from_ecr_repository(repository=self._ecr_repository, tag=self._cdkproxy_image_tag),
             environment=self.env_vars,
-            command=['python3.9', '-m', 'dataall.modules.shares_base.tasks.share_manager_task'],
+            command=[f'python{PYTHON_VERSION}', '-m', 'dataall.modules.shares_base.tasks.share_manager_task'],
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix='task',
                 log_group=self.create_log_group(self._envname, self._resource_prefix, log_group_name='share-manager'),
@@ -289,7 +290,7 @@ class ContainerStack(pyNestedClass):
     def add_share_verifier_task(self):
         verify_shares_task, verify_shares_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
-            command=['python3.9', '-m', 'dataall.modules.shares_base.tasks.share_verifier_task'],
+            command=[f'python{PYTHON_VERSION}', '-m', 'dataall.modules.shares_base.tasks.share_verifier_task'],
             container_id='container',
             ecr_repository=self._ecr_repository,
             environment=self.env_vars,
@@ -322,7 +323,7 @@ class ContainerStack(pyNestedClass):
             container_name='container',
             image=ecs.ContainerImage.from_ecr_repository(repository=self._ecr_repository, tag=self._cdkproxy_image_tag),
             environment=self.env_vars,
-            command=['python3.9', '-m', 'dataall.modules.shares_base.tasks.share_reapplier_task'],
+            command=[f'python{PYTHON_VERSION}', '-m', 'dataall.modules.shares_base.tasks.share_reapplier_task'],
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix='task',
                 log_group=self.create_log_group(self._envname, self._resource_prefix, log_group_name='share-reapplier'),
@@ -351,7 +352,7 @@ class ContainerStack(pyNestedClass):
         persistent_email_reminders_task, persistent_email_reminders_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
             command=[
-                'python3.9',
+                f'python{PYTHON_VERSION}',
                 '-m',
                 'dataall.modules.shares_base.tasks.persistent_email_reminders_task',
             ],
@@ -377,7 +378,7 @@ class ContainerStack(pyNestedClass):
         subscriptions_task, subscription_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
             command=[
-                'python3.9',
+                f'python{PYTHON_VERSION}',
                 '-m',
                 'dataall.modules.s3_datasets_shares.tasks.dataset_subscription_task',
             ],
@@ -400,7 +401,7 @@ class ContainerStack(pyNestedClass):
     def add_sync_dataset_table_task(self):
         sync_tables_task, sync_tables_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
-            command=['python3.9', '-m', 'dataall.modules.s3_datasets.tasks.tables_syncer'],
+            command=[f'python{PYTHON_VERSION}', '-m', 'dataall.modules.s3_datasets.tasks.tables_syncer'],
             container_id='container',
             ecr_repository=self._ecr_repository,
             environment=self._create_env(),
@@ -420,7 +421,7 @@ class ContainerStack(pyNestedClass):
     def add_omics_fetch_workflows_task(self):
         fetch_omics_workflows_task, fetch_omics_workflows_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
-            command=['python3.9', '-m', 'dataall.modules.omics.tasks.omics_workflows_fetcher'],
+            command=[f'python{PYTHON_VERSION}', '-m', 'dataall.modules.omics.tasks.omics_workflows_fetcher'],
             container_id='container',
             ecr_repository=self._ecr_repository,
             environment=self._create_env(),
@@ -455,7 +456,7 @@ class ContainerStack(pyNestedClass):
             image=ecs.ContainerImage.from_ecr_repository(repository=self._ecr_repository, tag=self._cdkproxy_image_tag),
             environment=self.env_vars,
             command=[
-                'python3.9',
+                f'python{PYTHON_VERSION}',
                 '-m',
                 'dataall.modules.shares_base.tasks.share_expiration_task',
             ],

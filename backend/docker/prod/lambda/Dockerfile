@@ -1,7 +1,8 @@
 FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 
 ARG FUNCTION_DIR="/home/app/"
-ARG PYTHON_VERSION=python3.9
+# setting a default but should be overridden by the build command
+ARG PYTHON_VERSION=python3.12
 ARG CONTAINER_USER=cuser
 ARG CONTAINER_USER_GROUP=cuser
 
@@ -19,8 +20,8 @@ RUN dnf -y install \
     postgresql-devel gcc unzip tar gzip
 
 # Install Python
-RUN dnf install $PYTHON_VERSION
-RUN dnf -y install python3-pip python3-devel
+RUN dnf install -y ${PYTHON_VERSION}
+RUN dnf -y install ${PYTHON_VERSION}-pip ${PYTHON_VERSION}-devel
 
 ## Add container user group
 RUN groupadd -r ${CONTAINER_USER_GROUP} && useradd -m -r -g ${CONTAINER_USER_GROUP} ${CONTAINER_USER}
@@ -37,8 +38,8 @@ USER ${CONTAINER_USER}
 COPY --chown=${CONTAINER_USER}:root backend/requirements.txt ./requirements.txt
 
 # Install App requirements
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install setuptools --prefix=/usr/local"
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r requirements.txt --prefix=/usr/local"
+RUN ${PYTHON_VERSION} -m pip install setuptools --prefix=/usr/local
+RUN ${PYTHON_VERSION} -m pip install -r requirements.txt --prefix=/usr/local
 
 # App code
 COPY --chown=${CONTAINER_USER}:root backend/. ./
@@ -50,6 +51,12 @@ COPY --chown=${CONTAINER_USER}:root config.json ./config.json
 ## You must add the Lambda Runtime Interface Client (RIC) for your runtime.
 RUN $PYTHON_VERSION -m pip install awslambdaric --target ${FUNCTION_DIR}
 
+COPY --chmod=755 <<EOT /awslambdaric.sh
+#!/usr/bin/env bash
+set -e
+${PYTHON_VERSION} -m awslambdaric \$@
+EOT
+
 # Command can be overwritten by providing a different command in the template directly.
-ENTRYPOINT [ "python3.9", "-m", "awslambdaric" ]
+ENTRYPOINT [ "/awslambdaric.sh" ]
 CMD ["auth_handler.handler"]

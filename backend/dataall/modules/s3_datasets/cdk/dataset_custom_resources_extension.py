@@ -15,6 +15,7 @@ from aws_cdk import (
 )
 
 from dataall.core.environment.cdk.environment_stack import EnvironmentSetup, EnvironmentStackExtension
+from dataall.runtime_options import PYTHON_LAMBDA_RUNTIME
 
 log = logging.getLogger(__name__)
 
@@ -87,7 +88,7 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
             dead_letter_queue_enabled=True,
             dead_letter_queue=lakeformation_cr_dlq,
             on_failure=lambda_destination.SqsDestination(lakeformation_cr_dlq),
-            runtime=_lambda.Runtime.PYTHON_3_9,
+            runtime=PYTHON_LAMBDA_RUNTIME,
         )
         LakeformationDefaultSettingsProvider = cr.Provider(
             setup,
@@ -154,7 +155,7 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
             dead_letter_queue=gluedb_lf_cr_dlq,
             on_failure=lambda_destination.SqsDestination(gluedb_lf_cr_dlq),
             tracing=_lambda.Tracing.ACTIVE,
-            runtime=_lambda.Runtime.PYTHON_3_9,
+            runtime=PYTHON_LAMBDA_RUNTIME,
         )
 
         glue_db_provider = cr.Provider(
