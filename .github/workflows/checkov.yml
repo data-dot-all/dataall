@@ -24,7 +24,7 @@ jobs:
       DATAALL_REPO_BRANCH: main
     strategy:
       matrix:
-        python-version: [3.9]
+        python-version: [3.12]
     services:
       postgres:
         image: postgres

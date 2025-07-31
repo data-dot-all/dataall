@@ -29,6 +29,6 @@ COPY --chown=${CONTAINER_USER}:root ./version.json /
 ENV DISABLE_ESLINT_PLUGIN=true
 
 # Set the port to serve the application
-ENV PORT=80
+ENV PORT=8080
 
 CMD yarn start

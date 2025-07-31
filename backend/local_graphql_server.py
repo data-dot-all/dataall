@@ -3,7 +3,7 @@ import os
 
 import jwt
 from ariadne import graphql_sync
-from ariadne.constants import PLAYGROUND_HTML
+from ariadne.explorer.playground import PLAYGROUND_HTML
 from fastapi import FastAPI, Request
 from graphql import parse
 from starlette.middleware.cors import CORSMiddleware
