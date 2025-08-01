@@ -2,7 +2,7 @@ import json
 import typing
 
 from ariadne import graphql_sync
-from ariadne.constants import PLAYGROUND_HTML
+from ariadne.explorer.playground import PLAYGROUND_HTML
 from fastapi import FastAPI
 from munch import DefaultMunch
 from starlette.requests import Request

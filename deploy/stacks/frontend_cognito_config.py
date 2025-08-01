@@ -11,6 +11,7 @@ from aws_cdk.triggers import TriggerFunction
 
 from custom_resources.utils import get_lambda_code
 from .pyNestedStack import pyNestedClass
+from .runtime_options import PYTHON_LAMBDA_RUNTIME
 
 
 class FrontendCognitoConfig(pyNestedClass):
@@ -112,7 +113,7 @@ class FrontendCognitoConfig(pyNestedClass):
             environment_encryption=lambda_env_key,
             tracing=_lambda.Tracing.ACTIVE,
             retry_attempts=0,
-            runtime=_lambda.Runtime.PYTHON_3_9,
+            runtime=PYTHON_LAMBDA_RUNTIME,
             handler='cognito_urls.handler',
             execute_after=execute_after,
             execute_on_handler_change=True,

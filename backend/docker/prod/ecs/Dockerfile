@@ -3,7 +3,8 @@ FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 ARG NODE_VERSION=22
 ARG NVM_VERSION=v0.37.2
 ARG DEEQU_VERSION=2.0.7-spark-3.3
-ARG PYTHON_VERSION=python3.9
+# setting a default but should be overridden by the build command
+ARG PYTHON_VERSION=python3.12
 ARG CONTAINER_USER=cuser
 ARG CONTAINER_USER_GROUP=cuser
 
@@ -20,8 +21,8 @@ RUN dnf -y install \
     postgresql-devel gcc unzip tar gzip
 
 # Install Python
-RUN dnf install $PYTHON_VERSION
-RUN dnf -y install python3-pip python3-devel git
+RUN dnf install -y ${PYTHON_VERSION}
+RUN dnf -y install ${PYTHON_VERSION}-pip ${PYTHON_VERSION}-devel
 
 # Install AWS CLI
 RUN curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscliv2.zip \
@@ -62,9 +63,9 @@ ADD --chown=${CONTAINER_USER}:root backend/requirements.txt /requirements.txt
 ADD --chown=${CONTAINER_USER}:root backend/dataall/base/cdkproxy/requirements.txt /cdk.requirements.txt
 
 # Install App requirements
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install setuptools --prefix /usr/local"
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r requirements.txt --prefix /usr/local"
-RUN /bin/bash -c "${PYTHON_VERSION} -m pip install -r cdk.requirements.txt --prefix /usr/local"
+RUN ${PYTHON_VERSION} -m pip install setuptools --prefix=/usr/local
+RUN ${PYTHON_VERSION} -m pip install -r requirements.txt --prefix=/usr/local
+RUN ${PYTHON_VERSION} -m pip install -r cdk.requirements.txt --prefix /usr/local
 
 # App code
 ADD --chown=${CONTAINER_USER}:root backend/dataall /dataall
@@ -81,4 +82,10 @@ ADD --chown=${CONTAINER_USER}:root https://repo1.maven.org/maven2/com/amazon/dee
 
 WORKDIR /
 
-CMD [ "/bin/bash", "-c", ". ~/.nvm/nvm.sh && uvicorn cdkproxymain:app --host 0.0.0.0 --port 8080" ]
+COPY --chmod=755 <<EOT /uvicorn.sh
+#!/usr/bin/env bash
+set -e
+${PYTHON_VERSION} -m uvicorn \$@
+EOT
+
+CMD ["/uvicorn.sh", "cdkproxymain:app", "--host", "0.0.0.0", "--port", "8080"]
