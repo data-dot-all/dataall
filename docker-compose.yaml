@@ -10,13 +10,12 @@ configs:
 services:
   cdkproxy:
     build:
-      context: ./backend
-      target: cdkproxy
-      dockerfile: docker/dev/Dockerfile
+      context: ./
+      dockerfile: backend/docker/prod/ecs/Dockerfile
       args:
         CONTAINER_UID: ${UID}
     healthcheck:
-      test: [ "CMD", "curl", "-s", "http://localhost:2805" ]
+      test: [ "CMD", "curl", "-s", "http://localhost:8080" ]
       interval: 60s
       timeout: 10s
       retries: 10
@@ -24,7 +23,7 @@ services:
     expose:
       - 2805
     ports:
-      - 2805:2805
+      - 2805:8080
     depends_on:
       db:
         condition: service_healthy
@@ -45,21 +44,30 @@ services:
         target: /config.json
     develop:
       watch:
-        - action: sync
+        - action: sync+restart
           path: ./backend/dataall
           target: /dataall
     restart:
       on-failure:60
     platform:
       linux/amd64
-
-  graphql:
+  graphql-base:
+    entrypoint: 'true'
     build:
-      context: ./backend
-      target: graphql
-      dockerfile: docker/dev/Dockerfile
+      context: ./
+      dockerfile: backend/docker/prod/lambda/Dockerfile
       args:
         CONTAINER_UID: ${UID}
+  graphql:
+    build:
+      context: ./
+      dockerfile_inline: |
+        FROM dataall-graphql-base
+        RUN python3.12 -m pip install uvicorn --prefix=/usr/local
+    entrypoint:
+      - "bash"
+      - "-c"
+      - "$${PYTHON_VERSION} -m uvicorn --reload --host 0.0.0.0 local_graphql_server:app --port 5000"
     healthcheck:
       test: [ "CMD", "curl", "-s", "http://localhost:5000/graphql" ]
       interval: 60s
@@ -174,13 +182,15 @@ services:
       - "8080:8080"
 
   migrations:
-    image: dataall-graphql
-    pull_policy: never
-    command: [ "alembic", "-c", "backend/alembic.ini", "upgrade", "head" ]
+    image: dataall-graphql-base
+    entrypoint: [ "alembic", "-c", "backend/alembic.ini", "upgrade", "head" ]
     working_dir: /migrations/
     environment:
       envname: dkrcompose
       PYTHONPATH: /migrations/backend
+    secrets:
+      - source: aws-creds
+        target: /home/cuser/.aws/credentials
     configs:
       - source: dataall-config
         target: /migrations/config.json
