@@ -335,6 +335,7 @@ class PipelineStack(Stack):
                     'codeartifact:GetAuthorizationToken',
                     'codeartifact:GetRepositoryEndpoint',
                     'codeartifact:ReadFromRepository',
+                    'codecommit:GitPull',
                     'ecr:GetDownloadUrlForLayer',
                     'ecr:BatchGetImage',
                     'ecr:BatchCheckLayerAvailability',
