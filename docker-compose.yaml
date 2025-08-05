@@ -14,8 +14,9 @@ services:
       dockerfile: backend/docker/prod/ecs/Dockerfile
       args:
         CONTAINER_UID: ${UID}
+        PORT: '2805'
     healthcheck:
-      test: [ "CMD", "curl", "-s", "http://localhost:8080" ]
+      test: [ "CMD", "curl", "-s", "http://localhost:2805" ]
       interval: 60s
       timeout: 10s
       retries: 10
@@ -23,7 +24,7 @@ services:
     expose:
       - 2805
     ports:
-      - 2805:8080
+      - 2805:2805
     depends_on:
       db:
         condition: service_healthy
@@ -61,8 +62,10 @@ services:
   graphql:
     build:
       context: ./
+      additional_contexts:
+        dataall-graphql-base: "service:graphql-base"
       dockerfile_inline: |
-        FROM dataall-graphql-base
+        FROM dataall-graphql-base 
         RUN python3.12 -m pip install uvicorn --prefix=/usr/local
     entrypoint:
       - "bash"

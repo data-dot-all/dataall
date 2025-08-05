@@ -8,6 +8,7 @@ ARG PYTHON_VERSION=python3.12
 ARG CONTAINER_USER=cuser
 ARG CONTAINER_USER_GROUP=cuser
 ARG CONTAINER_UID=999
+ARG PORT=8080
 
 # Clean cache
 RUN dnf upgrade -y;\
@@ -85,7 +86,7 @@ COPY --chmod=755 <<EOT /uvicorn.sh
 #!/usr/bin/env bash
 set -e
 . ~/.nvm/nvm.sh
-${PYTHON_VERSION} -m uvicorn \$@
+${PYTHON_VERSION} -m uvicorn --port ${PORT} \$@
 EOT
 
-CMD ["/uvicorn.sh", "cdkproxymain:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["/uvicorn.sh", "cdkproxymain:app", "--host", "0.0.0.0"]
