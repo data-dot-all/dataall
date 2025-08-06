@@ -69,7 +69,6 @@ Resources:
       ManagedPolicyName: !Join
         - ''
         - - !Ref PolicyName
-          - '-0-'
           - !Ref AWS::Region
       PolicyDocument:
         Version: 2012-10-17
