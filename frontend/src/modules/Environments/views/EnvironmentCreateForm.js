@@ -604,7 +604,7 @@ cdk bootstrap --trust ${trustedAccount} \
 -c @aws-cdk/core:newStyleStackSynthesis=true \
 --cloudformation-execution-policies arn:aws:iam::${
                                 values.AwsAccountId || 'ACCOUNT_ID'
-                              }:policy/DataAllCustomCDKPolicy-0-${
+                              }:policy/DataAllCustomCDKPolicy${
                                 values.region || 'REGION'
                               },\
 arn:aws:iam::${
