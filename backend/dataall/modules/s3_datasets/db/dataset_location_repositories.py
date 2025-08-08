@@ -97,9 +97,12 @@ class DatasetLocationRepository:
         return True
 
     @staticmethod
-    def get_dataset_folders(session, dataset_uri):
+    def get_dataset_folders(session, dataset_uri, limit=None):
         """return the dataset folders"""
-        return session.query(DatasetStorageLocation).filter(DatasetStorageLocation.datasetUri == dataset_uri).all()
+        query = session.query(DatasetStorageLocation).filter(DatasetStorageLocation.datasetUri == dataset_uri)
+        if limit:
+            query = query.limit(limit)
+        return query.all()
 
     @staticmethod
     def paginated_dataset_locations(session, uri, data=None) -> dict:

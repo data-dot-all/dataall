@@ -95,10 +95,10 @@ export const ReviewMetadataComponent = (props) => {
         if (targetIndex !== -1) {
           const updatedTarget = {
             ...targets[targetIndex],
-            description: response.data.generateMetadata[0].description,
-            label: response.data.generateMetadata[0].label,
-            tags: response.data.generateMetadata[0].tags,
-            topics: response.data.generateMetadata[0].topics
+            description: response.data.generateMetadata[0].description ?? '',
+            label: response.data.generateMetadata[0].label ?? '',
+            tags: response.data.generateMetadata[0].tags ?? '',
+            topics: response.data.generateMetadata[0].topics ?? ''
           };
 
           const updatedTargets = [...targets];

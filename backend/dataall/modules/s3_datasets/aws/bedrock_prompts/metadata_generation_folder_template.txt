@@ -34,7 +34,7 @@ Input:
 
 Output:
 {{
-    "label": "NotEnoughData",
+    "label": "my-folder-1",
     "description": "NotEnoughData"
 }}
 

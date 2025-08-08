@@ -48,6 +48,8 @@ class DatasetColumnRepository:
         return paginate(query=q, page=filter.get('page', 1), page_size=filter.get('pageSize', 10)).to_dict()
 
     @staticmethod
-    def list_active_columns_for_table(session, table_uri: str):
+    def list_active_columns_for_table(session, table_uri: str, limit=None):
         q = DatasetColumnRepository.query_active_columns_for_table(session, table_uri)
+        if limit:
+            q = q.limit(limit)
         return q.all()

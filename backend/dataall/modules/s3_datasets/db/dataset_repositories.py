@@ -186,9 +186,12 @@ class DatasetRepository(EnvironmentResource):
         dataset.glueDatabaseCreated = True
 
     @staticmethod
-    def get_dataset_tables(session, dataset_uri):
+    def get_dataset_tables(session, dataset_uri, limit=None):
         """return the dataset tables"""
-        return session.query(DatasetTable).filter(DatasetTable.datasetUri == dataset_uri).all()
+        query = session.query(DatasetTable).filter(DatasetTable.datasetUri == dataset_uri)
+        if limit:
+            query = query.limit(limit)
+        return query.all()
 
     @staticmethod
     def delete_dataset(session, dataset) -> bool:

@@ -33,6 +33,7 @@ from dataall.base.utils import json_utils
 from dataall.base.db import exceptions
 from dataall.modules.s3_datasets.aws.bedrock_metadata_client import BedrockClient
 from dataall.modules.s3_datasets.db.dataset_column_repositories import DatasetColumnRepository
+from dataall.modules.s3_datasets.services.dataset_enums import MetadataGenerationTypes
 
 
 log = logging.getLogger(__name__)
@@ -207,12 +208,14 @@ class DatasetTableService:
     #     'metadata', 'modules.s3_datasets.features.generate_metadata_ai.max_count_per_day'
     # )
     def generate_metadata_for_table(uri, metadata_types, sample_data):
+        metadataTypesForTable = [MetadataGenerationTypes.Description, MetadataGenerationTypes.Tag]
+        table_metadata_types = [item for item in metadata_types if item in metadataTypesForTable]
         context = get_context()
         with context.db_engine.scoped_session() as session:
             table = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
-            table_columns = DatasetColumnRepository.list_active_columns_for_table(session, table.tableUri)
+            table_columns = DatasetColumnRepository.list_active_columns_for_table(session, table.tableUri, limit=50)
             metadata = BedrockClient().invoke_model_table_metadata(
-                table=table, columns=table_columns, metadata_types=metadata_types, sample_data=sample_data
+                table=table, columns=table_columns, metadata_types=table_metadata_types, sample_data=sample_data
             )
 
             result = [{'targetUri': uri, 'targetType': 'Table', **metadata}]
