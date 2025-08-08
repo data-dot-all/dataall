@@ -601,8 +601,8 @@ class DatasetService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             dataset = DatasetBaseRepository.get_dataset_by_uri(session, uri)
-            tables = DatasetRepository.get_dataset_tables(session, dataset.datasetUri)
-            folders = DatasetLocationRepository.get_dataset_folders(session, dataset.datasetUri)
+            tables = DatasetRepository.get_dataset_tables(session, dataset.datasetUri, limit=50)
+            folders = DatasetLocationRepository.get_dataset_folders(session, dataset.datasetUri, limit=50)
             metadata = BedrockClient().invoke_model_dataset_metadata(
                 metadata_types=metadata_types,
                 dataset=dataset,

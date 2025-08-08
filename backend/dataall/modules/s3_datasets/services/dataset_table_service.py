@@ -210,7 +210,7 @@ class DatasetTableService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             table = DatasetTableRepository.get_dataset_table_by_uri(session, uri)
-            table_columns = DatasetColumnRepository.list_active_columns_for_table(session, table.tableUri)
+            table_columns = DatasetColumnRepository.list_active_columns_for_table(session, table.tableUri, limit=50)
             metadata = BedrockClient().invoke_model_table_metadata(
                 table=table, columns=table_columns, metadata_types=metadata_types, sample_data=sample_data
             )

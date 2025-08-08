@@ -81,7 +81,7 @@ class S3DatasetClient:
                 Bucket=bucket_name,
                 Prefix=prefix,
                 ExpectedBucketOwner=dataset.AwsAccountId,
-                MaxKeys=1000,
+                MaxKeys=100,
             )
             return response.get('Contents', [])
         except ClientError as e:
