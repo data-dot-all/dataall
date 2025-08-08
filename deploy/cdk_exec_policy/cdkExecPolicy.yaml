@@ -113,6 +113,17 @@ Resources:
               - 'iam:*Role*'
             Resource: !Sub 'arn:${AWS::Partition}:iam::*:role/cdk-*'
 
+          - Sid: CloudTrail
+            Effect: Allow
+            Action:
+              - 'cloudtrail:DeleteTrail'
+              - 'cloudtrail:CreateTrail'
+              - 'cloudtrail:AddTags'
+              - 'cloudtrail:StartLogging'
+              - 'cloudtrail:PutEventSelectors'
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:cloudtrail:${AWS::Region}:${AWS::AccountId}:trail/dataall-environment-*'
+
           - !If 
             - DashboardsEnabledCondition
             - Sid: Quicksight
@@ -239,6 +250,18 @@ Resources:
                 - !Sub 'arn:${AWS::Partition}:sagemaker:${AWS::Region}:${AWS::AccountId}:user-profile/*'
                 - !Sub 'arn:${AWS::Partition}:sagemaker:${AWS::Region}:${AWS::AccountId}:notebook-instance/${EnvironmentResourcePrefix}*'
             - !Ref AWS::NoValue
+
+  CDKCustomExecutionPolicy1:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: !Join
+        - ''
+        - - !Ref PolicyName
+          - '-1-'
+          - !Ref AWS::Region
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
 
           - Sid: SSM
             Effect: Allow

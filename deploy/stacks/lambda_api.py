@@ -23,7 +23,7 @@ from aws_cdk import (
     BundlingOptions,
 )
 from cdk_klayers import Klayers
-from aws_cdk.aws_apigateway import DomainNameOptions, EndpointType, SecurityPolicy
+from aws_cdk.aws_apigateway import EndpointType, SecurityPolicy
 from aws_cdk.aws_certificatemanager import Certificate
 from aws_cdk.aws_ec2 import (
     InterfaceVpcEndpoint,
@@ -35,6 +35,7 @@ from aws_cdk.aws_ec2 import (
 from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling
 from .waf_rules import get_waf_rules
+from .runtime_options import PYTHON_LAMBDA_RUNTIME
 
 DEFAULT_API_RATE_LIMIT = 10000
 DEFAULT_API_BURST_LIMIT = 5000
@@ -282,8 +283,7 @@ class LambdaApiStack(pyNestedClass):
             )
 
         # Initialize Klayers
-        runtime = _lambda.Runtime.PYTHON_3_12
-        klayers = Klayers(self, python_version=runtime, region=self.region)
+        klayers = Klayers(self, python_version=PYTHON_LAMBDA_RUNTIME, region=self.region)
 
         # get the latest layer version for the cryptography package
         cryptography_layer = klayers.layer_version(self, 'cryptography')
@@ -303,7 +303,7 @@ class LambdaApiStack(pyNestedClass):
             code=_lambda.Code.from_asset(
                 path=custom_authorizer_assets,
                 bundling=BundlingOptions(
-                    image=_lambda.Runtime.PYTHON_3_9.bundling_image,
+                    image=PYTHON_LAMBDA_RUNTIME.bundling_image,
                     local=SolutionBundling(source_path=custom_authorizer_assets),
                 ),
             ),
@@ -314,7 +314,7 @@ class LambdaApiStack(pyNestedClass):
             environment_encryption=lambda_env_key,
             vpc=vpc,
             security_groups=[authorizer_fn_sg],
-            runtime=runtime,
+            runtime=PYTHON_LAMBDA_RUNTIME,
             layers=[cryptography_layer],
             logging_format=_lambda.LoggingFormat.JSON,
             application_log_level_v2=getattr(_lambda.ApplicationLogLevel, log_level),

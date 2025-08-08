@@ -5,10 +5,10 @@ ARG REACT_APP_STAGE
 ARG DOMAIN
 ARG NODE_VERSION=22
 ARG NGINX_VERSION=1.24.0
-ARG NVM_VERSION=v0.37.2
+ARG NVM_VERSION=v0.40.3
 ARG CONTAINER_USER=cuser
 ARG CONTAINER_USER_GROUP=cuser
-
+ARG CONTAINER_UID=999
 
 
 # Clean cache
@@ -19,9 +19,9 @@ RUN dnf upgrade -y;\
     dnf clean all; rm -rfv /var/cache/dnf
 
 # Installing libraries
-RUN dnf install -y tar gzip openssl nginx-$NGINX_VERSION
+RUN dnf install -y findutils tar gzip openssl nginx-$NGINX_VERSION
 
-RUN groupadd -r ${CONTAINER_USER_GROUP} && useradd -m -r -g ${CONTAINER_USER_GROUP} ${CONTAINER_USER}
+RUN groupadd -r ${CONTAINER_USER_GROUP} && useradd -m -r -u ${CONTAINER_UID} -g ${CONTAINER_USER_GROUP} ${CONTAINER_USER}
 
 RUN mkdir -p /var/cache/nginx /var/log/nginx /var/lib/nginx /var/run/nginx /var/www/html && \
     chown -R ${CONTAINER_USER}:${CONTAINER_USER_GROUP} /var/cache/nginx /var/log/nginx /var/lib/nginx /var/run/nginx /var/www/html && \
@@ -44,11 +44,16 @@ USER ${CONTAINER_USER}
 
 RUN touch ~/.bashrc
 
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/$NVM_VERSION/install.sh | bash
-RUN . ~/.nvm/nvm.sh && nvm install node
-RUN echo '. ~/.nvm/nvm.sh' >> ~/.bashrc
-
-RUN . ~/.nvm/nvm.sh && npm install -g npm@9 yarn
+# Configuring Node
+RUN <<-EOF
+    curl -o- https://raw.githubusercontent.com/creationix/nvm/$NVM_VERSION/install.sh | bash
+    . ~/.nvm/nvm.sh
+    nvm install $NODE_VERSION
+    nvm use $NODE_VERSION
+    nvm alias default node
+    nvm cache clear
+    npm install --global yarn
+EOF
 
 
 COPY --chown=${CONTAINER_USER}:${CONTAINER_USER_GROUP} ./frontend/package.json ./frontend/yarn.lock ./
@@ -81,6 +86,6 @@ COPY --chown=${CONTAINER_USER}:${CONTAINER_USER_GROUP} ./frontend ./
 
 RUN . ~/.nvm/nvm.sh && yarn build
 
-RUN cp -a build/. /usr/share/nginx/html/
+RUN cp -av build/. /usr/share/nginx/html/
 
 CMD ["nginx", "-g", "daemon off;"]

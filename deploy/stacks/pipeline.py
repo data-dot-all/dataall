@@ -23,6 +23,7 @@ from .cloudfront_stage import CloudfrontStage
 from .codeartifact import CodeArtifactStack
 from .ecr_stage import ECRStage
 from .iam_utils import get_tooling_account_external_id
+from .runtime_options import PYTHON_VERSION
 from .vpc import VpcStack
 
 
@@ -335,6 +336,7 @@ class PipelineStack(Stack):
                     'codeartifact:GetAuthorizationToken',
                     'codeartifact:GetRepositoryEndpoint',
                     'codeartifact:ReadFromRepository',
+                    'codecommit:GitPull',
                     'ecr:GetDownloadUrlForLayer',
                     'ecr:BatchGetImage',
                     'ecr:BatchCheckLayerAvailability',
@@ -634,6 +636,13 @@ class PipelineStack(Stack):
                 repository_name=repository_name,
             )
         )
+        deploy_image_args = [
+            'image-tag=$IMAGE_TAG',
+            f'account={target_env["account"]}',
+            f'region={target_env["region"]}',
+            f'repo={repository_name}',
+            f'build-args="--build-arg PYTHON_VERSION=python{PYTHON_VERSION}"',
+        ]
         ecr_stage.add_post(
             pipelines.CodeBuildStep(
                 id='LambdaImage',
@@ -646,9 +655,7 @@ class PipelineStack(Stack):
                         'IMAGE_TAG': codebuild.BuildEnvironmentVariable(value=f'lambdas-{self.image_tag}'),
                     },
                 ),
-                commands=[
-                    f'make deploy-image type=lambda image-tag=$IMAGE_TAG account={target_env["account"]} region={target_env["region"]} repo={repository_name}',
-                ],
+                commands=[f'make deploy-image {" ".join(["type=lambda"] + deploy_image_args)}'],
                 role=self.baseline_codebuild_role.without_policy_updates(),
                 vpc=self.vpc,
             ),
@@ -663,9 +670,7 @@ class PipelineStack(Stack):
                         'IMAGE_TAG': codebuild.BuildEnvironmentVariable(value=f'cdkproxy-{self.image_tag}'),
                     },
                 ),
-                commands=[
-                    f'make deploy-image type=ecs image-tag=$IMAGE_TAG account={target_env["account"]} region={target_env["region"]} repo={repository_name}',
-                ],
+                commands=[f'make deploy-image {" ".join(["type=ecs"] + deploy_image_args)}'],
                 role=self.baseline_codebuild_role.without_policy_updates(),
                 vpc=self.vpc,
             ),

@@ -52,7 +52,7 @@ check-security: upgrade-pip install-backend install-cdkproxy
 	pip install bandit
 	pip install safety
 	bandit -lll -r backend
-	safety check --ignore=51668,70612,70624
+	safety check
 
 checkov-synth: upgrade-pip install-backend install-cdkproxy install-tests
 	export PYTHONPATH=./backend:/./tests && \
@@ -79,7 +79,7 @@ coverage: upgrade-pip install-backend install-cdkproxy install-tests
 		--color=yes
 
 deploy-image:
-	docker build -f backend/docker/prod/${type}/Dockerfile -t ${image-tag}:${image-tag} . && \
+	docker build ${build-args} -f backend/docker/prod/${type}/Dockerfile -t ${image-tag}:${image-tag} . && \
 	aws ecr get-login-password --region ${region} | docker login --username AWS --password-stdin ${account}.dkr.ecr.${region}.amazonaws.com && \
 	docker tag ${image-tag}:${image-tag} ${account}.dkr.ecr.${region}.amazonaws.com/${repo}:${image-tag} && \
 	docker push ${account}.dkr.ecr.${region}.amazonaws.com/${repo}:${image-tag}
