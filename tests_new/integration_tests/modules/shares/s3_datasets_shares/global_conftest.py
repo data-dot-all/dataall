@@ -50,13 +50,7 @@ def create_consumption_role(client, group, environment, environment_client, iam_
         iam_role_name,
         f'dataall-integration-tests-role-{environment.region}',
     )
-    return add_consumption_role(
-        client,
-        environment.environmentUri,
-        group,
-        cons_role_name,
-        role['Role']['Arn'],
-    )
+    return add_consumption_role(client, environment.environmentUri, group, cons_role_name, role['Role']['Arn'])
 
 
 # --------------SESSION PARAM FIXTURES----------------------------
