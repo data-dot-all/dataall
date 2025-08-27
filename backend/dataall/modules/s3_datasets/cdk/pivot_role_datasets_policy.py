@@ -69,9 +69,11 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     'glue:DeleteResourcePolicy',
                     'glue:PutResourcePolicy',
                 ],
-                resources=[f'arn:aws:glue:*:{self.account}:catalog',
-                           f'arn:aws:glue:*:{self.account}:database/*',
-                           f'arn:aws:glue:*:{self.account}:table/*/*']
+                resources=[
+                    f'arn:aws:glue:*:{self.account}:catalog',
+                    f'arn:aws:glue:*:{self.account}:database/*',
+                    f'arn:aws:glue:*:{self.account}:table/*/*',
+                ],
             ),
             # Manage LF permissions for glue databases
             iam.PolicyStatement(
@@ -128,7 +130,7 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     'glue:UpdateTrigger',
                     'glue:UpdateJob',
                     'glue:UpdateCrawler',
-                    'glue:GetCrawler'          
+                    'glue:GetCrawler',
                 ],
                 resources=[
                     f'arn:aws:glue:*:{self.account}:crawler/{self.env_resource_prefix}*',

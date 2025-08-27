@@ -101,16 +101,14 @@ class DataSharingPivotRole(PivotRoleStatementSet):
                 effect=iam.Effect.ALLOW,
                 actions=[
                     'ram:AcceptResourceShareInvitation',
-                    'ram:RejectResourceShareInvitation'
+                    'ram:RejectResourceShareInvitation',
                 ],
                 resources=[f'arn:aws:ram:*:{self.account}:resource-share-invitation/*'],  # Scoped
                 conditions={
-                    'StringEquals': {
-                        'aws:ResourceAccount': [f'{self.account}']
-                    },
+                    'StringEquals': {'aws:ResourceAccount': [f'{self.account}']},
                     'ForAllValues:StringLike': {
                         'ram:ResourceShareName': ['LakeFormation*', f'{self.env_resource_prefix}*']
-                    }
+                    },
                 },
             ),
             iam.PolicyStatement(
