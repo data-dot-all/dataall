@@ -185,7 +185,12 @@ services:
       - "8080:8080"
 
   migrations:
-    image: dataall-graphql-base
+    build:
+      context: ./
+      additional_contexts:
+        dataall-graphql-base: "service:graphql-base"
+      dockerfile_inline: |
+        FROM dataall-graphql-base
     entrypoint: [ "alembic", "-c", "backend/alembic.ini", "upgrade", "head" ]
     working_dir: /migrations/
     environment:
