@@ -129,7 +129,7 @@ def share(db):
                 owner='bob',
                 principalId=environment.SamlGroupName,
                 principalType=PrincipalType.Group.value,
-                principalRoleName=env_group.environmentIAMRoleName,
+                principalName=env_group.environmentIAMRoleName,
                 status=ShareObjectStatus.Approved.value,
                 groupUri=env_group.groupUri,
             )
