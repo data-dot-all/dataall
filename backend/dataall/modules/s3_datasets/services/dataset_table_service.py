@@ -208,7 +208,7 @@ class DatasetTableService:
     #     'metadata', 'modules.s3_datasets.features.generate_metadata_ai.max_count_per_day'
     # )
     def generate_metadata_for_table(uri, metadata_types, sample_data):
-        metadataTypesForTable = [MetadataGenerationTypes.Description, MetadataGenerationTypes.Tag]
+        metadataTypesForTable = [MetadataGenerationTypes.Description.value, MetadataGenerationTypes.Tag.value]
         table_metadata_types = [item for item in metadata_types if item in metadataTypesForTable]
         context = get_context()
         with context.db_engine.scoped_session() as session:
