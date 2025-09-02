@@ -2,7 +2,7 @@ import os
 
 # workaround: SPARK_VERSION must be already set before import of pydeequ packages
 # ruff: noqa: E402
-os.environ['SPARK_VERSION'] = '3.1'
+os.environ['SPARK_VERSION'] = '3.3'
 
 import json
 import logging
@@ -41,7 +41,7 @@ list_args = [
 ]
 try:
     args = getResolvedOptions(sys.argv, list_args)
-    logger.info(f"Table arg passed profiling will run only on specified table >>> {args['table']}")
+    logger.info(f'Table arg passed profiling will run only on specified table >>> {args["table"]}')
 except Exception as e:
     logger.info(f'No Table arg passed profiling will run on all dataset tables: {e}')
     list_args.remove('table')
@@ -78,7 +78,7 @@ def get_database_tables(client, database):
                 all_database_tables.append(table['Name'])
         return all_database_tables
     except ClientError as e:
-        logger.error(f'Could not retrieve all ' f'database {database} tables ')
+        logger.error(f'Could not retrieve all database {database} tables ')
         raise e
 
 
@@ -94,13 +94,13 @@ def run_table_profiling(
 ):
     response = glue.get_table(DatabaseName=database, Name=table)
     location = response['Table'].get('StorageDescriptor', {}).get('Location')
-    output_directory = f"s3://{results_bucket}/profiling/results/{dataset_uri}/{table}/{args['JOB_RUN_ID']}"
+    output_directory = f's3://{results_bucket}/profiling/results/{dataset_uri}/{table}/{args["JOB_RUN_ID"]}'
 
     if location:
         logger.debug('Profiling table for %s %s ', database, table)
         logger.debug('using %s', database)
         spark.sql('use `{}`'.format(database))
-        df = spark.sql('select * from {}'.format(table))
+        df = spark.sql('select * from `{}`'.format(table))
         total = df.count()
         logger.debug('Retrieved count for %s %s', table, total)
 
@@ -158,7 +158,7 @@ def run_table_profiling(
 
         response = s3_client.put_object(
             Bucket=results_bucket,
-            Key=f"profiling/results/{dataset_uri}/{table}/{args['JOB_RUN_ID']}/results.json",
+            Key=f'profiling/results/{dataset_uri}/{table}/{args["JOB_RUN_ID"]}/results.json',
             Body=json.dumps(profiling_results),
         )
         logger.info(f'JSON written to s3: {response}')

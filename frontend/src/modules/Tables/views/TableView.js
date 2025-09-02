@@ -42,6 +42,7 @@ import { isFeatureEnabled } from 'utils';
 import config from '../../../generated/config.json';
 
 const previewDataEnabled = isFeatureEnabled('s3_datasets', 'preview_data');
+const metricsEnabled = isFeatureEnabled('s3_datasets', 'metrics_data');
 
 const confidentialityOptionsDict =
   config.modules.datasets_base.features.confidentiality_dropdown === true &&
@@ -58,7 +59,7 @@ function TablePageHeader(props) {
     <Grid container justifyContent="space-between" spacing={3}>
       <Grid item>
         <Typography color="textPrimary" variant="h5">
-          Table {table.GlueTableName}
+          Table {table.label}
         </Typography>
         <Breadcrumbs
           aria-label="breadcrumb"
@@ -99,7 +100,7 @@ function TablePageHeader(props) {
             to={`/console/s3-datasets/table/${table.tableUri}`}
             variant="subtitle2"
           >
-            {table.GlueTableName}
+            {table.label}
           </Link>
         </Breadcrumbs>
       </Grid>
@@ -195,7 +196,7 @@ const TableView = () => {
       if (!tabs.find((t) => t.value === 'columns')) {
         tabs.push({ label: 'Columns', value: 'columns' });
       }
-      if (!tabs.find((t) => t.value === 'metrics')) {
+      if (metricsEnabled && !tabs.find((t) => t.value === 'metrics')) {
         tabs.push({ label: 'Metrics', value: 'metrics' });
       }
       if (
@@ -221,7 +222,7 @@ const TableView = () => {
   const fetchItem = useCallback(async () => {
     setLoading(true);
     const response = await client.query(getDatasetTable(params.uri));
-    if (!response.errors && response.data.getDatasetTable !== null) {
+    if (response.data.getDatasetTable !== null) {
       setTable(response.data.getDatasetTable);
       handleUserRole(
         response.data.getDatasetTable.dataset.userRoleForDataset,
@@ -310,7 +311,7 @@ const TableView = () => {
             {currentTab === 'columns' && (
               <TableColumns table={table} isAdmin={isAdmin} />
             )}
-            {currentTab === 'metrics' && (
+            {metricsEnabled && currentTab === 'metrics' && (
               <TableMetrics table={table} isAdmin={isAdmin} />
             )}
             {currentTab === 'datafilters' && isAdmin && (

@@ -5,7 +5,6 @@ from dataall.base.api.context import Context
 from dataall.base.db.exceptions import RequiredParameter
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.environment.services.environment_service import EnvironmentService
-from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.shares_base.services.shares_enums import ShareObjectPermission, PrincipalType
@@ -151,8 +150,8 @@ def reapply_items_share_object(context: Context, source, input):
     return ShareItemService.reapply_items_share_object(uri=share_uri, item_uris=reapply_item_uris)
 
 
-def delete_share_object(context: Context, source, shareUri: str = None):
-    return ShareObjectService.delete_share_object(uri=shareUri)
+def delete_share_object(context: Context, source, shareUri: str = None, forceDelete: bool = False):
+    return ShareObjectService.delete_share_object(uri=shareUri, force_delete=forceDelete)
 
 
 def cancel_share_object_extension(context: Context, source, shareUri: str = None):
@@ -214,7 +213,11 @@ def resolve_user_role(context: Context, source: ShareObject, **kwargs):
 
 
 def resolve_can_view_logs(context: Context, source: ShareObject):
-    return ShareLogsService.check_view_log_permissions(context.username, context.groups, source.shareUri)
+    try:
+        return ShareLogsService.check_view_logs_permissions(source.shareUri)
+    except Exception as e:
+        log.error(f'Failed to check if user is allowed to view share logs due to: {e}')
+        return False
 
 
 def resolve_dataset(context: Context, source: ShareObject, **kwargs):
@@ -310,12 +313,10 @@ def list_shares_in_my_outbox(context: Context, source, filter: dict = None):
 def list_shared_with_environment_data_items(context: Context, source, environmentUri: str = None, filter: dict = None):
     if not filter:
         filter = {}
-    with context.engine.scoped_session() as session:
-        return ShareItemService.paginated_shared_with_environment_datasets(
-            session=session,
-            uri=environmentUri,
-            data=filter,
-        )
+    return ShareItemService.paginated_shared_with_environment_datasets(
+        uri=environmentUri,
+        data=filter,
+    )
 
 
 def update_share_request_purpose(context: Context, source, shareUri: str = None, requestPurpose: str = None):

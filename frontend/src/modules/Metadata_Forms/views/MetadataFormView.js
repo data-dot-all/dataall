@@ -1,8 +1,8 @@
 import React, { useEffect, useCallback, useState } from 'react';
 
 import { Helmet } from 'react-helmet-async';
-import { SET_ERROR, useDispatch } from '../../../globalErrors';
-import { fetchEnums, useClient } from '../../../services';
+import { SET_ERROR, useDispatch } from 'globalErrors';
+import { fetchEnums, useClient } from 'services';
 import { getMetadataForm } from '../services';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import {
@@ -18,13 +18,18 @@ import {
   Tabs,
   Typography
 } from '@mui/material';
-import { ChevronRightIcon, useSettings } from '../../../design';
+import {
+  ChevronRightIcon,
+  DeleteObjectWithFrictionModal,
+  useSettings
+} from 'design';
 import { FaTrash } from 'react-icons/fa';
 import {
   MetadataFormInfo,
   MetadataFormFields,
   MetadataFormPreview,
-  MetadataFormEnforcement
+  MetadataFormEnforcement,
+  MetadataFormAttachedEntities
 } from '../components';
 import { deleteMetadataForm } from '../services/deleteMetadataForm';
 import { useNavigate } from 'react-router';
@@ -38,6 +43,7 @@ const MetadataFormView = () => {
   const tabs = [
     { label: 'Form Info', value: 'info' },
     { label: 'Fields', value: 'fields' },
+    { label: 'Attached Entities', value: 'attached' },
     { label: 'Enforcement', value: 'enforcement' },
     { label: 'Preview', value: 'preview' }
   ];
@@ -47,6 +53,7 @@ const MetadataFormView = () => {
   const [visibilityDict, setVisibilityDict] = useState({});
   const [fieldTypeOptions, setFieldTypeOptions] = useState([]);
   const [userRolesMF, setUserRolesMFDict] = useState({});
+  const [isDeleteRoleModalOpen, setIsDeleteRoleModalOpen] = useState(false);
 
   const handleTabsChange = (event, value) => {
     setCurrentTab(value);
@@ -113,6 +120,13 @@ const MetadataFormView = () => {
     } catch (e) {
       dispatch({ type: SET_ERROR, error: e.message });
     }
+  };
+
+  const handleDeleteRoleModalOpen = () => {
+    setIsDeleteRoleModalOpen(true);
+  };
+  const handleDeleteRoleModalClosed = () => {
+    setIsDeleteRoleModalOpen(false);
   };
 
   useEffect(() => {
@@ -206,12 +220,34 @@ const MetadataFormView = () => {
                     color="primary"
                     startIcon={<FaTrash size={15} />}
                     sx={{ mt: 1 }}
-                    onClick={deleteForm}
+                    onClick={handleDeleteRoleModalOpen}
                     type="button"
                     variant="outlined"
                   >
                     Delete
                   </Button>
+                  <DeleteObjectWithFrictionModal
+                    objectName={metadataForm.name}
+                    onApply={() => handleDeleteRoleModalClosed(false)}
+                    onClose={() => handleDeleteRoleModalClosed(false)}
+                    deleteMessage={
+                      <>
+                        <Typography
+                          align={'center'}
+                          variant="subtitle2"
+                          color="error"
+                        >
+                          Are you sure you want to delete this Metadata form ?
+                          Deleting a metadata form will remove the attached
+                          form, from all the entities. Once deleted, attached
+                          metadata forms cannot be recovered.
+                        </Typography>
+                      </>
+                    }
+                    open={isDeleteRoleModalOpen}
+                    isAWSResource={false}
+                    deleteFunction={deleteForm}
+                  />
                 </Box>
               </Grid>
             )}
@@ -251,7 +287,16 @@ const MetadataFormView = () => {
               />
             )}
             {currentTab === 'enforcement' && (
-              <MetadataFormEnforcement metadataForm={metadataForm} />
+              <MetadataFormEnforcement
+                metadataForm={metadataForm}
+                canEdit={metadataForm.userRole === userRolesMF.Owner}
+              />
+            )}
+            {currentTab === 'attached' && (
+              <MetadataFormAttachedEntities
+                metadataForm={metadataForm}
+                userRolesMF={userRolesMF}
+              />
             )}
             {currentTab === 'preview' && (
               <MetadataFormPreview metadataForm={metadataForm} />

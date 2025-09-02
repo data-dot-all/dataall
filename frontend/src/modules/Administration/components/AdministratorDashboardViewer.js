@@ -1,4 +1,4 @@
-import { AddOutlined, ArrowRightAlt } from '@mui/icons-material';
+import { AddOutlined } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
   Box,
@@ -17,12 +17,11 @@ import * as ReactIf from 'react-if';
 import * as Yup from 'yup';
 import { useSettings } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
-import { getTrustAccount, useClient } from 'services';
+import { useClient } from 'services';
 import {
   createQuicksightDataSourceSet,
   getMonitoringDashboardId,
   getMonitoringVPCConnectionId,
-  getPlatformAuthorSession,
   getPlatformReaderSession,
   updateSSMParameter
 } from '../services';
@@ -35,20 +34,9 @@ export const DashboardViewer = () => {
   const { settings } = useSettings();
   const [dashboardId, setDashboardId] = useState('');
   const [vpcConnectionId, setVpcConnectionId] = useState('');
-  const [trustedAccount, setTrustedAccount] = useState(null);
   const [dashboardRef] = useState(createRef());
   const [sessionUrl, setSessionUrl] = useState(null);
-  const [isOpeningSession, setIsOpeningSession] = useState(false);
   const [isCreatingDataSource, setIsCreatingDataSource] = useState(false);
-
-  const fetchTrustedAccount = useCallback(async () => {
-    const response = await client.query(getTrustAccount());
-    if (!response.errors) {
-      setTrustedAccount(response.data.getTrustAccount);
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-  }, [client, dispatch]);
 
   const fetchMonitoringVPCConnectionId = useCallback(async () => {
     const response = await client.query(getMonitoringVPCConnectionId());
@@ -99,16 +87,12 @@ export const DashboardViewer = () => {
       fetchMonitoringVPCConnectionId().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
-      fetchTrustedAccount().catch((e) =>
-        dispatch({ type: SET_ERROR, error: e.message })
-      );
     }
   }, [
     client,
     dispatch,
     fetchMonitoringDashboardId,
-    fetchMonitoringVPCConnectionId,
-    fetchTrustedAccount
+    fetchMonitoringVPCConnectionId
   ]);
 
   async function submitVpc(values, setStatus, setSubmitting, setErrors) {
@@ -183,19 +167,6 @@ export const DashboardViewer = () => {
     setIsCreatingDataSource(false);
   }
 
-  const startAuthorSession = async () => {
-    setIsOpeningSession(true);
-    const response = await client.query(
-      getPlatformAuthorSession(trustedAccount)
-    );
-    if (!response.errors) {
-      window.open(response.data.getPlatformAuthorSession, '_blank');
-    } else {
-      dispatch({ type: SET_ERROR, error: response.errors[0].message });
-    }
-    setIsOpeningSession(false);
-  };
-
   return (
     <Container maxWidth={settings.compact ? 'xl' : false}>
       <Grid container justifyContent="space-between" spacing={3}>
@@ -206,8 +177,9 @@ export const DashboardViewer = () => {
             <CardContent>
               <Box>
                 <Typography color="textSecondary" variant="subtitle2">
-                  1. Enable Quicksight Enterprise Edition in AWS Account ={' '}
-                  {trustedAccount}. Check the user guide for more details.
+                  1. Enable Quicksight Enterprise Edition in the infrastructure
+                  data.all central account. Check the user guide for more
+                  details.
                 </Typography>
               </Box>
               <Box>
@@ -343,20 +315,6 @@ export const DashboardViewer = () => {
                     Dashboard. Check the user guide for more details.
                   </Typography>
                 </Box>
-                <Grid container justifyContent="space-between" spacing={3}>
-                  <Grid item lg={12} xl={12} xs={12}>
-                    <LoadingButton
-                      loading={isOpeningSession}
-                      color="primary"
-                      endIcon={<ArrowRightAlt fontSize="small" />}
-                      variant="outlined"
-                      onClick={startAuthorSession}
-                      sx={{ mt: 1, mb: 2, ml: 2 }}
-                    >
-                      Start Quicksight session
-                    </LoadingButton>
-                  </Grid>
-                </Grid>
               </Box>
               <Box>
                 <Box mb={1}>

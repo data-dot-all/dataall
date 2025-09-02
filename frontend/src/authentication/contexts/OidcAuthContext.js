@@ -2,7 +2,7 @@ import { AuthProvider } from 'react-oidc-context';
 import PropTypes from 'prop-types';
 import { WebStorageStateStore } from 'oidc-client-ts';
 import { GenericAuthProvider } from './GenericAuthContext';
-import { RequestContextProvider } from '../../reauthentication';
+import { RequestContextProvider } from 'reauthentication';
 
 const oidcConfig = {
   authority: process.env.REACT_APP_CUSTOM_AUTH_URL,

@@ -1,3 +1,4 @@
+from dataall.base.utils.naming_convention import NamingConventionPattern, NamingConventionService
 from dataall.core.environment.db.environment_models import (
     EnvironmentParameter,
     Environment,
@@ -281,7 +282,9 @@ class EnvironmentRepository:
                 or_(
                     Environment.label.ilike('%' + term + '%'),
                     Environment.description.ilike('%' + term + '%'),
-                    Environment.tags.contains(f'{{{term}}}'),
+                    Environment.tags.contains(
+                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, target_label=term).sanitize()}}}'
+                    ),
                     Environment.region.ilike('%' + term + '%'),
                 )
             )
@@ -310,3 +313,16 @@ class EnvironmentRepository:
     @staticmethod
     def query_environment_groups(session, uri):
         return session.query(EnvironmentGroup).filter(EnvironmentGroup.environmentUri == uri).all()
+
+    @staticmethod
+    def get_environment_consumption_role_by_name(session, uri, IAMRoleName):
+        return (
+            session.query(ConsumptionRole)
+            .filter(
+                and_(
+                    ConsumptionRole.environmentUri == uri,
+                    ConsumptionRole.IAMRoleName == IAMRoleName,
+                )
+            )
+            .first()
+        )

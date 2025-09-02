@@ -30,8 +30,8 @@ export const DashboardOverview = (props) => {
       <Grid item lg={4} xl={3} xs={12}>
         <ObjectMetadata
           environment={dashboard.environment}
-          region={dashboard.environment.region}
-          organization={dashboard.organization}
+          region={dashboard.restricted?.region}
+          organization={dashboard.environment.organization}
           owner={dashboard.owner}
           admins={dashboard.SamlGroupName || '-'}
           created={dashboard.created}

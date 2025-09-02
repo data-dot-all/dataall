@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import Query
@@ -7,6 +8,8 @@ from dataall.base.db import exceptions, paginate
 from dataall.core.organizations.db import organization_models as models
 from dataall.core.environment.db.environment_models import Environment
 from dataall.base.context import get_context
+from dataall.base.utils.naming_convention import NamingConventionPattern, NamingConventionService
+
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +48,9 @@ class OrganizationRepository:
                 or_(
                     models.Organization.label.ilike('%' + filter.get('term') + '%'),
                     models.Organization.description.ilike('%' + filter.get('term') + '%'),
-                    models.Organization.tags.contains(f"{{{filter.get('term')}}}"),
+                    models.Organization.tags.contains(
+                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, target_label=filter.get("term")).sanitize()}}}'
+                    ),
                 )
             )
         return query.order_by(models.Organization.label).distinct()
@@ -127,3 +132,7 @@ class OrganizationRepository:
             .first()
         )
         return membership
+
+    @staticmethod
+    def query_all_active_organizations(session) -> List[models.Organization]:
+        return session.query(models.Organization).filter(models.Organization.deleted.is_(None)).all()

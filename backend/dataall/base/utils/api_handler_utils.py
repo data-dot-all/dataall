@@ -24,12 +24,22 @@ MAINTENANCE_ALLOWED_OPERATIONS_WHEN_NO_ACCESS = [
 ]
 ENGINE = get_engine(envname=ENVNAME)
 ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', '*')
+AWS_REGION = os.getenv('AWS_REGION')
+
+
+def redact_creds(event):
+    if event.get('headers', {}).get('Authorization'):
+        event['headers']['Authorization'] = 'XXXXXXXXXXXX'
+
+    if event.get('multiValueHeaders', {}).get('Authorization'):
+        event['multiValueHeaders']['Authorization'] = 'XXXXXXXXXXXX'
+    return event
 
 
 def get_cognito_groups(claims):
     if not claims:
         raise ValueError(
-            'Received empty claims. ' 'Please verify authorizer configuration',
+            'Received empty claims. Please verify authorizer configuration',
             claims,
         )
     groups = list()
@@ -107,7 +117,7 @@ def check_reauth(query, auth_time, username):
     # Determine if there are any Operations that Require ReAuth From SSM Parameter
     try:
         reauth_apis = ParameterStoreManager.get_parameter_value(
-            region=os.getenv('AWS_REGION', 'eu-west-1'), parameter_path=f'/dataall/{ENVNAME}/reauth/apis'
+            region=AWS_REGION, parameter_path=f'/dataall/{ENVNAME}/reauth/apis'
         ).split(',')
     except Exception:
         log.info('No ReAuth APIs Found in SSM')
@@ -124,7 +134,7 @@ def check_reauth(query, auth_time, username):
             log.info(f'ReAuth Required for User {username} on Operation {query.get("operationName", "")}, Error: {e}')
             return send_unauthorized_response(
                 operation=query.get('operationName', 'operation'),
-                message=f"ReAuth Required To Perform This Action {query.get('operationName', '')}",
+                message=f'ReAuth Required To Perform This Action {query.get("operationName", "")}',
                 extension={'code': 'REAUTH'},
             )
 

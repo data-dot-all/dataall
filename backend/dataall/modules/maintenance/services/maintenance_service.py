@@ -107,7 +107,7 @@ class MaintenanceService:
                     # Check if ECS tasks are running
                     ecs_cluster_name = ParameterStoreManager.get_parameter_value(
                         region=os.getenv('AWS_REGION', 'eu-west-1'),
-                        parameter_path=f"/dataall/{os.getenv('envname', 'local')}/ecs/cluster/name",
+                        parameter_path=f'/dataall/{os.getenv("envname", "local")}/ecs/cluster/name',
                     )
                     if Ecs.is_task_running(cluster_name=ecs_cluster_name):
                         logger.info(f'Current maintenance window status - {maintenance_record.status}')
@@ -143,7 +143,7 @@ class MaintenanceService:
     def _get_ecs_rules():
         ecs_scheduled_rules = ParameterStoreManager.get_parameters_by_path(
             region=os.getenv('AWS_REGION', 'eu-west-1'),
-            parameter_path=f"/dataall/{os.getenv('envname', 'local')}/ecs/ecs_scheduled_tasks/rule",
+            parameter_path=f'/dataall/{os.getenv("envname", "local")}/ecs/ecs_scheduled_tasks/rule',
         )
         logger.debug(ecs_scheduled_rules)
         return [item['Value'] for item in ecs_scheduled_rules]

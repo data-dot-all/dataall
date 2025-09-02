@@ -186,7 +186,7 @@ const DatasetEditForm = (props) => {
   async function submit(values, setStatus, setSubmitting, setErrors) {
     if (
       enableShareExpiration !== dataset.enableExpiration ||
-      values.expirationSetting !== dataset.expirationSetting ||
+      values.expirationSetting !== dataset.expirySetting ||
       values.minValidity !== dataset.expiryMinDuration ||
       values.maxValidity !== dataset.expiryMaxDuration
     ) {
@@ -333,7 +333,7 @@ const DatasetEditForm = (props) => {
                 terms: dataset.terms || [],
                 stewards: dataset.stewards,
                 confidentiality: dataset.confidentiality,
-                KmsAlias: dataset.KmsAlias,
+                KmsAlias: dataset.restricted.KmsAlias,
                 autoApprovalEnabled: dataset.autoApprovalEnabled,
                 expirationSetting: dataset.expirySetting,
                 minValidity: dataset.expiryMinDuration,

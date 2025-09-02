@@ -16,7 +16,7 @@ class DbConfig:
         for param in (user, db, schema):
             if len(param) > _POSTGRES_MAX_LEN:
                 raise ValueError(
-                    f"PostgreSQL doesn't allow values more than 63 characters" f' parameters {user}, {db}, {schema}'
+                    f"PostgreSQL doesn't allow values more than 63 characters parameters {user}, {db}, {schema}"
                 )
 
         if len(host) > _MAX_HOST_LENGTH:
@@ -30,7 +30,7 @@ class DbConfig:
         self.db = self._sanitize_and_compare(_SANITIZE_WORD_REGEX, db, 'database name')
         self.schema = self._sanitize_and_compare(_SANITIZE_WORD_REGEX, schema, 'schema')
         pwd = self._sanitize_and_compare(_SANITIZE_PWD_REGEX, pwd, 'password')
-        self.url = f'postgresql+pygresql://{self.user}:{pwd}@{self.host}/{self.db}'
+        self.url = f'postgresql+psycopg2://{self.user}:{pwd}@{self.host}/{self.db}'
 
     def __str__(self):
         lines = ['  DbConfig >']

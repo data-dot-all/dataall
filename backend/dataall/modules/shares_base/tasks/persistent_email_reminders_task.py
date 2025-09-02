@@ -9,10 +9,6 @@ from dataall.modules.shares_base.services.share_notification_service import Shar
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 
 
-root = logging.getLogger()
-root.setLevel(logging.INFO)
-if not root.hasHandlers():
-    root.addHandler(logging.StreamHandler(sys.stdout))
 log = logging.getLogger(__name__)
 
 

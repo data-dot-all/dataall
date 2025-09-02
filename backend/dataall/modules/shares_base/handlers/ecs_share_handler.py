@@ -33,6 +33,11 @@ class EcsShareHandler:
         return EcsShareHandler._manage_share(engine, task, SharingService.reapply_share, 'reapply_share')
 
     @staticmethod
+    @Worker.handler(path='ecs.share.cleanup')
+    def cleanup_share(engine, task: Task):
+        return EcsShareHandler._manage_share(engine, task, SharingService.cleanup_share, 'cleanup_share')
+
+    @staticmethod
     @Worker.handler(path='ecs.dataset.share.reapply')
     def reapply_shares_of_dataset(engine, task: Task):
         envname = os.environ.get('envname', 'local')

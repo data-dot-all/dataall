@@ -15,12 +15,7 @@ region
 environment { 
   environmentUri
   label
-  AwsAccountId
   region
-}
-organization { 
-  organizationUri
-  label
 }
 owners
 stewards

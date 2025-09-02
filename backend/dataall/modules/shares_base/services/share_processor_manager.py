@@ -23,6 +23,11 @@ class SharesProcessorInterface(ABC):
         """Executes a series of actions to verify share items using the share manager. Returns True if the verifying was successful"""
         ...
 
+    @abstractmethod
+    def cleanup_shares(self) -> bool:
+        """Executes a series of actions to fully cleanup a share using the share manager. Returns True"""
+        ...
+
 
 @dataclass
 class ShareProcessorDefinition:

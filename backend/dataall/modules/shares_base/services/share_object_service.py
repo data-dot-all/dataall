@@ -10,6 +10,7 @@ from dataall.base.db.exceptions import UnauthorizedOperation, InvalidInput
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
 from dataall.core.tasks.db.task_models import Task
 from dataall.core.tasks.service_handlers import Worker
@@ -34,6 +35,7 @@ from dataall.modules.shares_base.services.share_permissions import (
     CREATE_SHARE_OBJECT,
     DELETE_SHARE_OBJECT,
     GET_SHARE_OBJECT,
+    MANAGE_SHARES,
 )
 from dataall.modules.shares_base.services.share_processor_manager import ShareProcessorManager
 from dataall.modules.shares_base.services.shares_enums import (
@@ -106,6 +108,7 @@ class ShareObjectService:
             return ShareObjectRepository.get_share_by_uri(session, uri)
 
     @classmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(CREATE_SHARE_OBJECT)
     def create_share_object(
         cls,
@@ -252,6 +255,7 @@ class ShareObjectService:
             return share
 
     @classmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(SUBMIT_SHARE_OBJECT)
     def submit_share_object(cls, uri: str):
         context = get_context()
@@ -295,6 +299,7 @@ class ShareObjectService:
             return share
 
     @classmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(SUBMIT_SHARE_OBJECT)
     def submit_share_extension(cls, uri: str, expiration: int, extension_reason: str, nonExpirable: bool):
         context = get_context()
@@ -361,6 +366,7 @@ class ShareObjectService:
                 raise Exception("Share expiration cannot be extended as the dataset doesn't have expiration enabled")
 
     @classmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(APPROVE_SHARE_OBJECT)
     def approve_share_object(cls, uri: str):
         context = get_context()
@@ -407,6 +413,7 @@ class ShareObjectService:
         return share
 
     @classmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(APPROVE_SHARE_OBJECT)
     def approve_share_object_extension(cls, uri: str):
         context = get_context()
@@ -453,6 +460,7 @@ class ShareObjectService:
         return share
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(SUBMIT_SHARE_OBJECT)
     def update_share_request_purpose(uri: str, request_purpose) -> bool:
         with get_context().db_engine.scoped_session() as session:
@@ -462,6 +470,7 @@ class ShareObjectService:
             return True
 
     @classmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(SUBMIT_SHARE_OBJECT)
     def update_share_expiration_period(cls, uri: str, expiration, nonExpirable) -> bool:
         with get_context().db_engine.scoped_session() as session:
@@ -486,7 +495,7 @@ class ShareObjectService:
 
             if share_item_invalid_state:
                 raise Exception(
-                    f"Cannot update share object's expiration as it share items are in incorrect state { ', '.join(invalid_states)}"
+                    f"Cannot update share object's expiration as it share items are in incorrect state {', '.join(invalid_states)}"
                 )
 
             if nonExpirable:
@@ -527,6 +536,7 @@ class ShareObjectService:
             return True
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(REJECT_SHARE_OBJECT)
     def update_share_reject_purpose(uri: str, reject_purpose) -> bool:
         with get_context().db_engine.scoped_session() as session:
@@ -536,6 +546,7 @@ class ShareObjectService:
             return True
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(SUBMIT_SHARE_OBJECT)
     def update_share_extension_purpose(uri: str, extension_purpose) -> bool:
         with get_context().db_engine.scoped_session() as session:
@@ -544,6 +555,7 @@ class ShareObjectService:
             return True
 
     @classmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(REJECT_SHARE_OBJECT)
     def reject_share_object(cls, uri: str, reject_purpose: str):
         context = get_context()
@@ -583,6 +595,7 @@ class ShareObjectService:
             return share
 
     @classmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(SUBMIT_SHARE_OBJECT)
     def cancel_share_object_extension(cls, uri: str) -> bool:
         with get_context().db_engine.scoped_session() as session:
@@ -609,46 +622,62 @@ class ShareObjectService:
             return True
 
     @classmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(DELETE_SHARE_OBJECT)
-    def delete_share_object(cls, uri: str):
-        with get_context().db_engine.scoped_session() as session:
+    def delete_share_object(cls, uri: str, force_delete: bool):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
             share, dataset, states = cls._get_share_data(session, uri)
             shared_share_items_states = [x for x in ShareStatusRepository.get_share_item_shared_states() if x in states]
-
-            new_state = cls._run_transitions(session, share, states, ShareObjectActions.Delete)
-            if shared_share_items_states:
+            if shared_share_items_states and not force_delete:
                 raise ShareItemsFound(
                     action='Delete share object',
                     message='There are shared items in this request. '
                     'Revoke access to these items before deleting the request.',
                 )
 
-            if new_state == ShareObjectStatus.Deleted.value:
-                # Delete share resource policy permissions
-                # Deleting REQUESTER permissions
-                ResourcePolicyService.delete_resource_policy(
-                    session=session,
-                    group=share.groupUri,
-                    resource_uri=share.shareUri,
+            # Force clean-up of share AWS resources
+            if force_delete:
+                log.info('Triggering force clean-up task to revoke all share items')
+                cleanup_share_task: Task = Task(
+                    action='ecs.share.cleanup',
+                    targetUri=uri,
+                    payload={'environmentUri': share.environmentUri},
                 )
+                session.add(cleanup_share_task)
+                session.commit()
+                Worker.queue(engine=context.db_engine, task_ids=[cleanup_share_task.taskUri])
 
-                # Deleting APPROVER permissions
-                ResourcePolicyService.delete_resource_policy(
-                    session=session,
-                    group=dataset.SamlAdminGroupName,
-                    resource_uri=share.shareUri,
-                )
-                if dataset.stewards != dataset.SamlAdminGroupName:
-                    ResourcePolicyService.delete_resource_policy(
-                        session=session,
-                        group=dataset.stewards,
-                        resource_uri=share.shareUri,
-                    )
-
-                # Delete share
+            else:
+                ShareObjectService.deleting_share_permissions(session=session, share=share, dataset=dataset)
+                # Delete all share items and share
+                ShareStatusRepository.delete_share_item_batch(session=session, share_uri=share.shareUri)
                 session.delete(share)
-
             return True
+
+    @staticmethod
+    def deleting_share_permissions(session, share, dataset):
+        # Delete share resource policy permissions
+        # Deleting REQUESTER permissions
+        ResourcePolicyService.delete_resource_policy(
+            session=session,
+            group=share.groupUri,
+            resource_uri=share.shareUri,
+        )
+
+        # Deleting APPROVER permissions
+        ResourcePolicyService.delete_resource_policy(
+            session=session,
+            group=dataset.SamlAdminGroupName,
+            resource_uri=share.shareUri,
+        )
+        if dataset.stewards != dataset.SamlAdminGroupName:
+            ResourcePolicyService.delete_resource_policy(
+                session=session,
+                group=dataset.stewards,
+                resource_uri=share.shareUri,
+            )
+        return True
 
     @staticmethod
     def resolve_share_object_statistics(uri):

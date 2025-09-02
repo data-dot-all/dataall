@@ -32,6 +32,10 @@ class RedshiftDatasetApiModuleInterface(ModuleInterface):
     def __init__(self):
         from dataall.modules.vote.services.vote_service import add_vote_type
         from dataall.modules.feed.api.registry import FeedRegistry, FeedDefinition
+        from dataall.core.metadata_manager.metadata_form_entity_manager import (
+            MetadataFormEntityTypes,
+            MetadataFormEntityManager,
+        )
         from dataall.modules.catalog.indexers.registry import GlossaryRegistry, GlossaryDefinition
         from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 
@@ -51,11 +55,16 @@ class RedshiftDatasetApiModuleInterface(ModuleInterface):
             FEED_REDSHIFT_DATASET_TABLE_NAME,
             VOTE_REDSHIFT_DATASET_NAME,
         )
-
+        from dataall.modules.redshift_datasets.services.redshift_dataset_permissions import (
+            GET_REDSHIFT_DATASET,
+            GET_REDSHIFT_DATASET_TABLE,
+        )
         import dataall.modules.redshift_datasets.api
 
-        FeedRegistry.register(FeedDefinition(FEED_REDSHIFT_DATASET_TABLE_NAME, RedshiftTable))
-        FeedRegistry.register(FeedDefinition(FEED_REDSHIFT_DATASET_NAME, RedshiftDataset))
+        FeedRegistry.register(
+            FeedDefinition(FEED_REDSHIFT_DATASET_TABLE_NAME, RedshiftTable, GET_REDSHIFT_DATASET_TABLE)
+        )
+        FeedRegistry.register(FeedDefinition(FEED_REDSHIFT_DATASET_NAME, RedshiftDataset, GET_REDSHIFT_DATASET))
 
         GlossaryRegistry.register(
             GlossaryDefinition(
@@ -75,12 +84,13 @@ class RedshiftDatasetApiModuleInterface(ModuleInterface):
             )
         )
 
-        add_vote_type(VOTE_REDSHIFT_DATASET_NAME, DatasetIndexer)
+        add_vote_type(VOTE_REDSHIFT_DATASET_NAME, DatasetIndexer, GET_REDSHIFT_DATASET)
 
         EnvironmentResourceManager.register(RedshiftDatasetEnvironmentResource())
         EnvironmentResourceManager.register(RedshiftConnectionEnvironmentResource())
+        MetadataFormEntityManager.register(RedshiftDataset, MetadataFormEntityTypes.RDDataset.value)
 
-        log.info('API of Redshift datasets has been imported')
+    log.info('API of Redshift datasets has been imported')
 
 
 class RedshiftDatasetCdkModuleInterface(ModuleInterface):

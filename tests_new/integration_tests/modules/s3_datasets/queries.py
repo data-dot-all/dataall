@@ -10,33 +10,21 @@ owner
 created
 updated
 admins
-AwsAccountId
-region
-S3BucketName
-GlueDatabaseName
-GlueCrawlerName
-GlueCrawlerSchedule
-GlueProfilingJobName
-GlueProfilingTriggerSchedule
-IAMDatasetAdminRoleArn
-KmsAlias
 SamlAdminGroupName
-businessOwnerEmail
-businessOwnerDelegationEmails
-importedS3Bucket
-importedGlueDatabase
-importedKmsKey
-importedAdminRole
 imported
+restricted {
+  AwsAccountId
+  region
+  KmsAlias
+  S3BucketName
+  GlueDatabaseName
+  GlueCrawlerName
+  IAMDatasetAdminRoleArn
+}
 environment { 
   environmentUri
   label
-  AwsAccountId
   region
-}
-organization { 
-  organizationUri
-  label
 }
 owners
 stewards
@@ -270,8 +258,6 @@ def start_glue_crawler(client, datasetUri, input):
                     mutation StartGlueCrawler($datasetUri: String, $input: CrawlerInput) {{
                       startGlueCrawler(datasetUri: $datasetUri, input: $input) {{
                         Name
-                        AwsAccountId
-                        region
                         status
                       }}
                     }}
@@ -304,12 +290,14 @@ def list_s3_datasets_owned_by_env_group(client, environment_uri, group_uri, term
                     nodes {{
                       datasetUri
                       label
-                      AwsAccountId
-                      region
-                      GlueDatabaseName
+                      restricted {{
+                        AwsAccountId
+                        region
+                        S3BucketName
+                        GlueDatabaseName
+                      }}
                       SamlAdminGroupName
                       name
-                      S3BucketName
                       created
                       owner
                       stack {{
@@ -365,7 +353,6 @@ def update_folder(client, locationUri, input):
                     mutation updateDatasetStorageLocation($locationUri: String!, $input: ModifyDatasetStorageLocationInput!) {{
                       updateDatasetStorageLocation(locationUri: $locationUri, input: $input) {{
                         locationUri
-                        S3Prefix
                         label
                       }}
                     }}
@@ -436,25 +423,7 @@ def sync_tables(client, datasetUri):
         'variables': {'datasetUri': datasetUri},
         'query': f"""
                     mutation SyncTables($datasetUri: String!) {{
-                      syncTables(datasetUri: $datasetUri) {{
-                        count
-                        nodes {{
-                          tableUri
-                          GlueTableName
-                          GlueDatabaseName
-                          description
-                          name
-                          label
-                          created
-                          S3Prefix
-                          dataset {{
-                            datasetUri
-                            name
-                            GlueDatabaseName
-                            userRoleForDataset
-                          }}
-                        }}
-                      }}
+                      syncTables(datasetUri: $datasetUri)
                     }}
                 """,
     }
@@ -505,13 +474,15 @@ def get_dataset_table(client, tableUri):
                     created
                     tags
                     tableUri
-                    AwsAccountId
-                    GlueTableName
-                    GlueDatabaseName
+                    restricted {{
+                      S3Prefix
+                      AwsAccountId
+                      GlueTableName
+                      GlueDatabaseName
+                    }}
                     LastGlueTableStatus
                     label
                     name
-                    S3Prefix
               }}
             }}
             """,
@@ -531,7 +502,11 @@ def list_dataset_tables(client, datasetUri):
                             tables {{
                               count
                               nodes {{
-                                GlueTableName
+                                tableUri
+                                label
+                                restricted {{
+                                    GlueTableName
+                                }}
                               }}
                             }}
                           }}
@@ -632,7 +607,7 @@ def update_dataset_table_column(client, columnUri, input):
     return response.data.updateDatasetTableColumn
 
 
-def list_dataset_table_columns(client, tableUri, term):
+def list_dataset_table_columns(client, tableUri, term=''):
     query = {
         'operationName': 'ListDatasetTableColumns',
         'variables': {'tableUri': tableUri, 'filter': {'term': term}},

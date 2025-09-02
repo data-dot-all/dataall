@@ -10,15 +10,25 @@ from sqlalchemy import and_
 from dataall.core.permissions.services.environment_permissions import REMOVE_ENVIRONMENT_GROUP
 from dataall.core.permissions.db.resource_policy.resource_policy_models import ResourcePolicy
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.base.db import utils, Resource
+
 from alembic import op
-from sqlalchemy import orm
-from dataall.core.environment.db.environment_models import Environment
+from sqlalchemy import orm, Column, String
+from sqlalchemy.ext.declarative import declarative_base
 
 # revision identifiers, used by Alembic.
 revision = 'a991ac7a85a2'
 down_revision = 'c6d01930179d'
 branch_labels = None
 depends_on = None
+
+
+Base = declarative_base()
+
+
+class Environment(Resource, Base):
+    __tablename__ = 'environment'
+    environmentUri = Column(String, primary_key=True, default=utils.uuid('environment'))
 
 
 def get_session():

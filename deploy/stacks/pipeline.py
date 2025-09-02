@@ -7,27 +7,31 @@ from aws_cdk import aws_codebuild as codebuild
 from aws_cdk import aws_codecommit as codecommit
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
-from aws_cdk import aws_logs as logs
 from aws_cdk import aws_kms as kms
+from aws_cdk import aws_logs as logs
 from aws_cdk import aws_s3 as s3
 from aws_cdk import pipelines
+from aws_cdk.aws_codebuild import BuildSpec
 from aws_cdk.pipelines import CodePipelineSource
+from cdk_nag import NagSuppressions, NagPackSuppression
 
 from .albfront_stage import AlbFrontStage
 from .aurora import AuroraServerlessStack
 from .backend_stage import BackendStage
+from .cdk_asset_trail import setup_cdk_asset_trail
 from .cloudfront_stage import CloudfrontStage
 from .codeartifact import CodeArtifactStack
 from .ecr_stage import ECRStage
-from .vpc import VpcStack
 from .iam_utils import get_tooling_account_external_id
+from .runtime_options import PYTHON_VERSION
+from .vpc import VpcStack
 
 
 class PipelineStack(Stack):
     def __init__(
         self,
-        id,
         scope,
+        id,
         repo_connection_arn,
         target_envs: List = None,
         git_branch='main',
@@ -36,7 +40,7 @@ class PipelineStack(Stack):
         repo_string='awslabs/aws-dataall',
         **kwargs,
     ):
-        super().__init__(id, scope, **kwargs)
+        super().__init__(scope, id, **kwargs)
         self.validate_deployment_params(source, repo_connection_arn, git_branch, resource_prefix, target_envs)
         self.git_branch = git_branch
         self.source = source
@@ -94,6 +98,19 @@ class PipelineStack(Stack):
 
         self.set_codebuild_iam_roles()
 
+        self.server_access_logs_bucket = s3.Bucket(
+            self,
+            f'{resource_prefix}-access-logs',
+            encryption=s3.BucketEncryption.S3_MANAGED,
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            enforce_ssl=True,
+            removal_policy=RemovalPolicy.DESTROY,
+            versioned=True,
+            auto_delete_objects=True,
+        )
+
+        setup_cdk_asset_trail(self, self.server_access_logs_bucket)
+
         self.pipeline_bucket_name = f'{self.resource_prefix}-{self.git_branch}-code-{self.account}-{self.region}'
         self.pipeline_bucket = s3.Bucket(
             self,
@@ -119,6 +136,8 @@ class PipelineStack(Stack):
             versioned=True,
             enforce_ssl=True,
             auto_delete_objects=True,
+            server_access_logs_bucket=self.server_access_logs_bucket,
+            server_access_logs_prefix=self.pipeline_bucket_name,
         )
         self.pipeline_bucket.grant_read_write(iam.AccountPrincipal(self.account))
 
@@ -133,24 +152,30 @@ class PipelineStack(Stack):
         self.artifact_bucket = s3.Bucket(
             self,
             'pipeline-artifacts-bucket',
-            bucket_name=f'{self.resource_prefix}-{self.git_branch}-artifacts-{self.account}-{self.region}',
+            bucket_name=self.artifact_bucket_name,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             removal_policy=RemovalPolicy.DESTROY,
             versioned=True,
             encryption_key=self.artifact_bucket_key,
             enforce_ssl=True,
             auto_delete_objects=True,
+            server_access_logs_bucket=self.server_access_logs_bucket,
+            server_access_logs_prefix=self.artifact_bucket_name,
         )
 
         if self.source == 'codestar_connection':
             source = CodePipelineSource.connection(
-                repo_string=repo_string, branch=self.git_branch, connection_arn=repo_connection_arn
+                repo_string=repo_string,
+                branch=self.git_branch,
+                connection_arn=repo_connection_arn,
+                code_build_clone_output=True,
             )
 
         else:
             source = CodePipelineSource.code_commit(
                 repository=codecommit.Repository.from_repository_name(self, 'sourcerepo', repository_name='dataall'),
                 branch=self.git_branch,
+                code_build_clone_output=True,
             )
 
         self.pipeline = pipelines.CodePipeline(
@@ -164,9 +189,6 @@ class PipelineStack(Stack):
             synth=pipelines.CodeBuildStep(
                 'Synth',
                 input=source,
-                build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-                ),
                 commands=[
                     f'aws codeartifact login --tool npm --repository {self.codeartifact.codeartifact_npm_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                     'npm install -g aws-cdk',
@@ -178,12 +200,17 @@ class PipelineStack(Stack):
                 role=self.baseline_codebuild_role.without_policy_updates(),
                 vpc=self.vpc,
             ),
+            # all codebuild steps in the pipeline will use these defaults
             code_build_defaults=pipelines.CodeBuildOptions(
                 build_environment=codebuild.BuildEnvironment(
                     environment_variables={
                         'DATAALL_REPO_BRANCH': codebuild.BuildEnvironmentVariable(value=git_branch),
-                    }
-                )
+                    },
+                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
+                ),
+                partial_build_spec=BuildSpec.from_object(
+                    {'phases': {'install': {'runtime-versions': {'nodejs': '22'}}}}
+                ),
             ),
         )
 
@@ -205,7 +232,7 @@ class PipelineStack(Stack):
             if target_env.get('with_approval'):
                 backend_stage.add_pre(
                     pipelines.ManualApprovalStep(
-                        id=f"Approve{target_env['envname']}Deployment",
+                        id=f'Approve{target_env["envname"]}Deployment',
                         comment=f'Approve deployment for environment {target_env["envname"]}',
                     )
                 )
@@ -222,6 +249,20 @@ class PipelineStack(Stack):
                 )
             else:
                 self.set_albfront_stage(target_env, repository_name)
+
+        self.pipeline.build_pipeline()
+
+        for construct in scope.node.find_all():
+            if construct.node.path.endswith('CrossRegionCodePipelineReplicationBucket/Resource'):
+                NagSuppressions.add_resource_suppressions(
+                    construct,
+                    [
+                        NagPackSuppression(
+                            id='AwsSolutions-S1',
+                            reason='Stack and Bucket created by CodePipeline construct',
+                        ),
+                    ],
+                )
 
         Tags.of(self).add('Application', f'{resource_prefix}-{git_branch}')
 
@@ -244,113 +285,126 @@ class PipelineStack(Stack):
             assumed_by=iam.ServicePrincipal('codebuild.amazonaws.com'),
         )
 
+        baseline_policy_statements = [
+            iam.PolicyStatement(
+                actions=[
+                    'sts:AssumeRole',
+                ],
+                resources=['arn:aws:iam::*:role/cdk-hnb659fds-lookup-role*'],
+            ),
+            iam.PolicyStatement(
+                actions=[
+                    'sts:GetServiceBearerToken',
+                ],
+                resources=['*'],
+                conditions={'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}},
+            ),
+            iam.PolicyStatement(
+                actions=[
+                    'ecr:GetAuthorizationToken',
+                    'ec2:DescribePrefixLists',
+                    'ec2:DescribeManagedPrefixLists',
+                    'ec2:DescribeNetworkInterfaces',
+                    'ec2:DescribeSubnets',
+                    'ec2:DescribeSecurityGroups',
+                    'ec2:DescribeDhcpOptions',
+                    'ec2:DescribeVpcs',
+                ],
+                resources=['*'],
+            ),
+            iam.PolicyStatement(
+                actions=[
+                    'ec2:CreateNetworkInterface',
+                    'ec2:DeleteNetworkInterface',
+                ],
+                resources=[
+                    f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                ],
+            ),
+            iam.PolicyStatement(
+                actions=[
+                    'ec2:AssignPrivateIpAddresses',
+                    'ec2:UnassignPrivateIpAddresses',
+                ],
+                resources=[
+                    f'arn:aws:ec2:{self.region}:{self.account}:*/*',
+                ],
+                conditions={'StringEquals': {'ec2:Vpc': f'{self.vpc.vpc_id}'}},
+            ),
+            iam.PolicyStatement(
+                actions=[
+                    'codeartifact:GetAuthorizationToken',
+                    'codeartifact:GetRepositoryEndpoint',
+                    'codeartifact:ReadFromRepository',
+                    'codecommit:GitPull',
+                    'ecr:GetDownloadUrlForLayer',
+                    'ecr:BatchGetImage',
+                    'ecr:BatchCheckLayerAvailability',
+                    'ecr:PutImage',
+                    'ecr:InitiateLayerUpload',
+                    'ecr:UploadLayerPart',
+                    'ecr:CompleteLayerUpload',
+                    'ecr:GetDownloadUrlForLayer',
+                    'kms:Decrypt',
+                    'kms:Encrypt',
+                    'kms:GenerateDataKey',
+                    'kms:ReEncrypt*',
+                    'kms:DescribeKey',
+                    'secretsmanager:GetSecretValue',
+                    'secretsmanager:DescribeSecret',
+                    'ssm:GetParametersByPath',
+                    'ssm:GetParameters',
+                    'ssm:GetParameter',
+                    's3:Get*',
+                    's3:Put*',
+                    's3:List*',
+                    'codebuild:CreateReportGroup',
+                    'codebuild:CreateReport',
+                    'codebuild:UpdateReport',
+                    'codebuild:BatchPutTestCases',
+                    'codebuild:BatchPutCodeCoverages',
+                    'ec2:GetManagedPrefixListEntries',
+                    'ec2:CreateNetworkInterfacePermission',
+                    'logs:CreateLogGroup',
+                    'logs:CreateLogStream',
+                    'logs:PutLogEvents',
+                ],
+                resources=[
+                    f'arn:aws:s3:::{self.resource_prefix}*',
+                    f'arn:aws:s3:::{self.resource_prefix}*/*',
+                    f'arn:aws:codebuild:{self.region}:{self.account}:project/*{self.resource_prefix}*',
+                    f'arn:aws:codebuild:{self.region}:{self.account}:report-group/{self.resource_prefix}*',
+                    f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*{self.resource_prefix}*',
+                    f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*',
+                    f'arn:aws:kms:{self.region}:{self.account}:key/*',
+                    f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
+                    f'arn:aws:ssm:*:{self.account}:parameter/*{self.resource_prefix}*',
+                    f'arn:aws:ecr:{self.region}:{self.account}:repository/{self.resource_prefix}*',
+                    f'arn:aws:codeartifact:{self.region}:{self.account}:repository/{self.resource_prefix}*',
+                    f'arn:aws:codeartifact:{self.region}:{self.account}:domain/{self.resource_prefix}*',
+                    f'arn:aws:ec2:{self.region}:{self.account}:prefix-list/*',
+                    f'arn:aws:ec2:{self.region}:{self.account}:network-interface/*',
+                    f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws/codebuild/{self.resource_prefix}*',
+                ],
+            ),
+        ]
+
+        if self.repo_connection_arn:
+            baseline_policy_statements.append(
+                iam.PolicyStatement(
+                    actions=[
+                        'codestar-connections:UseConnection',
+                    ],
+                    resources=[self.repo_connection_arn],
+                ),
+            )
+
         self.baseline_codebuild_policy = iam.ManagedPolicy(
             self,
             'BaselineCodeBuildManagedPolicy',
             managed_policy_name=f'{self.resource_prefix}-{self.git_branch}-baseline-cb-policy',
             roles=[self.baseline_codebuild_role, self.expanded_codebuild_role],
-            statements=[
-                iam.PolicyStatement(
-                    actions=[
-                        'sts:AssumeRole',
-                    ],
-                    resources=['arn:aws:iam::*:role/cdk-hnb659fds-lookup-role*'],
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        'sts:GetServiceBearerToken',
-                    ],
-                    resources=['*'],
-                    conditions={'StringEquals': {'sts:AWSServiceName': 'codeartifact.amazonaws.com'}},
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        'ecr:GetAuthorizationToken',
-                        'ec2:DescribePrefixLists',
-                        'ec2:DescribeManagedPrefixLists',
-                        'ec2:DescribeNetworkInterfaces',
-                        'ec2:DescribeSubnets',
-                        'ec2:DescribeSecurityGroups',
-                        'ec2:DescribeDhcpOptions',
-                        'ec2:DescribeVpcs',
-                    ],
-                    resources=['*'],
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        'ec2:CreateNetworkInterface',
-                        'ec2:DeleteNetworkInterface',
-                    ],
-                    resources=[
-                        f'arn:aws:ec2:{self.region}:{self.account}:*/*',
-                    ],
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        'ec2:AssignPrivateIpAddresses',
-                        'ec2:UnassignPrivateIpAddresses',
-                    ],
-                    resources=[
-                        f'arn:aws:ec2:{self.region}:{self.account}:*/*',
-                    ],
-                    conditions={'StringEquals': {'ec2:Vpc': f'{self.vpc.vpc_id}'}},
-                ),
-                iam.PolicyStatement(
-                    actions=[
-                        'codeartifact:GetAuthorizationToken',
-                        'codeartifact:GetRepositoryEndpoint',
-                        'codeartifact:ReadFromRepository',
-                        'ecr:GetDownloadUrlForLayer',
-                        'ecr:BatchGetImage',
-                        'ecr:BatchCheckLayerAvailability',
-                        'ecr:PutImage',
-                        'ecr:InitiateLayerUpload',
-                        'ecr:UploadLayerPart',
-                        'ecr:CompleteLayerUpload',
-                        'ecr:GetDownloadUrlForLayer',
-                        'kms:Decrypt',
-                        'kms:Encrypt',
-                        'kms:GenerateDataKey',
-                        'kms:ReEncrypt*',
-                        'kms:DescribeKey',
-                        'secretsmanager:GetSecretValue',
-                        'secretsmanager:DescribeSecret',
-                        'ssm:GetParametersByPath',
-                        'ssm:GetParameters',
-                        'ssm:GetParameter',
-                        's3:Get*',
-                        's3:Put*',
-                        's3:List*',
-                        'codebuild:CreateReportGroup',
-                        'codebuild:CreateReport',
-                        'codebuild:UpdateReport',
-                        'codebuild:BatchPutTestCases',
-                        'codebuild:BatchPutCodeCoverages',
-                        'ec2:GetManagedPrefixListEntries',
-                        'ec2:CreateNetworkInterfacePermission',
-                        'logs:CreateLogGroup',
-                        'logs:CreateLogStream',
-                        'logs:PutLogEvents',
-                    ],
-                    resources=[
-                        f'arn:aws:s3:::{self.resource_prefix}*',
-                        f'arn:aws:s3:::{self.resource_prefix}*/*',
-                        f'arn:aws:codebuild:{self.region}:{self.account}:project/*{self.resource_prefix}*',
-                        f'arn:aws:codebuild:{self.region}:{self.account}:report-group/{self.resource_prefix}*',
-                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*{self.resource_prefix}*',
-                        f'arn:aws:secretsmanager:{self.region}:{self.account}:secret:*dataall*',
-                        f'arn:aws:kms:{self.region}:{self.account}:key/*',
-                        f'arn:aws:ssm:*:{self.account}:parameter/*dataall*',
-                        f'arn:aws:ssm:*:{self.account}:parameter/*{self.resource_prefix}*',
-                        f'arn:aws:ecr:{self.region}:{self.account}:repository/{self.resource_prefix}*',
-                        f'arn:aws:codeartifact:{self.region}:{self.account}:repository/{self.resource_prefix}*',
-                        f'arn:aws:codeartifact:{self.region}:{self.account}:domain/{self.resource_prefix}*',
-                        f'arn:aws:ec2:{self.region}:{self.account}:prefix-list/*',
-                        f'arn:aws:ec2:{self.region}:{self.account}:network-interface/*',
-                        f'arn:aws:logs:{self.region}:{self.account}:log-group:/aws/codebuild/{self.resource_prefix}*',
-                    ],
-                ),
-            ],
+            statements=baseline_policy_statements,
         )
         self.expanded_codebuild_policy = iam.ManagedPolicy(
             self,
@@ -426,7 +480,6 @@ class PipelineStack(Stack):
                     or 'client_id' not in custom_auth_configs
                     or 'response_types' not in custom_auth_configs
                     or 'scopes' not in custom_auth_configs
-                    or 'jwks_url' not in custom_auth_configs
                     or 'claims_mapping' not in custom_auth_configs
                     or 'user_id' not in custom_auth_configs['claims_mapping']
                     or 'email' not in custom_auth_configs['claims_mapping']
@@ -442,7 +495,6 @@ class PipelineStack(Stack):
                     or not isinstance(custom_auth_configs['client_id'], str)
                     or not isinstance(custom_auth_configs['response_types'], str)
                     or not isinstance(custom_auth_configs['scopes'], str)
-                    or not isinstance(custom_auth_configs['jwks_url'], str)
                     or not isinstance(custom_auth_configs['claims_mapping']['user_id'], str)
                     or not isinstance(custom_auth_configs['claims_mapping']['email'], str)
                 ):
@@ -457,9 +509,6 @@ class PipelineStack(Stack):
             gate_quality_wave.add_pre(
                 pipelines.CodeBuildStep(
                     id='ValidateDBMigrations',
-                    build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-                    ),
                     commands=[
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         f'export envname={self.git_branch}',
@@ -474,9 +523,6 @@ class PipelineStack(Stack):
                 ),
                 pipelines.CodeBuildStep(
                     id='SecurityChecks',
-                    build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-                    ),
                     commands=[
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'pip install --upgrade pip',
@@ -489,9 +535,6 @@ class PipelineStack(Stack):
                 ),
                 pipelines.CodeBuildStep(
                     id='Lint',
-                    build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-                    ),
                     commands=[
                         f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
                         'pip install --upgrade pip',
@@ -512,9 +555,6 @@ class PipelineStack(Stack):
             gate_quality_wave.add_post(
                 pipelines.CodeBuildStep(
                     id='IntegrationTests',
-                    build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-                    ),
                     partial_build_spec=codebuild.BuildSpec.from_object(
                         dict(
                             version='0.2',
@@ -547,9 +587,6 @@ class PipelineStack(Stack):
                 ),
                 pipelines.CodeBuildStep(
                     id='UploadCodeToS3',
-                    build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-                    ),
                     commands=[
                         'mkdir -p source_build',
                         'mv backend ./source_build/',
@@ -567,9 +604,6 @@ class PipelineStack(Stack):
             gate_quality_wave.add_pre(
                 pipelines.CodeBuildStep(
                     id='UploadCodeToS3',
-                    build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-                    ),
                     commands=[
                         'mkdir -p source_build',
                         'mv backend ./source_build/',
@@ -587,7 +621,7 @@ class PipelineStack(Stack):
         self,
         target_env,
     ):
-        repository_name = f"{self.resource_prefix}-{target_env['envname']}-ecr-repository"
+        repository_name = f'{self.resource_prefix}-{target_env["envname"]}-ecr-repository'
         ecr_stage = self.pipeline.add_stage(
             ECRStage(
                 self,
@@ -602,40 +636,41 @@ class PipelineStack(Stack):
                 repository_name=repository_name,
             )
         )
+        deploy_image_args = [
+            'image-tag=$IMAGE_TAG',
+            f'account={target_env["account"]}',
+            f'region={target_env["region"]}',
+            f'repo={repository_name}',
+            f'build-args="--build-arg PYTHON_VERSION=python{PYTHON_VERSION}"',
+        ]
         ecr_stage.add_post(
             pipelines.CodeBuildStep(
                 id='LambdaImage',
                 build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                     privileged=True,
                     environment_variables={
                         'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
-                            value=f"{target_env['account']}.dkr.ecr.{target_env['region']}.amazonaws.com/{repository_name}"
+                            value=f'{target_env["account"]}.dkr.ecr.{target_env["region"]}.amazonaws.com/{repository_name}'
                         ),
                         'IMAGE_TAG': codebuild.BuildEnvironmentVariable(value=f'lambdas-{self.image_tag}'),
                     },
                 ),
-                commands=[
-                    f"make deploy-image type=lambda image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
-                ],
+                commands=[f'make deploy-image {" ".join(["type=lambda"] + deploy_image_args)}'],
                 role=self.baseline_codebuild_role.without_policy_updates(),
                 vpc=self.vpc,
             ),
             pipelines.CodeBuildStep(
                 id='ECSImage',
                 build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                     privileged=True,
                     environment_variables={
                         'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
-                            value=f"{target_env['account']}.dkr.ecr.{target_env['region']}.amazonaws.com/{repository_name}"
+                            value=f'{target_env["account"]}.dkr.ecr.{target_env["region"]}.amazonaws.com/{repository_name}'
                         ),
                         'IMAGE_TAG': codebuild.BuildEnvironmentVariable(value=f'cdkproxy-{self.image_tag}'),
                     },
                 ),
-                commands=[
-                    f"make deploy-image type=ecs image-tag=$IMAGE_TAG account={target_env['account']} region={target_env['region']} repo={repository_name}",
-                ],
+                commands=[f'make deploy-image {" ".join(["type=ecs"] + deploy_image_args)}'],
                 role=self.baseline_codebuild_role.without_policy_updates(),
                 vpc=self.vpc,
             ),
@@ -646,7 +681,7 @@ class PipelineStack(Stack):
         backend_stage = self.pipeline.add_stage(
             BackendStage(
                 self,
-                f"{self.resource_prefix}-{target_env['envname']}-backend-stage",
+                f'{self.resource_prefix}-{target_env["envname"]}-backend-stage',
                 env={
                     'account': target_env['account'],
                     'region': target_env['region'],
@@ -662,6 +697,7 @@ class PipelineStack(Stack):
                 vpc_restricted_nacls=target_env.get('vpc_restricted_nacl', False),
                 internet_facing=target_env.get('internet_facing', True),
                 custom_domain=target_env.get('custom_domain'),
+                apigw_custom_domain=target_env.get('apigw_custom_domain'),
                 ip_ranges=target_env.get('ip_ranges'),
                 apig_vpce=target_env.get('apig_vpce'),
                 prod_sizing=target_env.get('prod_sizing', True),
@@ -680,6 +716,9 @@ class PipelineStack(Stack):
                 with_approval_tests=target_env.get('with_approval_tests', False),
                 allowed_origins=target_env.get('allowed_origins', '*'),
                 log_retention_duration=self.log_retention_duration,
+                throttling_config=target_env.get('throttling', {}),
+                deploy_aurora_migration_stack=target_env.get('aurora_migration_enabled', False),
+                old_aurora_connection_secret_arn=target_env.get('old_aurora_connection_secret_arn', ''),
             )
         )
         return backend_stage
@@ -697,9 +736,6 @@ class PipelineStack(Stack):
         backend_stage.add_post(
             pipelines.CodeBuildStep(
                 id='ApprovalTests',
-                build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-                ),
                 partial_build_spec=codebuild.BuildSpec.from_object(
                     dict(
                         version='0.2',
@@ -715,6 +751,8 @@ class PipelineStack(Stack):
                                     'aws sts get-caller-identity --profile buildprofile',
                                     f'export COGNITO_CLIENT=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/cognito/appclient --profile buildprofile --output text --query "Parameter.Value")',
                                     f'export API_ENDPOINT=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/apiGateway/backendUrl --profile buildprofile --output text --query "Parameter.Value")',
+                                    f'export IDP_DOMAIN_URL=https://$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/cognito/domain --profile buildprofile --output text --query "Parameter.Value").auth.{target_env["region"]}.amazoncognito.com',
+                                    f'export DATAALL_DOMAIN_URL=https://$(aws ssm get-parameter --region us-east-1 --name /dataall/{target_env["envname"]}/CloudfrontDistributionDomainName --profile buildprofile --output text --query "Parameter.Value")',
                                     f'export TESTDATA=$(aws ssm get-parameter --name /dataall/{target_env["envname"]}/testdata --profile buildprofile --output text --query "Parameter.Value")',
                                     f'export ENVNAME={target_env["envname"]}',
                                     f'export AWS_REGION={target_env["region"]}',
@@ -738,6 +776,7 @@ class PipelineStack(Stack):
                 role=self.expanded_codebuild_role.without_policy_updates(),
                 vpc=self.vpc,
                 security_groups=[self.codebuild_sg],
+                timeout=Duration.hours(4),
             )
         )
 
@@ -745,13 +784,10 @@ class PipelineStack(Stack):
         self,
         target_env,
     ):
-        wave = self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-stacks-updater-stage")
+        wave = self.pipeline.add_wave(f'{self.resource_prefix}-{target_env["envname"]}-stacks-updater-stage')
         wave.add_post(
             pipelines.CodeBuildStep(
                 id='StacksUpdater',
-                build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-                ),
                 commands=[
                     'mkdir ~/.aws/ && touch ~/.aws/config',
                     'echo "[profile buildprofile]" > ~/.aws/config',
@@ -776,7 +812,7 @@ class PipelineStack(Stack):
         cloudfront_stage = self.pipeline.add_stage(
             CloudfrontStage(
                 self,
-                f"{self.resource_prefix}-{target_env['envname']}-cloudfront-stage",
+                f'{self.resource_prefix}-{target_env["envname"]}-cloudfront-stage',
                 env={
                     'account': target_env['account'],
                     'region': 'us-east-1',
@@ -794,7 +830,6 @@ class PipelineStack(Stack):
             pipelines.CodeBuildStep(
                 id='DeployFrontEnd',
                 build_environment=codebuild.BuildEnvironment(
-                    build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                     compute_type=codebuild.ComputeType.LARGE,
                 ),
                 commands=[
@@ -821,7 +856,7 @@ class PipelineStack(Stack):
                     f'echo "external_id = {get_tooling_account_external_id(target_env["account"])}" >> ~/.aws/config',
                     'aws sts get-caller-identity --profile buildprofile',
                     'export AWS_PROFILE=buildprofile',
-                    'pip install boto3==1.34.35',
+                    'pip install boto3==1.35.26',
                     'pip install beautifulsoup4',
                     'python deploy/configs/frontend_config.py',
                     'export AWS_DEFAULT_REGION=us-east-1',
@@ -845,41 +880,13 @@ class PipelineStack(Stack):
                 *front_stage_actions,
                 self.cw_rum_config_action(target_env),
             )
-        self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-frontend-stage").add_post(
+        self.pipeline.add_wave(f'{self.resource_prefix}-{target_env["envname"]}-frontend-stage').add_post(
             *front_stage_actions
         )
-        if target_env.get('custom_auth', None) is None:
-            self.pipeline.add_wave(f"{self.resource_prefix}-{target_env['envname']}-docs-stage").add_post(
-                pipelines.CodeBuildStep(
-                    id='UpdateDocumentation',
-                    build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
-                    ),
-                    commands=[
-                        f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
-                        f"make assume-role REMOTE_ACCOUNT_ID={target_env['account']} REMOTE_ROLE={self.resource_prefix}-{target_env['envname']}-S3DeploymentRole EXTERNAL_ID={get_tooling_account_external_id(target_env['account'])}",
-                        '. ./.env.assumed_role',
-                        'aws sts get-caller-identity',
-                        'export AWS_DEFAULT_REGION=us-east-1',
-                        f"export distributionId=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/cloudfront/docs/user/CloudfrontDistributionId --output text --query 'Parameter.Value')",
-                        f"export bucket=$(aws ssm get-parameter --name /dataall/{target_env['envname']}/cloudfront/docs/user/CloudfrontDistributionBucket --output text --query 'Parameter.Value')",
-                        'cd documentation/userguide',
-                        'pip install -r requirements.txt',
-                        'mkdocs build',
-                        'aws s3 sync site/ s3://$bucket',
-                        "aws cloudfront create-invalidation --distribution-id $distributionId --paths '/*'",
-                    ],
-                    role=self.expanded_codebuild_role.without_policy_updates(),
-                    vpc=self.vpc,
-                ),
-            )
 
     def cw_rum_config_action(self, target_env):
         return pipelines.CodeBuildStep(
             id='ConfigureRUM',
-            build_environment=codebuild.BuildEnvironment(
-                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
-            ),
             commands=[
                 f'export envname={target_env["envname"]}',
                 f'export internet_facing={target_env.get("internet_facing", True)}',
@@ -893,7 +900,7 @@ class PipelineStack(Stack):
                 'aws sts get-caller-identity --profile buildprofile',
                 'export AWS_PROFILE=buildprofile',
                 'pip install --upgrade pip',
-                'pip install boto3==1.34.35',
+                'pip install boto3==1.35.26',
                 'python deploy/configs/rum_config.py',
             ],
             role=self.expanded_codebuild_role.without_policy_updates(),
@@ -927,7 +934,6 @@ class PipelineStack(Stack):
                 pipelines.CodeBuildStep(
                     id='FrontendImage',
                     build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
                         compute_type=codebuild.ComputeType.LARGE,
                         privileged=True,
                         environment_variables={
@@ -962,7 +968,7 @@ class PipelineStack(Stack):
                         f'echo "external_id = {get_tooling_account_external_id(target_env["account"])}" >> ~/.aws/config',
                         'aws sts get-caller-identity --profile buildprofile',
                         'export AWS_PROFILE=buildprofile',
-                        'pip install boto3==1.34.35',
+                        'pip install boto3==1.35.26',
                         'pip install beautifulsoup4',
                         'python deploy/configs/frontend_config.py',
                         'unset AWS_PROFILE',
@@ -976,34 +982,6 @@ class PipelineStack(Stack):
                 )
             ],
         )
-        if target_env.get('custom_auth') is None:
-            albfront_stage.add_pre(self.user_guide_pre_build_alb(repository_name))
 
         if target_env.get('enable_cw_rum', False) and target_env.get('custom_auth', None) is None:
             albfront_stage.add_post(self.cw_rum_config_action(target_env))
-
-    def user_guide_pre_build_alb(self, repository_name):
-        return pipelines.CodeBuildStep(
-            id='UserGuideImage',
-            build_environment=codebuild.BuildEnvironment(
-                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
-                compute_type=codebuild.ComputeType.LARGE,
-                privileged=True,
-                environment_variables={
-                    'REPOSITORY_URI': codebuild.BuildEnvironmentVariable(
-                        value=f'{self.account}.dkr.ecr.{self.region}.amazonaws.com/{repository_name}'
-                    ),
-                    'IMAGE_TAG': codebuild.BuildEnvironmentVariable(value=f'userguide-{self.image_tag}'),
-                },
-            ),
-            commands=[
-                f'aws codeartifact login --tool pip --repository {self.codeartifact.codeartifact_pip_repo_name} --domain {self.codeartifact.codeartifact_domain_name} --domain-owner {self.codeartifact.domain.attr_owner}',
-                'cd documentation/userguide',
-                'docker build -f docker/prod/Dockerfile -t $IMAGE_TAG:$IMAGE_TAG .',
-                f'aws ecr get-login-password --region {self.region} | docker login --username AWS --password-stdin {self.account}.dkr.ecr.{self.region}.amazonaws.com',
-                'docker tag $IMAGE_TAG:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG',
-                'docker push $REPOSITORY_URI:$IMAGE_TAG',
-            ],
-            role=self.expanded_codebuild_role.without_policy_updates(),
-            vpc=self.vpc,
-        )

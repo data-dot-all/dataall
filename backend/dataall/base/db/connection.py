@@ -11,7 +11,6 @@ from dataall.base.aws.secrets_manager import SecretsManager
 from dataall.base.db import Base
 from dataall.base.db.dbconfig import DbConfig
 from dataall.base.utils import Parameter
-from dataall.base.aws.sts import SessionHelper
 
 try:
     from urllib import quote_plus, unquote_plus
@@ -29,18 +28,17 @@ class Engine:
             dbconfig.url,
             echo=False,
             pool_size=1,
-            connect_args={'options': f'-csearch_path={dbconfig.schema}'},
+            connect_args={'options': f'-c search_path={dbconfig.schema}'},
         )
         try:
-            if not self.engine.dialect.has_schema(self.engine, dbconfig.schema):
-                log.info(f'Schema not found - init the schema {dbconfig.schema}')
-                self.engine.execute(sqlalchemy.schema.CreateSchema(dbconfig.schema))
+            create_schema_if_not_exists(self.engine, dbconfig.schema)
             log.info('-- Using schema: %s --', dbconfig.schema)
         except Exception as e:
-            log.error(f'Could not create schema: {e}')
+            log.exception('Could not create schema')
 
         self.sessions = {}
         self._session = None
+        self._active_sessions = 0
 
     def session(self):
         if self._session is None:
@@ -52,28 +50,34 @@ class Engine:
     def scoped_session(self):
         s = self.session()
         try:
+            self._active_sessions += 1
             yield s
             s.commit()
         except Exception as e:
             s.rollback()
             raise e
         finally:
-            s.close()
+            self._active_sessions -= 1
+            if self._active_sessions == 0:
+                s.close()
+                self._session = None
 
     def dispose(self):
         self.engine.dispose()
 
 
 def create_schema_if_not_exists(engine, envname):
-    print(f'Creating schema {envname}...')
     try:
-        if not engine.dialect.has_schema(engine.engine, envname):
-            print(f'Schema {envname} not found. Creating it...')
-            engine.execute(sqlalchemy.schema.CreateSchema(envname))
+        with engine.engine.connect() as connection:
+            if not sqlalchemy.inspect(connection).has_schema(envname):
+                log.info(f'Schema {envname} not found. Creating it...')
+                connection.execute(sqlalchemy.schema.CreateSchema(envname))
+                connection.commit()
+            else:
+                log.info(f'Schema {envname} already exists')
     except Exception as e:
-        print(f'Could not create schema: {e}')
+        log.exception('Could not create schema')
         raise e
-    print(f'Schema {envname} successfully created')
     return True
 
 
@@ -83,16 +87,19 @@ def create_schema_and_tables(engine, envname):
     try:
         Base.metadata.create_all(engine.engine)
     except Exception as e:
-        log.error(f'Failed to create all tables due to: {e}')
+        log.exception('Failed to create all tables')
         raise e
 
 
 def drop_schema_if_exists(engine, envname):
     try:
-        if engine.dialect.has_schema(engine, envname):
-            engine.execute(sqlalchemy.schema.DropSchema(envname, cascade=True))
+        with engine.engine.connect() as connection:
+            if sqlalchemy.inspect(connection).has_schema(envname):
+                log.warning(f'Dropping schema {envname}')
+                connection.execute(sqlalchemy.schema.DropSchema(envname, cascade=True))
+                connection.commit()
     except Exception as e:
-        log.error(f'Failed to drop all schema due to: {e}')
+        log.exception('Failed to drop schema')
         raise e
 
 

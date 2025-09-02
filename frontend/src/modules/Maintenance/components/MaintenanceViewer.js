@@ -242,6 +242,7 @@ export const ReIndexConfirmationPopUp = (props) => {
               control={
                 <Switch
                   color="primary"
+                  checked={withDelete}
                   onChange={() => {
                     setWithDelete(!withDelete);
                   }}
@@ -297,7 +298,7 @@ export const ReIndexConfirmationPopUp = (props) => {
 
 export const MaintenanceViewer = () => {
   const client = useClient();
-  const [refreshing, setRefreshing] = useState(false);
+  const [refreshing, setRefreshing] = useState(true);
   const refreshingReIndex = false;
   const [updatingReIndex, setUpdatingReIndex] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -320,7 +321,7 @@ export const MaintenanceViewer = () => {
     if (maintenanceModesEnum['MaintenanceModes'].length > 0) {
       setMaintenanceModes(
         maintenanceModesEnum['MaintenanceModes'].map((elem) => {
-          return { label: elem.value, value: elem.name };
+          return { label: elem.value, value: elem.value };
         })
       );
     } else {
@@ -442,7 +443,6 @@ export const MaintenanceViewer = () => {
   };
 
   const initializeMaintenanceView = useCallback(async () => {
-    setRefreshing(true);
     const response = await client.query(getMaintenanceStatus());
     if (!response.errors && response.data.getMaintenanceWindowStatus !== null) {
       const maintenanceStatusData = response.data.getMaintenanceWindowStatus;
@@ -470,13 +470,10 @@ export const MaintenanceViewer = () => {
       dispatch({ type: SET_ERROR, error });
     }
     setRefreshing(false);
-  }, [client]);
+  }, [client, maintenanceModes]);
 
   useEffect(() => {
     if (client) {
-      initializeMaintenanceView().catch((e) =>
-        dispatch({ type: SET_ERROR, e })
-      );
       fetchMaintenanceModes().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
@@ -489,6 +486,14 @@ export const MaintenanceViewer = () => {
       return () => clearInterval(setTimer);
     }
   }, [client]);
+
+  useEffect(() => {
+    if (maintenanceModes.length > 0) {
+      initializeMaintenanceView().catch((e) =>
+        dispatch({ type: SET_ERROR, e })
+      );
+    }
+  }, [maintenanceModes]);
 
   return (
     <Box>

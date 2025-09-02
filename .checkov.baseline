@@ -193,6 +193,13 @@
                     ]
                 },
                 {
+                    "resource": "AWS::Lambda::Function.CustomAuthorizerFunctiondevB38B5CCB",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116"
+                    ]
+                },
+                {
                     "resource": "AWS::Lambda::Function.ElasticSearchProxyHandlerDBDE7574",
                     "check_ids": [
                         "CKV_AWS_115"
@@ -206,6 +213,12 @@
                 },
                 {
                     "resource": "AWS::Logs::LogGroup.awsworkerloggroupF395EFD3",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
+                },
+                {
+                    "resource": "AWS::Logs::LogGroup.customauthorizerloggroup8F3B5B9D",
                     "check_ids": [
                         "CKV_AWS_158"
                     ]
@@ -363,19 +376,7 @@
                     ]
                 },
                 {
-                    "resource": "AWS::S3::Bucket.dataalldevfrontend64065639",
-                    "check_ids": [
-                        "CKV_AWS_18"
-                    ]
-                },
-                {
-                    "resource": "AWS::S3::Bucket.dataalldevlogging0F6723EE",
-                    "check_ids": [
-                        "CKV_AWS_18"
-                    ]
-                },
-                {
-                    "resource": "AWS::S3::Bucket.dataalldevuserguide5964DC13",
+                    "resource": "AWS::S3::Bucket.dataalldevcloudfrontaccesslogsCAF85B96",
                     "check_ids": [
                         "CKV_AWS_18"
                     ]
@@ -404,7 +405,7 @@
             ]
         },
         {
-            "file": "/cdk.out/asset.3045cb6b4340be1e173df6dcf6248d565aa849ceda3e2cf2c2f221ccee4bc1d6/pivotRole.yaml",
+            "file": "/cdk.out/asset.05d71d8b69cd4483d3c9db9120b556b718c72f349debbb79d461c74c4964b350/pivotRole.yaml",
             "findings": [
                 {
                     "resource": "AWS::IAM::ManagedPolicy.PivotRolePolicy0",
@@ -431,12 +432,6 @@
                     ]
                 },
                 {
-                    "resource": "AWS::IAM::Policy.dataallmaincdkpipelinePipelineRoleDefaultPolicy98FFDB2A",
-                    "check_ids": [
-                        "CKV_AWS_111"
-                    ]
-                },
-                {
                     "resource": "AWS::Lambda::Function.CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
                     "check_ids": [
                         "CKV_AWS_115",
@@ -445,13 +440,7 @@
                     ]
                 },
                 {
-                    "resource": "AWS::S3::Bucket.pipelineartifactsbucketE44F7DE9",
-                    "check_ids": [
-                        "CKV_AWS_18"
-                    ]
-                },
-                {
-                    "resource": "AWS::S3::Bucket.sourcecodebucket464EEFA3",
+                    "resource": "AWS::S3::Bucket.dataallaccesslogsEDA9BC4F",
                     "check_ids": [
                         "CKV_AWS_18"
                     ]
@@ -484,12 +473,6 @@
             "file": "/checkov_environment_synth.json",
             "findings": [
                 {
-                    "resource": "AWS::IAM::ManagedPolicy.dataallanothergroup111111servicespolicy19AC37181",
-                    "check_ids": [
-                        "CKV_AWS_111"
-                    ]
-                },
-                {
                     "resource": "AWS::IAM::ManagedPolicy.dataallanothergroup111111servicespolicy2E85AF510",
                     "check_ids": [
                         "CKV_AWS_111"
@@ -497,24 +480,6 @@
                 },
                 {
                     "resource": "AWS::IAM::ManagedPolicy.dataallanothergroup111111servicespolicy306EE0E93",
-                    "check_ids": [
-                        "CKV_AWS_111"
-                    ]
-                },
-                {
-                    "resource": "AWS::IAM::ManagedPolicy.dataallanothergroup111111servicespolicy7BF536CC5",
-                    "check_ids": [
-                        "CKV_AWS_109"
-                    ]
-                },
-                {
-                    "resource": "AWS::IAM::ManagedPolicy.dataallanothergroup111111servicespolicyCC720210",
-                    "check_ids": [
-                        "CKV_AWS_109"
-                    ]
-                },
-                {
-                    "resource": "AWS::IAM::ManagedPolicy.dataalltestadmins111111servicespolicy1A0C96958",
                     "check_ids": [
                         "CKV_AWS_111"
                     ]
@@ -532,18 +497,6 @@
                     ]
                 },
                 {
-                    "resource": "AWS::IAM::ManagedPolicy.dataalltestadmins111111servicespolicy3E3CBA9E",
-                    "check_ids": [
-                        "CKV_AWS_109"
-                    ]
-                },
-                {
-                    "resource": "AWS::IAM::ManagedPolicy.dataalltestadmins111111servicespolicy7DCF428B2",
-                    "check_ids": [
-                        "CKV_AWS_109"
-                    ]
-                },
-                {
                     "resource": "AWS::Lambda::Function.CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
                     "check_ids": [
                         "CKV_AWS_115",
@@ -556,16 +509,14 @@
                     "resource": "AWS::Lambda::Function.GlueDatabaseLFCustomResourceHandler7FAF0F82",
                     "check_ids": [
                         "CKV_AWS_115",
-                        "CKV_AWS_117",
-                        "CKV_AWS_173"
+                        "CKV_AWS_117"
                     ]
                 },
                 {
                     "resource": "AWS::Lambda::Function.LakeformationDefaultSettingsHandler2CBEDB06",
                     "check_ids": [
                         "CKV_AWS_115",
-                        "CKV_AWS_117",
-                        "CKV_AWS_173"
+                        "CKV_AWS_117"
                     ]
                 },
                 {
@@ -573,8 +524,7 @@
                     "check_ids": [
                         "CKV_AWS_115",
                         "CKV_AWS_116",
-                        "CKV_AWS_117",
-                        "CKV_AWS_173"
+                        "CKV_AWS_117"
                     ]
                 },
                 {
@@ -582,12 +532,17 @@
                     "check_ids": [
                         "CKV_AWS_115",
                         "CKV_AWS_116",
-                        "CKV_AWS_117",
-                        "CKV_AWS_173"
+                        "CKV_AWS_117"
                     ]
                 },
                 {
-                    "resource": "AWS::S3::Bucket.EnvironmentDefaultBucket78C3A8B0",
+                    "resource": "AWS::CloudTrail::Trail.S3CloudTrail9B4C955D",
+                    "check_ids": [
+                        "CKV_AWS_35"
+                    ]
+                },
+                {
+                    "resource": "AWS::S3::Bucket.EnvironmentDefaultLogBucket7F0EFAB3",
                     "check_ids": [
                         "CKV_AWS_18"
                     ]
@@ -602,25 +557,6 @@
                     "check_ids": [
                         "CKV2_AWS_68",
                         "CKV_AWS_371"
-                    ]
-                }
-            ]
-        },
-        {
-            "file": "/checkov_pipeline_synth.json",
-            "findings": [
-                {
-                    "resource": "AWS::IAM::Role.PipelineRoleDCFDBB91",
-                    "check_ids": [
-                        "CKV_AWS_107",
-                        "CKV_AWS_108",
-                        "CKV_AWS_111"
-                    ]
-                },
-                {
-                    "resource": "AWS::S3::Bucket.thistableartifactsbucketDB1C8C64",
-                    "check_ids": [
-                        "CKV_AWS_18"
                     ]
                 }
             ]
@@ -661,6 +597,25 @@
                     "resource": "/documentation/userguide/docker/prod/Dockerfile.",
                     "check_ids": [
                         "CKV_DOCKER_2"
+                    ]
+                }
+            ]
+        },
+        {
+            "file": "/checkov_pipeline_synth.json",
+            "findings": [
+                {
+                    "resource": "AWS::IAM::Role.PipelineRoleDCFDBB91",
+                    "check_ids": [
+                        "CKV_AWS_107",
+                        "CKV_AWS_108",
+                        "CKV_AWS_111"
+                    ]
+                },
+                {
+                    "resource": "AWS::S3::Bucket.thistableartifactsbucketDB1C8C64",
+                    "check_ids": [
+                        "CKV_AWS_18"
                     ]
                 }
             ]

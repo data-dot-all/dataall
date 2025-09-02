@@ -40,7 +40,7 @@ import { listDatasetTables, deleteDatasetTable, useClient } from 'services';
 import { syncTables } from '../services';
 
 import { DatasetStartCrawlerModal } from './DatasetStartCrawlerModal';
-import { isFeatureEnabled } from 'utils';
+import { emptyPrintUnauthorized, isFeatureEnabled } from 'utils';
 
 export const DatasetTables = (props) => {
   const { dataset, isAdmin } = props;
@@ -80,7 +80,7 @@ export const DatasetTables = (props) => {
         filter: { ...filter }
       })
     );
-    if (!response.errors) {
+    if (response.data.getDataset != null) {
       setItems({ ...response.data.getDataset.tables });
     } else {
       dispatch({ type: SET_ERROR, error: response.errors[0].message });
@@ -95,7 +95,7 @@ export const DatasetTables = (props) => {
       fetchItems().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
-      enqueueSnackbar(`Retrieved ${response.data.syncTables.count} tables`, {
+      enqueueSnackbar(`Retrieved ${response.data.syncTables} tables`, {
         anchorOrigin: {
           horizontal: 'right',
           vertical: 'top'
@@ -257,11 +257,17 @@ export const DatasetTables = (props) => {
                             to={`/console/s3-datasets/table/${table.tableUri}`}
                             variant="subtitle2"
                           >
-                            {table.GlueTableName}
+                            {table.name}
                           </Link>
                         </TableCell>
-                        <TableCell>{table.GlueDatabaseName}</TableCell>
-                        <TableCell>{table.S3Prefix}</TableCell>
+                        <TableCell>
+                          {emptyPrintUnauthorized(
+                            table.restricted?.GlueDatabaseName
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {emptyPrintUnauthorized(table.restricted?.S3Prefix)}
+                        </TableCell>
                         <TableCell>
                           {isAdmin && (
                             <IconButton

@@ -5,7 +5,6 @@ from typing import Set, List, Type
 
 from dataall.base.loader import ImportMode, ModuleInterface
 
-
 log = logging.getLogger(__name__)
 
 
@@ -26,6 +25,7 @@ class DashboardApiModuleInterface(ModuleInterface):
 
     def __init__(self):
         from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
+        from dataall.core.metadata_manager import MetadataFormEntityManager, MetadataFormEntityTypes
         from dataall.modules.dashboards.db.dashboard_repositories import DashboardRepository
         from dataall.modules.dashboards.db.dashboard_models import Dashboard
         import dataall.modules.dashboards.api
@@ -33,8 +33,9 @@ class DashboardApiModuleInterface(ModuleInterface):
         from dataall.modules.catalog.indexers.registry import GlossaryRegistry, GlossaryDefinition
         from dataall.modules.vote.services.vote_service import add_vote_type
         from dataall.modules.dashboards.indexers.dashboard_indexer import DashboardIndexer
+        from dataall.modules.dashboards.services.dashboard_permissions import GET_DASHBOARD
 
-        FeedRegistry.register(FeedDefinition('Dashboard', Dashboard))
+        FeedRegistry.register(FeedDefinition('Dashboard', Dashboard, GET_DASHBOARD))
 
         GlossaryRegistry.register(
             GlossaryDefinition(
@@ -42,9 +43,10 @@ class DashboardApiModuleInterface(ModuleInterface):
             )
         )
 
-        add_vote_type('dashboard', DashboardIndexer)
+        add_vote_type('dashboard', DashboardIndexer, GET_DASHBOARD)
 
         EnvironmentResourceManager.register(DashboardRepository())
+        MetadataFormEntityManager.register(Dashboard, MetadataFormEntityTypes.Dashboard.value)
         log.info('Dashboard API has been loaded')
 
 
