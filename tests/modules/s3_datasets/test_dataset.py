@@ -114,6 +114,9 @@ def test_list_datasets(client, dataset1, group):
 
 
 def test_update_dataset(dataset1, client, group, group2, module_mocker):
+    # Mock the validate_kms_key function to return True
+    module_mocker.patch('dataall.modules.s3_datasets.services.dataset_service.DatasetService.validate_kms_key', return_value=True)
+    
     response = client.query(
         """
         mutation UpdateDataset($datasetUri:String!,$input:ModifyDatasetInput){
@@ -587,7 +590,11 @@ def test_create_dataset_with_expiration_setting(client, env_fixture, org_fixture
     assert response.data.createDataset.expiryMaxDuration == 3
 
 
-def test_update_dataset_with_expiration_setting_changes(dataset2, client, user, group, group2):
+def test_update_dataset_with_expiration_setting_changes(dataset2, client, user, group, group2, module_mocker):
+    # Mock the validate_kms_key function to return True
+    module_mocker.patch('dataall.modules.s3_datasets.services.dataset_service.DatasetService.validate_kms_key',
+                        return_value=True)
+
     assert dataset2.enableExpiration == False
     assert dataset2.expirySetting == None
     assert dataset2.expiryMinDuration == None
