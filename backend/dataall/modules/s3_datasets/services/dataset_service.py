@@ -311,10 +311,11 @@ class DatasetService:
                     DatasetService.validate_kms_key(dataset, data.get('KmsAlias'))
                     new_kms_alias = 'SSE-S3' if (data.get('KmsAlias') == '' or data.get('KmsAlias') == 'SSE-S3') else data.get('KmsAlias')
                     dataset.KmsAlias = new_kms_alias
-                    dataset.importedKmsKey = False if data.get('KmsAlias') == '' else True
+                    dataset.importedKmsKey = False if ( data.get('KmsAlias') == '' or data.get('KmsAlias') == 'SSE-S3' ) else True
                     # Update the dataset bucket as well
                     dataset_bucket = DatasetBucketRepository.get_dataset_bucket_for_dataset(session, dataset.datasetUri)
                     dataset_bucket.KmsAlias = new_kms_alias
+                    dataset_bucket.importedKmsKey = False if ( data.get('KmsAlias') == '' or data.get('KmsAlias') == 'SSE-S3' ) else True
 
                 if data.get('stewards') and data.get('stewards') != dataset.stewards:
                     if data.get('stewards') != dataset.SamlAdminGroupName:
