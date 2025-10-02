@@ -24,7 +24,8 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
     ShareItemActions,
     ShareItemHealthStatus,
-    ShareObjectDataPermission, PrincipalType,
+    ShareObjectDataPermission,
+    PrincipalType,
 )
 from dataall.modules.shares_base.services.sharing_service import ShareData
 
@@ -81,7 +82,12 @@ class LFShareManager:
         self.share = share_data.share
         self.source_environment = share_data.source_environment
         self.target_environment = share_data.target_environment
-        self.target_principal_type = EnvironmentIAMPrincipalType.ROLE.value if share_data.share.principalType in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value, PrincipalType.RedshiftRole.value] else EnvironmentIAMPrincipalType.USER.value
+        self.target_principal_type = (
+            EnvironmentIAMPrincipalType.ROLE.value
+            if share_data.share.principalType
+            in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value, PrincipalType.RedshiftRole.value]
+            else EnvironmentIAMPrincipalType.USER.value
+        )
         # Set the source account details by checking if a catalog account exists
         self.source_account_id, self.source_account_region, self.source_database_name = (
             self.init_source_account_details()
@@ -118,10 +124,10 @@ class LFShareManager:
         principal_iam_arn = None
         if self.target_principal_type == EnvironmentIAMPrincipalType.ROLE.value:
             principal_iam_arn = IAM.get_role_arn_by_name(
-                                account_id=self.target_environment.AwsAccountId,
-                                region=self.target_environment.region,
-                                role_name=self.share.principalName,
-                                )
+                account_id=self.target_environment.AwsAccountId,
+                region=self.target_environment.region,
+                role_name=self.share.principalName,
+            )
         elif self.target_principal_type == EnvironmentIAMPrincipalType.USER.value:
             principal_iam_arn = IAM.get_user_arn_by_name(
                 account_id=self.target_environment.AwsAccountId,
@@ -138,9 +144,7 @@ class LFShareManager:
                 f'Principal IAM {self.target_principal_type} {self.share.principalName} not found in {self.target_environment.AwsAccountId}'
             )
             logger.info('Try to build arn. Defaulting to role type')
-            principal_iam_arn = (
-                f'arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.share.principalName}'
-            )
+            principal_iam_arn = f'arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.share.principalName}'
 
         return [principal_iam_arn]
 

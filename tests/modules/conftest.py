@@ -60,7 +60,7 @@ def consumption_role(db):
         group: str,
         consumption_role_name='test123',
         datallManaged=PolicyManagementOptions.FULLY_MANAGED.value,
-        consumptionPrincipalType=EnvironmentIAMPrincipalType.ROLE.value
+        consumptionPrincipalType=EnvironmentIAMPrincipalType.ROLE.value,
     ) -> EnvironmentGroup:
         with db.scoped_session() as session:
             IAMRoleArn = f'arn:aws:iam::{environment.AwsAccountId}:role/{consumption_role_name}'
@@ -71,7 +71,7 @@ def consumption_role(db):
                 IAMPrincipalName=IAMRoleArn,
                 IAMPrincipalArn=IAMRoleArn.split('/')[-1],
                 dataallManaged=datallManaged,
-                consumptionPrincipalType=consumptionPrincipalType
+                consumptionPrincipalType=consumptionPrincipalType,
             )
             session.add(consumption_role)
             session.commit()

@@ -527,7 +527,9 @@ class ProcessLakeFormationShare(SharesProcessorInterface):
             log.info('No tables to revoke. Skipping...')
         else:
             if not S3ShareService.verify_principal(self.session, self.share_data.share):
-                log.info(f'Principal {self.share_data.share.principalName} (type: {manager.target_principal_type}) is not found.')
+                log.info(
+                    f'Principal {self.share_data.share.principalName} (type: {manager.target_principal_type}) is not found.'
+                )
             if None in [
                 manager.source_account_id,
                 manager.source_account_region,

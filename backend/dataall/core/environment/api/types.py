@@ -181,7 +181,9 @@ ConsumptionPrincipal = gql.ObjectType(
         gql.Field(name='created', type=gql.String),
         gql.Field(name='updated', type=gql.String),
         gql.Field(name='deleted', type=gql.String),
-        gql.Field(name='consumptionPrincipalType', type=gql.NonNullableType(EnvironmentIAMPrincipalType.toGraphQLEnum()))
+        gql.Field(
+            name='consumptionPrincipalType', type=gql.NonNullableType(EnvironmentIAMPrincipalType.toGraphQLEnum())
+        ),
     ],
 )
 

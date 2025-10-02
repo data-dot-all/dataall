@@ -70,7 +70,9 @@ class ManagedPolicy(ABC):
         return policies
 
     def check_if_policy_attached(self, policy_name):
-        is_policy_attached = IAM.is_policy_attached(self.account, self.region, policy_name, self.principal_name, self.principal_type)
+        is_policy_attached = IAM.is_policy_attached(
+            self.account, self.region, policy_name, self.principal_name, self.principal_type
+        )
         return is_policy_attached
 
     def get_policies_unattached_to_principal(self):
@@ -100,7 +102,9 @@ class ManagedPolicy(ABC):
 
 
 class PolicyManager(object):
-    def __init__(self, session, account, region, environmentUri, resource_prefix, principal_name, principal_type='ROLE'):
+    def __init__(
+        self, session, account, region, environmentUri, resource_prefix, principal_name, principal_type='ROLE'
+    ):
         self.session = session
         self.principal_name = principal_name
         self.principal_type = principal_type

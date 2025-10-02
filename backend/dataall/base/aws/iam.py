@@ -294,7 +294,6 @@ class IAM:
             log.error(f'Failed to get the list of attached policies to the IAM {principal_type} {principal_name}: {e}')
             return False
 
-
     @staticmethod
     def attach_role_policy(account_id, region: str, role_name, policy_arn):
         try:

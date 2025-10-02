@@ -139,7 +139,9 @@ def share(db):
                 datasetUri=dataset.datasetUri,
                 environmentUri=environment.environmentUri,
                 owner='bob',
-                principalId=environment.SamlGroupName if not consumption_principal else consumption_principal.consumptionPrincipalUri,
+                principalId=environment.SamlGroupName
+                if not consumption_principal
+                else consumption_principal.consumptionPrincipalUri,
                 principalType=PrincipalType.Group.value
                 if not consumption_principal
                 else PrincipalType.ConsumptionRole.value,

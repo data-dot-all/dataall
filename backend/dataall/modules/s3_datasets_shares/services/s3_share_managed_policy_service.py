@@ -34,7 +34,15 @@ DEFAULT_MAX_ATTACHABLE_MANAGED_POLICIES_ACCOUNT = 10
 
 
 class S3SharePolicyService(ManagedPolicy):
-    def __init__(self, principal_name, account, region, environmentUri, resource_prefix, principal_type=EnvironmentIAMPrincipalType.ROLE.value):
+    def __init__(
+        self,
+        principal_name,
+        account,
+        region,
+        environmentUri,
+        resource_prefix,
+        principal_type=EnvironmentIAMPrincipalType.ROLE.value,
+    ):
         self.principal_name = principal_name
         self.principal_type = principal_type
         self.account = account
@@ -303,7 +311,9 @@ class S3SharePolicyService(ManagedPolicy):
             self._create_empty_policies_with_indexes(indexes=missing_policies_indexes)
 
         # Check if managed policies can be attached to target requester role and new service policies do not exceed service quota limit
-        log.info(f'Checking service quota limit for number of managed policies which can be attached to principal: {self.principal_name}')
+        log.info(
+            f'Checking service quota limit for number of managed policies which can be attached to principal: {self.principal_name}'
+        )
         self._check_iam_managed_policy_attachment_limit(policy_document_chunks)
 
         # Check if the number of policies required are greater than currently present
@@ -356,7 +366,10 @@ class S3SharePolicyService(ManagedPolicy):
             if self.check_if_policy_exists(policy_name=policy_name):
                 if self.check_if_policy_attached(policy_name=policy_name):
                     IAM.detach_policy_from_role(
-                        account_id=self.account, region=self.region, role_name=self.principal_name, policy_name=policy_name
+                        account_id=self.account,
+                        region=self.region,
+                        role_name=self.principal_name,
+                        policy_name=policy_name,
                     )
                 IAM.delete_managed_policy_non_default_versions(
                     account_id=self.account, region=self.region, policy_name=policy_name
@@ -445,10 +458,16 @@ class S3SharePolicyService(ManagedPolicy):
         if service_code:
             service_quota_codes = service_quota_client.list_service_quota(service_code=service_code)
             for service_quota_cd in service_quota_codes:
-                if self.principal_type == EnvironmentIAMPrincipalType.ROLE.value and service_quota_cd.get('QuotaName') == IAM_ROLE_SERVICE_QUOTA_NAME:
+                if (
+                    self.principal_type == EnvironmentIAMPrincipalType.ROLE.value
+                    and service_quota_cd.get('QuotaName') == IAM_ROLE_SERVICE_QUOTA_NAME
+                ):
                     service_quota_code = service_quota_cd.get('QuotaCode')
                     break
-                if self.principal_type == EnvironmentIAMPrincipalType.USER.value and service_quota_cd.get('QuotaName') == IAM_USER_SERVICE_QUOTA_NAME:
+                if (
+                    self.principal_type == EnvironmentIAMPrincipalType.USER.value
+                    and service_quota_cd.get('QuotaName') == IAM_USER_SERVICE_QUOTA_NAME
+                ):
                     service_quota_code = service_quota_cd.get('QuotaCode')
                     break
 

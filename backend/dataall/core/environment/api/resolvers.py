@@ -177,7 +177,9 @@ def get_parent_organization(context: Context, source, **kwargs):
 
 # used from getConsumptionRolePolicies query -- query resolver
 def get_consumption_principal_policies(context: Context, source, environmentUri, IAMPrincipalName, IAMPrincipalType):
-    return EnvironmentService.resolve_consumption_principal_policies(uri=environmentUri, IAMPrincipalName=IAMPrincipalName, IAMPrincipalType=IAMPrincipalType)
+    return EnvironmentService.resolve_consumption_principal_policies(
+        uri=environmentUri, IAMPrincipalName=IAMPrincipalName, IAMPrincipalType=IAMPrincipalType
+    )
 
 
 def resolve_environment_networks(context: Context, source, **kwargs):

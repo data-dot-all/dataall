@@ -5,6 +5,7 @@ Revises: 77c3f1b2bec8
 Create Date: 2025-05-08 14:31:30.098503
 
 """
+
 import datetime
 from typing import List
 
@@ -24,6 +25,7 @@ depends_on = None
 
 Base = declarative_base()
 
+
 class ConsumptionPrincipal(Base):
     __tablename__ = 'consumptionprincipals'
     consumptionPrincipalUri = Column(String, primary_key=True, default=utils.uuid('group'))
@@ -38,10 +40,12 @@ class ConsumptionPrincipal(Base):
     deleted = Column(DateTime)
     consumptionPrincipalType = Column(String, nullable=False)
 
+
 def get_session():
     bind = op.get_bind()
     session = orm.Session(bind=bind)
     return session
+
 
 def column_exists(table_name, column_name):
     bind = op.get_context().bind
@@ -49,26 +53,37 @@ def column_exists(table_name, column_name):
     columns = insp.get_columns(table_name)
     return any(c['name'] == column_name for c in columns)
 
+
 def table_exists(table_name):
     bind = op.get_context().bind
     insp = inspect(bind)
     return table_name in insp.get_table_names()
 
-def upgrade():
 
+def upgrade():
     op.rename_table('consumptionrole', 'consumptionprincipals')
-    op.alter_column(table_name='consumptionprincipals', column_name='consumptionRoleUri', new_column_name='consumptionPrincipalUri')
-    op.alter_column(table_name='consumptionprincipals', column_name='consumptionRoleName',
-                    new_column_name='consumptionPrincipalName')
-    op.alter_column(table_name='consumptionprincipals', column_name='IAMRoleName',
-                    new_column_name='IAMPrincipalName')
-    op.alter_column(table_name='consumptionprincipals', column_name='IAMRoleArn',
-                    new_column_name='IAMPrincipalArn')
+    op.alter_column(
+        table_name='consumptionprincipals', column_name='consumptionRoleUri', new_column_name='consumptionPrincipalUri'
+    )
+    op.alter_column(
+        table_name='consumptionprincipals',
+        column_name='consumptionRoleName',
+        new_column_name='consumptionPrincipalName',
+    )
+    op.alter_column(table_name='consumptionprincipals', column_name='IAMRoleName', new_column_name='IAMPrincipalName')
+    op.alter_column(table_name='consumptionprincipals', column_name='IAMRoleArn', new_column_name='IAMPrincipalArn')
 
     consumption_type_enum = sa.Enum(EnvironmentIAMPrincipalType, name='consumption_principal_type')
     consumption_type_enum.create(op.get_bind(), checkfirst=True)
 
-    op.add_column(table_name='consumptionprincipals', column=sa.Column('consumptionPrincipalType', sa.Enum(EnvironmentIAMPrincipalType, name='consumption_principal_type'), nullable=True))
+    op.add_column(
+        table_name='consumptionprincipals',
+        column=sa.Column(
+            'consumptionPrincipalType',
+            sa.Enum(EnvironmentIAMPrincipalType, name='consumption_principal_type'),
+            nullable=True,
+        ),
+    )
 
     session = get_session()
 
@@ -81,25 +96,32 @@ def upgrade():
 
     op.alter_column(table_name='consumptionprincipals', column_name='consumptionPrincipalType', nullable=False)
 
-    op.alter_column(table_name='share_object', column_name='principalRoleName',
-                    new_column_name='principalName') if not column_exists('share_object', 'principalName') else None
+    op.alter_column(
+        table_name='share_object', column_name='principalRoleName', new_column_name='principalName'
+    ) if not column_exists('share_object', 'principalName') else None
 
 
 def downgrade():
     # Check if the name of the table has changes .
     if table_exists('consumptionprincipals'):
         op.rename_table('consumptionprincipals', 'consumptionrole')
-        op.alter_column(table_name='consumptionrole', new_column_name='consumptionRoleUri',
-                        column_name='consumptionPrincipalUri') if column_exists('consumptionrole', 'consumptionPrincipalUri') else None
-        op.alter_column(table_name='consumptionrole', new_column_name='consumptionRoleName',
-                        column_name='consumptionPrincipalName') if column_exists('consumptionrole', 'consumptionPrincipalName') else None
-        op.alter_column(table_name='consumptionrole', new_column_name='IAMRoleName',
-                        column_name='IAMPrincipalName') if column_exists('consumptionrole', 'IAMPrincipalName') else None
-        op.alter_column(table_name='consumptionrole', new_column_name='IAMRoleArn',
-                        column_name='IAMPrincipalArn') if column_exists('consumptionrole', 'IAMPrincipalArn') else None
-        op.drop_column(table_name='consumptionrole', column_name='consumptionPrincipalType') if column_exists('consumptionrole', 'consumptionPrincipalType') else None
+        op.alter_column(
+            table_name='consumptionrole', new_column_name='consumptionRoleUri', column_name='consumptionPrincipalUri'
+        ) if column_exists('consumptionrole', 'consumptionPrincipalUri') else None
+        op.alter_column(
+            table_name='consumptionrole', new_column_name='consumptionRoleName', column_name='consumptionPrincipalName'
+        ) if column_exists('consumptionrole', 'consumptionPrincipalName') else None
+        op.alter_column(
+            table_name='consumptionrole', new_column_name='IAMRoleName', column_name='IAMPrincipalName'
+        ) if column_exists('consumptionrole', 'IAMPrincipalName') else None
+        op.alter_column(
+            table_name='consumptionrole', new_column_name='IAMRoleArn', column_name='IAMPrincipalArn'
+        ) if column_exists('consumptionrole', 'IAMPrincipalArn') else None
+        op.drop_column(table_name='consumptionrole', column_name='consumptionPrincipalType') if column_exists(
+            'consumptionrole', 'consumptionPrincipalType'
+        ) else None
         op.execute('DROP TYPE IF EXISTS consumption_principal_type')
 
-        op.alter_column(table_name='share_object', column_name='principalName',
-                        new_column_name='principalRoleName') if column_exists('share_object', 'principalName') else None
-
+        op.alter_column(
+            table_name='share_object', column_name='principalName', new_column_name='principalRoleName'
+        ) if column_exists('share_object', 'principalName') else None

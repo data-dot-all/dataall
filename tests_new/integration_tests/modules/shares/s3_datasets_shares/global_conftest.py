@@ -83,7 +83,9 @@ def session_consumption_role_2(client6, group6, persistent_cross_acc_env_1, pers
         'SessionConsRole2',
     )
     yield consumption_role
-    remove_consumption_role(client6, persistent_cross_acc_env_1.environmentUri, consumption_role.consumptionPrincipalUri)
+    remove_consumption_role(
+        client6, persistent_cross_acc_env_1.environmentUri, consumption_role.consumptionPrincipalUri
+    )
     iam_client = IAMClient(session=persistent_cross_acc_env_1_aws_client, region=persistent_cross_acc_env_1['region'])
     iam_client.delete_consumption_role(test_session_cons_role_name_2)
 

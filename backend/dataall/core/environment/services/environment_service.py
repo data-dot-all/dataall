@@ -407,9 +407,14 @@ class EnvironmentService:
                 if env_role_imported is True
                 else PolicyManagementOptions.PARTIALLY_MANAGED.value
             )
-            PolicyManager(session=session, account=environment.AwsAccountId, region=environment.region,
-                          environmentUri=environment.environmentUri, resource_prefix=environment.resourcePrefix,
-                          principal_name=env_group_iam_role_name).create_all_policies(policy_management=policy_management)
+            PolicyManager(
+                session=session,
+                account=environment.AwsAccountId,
+                region=environment.region,
+                environmentUri=environment.environmentUri,
+                resource_prefix=environment.resourcePrefix,
+                principal_name=env_group_iam_role_name,
+            ).create_all_policies(policy_management=policy_management)
 
             athena_workgroup = NamingConventionService(
                 target_uri=environment.environmentUri,
@@ -473,9 +478,14 @@ class EnvironmentService:
 
             group_membership = EnvironmentService.find_environment_group(session, group, environment.environmentUri)
 
-            PolicyManager(session=session, account=environment.AwsAccountId, region=environment.region,
-                          environmentUri=environment.environmentUri, resource_prefix=environment.resourcePrefix,
-                          principal_name=group_membership.environmentIAMRoleName).delete_all_policies()
+            PolicyManager(
+                session=session,
+                account=environment.AwsAccountId,
+                region=environment.region,
+                environmentUri=environment.environmentUri,
+                resource_prefix=environment.resourcePrefix,
+                principal_name=group_membership.environmentIAMRoleName,
+            ).delete_all_policies()
 
             if group_membership:
                 session.delete(group_membership)
@@ -591,7 +601,6 @@ class EnvironmentService:
                     message=f'IAM principal {IAMPrincipalArn} is already added to the environment {environment.name}',
                 )
 
-
             consumption_principal = ConsumptionPrincipal(
                 consumptionPrincipalName=data['consumptionPrincipalName'],
                 environmentUri=environment.environmentUri,
@@ -599,12 +608,18 @@ class EnvironmentService:
                 IAMPrincipalArn=IAMPrincipalArn,
                 IAMPrincipalName=IAMPrincipalArn.split('/')[-1],
                 dataallManaged=data.get('dataallManaged'),
-                consumptionPrincipalType=consumptionType
+                consumptionPrincipalType=consumptionType,
             )
 
-            PolicyManager(session=session, account=environment.AwsAccountId, region=environment.region,
-                          environmentUri=environment.environmentUri, resource_prefix=environment.resourcePrefix,
-                          principal_name=consumption_principal.IAMPrincipalName, principal_type=consumptionType).create_all_policies(policy_management=consumption_principal.dataallManaged)
+            PolicyManager(
+                session=session,
+                account=environment.AwsAccountId,
+                region=environment.region,
+                environmentUri=environment.environmentUri,
+                resource_prefix=environment.resourcePrefix,
+                principal_name=consumption_principal.IAMPrincipalName,
+                principal_type=consumptionType,
+            ).create_all_policies(policy_management=consumption_principal.dataallManaged)
 
             session.add(consumption_principal)
             session.commit()
@@ -634,9 +649,15 @@ class EnvironmentService:
                 )
 
             if consumption_principal:
-                PolicyManager(session=session, account=environment.AwsAccountId, region=environment.region,
-                              environmentUri=environment.environmentUri, resource_prefix=environment.resourcePrefix,
-                              principal_name=consumption_principal.IAMPrincipalName, principal_type=consumption_principal.consumptionPrincipalType).delete_all_policies()
+                PolicyManager(
+                    session=session,
+                    account=environment.AwsAccountId,
+                    region=environment.region,
+                    environmentUri=environment.environmentUri,
+                    resource_prefix=environment.resourcePrefix,
+                    principal_name=consumption_principal.IAMPrincipalName,
+                    principal_type=consumption_principal.consumptionPrincipalType,
+                ).delete_all_policies()
 
                 ResourcePolicyService.delete_resource_policy(
                     session=session,
@@ -673,12 +694,15 @@ class EnvironmentService:
                 # If the input consumption role is not Fully-Managed then attach the share policy if it exists
                 if consumption_principal.dataallManaged == PolicyManagementOptions.FULLY_MANAGED.value:
                     environment: Environment = EnvironmentService.get_environment_by_uri(session, env_uri)
-                    share_policy_manager = PolicyManager(session=session, account=environment.AwsAccountId,
-                                                         region=environment.region,
-                                                         environmentUri=environment.environmentUri,
-                                                         resource_prefix=environment.resourcePrefix,
-                                                         principal_name=consumption_principal.IAMPrincipalName,
-                                                         principal_type=consumption_principal.consumptionPrincipalType)
+                    share_policy_manager = PolicyManager(
+                        session=session,
+                        account=environment.AwsAccountId,
+                        region=environment.region,
+                        environmentUri=environment.environmentUri,
+                        resource_prefix=environment.resourcePrefix,
+                        principal_name=consumption_principal.IAMPrincipalName,
+                        principal_type=consumption_principal.consumptionPrincipalType,
+                    )
                     for policy_manager in [
                         Policy
                         for Policy in share_policy_manager.initializedPolicies
@@ -831,7 +855,9 @@ class EnvironmentService:
     def get_role_policy_management_type(principal_type: str, principal_id: str):
         with get_context().db_engine.scoped_session() as session:
             if principal_type == PrincipalType.ConsumptionRole.value:
-                consumption_role: ConsumptionPrincipal = EnvironmentService.get_consumption_role(session, uri=principal_id)
+                consumption_role: ConsumptionPrincipal = EnvironmentService.get_consumption_role(
+                    session, uri=principal_id
+                )
                 return consumption_role.dataallManaged
 
         return PolicyManagementOptions.FULLY_MANAGED.value
@@ -864,7 +890,9 @@ class EnvironmentService:
 
     @staticmethod
     def get_environment_consumption_principal(session, principal_uri, environment_uri) -> ConsumptionPrincipal:
-        consumption_principal = EnvironmentRepository.get_environment_consumption_principal(session, principal_uri, environment_uri)
+        consumption_principal = EnvironmentRepository.get_environment_consumption_principal(
+            session, principal_uri, environment_uri
+        )
         if not consumption_principal:
             raise exceptions.ObjectNotFound('ConsumptionPrincipalUri', f'({principal_uri},{environment_uri})')
         return consumption_principal
@@ -901,7 +929,9 @@ class EnvironmentService:
         with get_context().db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
             env_groups = EnvironmentRepository.query_environment_groups(session, uri)
-            env_consumption_principals = EnvironmentRepository.query_all_environment_consumption_principals(session, uri, None)
+            env_consumption_principals = EnvironmentRepository.query_all_environment_consumption_principals(
+                session, uri, None
+            )
 
             env_resources = 0
             for group in env_groups:
@@ -924,9 +954,14 @@ class EnvironmentService:
                     StackStatus.CREATE_FAILED.value,
                     StackStatus.DELETE_COMPLETE.value,
                 ]:
-                    PolicyManager(session=session, account=environment.AwsAccountId, region=environment.region,
-                                  environmentUri=environment.environmentUri, resource_prefix=environment.resourcePrefix,
-                                  principal_name=environment.EnvironmentDefaultIAMRoleName).delete_all_policies()
+                    PolicyManager(
+                        session=session,
+                        account=environment.AwsAccountId,
+                        region=environment.region,
+                        environmentUri=environment.environmentUri,
+                        resource_prefix=environment.resourcePrefix,
+                        principal_name=environment.EnvironmentDefaultIAMRoleName,
+                    ).delete_all_policies()
 
                 KeyValueTagRepository.delete_key_value_tags(session, environment.environmentUri, 'environment')
                 EnvironmentResourceManager.delete_env(session, environment)
@@ -1140,6 +1175,12 @@ class EnvironmentService:
     def resolve_consumption_principal_policies(uri, IAMPrincipalName, IAMPrincipalType):
         environment = EnvironmentService.find_environment_by_uri(uri=uri)
         with get_context().db_engine.scoped_session() as session:
-            return PolicyManager(session=session, account=environment.AwsAccountId, region=environment.region,
-                                 environmentUri=uri, resource_prefix=environment.resourcePrefix,
-                                 principal_name=IAMPrincipalName, principal_type=IAMPrincipalType).get_all_policies()
+            return PolicyManager(
+                session=session,
+                account=environment.AwsAccountId,
+                region=environment.region,
+                environmentUri=uri,
+                resource_prefix=environment.resourcePrefix,
+                principal_name=IAMPrincipalName,
+                principal_type=IAMPrincipalType,
+            ).get_all_policies()

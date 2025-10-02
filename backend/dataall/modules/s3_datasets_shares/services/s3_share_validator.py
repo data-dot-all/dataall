@@ -90,12 +90,14 @@ class S3ShareValidator(SharesValidatorInterface):
     @staticmethod
     def _validate_iam_principals(environment, principal_name, principal_type):
         if principal_type == PrincipalType.ConsumptionUser.value:
-            principal_user = IAM.get_user_arn_by_name(account_id=environment.AwsAccountId, region=environment.region,
-                                                      user_name=principal_name)
+            principal_user = IAM.get_user_arn_by_name(
+                account_id=environment.AwsAccountId, region=environment.region, user_name=principal_name
+            )
             return principal_user is not None
 
-        principal_role = IAM.get_role_arn_by_name(account_id=environment.AwsAccountId, region=environment.region,
-                                                  role_name=principal_name)
+        principal_role = IAM.get_role_arn_by_name(
+            account_id=environment.AwsAccountId, region=environment.region, role_name=principal_name
+        )
         return principal_role is not None
 
     @staticmethod
@@ -113,10 +115,15 @@ class S3ShareValidator(SharesValidatorInterface):
         session, environment, principal_type: str, principal_id: str, group_uri: str, attachMissingPolicies: bool
     ):
         share_consumption_principal = None
-        if principal_type == PrincipalType.ConsumptionRole.value or principal_type == PrincipalType.ConsumptionUser.value:
-            share_consumption_principal: ConsumptionPrincipal = EnvironmentService.get_environment_consumption_principal(session,
-                                                                                                              principal_id,
-                                                                                                              environment.environmentUri)
+        if (
+            principal_type == PrincipalType.ConsumptionRole.value
+            or principal_type == PrincipalType.ConsumptionUser.value
+        ):
+            share_consumption_principal: ConsumptionPrincipal = (
+                EnvironmentService.get_environment_consumption_principal(
+                    session, principal_id, environment.environmentUri
+                )
+            )
             principal_name = share_consumption_principal.IAMPrincipalName
             managed = share_consumption_principal.dataallManaged == PolicyManagementOptions.FULLY_MANAGED.value
 
@@ -140,10 +147,15 @@ class S3ShareValidator(SharesValidatorInterface):
             consumption_principal_type = share_consumption_principal.consumptionPrincipalType
         else:
             consumption_principal_type = EnvironmentIAMPrincipalType.ROLE.value
-        share_policy_manager = PolicyManager(session=session, account=environment.AwsAccountId,
-                                             region=environment.region, environmentUri=environment.environmentUri,
-                                             resource_prefix=environment.resourcePrefix,
-                                             principal_name=principal_name, principal_type=consumption_principal_type)
+        share_policy_manager = PolicyManager(
+            session=session,
+            account=environment.AwsAccountId,
+            region=environment.region,
+            environmentUri=environment.environmentUri,
+            resource_prefix=environment.resourcePrefix,
+            principal_name=principal_name,
+            principal_type=consumption_principal_type,
+        )
         for policy_manager in [
             Policy for Policy in share_policy_manager.initializedPolicies if Policy.policy_type == 'SharePolicy'
         ]:

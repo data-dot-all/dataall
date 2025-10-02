@@ -74,9 +74,12 @@ class S3AccessPointShareManager:
         self.target_account_id = share_data.target_environment.AwsAccountId
         self.source_env_admin = share_data.source_env_group.environmentIAMRoleArn
         self.target_requester_IAMPrincipalName = share_data.share.principalName
-        self.target_requestor_principal_type = EnvironmentIAMPrincipalType.ROLE.value if share_data.share.principalType in [
-            PrincipalType.ConsumptionRole.value, PrincipalType.Group.value,
-            PrincipalType.RedshiftRole.value] else EnvironmentIAMPrincipalType.USER.value
+        self.target_requestor_principal_type = (
+            EnvironmentIAMPrincipalType.ROLE.value
+            if share_data.share.principalType
+            in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value, PrincipalType.RedshiftRole.value]
+            else EnvironmentIAMPrincipalType.USER.value
+        )
         self.bucket_name = target_folder.S3BucketName
         self.dataset_admin = share_data.dataset.IAMDatasetAdminRoleArn
         self.dataset_account_id = share_data.dataset.AwsAccountId
@@ -183,12 +186,14 @@ class S3AccessPointShareManager:
         key_alias = f'alias/{self.dataset.KmsAlias}'
         kms_client = KmsClient(self.dataset_account_id, self.source_environment.region)
         kms_key_id = kms_client.get_key_id(key_alias)
-        share_policy_service = S3SharePolicyService(principal_name=self.target_requester_IAMPrincipalName,
-                                                    account=self.target_environment.AwsAccountId,
-                                                    region=self.target_environment.region,
-                                                    environmentUri=self.target_environment.environmentUri,
-                                                    resource_prefix=self.target_environment.resourcePrefix,
-                                                    principal_type=self.target_requestor_principal_type)
+        share_policy_service = S3SharePolicyService(
+            principal_name=self.target_requester_IAMPrincipalName,
+            account=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
+            environmentUri=self.target_environment.environmentUri,
+            resource_prefix=self.target_environment.resourcePrefix,
+            principal_type=self.target_requestor_principal_type,
+        )
         share_policy_service.initialize_statements()
 
         share_resource_policy_name = share_policy_service.generate_indexed_policy_name(index=0)
@@ -335,14 +340,18 @@ class S3AccessPointShareManager:
         Updates requester IAM role policy to include requested S3 bucket and access point
         :returns: None or raises exception if something fails
         """
-        logger.info(f'Grant target principal {self.target_requester_IAMPrincipalName} (type: {self.target_requestor_principal_type}) access policy')
+        logger.info(
+            f'Grant target principal {self.target_requester_IAMPrincipalName} (type: {self.target_requestor_principal_type}) access policy'
+        )
 
-        share_policy_service = S3SharePolicyService(principal_name=self.target_requester_IAMPrincipalName,
-                                                    account=self.target_environment.AwsAccountId,
-                                                    region=self.target_environment.region,
-                                                    environmentUri=self.target_environment.environmentUri,
-                                                    resource_prefix=self.target_environment.resourcePrefix,
-                                                    principal_type=self.target_requestor_principal_type)
+        share_policy_service = S3SharePolicyService(
+            principal_name=self.target_requester_IAMPrincipalName,
+            account=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
+            environmentUri=self.target_environment.environmentUri,
+            resource_prefix=self.target_environment.resourcePrefix,
+            principal_type=self.target_requestor_principal_type,
+        )
         # Process all backwards compatibility tasks and convert to indexed policies
         share_policy_service.process_backwards_compatibility_for_target_iam_roles() if self.target_requestor_principal_type == EnvironmentIAMPrincipalType.ROLE.value else None
 
@@ -711,12 +720,14 @@ class S3AccessPointShareManager:
     def revoke_target_role_access_policy(self):
         logger.info('Deleting target role IAM statements...')
 
-        share_policy_service = S3SharePolicyService(principal_name=self.target_requester_IAMPrincipalName,
-                                                    account=self.target_environment.AwsAccountId,
-                                                    region=self.target_environment.region,
-                                                    environmentUri=self.target_environment.environmentUri,
-                                                    resource_prefix=self.target_environment.resourcePrefix,
-                                                    principal_type=self.target_requestor_principal_type)
+        share_policy_service = S3SharePolicyService(
+            principal_name=self.target_requester_IAMPrincipalName,
+            account=self.target_environment.AwsAccountId,
+            region=self.target_environment.region,
+            environmentUri=self.target_environment.environmentUri,
+            resource_prefix=self.target_environment.resourcePrefix,
+            principal_type=self.target_requestor_principal_type,
+        )
         # Process all backwards compatibility tasks and convert to indexed policies
         share_policy_service.process_backwards_compatibility_for_target_iam_roles()
 

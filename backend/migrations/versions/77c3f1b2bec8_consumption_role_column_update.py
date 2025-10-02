@@ -5,6 +5,7 @@ Revises: af2e1362d4cb
 Create Date: 2025-02-05 11:05:55.782419
 
 """
+
 import datetime
 from typing import List, Dict
 
@@ -19,16 +20,18 @@ from dataall.core.environment.db.environment_models import ConsumptionPrincipal
 
 # revision identifiers, used by Alembic.
 revision = '77c3f1b2bec8'
-down_revision = '5c5e78526cae'
+down_revision = 'ba2da94739ab'
 branch_labels = None
 depends_on = None
 
 Base = declarative_base()
 
+
 def get_session():
     bind = op.get_bind()
     session = orm.Session(bind=bind)
     return session
+
 
 class ConsumptionRole(Base):
     __tablename__ = 'consumptionrole'
@@ -42,6 +45,7 @@ class ConsumptionRole(Base):
     created = Column(DateTime, default=datetime.datetime.now)
     updated = Column(DateTime, onupdate=datetime.datetime.now)
     deleted = Column(DateTime)
+
 
 def upgrade():
     # Update the column type to String and also remove the DEFAULT True
