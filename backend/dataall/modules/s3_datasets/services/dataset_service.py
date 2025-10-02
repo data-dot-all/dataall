@@ -137,7 +137,6 @@ class DatasetService:
 
     @staticmethod
     def validate_kms_key(dataset, kms_alias_for_validation):
-
         s3_encryption, kms_id_type, kms_id = S3DatasetClient(dataset).get_bucket_encryption()
         if kms_alias_for_validation not in [None, 'Undefined', '', 'SSE-S3']:  # user-defined KMS encryption
             if s3_encryption == 'AES256':
@@ -307,15 +306,23 @@ class DatasetService:
                 )
 
                 if data.get('KmsAlias') not in ['Undefined'] and data.get('KmsAlias') != dataset.KmsAlias:
-                    log.info(f"Validating the kms key with alias: {data.get('KmsAlias')}")
+                    log.info(f'Validating the kms key with alias: {data.get("KmsAlias")}')
                     DatasetService.validate_kms_key(dataset, data.get('KmsAlias'))
-                    new_kms_alias = 'SSE-S3' if (data.get('KmsAlias') == '' or data.get('KmsAlias') == 'SSE-S3') else data.get('KmsAlias')
+                    new_kms_alias = (
+                        'SSE-S3'
+                        if (data.get('KmsAlias') == '' or data.get('KmsAlias') == 'SSE-S3')
+                        else data.get('KmsAlias')
+                    )
                     dataset.KmsAlias = new_kms_alias
-                    dataset.importedKmsKey = False if ( data.get('KmsAlias') == '' or data.get('KmsAlias') == 'SSE-S3' ) else True
+                    dataset.importedKmsKey = (
+                        False if (data.get('KmsAlias') == '' or data.get('KmsAlias') == 'SSE-S3') else True
+                    )
                     # Update the dataset bucket as well
                     dataset_bucket = DatasetBucketRepository.get_dataset_bucket_for_dataset(session, dataset.datasetUri)
                     dataset_bucket.KmsAlias = new_kms_alias
-                    dataset_bucket.importedKmsKey = False if ( data.get('KmsAlias') == '' or data.get('KmsAlias') == 'SSE-S3' ) else True
+                    dataset_bucket.importedKmsKey = (
+                        False if (data.get('KmsAlias') == '' or data.get('KmsAlias') == 'SSE-S3') else True
+                    )
 
                 if data.get('stewards') and data.get('stewards') != dataset.stewards:
                     if data.get('stewards') != dataset.SamlAdminGroupName:
