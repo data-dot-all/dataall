@@ -4,9 +4,10 @@ from aws_cdk import aws_lambda, BundlingOptions
 from aws_cdk.aws_lambda import AssetCode
 
 from stacks.solution_bundling import SolutionBundling
+from stacks.runtime_options import PYTHON_LAMBDA_RUNTIME
 
 
-def get_lambda_code(path, image=aws_lambda.Runtime.PYTHON_3_9.bundling_image) -> AssetCode:
+def get_lambda_code(path, image=PYTHON_LAMBDA_RUNTIME.bundling_image) -> AssetCode:
     assets_path = os.path.realpath(
         os.path.join(
             os.path.dirname(__file__),

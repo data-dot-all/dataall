@@ -26,6 +26,7 @@ from .sqs import SqsStack
 from .trigger_function_stack import TriggerFunctionStack
 from .vpc import VpcStack
 from .iam_utils import get_tooling_account_external_id
+from .aurora_migration_task import CodeBuildProjectStack
 
 
 class BackendStack(Stack):
@@ -62,6 +63,8 @@ class BackendStack(Stack):
         with_approval_tests=False,
         allowed_origins='*',
         log_retention_duration=None,
+        deploy_aurora_migration_stack=False,
+        old_aurora_connection_secret_arn=None,
         throttling_config=None,
         **kwargs,
     ):
@@ -349,6 +352,18 @@ class BackendStack(Stack):
             env_var_encryption_key=lambda_env_key,
             **kwargs,
         )
+
+        if deploy_aurora_migration_stack:
+            self.aurora_migration_stack = CodeBuildProjectStack(
+                self,
+                'AuroraMigrationStack',
+                secret_id_aurora_v1_arn=old_aurora_connection_secret_arn,
+                secret_aurora_v2=aurora_stack.db_credentials,
+                kms_key_for_secret_arn=aurora_stack.kms_key.key_arn,
+                database_name=aurora_stack.db_name,
+                vpc_security_group=db_migrations.security_group,
+                vpc=vpc,
+            )
 
         self.monitoring_stack = MonitoringStack(
             self,

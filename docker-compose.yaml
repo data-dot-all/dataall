@@ -1,43 +1,82 @@
 # This configuration is intended for development purpose, it's **your** responsibility to harden it for production
-version: '3.2'
+secrets:
+  aws-creds:
+    file: $HOME/.aws/credentials
+configs:
+  dataall-config:
+    file: ./config.json
+  aws-config:
+    file: $HOME/.aws/config
 services:
   cdkproxy:
     build:
-      context: ./backend
-      dockerfile: docker/dev/Dockerfile
+      context: ./
+      dockerfile: backend/docker/prod/ecs/Dockerfile
       args:
         CONTAINER_UID: ${UID}
-    entrypoint: /bin/bash -c 'aws configure set region "eu-west-1" && . ~/.nvm/nvm.sh && uvicorn cdkproxymain:app --host 0.0.0.0 --port 2805 --reload'
+        PORT: '2805'
+    healthcheck:
+      test: [ "CMD", "curl", "-s", "http://localhost:2805" ]
+      interval: 60s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
     expose:
       - 2805
     ports:
       - 2805:2805
     depends_on:
-      - db
-    links:
-      - db
+      db:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
     environment:
       envname: 'dkrcompose'
       config_location: "/config.json"
       AWS_REGION: "${AWS_REGION:-eu-west-1}"
       AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-eu-west-1}"
-    volumes:
-      - ./backend/dataall:/dataall
-      - $HOME/.aws/credentials:/home/cuser/.aws/credentials:ro
-      - $HOME/.aws/config:/home/cuser/.aws/config
-      - ./config.json:/config.json
+    secrets:
+      - source: aws-creds
+        target: /home/cuser/.aws/credentials
+    configs:
+      - source: aws-config
+        target: /home/cuser/.aws/config
+      - source: dataall-config
+        target: /config.json
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./backend/dataall
+          target: /dataall
     restart:
       on-failure:60
     platform:
       linux/amd64
-
-  graphql:
+  graphql-base:
+    entrypoint: 'true'
     build:
-      context: ./backend
-      dockerfile: docker/dev/Dockerfile
+      context: ./
+      dockerfile: backend/docker/prod/lambda/Dockerfile
       args:
         CONTAINER_UID: ${UID}
-    entrypoint: /bin/bash -c "../build/wait-for-it.sh elasticsearch:9200 -t 30 && uvicorn local_graphql_server:app --host 0.0.0.0 --port 5000 --reload"
+  graphql:
+    build:
+      context: ./
+      additional_contexts:
+        dataall-graphql-base: "service:graphql-base"
+      dockerfile_inline: |
+        FROM dataall-graphql-base 
+        RUN python3.12 -m pip install uvicorn --prefix=/usr/local
+    entrypoint:
+      - "bash"
+      - "-c"
+      - "$${PYTHON_VERSION} -m uvicorn --reload --host 0.0.0.0 local_graphql_server:app --port 5000"
+    healthcheck:
+      test: [ "CMD", "curl", "-s", "http://localhost:5000/graphql" ]
+      interval: 60s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
     expose:
       - 5000
     ports:
@@ -48,42 +87,61 @@ services:
       AWS_REGION: "${AWS_REGION:-eu-west-1}"
       AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-eu-west-1}"
       email_sender_id: "noreply@someawsdomain"
-    volumes:
-      - ./backend/dataall:/dataall
-      - $HOME/.aws/credentials:/home/cuser/.aws/credentials:ro
-      - ./config.json:/config.json
+    secrets:
+      - source: aws-creds
+        target: /home/cuser/.aws/credentials
+    configs:
+      - source: aws-config
+        target: /home/cuser/.aws/config
+      - source: dataall-config
+        target: /config.json
+    develop:
+      watch:
+        - action: sync
+          path: ./backend/dataall
+          target: /dataall
     depends_on:
-      - db
-      - elasticsearch
-      - cdkproxy
-    links:
-      - db
-      - elasticsearch
-      - cdkproxy
+      db:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      cdkproxy:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
     restart:
       on-failure:60
 
   db:
-    build:
-      context: compose/postgres
+    image: postgres:16.4
     environment:
       POSTGRES_DB: 'dataall'
       POSTGRES_USER: 'postgres'
       POSTGRES_PASSWORD: 'docker'
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "postgres", "-d", "dataall" ]
+      interval: 60s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
     expose:
-    - 5432
+      - 5432
     ports:
       - 5432:5432
     volumes:
       - type: volume
         target: /usr/share/postgresql/data
-    restart: always
+    restart:
+      on-failure:60
 
   elasticsearch:
-    build:
-      context: compose/elasticsearch
-      args:
-        ELK_VERSION: 7.9.3
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
+    healthcheck:
+      test: [ "CMD", "curl", "-s", "http://localhost:9200" ]
+      interval: 60s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
     volumes:
       - type: volume
         target: /usr/share/elasticsearch/data
@@ -101,11 +159,51 @@ services:
     build:
       context: .
       dockerfile: frontend/docker/dev/Dockerfile
+    healthcheck:
+      test: [ "CMD", "node", "-e", "fetch('http://localhost:8080')" ]
+      interval: 60s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: /app
     deploy:
       resources:
         limits:
           memory: 4096M
         reservations:
           memory: 128M
+    depends_on:
+      graphql:
+        condition: service_healthy
+    expose:
+      - "8080"
     ports:
-      - "8080:80"
+      - "8080:8080"
+
+  migrations:
+    build:
+      context: ./
+      additional_contexts:
+        dataall-graphql-base: "service:graphql-base"
+      dockerfile_inline: |
+        FROM dataall-graphql-base
+    entrypoint: [ "alembic", "-c", "backend/alembic.ini", "upgrade", "head" ]
+    working_dir: /migrations/
+    environment:
+      envname: dkrcompose
+      PYTHONPATH: /migrations/backend
+    secrets:
+      - source: aws-creds
+        target: /home/cuser/.aws/credentials
+    configs:
+      - source: dataall-config
+        target: /migrations/config.json
+    volumes:
+      - ./backend:/migrations/backend
+    depends_on:
+      db:
+        condition: service_healthy

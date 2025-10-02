@@ -216,7 +216,7 @@ def describe_stack(stack, engine: Engine = None, stackid: str = None):
 
 
 def cdk_installed():
-    cmd1 = ['.', '~/.nvm/nvm.sh']
+    cmd1 = ['bash', '~/.nvm/nvm.sh']
     logger.info(f'Running command {" ".join(cmd1)}')
     subprocess.run(
         cmd1,
