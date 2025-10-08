@@ -1,6 +1,8 @@
 import os
 from dataall.base import db
-from dataall.base.utils.iam_cdk_utils import (
+from dataall.base.utils.iam_cdk_uimport os
+from dataall.base import db
+from dataall.base.utils.policy_utils import (
     process_and_split_policy_with_resources_in_statements,
     process_and_split_policy_with_conditions_in_statements,
 )
@@ -67,9 +69,11 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     'glue:DeleteResourcePolicy',
                     'glue:PutResourcePolicy',
                 ],
-                resources=[f'arn:aws:glue:*:*:catalog',
-                           f'arn:aws:glue:*:*:database/*',
-                           f'arn:aws:glue:*:*:table/*/*']
+                resources=[
+                    f'arn:aws:glue:*:*:catalog',
+                    f'arn:aws:glue:*:*:database/*',
+                    f'arn:aws:glue:*:*:table/*/*',
+                ]
             ),
             # Manage LF permissions for glue databases
             iam.PolicyStatement(
@@ -112,7 +116,7 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     f'arn:aws:lakeformation:{self.region}:*:database/*',
                     f'arn:aws:lakeformation:{self.region}:*:table/*/*',
                     f'arn:aws:lakeformation:{self.region}:*:data-location/*',
-                    f'arn:aws:lakeformation:{self.region}:*:lf-tag/*'
+                    f'arn:aws:lakeformation:{self.region}:*:lf-tag/*',
                 ],
             ),
             # Glue ETL - needed to start crawler and profiling jobs
@@ -126,7 +130,7 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     'glue:UpdateTrigger',
                     'glue:UpdateJob',
                     'glue:UpdateCrawler',
-                    'glue:GetCrawler'          
+                    'glue:GetCrawler'
                 ],
                 resources=[
                     f'arn:aws:glue:*:{self.account}:crawler/{self.env_resource_prefix}*',
