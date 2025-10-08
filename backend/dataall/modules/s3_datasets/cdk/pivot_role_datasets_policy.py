@@ -58,9 +58,7 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     'glue:GetPartition',
                     'glue:GetPartitions',
                     'glue:GetCatalogImportStatus',
-                    'glue:ListDatabases',
-                    'glue:ListTables',
-                    'glue:ListPartitions',
+                    'glue:GetTags'
                     'glue:SearchTables',
                     'glue:UpdateDatabase',
                     'glue:UpdatePartition',
@@ -70,9 +68,9 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     'glue:PutResourcePolicy',
                 ],
                 resources=[
-                    f'arn:aws:glue:*:{self.account}:catalog',
-                    f'arn:aws:glue:*:{self.account}:database/*',
-                    f'arn:aws:glue:*:{self.account}:table/*/*',
+                    'arn:aws:glue:*:*:catalog',
+                    'arn:aws:glue:*:*:database/*',
+                    'arn:aws:glue:*:*:table/*/*',
                 ],
             ),
             # Manage LF permissions for glue databases
@@ -111,12 +109,12 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     'lakeformation:DeleteObjectsOnCancel',
                 ],
                 resources=[
-                    f'arn:aws:lakeformation:{self.region}:{self.account}:catalog',
-                    f'arn:aws:lakeformation:{self.region}:{self.account}:catalog:{self.account}',
-                    f'arn:aws:lakeformation:{self.region}:{self.account}:database/*',
-                    f'arn:aws:lakeformation:{self.region}:{self.account}:table/*/*',
-                    f'arn:aws:lakeformation:{self.region}:{self.account}:data-location/*',
-                    f'arn:aws:lakeformation:{self.region}:{self.account}:lf-tag/*',
+                    f'arn:aws:lakeformation:{self.region}:*:catalog',
+                    f'arn:aws:lakeformation:{self.region}:*:catalog:*',
+                    f'arn:aws:lakeformation:{self.region}:*:database/*',
+                    f'arn:aws:lakeformation:{self.region}:*:table/*/*',
+                    f'arn:aws:lakeformation:{self.region}:*:data-location/*',
+                    f'arn:aws:lakeformation:{self.region}:*:lf-tag/*',
                 ],
             ),
             # Glue ETL - needed to start crawler and profiling jobs
