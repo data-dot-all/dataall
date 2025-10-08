@@ -58,8 +58,7 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     'glue:GetPartition',
                     'glue:GetPartitions',
                     'glue:GetCatalogImportStatus',
-                    'glue:GetTags'
-                    'glue:SearchTables',
+                    'glue:GetTagsglue:SearchTables',
                     'glue:UpdateDatabase',
                     'glue:UpdatePartition',
                     'glue:UpdateTable',
