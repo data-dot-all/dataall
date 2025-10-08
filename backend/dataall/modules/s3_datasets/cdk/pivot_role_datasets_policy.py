@@ -211,3 +211,6 @@ class DatasetsPivotRole(PivotRoleStatementSet):
             statements.extend(kms_statements)
 
         return statements
+            statements.extend(kms_statements)
+
+        return statements
