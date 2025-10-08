@@ -1,10 +1,8 @@
 import os
 from dataall.base import db
-from dataall.base.utils.iam_cdk_uimport os
-from dataall.base import db
-from dataall.base.utils.policy_utils import (
-    process_and_split_policy_with_resources_in_statements,
-    process_and_split_policy_with_conditions_in_statements,
+from dataall.base.utils.iam_policy_utils import (
+    split_policy_with_resources_in_statements,
+    split_policy_with_mutiple_value_condition_in_statements,
 )
 from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
@@ -70,10 +68,10 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     'glue:PutResourcePolicy',
                 ],
                 resources=[
-                    f'arn:aws:glue:*:*:catalog',
-                    f'arn:aws:glue:*:*:database/*',
-                    f'arn:aws:glue:*:*:table/*/*',
-                ]
+                    'arn:aws:glue:*:*:catalog',
+                    'arn:aws:glue:*:*:database/*',
+                    'arn:aws:glue:*:*:table/*/*',
+                ],
             ),
             # Manage LF permissions for glue databases
             iam.PolicyStatement(
@@ -130,7 +128,7 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     'glue:UpdateTrigger',
                     'glue:UpdateJob',
                     'glue:UpdateCrawler',
-                    'glue:GetCrawler'
+                    'glue:GetCrawler',
                 ],
                 resources=[
                     f'arn:aws:glue:*:{self.account}:crawler/{self.env_resource_prefix}*',
@@ -173,7 +171,7 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                         imported_kms_alias.append(f'alias/{dataset.KmsAlias}')
 
         if imported_buckets:
-            dataset_statements = process_and_split_policy_with_resources_in_statements(
+            dataset_statements = split_policy_with_resources_in_statements(
                 base_sid='ImportedDatasetBuckets',
                 effect=iam.Effect.ALLOW.value,
                 actions=[
@@ -190,7 +188,7 @@ class DatasetsPivotRole(PivotRoleStatementSet):
             )
             statements.extend(dataset_statements)
         if imported_kms_alias:
-            kms_statements = process_and_split_policy_with_conditions_in_statements(
+            kms_statements = split_policy_with_mutiple_value_condition_in_statements(
                 base_sid='KMSImportedDataset',
                 effect=iam.Effect.ALLOW.value,
                 actions=[
