@@ -211,6 +211,7 @@ class S3ShareObjectRepository:
                     ShareObject.environmentUri == environment_uri,
                     ShareObjectItem.status.in_(share_item_shared_states),
                     ShareObject.principalType != PrincipalType.ConsumptionRole.value,
+                    ShareObject.principalType != PrincipalType.ConsumptionUser.value,
                     or_(
                         ShareObject.owner == username,
                         ShareObject.principalId.in_(groups),
