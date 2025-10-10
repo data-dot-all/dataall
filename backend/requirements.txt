@@ -1,6 +1,6 @@
 ariadne==0.26.2
 aws-xray-sdk==2.4.3
-boto3==1.39.7
+boto3==1.40.48
 fastapi == 0.116.1
 nanoid==2.0.0
 opensearch-py==3.0.0
