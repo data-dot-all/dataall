@@ -124,6 +124,7 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                 sid='GlueETL',
                 effect=iam.Effect.ALLOW,
                 actions=[
+                    'glue:GetJobRun',
                     'glue:StartCrawler',
                     'glue:StartJobRun',
                     'glue:StartTrigger',
