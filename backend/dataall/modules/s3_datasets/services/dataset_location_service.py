@@ -5,8 +5,7 @@ from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 
-##TODO Uncomment the following to use the ResourceThresholdService once https://github.com/data-dot-all/dataall/pull/1653 is merged
-##from dataall.core.resource_threshold.services.resource_threshold_service import ResourceThresholdService
+from dataall.core.resource_threshold.services.resource_threshold_service import ResourceThresholdService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.base.db.exceptions import ResourceAlreadyExists
 from dataall.modules.s3_datasets.services.dataset_service import DatasetService
@@ -153,10 +152,9 @@ class DatasetLocationService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(UPDATE_DATASET_FOLDER, parent_resource=_get_dataset_uri)
-    ##TODO Uncomment the following to use the ResourceThresholdService once https://github.com/data-dot-all/dataall/pull/1653 is merged
-    # @ResourceThresholdService.check_invocation_count(
-    #     'metadata', 'modules.s3_datasets.features.generate_metadata_ai.max_count_per_day'
-    # )
+    @ResourceThresholdService.check_invocation_count(
+        'metadata', 'modules.s3_datasets.features.generate_metadata_ai.max_count_per_day'
+    )
     def generate_metadata_for_folder(uri, metadata_types):
         context = get_context()
         with context.db_engine.scoped_session() as session:

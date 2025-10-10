@@ -3,8 +3,7 @@ from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 
-##TODO
-##from dataall.core.resource_threshold.services.resource_threshold_service import ResourceThresholdService
+from dataall.core.resource_threshold.services.resource_threshold_service import ResourceThresholdService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.s3_datasets.aws.athena_table_client import AthenaTableClient
@@ -203,10 +202,9 @@ class DatasetTableService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(UPDATE_DATASET_TABLE, parent_resource=_get_dataset_uri)
-    ##TODO Uncomment the following to use the ResourceThresholdService once https://github.com/data-dot-all/dataall/pull/1653 is merged
-    # @ResourceThresholdService.check_invocation_count(
-    #     'metadata', 'modules.s3_datasets.features.generate_metadata_ai.max_count_per_day'
-    # )
+    @ResourceThresholdService.check_invocation_count(
+        'metadata', 'modules.s3_datasets.features.generate_metadata_ai.max_count_per_day'
+    )
     def generate_metadata_for_table(uri, metadata_types, sample_data):
         metadataTypesForTable = [MetadataGenerationTypes.Description.value, MetadataGenerationTypes.Tag.value]
         table_metadata_types = [item for item in metadata_types if item in metadataTypesForTable]
