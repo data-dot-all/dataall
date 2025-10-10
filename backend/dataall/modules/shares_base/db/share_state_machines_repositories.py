@@ -111,6 +111,13 @@ class ShareStatusRepository:
         )
 
     @staticmethod
+    def delete_share_item_batch(
+        session,
+        share_uri: str,
+    ):
+        (session.query(ShareObjectItem).filter(and_(ShareObjectItem.shareUri == share_uri)).delete())
+
+    @staticmethod
     def update_share_item_health_status(
         session,
         share_item: ShareObjectItem,

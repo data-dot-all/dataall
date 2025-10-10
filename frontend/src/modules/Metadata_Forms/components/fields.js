@@ -7,8 +7,8 @@ import {
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import { getGlossaryTree } from '../../Glossaries/services';
-import { SET_ERROR } from '../../../globalErrors';
-import { Defaults } from '../../../design';
+import { SET_ERROR } from 'globalErrors';
+import { Defaults } from 'design';
 
 export const FreeInputField = (props) => {
   const { field, onChange, errors } = props;
@@ -18,6 +18,7 @@ export const FreeInputField = (props) => {
       label={field.name}
       error={errors[field.name]}
       name={field.name}
+      defaultValue={field.value}
       onKeyUp={(event) => {
         onChange(event.target.value);
       }}
@@ -36,7 +37,9 @@ export const BooleanField = (props) => {
       control={
         <Checkbox
           id={field.name}
-          defaultChecked={field.value}
+          defaultChecked={
+            field.value !== undefined ? JSON.parse(field.value) : false
+          }
           onChange={(event, checked) => onChange(checked)}
         />
       }
@@ -83,6 +86,7 @@ export const GlossaryTermField = (props) => {
     <Autocomplete
       options={glossaryOptions}
       onChange={(event, value) => onChange(value.nodeUri)}
+      defaultValue={field.value}
       renderInput={(params) => (
         <TextField
           sx={{ width: '100%' }}
@@ -108,6 +112,7 @@ export const DropDownField = (props) => {
     <Autocomplete
       disablePortal
       options={field.possibleValues}
+      defaultValue={field.value}
       onChange={(event, value) => onChange(value)}
       renderInput={(params) => (
         <TextField

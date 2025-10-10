@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
-import { isModuleEnabled, ModuleNames } from 'utils';
+import { isModuleEnabled, isTenantUser, ModuleNames } from 'utils';
 import { useClient, useGroups } from 'services';
 import { LoadingScreen, NoAccessMaintenanceWindow } from 'design';
 import { getMaintenanceStatus } from '../../modules/Maintenance/services';
@@ -25,7 +25,7 @@ export const MaintenanceGuard = (props) => {
           response.data.getMaintenanceWindowStatus.status
         ) &&
         response.data.getMaintenanceWindowStatus.mode === 'NO-ACCESS' &&
-        !groups.includes('DAAdministrators')
+        !isTenantUser(groups)
       ) {
         setNoAccessMaintenanceFlag(true);
       } else {
@@ -34,11 +34,11 @@ export const MaintenanceGuard = (props) => {
     }
   };
 
-  useEffect(async () => {
+  useEffect(() => {
     // Check if the maintenance window is enabled and has NO-ACCESS Status
     // If yes then display a blank screen with a message that data.all is in maintenance mode ( Check use of isNoAccessMaintenance state )
     if (isModuleEnabled(ModuleNames.MAINTENANCE) === true) {
-      if (client) {
+      if (client && groups) {
         checkMaintenanceMode().catch((e) => dispatch({ type: SET_ERROR, e }));
       }
     }

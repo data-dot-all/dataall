@@ -11,6 +11,7 @@ owner
 tags
 SamlGroupName
 EnvironmentDefaultBucketName
+EnvironmentLogsBucketName
 EnvironmentDefaultIAMRoleArn
 EnvironmentDefaultIAMRoleName
 EnvironmentDefaultIAMRoleImported
@@ -63,13 +64,7 @@ def create_environment(client, name, group, organizationUri, awsAccountId, regio
                 'description': 'Created for integration testing',
                 'tags': tags,
                 'type': 'IntegrationTesting',
-                'parameters': [
-                    {'key': 'notebooksEnabled', 'value': 'true'},
-                    {'key': 'dashboardsEnabled', 'value': 'true'},
-                    {'key': 'mlStudiosEnabled', 'value': 'false'},
-                    {'key': 'pipelinesEnabled', 'value': 'true'},
-                    {'key': 'omicsEnabled', 'value': 'true'},
-                ],
+                'parameters': [],
             }
         },
         'query': f"""

@@ -1,7 +1,6 @@
 from dataall.base.db import exceptions
 from dataall.modules.worksheets.api.enums import WorksheetRole
 from dataall.modules.worksheets.db.worksheet_models import Worksheet
-from dataall.modules.worksheets.db.worksheet_repositories import WorksheetRepository
 from dataall.modules.worksheets.services.worksheet_service import WorksheetService
 from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.base.api.context import Context
@@ -15,9 +14,7 @@ def create_worksheet(context: Context, source, input: dict = None):
     if not input.get('label'):
         raise exceptions.RequiredParameter('label')
 
-    return WorksheetService.create_worksheet(
-        data=input,
-    )
+    return WorksheetService.create_worksheet(data=input)
 
 
 def update_worksheet(context: Context, source, worksheetUri: str, input: dict = None):
@@ -41,22 +38,14 @@ def resolve_user_role(context: Context, source: Worksheet):
 def list_worksheets(context, source, filter: dict = None):
     if not filter:
         filter = {}
-    with context.engine.scoped_session() as session:
-        return WorksheetRepository.paginated_user_worksheets(
-            session=session,
-            username=context.username,
-            groups=context.groups,
-            uri=None,
-            data=filter,
-            check_perm=True,
-        )
+    return WorksheetService.list_user_worksheets(filter)
 
 
-def run_sql_query(context: Context, source, environmentUri: str, worksheetUri: str, sqlQuery: str):
+def run_sql_query(context: Context, source, environmentUri: str = None, worksheetUri: str = None, sqlQuery: str = None):
     return WorksheetService.run_sql_query(uri=environmentUri, worksheetUri=worksheetUri, sqlQuery=sqlQuery)
 
 
-def delete_worksheet(context, source, worksheetUri: str):
+def delete_worksheet(context, source, worksheetUri: str = None):
     return WorksheetService.delete_worksheet(uri=worksheetUri)
 
 

@@ -8,12 +8,12 @@ from dataall.modules.worksheets.aws.bedrock_client import BedrockClient
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.db import exceptions
+from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.modules.worksheets.aws.athena_client import AthenaClient
 from dataall.modules.worksheets.db.worksheet_models import Worksheet
 from dataall.modules.worksheets.db.worksheet_repositories import WorksheetRepository
-from dataall.base.context import get_context
 from dataall.modules.worksheets.services.worksheet_permissions import (
     MANAGE_WORKSHEETS,
     UPDATE_WORKSHEET,
@@ -41,6 +41,12 @@ class WorksheetService:
     @TenantPolicyService.has_tenant_permission(MANAGE_WORKSHEETS)
     def create_worksheet(data=None) -> Worksheet:
         context = get_context()
+        with context.db_engine.scoped_session() as session:
+            context = get_context()
+        if data['SamlAdminGroupName'] not in context.groups:
+            raise exceptions.UnauthorizedOperation(
+                'CREATE_WORKSHEET', f'user {context.username} does not belong to group {data["SamlAdminGroupName"]}'
+            )
         with context.db_engine.scoped_session() as session:
             worksheet = Worksheet(
                 owner=context.username,
@@ -103,7 +109,7 @@ class WorksheetService:
             return worksheet
 
     @staticmethod
-    def list_worksheets(filter):
+    def list_user_worksheets(filter):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             return WorksheetRepository.paginated_user_worksheets(
@@ -131,7 +137,9 @@ class WorksheetService:
             return True
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_WORKSHEETS)
     @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
+    @ResourcePolicyService.has_resource_permission(GET_WORKSHEET, param_name='worksheetUri')
     def run_sql_query(uri, worksheetUri, sqlQuery):
         with get_context().db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
@@ -141,15 +149,15 @@ class WorksheetService:
                 session, worksheet.SamlAdminGroupName, environment.environmentUri
             )
 
-        cursor = AthenaClient.run_athena_query(
-            aws_account_id=environment.AwsAccountId,
-            env_group=env_group,
-            s3_staging_dir=f's3://{environment.EnvironmentDefaultBucketName}/athenaqueries/{env_group.environmentAthenaWorkGroup}/',
-            region=environment.region,
-            sql=sqlQuery,
-        )
+            cursor = AthenaClient.run_athena_query(
+                aws_account_id=environment.AwsAccountId,
+                env_group=env_group,
+                s3_staging_dir=f's3://{environment.EnvironmentDefaultBucketName}/athenaqueries/{env_group.environmentAthenaWorkGroup}/',
+                region=environment.region,
+                sql=sqlQuery,
+            )
 
-        return AthenaClient.convert_query_output(cursor)
+            return AthenaClient.convert_query_output(cursor)
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)

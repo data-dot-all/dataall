@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 from botocore.exceptions import ClientError
 
@@ -18,7 +19,7 @@ class ParameterStoreManager:
     @staticmethod
     def client(AwsAccountId=None, region=None, role=None):
         if AwsAccountId:
-            log.info(f"SSM Parameter remote session with role:{role if role else 'PivotRole'}")
+            log.info(f'SSM Parameter remote session with role:{role if role else "PivotRole"}')
             session = SessionHelper.remote_session(accountid=AwsAccountId, region=region, role=role)
         else:
             log.info('SSM Parameter session in central account')
@@ -39,15 +40,16 @@ class ParameterStoreManager:
 
     @staticmethod
     def get_parameters_by_path(AwsAccountId=None, region=None, parameter_path=None):
+        parameter_value_list: List[str] = []
         if not parameter_path:
             raise Exception('Parameter name is None')
         try:
-            parameter_values = ParameterStoreManager.client(AwsAccountId, region).get_parameters_by_path(
-                Path=parameter_path
-            )['Parameters']
+            paginator = ParameterStoreManager.client(AwsAccountId, region).get_paginator('get_parameters_by_path')
+            for page in paginator.paginate(Path=parameter_path):
+                parameter_value_list.extend(page['Parameters'])
         except ClientError as e:
             raise Exception(e)
-        return parameter_values
+        return parameter_value_list
 
     @staticmethod
     def update_parameter(AwsAccountId, region, parameter_name, parameter_value):

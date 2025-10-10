@@ -79,14 +79,13 @@ def test_get_dashboard(client, env_fixture, db, dashboard, group):
                     label
                     created
                     tags
-                    environment{
-                        label
-                        region
-                    }
-                    organization{
+                    environment {
+                      environmentUri
+                      label
+                      organization {
                         organizationUri
                         label
-                        name
+                      }
                     }
                 }
             }
@@ -211,14 +210,14 @@ def test_request_dashboard_share(
                     label
                     created
                     tags
-                    environment{
-                        label
-                        region
-                    }
-                    organization{
+                    environment {
+                      environmentUri
+                      label
+                      region
+                      organization {
                         organizationUri
                         label
-                        name
+                      }
                     }
                 }
             }

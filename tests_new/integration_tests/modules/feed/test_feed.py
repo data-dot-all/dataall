@@ -42,3 +42,15 @@ def test_get_feed_invalid(client1, session_s3_dataset1):
     assert_that(get_feed).raises(GqlError).when_called_with(client1, None, S3_DATASET_TARGET_TYPE).contains(
         'targetUri', 'must not be null'
     )
+
+
+def test_post_feed_message_unauthorized(client2, session_s3_dataset1):
+    assert_that(post_feed_message).raises(GqlError).when_called_with(
+        client2, session_s3_dataset1.datasetUri, S3_DATASET_TARGET_TYPE, 'message'
+    ).contains('UnauthorizedOperation', 'GET_DATASET', session_s3_dataset1.datasetUri)
+
+
+def test_get_feed_unauthorized(client2, session_s3_dataset1):
+    assert_that(get_feed).raises(GqlError).when_called_with(
+        client2, session_s3_dataset1.datasetUri, S3_DATASET_TARGET_TYPE
+    ).contains('UnauthorizedOperation', 'GET_DATASET', session_s3_dataset1.datasetUri)

@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from sqlalchemy import func, and_, or_
 
 from dataall.modules.notifications.db import notification_models as models
@@ -67,27 +65,6 @@ class NotificationRepository:
         return int(count)
 
     @staticmethod
-    def count_read_notifications(session, username, groups):
-        count = (
-            session.query(func.count(models.Notification.notificationUri))
-            .filter(or_(models.Notification.recipient == username, models.Notification.recipient.in_(groups)))
-            .filter(models.Notification.is_read == True)
-            .filter(models.Notification.deleted.is_(None))
-            .scalar()
-        )
-        return int(count)
-
-    @staticmethod
-    def count_deleted_notifications(session, username, groups):
-        count = (
-            session.query(func.count(models.Notification.notificationUri))
-            .filter(or_(models.Notification.recipient == username, models.Notification.recipient.in_(groups)))
-            .filter(models.Notification.deleted.isnot(None))
-            .scalar()
-        )
-        return int(count)
-
-    @staticmethod
     def read_notification(session, notificationUri):
         notification = session.query(models.Notification).get(notificationUri)
         notification.is_read = True
@@ -95,9 +72,5 @@ class NotificationRepository:
         return True
 
     @staticmethod
-    def delete_notification(session, notificationUri):
-        notification = session.query(models.Notification).get(notificationUri)
-        if notification:
-            notification.deleted = datetime.now()
-            session.commit()
-        return True
+    def get_notification(session, uri):
+        return session.query(models.Notification).get(uri)

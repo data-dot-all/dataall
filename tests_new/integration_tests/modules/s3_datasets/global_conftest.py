@@ -17,7 +17,9 @@ from integration_tests.modules.s3_datasets.queries import (
     sync_tables,
     create_folder,
     create_table_data_filter,
+    list_dataset_tables,
 )
+
 from tests_new.integration_tests.modules.datasets_base.queries import list_datasets
 from integration_tests.aws_clients.s3 import S3Client as S3CommonClient
 from integration_tests.modules.s3_datasets.aws_clients import S3Client, KMSClient, GlueClient, LakeFormationClient
@@ -80,7 +82,7 @@ def create_aws_imported_resources(
                 ).create_key_with_alias(kms_alias_name)
                 bucket = S3Client(session=aws_client, region=env['region']).create_bucket(
                     bucket_name=bucket_name,
-                    kms_key_arn=f"arn:aws:kms:{env['region']}:{env['AwsAccountId']}:key/{kms_id}",
+                    kms_key_arn=f'arn:aws:kms:{env["region"]}:{env["AwsAccountId"]}:key/{kms_id}',
                 )
             else:
                 bucket = S3Client(session=aws_client, region=env['region']).create_bucket(
@@ -179,19 +181,32 @@ def create_tables(client, dataset):
         aws_session_token=creds['sessionToken'],
     )
     file_path = os.path.join(os.path.dirname(__file__), 'sample_data/csv_table/csv_sample.csv')
-    s3_client = S3Client(dataset_session, dataset.region)
-    glue_client = GlueClient(dataset_session, dataset.region)
-    s3_client.upload_file_to_prefix(local_file_path=file_path, s3_path=f'{dataset.S3BucketName}/integrationtest1')
+    s3_client = S3Client(dataset_session, dataset.restricted.region)
+    glue_client = GlueClient(dataset_session, dataset.restricted.region)
+    s3_client.upload_file_to_prefix(
+        local_file_path=file_path, s3_path=f'{dataset.restricted.S3BucketName}/integrationtest1'
+    )
     glue_client.create_table(
-        database_name=dataset.GlueDatabaseName, table_name='integrationtest1', bucket=dataset.S3BucketName
+        database_name=dataset.restricted.GlueDatabaseName,
+        table_name='integrationtest1',
+        bucket=dataset.restricted.S3BucketName,
     )
 
-    s3_client.upload_file_to_prefix(local_file_path=file_path, s3_path=f'{dataset.S3BucketName}/integrationtest2')
-    glue_client.create_table(
-        database_name=dataset.GlueDatabaseName, table_name='integrationtest2', bucket=dataset.S3BucketName
+    s3_client.upload_file_to_prefix(
+        local_file_path=file_path, s3_path=f'{dataset.restricted.S3BucketName}/integrationtest2'
     )
-    response = sync_tables(client, datasetUri=dataset.datasetUri)
-    return [table for table in response.get('nodes', []) if table.GlueTableName.startswith('integrationtest')]
+    glue_client.create_table(
+        database_name=dataset.restricted.GlueDatabaseName,
+        table_name='integrationtest2',
+        bucket=dataset.restricted.S3BucketName,
+    )
+    sync_tables(client, datasetUri=dataset.datasetUri)
+    response = list_dataset_tables(client, datasetUri=dataset.datasetUri)
+    return [
+        table
+        for table in response.tables.get('nodes', [])
+        if table.restricted.GlueTableName.startswith('integrationtest')
+    ]
 
 
 def create_folders(client, dataset):
@@ -238,7 +253,9 @@ def session_s3_dataset1(client1, group1, org1, session_env1, session_id, testdat
     finally:
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
-            delete_aws_dataset_resources(aws_client=session_env1_aws_client, env=session_env1, bucket=ds.S3BucketName)
+            delete_aws_dataset_resources(
+                aws_client=session_env1_aws_client, env=session_env1, bucket=ds.restricted.S3BucketName
+            )
 
 
 @pytest.fixture(scope='session')
@@ -394,7 +411,9 @@ def temp_s3_dataset1(client1, group1, org1, session_env1, session_id, testdata, 
         if ds:
             delete_s3_dataset(client1, session_env1['environmentUri'], ds)
 
-            delete_aws_dataset_resources(aws_client=session_env1_aws_client, env=session_env1, bucket=ds.S3BucketName)
+            delete_aws_dataset_resources(
+                aws_client=session_env1_aws_client, env=session_env1, bucket=ds.restricted.S3BucketName
+            )
 
 
 """
@@ -488,7 +507,7 @@ def updated_persistent_s3_dataset1(client1, persistent_s3_dataset1):
 
 @pytest.fixture(scope='session')
 def persistent_imported_sse_s3_dataset1(client1, group1, persistent_env1, persistent_env1_aws_client, testdata):
-    bucket_name = f"dataalltesting{persistent_env1.environmentUri}perssses3{persistent_env1['AwsAccountId']}"
+    bucket_name = f'dataalltesting{persistent_env1.environmentUri}perssses3{persistent_env1["AwsAccountId"]}'
     bucket = None
     try:
         s3_client = S3Client(session=persistent_env1_aws_client, region=persistent_env1['region'])
@@ -517,7 +536,7 @@ def persistent_imported_sse_s3_dataset1(client1, group1, persistent_env1, persis
 def persistent_imported_kms_s3_dataset1(
     client1, group1, persistent_env1, persistent_env1_aws_client, persistent_env1_integration_role_arn, testdata
 ):
-    resource_name = f"dataalltesting{persistent_env1.environmentUri}perskms{persistent_env1['AwsAccountId']}"
+    resource_name = f'dataalltesting{persistent_env1.environmentUri}perskms{persistent_env1["AwsAccountId"]}'
     existing_bucket = S3Client(session=persistent_env1_aws_client, region=persistent_env1['region']).bucket_exists(
         resource_name
     )

@@ -22,6 +22,7 @@ from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling
 from .waf_rules import get_waf_rules
 from .iam_utils import get_tooling_account_external_id
+from .runtime_options import PYTHON_LAMBDA_RUNTIME
 
 
 class IdpStack(pyNestedClass):
@@ -97,10 +98,10 @@ class IdpStack(pyNestedClass):
             f'UserPool{envname}',
             user_pool=self.user_pool,
             cognito_domain=cognito.CognitoDomainOptions(
-                domain_prefix=f"{resource_prefix.replace('-', '')}{envname}{self.region.replace('-', '')}{self.account}"
+                domain_prefix=f'{resource_prefix.replace("-", "")}{envname}{self.region.replace("-", "")}{self.account}'
             ),
         )
-        id_token_duration = 120 if with_approval_tests else 60
+        jwt_token_duration = 180 if with_approval_tests else 60
         self.client = cognito.UserPoolClient(
             self,
             f'AppClient-{envname}',
@@ -108,7 +109,8 @@ class IdpStack(pyNestedClass):
             auth_flows=AuthFlow(user_password=with_approval_tests, user_srp=True, custom=True),
             prevent_user_existence_errors=True,
             refresh_token_validity=Duration.minutes(cognito_user_session_timeout_inmins),
-            id_token_validity=Duration.minutes(id_token_duration),
+            id_token_validity=Duration.minutes(jwt_token_duration),
+            access_token_validity=Duration.minutes(jwt_token_duration),
         )
 
         if enable_cw_rum:
@@ -322,7 +324,7 @@ class IdpStack(pyNestedClass):
                 code=_lambda.Code.from_asset(
                     path=cognito_assets,
                     bundling=BundlingOptions(
-                        image=_lambda.Runtime.PYTHON_3_9.bundling_image,
+                        image=PYTHON_LAMBDA_RUNTIME.bundling_image,
                         local=SolutionBundling(source_path=cognito_assets),
                     ),
                 ),
@@ -332,7 +334,7 @@ class IdpStack(pyNestedClass):
                 environment={'envname': envname, 'LOG_LEVEL': 'DEBUG'},
                 environment_encryption=lambda_env_key,
                 vpc=vpc,
-                runtime=_lambda.Runtime.PYTHON_3_9,
+                runtime=PYTHON_LAMBDA_RUNTIME,
             )
 
             sync_provider = cr.Provider(
@@ -409,10 +411,11 @@ class IdpStack(pyNestedClass):
             environment_encryption=lambda_env_key,
             tracing=_lambda.Tracing.ACTIVE,
             retry_attempts=0,
-            runtime=_lambda.Runtime.PYTHON_3_9,
+            runtime=PYTHON_LAMBDA_RUNTIME,
             handler='cognito_users.handler',
             execute_after=[self.client],
             execute_on_handler_change=True,
+            logging_format=_lambda.LoggingFormat.JSON,
         )
 
         CfnOutput(

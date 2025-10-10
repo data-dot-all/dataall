@@ -12,12 +12,9 @@ from integration_tests.core.environment.queries import (
     remove_consumption_role,
     remove_group_from_env,
 )
-
-from integration_tests.errors import GqlError
-
 from integration_tests.core.environment.utils import update_env_stack
-from integration_tests.core.stack.queries import get_stack
-
+from integration_tests.core.stack.queries import get_stack_logs
+from integration_tests.errors import GqlError
 
 log = logging.getLogger(__name__)
 
@@ -54,18 +51,15 @@ def test_list_envs_invited(client2, session_env1, session_env2, session_id):
 
 
 def test_persistent_env_update(client1, persistent_env1):
-    stack = get_stack(
-        client1,
-        persistent_env1.environmentUri,
-        persistent_env1.stack.stackUri,
-        persistent_env1.environmentUri,
-        target_type='environment',
-    )
-    updated_before = datetime.fromisoformat(stack.updated)
+    def get_last_log_ts():
+        logs = get_stack_logs(client1, target_uri=persistent_env1.environmentUri, target_type='environment')
+        return datetime.fromisoformat(logs[-1]['timestamp'])
+
+    ts_before = get_last_log_ts()
     stack = update_env_stack(client1, persistent_env1)
     assert_that(stack).contains_entry(status='UPDATE_COMPLETE')
-    updated = datetime.fromisoformat(stack.updated)
-    assert_that(updated).is_greater_than_or_equal_to(updated_before)
+    ts_after = get_last_log_ts()
+    assert_that(ts_after).is_greater_than_or_equal_to(ts_before)
 
 
 def test_invite_group_on_env_no_org(client1, session_env2, group4):

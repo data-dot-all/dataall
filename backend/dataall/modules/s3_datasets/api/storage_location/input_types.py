@@ -30,12 +30,3 @@ DatasetStorageLocationFilter = gql.InputType(
         gql.Argument('pageSize', gql.Integer),
     ],
 )
-
-
-DatasetAccessPointFilter = gql.InputType(
-    name='DatasetAccessPointFilter',
-    arguments=[
-        gql.Argument(name='page', type=gql.Integer),
-        gql.Argument(name='pageSize', type=gql.Integer),
-    ],
-)

@@ -20,14 +20,14 @@ export const useToken = () => {
             if (!auth.user) {
               await auth.signinSilent();
             }
-            const t = auth.user.id_token;
+            const t = auth.user.access_token;
             setToken(t);
           } catch (error) {
             if (!auth) throw Error('User Token Not Found !');
           }
         } else {
           const session = await Auth.currentSession();
-          const t = await session.getIdToken().getJwtToken();
+          const t = await session.getAccessToken().getJwtToken();
           setToken(t);
         }
       } catch (error) {

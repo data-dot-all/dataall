@@ -150,8 +150,8 @@ def reapply_items_share_object(context: Context, source, input):
     return ShareItemService.reapply_items_share_object(uri=share_uri, item_uris=reapply_item_uris)
 
 
-def delete_share_object(context: Context, source, shareUri: str = None):
-    return ShareObjectService.delete_share_object(uri=shareUri)
+def delete_share_object(context: Context, source, shareUri: str = None, forceDelete: bool = False):
+    return ShareObjectService.delete_share_object(uri=shareUri, force_delete=forceDelete)
 
 
 def cancel_share_object_extension(context: Context, source, shareUri: str = None):
@@ -313,12 +313,10 @@ def list_shares_in_my_outbox(context: Context, source, filter: dict = None):
 def list_shared_with_environment_data_items(context: Context, source, environmentUri: str = None, filter: dict = None):
     if not filter:
         filter = {}
-    with context.engine.scoped_session() as session:
-        return ShareItemService.paginated_shared_with_environment_datasets(
-            session=session,
-            uri=environmentUri,
-            data=filter,
-        )
+    return ShareItemService.paginated_shared_with_environment_datasets(
+        uri=environmentUri,
+        data=filter,
+    )
 
 
 def update_share_request_purpose(context: Context, source, shareUri: str = None, requestPurpose: str = None):

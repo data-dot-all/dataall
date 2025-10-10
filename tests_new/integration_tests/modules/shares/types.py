@@ -69,13 +69,6 @@ principal {{
 items(filter: $filter){{
     {SharedItemSearchResult}
 }},
-environment{{
-        environmentUri,
-        AwsAccountId,
-        region
-        resourcePrefix    
-        name
-}}
 canViewLogs,
 userRoleForShareObject,
 """

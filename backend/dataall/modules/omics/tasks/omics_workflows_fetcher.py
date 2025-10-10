@@ -11,10 +11,6 @@ from dataall.modules.omics.api.enums import OmicsWorkflowType
 from dataall.modules.omics.db.omics_repository import OmicsRepository
 
 
-root = logging.getLogger()
-root.setLevel(logging.INFO)
-if not root.hasHandlers():
-    root.addHandler(logging.StreamHandler(sys.stdout))
 log = logging.getLogger(__name__)
 
 
@@ -37,11 +33,11 @@ def fetch_omics_workflows(engine):
         workflows = ready_workflows  # + private_workflows
         log.info(f'Found workflows {str(workflows)} in environment {env.environmentUri}')
         for workflow in workflows:
-            log.info(f"Processing workflow name={workflow['name']}, id={workflow['id']}...")
+            log.info(f'Processing workflow name={workflow["name"]}, id={workflow["id"]}...')
             existing_workflow = OmicsRepository(session).get_workflow_by_id(workflow['id'])
             if existing_workflow is not None:
                 log.info(
-                    f"Workflow name={workflow['name']}, id={workflow['id']} has already been registered in database. Updating information..."
+                    f'Workflow name={workflow["name"]}, id={workflow["id"]} has already been registered in database. Updating information...'
                 )
                 existing_workflow.name = workflow['name']
                 existing_workflow.label = workflow['name']
@@ -49,7 +45,7 @@ def fetch_omics_workflows(engine):
 
             else:
                 log.info(
-                    f"Workflow name={workflow['name']} , id={workflow['id']} in environment {env.environmentUri} is new. Registering..."
+                    f'Workflow name={workflow["name"]} , id={workflow["id"]} in environment {env.environmentUri} is new. Registering...'
                 )
                 omicsWorkflow = OmicsWorkflow(
                     id=workflow['id'],

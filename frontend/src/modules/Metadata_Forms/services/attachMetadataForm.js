@@ -22,6 +22,7 @@ export const createAttachedMetadataForm = (formUri, input) => ({
           homeEntityName
           userRole
         }
+        version
         entityType
         entityUri
         fields {

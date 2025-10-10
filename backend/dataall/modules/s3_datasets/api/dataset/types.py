@@ -1,8 +1,7 @@
 from dataall.base.api import gql
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
 from dataall.modules.s3_datasets.api.dataset.resolvers import (
-    get_dataset_environment,
-    get_dataset_organization,
+    get_dataset_environment_simplified,
     get_dataset_owners_group,
     get_dataset_stewards_group,
     list_tables,
@@ -11,6 +10,7 @@ from dataall.modules.s3_datasets.api.dataset.resolvers import (
     get_dataset_statistics,
     get_dataset_glossary_terms,
     resolve_dataset_stack,
+    get_dataset_restricted_information,
 )
 from dataall.core.environment.api.enums import EnvironmentPermission
 
@@ -20,6 +20,23 @@ DatasetStatistics = gql.ObjectType(
         gql.Field(name='tables', type=gql.Integer),
         gql.Field(name='locations', type=gql.Integer),
         gql.Field(name='upvotes', type=gql.Integer),
+    ],
+)
+
+DatasetRestrictedInformation = gql.ObjectType(
+    name='DatasetRestrictedInformation',
+    fields=[
+        gql.Field(name='AwsAccountId', type=gql.String),
+        gql.Field(name='region', type=gql.String),
+        gql.Field(name='S3BucketName', type=gql.String),
+        gql.Field(name='GlueDatabaseName', type=gql.String),
+        gql.Field(name='GlueCrawlerName', type=gql.String),
+        gql.Field(name='IAMDatasetAdminRoleArn', type=gql.String),
+        gql.Field(name='KmsAlias', type=gql.String),
+        gql.Field(name='importedS3Bucket', type=gql.Boolean),
+        gql.Field(name='importedGlueDatabase', type=gql.Boolean),
+        gql.Field(name='importedKmsKey', type=gql.Boolean),
+        gql.Field(name='importedAdminRole', type=gql.Boolean),
     ],
 )
 
@@ -35,38 +52,17 @@ Dataset = gql.ObjectType(
         gql.Field(name='created', type=gql.String),
         gql.Field(name='updated', type=gql.String),
         gql.Field(name='admins', type=gql.ArrayType(gql.String)),
-        gql.Field(name='AwsAccountId', type=gql.String),
-        gql.Field(name='region', type=gql.String),
-        gql.Field(name='S3BucketName', type=gql.String),
-        gql.Field(name='GlueDatabaseName', type=gql.String),
-        gql.Field(name='GlueCrawlerName', type=gql.String),
-        gql.Field(name='GlueCrawlerSchedule', type=gql.String),
-        gql.Field(name='GlueProfilingJobName', type=gql.String),
-        gql.Field(name='GlueProfilingTriggerSchedule', type=gql.String),
-        gql.Field(name='IAMDatasetAdminRoleArn', type=gql.String),
-        gql.Field(name='KmsAlias', type=gql.String),
-        gql.Field(name='bucketCreated', type=gql.Boolean),
-        gql.Field(name='glueDatabaseCreated', type=gql.Boolean),
-        gql.Field(name='iamAdminRoleCreated', type=gql.Boolean),
-        gql.Field(name='lakeformationLocationCreated', type=gql.Boolean),
-        gql.Field(name='bucketPolicyCreated', type=gql.Boolean),
         gql.Field(name='SamlAdminGroupName', type=gql.String),
-        gql.Field(name='businessOwnerEmail', type=gql.String),
-        gql.Field(name='businessOwnerDelegationEmails', type=gql.ArrayType(gql.String)),
-        gql.Field(name='importedS3Bucket', type=gql.Boolean),
-        gql.Field(name='importedGlueDatabase', type=gql.Boolean),
-        gql.Field(name='importedKmsKey', type=gql.Boolean),
-        gql.Field(name='importedAdminRole', type=gql.Boolean),
         gql.Field(name='imported', type=gql.Boolean),
         gql.Field(
-            name='environment',
-            type=gql.Ref('Environment'),
-            resolver=get_dataset_environment,
+            name='restricted',
+            type=DatasetRestrictedInformation,
+            resolver=get_dataset_restricted_information,
         ),
         gql.Field(
-            name='organization',
-            type=gql.Ref('Organization'),
-            resolver=get_dataset_organization,
+            name='environment',
+            type=gql.Ref('EnvironmentSimplified'),
+            resolver=get_dataset_environment_simplified,
         ),
         gql.Field(
             name='owners',
@@ -135,8 +131,6 @@ GlueCrawler = gql.ObjectType(
     name='GlueCrawler',
     fields=[
         gql.Field(name='Name', type=gql.ID),
-        gql.Field(name='AwsAccountId', type=gql.String),
-        gql.Field(name='region', type=gql.String),
         gql.Field(name='status', type=gql.String),
     ],
 )

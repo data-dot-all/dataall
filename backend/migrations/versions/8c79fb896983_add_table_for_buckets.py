@@ -101,7 +101,7 @@ class DatasetBucket(Resource, Base):
     environmentEndPoint = query_expression()
 
     @classmethod
-    def uri(cls):
+    def uri_column(cls):
         return cls.bucketUri
 
 

@@ -40,7 +40,6 @@ MetadataFormFieldUpdateInput = gql.InputType(
     ],
 )
 
-
 MetadataFormFilter = gql.InputType(
     name='MetadataFormFilter',
     arguments=[
@@ -62,15 +61,16 @@ AttachedMetadataFormFilter = gql.InputType(
         gql.Argument('entityType', gql.String),
         gql.Argument('entityUri', gql.String),
         gql.Argument('metadataFormUri', gql.String),
+        gql.Argument('version', gql.Integer),
     ],
 )
-
 
 NewAttachedMetadataFormInput = gql.InputType(
     name='NewAttachedMetadataFormInput',
     arguments=[
         gql.Field(name='entityType', type=gql.NonNullableType(gql.String)),
         gql.Field(name='entityUri', type=gql.NonNullableType(gql.String)),
+        gql.Field(name='attachedUri', type=gql.String),
         gql.Field(name='fields', type=gql.ArrayType(gql.Ref('NewAttachedMetadataFormFieldInput'))),
     ],
 )
@@ -80,5 +80,24 @@ NewAttachedMetadataFormFieldInput = gql.InputType(
     arguments=[
         gql.Field(name='fieldUri', type=gql.NonNullableType(gql.String)),
         gql.Field(name='value', type=gql.String),
+    ],
+)
+
+NewMetadataFormEnforcementInput = gql.InputType(
+    name='NewMetadataFormEnforcementInput',
+    arguments=[
+        gql.Field(name='metadataFormUri', type=gql.NonNullableType(gql.String)),
+        gql.Field(name='level', type=gql.NonNullableType(gql.String)),
+        gql.Field(name='homeEntity', type=gql.String),
+        gql.Field(name='severity', type=gql.String),
+        gql.Field(name='entityTypes', type=gql.ArrayType(gql.String)),
+    ],
+)
+
+AffectedEntityFilter = gql.InputType(
+    name='AffectedEntityFilter',
+    arguments=[
+        gql.Argument('page', gql.Integer),
+        gql.Argument('pageSize', gql.Integer),
     ],
 )

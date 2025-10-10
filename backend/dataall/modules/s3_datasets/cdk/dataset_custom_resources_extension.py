@@ -15,6 +15,7 @@ from aws_cdk import (
 )
 
 from dataall.core.environment.cdk.environment_stack import EnvironmentSetup, EnvironmentStackExtension
+from dataall.runtime_options import PYTHON_LAMBDA_RUNTIME
 
 log = logging.getLogger(__name__)
 
@@ -27,6 +28,34 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
         _environment = setup.environment()
         kms_key = DatasetCustomResourcesExtension.set_cr_kms_key(
             setup=setup, environment=_environment, group_roles=setup.group_roles, default_role=setup.default_role
+        )
+
+        lambda_env_key = kms.Key(
+            setup,
+            f'{_environment.resourcePrefix}-ds-cst-lambda-env-var-key',
+            removal_policy=RemovalPolicy.DESTROY,
+            alias=f'{_environment.resourcePrefix}-ds-cst-lambda-env-var-key',
+            enable_key_rotation=True,
+            policy=iam.PolicyDocument(
+                statements=[
+                    iam.PolicyStatement(
+                        resources=['*'],
+                        effect=iam.Effect.ALLOW,
+                        principals=[
+                            iam.AccountPrincipal(account_id=_environment.AwsAccountId),
+                        ],
+                        actions=['kms:*'],
+                    ),
+                    iam.PolicyStatement(
+                        resources=['*'],
+                        effect=iam.Effect.ALLOW,
+                        principals=[
+                            iam.ServicePrincipal(service='lambda.amazonaws.com'),
+                        ],
+                        actions=['kms:GenerateDataKey*', 'kms:Decrypt'],
+                    ),
+                ],
+            ),
         )
 
         # Lakeformation default settings custom resource
@@ -55,15 +84,17 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
                 'DEFAULT_ENV_ROLE_ARN': _environment.EnvironmentDefaultIAMRoleArn,
                 'DEFAULT_CDK_ROLE_ARN': _environment.CDKRoleArn,
             },
+            environment_encryption=lambda_env_key,
             dead_letter_queue_enabled=True,
             dead_letter_queue=lakeformation_cr_dlq,
             on_failure=lambda_destination.SqsDestination(lakeformation_cr_dlq),
-            runtime=_lambda.Runtime.PYTHON_3_9,
+            runtime=PYTHON_LAMBDA_RUNTIME,
         )
         LakeformationDefaultSettingsProvider = cr.Provider(
             setup,
             f'{_environment.resourcePrefix}LakeformationDefaultSettingsProvider',
             on_event_handler=lf_default_settings_custom_resource,
+            provider_function_env_encryption=lambda_env_key,
         )
 
         default_lf_settings = CustomResource(
@@ -119,17 +150,19 @@ class DatasetCustomResourcesExtension(EnvironmentStackExtension):
                 'DEFAULT_ENV_ROLE_ARN': _environment.EnvironmentDefaultIAMRoleArn,
                 'DEFAULT_CDK_ROLE_ARN': _environment.CDKRoleArn,
             },
+            environment_encryption=lambda_env_key,
             dead_letter_queue_enabled=True,
             dead_letter_queue=gluedb_lf_cr_dlq,
             on_failure=lambda_destination.SqsDestination(gluedb_lf_cr_dlq),
             tracing=_lambda.Tracing.ACTIVE,
-            runtime=_lambda.Runtime.PYTHON_3_9,
+            runtime=PYTHON_LAMBDA_RUNTIME,
         )
 
         glue_db_provider = cr.Provider(
             setup,
             f'{_environment.resourcePrefix}GlueDbCustomResourceProvider',
             on_event_handler=gluedb_lf_custom_resource,
+            provider_function_env_encryption=lambda_env_key,
         )
         ssm.StringParameter(
             setup,

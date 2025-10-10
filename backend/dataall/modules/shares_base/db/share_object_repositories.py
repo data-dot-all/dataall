@@ -14,6 +14,8 @@ from dataall.modules.shares_base.db.share_object_models import ShareObjectItem, 
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
     PrincipalType,
+    ShareableType,
+    ShareObjectStatus,
 )
 
 logger = logging.getLogger(__name__)
@@ -399,7 +401,7 @@ class ShareObjectRepository:
                 ShareObjectItem.lastVerificationTime.label('lastVerificationTime'),
                 ShareObjectItem.attachedDataFilterUri.label('attachedDataFilterUri'),
                 case(
-                    [(ShareObjectItem.shareItemUri.isnot(None), True)],
+                    (ShareObjectItem.shareItemUri.isnot(None), True),
                     else_=False,
                 ).label('isShared'),
             )
@@ -411,6 +413,8 @@ class ShareObjectRepository:
         )
         if status:
             query = query.filter(ShareObjectItem.status.in_(status))
+        if type == ShareableType.Table:
+            query = query.filter(share_type_model.LastGlueTableStatus == 'InSync')
         return query
 
     @staticmethod
@@ -456,6 +460,14 @@ class ShareObjectRepository:
         return share_objects
 
     @staticmethod
+    def list_share_object_items_for_item_with_status(session, item_uri: str, status: List[str]):
+        return (
+            session.query(ShareObjectItem)
+            .filter(ShareObjectItem.status.in_(status), ShareObjectItem.itemUri == item_uri)
+            .all()
+        )
+
+    @staticmethod
     def fetch_submitted_shares_with_notifications(session):
         """
         A method used by the scheduled ECS Task to run fetch_submitted_shares_with_notifications() process against ALL shared objects in ALL
@@ -479,7 +491,13 @@ class ShareObjectRepository:
     def get_all_active_shares_with_expiration(session):
         return (
             session.query(ShareObject)
-            .filter(and_(ShareObject.expiryDate.isnot(None), ShareObject.deleted.is_(None)))
+            .filter(
+                and_(
+                    ShareObject.expiryDate.isnot(None),
+                    ShareObject.deleted.is_(None),
+                    ShareObject.status == ShareObjectStatus.Processed.value,
+                )
+            )
             .all()
         )
 

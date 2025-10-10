@@ -4,7 +4,6 @@
 # # IF MONITORING ON (TODO)
 # getMonitoringDashboardId
 # getMonitoringVpcConnectionId
-# getPlatformAuthorSession
 # getPlatformReaderSession
 
 
@@ -31,17 +30,17 @@ def search_dashboards(client, filter):
                   tags
                   userRoleForDashboard
                   upvotes
-                  organization {
-                    organizationUri
-                    label
-                    name
+                  restricted {
+                    region
+                    AwsAccountId
                   }
                   environment {
                     environmentUri
-                    name
                     label
-                    AwsAccountId
-                    region
+                    organization {
+                      organizationUri
+                      label
+                    }
                   }
                 }
               }
@@ -68,14 +67,17 @@ def get_dashboard(client, dashboardUri):
                 created
                 tags
                 userRoleForDashboard
-                environment {
-                  label
-                  region
+                restricted {
+                    region
+                    AwsAccountId
                 }
-                organization {
-                  organizationUri
+                environment {
+                  environmentUri
                   label
-                  name
+                  organization {
+                    organizationUri
+                    label
+                  }
                 }
                 terms {
                   count

@@ -1,9 +1,12 @@
+import logging
 from dataall.base.context import get_context
 from dataall.base.db import exceptions, paginate
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.modules.metadata_forms.db.metadata_form_repository import MetadataFormRepository
 from dataall.modules.metadata_forms.services.metadata_form_access_service import MetadataFormAccessService
 from dataall.modules.metadata_forms.services.metadata_form_permissions import ATTACH_METADATA_FORM
+
+log = logging.getLogger(__name__)
 
 
 class AttachedMetadataFormValidationService:
@@ -40,6 +43,28 @@ class AttachedMetadataFormService:
     @ResourcePolicyService.has_resource_permission(
         ATTACH_METADATA_FORM, parent_resource=_get_entity_uri, param_name='data'
     )
+    def create_or_update_attached_metadata_form(uri, data):
+        new_form = None
+        try:
+            new_form = AttachedMetadataFormService.create_attached_metadata_form(uri=uri, data=data)
+            if data.get('attachedUri'):
+                with get_context().db_engine.scoped_session() as session:
+                    existingAMF = MetadataFormRepository.get_attached_metadata_form(session, data.get('attachedUri'))
+                    log.info(f'Found an existing metadata form with uri: {existingAMF.uri}')
+                    if existingAMF and new_form:
+                        log.info(f'Deleting older existing metadata form attachement with uri: {existingAMF.uri}')
+                        session.delete(existingAMF)
+            return new_form
+        except Exception as e:
+            log.error(f'Error occurred while creating / updating attached metadata forms due to: {e}')
+            if new_form:
+                AttachedMetadataFormService.delete_attached_metadata_form(uri=new_form.uri)
+                raise e
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(
+        ATTACH_METADATA_FORM, parent_resource=_get_entity_uri, param_name='data'
+    )
     def create_attached_metadata_form(uri, data):
         AttachedMetadataFormValidationService.validate_filled_form_params(uri, data)
         context = get_context()
@@ -50,11 +75,17 @@ class AttachedMetadataFormService:
             mf_fields = MetadataFormRepository.get_metadata_form_fields(session, uri)
             AttachedMetadataFormValidationService.validate_enrich_fields_params(mf_fields, data)
             amf = MetadataFormRepository.create_attached_metadata_form(session, uri, data)
-            for f in data.get('fields'):
-                MetadataFormRepository.create_attached_metadata_form_field(
-                    session, amf.uri, f.get('field'), f.get('value')
-                )
-            return amf
+            try:
+                for f in data.get('fields'):
+                    MetadataFormRepository.create_attached_metadata_form_field(
+                        session, amf.uri, f.get('field'), f.get('value')
+                    )
+                log.info(f'Returning new attached metadata forms with uri: {amf.uri}')
+                return amf
+            except Exception as e:
+                log.error(f'Error while creating attached meta form fields due to: {e}')
+                AttachedMetadataFormService.delete_attached_metadata_form(uri=amf.uri)
+                raise e
 
     @staticmethod
     def get_attached_metadata_form(uri):

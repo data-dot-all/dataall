@@ -105,8 +105,8 @@ class EnvironmentRequestValidationService:
         if environment:
             raise exceptions.InvalidInput(
                 'AwsAccount/region',
-                f"{data.get('AwsAccountId')}/{data.get('region')}",
-                f"unique. An environment for {data.get('AwsAccountId')}/{data.get('region')} already exists",
+                f'{data.get("AwsAccountId")}/{data.get("region")}',
+                f'unique. An environment for {data.get("AwsAccountId")}/{data.get("region")} already exists',
             )
 
     @staticmethod
@@ -135,7 +135,7 @@ class EnvironmentRequestValidationService:
 
 class EnvironmentService:
     @staticmethod
-    def validate_permissions(session, uri, g_permissions, group):
+    def _validate_permissions(session, uri, g_permissions, group):
         """
         g_permissions: coming from frontend = ENVIRONMENT_INVITATION_REQUEST
 
@@ -160,15 +160,15 @@ class EnvironmentService:
             )
 
     @staticmethod
-    def get_pivot_role_as_part_of_environment():
+    def _get_pivot_role_as_part_of_environment():
         ssm_param = ParameterStoreManager.get_parameter_value(
             region=os.getenv('AWS_REGION', 'eu-west-1'),
-            parameter_path=f"/dataall/{os.getenv('envname', 'local')}/pivotRole/enablePivotRoleAutoCreate",
+            parameter_path=f'/dataall/{os.getenv("envname", "local")}/pivotRole/enablePivotRoleAutoCreate',
         )
         return ssm_param == 'True'
 
     @staticmethod
-    def check_cdk_resources(account_id, region, data) -> str:
+    def _check_cdk_resources(account_id, region, data) -> str:
         """
         Check if all necessary cdk resources exists in the account
         :return : pivot role name
@@ -181,7 +181,7 @@ class EnvironmentService:
 
         log.info('Checking cdk resources for environment.')
 
-        pivot_role_as_part_of_environment = EnvironmentService.get_pivot_role_as_part_of_environment()
+        pivot_role_as_part_of_environment = EnvironmentService._get_pivot_role_as_part_of_environment()
         log.info(f'Pivot role as part of environment = {pivot_role_as_part_of_environment}')
 
         cdk_look_up_role_arn = SessionHelper.get_cdk_look_up_role_arn(accountid=account_id, region=region)
@@ -217,13 +217,18 @@ class EnvironmentService:
         return cdk_role_name
 
     @staticmethod
+    @ResourcePolicyService.has_resource_permission(LINK_ENVIRONMENT)
+    def get_trust_account(uri):
+        return SessionHelper.get_account()
+
+    @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
     @ResourcePolicyService.has_resource_permission(LINK_ENVIRONMENT)
     def create_environment(uri, data=None):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             EnvironmentRequestValidationService.validate_creation_params(data, uri, session)
-            cdk_role_name = EnvironmentService.check_cdk_resources(data.get('AwsAccountId'), data.get('region'), data)
+            cdk_role_name = EnvironmentService._check_cdk_resources(data.get('AwsAccountId'), data.get('region'), data)
             env = Environment(
                 organizationUri=data.get('organizationUri'),
                 label=data.get('label', 'Unnamed'),
@@ -238,7 +243,7 @@ class EnvironmentService:
                 isOrganizationDefaultEnvironment=False,
                 EnvironmentDefaultIAMRoleName=data.get('EnvironmentDefaultIAMRoleArn', 'unknown').split('/')[-1],
                 EnvironmentDefaultIAMRoleArn=data.get('EnvironmentDefaultIAMRoleArn', 'unknown'),
-                CDKRoleArn=f"arn:aws:iam::{data.get('AwsAccountId')}:role/{cdk_role_name}",
+                CDKRoleArn=f'arn:aws:iam::{data.get("AwsAccountId")}:role/{cdk_role_name}',
                 resourcePrefix=data.get('resourcePrefix'),
             )
 
@@ -251,6 +256,13 @@ class EnvironmentService:
             env.EnvironmentDefaultBucketName = NamingConventionService(
                 target_uri=env.environmentUri,
                 target_label=env.label,
+                pattern=NamingConventionPattern.S3,
+                resource_prefix=env.resourcePrefix,
+            ).build_compliant_name()
+
+            env.EnvironmentLogsBucketName = NamingConventionService(
+                target_uri=env.environmentUri,
+                target_label='env-access-logs',
                 pattern=NamingConventionPattern.S3,
                 resource_prefix=env.resourcePrefix,
             ).build_compliant_name()
@@ -316,7 +328,7 @@ class EnvironmentService:
         with get_context().db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
             previous_resource_prefix = environment.resourcePrefix
-            EnvironmentService.check_cdk_resources(
+            EnvironmentService._check_cdk_resources(
                 account_id=environment.AwsAccountId, region=environment.region, data=data
             )
 
@@ -359,7 +371,7 @@ class EnvironmentService:
         group: str = data['groupUri']
 
         with get_context().db_engine.scoped_session() as session:
-            EnvironmentService.validate_permissions(session, uri, data['permissions'], group)
+            EnvironmentService._validate_permissions(session, uri, data['permissions'], group)
 
             environment = EnvironmentService.get_environment_by_uri(session, uri)
 
@@ -486,7 +498,7 @@ class EnvironmentService:
         group = data['groupUri']
 
         with get_context().db_engine.scoped_session() as session:
-            EnvironmentService.validate_permissions(session, uri, data['permissions'], group)
+            EnvironmentService._validate_permissions(session, uri, data['permissions'], group)
 
             environment = EnvironmentService.get_environment_by_uri(session, uri)
 
@@ -514,7 +526,7 @@ class EnvironmentService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(environment_permissions.LIST_ENVIRONMENT_GROUP_PERMISSIONS)
-    def list_group_permissions(session, uri, group_uri):
+    def list_group_permissions(uri, group_uri):
         # the permission checked
         with get_context().db_engine.scoped_session() as session:
             return EnvironmentService.list_group_permissions_internal(session, uri, group_uri)
@@ -836,6 +848,10 @@ class EnvironmentService:
     @staticmethod
     @ResourcePolicyService.has_resource_permission(environment_permissions.GET_ENVIRONMENT)
     def find_environment_by_uri(uri) -> Environment:
+        return EnvironmentService.find_environment_by_uri_simplified(uri)
+
+    @staticmethod
+    def find_environment_by_uri_simplified(uri):
         with get_context().db_engine.scoped_session() as session:
             return EnvironmentService.get_environment_by_uri(session, uri)
 
@@ -851,6 +867,7 @@ class EnvironmentService:
         return environments
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
     @ResourcePolicyService.has_resource_permission(environment_permissions.DELETE_ENVIRONMENT)
     def delete_environment(uri):
         with get_context().db_engine.scoped_session() as session:
@@ -916,7 +933,7 @@ class EnvironmentService:
         return param is not None and param.value.lower() == 'true'
 
     @staticmethod
-    def is_user_invited(uri):
+    def _is_user_invited(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
             return EnvironmentRepository.is_user_invited_to_environment(session=session, groups=context.groups, uri=uri)
@@ -927,22 +944,17 @@ class EnvironmentService:
             return EnvironmentPermission.Owner.value
         elif environment.SamlGroupName in get_context().groups:
             return EnvironmentPermission.Admin.value
-        elif EnvironmentService.is_user_invited(environment.environmentUri):
+        elif EnvironmentService._is_user_invited(environment.environmentUri):
             return EnvironmentPermission.Invited.value
         return EnvironmentPermission.NotInvited.value
 
     @staticmethod
-    def enable_subscriptions(environmentUri: str = None, input: dict = None):
+    @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
+    @ResourcePolicyService.has_resource_permission(ENABLE_ENVIRONMENT_SUBSCRIPTIONS)
+    def enable_subscriptions(uri, input: dict = None):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            ResourcePolicyService.check_user_resource_permission(
-                session=session,
-                username=context.username,
-                groups=context.groups,
-                resource_uri=environmentUri,
-                permission_name=ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
-            )
-            environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
+            environment = EnvironmentService.get_environment_by_uri(session, uri)
             if input.get('producersTopicArn'):
                 environment.subscriptionsProducersTopicName = input.get('producersTopicArn')
                 environment.subscriptionsProducersTopicImported = True
@@ -967,17 +979,12 @@ class EnvironmentService:
             return True
 
     @staticmethod
-    def disable_subscriptions(environment_uri: str = None):
+    @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
+    @ResourcePolicyService.has_resource_permission(ENABLE_ENVIRONMENT_SUBSCRIPTIONS)
+    def disable_subscriptions(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            ResourcePolicyService.check_user_resource_permission(
-                session=session,
-                username=context.username,
-                groups=context.groups,
-                resource_uri=environment_uri,
-                permission_name=ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
-            )
-            environment = EnvironmentService.get_environment_by_uri(session, environment_uri)
+            environment = EnvironmentService.get_environment_by_uri(session, uri)
 
             environment.subscriptionsConsumersTopicName = None
             environment.subscriptionsConsumersTopicImported = False
@@ -1028,20 +1035,12 @@ class EnvironmentService:
         return aws_session
 
     @staticmethod
-    def get_environment_assume_role_url(
-        environmentUri: str = None,
-        groupUri: str = None,
-    ):
+    @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
+    @ResourcePolicyService.has_resource_permission(CREDENTIALS_ENVIRONMENT)
+    def get_environment_assume_role_url(uri, groupUri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            ResourcePolicyService.check_user_resource_permission(
-                session=session,
-                username=context.username,
-                groups=context.groups,
-                resource_uri=environmentUri,
-                permission_name=CREDENTIALS_ENVIRONMENT,
-            )
-            environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
+            environment = EnvironmentService.get_environment_by_uri(session, uri)
             url = SessionHelper.get_console_access_url(
                 EnvironmentService._get_environment_group_aws_session(
                     session=session,
@@ -1055,17 +1054,12 @@ class EnvironmentService:
             return url
 
     @staticmethod
-    def generate_environment_access_token(environmentUri: str = None, groupUri: str = None):
+    @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
+    @ResourcePolicyService.has_resource_permission(CREDENTIALS_ENVIRONMENT)
+    def generate_environment_access_token(uri, groupUri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
-            ResourcePolicyService.check_user_resource_permission(
-                session=session,
-                username=context.username,
-                groups=context.groups,
-                resource_uri=environmentUri,
-                permission_name=CREDENTIALS_ENVIRONMENT,
-            )
-            environment = EnvironmentService.get_environment_by_uri(session, environmentUri)
+            environment = EnvironmentService.get_environment_by_uri(session, uri)
             c = EnvironmentService._get_environment_group_aws_session(
                 session=session,
                 username=context.username,
@@ -1080,16 +1074,8 @@ class EnvironmentService:
             }
 
     @staticmethod
-    def get_pivot_role(organization_uri):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            ResourcePolicyService.check_user_resource_permission(
-                session=session,
-                username=context.username,
-                groups=context.groups,
-                resource_uri=organization_uri,
-                permission_name=GET_ORGANIZATION,
-            )
+    @ResourcePolicyService.has_resource_permission(LINK_ENVIRONMENT)
+    def get_pivot_role(uri):
         pivot_role_name = SessionHelper.get_delegation_role_name(region='<REGION>')
         if not pivot_role_name:
             raise exceptions.AWSResourceNotFound(
@@ -1099,47 +1085,31 @@ class EnvironmentService:
         return pivot_role_name
 
     @staticmethod
-    def get_external_id(organization_uri):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            ResourcePolicyService.check_user_resource_permission(
-                session=session,
-                username=context.username,
-                groups=context.groups,
-                resource_uri=organization_uri,
-                permission_name=GET_ORGANIZATION,
+    @ResourcePolicyService.has_resource_permission(LINK_ENVIRONMENT)
+    def get_external_id(uri):
+        external_id = SessionHelper.get_external_id_secret()
+        if not external_id:
+            raise exceptions.AWSResourceNotFound(
+                action='GET_EXTERNAL_ID',
+                message='External Id could not be found on AWS Secretsmanager',
             )
-            external_id = SessionHelper.get_external_id_secret()
-            if not external_id:
-                raise exceptions.AWSResourceNotFound(
-                    action='GET_EXTERNAL_ID',
-                    message='External Id could not be found on AWS Secretsmanager',
-                )
-            return external_id
+        return external_id
 
     @staticmethod
-    def get_template_from_resource_bucket(organization_uri, template_name):
-        context = get_context()
-        with context.db_engine.scoped_session() as session:
-            ResourcePolicyService.check_user_resource_permission(
-                session=session,
-                username=context.username,
-                groups=context.groups,
-                resource_uri=organization_uri,
-                permission_name=GET_ORGANIZATION,
+    @ResourcePolicyService.has_resource_permission(LINK_ENVIRONMENT)
+    def get_template_from_resource_bucket(uri, template_name):
+        envname = os.getenv('envname', 'local')
+        region = os.getenv('AWS_REGION', 'eu-central-1')
+
+        resource_bucket = Parameter().get_parameter(env=envname, path='s3/resources_bucket_name')
+        template_key = Parameter().get_parameter(env=envname, path=f's3/{template_name}')
+        if not resource_bucket or not template_key:
+            raise AWSResourceNotFound(
+                action='GET_TEMPLATE',
+                message=f'{template_name} Yaml template file could not be found on Amazon S3 bucket',
             )
-            envname = os.getenv('envname', 'local')
-            region = os.getenv('AWS_REGION', 'eu-central-1')
 
-            resource_bucket = Parameter().get_parameter(env=envname, path='s3/resources_bucket_name')
-            template_key = Parameter().get_parameter(env=envname, path=f's3/{template_name}')
-            if not resource_bucket or not template_key:
-                raise AWSResourceNotFound(
-                    action='GET_TEMPLATE',
-                    message=f'{template_name} Yaml template file could not be found on Amazon S3 bucket',
-                )
-
-            return S3_client.get_presigned_url(region, resource_bucket, template_key)
+        return S3_client.get_presigned_url(region, resource_bucket, template_key)
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(environment_permissions.GET_ENVIRONMENT)

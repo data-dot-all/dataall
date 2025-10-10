@@ -38,14 +38,15 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     DATASET_ALL,
     DATASET_READ,
     IMPORT_DATASET,
+    DATASET_TABLE_ALL,
     GET_DATASET,
 )
+from dataall.modules.datasets_base.services.dataset_list_permissions import LIST_ENVIRONMENT_DATASETS
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetTable
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
-from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_ALL
 from dataall.modules.datasets_base.services.dataset_service_interface import DatasetServiceInterface
 
 log = logging.getLogger(__name__)
@@ -93,7 +94,7 @@ class DatasetService:
             interface.extend_delete_steward_permissions(session, dataset)
 
     @staticmethod
-    def check_dataset_account(session, environment):
+    def _check_dataset_account(session, environment):
         dashboards_enabled = EnvironmentService.get_boolean_env_param(session, environment, 'dashboardsEnabled')
         if dashboards_enabled:
             quicksight_subscription = QuicksightClient.check_quicksight_enterprise_subscription(
@@ -107,7 +108,7 @@ class DatasetService:
         return True
 
     @staticmethod
-    def check_imported_resources(dataset: S3Dataset, data: dict = {}):
+    def _check_imported_resources(dataset: S3Dataset, data: dict = {}):
         # check that resource names are valid
         if dataset.S3BucketName:
             NamingConventionService(
@@ -183,11 +184,11 @@ class DatasetService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
-            DatasetService.check_dataset_account(session=session, environment=environment)
+            DatasetService._check_dataset_account(session=session, environment=environment)
             dataset = DatasetRepository.build_dataset(username=context.username, env=environment, data=data)
 
             if dataset.imported:
-                DatasetService.check_imported_resources(dataset, data)
+                DatasetService._check_imported_resources(dataset, data)
 
             dataset = DatasetRepository.create_dataset(session=session, env=environment, dataset=dataset, data=data)
             DatasetBucketRepository.create_dataset_bucket(session, dataset, data)
@@ -228,12 +229,12 @@ class DatasetService:
         return dataset
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     def import_dataset(uri, admin_group, data):
         data['imported'] = True
         return DatasetService.create_dataset(uri=uri, admin_group=admin_group, data=data)
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     def get_dataset(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -242,7 +243,13 @@ class DatasetService:
                 dataset.userRoleForDataset = DatasetRole.Admin.value
             return dataset
 
+    @classmethod
+    @ResourcePolicyService.has_resource_permission(GET_DATASET)
+    def find_dataset(cls, uri):
+        return DatasetService.get_dataset(uri)
+
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def get_file_upload_presigned_url(uri: str, data: dict):
         with get_context().db_engine.scoped_session() as session:
@@ -275,13 +282,13 @@ class DatasetService:
         with get_context().db_engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             environment = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
-            DatasetService.check_dataset_account(session=session, environment=environment)
+            DatasetService._check_dataset_account(session=session, environment=environment)
 
             username = get_context().username
             dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             if data and isinstance(data, dict):
                 if data.get('imported', False):
-                    DatasetService.check_imported_resources(dataset, data)
+                    DatasetService._check_imported_resources(dataset, data)
 
                 for k in data.keys():
                     if k not in ['stewards', 'KmsAlias']:
@@ -338,6 +345,12 @@ class DatasetService:
         }
 
     @staticmethod
+    @ResourcePolicyService.has_resource_permission(GET_DATASET)
+    def get_dataset_restricted_information(uri: str, dataset: S3Dataset):
+        return dataset
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def get_dataset_assume_role_url(uri):
         context = get_context()
@@ -363,6 +376,7 @@ class DatasetService:
         return url
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CRAWL_DATASET)
     def start_crawler(uri: str, data: dict = None):
         engine = get_context().db_engine
@@ -388,12 +402,11 @@ class DatasetService:
 
             return {
                 'Name': dataset.GlueCrawlerName,
-                'AwsAccountId': dataset.AwsAccountId,
-                'region': dataset.region,
                 'status': crawler.get('LastCrawl', {}).get('Status', 'N/A'),
             }
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def generate_dataset_access_token(uri):
         with get_context().db_engine.scoped_session() as session:
@@ -411,6 +424,7 @@ class DatasetService:
         return json.dumps(credentials)
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(DELETE_DATASET)
     def delete_dataset(uri: str, delete_from_aws: bool = False):
         context = get_context()
@@ -430,7 +444,7 @@ class DatasetService:
             DatasetIndexer.delete_doc(doc_id=uri)
 
             DatasetService.execute_on_delete(session, uri, action=DELETE_DATASET)
-            DatasetService.delete_dataset_term_links(session, uri)
+            DatasetService._delete_dataset_term_links(session, uri)
             DatasetTableRepository.delete_dataset_tables(session, dataset.datasetUri)
             DatasetLocationRepository.delete_dataset_locations(session, dataset.datasetUri)
             DatasetBucketRepository.delete_dataset_buckets(session, dataset.datasetUri)
@@ -482,11 +496,18 @@ class DatasetService:
         )
 
     @staticmethod
-    def list_datasets_owned_by_env_group(env_uri: str, group_uri: str, data: dict):
-        with get_context().db_engine.scoped_session() as session:
+    @ResourcePolicyService.has_resource_permission(LIST_ENVIRONMENT_DATASETS)
+    def list_datasets_owned_by_env_group(uri: str, group_uri: str, data: dict):
+        context = get_context()
+        if group_uri not in context.groups:
+            raise exceptions.UnauthorizedOperation(
+                action='LIST_ENVIRONMENT_GROUP_DATASETS',
+                message=f'User: {context.username} is not a member of the team {group_uri}',
+            )
+        with context.db_engine.scoped_session() as session:
             return DatasetRepository.paginated_environment_group_datasets(
                 session=session,
-                env_uri=env_uri,
+                env_uri=uri,
                 group_uri=group_uri,
                 data=data,
             )
@@ -552,7 +573,7 @@ class DatasetService:
         return dataset
 
     @staticmethod
-    def delete_dataset_term_links(session, dataset_uri):
+    def _delete_dataset_term_links(session, dataset_uri):
         tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, dataset_uri)]
         for table_uri in tables:
             GlossaryRepository.delete_glossary_terms_links(session, table_uri, 'DatasetTable')
