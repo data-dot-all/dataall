@@ -7,48 +7,83 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#157878">
     <link rel="stylesheet" href="{{ 'assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
+    <link rel="stylesheet" href="{{ '/assets/css/sidebar.css' | relative_url }}">
     <script src="https://code.iconify.design/1/1.0.7/iconify.min.js"></script>
+    <script src="{{ '/assets/js/sidebar.js' | relative_url }}"></script>
     <link rel="shortcut icon" type="/aws-dataall/image/png" href="{{'logo.png' | relative_url}}">
 </head>
 <body>
 
-<section>
-    <div class="menu-background menu-background-berry">
-        <section class="menu-bar">
-            <div>
-                <nav role="navigation">
-                    <ul>
-                        <li><a class="nav-title" href="/dataall/">data.all</a></li>
-                        <li><a class="nav-item"  href="/dataall/concepts" aria-haspopup="true">Basic Concepts</a>
-                        <li><a class="nav-item"  href="/dataall/architecture" aria-haspopup="true">Architecture</a>
-                        <li><a class="nav-item"  href="/dataall/code" aria-haspopup="true">Code Walkthrough</a>
-                        <li><a class="nav-item"  href="{{ site.workshop_url }}" aria-haspopup="true">Getting Started Workshop</a>
-                    </ul>
-                </nav>
-            </div>
+<!-- Sidebar Navigation -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <img class="logo" alt="dataall Logo" src="{{ '/img/logo.png' | relative_url }}"/>
+        <a href="{{ '/' | relative_url }}" class="title">{{ site.title }}</a>
+    </div>
+    <nav class="sidebar-nav">
+        {% include navigation.html %}
+    </nav>
+</div>
 
+<!-- Mobile toggle button -->
+<button class="sidebar-toggle" id="sidebarToggle">☰</button>
+
+<!-- Main content wrapper -->
+<div class="site-content" id="siteContent">
+<section>
+    {% include search.html %}
+    {% if page.homePage == true %}
+    <!-- Home page layout with banner -->
+    <div class="banner-background">
+        <section class="page-header">
+            <div class="header-container">
+                <div class="image-container">
+                    <img style="width:100%" class="logo" alt="dataall Logo" src="{{ '/img/logo.png' | relative_url }}"/>
+                </div>
+                <div class="title-container">
+                    <div class="header-title"><h1>{{ site.title }}</h1></div>
+                    <div class="header-desc"><h3>{{ site.description }}</h3></div>
+                    <div class="header-actions">
+                        <div class="btn-div">
+                            <a href="{{ site.github.repository_url }}" class="btn" >
+                                <div class="button-container">
+                                    <div class="button-item">
+                                        <span class="iconify github-icon"
+                                              data-icon="akar-icons:github-fill"
+                                              data-inline="false"
+                                              data-width="30"></span>
+                                    </div>
+                                    <div class="button-item">
+                                        View on GitHub
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
     </div>
-
-    {% if page.homePage != true %}
-    <div class="default-content default-content-margin-top" >
+    <div class="default-content">
+        {{ content }}
+    </div>
+    {% else %}
+    <!-- Standard content page layout -->
+    <div class="default-content">
+        {% include toc.html %}
         <div class="main-content">
             {{ content }}
         </div>
     </div>
-    {% else %}}
-    <div class="default-content {% if page.homePage != true %} default-content-margin-top {% endif %}" >
-        {{ content }}
-    </div>
     {% endif %}
 
 </section>
+</div>
 <section class="main-content">
     <hr>
     <div class="footer-content">
         <div>©2024 Amazon Web Services</div>
         <div>An <a href="https://aws.amazon.com/professional-services/">AWS Professional Services</a> open source initiative | aws-proserve-opensource@amazon.com</div>
-
     </div>
 </section>
 

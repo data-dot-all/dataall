@@ -1,5 +1,6 @@
 ---
-layout: default_sublevel
+layout: default
+sublevel: true
 title: Deploy to AWS
 permalink: /deploy-locally/
 ---
@@ -25,7 +26,7 @@ data.all is fully dockerized with docker-compose, and can be fully run from your
 The first step is to clone the repo.
 
 ```bash
-git clone https://github.com/data-dot-all/dataall.git --branch v2.6.0
+git clone https://github.com/data-dot-all/dataall.git --branch v2.6.1
 ```
 
 With docker compose we orchestrate the build of 5 containers: frontend, db, graphql, cdkproxy, opensearch.
