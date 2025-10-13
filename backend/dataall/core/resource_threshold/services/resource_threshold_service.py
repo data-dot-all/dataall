@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 
 class ResourceThresholdService:
     @staticmethod
-    def check_invocation_count(action_type, max_count_config_path):
+    def check_invocation_count(action_type, max_daily_count_config_path):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
@@ -20,7 +20,7 @@ class ResourceThresholdService:
                     count = ResourceThresholdRepository.get_count_today(
                         session=session, username=context.username, action_type=action_type
                     )
-                    max_count = config.get_property(max_count_config_path, 10)
+                    max_count = config.get_property(max_daily_count_config_path, 10)
                     log.info(
                         f'User {context.username} has invoked {action_type} {count} times today of max {max_count}'
                     )
