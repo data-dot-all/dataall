@@ -10,7 +10,6 @@ from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRep
 
 
 log = logging.getLogger(__name__)
-Worker.queue = SqsQueue.send
 
 
 def persistent_email_reminders(engine):
@@ -28,7 +27,7 @@ def persistent_email_reminders(engine):
             share = ShareObjectRepository.get_share_by_uri(session, pending_share.shareUri)
             dataset = DatasetBaseRepository.get_dataset_by_uri(session, share.datasetUri)
             ShareNotificationService(session=session, dataset=dataset, share=share).notify_persistent_email_reminder(
-                email_id=share.owner, engine=engine
+                email_id=share.owner
             )
             log.info(f'Email reminder sent for share {share.shareUri}')
         log.info('Completed Persistent Email Reminders Task')
