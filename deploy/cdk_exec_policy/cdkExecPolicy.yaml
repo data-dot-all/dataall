@@ -107,8 +107,8 @@ Resources:
               - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${EnvironmentResourcePrefix}*'
               - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-*'
               - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/cdk-*'
-              - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/dataall-*'
-              - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/dataall-*'
+              - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/dataall*'
+              - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/dataall*'
 
           - Sid: IAMTwo
             Effect: Allow
