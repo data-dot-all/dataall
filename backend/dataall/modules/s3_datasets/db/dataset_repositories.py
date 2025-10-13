@@ -14,6 +14,8 @@ from dataall.base.utils.naming_convention import (
     NamingConventionService,
     NamingConventionPattern,
 )
+from dataall.modules.shares_base.db.share_object_models import ShareObject
+from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +48,10 @@ class DatasetRepository(EnvironmentResource):
             businessOwnerDelegationEmails=data.get('businessOwnerDelegationEmails', []),
             stewards=data.get('stewards') if data.get('stewards') else data['SamlAdminGroupName'],
             autoApprovalEnabled=data.get('autoApprovalEnabled', False),
+            enableExpiration=data.get('enableExpiration', False),
+            expirySetting=data.get('expirySetting'),
+            expiryMinDuration=data.get('expiryMinDuration'),
+            expiryMaxDuration=data.get('expiryMaxDuration'),
         )
 
         cls._set_import_data(dataset, data)
@@ -116,8 +122,8 @@ class DatasetRepository(EnvironmentResource):
         ).build_compliant_name()
         iam_role_arn = f'arn:aws:iam::{dataset.AwsAccountId}:role/{iam_role_name}'
         if data.get('adminRoleName'):
-            dataset.IAMDatasetAdminRoleArn = f"arn:aws:iam::{dataset.AwsAccountId}:role/{data['adminRoleName']}"
-            dataset.IAMDatasetAdminUserArn = f"arn:aws:iam::{dataset.AwsAccountId}:role/{data['adminRoleName']}"
+            dataset.IAMDatasetAdminRoleArn = f'arn:aws:iam::{dataset.AwsAccountId}:role/{data["adminRoleName"]}'
+            dataset.IAMDatasetAdminUserArn = f'arn:aws:iam::{dataset.AwsAccountId}:role/{data["adminRoleName"]}'
         else:
             dataset.IAMDatasetAdminRoleArn = iam_role_arn
             dataset.IAMDatasetAdminUserArn = iam_role_arn
@@ -197,6 +203,18 @@ class DatasetRepository(EnvironmentResource):
         return session.query(S3Dataset).filter(S3Dataset.deleted.is_(None)).all()
 
     @staticmethod
+    def list_all_active_datasets_with_glue_db(session, glue_db_name: str) -> [S3Dataset]:
+        # List all the S3 datasets which have the same glue db name ( irrespective of the environment )
+        # This query will fetch S3 dataset even if they belong to different environments.
+        # This is because the _shared db which will be created in consumer's account is a common resource which can be modified at the same time and cause contention and potential override. See https://github.com/data-dot-all/dataall/issues/1633 for more details
+
+        return (
+            session.query(S3Dataset)
+            .filter(and_(S3Dataset.deleted.is_(None), S3Dataset.GlueDatabaseName == glue_db_name))
+            .all()
+        )
+
+    @staticmethod
     def get_dataset_by_bucket_name(session, bucket) -> [S3Dataset]:
         return session.query(S3Dataset).filter(S3Dataset.S3BucketName == bucket).first()
 
@@ -219,7 +237,9 @@ class DatasetRepository(EnvironmentResource):
                 or_(
                     S3Dataset.label.ilike('%' + term + '%'),
                     S3Dataset.description.ilike('%' + term + '%'),
-                    S3Dataset.tags.contains(f'{{{term}}}'),
+                    S3Dataset.tags.contains(
+                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, target_label=term).sanitize()}}}'
+                    ),
                     S3Dataset.region.ilike('%' + term + '%'),
                 )
             )
@@ -236,7 +256,9 @@ class DatasetRepository(EnvironmentResource):
                 or_(
                     S3Dataset.label.ilike('%' + term + '%'),
                     S3Dataset.description.ilike('%' + term + '%'),
-                    S3Dataset.tags.contains(f'{{{term}}}'),
+                    S3Dataset.tags.contains(
+                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, target_label=term).sanitize()}}}'
+                    ),
                     S3Dataset.region.ilike('%' + term + '%'),
                 )
             )

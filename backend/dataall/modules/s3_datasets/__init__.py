@@ -4,6 +4,7 @@ import logging
 from typing import List, Type, Set
 
 from dataall.base.loader import ModuleInterface, ImportMode
+from dataall.modules.s3_datasets.db.dataset_models import DatasetBucket
 
 log = logging.getLogger(__name__)
 
@@ -32,6 +33,10 @@ class DatasetApiModuleInterface(ModuleInterface):
     def __init__(self):
         # these imports are placed inside the method because they are only related to GraphQL api.
         from dataall.core.stacks.db.target_type_repositories import TargetType
+        from dataall.core.metadata_manager.metadata_form_entity_manager import (
+            MetadataFormEntityTypes,
+            MetadataFormEntityManager,
+        )
         from dataall.modules.vote.services.vote_service import add_vote_type
         from dataall.modules.feed.api.registry import FeedRegistry, FeedDefinition
         from dataall.modules.catalog.indexers.registry import GlossaryRegistry, GlossaryDefinition
@@ -41,13 +46,19 @@ class DatasetApiModuleInterface(ModuleInterface):
         from dataall.modules.s3_datasets.indexers.table_indexer import DatasetTableIndexer
 
         import dataall.modules.s3_datasets.api
-        from dataall.modules.s3_datasets.services.dataset_permissions import GET_DATASET, UPDATE_DATASET
+        from dataall.modules.s3_datasets.services.dataset_permissions import (
+            GET_DATASET,
+            UPDATE_DATASET,
+            GET_DATASET_TABLE,
+            GET_DATASET_FOLDER,
+            MANAGE_DATASETS,
+        )
         from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
         from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset
 
-        FeedRegistry.register(FeedDefinition('DatasetStorageLocation', DatasetStorageLocation))
-        FeedRegistry.register(FeedDefinition('DatasetTable', DatasetTable))
-        FeedRegistry.register(FeedDefinition('Dataset', S3Dataset))
+        FeedRegistry.register(FeedDefinition('DatasetStorageLocation', DatasetStorageLocation, GET_DATASET_FOLDER))
+        FeedRegistry.register(FeedDefinition('DatasetTable', DatasetTable, GET_DATASET_TABLE))
+        FeedRegistry.register(FeedDefinition('Dataset', S3Dataset, GET_DATASET))
 
         GlossaryRegistry.register(
             GlossaryDefinition(
@@ -71,11 +82,15 @@ class DatasetApiModuleInterface(ModuleInterface):
             )
         )
 
-        add_vote_type('dataset', DatasetIndexer)
+        add_vote_type('dataset', DatasetIndexer, GET_DATASET)
 
-        TargetType('dataset', GET_DATASET, UPDATE_DATASET)
+        TargetType('dataset', GET_DATASET, UPDATE_DATASET, MANAGE_DATASETS)
 
         EnvironmentResourceManager.register(DatasetRepository())
+        MetadataFormEntityManager.register(S3Dataset, MetadataFormEntityTypes.S3Dataset.value)
+        MetadataFormEntityManager.register(DatasetTable, MetadataFormEntityTypes.Table.value)
+        MetadataFormEntityManager.register(DatasetStorageLocation, MetadataFormEntityTypes.Folder.value)
+        MetadataFormEntityManager.register(DatasetBucket, MetadataFormEntityTypes.Bucket.value)
 
         log.info('API of S3 datasets has been imported')
 

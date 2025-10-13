@@ -16,7 +16,7 @@ venv:
 	@python3 -m venv "venv"
 	@/bin/bash -c "source venv/bin/activate"
 
-install: upgrade-pip install-deploy install-backend install-cdkproxy install-tests
+install: upgrade-pip install-deploy install-backend install-cdkproxy install-tests install-integration-tests install-custom-auth
 
 upgrade-pip:
 	pip install --upgrade pip setuptools
@@ -36,6 +36,9 @@ install-tests:
 install-integration-tests:
 	pip install -r tests_new/integration_tests/requirements.txt
 
+install-custom-auth:
+	pip install -r deploy/custom_resources/custom_authorizer/requirements.txt
+
 lint:
 	pip install ruff
 	ruff check --fix
@@ -49,7 +52,11 @@ check-security: upgrade-pip install-backend install-cdkproxy
 	pip install bandit
 	pip install safety
 	bandit -lll -r backend
-	safety check --ignore=51668,70612,70624
+	safety check
+
+checkov-synth: upgrade-pip install-backend install-cdkproxy install-tests
+	export PYTHONPATH=./backend:/./tests && \
+	python -m pytest -v -ra -k test_checkov tests
 
 test:
 	export PYTHONPATH=./backend:/./tests && \
@@ -57,7 +64,7 @@ test:
 
 integration-tests: upgrade-pip install-integration-tests
 	export PYTHONPATH=./backend:/./tests_new && \
-	python -m pytest -v -ra tests_new/integration_tests/ \
+	python -m pytest -x -v -ra tests_new/integration_tests/ \
 		--junitxml=reports/integration_tests.xml
 
 coverage: upgrade-pip install-backend install-cdkproxy install-tests
@@ -72,13 +79,13 @@ coverage: upgrade-pip install-backend install-cdkproxy install-tests
 		--color=yes
 
 deploy-image:
-	docker build -f backend/docker/prod/${type}/Dockerfile -t ${image-tag}:${image-tag} . && \
+	docker build ${build-args} -f backend/docker/prod/${type}/Dockerfile -t ${image-tag}:${image-tag} . && \
 	aws ecr get-login-password --region ${region} | docker login --username AWS --password-stdin ${account}.dkr.ecr.${region}.amazonaws.com && \
 	docker tag ${image-tag}:${image-tag} ${account}.dkr.ecr.${region}.amazonaws.com/${repo}:${image-tag} && \
 	docker push ${account}.dkr.ecr.${region}.amazonaws.com/${repo}:${image-tag}
 
 assume-role:
-	aws sts assume-role --role-arn "arn:aws:iam::${REMOTE_ACCOUNT_ID}:role/${REMOTE_ROLE}" --role-session-name "session1" >.assume_role_json
+	aws sts assume-role --role-arn "arn:aws:iam::${REMOTE_ACCOUNT_ID}:role/${REMOTE_ROLE}" --external-id ${EXTERNAL_ID} --role-session-name "session1" >.assume_role_json
 	echo "export AWS_ACCESS_KEY_ID=$$(cat .assume_role_json | jq '.Credentials.AccessKeyId' -r)" >.env.assumed_role
 	echo "export AWS_SECRET_ACCESS_KEY=$$(cat .assume_role_json | jq '.Credentials.SecretAccessKey' -r)" >>.env.assumed_role
 	echo "export AWS_SESSION_TOKEN=$$(cat .assume_role_json | jq '.Credentials.SessionToken' -r)" >>.env.assumed_role

@@ -1,23 +1,27 @@
 import logging
 
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.tasks.service_handlers import Worker
 from dataall.base.context import get_context
 from dataall.core.tasks.db.task_models import Task
-from dataall.base.db.exceptions import ObjectNotFound, UnauthorizedOperation
+from dataall.base.db.exceptions import ObjectNotFound, UnauthorizedOperation, InvalidInput
 from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
     ShareItemStatus,
     ShareItemActions,
     ShareItemHealthStatus,
+    ShareableType,
 )
 from dataall.modules.shares_base.db.share_object_models import ShareObjectItem
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository
+from dataall.modules.shares_base.db.share_object_item_repositories import ShareObjectItemRepository
 from dataall.modules.shares_base.db.share_object_state_machines import (
     ShareObjectSM,
     ShareItemSM,
 )
+from sqlalchemy import exc
 from dataall.modules.shares_base.services.share_exceptions import ShareItemsFound
 from dataall.modules.shares_base.services.share_notification_service import ShareNotificationService
 from dataall.modules.shares_base.services.share_permissions import (
@@ -26,6 +30,7 @@ from dataall.modules.shares_base.services.share_permissions import (
     REMOVE_ITEM,
     LIST_ENVIRONMENT_SHARED_WITH_OBJECTS,
     APPROVE_SHARE_OBJECT,
+    MANAGE_SHARES,
 )
 from dataall.modules.shares_base.services.share_processor_manager import ShareProcessorManager
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
@@ -37,10 +42,15 @@ class ShareItemService:
     @staticmethod
     def _get_share_uri(session, uri):
         share_item = ShareObjectRepository.get_share_item_by_uri(session, uri)
-        share = ShareObjectRepository.get_share_by_uri(session, share_item.shareUri)
-        return share.shareUri
+        return share_item.shareUri
 
     @staticmethod
+    def _get_share_uri_from_item_filter_uri(session, uri):
+        share_item = ShareObjectItemRepository.get_share_item_by_item_filter_uri(session, uri)
+        return share_item.shareUri
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(GET_SHARE_OBJECT)
     def verify_items_share_object(uri, item_uris):
         context = get_context()
@@ -56,6 +66,7 @@ class ShareItemService:
         return True
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(APPROVE_SHARE_OBJECT)
     def reapply_items_share_object(uri, item_uris):
         context = get_context()
@@ -71,6 +82,7 @@ class ShareItemService:
         return True
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(GET_SHARE_OBJECT)
     def revoke_items_share_object(uri, revoked_uris):
         context = get_context()
@@ -123,6 +135,7 @@ class ShareItemService:
         return share
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(ADD_ITEM)
     def add_shared_item(uri: str, data: dict = None):
         context = get_context()
@@ -155,6 +168,7 @@ class ShareItemService:
         return share_item
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
     @ResourcePolicyService.has_resource_permission(REMOVE_ITEM, parent_resource=_get_share_uri)
     def remove_shared_item(uri: str):
         with get_context().db_engine.scoped_session() as session:
@@ -162,6 +176,11 @@ class ShareItemService:
             item_sm = ShareItemSM(share_item.status)
             item_sm.run_transition(ShareItemActions.RemoveItem.value)
             ShareObjectRepository.remove_share_object_item(session, share_item)
+            if share_item.attachedDataFilterUri:
+                share_item_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(
+                    session, share_item.attachedDataFilterUri
+                )
+                ShareObjectItemRepository.delete_share_item_filter(session, share_item_filter)
         return True
 
     @staticmethod
@@ -201,6 +220,63 @@ class ShareItemService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(LIST_ENVIRONMENT_SHARED_WITH_OBJECTS)
-    def paginated_shared_with_environment_datasets(session, uri, data) -> dict:
-        share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
-        return ShareObjectRepository.paginate_shared_datasets(session, uri, data, share_item_shared_states)
+    def paginated_shared_with_environment_datasets(uri, data) -> dict:
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            share_item_shared_states = ShareStatusRepository.get_share_item_shared_states()
+            return ShareObjectRepository.paginate_shared_datasets(session, uri, data, share_item_shared_states)
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
+    @ResourcePolicyService.has_resource_permission(APPROVE_SHARE_OBJECT, parent_resource=_get_share_uri)
+    def update_filters_table_share_item(uri: str, data: dict):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            if share_item := ShareObjectRepository.get_share_item_by_uri(session, uri):
+                if share_item.itemType != ShareableType.Table.value:
+                    raise Exception(f'Share item is not type {ShareableType.Table.value} - required for data filters')
+
+                if share_item.status in ShareStatusRepository.get_share_item_shared_states():
+                    raise Exception(f'Share item already shared in state {share_item.status} - can not assign filters')
+                try:
+                    if share_item.attachedDataFilterUri:
+                        share_item_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(
+                            session, share_item.attachedDataFilterUri
+                        )
+                        ShareObjectItemRepository.update_share_item_filter(session, share_item_filter, data)
+                        return True
+
+                    share_item_filter = ShareObjectItemRepository.create_share_item_filter(session, share_item, data)
+                    share_item.attachedDataFilterUri = share_item_filter.attachedDataFilterUri
+                    return True
+                except exc.IntegrityError:
+                    raise InvalidInput(
+                        'label',
+                        data.get('label'),
+                        f'same label already exists on another share item for table {share_item.itemName}',
+                    )
+            raise ObjectNotFound('ShareObjectItem', uri)
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(
+        GET_SHARE_OBJECT, parent_resource=_get_share_uri_from_item_filter_uri
+    )
+    def get_share_item_data_filters(uri: str):
+        with get_context().db_engine.scoped_session() as session:
+            return ShareObjectItemRepository.get_share_item_filter_by_uri(session, uri)
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_SHARES)
+    @ResourcePolicyService.has_resource_permission(
+        APPROVE_SHARE_OBJECT, parent_resource=_get_share_uri_from_item_filter_uri
+    )
+    def remove_share_item_data_filters(uri: str):
+        with get_context().db_engine.scoped_session() as session:
+            share_item = ShareObjectItemRepository.get_share_item_by_item_filter_uri(session, uri)
+            if share_item.status in ShareStatusRepository.get_share_item_shared_states():
+                raise Exception(
+                    f'Share item in shared state {share_item.status} - can not remove filters, must revoke first...'
+                )
+            share_item.attachedDataFilterUri = None
+            item_data_filter = ShareObjectItemRepository.get_share_item_filter_by_uri(session, uri)
+            return ShareObjectItemRepository.delete_share_item_filter(session, item_data_filter)

@@ -13,20 +13,25 @@ def _columns(db, dataset_fixture, table_fixture) -> List[DatasetTableColumn]:
             c = DatasetTableColumn(
                 datasetUri=dataset_fixture.datasetUri,
                 tableUri=table_fixture.tableUri,
-                label=f'c{i+1}',
-                AWSAccountId=dataset_fixture.AwsAccountId,
-                region=dataset_fixture.region,
+                label=f'c{i + 1}',
+                AWSAccountId=dataset_fixture.restricted.AwsAccountId,
+                region=dataset_fixture.restricted.region,
                 GlueTableName='table',
                 typeName='String',
                 owner='user',
-                GlueDatabaseName=dataset_fixture.GlueDatabaseName,
+                GlueDatabaseName=dataset_fixture.restricted.GlueDatabaseName,
             )
             session.add(c)
             cols.append(c)
     yield cols
 
 
-def test_dataset_term_link_approval(db, client, t1, dataset_fixture, user, group):
+def test_dataset_term_link_approval(db, client, t1, dataset_fixture, user, group, module_mocker):
+    # Mock the validate_kms_key function to return True
+    module_mocker.patch(
+        'dataall.modules.s3_datasets.services.dataset_service.DatasetService.validate_kms_key', return_value=True
+    )
+
     response = client.query(
         """
         mutation UpdateDataset($datasetUri:String!,$input:ModifyDatasetInput){

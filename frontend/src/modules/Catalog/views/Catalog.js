@@ -234,10 +234,7 @@ const Catalog = () => {
       url: transformedRequest.url,
       credentials: { token },
       headers: {
-        AccessControlAllowOrigin: '*',
-        AccessControlAllowHeaders: '*',
-        'access-control-allow-origin': '*',
-        Authorization: token,
+        Authorization: token ? `Bearer ${token}` : '',
         AccessKeyId: 'None',
         SecretKey: 'None'
       }

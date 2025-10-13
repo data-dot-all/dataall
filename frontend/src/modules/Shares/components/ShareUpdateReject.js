@@ -14,7 +14,7 @@ import { SET_ERROR } from 'globalErrors';
 import SendIcon from '@mui/icons-material/Send';
 import React, { useState } from 'react';
 import { updateShareRejectReason } from '../services';
-import { PencilAltIcon } from '../../../design';
+import { PencilAltIcon } from 'design';
 
 export const UpdateRejectReason = (props) => {
   const { share, client, dispatch, enqueueSnackbar, fetchItem, ...other } =

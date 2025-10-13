@@ -40,6 +40,7 @@ import {
   deleteWorksheet,
   getWorksheet,
   listS3DatasetsSharedWithEnvGroup,
+  listSharedDatasetTableColumns,
   runAthenaSqlQuery,
   updateWorksheet
 } from '../services';
@@ -135,7 +136,7 @@ const WorksheetView = () => {
           (d) => ({
             ...d,
             value: d.datasetUri,
-            label: d.GlueDatabaseName
+            label: d.restricted.GlueDatabaseName
           })
         );
       }
@@ -152,7 +153,8 @@ const WorksheetView = () => {
         sharedWithDatabases =
           response.data.listS3DatasetsSharedWithEnvGroup?.map((d) => ({
             value: d.datasetUri,
-            label: d.sharedGlueDatabaseName
+            label: d.sharedGlueDatabaseName,
+            shareUri: d.shareUri
           }));
       }
       setDatabaseOptions(ownedDatabases.concat(sharedWithDatabases));
@@ -164,7 +166,7 @@ const WorksheetView = () => {
     async (environment, dataset) => {
       setLoadingTables(true);
       let response = '';
-      if (dataset.label.includes(dataset.value + '_shared')) {
+      if (dataset.label.includes('_shared')) {
         response = await client.query(
           getSharedDatasetTables({
             datasetUri: dataset.value,
@@ -180,10 +182,7 @@ const WorksheetView = () => {
         );
       }
 
-      if (
-        !response.errors &&
-        dataset.label.includes(dataset.value + '_shared')
-      ) {
+      if (!response.errors && dataset.label.includes('_shared')) {
         setTableOptions(
           response.data.getSharedDatasetTables.map((t) => ({
             ...t,
@@ -196,7 +195,7 @@ const WorksheetView = () => {
           response.data.getDataset.tables.nodes.map((t) => ({
             ...t,
             value: t.tableUri,
-            label: t.GlueTableName
+            label: t.restricted.GlueTableName
           }))
         );
       } else {
@@ -207,22 +206,44 @@ const WorksheetView = () => {
     [client, dispatch]
   );
   const fetchColumns = useCallback(
-    async (table) => {
+    async (table, database) => {
       setLoadingColumns(true);
-      const response = await client.query(
-        listDatasetTableColumns({
-          tableUri: table.tableUri,
-          filter: Defaults.selectListFilter
-        })
-      );
-      if (!response.errors) {
-        setColumns(
-          response.data.listDatasetTableColumns.nodes.map((c) => ({
-            ...c,
-            value: c.columnUri,
-            label: c.name
-          }))
+      let response;
+      if (database?.shareUri) {
+        response = await client.query(
+          listSharedDatasetTableColumns({
+            tableUri: table.tableUri,
+            shareUri: database.shareUri,
+            filter: Defaults.selectListFilter
+          })
         );
+      } else {
+        response = await client.query(
+          listDatasetTableColumns({
+            tableUri: table.tableUri,
+            filter: Defaults.selectListFilter
+          })
+        );
+      }
+
+      if (!response.errors) {
+        if (database?.shareUri) {
+          setColumns(
+            response.data.listSharedDatasetTableColumns.nodes.map((c) => ({
+              ...c,
+              value: c.columnUri,
+              label: c.name
+            }))
+          );
+        } else {
+          setColumns(
+            response.data.listDatasetTableColumns.nodes.map((c) => ({
+              ...c,
+              value: c.columnUri,
+              label: c.name
+            }))
+          );
+        }
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -351,11 +372,15 @@ const WorksheetView = () => {
   function handleTableChange(event) {
     setColumns([]);
     setSelectedTable(event.target.value);
-    fetchColumns(event.target.value).catch((e) =>
+    fetchColumns(event.target.value, selectedDatabase).catch((e) =>
       dispatch({ type: SET_ERROR, error: e.message })
     );
     setSqlBody(
-      `SELECT * FROM "${selectedDatabase.label}"."${event.target.value.GlueTableName}" limit 10;`
+      `SELECT * FROM "${selectedDatabase.label}"."${
+        event.target.value.restricted
+          ? event.target.value.restricted.GlueTableName
+          : event.target.value.GlueTableName
+      }" limit 10;`
     );
   }
 
@@ -488,7 +513,7 @@ const WorksheetView = () => {
                     {tableOptions.length > 0 ? (
                       tableOptions.map((table) => (
                         <MenuItem key={table.tableUri} value={table}>
-                          {table.GlueTableName}
+                          {table.label}
                         </MenuItem>
                       ))
                     ) : (

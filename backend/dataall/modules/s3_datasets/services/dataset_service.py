@@ -2,10 +2,10 @@ import os
 import json
 import logging
 from typing import List
-from dataall.core.resource_lock.db.resource_lock_repositories import ResourceLockRepository
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.db import exceptions
-from dataall.base.utils.naming_convention import NamingConventionPattern
+from dataall.base.utils.naming_convention import NamingConventionPattern, NamingConventionService
+from dataall.base.utils.expiration_util import ExpirationUtils
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.stacks.services.stack_service import StackService
@@ -21,6 +21,7 @@ from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.tasks.db.task_models import Task
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.s3_datasets.db.dataset_bucket_repositories import DatasetBucketRepository
+from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.vote.db.vote_repositories import VoteRepository
 from dataall.modules.s3_datasets.aws.glue_dataset_client import DatasetCrawler
 from dataall.modules.s3_datasets.aws.s3_dataset_client import S3DatasetClient
@@ -37,13 +38,15 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
     DATASET_ALL,
     DATASET_READ,
     IMPORT_DATASET,
+    DATASET_TABLE_ALL,
+    GET_DATASET,
 )
+from dataall.modules.datasets_base.services.dataset_list_permissions import LIST_ENVIRONMENT_DATASETS
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.datasets_base.db.dataset_repositories import DatasetBaseRepository
 from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetTable
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
-from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ
 from dataall.modules.datasets_base.services.dataset_service_interface import DatasetServiceInterface
 
 log = logging.getLogger(__name__)
@@ -85,13 +88,13 @@ class DatasetService:
             interface.extend_attach_steward_permissions(session, dataset, new_stewards)
 
     @classmethod
-    def _delete_additional_steward__permissions(cls, session, dataset):
+    def _delete_additional_steward_permissions(cls, session, dataset):
         """All permissions from other modules that need to be deleted to stewards"""
         for interface in cls._interfaces:
             interface.extend_delete_steward_permissions(session, dataset)
 
     @staticmethod
-    def check_dataset_account(session, environment):
+    def _check_dataset_account(session, environment):
         dashboards_enabled = EnvironmentService.get_boolean_env_param(session, environment, 'dashboardsEnabled')
         if dashboards_enabled:
             quicksight_subscription = QuicksightClient.check_quicksight_enterprise_subscription(
@@ -105,50 +108,75 @@ class DatasetService:
         return True
 
     @staticmethod
-    def check_imported_resources(dataset: S3Dataset):
+    def _check_imported_resources(dataset: S3Dataset, data: dict = {}):
+        # check that resource names are valid
+        if dataset.S3BucketName:
+            NamingConventionService(
+                target_uri=dataset.datasetUri,
+                target_label=dataset.S3BucketName,
+                pattern=NamingConventionPattern.S3,
+            ).validate_imported_name()
+
         if dataset.importedGlueDatabase:
-            if len(dataset.GlueDatabaseName) > NamingConventionPattern.GLUE.value.get('max_length'):
-                raise exceptions.InvalidInput(
-                    param_name='GlueDatabaseName',
-                    param_value=dataset.GlueDatabaseName,
-                    constraint=f"less than {NamingConventionPattern.GLUE.value.get('max_length')} characters",
+            NamingConventionService(
+                target_uri=dataset.datasetUri,
+                target_label=data.get('glueDatabaseName', 'undefined'),
+                pattern=NamingConventionPattern.GLUE,
+            ).validate_imported_name()
+
+        with get_context().db_engine.scoped_session() as session:
+            if DatasetBucketRepository.get_dataset_bucket_by_name(session, dataset.S3BucketName):
+                raise exceptions.ResourceAlreadyExists(
+                    action=IMPORT_DATASET,
+                    message=f'Dataset with bucket {dataset.S3BucketName} already exists',
                 )
         kms_alias = dataset.KmsAlias
+        DatasetService.validate_kms_key(dataset, kms_alias)
 
-        s3_encryption, kms_id = S3DatasetClient(dataset).get_bucket_encryption()
-        if kms_alias not in [None, 'Undefined', '', 'SSE-S3']:  # user-defined KMS encryption
+        return True
+
+    @staticmethod
+    def validate_kms_key(dataset, kms_alias_for_validation):
+        s3_encryption, kms_id_type, kms_id = S3DatasetClient(dataset).get_bucket_encryption()
+        if kms_alias_for_validation not in [None, 'Undefined', '', 'SSE-S3']:  # user-defined KMS encryption
             if s3_encryption == 'AES256':
                 raise exceptions.InvalidInput(
                     param_name='KmsAlias',
-                    param_value=dataset.KmsAlias,
-                    constraint=f'empty, Bucket {dataset.S3BucketName} is encrypted with AWS managed key (SSE-S3). KmsAlias {kms_alias} should NOT be provided as input parameter.',
+                    param_value=kms_alias_for_validation,
+                    constraint=f'empty, Bucket {dataset.S3BucketName} is encrypted with AWS managed key (SSE-S3). KmsAlias {kms_alias_for_validation} should NOT be provided as input parameter.',
                 )
+            NamingConventionService(
+                target_uri=dataset.datasetUri,
+                target_label=kms_alias_for_validation,
+                pattern=NamingConventionPattern.KMS,
+            ).validate_imported_name()
 
             key_exists = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).check_key_exists(
-                key_alias=f'alias/{kms_alias}'
+                key_alias=f'alias/{kms_alias_for_validation}'
             )
             if not key_exists:
                 raise exceptions.AWSResourceNotFound(
                     action=IMPORT_DATASET,
-                    message=f'KMS key with alias={kms_alias} cannot be found - Please check if KMS Key Alias exists in account {dataset.AwsAccountId}',
+                    message=f'KMS key with alias={kms_alias_for_validation} cannot be found - Please check if KMS Key Alias exists in account {dataset.AwsAccountId}',
                 )
 
-            key_id = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).get_key_id(
-                key_alias=f'alias/{kms_alias}'
-            )
+            key_matches = kms_id == kms_alias_for_validation
+            if kms_id_type == 'key':
+                key_id = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).get_key_id(
+                    key_alias=f'alias/{kms_alias_for_validation}'
+                )
+                key_matches = key_id == kms_id
 
-            if key_id != kms_id:
+            if not key_matches:
                 raise exceptions.InvalidInput(
                     param_name='KmsAlias',
-                    param_value=dataset.KmsAlias,
+                    param_value=kms_alias_for_validation,
                     constraint=f'the KMS Alias of the KMS key used to encrypt the Bucket {dataset.S3BucketName}. Provide the correct KMS Alias as input parameter.',
                 )
 
         else:  # user-defined S3 encryption
             if s3_encryption != 'AES256':
                 raise exceptions.RequiredParameter(param_name='KmsAlias')
-
-        return True
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
@@ -158,11 +186,11 @@ class DatasetService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
-            DatasetService.check_dataset_account(session=session, environment=environment)
+            DatasetService._check_dataset_account(session=session, environment=environment)
             dataset = DatasetRepository.build_dataset(username=context.username, env=environment, data=data)
 
             if dataset.imported:
-                DatasetService.check_imported_resources(dataset)
+                DatasetService._check_imported_resources(dataset, data)
 
             dataset = DatasetRepository.create_dataset(session=session, env=environment, dataset=dataset, data=data)
             DatasetBucketRepository.create_dataset_bucket(session, dataset, data)
@@ -203,12 +231,12 @@ class DatasetService:
         return dataset
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     def import_dataset(uri, admin_group, data):
         data['imported'] = True
         return DatasetService.create_dataset(uri=uri, admin_group=admin_group, data=data)
 
     @staticmethod
-    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     def get_dataset(uri):
         context = get_context()
         with context.db_engine.scoped_session() as session:
@@ -217,7 +245,13 @@ class DatasetService:
                 dataset.userRoleForDataset = DatasetRole.Admin.value
             return dataset
 
+    @classmethod
+    @ResourcePolicyService.has_resource_permission(GET_DATASET)
+    def find_dataset(cls, uri):
+        return DatasetService.get_dataset(uri)
+
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def get_file_upload_presigned_url(uri: str, data: dict):
         with get_context().db_engine.scoped_session() as session:
@@ -250,21 +284,45 @@ class DatasetService:
         with get_context().db_engine.scoped_session() as session:
             dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             environment = EnvironmentService.get_environment_by_uri(session, dataset.environmentUri)
-            DatasetService.check_dataset_account(session=session, environment=environment)
+            DatasetService._check_dataset_account(session=session, environment=environment)
 
             username = get_context().username
             dataset: S3Dataset = DatasetRepository.get_dataset_by_uri(session, uri)
             if data and isinstance(data, dict):
                 if data.get('imported', False):
-                    DatasetService.check_imported_resources(dataset)
+                    DatasetService._check_imported_resources(dataset, data)
 
                 for k in data.keys():
                     if k not in ['stewards', 'KmsAlias']:
                         setattr(dataset, k, data.get(k))
 
+                ShareObjectRepository.update_dataset_shares_expiration(
+                    session=session,
+                    enabledExpiration=dataset.enableExpiration,
+                    datasetUri=dataset.datasetUri,
+                    expirationDate=ExpirationUtils.calculate_expiry_date(
+                        expirationPeriod=dataset.expiryMinDuration, expirySetting=dataset.expirySetting
+                    ),
+                )
+
                 if data.get('KmsAlias') not in ['Undefined'] and data.get('KmsAlias') != dataset.KmsAlias:
-                    dataset.KmsAlias = 'SSE-S3' if data.get('KmsAlias') == '' else data.get('KmsAlias')
-                    dataset.importedKmsKey = False if data.get('KmsAlias') == '' else True
+                    log.info(f'Validating the kms key with alias: {data.get("KmsAlias")}')
+                    DatasetService.validate_kms_key(dataset, data.get('KmsAlias'))
+                    new_kms_alias = (
+                        'SSE-S3'
+                        if (data.get('KmsAlias') == '' or data.get('KmsAlias') == 'SSE-S3')
+                        else data.get('KmsAlias')
+                    )
+                    dataset.KmsAlias = new_kms_alias
+                    dataset.importedKmsKey = (
+                        False if (data.get('KmsAlias') == '' or data.get('KmsAlias') == 'SSE-S3') else True
+                    )
+                    # Update the dataset bucket as well
+                    dataset_bucket = DatasetBucketRepository.get_dataset_bucket_for_dataset(session, dataset.datasetUri)
+                    dataset_bucket.KmsAlias = new_kms_alias
+                    dataset_bucket.importedKmsKey = (
+                        False if (data.get('KmsAlias') == '' or data.get('KmsAlias') == 'SSE-S3') else True
+                    )
 
                 if data.get('stewards') and data.get('stewards') != dataset.stewards:
                     if data.get('stewards') != dataset.SamlAdminGroupName:
@@ -304,6 +362,12 @@ class DatasetService:
         }
 
     @staticmethod
+    @ResourcePolicyService.has_resource_permission(GET_DATASET)
+    def get_dataset_restricted_information(uri: str, dataset: S3Dataset):
+        return dataset
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def get_dataset_assume_role_url(uri):
         context = get_context()
@@ -329,6 +393,7 @@ class DatasetService:
         return url
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CRAWL_DATASET)
     def start_crawler(uri: str, data: dict = None):
         engine = get_context().db_engine
@@ -354,12 +419,11 @@ class DatasetService:
 
             return {
                 'Name': dataset.GlueCrawlerName,
-                'AwsAccountId': dataset.AwsAccountId,
-                'region': dataset.region,
                 'status': crawler.get('LastCrawl', {}).get('Status', 'N/A'),
             }
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(CREDENTIALS_DATASET)
     def generate_dataset_access_token(uri):
         with get_context().db_engine.scoped_session() as session:
@@ -377,6 +441,7 @@ class DatasetService:
         return json.dumps(credentials)
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
     @ResourcePolicyService.has_resource_permission(DELETE_DATASET)
     def delete_dataset(uri: str, delete_from_aws: bool = False):
         context = get_context()
@@ -396,7 +461,7 @@ class DatasetService:
             DatasetIndexer.delete_doc(doc_id=uri)
 
             DatasetService.execute_on_delete(session, uri, action=DELETE_DATASET)
-            DatasetService.delete_dataset_term_links(session, uri)
+            DatasetService._delete_dataset_term_links(session, uri)
             DatasetTableRepository.delete_dataset_tables(session, dataset.datasetUri)
             DatasetLocationRepository.delete_dataset_locations(session, dataset.datasetUri)
             DatasetBucketRepository.delete_dataset_buckets(session, dataset.datasetUri)
@@ -448,11 +513,18 @@ class DatasetService:
         )
 
     @staticmethod
-    def list_datasets_owned_by_env_group(env_uri: str, group_uri: str, data: dict):
-        with get_context().db_engine.scoped_session() as session:
+    @ResourcePolicyService.has_resource_permission(LIST_ENVIRONMENT_DATASETS)
+    def list_datasets_owned_by_env_group(uri: str, group_uri: str, data: dict):
+        context = get_context()
+        if group_uri not in context.groups:
+            raise exceptions.UnauthorizedOperation(
+                action='LIST_ENVIRONMENT_GROUP_DATASETS',
+                message=f'User: {context.username} is not a member of the team {group_uri}',
+            )
+        with context.db_engine.scoped_session() as session:
             return DatasetRepository.paginated_environment_group_datasets(
                 session=session,
-                env_uri=env_uri,
+                env_uri=uri,
                 group_uri=group_uri,
                 data=data,
             )
@@ -477,7 +549,7 @@ class DatasetService:
                     resource_uri=tableUri,
                 )
 
-        DatasetService._delete_additional_steward__permissions(session, dataset)
+        DatasetService._delete_additional_steward_permissions(session, dataset)
         return dataset
 
     @staticmethod
@@ -508,7 +580,7 @@ class DatasetService:
             ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=new_stewards,
-                permissions=DATASET_TABLE_READ,
+                permissions=DATASET_TABLE_ALL,
                 resource_uri=tableUri,
                 resource_type=DatasetTable.__name__,
             )
@@ -518,7 +590,7 @@ class DatasetService:
         return dataset
 
     @staticmethod
-    def delete_dataset_term_links(session, dataset_uri):
+    def _delete_dataset_term_links(session, dataset_uri):
         tables = [t.tableUri for t in DatasetRepository.get_dataset_tables(session, dataset_uri)]
         for table_uri in tables:
             GlossaryRepository.delete_glossary_terms_links(session, table_uri, 'DatasetTable')

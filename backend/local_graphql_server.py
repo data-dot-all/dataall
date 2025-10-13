@@ -1,24 +1,23 @@
+import logging
 import os
 
 import jwt
 from ariadne import graphql_sync
-from ariadne.constants import PLAYGROUND_HTML
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from ariadne.explorer.playground import PLAYGROUND_HTML
+from fastapi import FastAPI, Request
 from graphql import parse
+from starlette.middleware.cors import CORSMiddleware
+from starlette.responses import JSONResponse, HTMLResponse
 
 from dataall.base.api import get_executable_schema
-from dataall.core.tasks.service_handlers import Worker
-from dataall.core.permissions.services.tenant_permissions import TENANT_ALL
-from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
-
-from dataall.base.db import get_engine, Base
-from dataall.base.searchproxy import connect, run_query
-from dataall.base.loader import load_modules, ImportMode
 from dataall.base.config import config
 from dataall.base.context import set_context, dispose_context, RequestContext
-
-import logging
+from dataall.base.db import get_engine, Base
+from dataall.base.loader import load_modules, ImportMode
+from dataall.base.searchproxy import connect, run_query
+from dataall.core.permissions.services.tenant_permissions import TENANT_ALL
+from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
+from dataall.core.tasks.service_handlers import Worker
 
 logger = logging.getLogger('graphql')
 logger.propagate = False
@@ -45,10 +44,14 @@ class Context:
 
 
 schema = get_executable_schema()
-# app = GraphQL(schema, debug=True)
-
-app = Flask(__name__)
-CORS(app)
+app = FastAPI(debug=True)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'],
+    allow_credentials=True,
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
 
 
 def request_context(headers, mock=False):
@@ -87,67 +90,61 @@ def request_context(headers, mock=False):
     return context.__dict__
 
 
-@app.route('/graphql', methods=['OPTIONS'])
+@app.options('/graphql')
 def opt():
     # On GET request serve GraphQL Playground
     # You don't need to provide Playground if you don't want to
     # but keep on mind this will not prohibit clients from
     # exploring your API using desktop GraphQL Playground app.
-    return '<html><body><h1>Hello</h1></body></html>', 200
+    return HTMLResponse('<html><body><h1>Hello</h1></body></html>')
 
 
-@app.route('/esproxy', methods=['OPTIONS'])
+@app.options('/esproxy')
 def esproxyopt():
     # On GET request serve GraphQL Playground
     # You don't need to provide Playground if you don't want to
     # but keep on mind this will not prohibit clients from
     # exploring your API using desktop GraphQL Playground app.
-    return '<html><body><h1>Hello</h1></body></html>', 200
+    return HTMLResponse('<html><body><h1>Hello</h1></body></html>')
 
 
-@app.route('/graphql', methods=['GET'])
+@app.get('/graphql')
 def graphql_playground():
     # On GET request serve GraphQL Playground
     # You don't need to provide Playground if you don't want to
     # but keep on mind this will not prohibit clients from
     # exploring your API using desktop GraphQL Playground app.
-    return PLAYGROUND_HTML, 200
+    return HTMLResponse(PLAYGROUND_HTML)
 
 
-@app.route('/esproxy', methods=['POST'])
-def esproxy():
-    body = request.data.decode('utf-8')
-    print(body)
+@app.post('/esproxy')
+async def esproxy(request: Request):
+    body = (await request.body()).decode('utf-8')
+    logger.info('body %s', body)
     return run_query(es=es, index='dataall-index', body=body)
 
 
-@app.route('/graphql', methods=['POST'])
-def graphql_server():
-    print('.............................')
-    # GraphQL queries are always sent as POST
-    logger.debug(request.data)
-    data = request.get_json()
-    print('*** Request ***', request.data)
-    logger.info(data)
+@app.post('/graphql')
+async def graphql_server(request: Request):
+    logger.info('.............................')
+    data = await request.json()
+    logger.info('Request payload %s', data)
 
     # Extract the GraphQL query string from the 'query' key in the data dictionary
     query_string = data.get('query')
 
     if not query_string:
-        return jsonify({'error': 'GraphQL query not provided'}), 400
+        return JSONResponse({'error': 'GraphQL query not provided'}, 400)
     try:
         query = parse(query_string)
     except Exception as e:
-        return jsonify({'error': str(e)}), 400
+        return JSONResponse({'error': str(e)}, 400)
 
-    print('*****    Printing Query      ****** \n\n')
-    print(query)
+    logger.info('Request query %s', query.to_dict())
 
     context = request_context(request.headers, mock=True)
     logger.debug(context)
 
-    # Note: Passing the request to the context is optional.
-    # In Flask, the current request is always accessible as flask.request
     success, result = graphql_sync(
         schema,
         data,
@@ -157,14 +154,4 @@ def graphql_server():
 
     dispose_context()
     status_code = 200 if success else 400
-    return jsonify(result), status_code
-
-
-if __name__ == '__main__':
-    logger.info('Starting dataall flask local application')
-    app.run(
-        debug=True,  # nosec
-        threaded=False,
-        host='0.0.0.0',
-        port=5000,
-    )
+    return JSONResponse(result, status_code)

@@ -14,8 +14,7 @@ log = logging.getLogger()
 def resolve_group_environment_permissions(context, source, environmentUri):
     if not source:
         return None
-    with context.engine.scoped_session() as session:
-        return EnvironmentService.list_group_permissions(session=session, uri=environmentUri, group_uri=source.groupUri)
+    return EnvironmentService.list_group_permissions(uri=environmentUri, group_uri=source.groupUri)
 
 
 def resolve_group_tenant_permissions(context, source):
@@ -50,3 +49,11 @@ def get_groups_for_user(context, source, userid):
         raise Exception("User Id doesn't match user id from context")
 
     return GroupService.get_groups_for_user(userid)
+
+
+def list_user(context, source, groupUri):
+    if not groupUri:
+        raise exceptions.RequiredParameter('groupUri')
+
+    user_list = GroupService.get_user_list_for_group(groupUri)
+    return user_list

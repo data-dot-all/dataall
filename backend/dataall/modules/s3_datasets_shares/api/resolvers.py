@@ -5,7 +5,6 @@ from dataall.base.db.exceptions import RequiredParameter
 from dataall.base.feature_toggle_checker import is_feature_enabled
 from dataall.modules.s3_datasets_shares.services.s3_share_service import S3ShareService
 
-
 log = logging.getLogger(__name__)
 
 
@@ -41,7 +40,7 @@ class RequestValidator:
 
 
 def list_shared_tables_by_env_dataset(context: Context, source, datasetUri: str, envUri: str):
-    return S3ShareService.list_shared_tables_by_env_dataset(datasetUri, envUri)
+    return S3ShareService.list_shared_tables_by_env_dataset(uri=envUri, dataset_uri=datasetUri)
 
 
 @is_feature_enabled('modules.s3_datasets.features.aws_actions')
@@ -65,10 +64,24 @@ def get_s3_consumption_data(context: Context, source, shareUri: str):
 
 
 def list_shared_databases_tables_with_env_group(context: Context, source, environmentUri: str, groupUri: str):
-    return S3ShareService.list_shared_databases_tables_with_env_group(environmentUri=environmentUri, groupUri=groupUri)
+    return S3ShareService.list_shared_databases_tables_with_env_group(uri=environmentUri, group_uri=groupUri)
 
 
 def resolve_shared_db_name(context: Context, source, **kwargs):
-    return S3ShareService.resolve_shared_db_name(
-        source.GlueDatabaseName, source.shareUri, source.targetEnvAwsAccountId, source.targetEnvRegion
-    )
+    return S3ShareService.resolve_shared_db_name(source.GlueDatabaseName, source.shareUri)
+
+
+def list_shared_table_columns(context: Context, source, tableUri: str, shareUri: str, filter: dict):
+    if source:
+        tableUri = source.tableUri
+    if not filter:
+        filter = {}
+    return S3ShareService.paginate_active_columns_for_table_share(uri=tableUri, shareUri=shareUri, filter=filter)
+
+
+def list_table_data_filters_by_attached(
+    context: Context, source, attachedDataFilterUri: str = None, filter: dict = None
+):
+    if not filter:
+        filter = {'page': 1, 'pageSize': 5}
+    return S3ShareService.list_table_data_filters_by_attached(uri=attachedDataFilterUri, data=filter)

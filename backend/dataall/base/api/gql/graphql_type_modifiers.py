@@ -36,7 +36,7 @@ def modifier_factory(template):
             elif isinstance(self.of_type, Thunk):
                 return template(self.of_type.target.name)
             else:
-                raise Exception('Cant gql ')
+                raise Exception(f'Cant gql {self.of_type}')
 
     return Modifier
 

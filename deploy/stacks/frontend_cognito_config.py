@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from aws_cdk import (
     aws_lambda as _lambda,
     aws_iam as iam,
@@ -9,6 +11,7 @@ from aws_cdk.triggers import TriggerFunction
 
 from custom_resources.utils import get_lambda_code
 from .pyNestedStack import pyNestedClass
+from .runtime_options import PYTHON_LAMBDA_RUNTIME
 
 
 class FrontendCognitoConfig(pyNestedClass):
@@ -105,12 +108,14 @@ class FrontendCognitoConfig(pyNestedClass):
                 'envname': envname,
                 'deployment_region': backend_region,
                 'custom_domain': str(bool(custom_domain)),
+                'timestamp': datetime.utcnow().isoformat(),
             },
             environment_encryption=lambda_env_key,
             tracing=_lambda.Tracing.ACTIVE,
             retry_attempts=0,
-            runtime=_lambda.Runtime.PYTHON_3_9,
+            runtime=PYTHON_LAMBDA_RUNTIME,
             handler='cognito_urls.handler',
             execute_after=execute_after,
             execute_on_handler_change=True,
+            logging_format=_lambda.LoggingFormat.JSON,
         )

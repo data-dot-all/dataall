@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from dataall.base.context import set_context, RequestContext, dispose_context
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
@@ -10,7 +11,7 @@ from dataall.modules.shares_base.services.shares_enums import ShareableType, Pri
 from dataall.modules.shares_base.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.shares_base.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
-from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ
+from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_ALL
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetTable, DatasetStorageLocation
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_ALL
@@ -19,7 +20,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_ALL
 @pytest.fixture(scope='module', autouse=True)
 def patch_dataset_methods(module_mocker):
     module_mocker.patch(
-        'dataall.modules.s3_datasets.services.dataset_service.DatasetService.check_dataset_account', return_value=True
+        'dataall.modules.s3_datasets.services.dataset_service.DatasetService._check_dataset_account', return_value=True
     )
     module_mocker.patch(
         'dataall.modules.s3_datasets.services.dataset_service.DatasetService._deploy_dataset_stack', return_value=True
@@ -75,15 +76,20 @@ def dataset(client, patch_es, patch_dataset_methods):
                     datasetUri
                     label
                     description
-                    AwsAccountId
-                    S3BucketName
-                    GlueDatabaseName
                     owner
-                    region,
-                    businessOwnerEmail
-                    businessOwnerDelegationEmails
                     SamlAdminGroupName
-                    GlueCrawlerName
+                    enableExpiration
+                    expirySetting
+                    expiryMinDuration
+                    expiryMaxDuration
+                    restricted {
+                      AwsAccountId
+                      region
+                      KmsAlias
+                      S3BucketName
+                      GlueDatabaseName
+                      IAMDatasetAdminRoleArn
+                    }
                     tables{
                      nodes{
                       tableUri
@@ -111,10 +117,6 @@ def dataset(client, patch_es, patch_dataset_methods):
                     language
                     confidentiality
                     autoApprovalEnabled
-                    organization{
-                        organizationUri
-                        label
-                    }
                     terms{
                         count
                         nodes{
@@ -126,19 +128,14 @@ def dataset(client, patch_es, patch_dataset_methods):
                             }
                         }
                     }
-                    environment{
-                        environmentUri
+                    environment {
+                      environmentUri
+                      label
+                      region
+                      organization {
+                        organizationUri
                         label
-                        region
-                        subscriptionsEnabled
-                        subscriptionsProducersTopicImported
-                        subscriptionsConsumersTopicImported
-                        subscriptionsConsumersTopicName
-                        subscriptionsProducersTopicName
-                        organization{
-                            organizationUri
-                            label
-                        }
+                      }
                     }
                     statistics{
                         tables
@@ -184,11 +181,11 @@ def table(db):
                 label=name,
                 owner=username,
                 datasetUri=dataset.datasetUri,
-                GlueDatabaseName=dataset.GlueDatabaseName,
+                GlueDatabaseName=dataset.restricted.GlueDatabaseName,
                 GlueTableName=name,
-                region=dataset.region,
-                AWSAccountId=dataset.AwsAccountId,
-                S3BucketName=dataset.S3BucketName,
+                region=dataset.restricted.region,
+                AWSAccountId=dataset.restricted.AwsAccountId,
+                S3BucketName=dataset.restricted.S3BucketName,
                 S3Prefix=f'{name}',
             )
             session.add(table)
@@ -197,7 +194,7 @@ def table(db):
             ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=dataset.SamlAdminGroupName,
-                permissions=DATASET_TABLE_READ,
+                permissions=DATASET_TABLE_ALL,
                 resource_uri=table.tableUri,
                 resource_type=DatasetTable.__name__,
             )
@@ -237,7 +234,7 @@ def table_fixture(db, dataset_fixture, table, group, user):
         ResourcePolicyService.attach_resource_policy(
             session=session,
             group=group.groupUri,
-            permissions=DATASET_TABLE_READ,
+            permissions=DATASET_TABLE_ALL,
             resource_uri=table1.tableUri,
             resource_type=DatasetTable.__name__,
         )
@@ -252,7 +249,7 @@ def table_confidential_fixture(db, dataset_confidential_fixture, table, group, u
         ResourcePolicyService.attach_resource_policy(
             session=session,
             group=group.groupUri,
-            permissions=DATASET_TABLE_READ,
+            permissions=DATASET_TABLE_ALL,
             resource_uri=table2.tableUri,
             resource_type=DatasetTable.__name__,
         )
@@ -329,9 +326,9 @@ def location(db):
                 label=name,
                 owner=username,
                 datasetUri=dataset.datasetUri,
-                S3BucketName=dataset.S3BucketName,
-                region=dataset.region,
-                AWSAccountId=dataset.AwsAccountId,
+                S3BucketName=dataset.restricted.S3BucketName,
+                region=dataset.restricted.region,
+                AWSAccountId=dataset.restricted.AwsAccountId,
                 S3Prefix=f'{name}',
             )
             session.add(ds_location)
@@ -378,7 +375,7 @@ def share(db):
                 groupUri=env_group.groupUri,
                 principalId=env_group.groupUri,
                 principalType=PrincipalType.Group.value,
-                principalIAMRoleName=env_group.environmentIAMRoleName,
+                principalRoleName=env_group.environmentIAMRoleName,
                 status=status,
             )
             session.add(share)
@@ -437,3 +434,9 @@ def random_tag():
 
 def random_tags():
     return [random_tag() for i in range(1, random.choice([2, 3, 4, 5]))]
+
+
+@pytest.fixture(scope='function')
+def api_context_1(db, user, group):
+    yield set_context(RequestContext(db_engine=db, username=user.username, groups=[group.name], user_id=user.username))
+    dispose_context()

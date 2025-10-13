@@ -6,3 +6,5 @@ export * from './startDatasetProfilingRun';
 export * from './syncDatasetTableColumns';
 export * from './updateDatasetTable';
 export * from './updateDatasetTableColumn';
+export * from './createTableDataFilter';
+export * from './deleteTableDataFilter';

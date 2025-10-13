@@ -1,18 +1,27 @@
 import logging
+from retrying import retry
+from typing import List
 
 from dataall.base.aws.sts import SessionHelper
 from botocore.exceptions import ClientError
-
 
 from dataall.modules.s3_datasets_shares.aws.share_policy_verifier import SharePolicyVerifier
 
 log = logging.getLogger(__name__)
 
 DATAALL_READ_ONLY_SID = 'DataAll-Bucket-ReadOnly'
+DATAALL_WRITE_ONLY_SID = 'DataAll-Bucket-WriteOnly'
+DATAALL_MODIFY_ONLY_SID = 'DataAll-Bucket-ModifyOnly'
 DATAALL_ALLOW_OWNER_SID = 'AllowAllToAdmin'
 DATAALL_DELEGATE_TO_ACCESS_POINT = 'DelegateAccessToAccessPoint'
 
-DATAALL_BUCKET_SIDS = [DATAALL_READ_ONLY_SID, DATAALL_ALLOW_OWNER_SID, DATAALL_DELEGATE_TO_ACCESS_POINT]
+DATAALL_BUCKET_SIDS = [
+    DATAALL_READ_ONLY_SID,
+    DATAALL_WRITE_ONLY_SID,
+    DATAALL_MODIFY_ONLY_SID,
+    DATAALL_ALLOW_OWNER_SID,
+    DATAALL_DELEGATE_TO_ACCESS_POINT,
+]
 
 
 class S3ControlClient:
@@ -35,16 +44,28 @@ class S3ControlClient:
 
     def create_bucket_access_point(self, bucket_name: str, access_point_name: str):
         try:
-            access_point = self._client.create_access_point(
+            self._client.create_access_point(
                 AccountId=self._account_id,
                 Name=access_point_name,
                 Bucket=bucket_name,
             )
         except Exception as e:
             log.error(f'S3 bucket access point creation failed for location {bucket_name} : {e}')
-            raise e
-        else:
-            return access_point['AccessPointArn']
+            if 'AccessPointAlreadyOwnedByYou' not in str(e):
+                raise e
+
+        return self.try_get_bucket_access_point_arn(bucket_name, access_point_name)
+
+    @retry(retry_on_result=lambda arn: arn is None, stop_max_attempt_number=10, wait_fixed=30000)
+    def try_get_bucket_access_point_arn(self, bucket_name: str, access_point_name: str):
+        log.info(f'Attempt to get access point arn for bucket {bucket_name} and accesspoint {access_point_name}')
+        all_access_points = self._client.list_access_points(
+            AccountId=self._account_id, Bucket=bucket_name, MaxResults=1000
+        )
+        for ap in all_access_points['AccessPointList']:
+            if ap['Name'] == access_point_name:
+                return ap['AccessPointArn']
+        return None
 
     def delete_bucket_access_point(self, access_point_name: str):
         try:
@@ -80,6 +101,7 @@ class S3ControlClient:
         principal_id: str,
         access_point_arn: str,
         s3_prefix: str,
+        actions: List[str],
     ):
         policy = {
             'Version': '2012-10-17',
@@ -88,7 +110,7 @@ class S3ControlClient:
                     'Sid': f'{principal_id}0',
                     'Effect': 'Allow',
                     'Principal': {'AWS': '*'},
-                    'Action': 's3:ListBucket',
+                    'Action': ['s3:ListBucket'],
                     'Resource': f'{access_point_arn}',
                     'Condition': {'StringLike': {'s3:prefix': [f'{s3_prefix}/*'], 'aws:userId': [f'{principal_id}:*']}},
                 },
@@ -96,7 +118,7 @@ class S3ControlClient:
                     'Sid': f'{principal_id}1',
                     'Effect': 'Allow',
                     'Principal': {'AWS': '*'},
-                    'Action': 's3:GetObject',
+                    'Action': actions,
                     'Resource': [f'{access_point_arn}/object/{s3_prefix}/*'],
                     'Condition': {'StringLike': {'aws:userId': [f'{principal_id}:*']}},
                 },

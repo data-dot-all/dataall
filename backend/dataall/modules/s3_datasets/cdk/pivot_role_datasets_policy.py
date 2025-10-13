@@ -1,8 +1,8 @@
 import os
 from dataall.base import db
-from dataall.base.utils.iam_policy_utils import (
-    split_policy_with_resources_in_statements,
-    split_policy_with_mutiple_value_condition_in_statements,
+from dataall.base.utils.iam_cdk_utils import (
+    process_and_split_policy_with_resources_in_statements,
+    process_and_split_policy_with_conditions_in_statements,
 )
 from dataall.core.environment.cdk.pivot_role_stack import PivotRoleStatementSet
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
@@ -50,9 +50,17 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     'glue:DeleteDatabase',
                     'glue:DeletePartition',
                     'glue:DeleteTable',
-                    'glue:BatchGet*',
-                    'glue:Get*',
-                    'glue:List*',
+                    'glue:BatchGetPartition',
+                    'glue:GetDatabase',
+                    'glue:GetDatabases',
+                    'glue:GetTable',
+                    'glue:GetTables',
+                    'glue:GetPartition',
+                    'glue:GetPartitions',
+                    'glue:GetCatalogImportStatus',
+                    'glue:ListDatabases',
+                    'glue:ListTables',
+                    'glue:ListPartitions',
                     'glue:SearchTables',
                     'glue:UpdateDatabase',
                     'glue:UpdatePartition',
@@ -61,7 +69,11 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     'glue:DeleteResourcePolicy',
                     'glue:PutResourcePolicy',
                 ],
-                resources=['*'],
+                resources=[
+                    f'arn:aws:glue:*:{self.account}:catalog',
+                    f'arn:aws:glue:*:{self.account}:database/*',
+                    f'arn:aws:glue:*:{self.account}:table/*/*',
+                ],
             ),
             # Manage LF permissions for glue databases
             iam.PolicyStatement(
@@ -98,19 +110,28 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     'lakeformation:UpdateTableObjects',
                     'lakeformation:DeleteObjectsOnCancel',
                 ],
-                resources=['*'],
+                resources=[
+                    f'arn:aws:lakeformation:{self.region}:{self.account}:catalog',
+                    f'arn:aws:lakeformation:{self.region}:{self.account}:catalog:{self.account}',
+                    f'arn:aws:lakeformation:{self.region}:{self.account}:database/*',
+                    f'arn:aws:lakeformation:{self.region}:{self.account}:table/*/*',
+                    f'arn:aws:lakeformation:{self.region}:{self.account}:data-location/*',
+                    f'arn:aws:lakeformation:{self.region}:{self.account}:lf-tag/*',
+                ],
             ),
             # Glue ETL - needed to start crawler and profiling jobs
             iam.PolicyStatement(
                 sid='GlueETL',
                 effect=iam.Effect.ALLOW,
                 actions=[
+                    'glue:GetJobRun',
                     'glue:StartCrawler',
                     'glue:StartJobRun',
                     'glue:StartTrigger',
                     'glue:UpdateTrigger',
                     'glue:UpdateJob',
                     'glue:UpdateCrawler',
+                    'glue:GetCrawler',
                 ],
                 resources=[
                     f'arn:aws:glue:*:{self.account}:crawler/{self.env_resource_prefix}*',
@@ -153,9 +174,9 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                         imported_kms_alias.append(f'alias/{dataset.KmsAlias}')
 
         if imported_buckets:
-            dataset_statement = split_policy_with_resources_in_statements(
+            dataset_statements = process_and_split_policy_with_resources_in_statements(
                 base_sid='ImportedDatasetBuckets',
-                effect=iam.Effect.ALLOW,
+                effect=iam.Effect.ALLOW.value,
                 actions=[
                     's3:List*',
                     's3:GetBucket*',
@@ -168,11 +189,11 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                 ],
                 resources=imported_buckets,
             )
-            statements.extend(dataset_statement)
+            statements.extend(dataset_statements)
         if imported_kms_alias:
-            kms_statement = split_policy_with_mutiple_value_condition_in_statements(
+            kms_statements = process_and_split_policy_with_conditions_in_statements(
                 base_sid='KMSImportedDataset',
-                effect=iam.Effect.ALLOW,
+                effect=iam.Effect.ALLOW.value,
                 actions=[
                     'kms:Decrypt',
                     'kms:Encrypt',
@@ -190,6 +211,6 @@ class DatasetsPivotRole(PivotRoleStatementSet):
                     'values': imported_kms_alias,
                 },
             )
-            statements.extend(kms_statement)
+            statements.extend(kms_statements)
 
         return statements

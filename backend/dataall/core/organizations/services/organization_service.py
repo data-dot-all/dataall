@@ -70,6 +70,7 @@ class OrganizationService:
             return org
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_ORGANIZATIONS)
     @ResourcePolicyService.has_resource_permission(UPDATE_ORGANIZATION)
     def update_organization(uri, data):
         context = get_context()
@@ -304,7 +305,7 @@ class OrganizationService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             env = EnvironmentRepository.get_environment_by_uri(session, uri)
-            return OrganizationRepository.find_organization_by_uri(session, env.organizationUri)
+            return OrganizationService.get_organization(uri=env.organizationUri)
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(GET_ORGANIZATION)

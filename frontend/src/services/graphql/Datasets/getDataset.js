@@ -12,20 +12,20 @@ export const getDataset = (datasetUri) => ({
         description
         label
         name
-        region
         created
         imported
         userRoleForDataset
         SamlAdminGroupName
-        AwsAccountId
-        KmsAlias
-        S3BucketName
-        GlueDatabaseName
+        restricted {
+          AwsAccountId
+          region
+          KmsAlias
+          S3BucketName
+          GlueDatabaseName
+          IAMDatasetAdminRoleArn
+        }
         tags
-        businessOwnerEmail
         stewards
-        IAMDatasetAdminRoleArn
-        businessOwnerDelegationEmails
         stack {
           stack
           status
@@ -42,10 +42,10 @@ export const getDataset = (datasetUri) => ({
         language
         confidentiality
         autoApprovalEnabled
-        organization {
-          organizationUri
-          label
-        }
+        enableExpiration
+        expirySetting
+        expiryMinDuration
+        expiryMaxDuration
         terms {
           count
           nodes {
@@ -61,11 +61,6 @@ export const getDataset = (datasetUri) => ({
           environmentUri
           label
           region
-          subscriptionsEnabled
-          subscriptionsProducersTopicImported
-          subscriptionsConsumersTopicImported
-          subscriptionsConsumersTopicName
-          subscriptionsProducersTopicName
           organization {
             organizationUri
             label

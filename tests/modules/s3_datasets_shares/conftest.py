@@ -3,15 +3,23 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from dataall.base.utils.expiration_util import ExpirationUtils
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
+from dataall.modules.shares_base.services.shares_enums import ShareableType, PrincipalType, ShareObjectDataPermission
+from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.shares_base.services.shares_enums import ShareableType, PrincipalType
 from dataall.modules.shares_base.db.share_object_models import ShareObject, ShareObjectItem
 from dataall.modules.shares_base.services.share_permissions import SHARE_OBJECT_REQUESTER, SHARE_OBJECT_APPROVER
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
-from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_READ
-from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetTable, DatasetStorageLocation
+from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_TABLE_ALL
+from dataall.modules.s3_datasets.db.dataset_models import (
+    S3Dataset,
+    DatasetTable,
+    DatasetStorageLocation,
+    DatasetTableDataFilter,
+)
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_ALL
 
@@ -19,7 +27,7 @@ from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_ALL
 @pytest.fixture(scope='module', autouse=True)
 def patch_dataset_methods(module_mocker):
     module_mocker.patch(
-        'dataall.modules.s3_datasets.services.dataset_service.DatasetService.check_dataset_account', return_value=True
+        'dataall.modules.s3_datasets.services.dataset_service.DatasetService._check_dataset_account', return_value=True
     )
     module_mocker.patch(
         'dataall.modules.s3_datasets.services.dataset_service.DatasetService._deploy_dataset_stack', return_value=True
@@ -75,15 +83,16 @@ def dataset(client, patch_es, patch_dataset_methods):
                     datasetUri
                     label
                     description
-                    AwsAccountId
-                    S3BucketName
-                    GlueDatabaseName
                     owner
-                    region,
-                    businessOwnerEmail
-                    businessOwnerDelegationEmails
                     SamlAdminGroupName
-                    GlueCrawlerName
+                    restricted {
+                      AwsAccountId
+                      region
+                      KmsAlias
+                      S3BucketName
+                      GlueDatabaseName
+                      IAMDatasetAdminRoleArn
+                    }
                     tables{
                      nodes{
                       tableUri
@@ -111,10 +120,6 @@ def dataset(client, patch_es, patch_dataset_methods):
                     language
                     confidentiality
                     autoApprovalEnabled
-                    organization{
-                        organizationUri
-                        label
-                    }
                     terms{
                         count
                         nodes{
@@ -126,19 +131,14 @@ def dataset(client, patch_es, patch_dataset_methods):
                             }
                         }
                     }
-                    environment{
-                        environmentUri
+                    environment {
+                      environmentUri
+                      label
+                      region
+                      organization {
+                        organizationUri
                         label
-                        region
-                        subscriptionsEnabled
-                        subscriptionsProducersTopicImported
-                        subscriptionsConsumersTopicImported
-                        subscriptionsConsumersTopicName
-                        subscriptionsProducersTopicName
-                        organization{
-                            organizationUri
-                            label
-                        }
+                      }
                     }
                     statistics{
                         tables
@@ -197,11 +197,34 @@ def table(db):
             ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=dataset.SamlAdminGroupName,
-                permissions=DATASET_TABLE_READ,
+                permissions=DATASET_TABLE_ALL,
                 resource_uri=table.tableUri,
                 resource_type=DatasetTable.__name__,
             )
         return table
+
+    yield factory
+
+
+@pytest.fixture(scope='module')
+def table_column_data_filter(db):
+    def factory(
+        table: DatasetTable,
+        name,
+        filterType,
+    ) -> DatasetTableDataFilter:
+        with db.scoped_session() as session:
+            data_filter = DatasetTableDataFilter(
+                tableUri=table.tableUri,
+                label=name,
+                filterType=filterType,
+                rowExpression=None,
+                includedCols=['id1', 'id2'],
+                owner='foo',
+            )
+            session.add(data_filter)
+            session.commit()
+            return data_filter
 
     yield factory
 
@@ -231,13 +254,18 @@ def dataset_confidential_fixture(env_fixture, org_fixture, dataset, group) -> S3
 
 @pytest.fixture(scope='module')
 def table_fixture(db, dataset_fixture, table, group, user):
-    table1 = table(dataset=dataset_fixture, name='table1', username=user.username)
+    dataset = dataset_fixture
+    dataset.GlueDatabaseName = dataset_fixture.restricted.GlueDatabaseName
+    dataset.region = dataset_fixture.restricted.region
+    dataset.S3BucketName = dataset_fixture.restricted.S3BucketName
+    dataset.AwsAccountId = dataset_fixture.restricted.AwsAccountId
+    table1 = table(dataset=dataset, name='table1', username=user.username)
 
     with db.scoped_session() as session:
         ResourcePolicyService.attach_resource_policy(
             session=session,
             group=group.groupUri,
-            permissions=DATASET_TABLE_READ,
+            permissions=DATASET_TABLE_ALL,
             resource_uri=table1.tableUri,
             resource_type=DatasetTable.__name__,
         )
@@ -252,7 +280,7 @@ def table_confidential_fixture(db, dataset_confidential_fixture, table, group, u
         ResourcePolicyService.attach_resource_policy(
             session=session,
             group=group.groupUri,
-            permissions=DATASET_TABLE_READ,
+            permissions=DATASET_TABLE_ALL,
             resource_uri=table2.tableUri,
             resource_type=DatasetTable.__name__,
         )
@@ -279,7 +307,14 @@ def folder_fixture(db, dataset_fixture):
 @pytest.fixture(scope='module')
 def dataset_model(db):
     def factory(
-        organization: Organization, environment: Environment, label: str, autoApprovalEnabled: bool = False
+        organization: Organization,
+        environment: Environment,
+        label: str,
+        autoApprovalEnabled: bool = False,
+        enableExpiration: bool = False,
+        expirySetting: str = None,
+        expiryMinDuration: int = None,
+        expiryMaxDuration: int = None,
     ) -> S3Dataset:
         with db.scoped_session() as session:
             dataset = S3Dataset(
@@ -299,6 +334,10 @@ def dataset_model(db):
                 IAMDatasetAdminUserArn=f'arn:aws:iam::{environment.AwsAccountId}:user/dataset',
                 IAMDatasetAdminRoleArn=f'arn:aws:iam::{environment.AwsAccountId}:role/dataset',
                 autoApprovalEnabled=autoApprovalEnabled,
+                expirySetting=expirySetting,
+                enableExpiration=enableExpiration,
+                expiryMinDuration=expiryMinDuration,
+                expiryMaxDuration=expiryMaxDuration,
             )
             session.add(dataset)
             session.commit()
@@ -368,8 +407,17 @@ def share_item(db):
 @pytest.fixture(scope='module')
 def share(db):
     def factory(
-        dataset: S3Dataset, environment: Environment, env_group: EnvironmentGroup, owner: str, status: str
+        dataset: S3Dataset,
+        environment: Environment,
+        env_group: EnvironmentGroup,
+        owner: str,
+        status: str,
+        permissions=[ShareObjectDataPermission.Read.value],
+        shareExpirationPeriod: int = None,
     ) -> ShareObject:
+        expirationDate = None
+        if shareExpirationPeriod is not None:
+            expirationDate = ExpirationUtils.calculate_expiry_date(shareExpirationPeriod, dataset.expirySetting)
         with db.scoped_session() as session:
             share = ShareObject(
                 datasetUri=dataset.datasetUri,
@@ -378,8 +426,10 @@ def share(db):
                 groupUri=env_group.groupUri,
                 principalId=env_group.groupUri,
                 principalType=PrincipalType.Group.value,
-                principalIAMRoleName=env_group.environmentIAMRoleName,
+                principalRoleName=env_group.environmentIAMRoleName,
                 status=status,
+                expiryDate=expirationDate,
+                permissions=[permissions],
             )
             session.add(share)
             session.commit()

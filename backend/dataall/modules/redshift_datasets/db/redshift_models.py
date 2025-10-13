@@ -17,6 +17,8 @@ class RedshiftConnection(Base, Resource):
     database = Column(String, nullable=False)
     redshiftUser = Column(String, nullable=True)
     secretArn = Column(String, nullable=True)
+    encryptionType = Column(String, nullable=True)
+    connectionType = Column(String, nullable=False)
 
 
 class RedshiftDataset(DatasetBase):
@@ -37,5 +39,5 @@ class RedshiftTable(Base, Resource):
     topics = Column(ARRAY(String), nullable=True)
 
     @classmethod
-    def uri(cls):
+    def uri_column(cls):
         return cls.rsTableUri

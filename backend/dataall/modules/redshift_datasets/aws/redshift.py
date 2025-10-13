@@ -13,12 +13,21 @@ class RedshiftClient:
         self.client = session.client(service_name='redshift', region_name=region)
 
     def describe_cluster(self, clusterId: str):
+        log.info(f'Describing cluster {clusterId=}')
         try:
-            log.info(f'Describing cluster {clusterId=}')
             return self.client.describe_clusters(ClusterIdentifier=clusterId)['Clusters'][0]
         except ClientError as e:
-            log.error(e)
-            raise e
+            if e.response['Error']['Code'] == 'ClusterNotFound':
+                log.error(f'Redshift cluster {clusterId} does not exist')
+                return None
+            else:
+                raise e
+
+    def get_cluster_namespaceId(self, clusterId: str):
+        log.info(f'Describing cluster {clusterId=}')
+        return self.client.describe_clusters(ClusterIdentifier=clusterId)['Clusters'][0]['ClusterNamespaceArn'].split(
+            ':'
+        )[-1]
 
 
 def redshift_client(account_id: str, region: str) -> RedshiftClient:

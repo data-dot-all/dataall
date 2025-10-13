@@ -3,8 +3,7 @@ import re
 
 from .sts import SessionHelper
 
-logger = logging.getLogger('QuicksightHandler')
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 class QuicksightClient:
@@ -118,14 +117,14 @@ class QuicksightClient:
             else:
                 if response['AccountInfo']['Edition'] not in ['ENTERPRISE', 'ENTERPRISE_AND_Q']:
                     raise Exception(
-                        f"Quicksight Subscription found in Account: {AwsAccountId} of incorrect type: {response['AccountInfo']['Edition']}"
+                        f'Quicksight Subscription found in Account: {AwsAccountId} of incorrect type: {response["AccountInfo"]["Edition"]}'
                     )
                 else:
                     if response['AccountInfo']['AccountSubscriptionStatus'] == 'ACCOUNT_CREATED':
                         return True
                     else:
                         raise Exception(
-                            f"Quicksight Subscription found in Account: {AwsAccountId} not active. Status = {response['AccountInfo']['AccountSubscriptionStatus']}"
+                            f'Quicksight Subscription found in Account: {AwsAccountId} not active. Status = {response["AccountInfo"]["AccountSubscriptionStatus"]}'
                         )
 
         except client.exceptions.ResourceNotFoundException:

@@ -4,6 +4,7 @@ from dataall.modules.s3_datasets.api.table.resolvers import (
     resolve_dataset,
     get_glue_table_properties,
     resolve_glossary_terms,
+    get_dataset_table_restricted_information,
 )
 
 TablePermission = gql.ObjectType(
@@ -21,6 +22,15 @@ TablePermissionSearchResult = gql.ObjectType(
         gql.Field(name='nodes', type=gql.ArrayType(TablePermission)),
     ],
 )
+DatasetTableRestrictedInformation = gql.ObjectType(
+    name='DatasetTableRestrictedInformation',
+    fields=[
+        gql.Field(name='AwsAccountId', type=gql.String),
+        gql.Field(name='GlueDatabaseName', type=gql.String),
+        gql.Field(name='GlueTableName', type=gql.String),
+        gql.Field(name='S3Prefix', type=gql.String),
+    ],
+)
 
 DatasetTable = gql.ObjectType(
     name='DatasetTable',
@@ -35,12 +45,11 @@ DatasetTable = gql.ObjectType(
         gql.Field(name='created', type=gql.String),
         gql.Field(name='updated', type=gql.String),
         gql.Field(name='admins', type=gql.ArrayType(gql.String)),
-        gql.Field(name='AwsAccountId', type=gql.String),
-        gql.Field(name='GlueDatabaseName', type=gql.String),
-        gql.Field(name='GlueTableName', type=gql.String),
         gql.Field(name='LastGlueTableStatus', type=gql.String),
-        gql.Field(name='S3Prefix', type=gql.String),
         gql.Field(name='GlueTableConfig', type=gql.String),
+        gql.Field(
+            name='restricted', type=DatasetTableRestrictedInformation, resolver=get_dataset_table_restricted_information
+        ),
         gql.Field(
             name='GlueTableProperties',
             type=gql.String,
@@ -67,6 +76,32 @@ DatasetTableSearchResult = gql.ObjectType(
     name='DatasetTableSearchResult',
     fields=[
         gql.Field(name='nodes', type=gql.ArrayType(DatasetTable)),
+        gql.Field(name='count', type=gql.Integer),
+        gql.Field(name='pages', type=gql.Integer),
+        gql.Field(name='page', type=gql.Integer),
+        gql.Field(name='hasNext', type=gql.Boolean),
+        gql.Field(name='hasPrevious', type=gql.Boolean),
+    ],
+)
+
+DatasetTableDataFilter = gql.ObjectType(
+    name='DatasetTableDataFilter',
+    fields=[
+        gql.Field(name='filterUri', type=gql.String),
+        gql.Field(name='tableUri', type=gql.String),
+        gql.Field(name='label', type=gql.String),
+        gql.Field(name='name', type=gql.String),
+        gql.Field(name='description', type=gql.String),
+        gql.Field(name='filterType', type=gql.String),
+        gql.Field(name='includedCols', type=gql.ArrayType(gql.String)),
+        gql.Field(name='rowExpression', type=gql.String),
+    ],
+)
+
+DatasetTableDataFilterSearchResult = gql.ObjectType(
+    name='DatasetTableDataFilterSearchResult',
+    fields=[
+        gql.Field(name='nodes', type=gql.ArrayType(DatasetTableDataFilter)),
         gql.Field(name='count', type=gql.Integer),
         gql.Field(name='pages', type=gql.Integer),
         gql.Field(name='page', type=gql.Integer),

@@ -25,6 +25,8 @@ from .ses_stack import SesStack
 from .sqs import SqsStack
 from .trigger_function_stack import TriggerFunctionStack
 from .vpc import VpcStack
+from .iam_utils import get_tooling_account_external_id
+from .aurora_migration_task import CodeBuildProjectStack
 
 
 class BackendStack(Stack):
@@ -43,6 +45,7 @@ class BackendStack(Stack):
         vpc_endpoints_sg=None,
         internet_facing=True,
         custom_domain=None,
+        apigw_custom_domain=None,
         ip_ranges=None,
         apig_vpce=None,
         prod_sizing=False,
@@ -58,6 +61,11 @@ class BackendStack(Stack):
         custom_auth=None,
         custom_waf_rules=None,
         with_approval_tests=False,
+        allowed_origins='*',
+        log_retention_duration=None,
+        deploy_aurora_migration_stack=False,
+        old_aurora_connection_secret_arn=None,
+        throttling_config=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -74,6 +82,7 @@ class BackendStack(Stack):
             vpc_endpoints_sg=vpc_endpoints_sg,
             vpc_id=vpc_id,
             restricted_nacl=vpc_restricted_nacls,
+            log_retention_duration=log_retention_duration,
             **kwargs,
         )
         vpc = self.vpc_stack.vpc
@@ -81,7 +90,7 @@ class BackendStack(Stack):
         vpce_connection = ec2.Connections(security_groups=[vpc_endpoints_sg])
         self.s3_prefix_list = self.get_s3_prefix_list()
 
-        self.pivot_role_name = f"dataallPivotRole{'-cdk' if enable_pivot_role_auto_create else ''}"
+        self.pivot_role_name = f'dataallPivotRole{"-cdk" if enable_pivot_role_auto_create else ""}'
 
         ParamStoreStack(
             self,
@@ -137,6 +146,7 @@ class BackendStack(Stack):
                 f'{resource_prefix}-{envname}-frontend-config-role',
                 role_name=f'{resource_prefix}-{envname}-frontend-config-role',
                 assumed_by=iam.AccountPrincipal(tooling_account_id),
+                external_ids=[get_tooling_account_external_id(self.account)],
             )
             cross_account_frontend_config_role.add_to_policy(
                 iam.PolicyStatement(
@@ -190,14 +200,19 @@ class BackendStack(Stack):
             apig_vpce=apig_vpce,
             prod_sizing=prod_sizing,
             user_pool=cognito_stack.user_pool if custom_auth is None else None,
+            user_pool_client=cognito_stack.client if custom_auth is None else None,
             pivot_role_name=self.pivot_role_name,
             reauth_ttl=reauth_config.get('ttl', 5) if reauth_config else 5,
             email_notification_sender_email_id=email_sender,
             email_custom_domain=ses_stack.ses_identity.email_identity_name if ses_stack is not None else None,
             ses_configuration_set=ses_stack.configuration_set.configuration_set_name if ses_stack is not None else None,
             custom_domain=custom_domain,
+            apigw_custom_domain=apigw_custom_domain,
             custom_auth=custom_auth,
             custom_waf_rules=custom_waf_rules,
+            allowed_origins=allowed_origins,
+            log_retention_duration=log_retention_duration,
+            throttling_config=throttling_config,
             **kwargs,
         )
 
@@ -222,6 +237,7 @@ class BackendStack(Stack):
             email_custom_domain=ses_stack.ses_identity.email_identity_name if ses_stack is not None else None,
             ses_configuration_set=ses_stack.configuration_set.configuration_set_name if ses_stack is not None else None,
             custom_domain=custom_domain,
+            log_retention_duration=log_retention_duration,
             **kwargs,
         )
 
@@ -337,6 +353,18 @@ class BackendStack(Stack):
             **kwargs,
         )
 
+        if deploy_aurora_migration_stack:
+            self.aurora_migration_stack = CodeBuildProjectStack(
+                self,
+                'AuroraMigrationStack',
+                secret_id_aurora_v1_arn=old_aurora_connection_secret_arn,
+                secret_aurora_v2=aurora_stack.db_credentials,
+                kms_key_for_secret_arn=aurora_stack.kms_key.key_arn,
+                database_name=aurora_stack.db_name,
+                vpc_security_group=db_migrations.security_group,
+                vpc=vpc,
+            )
+
         self.monitoring_stack = MonitoringStack(
             self,
             'CWDashboards',
@@ -368,6 +396,7 @@ class BackendStack(Stack):
             'ecs_security_groups': self.ecs_stack.ecs_security_groups,
             'ecs_task_role': self.ecs_stack.ecs_task_role,
             'prod_sizing': prod_sizing,
+            'log_retention_duration': log_retention_duration,
             **kwargs,
         }
         if enable_opensearch_serverless:

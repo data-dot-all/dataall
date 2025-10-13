@@ -4,8 +4,8 @@ from typing import List
 
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
 from dataall.modules.s3_datasets_shares.services.share_managers import S3AccessPointShareManager
-from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.s3_datasets_shares.services.s3_share_service import S3ShareService
+from dataall.modules.shares_base.services.share_object_service import ShareObjectService
 from dataall.modules.shares_base.services.shares_enums import (
     ShareItemHealthStatus,
     ShareItemStatus,
@@ -18,6 +18,7 @@ from dataall.modules.shares_base.db.share_state_machines_repositories import Sha
 from dataall.modules.shares_base.db.share_object_state_machines import ShareItemSM
 from dataall.modules.shares_base.services.sharing_service import ShareData
 from dataall.modules.shares_base.services.share_processor_manager import SharesProcessorInterface
+from dataall.modules.shares_base.services.share_manager_utils import execute_and_suppress_exception
 
 
 log = logging.getLogger(__name__)
@@ -63,10 +64,10 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                 new_state = shared_item_SM.run_transition(ShareObjectActions.Start.value)
                 shared_item_SM.update_state_single_item(self.session, sharing_item, new_state)
             try:
-                if not ShareObjectService.verify_principal_role(self.session, self.share_data.share):
+                if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
                     raise PrincipalRoleNotFound(
                         'process approved shares',
-                        f'Principal role {self.share_data.share.principalIAMRoleName} is not found. Failed to update bucket policy',
+                        f'Principal role {self.share_data.share.principalRoleName} is not found. Failed to update bucket policy',
                     )
 
                 manager.manage_bucket_policy()
@@ -129,6 +130,11 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
             revoked_item_SM.update_state_single_item(self.session, removing_item, new_state)
 
             try:
+                if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
+                    raise PrincipalRoleNotFound(
+                        'process approved shares',
+                        f'Principal role {self.share_data.share.principalRoleName} is not found. Failed to update bucket policy',
+                    )
                 access_point_policy = manager.revoke_access_in_access_point_policy()
 
                 if len(access_point_policy['Statement']) > 0:
@@ -180,6 +186,11 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
             )
 
             try:
+                if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
+                    raise PrincipalRoleNotFound(
+                        'process verify shares',
+                        f'Share principal Role {self.share_data.share.principalRoleName} not found. Check the team or consumption IAM role used.',
+                    )
                 manager.check_bucket_policy()
                 manager.check_target_role_access_policy()
                 manager.check_access_point_and_policy()
@@ -201,4 +212,64 @@ class ProcessS3AccessPointShare(SharesProcessorInterface):
                 ShareStatusRepository.update_share_item_health_status(
                     self.session, sharing_item, ShareItemHealthStatus.Healthy.value, None, datetime.now()
                 )
+        return True
+
+    def cleanup_shares(self) -> bool:
+        """
+        1) try to delete_access_point_policy for folder
+        2) delete all share items and delete share object
+
+        Returns
+        -------
+        True
+        """
+
+        log.info('##### Starting Cleaning-up folders #######')
+        if not self.folders:
+            log.info('No Folders to revoke. Skipping...')
+        for folder in self.folders:
+            log.info(f'Revoking access to folder {folder.locationUri}/{folder.name}')
+            manager = self._initialize_share_manager(folder)
+            if not S3ShareService.verify_principal_role(self.session, self.share_data.share):
+                log.info(f'Principal role {self.share_data.share.principalRoleName} is not found.')
+            try:
+                access_point_policy = manager.revoke_access_in_access_point_policy()
+                if len(access_point_policy['Statement']) > 0:
+                    manager.attach_new_access_point_policy(access_point_policy)
+                else:
+                    log.info('Cleaning up folder share resources...')
+                    execute_and_suppress_exception(func=manager.delete_access_point)
+                    execute_and_suppress_exception(func=manager.revoke_target_role_access_policy)
+                    if not self.share_data.dataset.imported or self.share_data.dataset.importedKmsKey:
+                        manager.delete_dataset_bucket_key_policy(dataset=self.share_data.dataset)
+            except Exception:
+                log.exception('')
+            if (
+                self.share_data.share.groupUri != self.share_data.dataset.SamlAdminGroupName
+                and self.share_data.share.groupUri != self.share_data.dataset.stewards
+            ):
+                log.info(f'Deleting FOLDER READ permissions from {folder.locationUri}...')
+                execute_and_suppress_exception(
+                    func=S3ShareService.delete_dataset_folder_read_permission,
+                    session=self.session,
+                    share=manager.share,
+                    locationUri=folder.locationUri,
+                )
+            # Delete share item
+            sharing_item = ShareObjectRepository.find_sharable_item(
+                self.session,
+                self.share_data.share.shareUri,
+                folder.locationUri,
+            )
+            self.session.delete(sharing_item)
+            self.session.commit()
+        # Check share items in share and delete share
+        remaining_share_items = ShareObjectRepository.get_all_share_items_in_share(
+            session=self.session, share_uri=self.share_data.share.shareUri
+        )
+        if not remaining_share_items:
+            ShareObjectService.deleting_share_permissions(
+                session=self.session, share=self.share_data.share, dataset=self.share_data.dataset
+            )
+            self.session.delete(self.share_data.share)
         return True

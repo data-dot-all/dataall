@@ -5,6 +5,7 @@ import pytest
 from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, EnvironmentParameter
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.core.permissions.services.environment_permissions import ENVIRONMENT_ALL
+from dataall.core.permissions.services.organization_permissions import ORGANIZATION_ALL
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.core.stacks.db.stack_models import KeyValueTag
@@ -75,8 +76,20 @@ def _create_env_stack(session, env):
 
 @pytest.fixture(scope='module', autouse=True)
 def env(db, environment_group):
-    def factory(org, envname, owner, group, account, region='eu-west-1', desc='test', role='iam_role', parameters=None):
+    def factory(
+        org,
+        envname,
+        owner,
+        group,
+        account,
+        region='eu-west-1',
+        desc='test',
+        role='iam_role',
+        parameters=None,
+        envUri=None,
+    ):
         with db.scoped_session() as session:
+            kwargs = {'environmentUri': envUri} if envUri else {}
             env = Environment(
                 organizationUri=org.organizationUri,
                 AwsAccountId=account,
@@ -89,8 +102,10 @@ def env(db, environment_group):
                 EnvironmentDefaultIAMRoleName=role,
                 EnvironmentDefaultIAMRoleArn=f'arn:aws:iam::{account}:role/{role}',
                 EnvironmentDefaultBucketName='defaultbucketname1234567789',
+                EnvironmentLogsBucketName='logsbucketname1234567789',
                 CDKRoleArn=f'arn:aws::{account}:role/EnvRole',
                 EnvironmentDefaultAthenaWorkGroup='DefaultWorkGroup',
+                **kwargs,
             )
             session.add(env)
             session.commit()
@@ -114,6 +129,14 @@ def org(db):
                 SamlGroupName=group.name,
             )
             session.add(org)
+            session.commit()
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                resource_uri=org.organizationUri,
+                group=group.name,
+                permissions=ORGANIZATION_ALL,
+                resource_type=Organization.__name__,
+            )
             session.commit()
             return org
 

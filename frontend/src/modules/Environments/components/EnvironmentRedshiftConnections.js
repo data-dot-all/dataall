@@ -22,16 +22,19 @@ import { listEnvironmentRedshiftConnections, useClient } from 'services';
 import {
   Defaults,
   DeleteObjectWithFrictionModal,
+  Label,
   RefreshTableMenu,
   Scrollbar,
   SearchIcon
 } from 'design';
 
 import { EnvironmentRedshiftConnectionAddForm } from './EnvironmentRedshiftConnectionAddForm';
+import { RedshiftConnectionsPermissionsDialog } from './RedshiftConnectionsPermissionsDialog';
 import { deleteRedshiftConnection } from '../services';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import PermContactCalendarIcon from '@mui/icons-material/PermContactCalendar';
 import { useSnackbar } from 'notistack';
 
 export const EnvironmentRedshiftConnections = ({ environment }) => {
@@ -45,6 +48,8 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [rowModesModel, setRowModesModel] = useState({});
   const [isDeleteModalOpenId, setIsDeleteModalOpen] = useState(0);
+  const [openPermissionsDialog, setOpenPermissionsDialog] = useState(false);
+  const [selectedConnection, setSelectedConnection] = useState(false);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -140,13 +145,11 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
                 id: item.connectionUri,
                 redshiftId:
                   item.redshiftType === 'serverless'
-                    ? item.nameSpaceId
+                    ? item.workgroup
                     : item.clusterId,
-                connectionType: item.secretArn ? 'SecretArn' : 'Redshift User',
                 connectionDetails: item.secretArn
                   ? item.secretArn
-                  : item.redshiftUser,
-                workgroup: item.workgroup ? item.workgroup : '-'
+                  : item.redshiftUser
               })
             )
           ]
@@ -172,7 +175,6 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
   if (loading) {
     return <CircularProgress />;
   }
-
   return (
     <Box>
       <Box sx={{ mt: 3 }}>
@@ -256,10 +258,46 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
                     editable: true
                   },
                   {
+                    field: 'connectionType',
+                    headerName: 'Connection Type',
+                    flex: 1,
+                    editable: false,
+                    renderCell: (params) => {
+                      return (
+                        <Label
+                          color={params.value === 'ADMIN' ? 'success' : 'info'}
+                        >
+                          {params.value}
+                        </Label>
+                      );
+                    }
+                  },
+                  {
                     field: 'SamlGroupName',
                     headerName: 'Team',
                     flex: 1,
                     editable: false
+                  },
+                  {
+                    field: 'permissions',
+                    headerName: 'Permissions',
+                    flex: 0.8,
+                    renderCell: (params) => {
+                      return (
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          disabled={params.row.connectionType === 'DATA_USER'}
+                          endIcon={<PermContactCalendarIcon />}
+                          onClick={() => {
+                            setSelectedConnection(params.row);
+                            setOpenPermissionsDialog(true);
+                          }}
+                        >
+                          View and Edit
+                        </Button>
+                      );
+                    }
                   },
                   {
                     field: 'redshiftType',
@@ -268,20 +306,14 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
                     editable: false
                   },
                   {
+                    field: 'nameSpaceId',
+                    headerName: 'Namespace Id',
+                    flex: 1,
+                    editable: false
+                  },
+                  {
                     field: 'redshiftId',
-                    headerName: 'NamespaceId/ClusterId',
-                    flex: 1,
-                    editable: false
-                  },
-                  {
-                    field: 'workgroup',
-                    headerName: 'Workgroup',
-                    flex: 1,
-                    editable: false
-                  },
-                  {
-                    field: 'connectionType',
-                    headerName: 'Connection Type',
+                    headerName: 'Workgroup/ClusterId',
                     flex: 1,
                     editable: false
                   },
@@ -369,6 +401,14 @@ export const EnvironmentRedshiftConnections = ({ environment }) => {
           </Scrollbar>
         </Card>
       </Box>
+      {openPermissionsDialog && (
+        <RedshiftConnectionsPermissionsDialog
+          open={openPermissionsDialog}
+          onClose={() => setOpenPermissionsDialog(false)}
+          connection={selectedConnection}
+          environment={environment}
+        />
+      )}
     </Box>
   );
 };

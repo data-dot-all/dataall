@@ -1,6 +1,7 @@
 import {
   ForumOutlined,
   Info,
+  ShareOutlined,
   ViewArrayOutlined,
   Warning
 } from '@mui/icons-material';
@@ -34,8 +35,9 @@ import {
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { countUpVotes, getVote, upVote, useClient } from 'services';
-import { deleteRedshiftDataset, getRedshiftDataset } from '../services';
 import { FeedComments } from 'modules/Shared';
+import { ShareBoxList } from 'modules/Shares';
+import { deleteRedshiftDataset, getRedshiftDataset } from '../services';
 import { RedshiftDatasetTables, RedshiftDatasetOverview } from '../components';
 
 const RSDatasetView = () => {
@@ -62,6 +64,13 @@ const RSDatasetView = () => {
         icon: <ViewArrayOutlined fontSize="small" />
       }
     ];
+    if (isAdmin) {
+      tabs.push({
+        label: 'Shares',
+        value: 'shares',
+        icon: <ShareOutlined fontSize="small" />
+      });
+    }
     return tabs;
   };
 
@@ -217,13 +226,14 @@ const RSDatasetView = () => {
             </Grid>
             <Grid item>
               <Box sx={{ m: -1 }}>
+                <UpVoteButton
+                  upVoted={isUpVoted}
+                  disabled={!isAdmin}
+                  onClick={() => upVoteDataset(dataset.datasetUri)}
+                  upVotes={upVotes}
+                />
                 {isAdmin && (
                   <span>
-                    <UpVoteButton
-                      upVoted={isUpVoted}
-                      onClick={() => upVoteDataset(dataset.datasetUri)}
-                      upVotes={upVotes}
-                    />
                     <Button
                       color="primary"
                       startIcon={<ForumOutlined fontSize="small" />}
@@ -286,6 +296,9 @@ const RSDatasetView = () => {
             )}
             {currentTab === 'overview' && (
               <RedshiftDatasetOverview dataset={dataset} isAdmin={isAdmin} />
+            )}
+            {isAdmin && currentTab === 'shares' && (
+              <ShareBoxList tab={'inbox'} dataset={dataset} />
             )}
           </Box>
         </Container>

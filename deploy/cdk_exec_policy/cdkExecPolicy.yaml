@@ -103,8 +103,12 @@ Resources:
               - 'iam:UpdateAssumeRolePolicy'
               - 'iam:PutRolePolicy'
             Resource:
-              - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/*'
-              - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/*'
+              - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${EnvironmentResourcePrefix}*'
+              - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-*'
+              - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/cdk-*'
+              - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/dataall*'
+              - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/dataall*'
 
           - Sid: IAMTwo
             Effect: Allow
@@ -112,6 +116,17 @@ Resources:
               - 'sts:AssumeRole'
               - 'iam:*Role*'
             Resource: !Sub 'arn:${AWS::Partition}:iam::*:role/cdk-*'
+
+          - Sid: CloudTrail
+            Effect: Allow
+            Action:
+              - 'cloudtrail:DeleteTrail'
+              - 'cloudtrail:CreateTrail'
+              - 'cloudtrail:AddTags'
+              - 'cloudtrail:StartLogging'
+              - 'cloudtrail:PutEventSelectors'
+            Resource:
+              - !Sub 'arn:${AWS::Partition}:cloudtrail:${AWS::Region}:${AWS::AccountId}:trail/dataall-environment-*'
 
           - !If 
             - DashboardsEnabledCondition
@@ -239,6 +254,18 @@ Resources:
                 - !Sub 'arn:${AWS::Partition}:sagemaker:${AWS::Region}:${AWS::AccountId}:user-profile/*'
                 - !Sub 'arn:${AWS::Partition}:sagemaker:${AWS::Region}:${AWS::AccountId}:notebook-instance/${EnvironmentResourcePrefix}*'
             - !Ref AWS::NoValue
+
+  CDKCustomExecutionPolicy1:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: !Join
+        - ''
+        - - !Ref PolicyName
+          - '-1-'
+          - !Ref AWS::Region
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
 
           - Sid: SSM
             Effect: Allow

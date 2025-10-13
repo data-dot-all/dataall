@@ -1,13 +1,18 @@
 import random
 import typing
+from datetime import datetime
 from unittest.mock import MagicMock
 
 import boto3
 import pytest
+from assertpy import assert_that
 
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
+from dataall.base.utils.expiration_util import ExpirationUtils
+from dataall.base.utils.naming_convention import NamingConventionPattern, NamingConventionService
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionRole
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.modules.shares_base.services.shares_enums import ShareableType, PrincipalType
+from dataall.modules.shares_base.services.share_object_service import ShareObjectService
+from dataall.modules.shares_base.services.shares_enums import ShareableType, PrincipalType, ShareObjectDataPermission
 from dataall.modules.shares_base.services.shares_enums import (
     ShareObjectActions,
     ShareItemActions,
@@ -73,6 +78,61 @@ def dataset1(dataset_model: typing.Callable, org1: Organization, env1: Environme
 
 
 @pytest.fixture(scope='module')
+def dataset_with_expiration(dataset_model: typing.Callable, org1: Organization, env1: Environment) -> S3Dataset:
+    yield dataset_model(
+        organization=org1,
+        environment=env1,
+        label='datasettoshare',
+        enableExpiration=True,
+        expirySetting='Monthly',
+        expiryMinDuration=1,
+        expiryMaxDuration=3,
+    )
+
+
+@pytest.fixture(scope='module')
+def dataset_with_expiration_3(dataset_model: typing.Callable, org1: Organization, env1: Environment) -> S3Dataset:
+    yield dataset_model(
+        organization=org1,
+        environment=env1,
+        label='datasettoshare',
+        enableExpiration=True,
+        expirySetting='Monthly',
+        expiryMinDuration=1,
+        expiryMaxDuration=3,
+    )
+
+
+@pytest.fixture(scope='module')
+def dataset_with_expiration_2(dataset_model: typing.Callable, org2: Organization, env2: Environment) -> S3Dataset:
+    yield dataset_model(
+        organization=org2,
+        environment=env2,
+        label='datasettoshare',
+        enableExpiration=True,
+        expirySetting='Monthly',
+        expiryMinDuration=1,
+        expiryMaxDuration=3,
+    )
+
+
+@pytest.fixture(scope='module')
+def dataset_with_expiration_with_autoapproval(
+    dataset_model: typing.Callable, org2: Organization, env2: Environment
+) -> S3Dataset:
+    yield dataset_model(
+        organization=org2,
+        environment=env2,
+        label='datasettoshare',
+        enableExpiration=True,
+        expirySetting='Monthly',
+        expiryMinDuration=1,
+        expiryMaxDuration=3,
+        autoApprovalEnabled=True,
+    )
+
+
+@pytest.fixture(scope='module')
 def tables1(table: typing.Callable, dataset1: S3Dataset):
     for i in range(1, 100):
         table(dataset1, name=random_table_name(), username=dataset1.owner)
@@ -86,6 +146,18 @@ def table1(table: typing.Callable, dataset1: S3Dataset) -> DatasetTable:
 @pytest.fixture(scope='module', autouse=True)
 def table1_1(table: typing.Callable, dataset1: S3Dataset) -> DatasetTable:
     yield table(dataset=dataset1, name='table5', username='alice')
+
+
+@pytest.fixture(scope='module', autouse=True)
+def table1_expiration_dataset(table: typing.Callable, dataset_with_expiration_2: S3Dataset) -> DatasetTable:
+    yield table(dataset=dataset_with_expiration_2, name='table5', username='alice')
+
+
+@pytest.fixture(scope='module', autouse=True)
+def table1_expiration_dataset_with_autoapproval(
+    table: typing.Callable, dataset_with_expiration_with_autoapproval: S3Dataset
+) -> DatasetTable:
+    yield table(dataset=dataset_with_expiration_with_autoapproval, name='table5', username='alice')
 
 
 @pytest.fixture(scope='module')
@@ -144,6 +216,11 @@ def tables3(table, dataset3):
 @pytest.fixture(scope='module', autouse=True)
 def table3(table: typing.Callable, dataset3: S3Dataset) -> DatasetTable:
     yield table(dataset=dataset3, name='table3', username='bob')
+
+
+@pytest.fixture(scope='module')
+def table_data_filter_fixture(db, table_fixture, table_column_data_filter, group, user):
+    yield table_column_data_filter(table=table_fixture, name='datafilter1', filterType='COLUMN')
 
 
 @pytest.fixture(scope='function')
@@ -351,8 +428,164 @@ def share3_processed(
 def share3_item_shared(
     share_item: typing.Callable, share3_processed: ShareObject, table1: DatasetTable
 ) -> ShareObjectItem:
-    # Cleaned up with share3
+    # Cleaned up with share3_happy_path
     yield share_item(share=share3_processed, table=table1, status=ShareItemStatus.Share_Succeeded.value)
+
+
+@pytest.fixture(scope='function')
+def share3_with_expiration_processed(
+    db,
+    client,
+    user2,
+    group2,
+    share: typing.Callable,
+    dataset_with_expiration_2: S3Dataset,
+    env2: Environment,
+    env2group: EnvironmentGroup,
+    shareExpirationPeriod=1,
+) -> ShareObject:
+    share3_processed_with_expiration = share(
+        dataset=dataset_with_expiration_2,
+        environment=env2,
+        env_group=env2group,
+        owner=user2.username,
+        status=ShareObjectStatus.Processed.value,
+        shareExpirationPeriod=shareExpirationPeriod,
+    )
+    yield share3_processed_with_expiration
+    # Cleanup share
+    # First try to direct delete
+    delete_share_object_response = delete_share_object(
+        client=client, user=user2, group=group2, shareUri=share3_processed_with_expiration.shareUri
+    )
+
+    if delete_share_object_response.data.deleteShareObject == True:
+        return
+
+    # Revert healthStatus back to healthy
+    with db.scoped_session() as session:
+        ShareStatusRepository.update_share_item_health_status_batch(
+            session=session,
+            share_uri=share3_processed_with_expiration.shareUri,
+            old_status=ShareItemHealthStatus.PendingReApply.value,
+            new_status=ShareItemHealthStatus.Healthy.value,
+        )
+
+    # Given share item in shared states
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed_with_expiration.shareUri,
+        filter={'isShared': True},
+    )
+    revoked_items_uris = [
+        node.shareItemUri for node in get_share_object_response.data.getShareObject.get('items').nodes
+    ]
+
+    # Then delete via revoke items if still items present
+    revoke_items_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed_with_expiration.shareUri,
+        revoked_items_uris=revoked_items_uris,
+    )
+    _successfull_processing_for_share_object(db, share3_processed_with_expiration)
+
+    delete_share_object(client=client, user=user2, group=group2, shareUri=share3_processed_with_expiration.shareUri)
+
+
+@pytest.fixture(scope='function')
+def share3_item_expiration_share(
+    share_item: typing.Callable, share3_with_expiration_processed: ShareObject, table1_expiration_dataset: DatasetTable
+) -> ShareObjectItem:
+    # Cleaned up with share3
+    yield share_item(
+        share=share3_with_expiration_processed,
+        table=table1_expiration_dataset,
+        status=ShareItemStatus.Share_Succeeded.value,
+    )
+
+
+@pytest.fixture(scope='function')
+def share3_with_expiration_processed_with_autoapproval(
+    db,
+    client,
+    user2,
+    group2,
+    share: typing.Callable,
+    dataset_with_expiration_with_autoapproval: S3Dataset,
+    env2: Environment,
+    env2group: EnvironmentGroup,
+    shareExpirationPeriod=1,
+) -> ShareObject:
+    share3_processed_with_expiration_with_autoapproval = share(
+        dataset=dataset_with_expiration_with_autoapproval,
+        environment=env2,
+        env_group=env2group,
+        owner=user2.username,
+        status=ShareObjectStatus.Processed.value,
+        shareExpirationPeriod=shareExpirationPeriod,
+    )
+    yield share3_processed_with_expiration_with_autoapproval
+    # Cleanup share
+    # First try to direct delete
+    delete_share_object_response = delete_share_object(
+        client=client, user=user2, group=group2, shareUri=share3_processed_with_expiration_with_autoapproval.shareUri
+    )
+
+    if delete_share_object_response.data.deleteShareObject == True:
+        return
+
+    # Revert healthStatus back to healthy
+    with db.scoped_session() as session:
+        ShareStatusRepository.update_share_item_health_status_batch(
+            session=session,
+            share_uri=share3_processed_with_expiration_with_autoapproval.shareUri,
+            old_status=ShareItemHealthStatus.PendingReApply.value,
+            new_status=ShareItemHealthStatus.Healthy.value,
+        )
+
+    # Given share item in shared states
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed_with_expiration_with_autoapproval.shareUri,
+        filter={'isShared': True},
+    )
+    revoked_items_uris = [
+        node.shareItemUri for node in get_share_object_response.data.getShareObject.get('items').nodes
+    ]
+
+    # Then delete via revoke items if still items present
+    revoke_items_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_processed_with_expiration_with_autoapproval.shareUri,
+        revoked_items_uris=revoked_items_uris,
+    )
+    _successfull_processing_for_share_object(db, share3_processed_with_expiration_with_autoapproval)
+
+    delete_share_object(
+        client=client, user=user2, group=group2, shareUri=share3_processed_with_expiration_with_autoapproval.shareUri
+    )
+
+
+@pytest.fixture(scope='function')
+def share3_item_expiration_share_with_autoapproval(
+    share_item: typing.Callable,
+    share3_with_expiration_processed_with_autoapproval: ShareObject,
+    table1_expiration_dataset_with_autoapproval: DatasetTable,
+) -> ShareObjectItem:
+    # Cleaned up with share3
+    yield share_item(
+        share=share3_with_expiration_processed_with_autoapproval,
+        table=table1_expiration_dataset_with_autoapproval,
+        status=ShareItemStatus.Share_Succeeded.value,
+    )
 
 
 @pytest.fixture(scope='function')
@@ -376,7 +609,7 @@ def share4_draft(
 def share3_item_shared_unhealthy(
     share_item: typing.Callable, share3_processed: ShareObject, table1_1: DatasetTable
 ) -> ShareObjectItem:
-    # Cleaned up with share3
+    # Cleaned up with share3_happy_path
     yield share_item(
         share=share3_processed,
         table=table1_1,
@@ -402,6 +635,9 @@ def create_share_object(
     attachMissingPolicies=True,
     principalId=None,
     principalType=PrincipalType.Group.value,
+    permissions=[ShareObjectDataPermission.Read.value],
+    shareExpirationPeriod=None,
+    nonExpiring=False,
 ):
     q = """
       mutation CreateShareObject(
@@ -422,6 +658,12 @@ def create_share_object(
           userRoleForShareObject
           requestPurpose
           rejectPurpose
+          expiryDate
+          requestedExpiryDate
+          nonExpirable
+          lastExtensionDate
+          extensionReason
+          submittedForExtension
           dataset {
             datasetUri
             datasetName
@@ -449,6 +691,9 @@ def create_share_object(
             'principalType': principalType,
             'requestPurpose': 'testShare',
             'attachMissingPolicies': attachMissingPolicies,
+            'permissions': permissions,
+            'shareExpirationPeriod': shareExpirationPeriod,
+            'nonExpirable': nonExpiring,
         },
     )
 
@@ -468,18 +713,18 @@ def get_share_object(client, user, group, shareUri, filter):
         requestPurpose
         rejectPurpose
         userRoleForShareObject
+        extensionReason
+        expiryDate
+        requestedExpiryDate
+        nonExpirable
+        shareExpirationPeriod
         principal {
-          principalId
-          principalType
           principalName
-          principalIAMRoleName
+          principalType
+          principalId
+          principalRoleName
           SamlGroupName
-          environmentUri
           environmentName
-          AwsAccountId
-          region
-          organizationUri
-          organizationName
         }
         items(filter: $filter) {
           count
@@ -497,6 +742,7 @@ def get_share_object(client, user, group, shareUri, filter):
             healthStatus
             healthMessage
             lastVerificationTime
+            attachedDataFilterUri
           }
         }
         dataset {
@@ -519,6 +765,30 @@ def get_share_object(client, user, group, shareUri, filter):
     )
     # Print response
     print('Get share request response: ', response)
+    return response
+
+
+def get_share_item_data_filters(client, user, group, attachedDataFilterUri):
+    q = """
+    query getShareItemDataFilters($attachedDataFilterUri: String!) {
+      getShareItemDataFilters(attachedDataFilterUri: $attachedDataFilterUri) {
+        attachedDataFilterUri
+        label
+        dataFilterUris
+        dataFilterNames
+        itemUri
+      }
+    }
+    """
+
+    response = client.query(
+        q,
+        username=user.username,
+        groups=[group.name],
+        attachedDataFilterUri=attachedDataFilterUri,
+    )
+    # Print response
+    print('get_share_item_data_filters response: ', response)
     return response
 
 
@@ -619,6 +889,37 @@ def add_share_item(client, user, group, shareUri, itemUri, itemType):
     )
 
     print('Response from addSharedItem: ', response)
+    return response
+
+
+def update_share_item_filter(client, user, group, input):
+    q = """
+      mutation updateShareItemFilters($input: ModifyFiltersTableShareItemInput!) {
+        updateShareItemFilters(input: $input)
+      }
+        """
+
+    response = client.query(q, username=user.username, groups=[group.name], input=input)
+
+    print('Response from updateShareItemFilters: ', response)
+    return response
+
+
+def remove_share_item_filter(client, user, group, attachedDataFilterUri):
+    q = """
+      mutation removeShareItemFilter($attachedDataFilterUri: String!) {
+        removeShareItemFilter(attachedDataFilterUri: $attachedDataFilterUri)
+      }
+        """
+
+    response = client.query(
+        q,
+        username=user.username,
+        groups=[group.name],
+        attachedDataFilterUri=attachedDataFilterUri,
+    )
+
+    print('Response from removeShareItemFilter: ', response)
     return response
 
 
@@ -840,6 +1141,112 @@ def list_datasets_published_in_environment(client, user, group, environmentUri):
     return response
 
 
+def submit_share_extension(client, user, group, shareUri, expiration, nonExpirable=False):
+    q = """
+         mutation submitShareExtension(
+          $shareUri: String!
+          $expiration: Int
+          $extensionReason: String
+          $nonExpirable: Boolean
+        ) {
+          submitShareExtension(
+            shareUri: $shareUri
+            expiration: $expiration
+            extensionReason: $extensionReason
+            nonExpirable: $nonExpirable
+          ) {
+            shareUri
+            status
+          }
+        }
+        """
+
+    response = client.query(
+        q,
+        username=user.username,
+        groups=[group.name],
+        shareUri=shareUri,
+        expiration=expiration,
+        extensionReason='',
+        nonExpirable=nonExpirable,
+    )
+    return response
+
+
+def update_share_extension_period(client, user, group, shareUri, expiration, nonExpirable=False):
+    q = """
+    mutation updateShareExpirationPeriod(
+      $shareUri: String!
+      $expiration: Int
+      $nonExpirable: Boolean
+    ) {
+      updateShareExpirationPeriod(
+        shareUri: $shareUri
+        expiration: $expiration
+        nonExpirable: $nonExpirable
+      )
+    }
+           """
+
+    response = client.query(
+        q,
+        username=user.username,
+        groups=[group.name],
+        shareUri=shareUri,
+        expiration=expiration,
+        nonExpirable=nonExpirable,
+    )
+    return response
+
+
+def update_share_extension_reason(client, user, group, shareUri, expirationPurpose):
+    q = """
+             mutation updateShareExtensionReason(
+              $shareUri: String!
+              $extensionPurpose: String!
+            ) {
+              updateShareExtensionReason(
+                shareUri: $shareUri
+                extensionPurpose: $extensionPurpose
+              )
+            }
+           """
+
+    response = client.query(
+        q,
+        username=user.username,
+        groups=[group.name],
+        shareUri=shareUri,
+        extensionPurpose=expirationPurpose,
+    )
+    return response
+
+
+def cancel_share_extension(client, user, group, shareUri):
+    q = """
+    mutation cancelShareExtension($shareUri: String!) {
+      cancelShareExtension(shareUri: $shareUri)
+    }
+           """
+
+    response = client.query(q, username=user.username, groups=[group.name], shareUri=shareUri)
+    return response
+
+
+def approve_share_extension(client, user, group, shareUri):
+    q = """
+       mutation approveShareExtension($shareUri: String!) {
+          approveShareExtension(shareUri: $shareUri) {
+            shareUri
+            status
+          }
+       }
+    """
+
+    response = client.query(q, username=user.username, groups=[group.name], shareUri=shareUri)
+    return response
+
+
 # Tests
 def test_create_share_object_unauthorized(mocker, client, group3, dataset1, env2, env2group):
     # Given
@@ -862,15 +1269,22 @@ def test_create_share_object_as_requester(mocker, client, user2, group2, env2gro
     # Given
     # Existing dataset, target environment and group
     # SharePolicy exists and is attached
-    # When a user that belongs to environment and group creates request
+    mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='role_arn',
+    )
+
+    old_policy_exists = False
     mocker.patch(
         'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
-        return_value=True,
+        return_value=old_policy_exists,
     )
     mocker.patch(
         'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
+    mocker.patch('dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern', return_value=['policy-0'])
+
     create_share_object_response = create_share_object(
         mocker=mocker,
         client=client,
@@ -893,13 +1307,21 @@ def test_create_share_object_as_approver_and_requester(mocker, client, user, gro
     # SharePolicy exists and is attached
     # When a user that belongs to environment and group creates request
     mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='role_arn',
+    )
+    old_policy_exists = False
+    mocker.patch(
         'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
-        return_value=True,
+        return_value=old_policy_exists,
     )
     mocker.patch(
         'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
+
+    mocker.patch('dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern', return_value=['policy-0'])
+
     create_share_object_response = create_share_object(
         mocker=mocker,
         client=client,
@@ -916,6 +1338,42 @@ def test_create_share_object_as_approver_and_requester(mocker, client, user, gro
     assert create_share_object_response.data.createShareObject.requestPurpose == 'testShare'
 
 
+def test_create_share_object_invalid_account(mocker, client, user, group2, env2group, env2, dataset1):
+    # Given
+    # Existing dataset, target environment and group
+    # SharePolicy exists and is attached
+    # When a user that belongs to environment and group creates request
+    mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='role_arn',
+    )
+    old_policy_exists = False
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
+        return_value=old_policy_exists,
+    )
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
+        return_value=True,
+    )
+
+    mocker.patch('dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern', return_value=['policy-0'])
+
+    create_share_object_response = create_share_object(
+        mocker=mocker,
+        client=client,
+        username=user.username,
+        group=group2,
+        groupUri=env2group.groupUri,
+        environmentUri=env2.environmentUri,
+        datasetUri=dataset1.datasetUri,
+        permissions=[ShareObjectDataPermission.Write.value],
+    )
+    assert_that(create_share_object_response.errors[0].message).contains(
+        'InvalidInput', env2.AwsAccountId, dataset1.AwsAccountId
+    )
+
+
 def test_create_share_object_with_item_authorized(
     mocker, client, user2, group2, env2group, env2, dataset1, table1, mock_glue_client
 ):
@@ -924,13 +1382,23 @@ def test_create_share_object_with_item_authorized(
     # SharePolicy exists and is attached
     # When a user that belongs to environment and group creates request with table in the request
     mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='role_arn',
+    )
+    mocker.patch(
         'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
+        return_value=False,
+    )
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
     mocker.patch(
         'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
         return_value=True,
     )
+    mocker.patch('dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern', return_value=['policy-0'])
+
     create_share_object_response = create_share_object(
         mocker=mocker,
         client=client,
@@ -969,17 +1437,23 @@ def test_create_share_object_share_policy_not_attached_attachMissingPolicies_ena
     # SharePolicy exists and is NOT attached, attachMissingPolicies=True
     # When a correct user creates request, data.all attaches the policy and the share creates successfully
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
-        return_value=True,
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='role_arn',
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=False,
     )
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.get_policies_unattached_to_role',
+        return_value='policy-0',
+    )
     attach_mocker = mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.attach_policy',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.attach_policies',
         return_value=True,
     )
+    mocker.patch('dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern', return_value=['policy-0'])
+
     create_share_object_response = create_share_object(
         mocker=mocker,
         client=client,
@@ -1006,17 +1480,23 @@ def test_create_share_object_share_policy_not_attached_attachMissingPolicies_dis
     # SharePolicy exists and is NOT attached, attachMissingPolicies=True but principal=Group so managed=Trye
     # When a correct user creates request, data.all attaches the policy and the share creates successfully
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
-        return_value=True,
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='role_arn',
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=False,
     )
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.get_policies_unattached_to_role',
+        return_value='policy-0',
+    )
     attach_mocker = mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.attach_policy',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.attach_policies',
         return_value=True,
     )
+    mocker.patch('dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern', return_value=['policy-0'])
+
     create_share_object_response = create_share_object(
         mocker=mocker,
         client=client,
@@ -1043,15 +1523,22 @@ def test_create_share_object_share_policy_not_attached_attachMissingPolicies_dis
     # SharePolicy exists and is NOT attached, attachMissingPolicies=True
     # When a correct user creates request, data.all attaches the policy and the share creates successfully
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
-        return_value=True,
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='role_arn',
     )
     mocker.patch(
-        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_attached',
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
         return_value=False,
     )
-    consumption_role = type('consumption_role', (object,), {})()
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.get_policies_unattached_to_role',
+        return_value='policy-0',
+    )
+    mocker.patch('dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern', return_value=['policy-0'])
+
+    consumption_role = MagicMock(spec_set=ConsumptionRole)
     consumption_role.IAMRoleName = 'randomName'
+    consumption_role.IAMRoleArn = 'randomArn'
     consumption_role.dataallManaged = False
     mocker.patch(
         'dataall.core.environment.services.environment_service.EnvironmentService.get_environment_consumption_role',
@@ -1070,8 +1557,132 @@ def test_create_share_object_share_policy_not_attached_attachMissingPolicies_dis
         principalType=PrincipalType.ConsumptionRole.value,
     )
     # Then share object is not created and an error appears
-    assert 'Required customer managed policy' in create_share_object_response.errors[0].message
-    assert 'is not attached to role randomName' in create_share_object_response.errors[0].message
+    assert 'Required customer managed policies' in create_share_object_response.errors[0].message
+    assert 'are not attached to role randomName' in create_share_object_response.errors[0].message
+
+
+def test_create_share_object_with_share_expiration_added(
+    mocker, client, user2, group2, env2group, env2, dataset_with_expiration
+):
+    mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='role_arn',
+    )
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
+        return_value=False,
+    )
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.get_policies_unattached_to_role',
+        return_value='policy-0',
+    )
+    mocker.patch('dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern', return_value=['policy-0'])
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.attach_policies',
+        return_value=True,
+    )
+
+    create_share_object_response = create_share_object(
+        mocker=mocker,
+        client=client,
+        username=user2.username,
+        group=group2,
+        groupUri=env2group.groupUri,
+        environmentUri=env2.environmentUri,
+        datasetUri=dataset_with_expiration.datasetUri,
+        shareExpirationPeriod=2,
+    )
+
+    # Then share object created with status Draft and user is 'Requester'
+    assert create_share_object_response.data.createShareObject.shareUri
+    assert create_share_object_response.data.createShareObject.status == ShareObjectStatus.Draft.value
+    assert create_share_object_response.data.createShareObject.nonExpirable == False
+    date_format = '%Y-%m-%d %H:%M:%S'
+    requested_share_expiration_date = datetime.strptime(
+        create_share_object_response.data.createShareObject.requestedExpiryDate, date_format
+    )
+    assert (
+        requested_share_expiration_date.date()
+        == ExpirationUtils.calculate_expiry_date(2, dataset_with_expiration.expirySetting).date()
+    )
+
+
+def test_create_share_object_with_non_expiring_share(
+    mocker, client, user2, group2, env2group, env2, dataset_with_expiration_3
+):
+    mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='role_arn',
+    )
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
+        return_value=False,
+    )
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.get_policies_unattached_to_role',
+        return_value='policy-0',
+    )
+    mocker.patch('dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern', return_value=['policy-0'])
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.attach_policies',
+        return_value=True,
+    )
+
+    create_share_object_response = create_share_object(
+        mocker=mocker,
+        client=client,
+        username=user2.username,
+        group=group2,
+        groupUri=env2group.groupUri,
+        environmentUri=env2.environmentUri,
+        datasetUri=dataset_with_expiration_3.datasetUri,
+        shareExpirationPeriod=None,
+        nonExpiring=True,
+    )
+
+    # Then share object created with status Draft and user is 'Requester'
+    assert create_share_object_response.data.createShareObject.shareUri
+    assert create_share_object_response.data.createShareObject.status == ShareObjectStatus.Draft.value
+    assert create_share_object_response.data.createShareObject.requestedExpiryDate == None
+    assert create_share_object_response.data.createShareObject.nonExpirable == True
+
+
+def test_create_share_object_with_share_expiration_incorrect_share_expiration(
+    mocker, client, user2, group2, env2group, env2, dataset_with_expiration
+):
+    mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='role_arn',
+    )
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.check_if_policy_exists',
+        return_value=False,
+    )
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.get_policies_unattached_to_role',
+        return_value='policy-0',
+    )
+    mocker.patch('dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern', return_value=['policy-0'])
+    mocker.patch(
+        'dataall.modules.s3_datasets_shares.services.s3_share_managed_policy_service.S3SharePolicyService.attach_policies',
+        return_value=True,
+    )
+
+    create_share_object_response = create_share_object(
+        mocker=mocker,
+        client=client,
+        username=user2.username,
+        group=group2,
+        groupUri=env2group.groupUri,
+        environmentUri=env2.environmentUri,
+        datasetUri=dataset_with_expiration.datasetUri,
+        shareExpirationPeriod=5,
+    )
+
+    assert (
+        'Share expiration period is not within the maximum and the minimum expiration duration'
+        in create_share_object_response.errors[0].message
+    )
 
 
 def test_get_share_object(client, share1_draft, user, group):
@@ -1084,9 +1695,8 @@ def test_get_share_object(client, share1_draft, user, group):
     # Then we get the info about the share
     assert get_share_object_response.data.getShareObject.shareUri == share1_draft.shareUri
     assert get_share_object_response.data.getShareObject.get('principal').principalType == PrincipalType.Group.name
-    assert get_share_object_response.data.getShareObject.get('principal').principalIAMRoleName
+    assert get_share_object_response.data.getShareObject.get('principal').principalRoleName
     assert get_share_object_response.data.getShareObject.get('principal').SamlGroupName
-    assert get_share_object_response.data.getShareObject.get('principal').region
 
 
 def test_update_share_request_purpose(client, share1_draft, user2, group2):
@@ -1118,13 +1728,36 @@ def test_update_share_request_purpose_unauthorized(client, share1_draft, user, g
     assert 'UnauthorizedOperation' in update_share_request_purpose_response.errors[0].message
 
 
+def test_update_share_extension_purpose(client, share1_draft, user2, group2):
+    update_share_extension_reason(client, user2, group2, share1_draft.shareUri, 'Extension Reason')
+
+    get_share_object_response = get_share_object(
+        client=client, user=user2, group=group2, shareUri=share1_draft.shareUri, filter={}
+    )
+
+    assert get_share_object_response.data.getShareObject.extensionReason == 'Extension Reason'
+    assert get_share_object_response.data.getShareObject.userRoleForShareObject == 'Requesters'
+
+
+def test_update_share_extension_purpose_unauthorized(client, share1_draft, user, group):
+    response_update_share_extension = update_share_extension_reason(
+        client, user, group, share1_draft.shareUri, 'Extension Reason'
+    )
+
+    get_share_object_response = get_share_object(
+        client=client, user=user, group=group, shareUri=share1_draft.shareUri, filter={}
+    )
+
+    assert 'UnauthorizedOperation' in response_update_share_extension.errors[0].message
+
+
 def test_list_shares_to_me_approver(client, user, group, share1_draft):
     # Given
     # Existing share object in status Draft (->fixture share1_draft) + share object (-> fixture share)
     # When a user from the Approvers group lists the share objects sent to him
     get_share_requests_to_me_response = get_share_requests_to_me(client=client, user=user, group=group)
     # Then he sees the 2 shares
-    assert get_share_requests_to_me_response.data.getShareRequestsToMe.count == 2
+    assert get_share_requests_to_me_response.data.getShareRequestsToMe.count == 4
 
 
 def test_list_shares_to_me_requester(client, user2, group2, share1_draft):
@@ -1151,7 +1784,7 @@ def test_list_shares_from_me_requester(client, user2, group2, share1_draft):
     # When a user from the Requesters group lists the share objects sent from him
     get_share_requests_from_me_response = get_share_requests_from_me(client=client, user=user2, group=group2)
     # Then he sees the 2 shares
-    assert get_share_requests_from_me_response.data.getShareRequestsFromMe.count == 2
+    assert get_share_requests_from_me_response.data.getShareRequestsFromMe.count == 4
 
 
 def test_add_share_item(client, user2, group2, share1_draft, mock_glue_client):
@@ -1175,6 +1808,78 @@ def test_add_share_item(client, user2, group2, share1_draft, mock_glue_client):
     # Then shared item was added to share object in status PendingApproval
     assert add_share_item_response.data.addSharedItem.shareUri == share1_draft.shareUri
     assert add_share_item_response.data.addSharedItem.status == ShareItemStatus.PendingApproval.name
+
+
+# remove_share_item_filter
+def test_update_share_item_filter(client, user, group, share1_draft, share1_item_pa, table_data_filter_fixture):
+    # # Given
+    # # Existing share object in status Draft (-> fixture share1_draft)
+    get_share_object_response = get_share_object(
+        client=client, user=user, group=group, shareUri=share1_draft.shareUri, filter={'isShared': True}
+    )
+    # # Given existing shareable items (-> fixture)
+    shareItem = get_share_object_response.data.getShareObject.get('items').nodes[0]
+    print('\n\n\n\n SHARE ITMES \n\n')
+    print(get_share_object_response.data.getShareObject.get('items'))
+    assert shareItem.shareItemUri == share1_item_pa.shareItemUri
+
+    # When we update share item filter
+    input = {
+        'shareItemUri': share1_item_pa.shareItemUri,
+        'label': 'test',
+        'filterUris': [table_data_filter_fixture.filterUri],
+        'filterNames': [table_data_filter_fixture.label],
+    }
+    update_share_item_filter_response = update_share_item_filter(client=client, user=user, group=group, input=input)
+
+    # Then shared item filter was added to share object item
+    assert update_share_item_filter_response.data.updateShareItemFilters == True
+    get_share_object_response = get_share_object(
+        client=client, user=user, group=group, shareUri=share1_draft.shareUri, filter={'isShared': True}
+    )
+    shareItem = get_share_object_response.data.getShareObject.get('items').nodes[0]
+    assert shareItem.attachedDataFilterUri
+
+    get_share_item_data_filters_response = get_share_item_data_filters(
+        client=client, user=user, group=group, attachedDataFilterUri=shareItem.attachedDataFilterUri
+    )
+    assert get_share_item_data_filters_response.data.getShareItemDataFilters.itemUri == share1_item_pa.itemUri
+    assert (
+        get_share_item_data_filters_response.data.getShareItemDataFilters.dataFilterUris[0]
+        == table_data_filter_fixture.filterUri
+    )
+    assert (
+        get_share_item_data_filters_response.data.getShareItemDataFilters.dataFilterNames[0]
+        == table_data_filter_fixture.label
+    )
+
+    # When we update share item filter
+    input = {
+        'shareItemUri': share1_item_pa.shareItemUri,
+        'label': 'testnew',
+        'filterUris': [table_data_filter_fixture.filterUri],
+        'filterNames': [table_data_filter_fixture.label],
+    }
+    update_share_item_filter_response = update_share_item_filter(client=client, user=user, group=group, input=input)
+
+    # Then shared item filter name was updated
+    get_share_item_data_filters_response = get_share_item_data_filters(
+        client=client, user=user, group=group, attachedDataFilterUri=shareItem.attachedDataFilterUri
+    )
+    assert get_share_item_data_filters_response.data.getShareItemDataFilters.label == 'testnew'
+
+    # When we remove the share item filter
+    remove_share_item_filter_response = remove_share_item_filter(
+        client=client, user=user, group=group, attachedDataFilterUri=shareItem.attachedDataFilterUri
+    )
+
+    # Then Share item has not attached filter URI
+    get_share_object_response = get_share_object(
+        client=client, user=user, group=group, shareUri=share1_draft.shareUri, filter={'isShared': True}
+    )
+    # # Given existing shareable items (-> fixture)
+    shareItem = get_share_object_response.data.getShareObject.get('items').nodes[0]
+    assert shareItem.attachedDataFilterUri is None
 
 
 def test_remove_share_item(client, user2, group2, share1_draft, share1_item_pa):
@@ -1262,6 +1967,92 @@ def test_submit_share_request(client, user2, group2, share1_draft, share1_item_p
     assert status == ShareItemStatus.PendingApproval.name
 
 
+def test_submit_share_extension_request(
+    client,
+    user2,
+    group2,
+    share3_item_expiration_share,
+    share3_with_expiration_processed,
+    mocker,
+    dataset_with_expiration_2,
+):
+    # Given
+    # Existing share object in status Processed (-> fixture share3_item_expiration_share)
+    # with existing share item in status Share_Succeeded (-> fixture share3_with_expiration_processed)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+
+    # Submit a share extension request
+    submit_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri, 1)
+
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Submitted_For_Extension.value
+    date_format = '%Y-%m-%d %H:%M:%S'
+    share_expiration_date = datetime.strptime(
+        get_share_object_response.data.getShareObject.requestedExpiryDate, date_format
+    )
+    assert (
+        share_expiration_date.date()
+        == ExpirationUtils.calculate_expiry_date(1, dataset_with_expiration_2.expirySetting).date()
+    )
+
+    cancel_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri)
+
+
+def test_submit_share_extension_request_non_expiring_share(
+    client,
+    user2,
+    group2,
+    share3_item_expiration_share,
+    share3_with_expiration_processed,
+    mocker,
+    dataset_with_expiration_2,
+):
+    # Given
+    # Existing share object in status Processed (-> fixture share3_item_expiration_share)
+    # with existing share item in status Share_Succeeded (-> fixture share3_with_expiration_processed)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+
+    # Submit a share extension request
+    submit_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri, None, True)
+
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Submitted_For_Extension.value
+    assert get_share_object_response.data.getShareObject.requestedExpiryDate == None
+    assert get_share_object_response.data.getShareObject.nonExpirable == True
+
+    cancel_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri)
+
+
 def test_submit_share_request_with_auto_approval(
     client, user2, group2, share_autoapprove_draft, share_autoapprove_item_pa, mocker
 ):
@@ -1316,6 +2107,68 @@ def test_submit_share_request_with_auto_approval(
     shareItem = get_share_object_response.data.getShareObject.get('items').nodes[0]
     status = shareItem['status']
     assert status == ShareItemStatus.Share_Approved.name
+
+
+def test_submit_share_extension_request_with_auto_approval(
+    client,
+    user2,
+    group2,
+    share3_item_expiration_share_with_autoapproval,
+    share3_with_expiration_processed_with_autoapproval,
+    mocker,
+    dataset_with_expiration_with_autoapproval,
+):
+    # Given
+    # Existing share object in status Processed (-> fixture share3_item_expiration_share)
+    # with existing share item in status Share_Succeeded (-> fixture share3_with_expiration_processed)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed_with_autoapproval.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.remote_session',
+        return_value=boto3.Session(),
+    )
+
+    # Mock glue and sts calls to create a LF processor
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.get_account',
+        return_value='1111',
+    )
+    # Mock glue and sts calls to create a LF processor
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.get_delegation_role_arn',
+        return_value='arn',
+    )
+
+    mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='fake_role_arn',
+    )
+    # Submit a share extension request with a dataset which has auto approval on it
+    submit_share_extension(client, user2, group2, share3_with_expiration_processed_with_autoapproval.shareUri, 1)
+
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed_with_autoapproval.shareUri,
+        filter={'isShared': True},
+    )
+
+    # share should be auto approved for share extension as well
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+    date_format = '%Y-%m-%d %H:%M:%S'
+    share_expiration_date = datetime.strptime(get_share_object_response.data.getShareObject.expiryDate, date_format)
+    assert (
+        share_expiration_date.date()
+        == ExpirationUtils.calculate_expiry_date(1, dataset_with_expiration_with_autoapproval.expirySetting).date()
+    )
 
 
 def test_update_share_reject_purpose(client, share2_submitted, user, group):
@@ -1413,6 +2266,171 @@ def test_approve_share_request(db, client, user, group, share2_submitted, share2
     # And share item status is changed to Share_Succeeded
     shareItem = get_share_object_response.data.getShareObject.get('items').nodes[0]
     assert shareItem.status == ShareItemStatus.Share_Succeeded.value
+
+
+def test_approve_share_extension(
+    client,
+    user,
+    group,
+    user2,
+    group2,
+    share3_item_expiration_share,
+    share3_with_expiration_processed,
+    mocker,
+    dataset_with_expiration_2,
+):
+    # Given
+    # Existing share object in status Processed (-> fixture share3_item_expiration_share)
+    # with existing share item in status Share_Succeeded (-> fixture share3_with_expiration_processed)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.remote_session',
+        return_value=boto3.Session(),
+    )
+
+    # Mock glue and sts calls to create a LF processor
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.get_account',
+        return_value='1111',
+    )
+    # Mock glue and sts calls to create a LF processor
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.get_delegation_role_arn',
+        return_value='arn',
+    )
+
+    mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='fake_role_arn',
+    )
+
+    # Submit a share extension request
+    submit_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri, 1)
+
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Submitted_For_Extension.value
+    date_format = '%Y-%m-%d %H:%M:%S'
+    share_expiration_date = datetime.strptime(
+        get_share_object_response.data.getShareObject.requestedExpiryDate, date_format
+    )
+    assert (
+        share_expiration_date.date()
+        == ExpirationUtils.calculate_expiry_date(1, dataset_with_expiration_2.expirySetting).date()
+    )
+    requested_expiration_date_raw = get_share_object_response.data.getShareObject.requestedExpiryDate
+
+    # Approve Share Extension
+    approve_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri)
+
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+    share_item = get_share_object_response.data.getShareObject.get('items').nodes[0]
+    assert share_item.shareItemUri == share3_item_expiration_share.shareItemUri
+    assert share_item.status == ShareItemStatus.Share_Succeeded.value
+    assert get_share_object_response.data.getShareObject.get('items').count == 1
+    assert get_share_object_response.data.getShareObject.expiryDate == requested_expiration_date_raw
+
+
+def test_approve_share_extension_non_expiring(
+    client,
+    user,
+    group,
+    user2,
+    group2,
+    share3_item_expiration_share,
+    share3_with_expiration_processed,
+    mocker,
+    dataset_with_expiration_2,
+):
+    # Given
+    # Existing share object in status Processed (-> fixture share3_item_expiration_share)
+    # with existing share item in status Share_Succeeded (-> fixture share3_with_expiration_processed)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.remote_session',
+        return_value=boto3.Session(),
+    )
+
+    # Mock glue and sts calls to create a LF processor
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.get_account',
+        return_value='1111',
+    )
+    # Mock glue and sts calls to create a LF processor
+    mocker.patch(
+        'dataall.base.aws.sts.SessionHelper.get_delegation_role_arn',
+        return_value='arn',
+    )
+
+    mocker.patch(
+        'dataall.base.aws.iam.IAM.get_role_arn_by_name',
+        return_value='fake_role_arn',
+    )
+
+    # Submit a share extension request
+    submit_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri, None, True)
+
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Submitted_For_Extension.value
+    assert get_share_object_response.data.getShareObject.requestedExpiryDate == None
+    assert get_share_object_response.data.getShareObject.nonExpirable == True
+
+    # Approve Share Extension
+    approve_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri)
+
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+    share_item = get_share_object_response.data.getShareObject.get('items').nodes[0]
+    assert get_share_object_response.data.getShareObject.expiryDate == None
+    assert share_item.shareItemUri == share3_item_expiration_share.shareItemUri
+    assert share_item.status == ShareItemStatus.Share_Succeeded.value
+    assert get_share_object_response.data.getShareObject.get('items').count == 1
 
 
 def test_reject_share_request(client, user, group, share2_submitted, share2_item_pa):
@@ -1706,7 +2724,233 @@ def test_delete_share_object_remaining_items_error(
         client=client, user=user2, group=group2, shareUri=share3_processed.shareUri
     )
     # Then we get an error of the type
-    assert 'UnauthorizedOperation' in delete_share_object_response.errors[0].message
+    assert 'ShareItemsFound' in delete_share_object_response.errors[0].message
+
+
+def test_cancel_share_extension_request(
+    client,
+    user2,
+    group2,
+    share3_item_expiration_share,
+    share3_with_expiration_processed,
+    mocker,
+    dataset_with_expiration_2,
+):
+    # Given
+    # Existing share object in status Processed (-> fixture share3_item_expiration_share)
+    # with existing share item in status Share_Succeeded (-> fixture share3_with_expiration_processed)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+
+    # Submit a share extension request
+    submit_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri, 1)
+
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Submitted_For_Extension.value
+    date_format = '%Y-%m-%d %H:%M:%S'
+    share_expiration_date = datetime.strptime(
+        get_share_object_response.data.getShareObject.requestedExpiryDate, date_format
+    )
+    assert (
+        share_expiration_date.date()
+        == ExpirationUtils.calculate_expiry_date(1, dataset_with_expiration_2.expirySetting).date()
+    )
+
+    cancel_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri)
+
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+    share_item = get_share_object_response.data.getShareObject.get('items').nodes[0]
+    assert share_item.shareItemUri == share3_item_expiration_share.shareItemUri
+    assert share_item.status == ShareItemStatus.Share_Succeeded.value
+    assert get_share_object_response.data.getShareObject.get('items').count == 1
+
+
+def test_cancel_share_extension_request_with_non_expiring_share_extension_requested(
+    client,
+    user2,
+    group2,
+    share3_item_expiration_share,
+    share3_with_expiration_processed,
+    mocker,
+    dataset_with_expiration_2,
+):
+    # Given
+    # Existing share object in status Processed (-> fixture share3_item_expiration_share)
+    # with existing share item in status Share_Succeeded (-> fixture share3_with_expiration_processed)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+
+    current_expiration_date = get_share_object_response.data.getShareObject.expiryDate
+
+    # Submit a share extension request
+    submit_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri, None, True)
+
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Submitted_For_Extension.value
+    assert get_share_object_response.data.getShareObject.requestedExpiryDate == None
+    assert get_share_object_response.data.getShareObject.nonExpirable == True
+
+    cancel_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri)
+
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+    share_item = get_share_object_response.data.getShareObject.get('items').nodes[0]
+    assert share_item.shareItemUri == share3_item_expiration_share.shareItemUri
+    assert get_share_object_response.data.getShareObject.expiryDate == current_expiration_date
+    assert get_share_object_response.data.getShareObject.nonExpirable == False
+    assert share_item.status == ShareItemStatus.Share_Succeeded.value
+    assert get_share_object_response.data.getShareObject.get('items').count == 1
+
+
+def test_update_share_extension_period(
+    client,
+    user2,
+    group2,
+    share3_item_expiration_share,
+    share3_with_expiration_processed,
+    mocker,
+    dataset_with_expiration_2,
+):
+    # Given
+    # Existing share object in status Processed (-> fixture share3_item_expiration_share)
+    # with existing share item in status Share_Succeeded (-> fixture share3_with_expiration_processed)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+
+    current_expiration_date = get_share_object_response.data.getShareObject.expiryDate
+    shareExpirationPeriod = get_share_object_response.data.getShareObject.shareExpirationPerioud
+
+    # Submit a share extension request
+    submit_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri, 3)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.shareExpirationPeriod == 3
+
+    update_share_extension_period(client, user2, group2, share3_with_expiration_processed.shareUri, 2)
+
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Submitted_For_Extension.value
+    assert get_share_object_response.data.getShareObject.nonExpirable == False
+    assert get_share_object_response.data.getShareObject.shareExpirationPeriod == 2
+
+    cancel_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri)
+
+
+def test_update_share_extension_period_to_make_non_expiring(
+    client,
+    user2,
+    group2,
+    share3_item_expiration_share,
+    share3_with_expiration_processed,
+    mocker,
+    dataset_with_expiration_2,
+):
+    # Given
+    # Existing share object in status Processed (-> fixture share3_item_expiration_share)
+    # with existing share item in status Share_Succeeded (-> fixture share3_with_expiration_processed)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Processed.value
+
+    current_expiration_date = get_share_object_response.data.getShareObject.expiryDate
+    shareExpirationPeriod = get_share_object_response.data.getShareObject.shareExpirationPerioud
+
+    # Submit a share extension request
+    submit_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri, 3)
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.shareExpirationPeriod == 3
+
+    update_share_extension_period(client, user2, group2, share3_with_expiration_processed.shareUri, None, True)
+
+    get_share_object_response = get_share_object(
+        client=client,
+        user=user2,
+        group=group2,
+        shareUri=share3_with_expiration_processed.shareUri,
+        filter={'isShared': True},
+    )
+
+    assert get_share_object_response.data.getShareObject.status == ShareObjectStatus.Submitted_For_Extension.value
+    assert get_share_object_response.data.getShareObject.nonExpirable == True
+    assert get_share_object_response.data.getShareObject.shareExpirationPeriod == None
+
+    cancel_share_extension(client, user2, group2, share3_with_expiration_processed.shareUri)
 
 
 def _successfull_processing_for_share_object(db, share):

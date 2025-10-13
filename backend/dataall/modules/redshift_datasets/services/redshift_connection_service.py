@@ -11,8 +11,10 @@ from dataall.modules.redshift_datasets.db.redshift_connection_repositories impor
 from dataall.modules.redshift_datasets.services.redshift_connection_permissions import (
     MANAGE_REDSHIFT_CONNECTIONS,
     REDSHIFT_CONNECTION_ALL,
+    REDSHIFT_GRANTABLE_PERMISSIONS,
     DELETE_REDSHIFT_CONNECTION,
     GET_REDSHIFT_CONNECTION,
+    EDIT_REDSHIFT_CONNECTION_PERMISSIONS,
     CREATE_REDSHIFT_CONNECTION,
     LIST_ENVIRONMENT_REDSHIFT_CONNECTIONS,
 )
@@ -20,6 +22,12 @@ from dataall.modules.redshift_datasets.db.redshift_models import RedshiftConnect
 from dataall.modules.redshift_datasets.aws.redshift_data import redshift_data_client
 from dataall.modules.redshift_datasets.aws.redshift_serverless import redshift_serverless_client
 from dataall.modules.redshift_datasets.aws.redshift import redshift_client
+from dataall.modules.redshift_datasets.aws.kms_redshift import kms_redshift_client
+from dataall.modules.redshift_datasets.services.redshift_enums import (
+    RedshiftType,
+    RedshiftEncryptionType,
+    RedshiftConnectionTypes,
+)
 
 log = logging.getLogger(__name__)
 
@@ -35,7 +43,6 @@ class RedshiftConnectionService:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
             connection = RedshiftConnection(
                 label=data.get('connectionName'),
-                name=data.get('connectionName'),
                 owner=context.username,
                 environmentUri=environment.environmentUri,
                 SamlGroupName=admin_group,
@@ -46,10 +53,19 @@ class RedshiftConnectionService:
                 database=data.get('database'),
                 redshiftUser=data.get('redshiftUser', ''),
                 secretArn=data.get('secretArn', ''),
+                connectionType=data.get('connectionType', RedshiftConnectionTypes.DATA_USER.value),
             )
             RedshiftConnectionService._check_redshift_connection(
                 account_id=environment.AwsAccountId, region=environment.region, connection=connection
             )
+            if connection.redshiftType == RedshiftType.Cluster.value:
+                connection.nameSpaceId = redshift_client(
+                    account_id=environment.AwsAccountId,
+                    region=environment.region,
+                ).get_cluster_namespaceId(connection.clusterId)
+            connection.encryptionType = RedshiftConnectionService._get_redshift_encryption(
+                account_id=environment.AwsAccountId, region=environment.region, connection=connection
+            ).value
             RedshiftConnectionRepository.save_redshift_connection(session, connection)
 
             ResourcePolicyService.attach_resource_policy(
@@ -59,6 +75,14 @@ class RedshiftConnectionService:
                 resource_uri=connection.connectionUri,
                 resource_type=RedshiftConnection.__name__,
             )
+            if connection.connectionType == RedshiftConnectionTypes.ADMIN.value:
+                ResourcePolicyService.attach_resource_policy(
+                    session=session,
+                    group=connection.SamlGroupName,
+                    permissions=REDSHIFT_GRANTABLE_PERMISSIONS,
+                    resource_uri=connection.connectionUri,
+                    resource_type=RedshiftConnection.__name__,
+                )
             StackService.deploy_stack(targetUri=environment.environmentUri)
             return connection
 
@@ -89,6 +113,7 @@ class RedshiftConnectionService:
             )
             session.delete(connection)
             session.commit()
+        StackService.deploy_stack(targetUri=connection.environmentUri)
         return True
 
     @staticmethod
@@ -125,8 +150,77 @@ class RedshiftConnectionService:
             return response
 
     @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_CONNECTIONS)
+    @ResourcePolicyService.has_resource_permission(EDIT_REDSHIFT_CONNECTION_PERMISSIONS)
+    def add_group_permissions(uri, group, permissions) -> bool:
+        context = get_context()
+        connection = RedshiftConnectionService.get_redshift_connection_by_uri(uri=uri)
+        RedshiftConnectionService._check_redshift_connection_has_grantable_permissions(connection)
+        if any(permission not in REDSHIFT_GRANTABLE_PERMISSIONS for permission in permissions):
+            raise exceptions.InvalidInput(
+                param_name='Permissions',
+                param_value=permissions,
+                constraint=f'one of the possible grantable permissions {REDSHIFT_GRANTABLE_PERMISSIONS}',
+            )
+        env_groups = EnvironmentService.list_all_environment_groups(uri=connection.environmentUri)
+        with context.db_engine.scoped_session() as session:
+            if group not in env_groups:
+                raise exceptions.InvalidInput(
+                    param_name='Team', param_value=group, constraint='a team invited to the Environment.'
+                )
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                group=group,
+                permissions=permissions,
+                resource_uri=uri,
+                resource_type=RedshiftConnection.__name__,
+            )
+        return True
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_REDSHIFT_CONNECTIONS)
+    @ResourcePolicyService.has_resource_permission(EDIT_REDSHIFT_CONNECTION_PERMISSIONS)
+    def delete_group_permissions(uri, group) -> bool:
+        context = get_context()
+        connection = RedshiftConnectionService.get_redshift_connection_by_uri(uri=uri)
+        RedshiftConnectionService._check_redshift_connection_has_grantable_permissions(connection)
+        if connection.SamlGroupName == group:
+            raise exceptions.InvalidInput(
+                param_name='Team', param_value=group, constraint='any team EXCEPT the connection owners team.'
+            )
+        with context.db_engine.scoped_session() as session:
+            ResourcePolicyService.delete_resource_policy(
+                session=session,
+                group=group,
+                resource_uri=uri,
+                resource_type=RedshiftConnection.__name__,
+            )
+        return True
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(EDIT_REDSHIFT_CONNECTION_PERMISSIONS)
+    def list_connection_group_permissions(uri, filter):
+        context = get_context()
+        permissions = REDSHIFT_GRANTABLE_PERMISSIONS
+        with context.db_engine.scoped_session() as session:
+            return RedshiftConnectionRepository.paginated_redshift_connection_group_permissions(
+                session, uri, permissions, filter
+            )
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(EDIT_REDSHIFT_CONNECTION_PERMISSIONS)
+    def list_connection_group_no_permissions(uri, filter):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            connection = RedshiftConnectionService.get_redshift_connection_by_uri(uri=uri)
+            RedshiftConnectionService._check_redshift_connection_has_grantable_permissions(connection)
+            return RedshiftConnectionRepository.list_redshift_connection_group_no_permissions(
+                session, uri, connection.environmentUri, filter
+            )
+
+    @staticmethod
     def _check_redshift_connection(account_id: str, region: str, connection: RedshiftConnection):
-        if connection.nameSpaceId:
+        if connection.redshiftType == RedshiftType.Serverless.value:
             if (
                 namespace := redshift_serverless_client(account_id=account_id, region=region).get_namespace_by_id(
                     connection.nameSpaceId
@@ -145,13 +239,16 @@ class RedshiftConnectionService:
                     f'Redshift workgroup {connection.workgroup} does not exist or is not associated to namespace {connection.nameSpaceId}'
                 )
 
-        if connection.clusterId and not redshift_client(account_id=account_id, region=region).describe_cluster(
-            connection.clusterId
-        ):
-            raise Exception(
-                f'Redshift cluster {connection.clusterId} does not exist or cannot be accessed with these parameters'
-            )
-
+        if connection.redshiftType == RedshiftType.Cluster.value:
+            cluster = redshift_client(account_id=account_id, region=region).describe_cluster(connection.clusterId)
+            if not cluster:
+                raise Exception(
+                    f'Redshift cluster {connection.clusterId} does not exist or cannot be accessed with these parameters'
+                )
+            if not cluster.get('Encrypted', False):
+                raise Exception(
+                    f'Redshift cluster {connection.clusterId} is not encrypted. Data.all clusters MUST be encrypted'
+                )
         try:
             redshift_data_client(
                 account_id=account_id, region=region, connection=connection
@@ -161,3 +258,40 @@ class RedshiftConnectionService:
                 f'Redshift database {connection.database} does not exist or cannot be accessed with these parameters: {e}'
             )
         return
+
+    @staticmethod
+    def _get_redshift_encryption(
+        account_id: str, region: str, connection: RedshiftConnection
+    ) -> RedshiftEncryptionType:
+        if connection.redshiftType == RedshiftType.Serverless.value:
+            namespace = redshift_serverless_client(account_id=account_id, region=region).get_namespace_by_id(
+                connection.nameSpaceId
+            )
+            return (
+                RedshiftEncryptionType.AWS_OWNED_KMS_KEY
+                if namespace.get('kmsKeyId', None) == RedshiftEncryptionType.AWS_OWNED_KMS_KEY.value
+                else RedshiftEncryptionType.CUSTOMER_MANAGED_KMS_KEY
+            )
+        if connection.redshiftType == RedshiftType.Cluster.value:
+            cluster = redshift_client(account_id=account_id, region=region).describe_cluster(connection.clusterId)
+            if key_id := cluster.get('KmsKeyId', None):
+                key = kms_redshift_client(account_id=account_id, region=region).describe_kms_key(key_id=key_id)
+                if key.get('KeyManager', None) == 'AWS':
+                    return RedshiftEncryptionType.AWS_OWNED_KMS_KEY
+                elif key.get('KeyManager', None) == 'CUSTOMER':
+                    return RedshiftEncryptionType.CUSTOMER_MANAGED_KMS_KEY
+                else:
+                    raise Exception
+            if cluster.get('HsmStatus', None):
+                return RedshiftEncryptionType.HSM
+        raise Exception
+
+    @staticmethod
+    def _check_redshift_connection_has_grantable_permissions(connection: RedshiftConnection):
+        if connection.connectionType != RedshiftConnectionTypes.ADMIN.value:
+            raise exceptions.InvalidInput(
+                param_name='ConnectionType',
+                param_value=connection.connectionType,
+                constraint=f'of type {RedshiftConnectionTypes.ADMIN.value}. Only ADMIN connections support granting additional permissions.',
+            )
+        return True

@@ -1,8 +1,10 @@
 import {
   ArchiveOutlined,
+  BallotOutlined,
   Info,
   SupervisedUserCircleRounded,
-  Warning
+  Warning,
+  WarningAmber
 } from '@mui/icons-material';
 import {
   Box,
@@ -38,16 +40,9 @@ import {
   OrganizationOverview,
   OrganizationTeams
 } from '../components';
-
-const tabs = [
-  { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
-  { label: 'Environments', value: 'environments', icon: <FaAws size={20} /> },
-  {
-    label: 'Teams',
-    value: 'teams',
-    icon: <SupervisedUserCircleRounded fontSize="small" />
-  }
-];
+import { MetadataAttachment } from '../../Metadata_Forms/components';
+import { isModuleEnabled, ModuleNames } from 'utils';
+import { listRulesThatAffectEntity } from '../../Metadata_Forms/services';
 
 const OrganizationView = () => {
   const { settings } = useSettings();
@@ -57,14 +52,71 @@ const OrganizationView = () => {
   const dispatch = useDispatch();
   const params = useParams();
   const client = useClient();
+  const [isAdmin, setIsAdmin] = useState(false);
   const [currentTab, setCurrentTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [isArchiveObjectModalOpen, setIsArchiveObjectModalOpen] =
     useState(false);
+
+  const [affectingMFRules, setAffectingMFRules] = useState([]);
+
+  const getTabs = () => {
+    const tabs = [
+      { label: 'Overview', value: 'overview', icon: <Info fontSize="small" /> },
+      {
+        label: 'Environments',
+        value: 'environments',
+        icon: <FaAws size={20} />
+      },
+      {
+        label: (
+          <>
+            Metadata{' '}
+            {affectingMFRules.filter(
+              (r) => r.severity === 'Mandatory' && !r.attached
+            ).length > 0 ? (
+              <WarningAmber sx={{ color: 'red', ml: 1 }} />
+            ) : null}
+            {affectingMFRules.filter(
+              (r) => r.severity === 'Mandatory' && !r.attached
+            ).length === 0 &&
+            affectingMFRules.filter(
+              (r) => r.severity === 'Recommended' && !r.attached
+            ).length > 0 ? (
+              <WarningAmber sx={{ color: 'orange', ml: 1 }} />
+            ) : null}
+          </>
+        ),
+        value: 'metadata',
+        icon: <BallotOutlined fontSize="small" />,
+        active: isModuleEnabled(ModuleNames.METADATA_FORMS)
+      },
+      {
+        label: 'Teams',
+        value: 'teams',
+        icon: <SupervisedUserCircleRounded fontSize="small" />
+      }
+    ];
+
+    return tabs.filter((tab) => tab.active !== false);
+  };
   const handleArchiveObjectModalOpen = () => {
     setIsArchiveObjectModalOpen(true);
   };
 
+  const fetchAffectingMFRules = async () => {
+    if (isModuleEnabled(ModuleNames.METADATA_FORMS)) {
+      const response = await client.query(
+        listRulesThatAffectEntity(params.uri, 'Environment')
+      );
+      if (
+        !response.errors &&
+        response.data.listRulesThatAffectEntity !== null
+      ) {
+        setAffectingMFRules(response.data.listRulesThatAffectEntity);
+      }
+    }
+  };
   const handleArchiveObjectModalClose = () => {
     setIsArchiveObjectModalOpen(false);
   };
@@ -96,6 +148,11 @@ const OrganizationView = () => {
     const response = await client.query(getOrganization(params.uri));
     if (!response.errors) {
       setOrg(response.data.getOrganization);
+      setIsAdmin(
+        ['Admin', 'Owner'].indexOf(
+          response.data.getOrganization.userRoleInOrganization
+        ) !== -1
+      );
       setLoading(false);
     }
     setLoading(false);
@@ -104,6 +161,9 @@ const OrganizationView = () => {
   useEffect(() => {
     if (client) {
       fetchItem().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+      fetchAffectingMFRules().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
     }
   }, [client, dispatch, fetchItem]);
 
@@ -161,27 +221,29 @@ const OrganizationView = () => {
                 </Breadcrumbs>
               </Grid>
               <Grid item>
-                <Box sx={{ m: -1 }}>
-                  <Button
-                    color="primary"
-                    component={RouterLink}
-                    startIcon={<PencilAltIcon fontSize="small" />}
-                    sx={{ m: 1 }}
-                    variant="outlined"
-                    to={`/console/organizations/${org.organizationUri}/edit`}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    color="primary"
-                    startIcon={<ArchiveOutlined />}
-                    sx={{ m: 1 }}
-                    variant="outlined"
-                    onClick={handleArchiveObjectModalOpen}
-                  >
-                    Archive
-                  </Button>
-                </Box>
+                {isAdmin && (
+                  <Box sx={{ m: -1 }}>
+                    <Button
+                      color="primary"
+                      component={RouterLink}
+                      startIcon={<PencilAltIcon fontSize="small" />}
+                      sx={{ m: 1 }}
+                      variant="outlined"
+                      to={`/console/organizations/${org.organizationUri}/edit`}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      color="primary"
+                      startIcon={<ArchiveOutlined />}
+                      sx={{ m: 1 }}
+                      variant="outlined"
+                      onClick={handleArchiveObjectModalOpen}
+                    >
+                      Archive
+                    </Button>
+                  </Box>
+                )}
               </Grid>
             </Grid>
             <Box sx={{ mt: 3 }}>
@@ -193,7 +255,7 @@ const OrganizationView = () => {
                 value={currentTab}
                 variant="fullWidth"
               >
-                {tabs.map((tab) => (
+                {getTabs().map((tab) => (
                   <Tab
                     key={tab.value}
                     label={tab.label}
@@ -214,6 +276,13 @@ const OrganizationView = () => {
               )}
               {currentTab === 'environments' && (
                 <OrganizationEnvironments organization={org} />
+              )}
+              {currentTab === 'metadata' && (
+                <MetadataAttachment
+                  entityType="Organization"
+                  entityUri={org.organizationUri}
+                  affectingRules={affectingMFRules}
+                />
               )}
             </Box>
           </Container>

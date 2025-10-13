@@ -1,13 +1,18 @@
 from dataall.base.api import gql
 from dataall.modules.dashboards.api.resolvers import (
     DashboardRole,
-    get_dashboard_organization,
+    get_dashboard_restricted_information,
     resolve_glossary_terms,
     resolve_upvotes,
     resolve_user_role,
 )
 
 from dataall.core.environment.api.resolvers import resolve_environment
+
+DashboardRestrictedInformation = gql.ObjectType(
+    name='DashboardRestrictedInformation',
+    fields=[gql.Field('AwsAccountId', type=gql.String), gql.Field('region', type=gql.String)],
+)
 
 Dashboard = gql.ObjectType(
     name='Dashboard',
@@ -23,13 +28,13 @@ Dashboard = gql.ObjectType(
         gql.Field('owner', type=gql.String),
         gql.Field('SamlGroupName', type=gql.String),
         gql.Field(
-            'organization',
-            type=gql.Ref('Organization'),
-            resolver=get_dashboard_organization,
+            'restricted',
+            type=DashboardRestrictedInformation,
+            resolver=get_dashboard_restricted_information,
         ),
         gql.Field(
             'environment',
-            type=gql.Ref('Environment'),
+            type=gql.Ref('EnvironmentSimplified'),
             resolver=resolve_environment,
         ),
         gql.Field(

@@ -11,20 +11,17 @@ export const getDatasetTable = (tableUri) => ({
           datasetUri
           name
           userRoleForDataset
-          region
           SamlAdminGroupName
           owner
-          organization {
-            label
-          }
+          confidentiality
           environment {
+            environmentUri
             label
             region
-            subscriptionsEnabled
-            subscriptionsProducersTopicImported
-            subscriptionsConsumersTopicImported
-            subscriptionsConsumersTopicName
-            subscriptionsProducersTopicName
+            organization {
+              organizationUri
+              label
+            }
           }
         }
         datasetUri
@@ -33,13 +30,15 @@ export const getDatasetTable = (tableUri) => ({
         created
         tags
         tableUri
-        AwsAccountId
-        GlueTableName
-        GlueDatabaseName
         LastGlueTableStatus
         label
         name
-        S3Prefix
+        restricted {
+          S3Prefix
+          AwsAccountId
+          GlueTableName
+          GlueDatabaseName
+        }
         terms {
           count
           nodes {

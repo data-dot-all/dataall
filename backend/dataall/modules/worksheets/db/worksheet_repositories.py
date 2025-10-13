@@ -8,6 +8,10 @@ from sqlalchemy.orm import Query
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResource
 from dataall.base.db import paginate
 from dataall.modules.worksheets.db.worksheet_models import Worksheet, WorksheetQueryResult
+from dataall.base.utils.naming_convention import (
+    NamingConventionService,
+    NamingConventionPattern,
+)
 
 
 class WorksheetRepository(EnvironmentResource):
@@ -41,7 +45,9 @@ class WorksheetRepository(EnvironmentResource):
                 or_(
                     Worksheet.label.ilike('%' + filter.get('term') + '%'),
                     Worksheet.description.ilike('%' + filter.get('term') + '%'),
-                    Worksheet.tags.contains(f"{{{filter.get('term')}}}"),
+                    Worksheet.tags.contains(
+                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, target_label=filter.get("term")).sanitize()}}}'
+                    ),
                 )
             )
         return query.order_by(Worksheet.label)

@@ -7,10 +7,11 @@ from dataall.base.config import config
 from dataall.core.environment.db.environment_models import Environment
 from dataall.core.organizations.db.organization_models import Organization
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
-from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset
+from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, DatasetTable, S3Dataset, DatasetBucket
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.core.resource_lock.db.resource_lock_models import ResourceLock
 from tests.core.stacks.test_stack import update_stack_query
+from dataall.modules.s3_datasets.db.dataset_bucket_repositories import DatasetBucketRepository
 
 from dataall.modules.datasets_base.services.datasets_enums import ConfidentialityClassification
 
@@ -23,12 +24,48 @@ def mock_s3_client(module_mocker):
     s3_client = MagicMock()
     module_mocker.patch('dataall.modules.s3_datasets.services.dataset_service.S3DatasetClient', s3_client)
 
-    s3_client().get_bucket_encryption.return_value = ('aws:kms', mocked_key_id)
+    s3_client().get_bucket_encryption.return_value = ('aws:kms', 'key', mocked_key_id)
     yield s3_client
 
 
 @pytest.fixture(scope='module')
 def dataset1(
+    module_mocker,
+    org_fixture: Organization,
+    env_fixture: Environment,
+    dataset: typing.Callable,
+    group,
+) -> S3Dataset:
+    kms_client = MagicMock()
+    module_mocker.patch('dataall.modules.s3_datasets.services.dataset_service.KmsClient', kms_client)
+
+    kms_client().get_key_id.return_value = mocked_key_id
+
+    d = dataset(org=org_fixture, env=env_fixture, name='dataset1', owner=env_fixture.owner, group=group.name)
+    print(d)
+    yield d
+
+
+@pytest.fixture(scope='function')
+def dataset3(
+    module_mocker,
+    org_fixture: Organization,
+    env_fixture: Environment,
+    dataset: typing.Callable,
+    group,
+) -> S3Dataset:
+    kms_client = MagicMock()
+    module_mocker.patch('dataall.modules.s3_datasets.services.dataset_service.KmsClient', kms_client)
+
+    kms_client().get_key_id.return_value = mocked_key_id
+
+    d = dataset(org=org_fixture, env=env_fixture, name='dataset1', owner=env_fixture.owner, group=group.name)
+    print(d)
+    yield d
+
+
+@pytest.fixture(scope='module')
+def dataset2(
     module_mocker,
     org_fixture: Organization,
     env_fixture: Environment,
@@ -51,13 +88,15 @@ def test_get_dataset(client, dataset1, env_fixture, group):
         query GetDataset($datasetUri:String!){
             getDataset(datasetUri:$datasetUri){
                 label
-                AwsAccountId
                 description
-                region
-                imported
-                importedS3Bucket
                 stewards
                 owners
+                imported
+                restricted {
+                  AwsAccountId
+                  region
+                  importedS3Bucket
+                }
             }
         }
         """,
@@ -65,11 +104,11 @@ def test_get_dataset(client, dataset1, env_fixture, group):
         username='alice',
         groups=[group.name],
     )
-    assert response.data.getDataset.AwsAccountId == env_fixture.AwsAccountId
-    assert response.data.getDataset.region == env_fixture.region
+    assert response.data.getDataset.restricted.AwsAccountId == env_fixture.AwsAccountId
+    assert response.data.getDataset.restricted.region == env_fixture.region
     assert response.data.getDataset.label == 'dataset1'
     assert response.data.getDataset.imported is False
-    assert response.data.getDataset.importedS3Bucket is False
+    assert response.data.getDataset.restricted.importedS3Bucket is False
 
 
 def test_list_datasets(client, dataset1, group):
@@ -94,6 +133,11 @@ def test_list_datasets(client, dataset1, group):
 
 
 def test_update_dataset(dataset1, client, group, group2, module_mocker):
+    # Mock the validate_kms_key function to return True
+    module_mocker.patch(
+        'dataall.modules.s3_datasets.services.dataset_service.DatasetService.validate_kms_key', return_value=True
+    )
+
     response = client.query(
         """
         mutation UpdateDataset($datasetUri:String!,$input:ModifyDatasetInput){
@@ -176,8 +220,6 @@ def test_start_crawler(org_fixture, env_fixture, dataset1, client, group, module
                 mutation StartGlueCrawler($datasetUri:String, $input:CrawlerInput){
                         startGlueCrawler(datasetUri:$datasetUri,input:$input){
                             Name
-                            AwsAccountId
-                            region
                             status
                         }
                     }
@@ -191,7 +233,7 @@ def test_start_crawler(org_fixture, env_fixture, dataset1, client, group, module
             'prefix': 'raw',
         },
     )
-    assert response.data.startGlueCrawler.Name == dataset1.GlueCrawlerName
+    assert response.data.Name == dataset1.restricted.GlueCrawlerName
 
 
 def test_update_dataset_unauthorized(dataset1, client, group):
@@ -214,7 +256,7 @@ def test_update_dataset_unauthorized(dataset1, client, group):
 
 def test_add_tables(table, dataset1, db):
     for i in range(0, 10):
-        table(dataset=dataset1, name=f'table{i+1}', username=dataset1.owner)
+        table(dataset=dataset1, name=f'table{i + 1}', username=dataset1.owner)
 
     with db.scoped_session() as session:
         nb = session.query(DatasetTable).count()
@@ -223,7 +265,7 @@ def test_add_tables(table, dataset1, db):
 
 def test_add_locations(location, dataset1, db):
     for i in range(0, 10):
-        location(dataset=dataset1, name=f'unstructured{i+1}', username=dataset1.owner)
+        location(dataset=dataset1, name=f'unstructured{i + 1}', username=dataset1.owner)
 
     with db.scoped_session() as session:
         nb = session.query(DatasetStorageLocation).count()
@@ -291,9 +333,11 @@ def test_list_dataset_tables(client, dataset1, group):
                         tableUri
                         name
                         label
-                        GlueDatabaseName
-                        GlueTableName
-                        S3Prefix
+                        restricted{
+                            GlueDatabaseName
+                            GlueTableName
+                            S3Prefix
+                        }
                     }
                 }
             }
@@ -373,9 +417,11 @@ def test_delete_dataset(client, dataset, env_fixture, org_fixture, db, module_mo
         query GetDataset($datasetUri:String!){
             getDataset(datasetUri:$datasetUri){
                 label
-                AwsAccountId
+                restricted {
+                    AwsAccountId
+                    region
+                }
                 description
-                region
             }
         }
         """,
@@ -410,17 +456,15 @@ def test_import_dataset(org_fixture, env_fixture, dataset1, client, group):
         mutation importDataset($input:ImportDatasetInput){
             importDataset(input:$input){
                 label
-                AwsAccountId
-                region
                 imported
-                importedS3Bucket
-                importedGlueDatabase
-                importedKmsKey
-                importedAdminRole
-                S3BucketName
-                GlueDatabaseName
-                IAMDatasetAdminRoleArn
-                KmsAlias
+                restricted {
+                    AwsAccountId
+                    region
+                    S3BucketName
+                    GlueDatabaseName
+                    IAMDatasetAdminRoleArn
+                    KmsAlias
+                }
             }
         }
         """,
@@ -439,17 +483,13 @@ def test_import_dataset(org_fixture, env_fixture, dataset1, client, group):
         },
     )
     assert response.data.importDataset.label == 'datasetImported'
-    assert response.data.importDataset.AwsAccountId == env_fixture.AwsAccountId
-    assert response.data.importDataset.region == env_fixture.region
+    assert response.data.importDataset.restricted.AwsAccountId == env_fixture.AwsAccountId
+    assert response.data.importDataset.restricted.region == env_fixture.region
     assert response.data.importDataset.imported is True
-    assert response.data.importDataset.importedS3Bucket is True
-    assert response.data.importDataset.importedGlueDatabase is True
-    assert response.data.importDataset.importedKmsKey is True
-    assert response.data.importDataset.importedAdminRole is True
-    assert response.data.importDataset.S3BucketName == 'dhimportedbucket'
-    assert response.data.importDataset.GlueDatabaseName == 'dhimportedGlueDB'
-    assert response.data.importDataset.KmsAlias == '1234-YYEY'
-    assert 'dhimportedRole' in response.data.importDataset.IAMDatasetAdminRoleArn
+    assert response.data.importDataset.restricted.S3BucketName == 'dhimportedbucket'
+    assert response.data.importDataset.restricted.GlueDatabaseName == 'dhimportedGlueDB'
+    assert response.data.importDataset.restricted.KmsAlias == '1234-YYEY'
+    assert 'dhimportedRole' in response.data.importDataset.restricted.IAMDatasetAdminRoleArn
 
 
 def test_get_dataset_by_prefix(db, env_fixture, org_fixture):
@@ -494,13 +534,15 @@ def test_stewardship(client, dataset, env_fixture, org_fixture, db, group2, grou
                 datasetUri
                 label
                 description
-                AwsAccountId
-                S3BucketName
-                GlueDatabaseName
+                restricted {
+                  AwsAccountId
+                  region
+                  KmsAlias
+                  S3BucketName
+                  GlueDatabaseName
+                  IAMDatasetAdminRoleArn
+                }
                 owner
-                region,
-                businessOwnerEmail
-                businessOwnerDelegationEmails
                 SamlAdminGroupName
                 stewards
 
@@ -528,3 +570,322 @@ def test_dataset_stack(client, dataset_fixture, group):
     dataset = dataset_fixture
     response = update_stack_query(client, dataset.datasetUri, 'dataset', dataset.SamlAdminGroupName)
     assert response.data.updateStack.targetUri == dataset.datasetUri
+
+
+def test_create_dataset_with_expiration_setting(client, env_fixture, org_fixture, db, group2, group, user, patch_es):
+    response = client.query(
+        """
+        mutation CreateDataset($input:NewDatasetInput!){
+            createDataset(
+            input:$input
+            ){
+                enableExpiration
+                expirySetting
+                expiryMinDuration
+                expiryMaxDuration
+            }
+        }
+        """,
+        username=user.username,
+        groups=[group.name],
+        input={
+            'owner': user.username,
+            'label': f'stewardsds',
+            'description': 'test dataset {name}',
+            'businessOwnerEmail': 'jeff@amazon.com',
+            'tags': ['t1', 't2'],
+            'environmentUri': env_fixture.environmentUri,
+            'SamlAdminGroupName': group.name,
+            'stewards': group2.name,
+            'organizationUri': org_fixture.organizationUri,
+            'enableExpiration': True,
+            'expirySetting': 'Monthly',
+            'expiryMinDuration': 1,
+            'expiryMaxDuration': 3,
+        },
+    )
+
+    assert response.data.createDataset.enableExpiration == True
+    assert response.data.createDataset.expirySetting == 'Monthly'
+    assert response.data.createDataset.expiryMinDuration == 1
+    assert response.data.createDataset.expiryMaxDuration == 3
+
+
+def test_update_dataset_with_expiration_setting_changes(dataset2, client, user, group, group2, module_mocker):
+    # Mock the validate_kms_key function to return True
+    module_mocker.patch(
+        'dataall.modules.s3_datasets.services.dataset_service.DatasetService.validate_kms_key', return_value=True
+    )
+
+    assert dataset2.enableExpiration == False
+    assert dataset2.expirySetting == None
+    assert dataset2.expiryMinDuration == None
+    assert dataset2.expiryMaxDuration == None
+
+    response = client.query(
+        """
+        mutation UpdateDataset($datasetUri:String!,$input:ModifyDatasetInput){
+            updateDataset(datasetUri:$datasetUri,input:$input){
+                datasetUri
+                label
+                tags
+                stewards
+                confidentiality
+                enableExpiration
+                expirySetting
+                expiryMinDuration
+                expiryMaxDuration
+            }
+        }
+        """,
+        username=user.username,
+        datasetUri=dataset2.datasetUri,
+        input={
+            'label': 'dataset1updated',
+            'stewards': group2.name,
+            'confidentiality': ConfidentialityClassification.Secret.value,
+            'KmsAlias': '',
+            'enableExpiration': True,
+            'expirySetting': 'Monthly',
+            'expiryMinDuration': 1,
+            'expiryMaxDuration': 3,
+        },
+        groups=[group.name],
+    )
+
+    assert response.data.updateDataset.enableExpiration == True
+    assert response.data.updateDataset.expirySetting == 'Monthly'
+    assert response.data.updateDataset.expiryMinDuration == 1
+    assert response.data.updateDataset.expiryMaxDuration == 3
+
+
+def test_update_dataset_with_expiration_with_incorrect_input(dataset2, client, group, group2):
+    assert dataset2.enableExpiration == False
+    assert dataset2.expirySetting == None
+    assert dataset2.expiryMinDuration == None
+    assert dataset2.expiryMaxDuration == None
+
+    response = client.query(
+        """
+        mutation UpdateDataset($datasetUri:String!,$input:ModifyDatasetInput){
+            updateDataset(datasetUri:$datasetUri,input:$input){
+                datasetUri
+                label
+                tags
+                stewards
+                confidentiality
+                enableExpiration
+                expirySetting
+                expiryMinDuration
+                expiryMaxDuration
+            }
+        }
+        """,
+        username=dataset2.owner,
+        datasetUri=dataset2.datasetUri,
+        input={
+            'label': 'dataset1updated',
+            'stewards': group2.name,
+            'confidentiality': ConfidentialityClassification.Secret.value,
+            'KmsAlias': '',
+            'enableExpiration': True,
+            'expirySetting': 'SOMETHING',
+            'expiryMinDuration': 1,
+            'expiryMaxDuration': 3,
+        },
+        groups=[group.name],
+    )
+
+    assert 'InvalidInput' in response.errors[0].message
+    assert 'Expiration Setting value SOMETHING must be is of invalid type' in response.errors[0].message
+
+    response = client.query(
+        """
+        mutation UpdateDataset($datasetUri:String!,$input:ModifyDatasetInput){
+            updateDataset(datasetUri:$datasetUri,input:$input){
+                datasetUri
+                label
+                tags
+                stewards
+                confidentiality
+                enableExpiration
+                expirySetting
+                expiryMinDuration
+                expiryMaxDuration
+            }
+        }
+        """,
+        username=dataset2.owner,
+        datasetUri=dataset2.datasetUri,
+        input={
+            'label': 'dataset1updated',
+            'stewards': group2.name,
+            'confidentiality': ConfidentialityClassification.Secret.value,
+            'KmsAlias': '',
+            'enableExpiration': True,
+            'expirySetting': 'Monthly',
+            'expiryMinDuration': -1,
+            'expiryMaxDuration': 3,
+        },
+        groups=[group.name],
+    )
+
+    assert 'InvalidInput' in response.errors[0].message
+    assert 'expiration duration  value  must be must be greater than zero' in response.errors[0].message
+
+
+def test_import_dataset_with_expiration_setting(org_fixture, env_fixture, dataset1, client, group):
+    response = client.query(
+        """
+        mutation importDataset($input:ImportDatasetInput){
+            importDataset(input:$input){
+                enableExpiration
+                expirySetting
+                expiryMinDuration
+                expiryMaxDuration
+            }
+        }
+        """,
+        username=dataset1.owner,
+        groups=[group.name],
+        input={
+            'organizationUri': org_fixture.organizationUri,
+            'environmentUri': env_fixture.environmentUri,
+            'label': 'datasetImportedin',
+            'bucketName': 'dhimportedbucketin',
+            'glueDatabaseName': 'dhimportedGlueDBin',
+            'adminRoleName': 'dhimportedRolein',
+            'KmsKeyAlias': '1234-YYEY-888',
+            'owner': dataset1.owner,
+            'SamlAdminGroupName': group.name,
+            'enableExpiration': True,
+            'expirySetting': 'Monthly',
+            'expiryMinDuration': 1,
+            'expiryMaxDuration': 3,
+        },
+    )
+    assert response.data.importDataset.enableExpiration == True
+    assert response.data.importDataset.expirySetting == 'Monthly'
+    assert response.data.importDataset.expiryMinDuration == 1
+    assert response.data.importDataset.expiryMaxDuration == 3
+
+
+def test_update_dataset_kms_key_change_to_new_key(db, dataset3, client, group, module_mocker):
+    """Test updating a dataset's KMS key to a new key alias"""
+    # Mock the validate_kms_key function to return True
+    module_mocker.patch(
+        'dataall.modules.s3_datasets.services.dataset_service.DatasetService.validate_kms_key', return_value=True
+    )
+
+    # First, set an initial KMS alias for the dataset
+    with db.scoped_session() as session:
+        dataset = DatasetRepository.get_dataset_by_uri(session, dataset3.datasetUri)
+        initial_kms = 'initial-kms-key'
+        dataset.KmsAlias = initial_kms
+        dataset.importedKmsKey = True
+        session.commit()
+
+        # Also update the bucket
+        dataset_bucket = DatasetBucketRepository.get_dataset_bucket_for_dataset(session, dataset3.datasetUri)
+        if dataset_bucket:
+            dataset_bucket.KmsAlias = initial_kms
+            session.commit()
+
+    # Update dataset with new KMS alias
+    new_kms_key = 'new-key'
+    response = client.query(
+        """
+        mutation UpdateDataset($datasetUri:String!,$input:ModifyDatasetInput){
+            updateDataset(datasetUri:$datasetUri,input:$input){
+                datasetUri
+                label
+                restricted {
+                    KmsAlias
+                }
+            }
+        }
+        """,
+        username=dataset3.owner,
+        datasetUri=dataset3.datasetUri,
+        input={
+            'label': dataset3.label,
+            'KmsAlias': new_kms_key,
+        },
+        groups=[group.name],
+    )
+
+    # Verify the GraphQL response
+    assert response.data.updateDataset.datasetUri == dataset3.datasetUri
+    assert response.data.updateDataset.restricted.KmsAlias == new_kms_key
+
+    # Verify the dataset was updated in the database
+    with db.scoped_session() as session:
+        updated_dataset = DatasetRepository.get_dataset_by_uri(session, dataset3.datasetUri)
+        assert updated_dataset.KmsAlias == new_kms_key
+        assert updated_dataset.importedKmsKey == True  # Should be True for custom KMS key
+
+        # Verify the dataset bucket was also updated
+        dataset_bucket = DatasetBucketRepository.get_dataset_bucket_for_dataset(session, dataset3.datasetUri)
+        assert dataset_bucket is not None
+        assert dataset_bucket.KmsAlias == new_kms_key
+        assert dataset_bucket.importedKmsKey == True
+
+
+def test_update_dataset_kms_key_change_to_sse_s3(db, dataset3, client, group, module_mocker):
+    """Test updating a dataset's KMS key to SSE-S3 (server-side encryption with S3 managed keys)"""
+    # Mock the validate_kms_key function to return True
+    module_mocker.patch(
+        'dataall.modules.s3_datasets.services.dataset_service.DatasetService.validate_kms_key', return_value=True
+    )
+
+    # First, set an initial KMS alias for the dataset
+    with db.scoped_session() as session:
+        dataset = DatasetRepository.get_dataset_by_uri(session, dataset3.datasetUri)
+        initial_kms = 'existing-kms-key'
+        dataset.KmsAlias = initial_kms
+        dataset.importedKmsKey = True
+        session.commit()
+
+        # Also update the bucket
+        dataset_bucket = DatasetBucketRepository.get_dataset_bucket_for_dataset(session, dataset3.datasetUri)
+        if dataset_bucket:
+            dataset_bucket.KmsAlias = initial_kms
+            session.commit()
+
+    # Update dataset to use SSE-S3 (by passing 'SSE-S3' as the alias)
+    response = client.query(
+        """
+        mutation UpdateDataset($datasetUri:String!,$input:ModifyDatasetInput){
+            updateDataset(datasetUri:$datasetUri,input:$input){
+                datasetUri
+                label
+                restricted {
+                    KmsAlias
+                }
+            }
+        }
+        """,
+        username=dataset3.owner,
+        datasetUri=dataset3.datasetUri,
+        input={
+            'label': dataset3.label,
+            'KmsAlias': 'SSE-S3',  # This should trigger SSE-S3 mode
+        },
+        groups=[group.name],
+    )
+
+    # Verify the GraphQL response
+    assert response.data.updateDataset.datasetUri == dataset3.datasetUri
+    assert response.data.updateDataset.restricted.KmsAlias == 'SSE-S3'
+
+    # Verify the dataset was updated in the database
+    with db.scoped_session() as session:
+        updated_dataset = DatasetRepository.get_dataset_by_uri(session, dataset3.datasetUri)
+        assert updated_dataset.KmsAlias == 'SSE-S3'
+        assert updated_dataset.importedKmsKey == False  # Should be False for SSE-S3
+
+        # Verify the dataset bucket was also updated
+        dataset_bucket = DatasetBucketRepository.get_dataset_bucket_for_dataset(session, dataset3.datasetUri)
+        assert dataset_bucket is not None
+        assert dataset_bucket.KmsAlias == 'SSE-S3'
+        assert dataset_bucket.importedKmsKey == False  # Should be False for SSE-S3

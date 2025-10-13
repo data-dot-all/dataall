@@ -4,6 +4,7 @@ from sqlalchemy.orm import query_expression
 from dataall.base.db import Base, Resource, utils
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.services.datasets_enums import DatasetTypes
+from dataall.core.metadata_manager.metadata_form_entity_manager import MetadataFormEntity
 
 
 class DatasetTableColumn(Resource, Base):
@@ -20,7 +21,7 @@ class DatasetTableColumn(Resource, Base):
     columnType = Column(String, default='column')  # can be either "column" or "partition"
 
     @classmethod
-    def uri(cls):
+    def uri_column(cls):
         return cls.columnUri
 
 
@@ -39,6 +40,7 @@ class DatasetProfilingRun(Resource, Base):
 
 
 class DatasetStorageLocation(Resource, Base):
+    __metaclass__ = MetadataFormEntity
     __tablename__ = 'dataset_storage_location'
     datasetUri = Column(String, nullable=False)
     locationUri = Column(String, primary_key=True, default=utils.uuid('location'))
@@ -52,12 +54,22 @@ class DatasetStorageLocation(Resource, Base):
     projectPermission = query_expression()
     environmentEndPoint = query_expression()
 
+    def owner_name(self):
+        return ''
+
+    def entity_name(self):
+        return f'{self.S3BucketName}/{self.S3Prefix}'
+
+    def uri(self):
+        return self.locationUri
+
     @classmethod
-    def uri(cls):
+    def uri_column(cls):
         return cls.locationUri
 
 
 class DatasetTable(Resource, Base):
+    __metaclass__ = MetadataFormEntity
     __tablename__ = 'dataset_table'
     datasetUri = Column(String, nullable=False)
     tableUri = Column(String, primary_key=True, default=utils.uuid('table'))
@@ -78,8 +90,17 @@ class DatasetTable(Resource, Base):
     topics = Column(ARRAY(String), nullable=True)
     confidentiality = Column(String, nullable=False, default='C1')
 
+    def owner_name(self):
+        return ''
+
+    def entity_name(self):
+        return f'{self.GlueDatabaseName}.{self.GlueTableName}'
+
+    def uri(self):
+        return self.tableUri
+
     @classmethod
-    def uri(cls):
+    def uri_column(cls):
         return cls.tableUri
 
 
@@ -119,6 +140,7 @@ class S3Dataset(DatasetBase):
 
 
 class DatasetBucket(Resource, Base):
+    __metaclass__ = MetadataFormEntity
     __tablename__ = 'dataset_bucket'
     datasetUri = Column(String, ForeignKey('s3_dataset.datasetUri', ondelete='CASCADE'), nullable=False)
     bucketUri = Column(String, primary_key=True, default=utils.uuid('bucket'))
@@ -133,6 +155,24 @@ class DatasetBucket(Resource, Base):
     projectPermission = query_expression()
     environmentEndPoint = query_expression()
 
+    def owner_name(self):
+        return ''
+
+    def entity_name(self):
+        return self.S3BucketName
+
+    def uri(self):
+        return self.bucketUri
+
     @classmethod
-    def uri(cls):
+    def uri_column(cls):
         return cls.bucketUri
+
+
+class DatasetTableDataFilter(Resource, Base):
+    __tablename__ = 'data_filter'
+    filterUri = Column(String, primary_key=True, default=utils.uuid('datafilter'))
+    tableUri = Column(String, ForeignKey('dataset_table.tableUri'), nullable=False)
+    filterType = Column(String, nullable=False)
+    includedCols = Column(ARRAY(String), nullable=True)
+    rowExpression = Column(String, nullable=True)

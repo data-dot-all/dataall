@@ -1,3 +1,4 @@
+import logging
 from typing import Dict
 from aws_cdk import (
     aws_ec2 as ec2,
@@ -13,6 +14,9 @@ from aws_cdk.aws_applicationautoscaling import Schedule
 
 from .pyNestedStack import pyNestedClass
 from .run_if import run_if
+from .deploy_config import deploy_config
+from .iam_utils import get_tooling_account_external_id
+from .runtime_options import PYTHON_VERSION
 
 
 class ContainerStack(pyNestedClass):
@@ -34,11 +38,13 @@ class ContainerStack(pyNestedClass):
         email_custom_domain=None,
         ses_configuration_set=None,
         custom_domain=None,
+        log_retention_duration=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
         self._envname = envname
         self._resource_prefix = resource_prefix
+        self.log_retention_duration = log_retention_duration
 
         if self.node.try_get_context('image_tag'):
             image_tag = self.node.try_get_context('image_tag')
@@ -47,18 +53,25 @@ class ContainerStack(pyNestedClass):
         self._ecr_repository = ecr_repository
         self._vpc = vpc
         self._prod_sizing = prod_sizing
+        self._log_level = 'INFO' if prod_sizing else 'DEBUG'
 
         (self.scheduled_tasks_sg, self.share_manager_sg) = self.create_ecs_security_groups(
             envname, resource_prefix, vpc, vpce_connection, s3_prefix_list, lambdas
         )
         self.ecs_security_groups: [aws_ec2.SecurityGroup] = [self.scheduled_tasks_sg, self.share_manager_sg]
-        self.env_vars = self._create_env('INFO')
+        self.env_vars = self._create_env()
 
         # Check if custom domain exists and if it exists email notifications could be enabled.
         # Create an env variable which stores the domain URL.
         # This is used for sending data.all share weblinks in the email notifications.
         if custom_domain and custom_domain.get('hosted_zone_name'):
             self.env_vars.update({'frontend_domain_url': f'https://{custom_domain["hosted_zone_name"]}'})
+            email_sender = (
+                custom_domain.get('email_notification_sender_email_id', 'noreply')
+                + '@'
+                + custom_domain.get('hosted_zone_name')
+            )
+            self.env_vars.update({'email_sender_id': email_sender})
 
         cluster = ecs.Cluster(
             self,
@@ -87,12 +100,15 @@ class ContainerStack(pyNestedClass):
                 ecs.CfnTaskDefinition.ContainerDefinitionProperty(
                     image=cdkproxy_image.image_name,
                     name=cdkproxy_container_name,
-                    command=['python3.9', '-m', 'dataall.core.stacks.tasks.cdkproxy'],
+                    command=[f'python{PYTHON_VERSION}', '-m', 'dataall.core.stacks.tasks.cdkproxy'],
                     environment=[
                         ecs.CfnTaskDefinition.KeyValuePairProperty(name='AWS_REGION', value=self.region),
                         ecs.CfnTaskDefinition.KeyValuePairProperty(name='envname', value=envname),
                         ecs.CfnTaskDefinition.KeyValuePairProperty(name='LOGLEVEL', value='DEBUG'),
                         ecs.CfnTaskDefinition.KeyValuePairProperty(name='config_location', value='/config.json'),
+                        ecs.CfnTaskDefinition.KeyValuePairProperty(
+                            name='LOG_RETENTION', value=self.log_retention_duration
+                        ),
                     ],
                     essential=True,
                     log_configuration=ecs.CfnTaskDefinition.LogConfigurationProperty(
@@ -143,10 +159,10 @@ class ContainerStack(pyNestedClass):
 
         stacks_updater, stacks_updater_task_def = self.set_scheduled_task(
             cluster=cluster,
-            command=['python3.9', '-m', 'dataall.core.environment.tasks.env_stacks_updater'],
+            command=[f'python{PYTHON_VERSION}', '-m', 'dataall.core.environment.tasks.env_stacks_updater'],
             container_id='container',
             ecr_repository=ecr_repository,
-            environment=self._create_env('INFO'),
+            environment=self._create_env(),
             image_tag=self._cdkproxy_image_tag,
             log_group=self.create_log_group(envname, resource_prefix, log_group_name='stacks-updater'),
             schedule_expression=Schedule.expression('cron(0 1 * * ? *)'),
@@ -192,16 +208,17 @@ class ContainerStack(pyNestedClass):
         self.add_share_reapplier_task()
         self.add_omics_fetch_workflows_task()
         self.add_persistent_email_reminders_task()
+        self.add_share_expiration_task()
 
     @run_if(['modules.s3_datasets.active', 'modules.dashboards.active'])
     def add_catalog_indexer_task(self):
         container_id = 'container'
         catalog_indexer_task, catalog_indexer_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
-            command=['python3.9', '-m', 'dataall.modules.catalog.tasks.catalog_indexer_task'],
+            command=[f'python{PYTHON_VERSION}', '-m', 'dataall.modules.catalog.tasks.catalog_indexer_task'],
             container_id=container_id,
             ecr_repository=self._ecr_repository,
-            environment=self._create_env('INFO'),
+            environment=self._create_env(),
             image_tag=self._cdkproxy_image_tag,
             log_group=self.create_log_group(self._envname, self._resource_prefix, log_group_name='catalog-indexer'),
             schedule_expression=Schedule.expression('rate(6 hours)'),
@@ -245,8 +262,8 @@ class ContainerStack(pyNestedClass):
             f'ShareManagementTaskContainer{self._envname}',
             container_name='container',
             image=ecs.ContainerImage.from_ecr_repository(repository=self._ecr_repository, tag=self._cdkproxy_image_tag),
-            environment=self._create_env('DEBUG'),
-            command=['python3.9', '-m', 'dataall.modules.shares_base.tasks.share_manager_task'],
+            environment=self.env_vars,
+            command=[f'python{PYTHON_VERSION}', '-m', 'dataall.modules.shares_base.tasks.share_manager_task'],
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix='task',
                 log_group=self.create_log_group(self._envname, self._resource_prefix, log_group_name='share-manager'),
@@ -273,10 +290,10 @@ class ContainerStack(pyNestedClass):
     def add_share_verifier_task(self):
         verify_shares_task, verify_shares_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
-            command=['python3.9', '-m', 'dataall.modules.shares_base.tasks.share_verifier_task'],
+            command=[f'python{PYTHON_VERSION}', '-m', 'dataall.modules.shares_base.tasks.share_verifier_task'],
             container_id='container',
             ecr_repository=self._ecr_repository,
-            environment=self._create_env('INFO'),
+            environment=self.env_vars,
             image_tag=self._cdkproxy_image_tag,
             log_group=self.create_log_group(self._envname, self._resource_prefix, log_group_name='share-verifier'),
             schedule_expression=Schedule.expression('rate(7 days)'),
@@ -305,8 +322,8 @@ class ContainerStack(pyNestedClass):
             f'ShareReapplierTaskContainer{self._envname}',
             container_name='container',
             image=ecs.ContainerImage.from_ecr_repository(repository=self._ecr_repository, tag=self._cdkproxy_image_tag),
-            environment=self._create_env('INFO'),
-            command=['python3.9', '-m', 'dataall.modules.shares_base.tasks.share_reapplier_task'],
+            environment=self.env_vars,
+            command=[f'python{PYTHON_VERSION}', '-m', 'dataall.modules.shares_base.tasks.share_reapplier_task'],
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix='task',
                 log_group=self.create_log_group(self._envname, self._resource_prefix, log_group_name='share-reapplier'),
@@ -330,12 +347,12 @@ class ContainerStack(pyNestedClass):
 
         self.ecs_task_definitions_families.append(share_reapplier_task_definition.family)
 
-    @run_if(['modules.dataset_base.features.share_notifications.email.persistent_reminders'])
+    @run_if(['modules.datasets_base.features.share_notifications.email.persistent_reminders'])
     def add_persistent_email_reminders_task(self):
         persistent_email_reminders_task, persistent_email_reminders_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
             command=[
-                'python3.9',
+                f'python{PYTHON_VERSION}',
                 '-m',
                 'dataall.modules.shares_base.tasks.persistent_email_reminders_task',
             ],
@@ -361,13 +378,13 @@ class ContainerStack(pyNestedClass):
         subscriptions_task, subscription_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
             command=[
-                'python3.9',
+                f'python{PYTHON_VERSION}',
                 '-m',
                 'dataall.modules.s3_datasets_shares.tasks.dataset_subscription_task',
             ],
             container_id='container',
             ecr_repository=self._ecr_repository,
-            environment=self._create_env('INFO'),
+            environment=self._create_env(),
             image_tag=self._cdkproxy_image_tag,
             log_group=self.create_log_group(self._envname, self._resource_prefix, log_group_name='subscriptions'),
             schedule_expression=Schedule.expression('rate(15 minutes)'),
@@ -384,10 +401,10 @@ class ContainerStack(pyNestedClass):
     def add_sync_dataset_table_task(self):
         sync_tables_task, sync_tables_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
-            command=['python3.9', '-m', 'dataall.modules.s3_datasets.tasks.tables_syncer'],
+            command=[f'python{PYTHON_VERSION}', '-m', 'dataall.modules.s3_datasets.tasks.tables_syncer'],
             container_id='container',
             ecr_repository=self._ecr_repository,
-            environment=self._create_env('INFO'),
+            environment=self._create_env(),
             image_tag=self._cdkproxy_image_tag,
             log_group=self.create_log_group(self._envname, self._resource_prefix, log_group_name='tables-syncer'),
             schedule_expression=Schedule.expression('rate(15 minutes)'),
@@ -404,10 +421,10 @@ class ContainerStack(pyNestedClass):
     def add_omics_fetch_workflows_task(self):
         fetch_omics_workflows_task, fetch_omics_workflows_task_def = self.set_scheduled_task(
             cluster=self.ecs_cluster,
-            command=['python3.9', '-m', 'dataall.modules.omics.tasks.omics_workflows_fetcher'],
+            command=[f'python{PYTHON_VERSION}', '-m', 'dataall.modules.omics.tasks.omics_workflows_fetcher'],
             container_id='container',
             ecr_repository=self._ecr_repository,
-            environment=self._create_env('DEBUG'),
+            environment=self._create_env(),
             image_tag=self._cdkproxy_image_tag,
             log_group=self.create_log_group(
                 self._envname, self._resource_prefix, log_group_name='omics-workflows-fetcher'
@@ -421,6 +438,68 @@ class ContainerStack(pyNestedClass):
             prod_sizing=self._prod_sizing,
         )
         self.ecs_task_definitions_families.append(fetch_omics_workflows_task.task_definition.family)
+
+    @run_if(['modules.datasets_base.features.share_expiration.active'])
+    def add_share_expiration_task(self):
+        task = ecs.FargateTaskDefinition(
+            self,
+            f'{self._resource_prefix}-{self._envname}-share-expiration-task',
+            family=f'{self._resource_prefix}-{self._envname}-share-expiration-task',
+            cpu=1024,
+            memory_limit_mib=2048,
+            task_role=self.task_role,
+            execution_role=self.task_role,
+        )
+        task.add_container(
+            'container',
+            container_name='container',
+            image=ecs.ContainerImage.from_ecr_repository(repository=self._ecr_repository, tag=self._cdkproxy_image_tag),
+            environment=self.env_vars,
+            command=[
+                f'python{PYTHON_VERSION}',
+                '-m',
+                'dataall.modules.shares_base.tasks.share_expiration_task',
+            ],
+            logging=ecs.LogDriver.aws_logs(
+                stream_prefix='task',
+                log_group=self.create_log_group(
+                    self._envname, self._resource_prefix, log_group_name='share-expiration-task'
+                ),
+            ),
+            readonly_root_filesystem=True,
+        )
+        try:
+            run_schedule = deploy_config.get_property('modules.datasets_base.features.share_expiration.run_schedule')
+            if 0 not in run_schedule:
+                run_schedule.append(0)
+        except Exception:
+            run_schedule = [0]
+
+        for value in run_schedule:
+            scheduled_task = ecs_patterns.ScheduledFargateTask(
+                self,
+                f'{self._resource_prefix}-{self._envname}-share-expiration-schedule-{value}',
+                cluster=self.ecs_cluster,
+                schedule=Schedule.expression(f'cron(0 9 L-{value} * ? *)'),
+                scheduled_fargate_task_definition_options=ecs_patterns.ScheduledFargateTaskDefinitionOptions(
+                    task_definition=task
+                ),
+                vpc=self._vpc,
+                subnet_selection=ec2.SubnetSelection(
+                    subnets=self._vpc.select_subnets(subnet_type=ec2.SubnetType.PRIVATE_WITH_NAT).subnets
+                ),
+                rule_name=f'{self._resource_prefix}-{self._envname}-share-expiration-schedule-{value}',
+                security_groups=[self.scheduled_tasks_sg],
+            )
+
+            # Add the rule of the scheduled task to parameter store
+            ssm.StringParameter(
+                self,
+                f'ECSTaskRule-{self._resource_prefix}-{self._envname}-share-expiration-schedule-{value}',
+                parameter_name=f'/dataall/{self._envname}/ecs/ecs_scheduled_tasks/rule/{self._resource_prefix}-{self._envname}-share-expiration-schedule-{value}',
+                string_value=scheduled_task.event_rule.rule_name,
+            )
+            self.ecs_task_definitions_families.append(scheduled_task.task_definition.family)
 
     def create_ecs_security_groups(self, envname, resource_prefix, vpc, vpce_connection, s3_prefix_list, lambdas):
         scheduled_tasks_sg = ec2.SecurityGroup(
@@ -491,10 +570,15 @@ class ContainerStack(pyNestedClass):
             self,
             id=f'StackUpdaterCBRole{envname}',
             role_name=f'{resource_prefix}-{envname}-cb-stackupdater-role',
-            assumed_by=iam.CompositePrincipal(
-                iam.ServicePrincipal('codebuild.amazonaws.com'),
-                iam.AccountPrincipal(tooling_account_id),
-            ),
+            assumed_by=iam.AccountPrincipal(tooling_account_id),
+            external_ids=[get_tooling_account_external_id(self.account)],
+        )
+        cicd_stacks_updater_role.assume_role_policy.add_statements(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                principals=[iam.ServicePrincipal('codebuild.amazonaws.com')],
+                actions=['sts:AssumeRole'],
+            )
         )
         cicd_stacks_updater_role.add_to_policy(
             iam.PolicyStatement(
@@ -642,8 +726,8 @@ class ContainerStack(pyNestedClass):
             self,
             f'ECSLogGroup{log_group_name}{envname}',
             log_group_name=f'/{resource_prefix}/{envname}/ecs/{log_group_name}',
-            retention=logs.RetentionDays.ONE_MONTH,
             removal_policy=RemovalPolicy.DESTROY,
+            retention=getattr(logs.RetentionDays, self.log_retention_duration),
         )
         return log_group
 
@@ -740,10 +824,10 @@ class ContainerStack(pyNestedClass):
     def ecs_task_role(self) -> iam.Role:
         return self.task_role
 
-    def _create_env(self, log_lvl) -> Dict:
+    def _create_env(self) -> Dict:
         return {
             'AWS_REGION': self.region,
             'envname': self._envname,
-            'LOGLEVEL': log_lvl,
+            'LOG_LEVEL': self._log_level,
             'config_location': '/config.json',
         }

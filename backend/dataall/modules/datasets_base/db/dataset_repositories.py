@@ -6,6 +6,10 @@ from dataall.base.db import paginate
 from dataall.base.db.exceptions import ObjectNotFound
 from dataall.core.activity.db.activity_models import Activity
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
+from dataall.base.utils.naming_convention import (
+    NamingConventionService,
+    NamingConventionPattern,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -65,9 +69,11 @@ class DatasetListRepository:
             term = filter['term']
             query = query.filter(
                 or_(
-                    DatasetBase.description.ilike(term + '%%'),
-                    DatasetBase.label.ilike(term + '%%'),
-                    DatasetBase.tags.contains(f'{{{term}}}'),
+                    DatasetBase.label.ilike('%' + term + '%'),
+                    DatasetBase.description.ilike('%' + term + '%'),
+                    DatasetBase.tags.contains(
+                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, target_label=term).sanitize()}}}'
+                    ),
                 )
             )
         return query.order_by(DatasetBase.label).distinct(DatasetBase.datasetUri, DatasetBase.label)
@@ -90,10 +96,14 @@ class DatasetListRepository:
             )
         )
         if filter and filter.get('term'):
+            term = filter['term']
             query = query.filter(
                 or_(
-                    DatasetBase.description.ilike(filter.get('term') + '%%'),
-                    DatasetBase.label.ilike(filter.get('term') + '%%'),
+                    DatasetBase.label.ilike('%' + term + '%'),
+                    DatasetBase.description.ilike('%' + term + '%'),
+                    DatasetBase.tags.contains(
+                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, target_label=term).sanitize()}}}'
+                    ),
                 )
             )
         return query.order_by(DatasetBase.label).distinct(DatasetBase.datasetUri, DatasetBase.label)
@@ -105,27 +115,28 @@ class DatasetListRepository:
         data=None,
     ) -> dict:
         return paginate(
-            query=DatasetListRepository._query_environment_datasets(session, uri, data),
+            query=DatasetListRepository.query_datasets(session, data, environmentUri=uri),
             page=data.get('page', 1),
             page_size=data.get('pageSize', 10),
         ).to_dict()
 
     @staticmethod
-    def _query_environment_datasets(session, uri, filter) -> Query:
-        query = session.query(DatasetBase).filter(
-            and_(
-                DatasetBase.environmentUri == uri,
-                DatasetBase.deleted.is_(None),
-            )
-        )
+    def query_datasets(session, filter=None, organizationUri=None, environmentUri=None) -> Query:
+        query = session.query(DatasetBase).filter(DatasetBase.deleted.is_(None))
+        if organizationUri:
+            query = query.filter(DatasetBase.organizationUri == organizationUri)
+        if environmentUri:
+            query = query.filter(DatasetBase.environmentUri == environmentUri)
+
         if filter and filter.get('term'):
             term = filter['term']
             query = query.filter(
                 or_(
                     DatasetBase.label.ilike('%' + term + '%'),
                     DatasetBase.description.ilike('%' + term + '%'),
-                    DatasetBase.tags.contains(f'{{{term}}}'),
-                    DatasetBase.region.ilike('%' + term + '%'),
+                    DatasetBase.tags.contains(
+                        f'{{{NamingConventionService(pattern=NamingConventionPattern.DEFAULT_SEARCH, target_label=term).sanitize()}}}'
+                    ),
                 )
             )
         return query.order_by(DatasetBase.label)
