@@ -166,7 +166,7 @@ const WorksheetView = () => {
     async (environment, dataset) => {
       setLoadingTables(true);
       let response = '';
-      if (dataset.label.includes(dataset.value + '_shared')) {
+      if (dataset.label.includes('_shared')) {
         response = await client.query(
           getSharedDatasetTables({
             datasetUri: dataset.value,
@@ -182,10 +182,7 @@ const WorksheetView = () => {
         );
       }
 
-      if (
-        !response.errors &&
-        dataset.label.includes(dataset.value + '_shared')
-      ) {
+      if (!response.errors && dataset.label.includes('_shared')) {
         setTableOptions(
           response.data.getSharedDatasetTables.map((t) => ({
             ...t,
