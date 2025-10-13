@@ -35,3 +35,7 @@ class DatasetBucketRepository:
     @staticmethod
     def get_dataset_bucket_by_name(session, bucket_name) -> DatasetBucket:
         return session.query(DatasetBucket).filter(DatasetBucket.S3BucketName == bucket_name).first()
+
+    @staticmethod
+    def get_dataset_bucket_for_dataset(session, datasetUri) -> DatasetBucket:
+        return session.query(DatasetBucket).filter(DatasetBucket.datasetUri == datasetUri).first()
