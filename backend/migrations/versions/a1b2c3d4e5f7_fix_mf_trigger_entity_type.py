@@ -7,7 +7,7 @@ Create Date: 2025-10-03 12:00:00.000000
 from alembic import op
 import os
 
-# revision identifiers, used by Alembic.
+# revision identifiers used by Alembic.
 revision = 'a1b2c3d4e5f7'
 down_revision = 'ba2da94739ab'
 branch_labels = None
