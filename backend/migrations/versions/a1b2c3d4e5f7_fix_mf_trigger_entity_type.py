@@ -31,7 +31,7 @@ def upgrade():
         $$ LANGUAGE plpgsql;
     """
 
-    op.execute(op.text(SQL_DATASET_TRIGGER_DEF), {"envname": ENVNAME})
+    op.execute(op.text(SQL_DATASET_TRIGGER_DEF), {'envname': ENVNAME})
 
 
 def downgrade():
@@ -48,4 +48,4 @@ def downgrade():
         $$ LANGUAGE plpgsql;
     """
 
-    op.execute(op.text(SQL_DATASET_TRIGGER_DEF), {"envname": ENVNAME})
+    op.execute(op.text(SQL_DATASET_TRIGGER_DEF), {'envname': ENVNAME})
