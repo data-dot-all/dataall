@@ -1,6 +1,6 @@
 """fix_mf_trigger_entity_type
 Revision ID: a1b2c3d4e5f7
-Revises: 5cdcf6cc1d73
+Revises: ba2da94739ab
 Create Date: 2025-10-03 12:00:00.000000
 """
 
@@ -9,7 +9,7 @@ import os
 
 # revision identifiers, used by Alembic.
 revision = 'a1b2c3d4e5f7'
-down_revision = '5cdcf6cc1d73'
+down_revision = 'ba2da94739ab'
 branch_labels = None
 depends_on = None
 
