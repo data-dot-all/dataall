@@ -6,7 +6,6 @@ Create Date: 2025-10-03 12:00:00.000000
 
 from alembic import op
 import os
-import sqlalchemy as sa
 
 # revision identifiers used by Alembic.
 revision = 'a1b2c3d4e5f7'
@@ -24,15 +23,17 @@ def upgrade():
         CREATE OR REPLACE FUNCTION dataset_delete_trigger_function()
         RETURNS TRIGGER AS $$
         BEGIN
-            DELETE FROM :envname.attached_metadata_form
+            DELETE FROM {SCHEMA_NAME}.attached_metadata_form
             WHERE "entityUri" = OLD."datasetUri"
               AND "entityType" = 'S3-Dataset';
             RETURN OLD;
         END;
         $$ LANGUAGE plpgsql;
-    """
+    """.format(
+        SCHEMA_NAME=ENVNAME
+    )
 
-    op.execute(sa.text(SQL_DATASET_TRIGGER_DEF), {'envname': ENVNAME})
+    op.execute(SQL_DATASET_TRIGGER_DEF)  # nosemgrep
 
 
 def downgrade():
@@ -41,12 +42,14 @@ def downgrade():
         CREATE OR REPLACE FUNCTION dataset_delete_trigger_function()
         RETURNS TRIGGER AS $$
         BEGIN
-            DELETE FROM :envname.attached_metadata_form
+            DELETE FROM {SCHEMA_NAME}.attached_metadata_form
             WHERE "entityUri" = OLD."datasetUri"
               AND "entityType" = 'Dataset';
             RETURN OLD;
         END;
         $$ LANGUAGE plpgsql;
-    """
+    """.format(
+        SCHEMA_NAME=ENVNAME
+    )
 
-    op.execute(sa.text(SQL_DATASET_TRIGGER_DEF), {'envname': ENVNAME})
+    op.execute(SQL_DATASET_TRIGGER_DEF)  # nosemgrep
