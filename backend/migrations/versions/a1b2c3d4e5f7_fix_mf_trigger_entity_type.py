@@ -29,9 +29,7 @@ def upgrade():
             RETURN OLD;
         END;
         $$ LANGUAGE plpgsql;
-    """.format(
-        SCHEMA_NAME=ENVNAME
-    )
+    """.format(SCHEMA_NAME=ENVNAME)
 
     op.execute(SQL_DATASET_TRIGGER_DEF)  # nosemgrep
 
@@ -48,8 +46,6 @@ def downgrade():
             RETURN OLD;
         END;
         $$ LANGUAGE plpgsql;
-    """.format(
-        SCHEMA_NAME=ENVNAME
-    )
+    """.format(SCHEMA_NAME=ENVNAME)
 
     op.execute(SQL_DATASET_TRIGGER_DEF)  # nosemgrep
