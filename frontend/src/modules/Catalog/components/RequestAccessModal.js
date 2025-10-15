@@ -191,7 +191,7 @@ export const RequestAccessModal = (props) => {
             .filter((policy) => policy.policy_type === 'SharePolicy')
             .map((policy) => policy.attached);
         const isAllPoliciesAttached = isSharePoliciesAttached.every(
-          (value) => value === true
+          (value) => value === 'ATTACHED'
         );
         setIsSharePolicyAttached(isAllPoliciesAttached);
         let policyNameList = response.data.getConsumptionPrincipalPolicies
@@ -741,9 +741,9 @@ export const RequestAccessModal = (props) => {
                     )}
                     {!values.consumptionPrincipal ||
                     values.consumptionPrincipal.dataallManaged ===
-                      'Fully-Managed' ||
+                      'FULLY_MANAGED' ||
                     values.consumptionPrincipal.dataallManaged ===
-                      'Externally-Managed' ||
+                      'EXTERNALLY_MANAGED' ||
                     isSharePolicyAttached ? (
                       <Box />
                     ) : (
@@ -768,7 +768,7 @@ export const RequestAccessModal = (props) => {
                               >
                                 {values.consumptionPrincipal &&
                                 values.consumptionPrincipal.dataallManaged ===
-                                  'Partially-Managed' &&
+                                  'PARTIALLY_MANAGED' &&
                                 !isSharePolicyAttached ? (
                                   <FormHelperText error>
                                     Selected consumption role is partially

@@ -3,7 +3,8 @@ import logging
 import json
 from abc import ABC, abstractmethod
 from dataall.base.aws.iam import IAM
-from dataall.base.utils.consumption_principal_utils import EnvironmentIAMPrincipalType
+from dataall.base.utils.consumption_principal_utils import EnvironmentIAMPrincipalType, \
+    EnvironmentIAMPrincipalAttachmentStatus
 from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 
@@ -237,13 +238,14 @@ class PolicyManager(object):
                 externally_managed_role = True
 
             for policy_name in policy_name_list:
+                is_policy_attached: bool = policy_manager.check_if_policy_attached(policy_name=policy_name)
                 policy_dict = {
                     'policy_name': policy_name,
                     'policy_type': policy_manager.policy_type,
                     'exists': policy_manager.check_if_policy_exists(policy_name=policy_name),
-                    'attached': 'N/A'
+                    'attached': EnvironmentIAMPrincipalAttachmentStatus.NOTAPPLICABLE.value
                     if externally_managed_role
-                    else policy_manager.check_if_policy_attached(policy_name=policy_name),
+                    else EnvironmentIAMPrincipalAttachmentStatus.get_policy_attachment_type(is_policy_attached),
                 }
                 all_policies.append(policy_dict)
         logger.info(f'All policies currently added to role: {self.principal_name} are: {str(all_policies)}')

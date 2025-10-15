@@ -356,10 +356,10 @@ export const IAMPrincipalPolicyDataGridCell = ({
     const is_policy_attach = managedPolicyDetails.map(
       (policy) => policy.attached
     );
-    if (is_policy_attach.every((policy) => policy === 'N/A')) {
+    if (is_policy_attach.every((policy) => policy === 'NOTAPPLICABLE')) {
       return 'N/A';
     }
-    if (is_policy_attach.some((policy) => policy === 'false')) {
+    if (is_policy_attach.some((policy) => policy === 'NOTATTACHED')) {
       return 'Not Attached';
     }
     return 'Attached';

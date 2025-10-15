@@ -1,5 +1,6 @@
 from dataall.base.api import gql
-from dataall.base.utils.consumption_principal_utils import EnvironmentIAMPrincipalType
+from dataall.base.utils.consumption_principal_utils import EnvironmentIAMPrincipalType, \
+    EnvironmentIAMPrincipalAttachmentStatus
 
 from dataall.core.environment.api.resolvers import (
     get_environment_stack,
@@ -164,7 +165,7 @@ PrincipalManagedPolicy = gql.ObjectType(
         gql.Field(name='policy_name', type=gql.String),
         gql.Field(name='policy_type', type=gql.String),
         gql.Field(name='exists', type=gql.Boolean),
-        gql.Field(name='attached', type=gql.String),
+        gql.Field(name='attached', type=gql.NonNullableType(EnvironmentIAMPrincipalAttachmentStatus.toGraphQLEnum())),
     ],
 )
 

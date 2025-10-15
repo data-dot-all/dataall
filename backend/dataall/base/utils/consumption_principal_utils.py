@@ -15,3 +15,13 @@ class EnvironmentIAMPrincipalType(GraphQLEnumMapper):
             return EnvironmentIAMPrincipalType.ROLE.value
         if principal_type == 'user':
             return EnvironmentIAMPrincipalType.USER.value
+
+class EnvironmentIAMPrincipalAttachmentStatus(GraphQLEnumMapper):
+    NOTAPPLICABLE = 'N/A'
+    ATTACHED = 'Attached'
+    NOTATTACHED = 'Not-Attached'
+
+    @staticmethod
+    def get_policy_attachment_type(is_attached: bool):
+        return EnvironmentIAMPrincipalAttachmentStatus.ATTACHED.value if is_attached else EnvironmentIAMPrincipalAttachmentStatus.NOTATTACHED.value
+
