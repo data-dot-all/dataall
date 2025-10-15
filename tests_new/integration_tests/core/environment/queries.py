@@ -210,54 +210,56 @@ def remove_group_from_env(client, env_uri, group_uri):
     return response.data.removeGroupFromEnvironment
 
 
-def add_consumption_role(client, env_uri, group_uri, consumption_role_name, iam_role_arn, is_managed='Fully-Managed'):
+def add_consumption_role(
+    client, env_uri, group_uri, consumption_principal_name, iam_principal_arn, is_managed='FULLY_MANAGED'
+):
     query = {
-        'operationName': 'addConsumptionRoleToEnvironment',
+        'operationName': 'addConsumptionPrincipalToEnvironment',
         'variables': {
             'input': {
                 'environmentUri': env_uri,
                 'groupUri': group_uri,
-                'consumptionRoleName': consumption_role_name,
-                'IAMRoleArn': iam_role_arn,
+                'consumptionPrincipalName': consumption_principal_name,
+                'IAMPrincipalArn': iam_principal_arn,
                 'dataallManaged': is_managed,
             },
         },
         'query': """
-                    mutation addConsumptionRoleToEnvironment(
-                      $input: AddConsumptionRoleToEnvironmentInput!
+                    mutation addConsumptionPrincipalToEnvironment(
+                      $input: AddConsumptionPrincipalToEnvironmentInput!
                     ) {
-                      addConsumptionRoleToEnvironment(input: $input) {
-                        consumptionRoleUri
-                        consumptionRoleName
+                      addConsumptionPrincipalToEnvironment(input: $input) {
+                        consumptionPrincipalUri
+                        consumptionPrincipalName
                         environmentUri
                         groupUri
-                        IAMRoleArn
+                        IAMPrincipalArn
                       }
                     }
         """,
     }
     response = client.query(query=query)
-    return response.data.addConsumptionRoleToEnvironment
+    return response.data.addConsumptionPrincipalToEnvironment
 
 
 def list_environment_consumption_roles(client, env_uri, filter):
     query = {
-        'operationName': 'listEnvironmentConsumptionRoles',
+        'operationName': 'listEnvironmentConsumptionPrincipals',
         'variables': {'environmentUri': env_uri, 'filter': filter},
         'query': """
-                    query listEnvironmentConsumptionRoles($environmentUri: String!, $filter: ConsumptionRoleFilter) {
-                      listEnvironmentConsumptionRoles(environmentUri: $environmentUri, filter: $filter) {
+                    query listEnvironmentConsumptionPrincipals($environmentUri: String!, $filter: ConsumptionPrincipalFilter) {
+                      listEnvironmentConsumptionPrincipals(environmentUri: $environmentUri, filter: $filter) {
                         count
                         page
                         pages
                         hasNext
                         hasPrevious
                         nodes {
-                          consumptionRoleUri
-                          consumptionRoleName
+                          consumptionPrincipalUri
+                          consumptionPrincipalName
                           environmentUri
                           groupUri
-                          IAMRoleArn
+                          IAMPrincipalArn
                         }
                       }
                     }
@@ -267,21 +269,21 @@ def list_environment_consumption_roles(client, env_uri, filter):
     return response.data.listEnvironmentConsumptionPrincipals
 
 
-def remove_consumption_role(client, env_uri, consumption_role_uri):
+def remove_consumption_role(client, env_uri, consumption_princripal_uri):
     query = {
-        'operationName': 'removeConsumptionRoleFromEnvironment',
+        'operationName': 'removeConsumptionPrincipalFromEnvironment',
         'variables': {
             'environmentUri': env_uri,
-            'consumptionRoleUri': consumption_role_uri,
+            'consumptionPrincipalUri': consumption_princripal_uri,
         },
         'query': """
-                    mutation removeConsumptionRoleFromEnvironment(
+                    mutation removeConsumptionPrincipalFromEnvironment(
                       $environmentUri: String!
-                      $consumptionRoleUri: String!
+                      $consumptionPrincipalUri: String!
                     ) {
-                      removeConsumptionRoleFromEnvironment(
+                      removeConsumptionPrincipalFromEnvironment(
                         environmentUri: $environmentUri
-                        consumptionRoleUri: $consumptionRoleUri
+                        consumptionPrincipalUri: $consumptionPrincipalUri
                       )
                     }
         """,

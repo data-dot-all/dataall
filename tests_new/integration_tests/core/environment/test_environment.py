@@ -105,11 +105,11 @@ def test_add_remove_consumption_role(client1, session_env2, group1):
             client1, env_uri, group1, 'TestConsumptionRole', f'arn:aws:iam::{session_env2.AwsAccountId}:role/Admin'
         )
         assert_that(consumption_role).contains_key(
-            'consumptionRoleUri', 'consumptionRoleName', 'environmentUri', 'groupUri', 'IAMRoleArn'
+            'consumptionPrincipalUri', 'consumptionPrincipalName', 'environmentUri', 'groupUri', 'IAMPrincipalArn'
         )
     finally:
         if consumption_role:
-            assert_that(remove_consumption_role(client1, env_uri, consumption_role.consumptionRoleUri)).is_true()
+            assert_that(remove_consumption_role(client1, env_uri, consumption_role.consumptionPrincipalUri)).is_true()
 
 
 def test_add_consumption_role_unauthorized(client2, session_env2, group1):
