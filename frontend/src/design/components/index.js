@@ -32,3 +32,4 @@ export * from './popovers';
 export * from './SanitizedHTML';
 export * from './NoAccessMaintenanceWindow';
 export * from './UserModal';
+export * from './InfoIconWithToolTip';

@@ -1,7 +1,7 @@
 import pytest
 
 from dataall.core.organizations.db.organization_models import Organization
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup
+from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, ConsumptionPrincipal
 from dataall.modules.shares_base.services.shares_enums import (
     ShareableType,
     ShareItemStatus,
@@ -128,15 +128,26 @@ def bucket(db):
 
 @pytest.fixture(scope='module')
 def share(db):
-    def factory(dataset: S3Dataset, environment: Environment, env_group: EnvironmentGroup) -> ShareObject:
+    def factory(
+        dataset: S3Dataset,
+        environment: Environment,
+        env_group: EnvironmentGroup,
+        consumption_principal: ConsumptionPrincipal = None,
+    ) -> ShareObject:
         with db.scoped_session() as session:
             share = ShareObject(
                 datasetUri=dataset.datasetUri,
                 environmentUri=environment.environmentUri,
                 owner='bob',
-                principalId=environment.SamlGroupName,
-                principalType=PrincipalType.Group.value,
-                principalRoleName=env_group.environmentIAMRoleName,
+                principalId=environment.SamlGroupName
+                if not consumption_principal
+                else consumption_principal.consumptionPrincipalUri,
+                principalType=PrincipalType.Group.value
+                if not consumption_principal
+                else PrincipalType.ConsumptionRole.value,
+                principalName=env_group.environmentIAMRoleName
+                if not consumption_principal
+                else consumption_principal.IAMPrincipalName,
                 status=ShareObjectStatus.Approved.value,
                 groupUri=env_group.groupUri,
                 permissions=[ShareObjectDataPermission.Read.value],

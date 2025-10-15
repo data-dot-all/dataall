@@ -175,7 +175,7 @@ class S3ShareObjectRepository:
         return (
             session.query(ShareObject)
             .join(S3Dataset, S3Dataset.datasetUri == ShareObject.datasetUri)
-            .filter(and_(S3Dataset.GlueDatabaseName == database, ShareObject.principalRoleName == principal))
+            .filter(and_(S3Dataset.GlueDatabaseName == database, ShareObject.principalName == principal))
         )
 
     @staticmethod
@@ -211,6 +211,7 @@ class S3ShareObjectRepository:
                     ShareObject.environmentUri == environment_uri,
                     ShareObjectItem.status.in_(share_item_shared_states),
                     ShareObject.principalType != PrincipalType.ConsumptionRole.value,
+                    ShareObject.principalType != PrincipalType.ConsumptionUser.value,
                     or_(
                         ShareObject.owner == username,
                         ShareObject.principalId.in_(groups),

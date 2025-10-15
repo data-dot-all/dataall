@@ -23,11 +23,11 @@ import { Defaults } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import {
   createShareObject,
-  listEnvironmentConsumptionRoles,
+  listEnvironmentConsumptionPrincipals,
   listEnvironmentGroups,
   listValidEnvironments,
   requestDashboardShare,
-  getConsumptionRolePolicies,
+  getConsumptionPrincipalPolicies,
   fetchEnums,
   useClient
 } from 'services';
@@ -141,18 +141,24 @@ export const RequestAccessModal = (props) => {
     setLoadingRoles(true);
     try {
       const response = await client.query(
-        listEnvironmentConsumptionRoles({
+        listEnvironmentConsumptionPrincipals({
           filter: { ...Defaults.selectListFilter, groupUri: groupUri },
           environmentUri
         })
       );
       if (!response.errors) {
         setRoleOptions(
-          response.data.listEnvironmentConsumptionRoles.nodes.map((g) => ({
-            value: g.consumptionRoleUri,
-            label: [g.consumptionRoleName, ' [', g.IAMRoleArn, ']'].join(''),
-            IAMRoleName: g.IAMRoleName,
-            dataallManaged: g.dataallManaged
+          response.data.listEnvironmentConsumptionPrincipals.nodes.map((g) => ({
+            value: g.consumptionPrincipalUri,
+            label: [
+              g.consumptionPrincipalName,
+              ' [',
+              g.IAMPrincipalArn,
+              ']'
+            ].join(''),
+            IAMPrincipalName: g.IAMPrincipalName,
+            dataallManaged: g.dataallManaged,
+            consumptionPrincipalType: g.consumptionPrincipalType
           }))
         );
       } else {
@@ -165,24 +171,30 @@ export const RequestAccessModal = (props) => {
     }
   };
 
-  const fetchRolePolicies = async (environmentUri, IAMRoleName) => {
+  const fetchRolePolicies = async (
+    environmentUri,
+    IAMPrincipalName,
+    IAMPrincipalType
+  ) => {
     setLoadingPolicies(true);
     try {
       const response = await client.query(
-        getConsumptionRolePolicies({
+        getConsumptionPrincipalPolicies({
           environmentUri,
-          IAMRoleName
+          IAMPrincipalName,
+          IAMPrincipalType
         })
       );
       if (!response.errors) {
-        let isSharePoliciesAttached = response.data.getConsumptionRolePolicies
-          .filter((policy) => policy.policy_type === 'SharePolicy')
-          .map((policy) => policy.attached);
+        let isSharePoliciesAttached =
+          response.data.getConsumptionPrincipalPolicies
+            .filter((policy) => policy.policy_type === 'SharePolicy')
+            .map((policy) => policy.attached);
         const isAllPoliciesAttached = isSharePoliciesAttached.every(
-          (value) => value === true
+          (value) => value === 'ATTACHED'
         );
         setIsSharePolicyAttached(isAllPoliciesAttached);
-        let policyNameList = response.data.getConsumptionRolePolicies
+        let policyNameList = response.data.getConsumptionPrincipalPolicies
           .filter((policy) => {
             return (
               policy.policy_type === 'SharePolicy' && policy.attached === false
@@ -258,9 +270,13 @@ export const RequestAccessModal = (props) => {
   };
 
   const formRequestObject = (values) => {
-    let type = values.consumptionRole ? 'ConsumptionRole' : 'Group';
-    let principal = values.consumptionRole.value
-      ? values.consumptionRole.value
+    let type = values.consumptionPrincipal
+      ? values.consumptionPrincipal.consumptionPrincipalType === 'USER'
+        ? 'ConsumptionUser'
+        : 'ConsumptionRole'
+      : 'Group';
+    let principal = values.consumptionPrincipal.value
+      ? values.consumptionPrincipal.value
       : values.groupUri;
 
     let inputObject = {
@@ -357,8 +373,8 @@ export const RequestAccessModal = (props) => {
           </Typography>
           <Typography align="center" color="textSecondary" variant="subtitle2">
             Data access is requested for the whole requester Team or for the
-            selected Consumption role. The request will be submitted to the data
-            owners, track its progress in the Shares menu on the left.
+            selected Consumption Principal. The request will be submitted to the
+            data owners, track its progress in the Shares menu on the left.
           </Typography>
           <Box sx={{ p: 3 }}>
             <Formik
@@ -375,7 +391,7 @@ export const RequestAccessModal = (props) => {
                   '*Environment is required'
                 ),
                 groupUri: Yup.string().required('*Team is required'),
-                consumptionRole: Yup.object(),
+                consumptionPrincipal: Yup.object(),
                 comment: Yup.string().max(5000),
                 shareExpirationPeriod:
                   datasetExpirationDetails.enableExpiration &&
@@ -475,7 +491,7 @@ export const RequestAccessModal = (props) => {
                             options={environmentOptions.map((option) => option)}
                             onChange={(event, value) => {
                               setFieldValue('groupUri', '');
-                              setFieldValue('consumptionRole', '');
+                              setFieldValue('consumptionPrincipal', '');
                               if (value && value.environmentUri) {
                                 setFieldValue(
                                   'environmentUri',
@@ -523,7 +539,7 @@ export const RequestAccessModal = (props) => {
                                   disablePortal
                                   options={groupOptions.map((option) => option)}
                                   onChange={(event, value) => {
-                                    setFieldValue('consumptionRole', '');
+                                    setFieldValue('consumptionPrincipal', '');
                                     if (value && value.value) {
                                       setFieldValue('groupUri', value.value);
                                       fetchRoles(
@@ -602,16 +618,20 @@ export const RequestAccessModal = (props) => {
                             <Box>
                               {roleOptions.length > 0 ? (
                                 <Autocomplete
-                                  id="consumptionRole"
+                                  id="consumptionPrincipal"
                                   disablePortal
                                   options={roleOptions.map((option) => option)}
                                   getOptionLabel={(option) => option.label}
                                   onChange={(event, value) => {
-                                    setFieldValue('consumptionRole', value);
-                                    if (value && value.IAMRoleName) {
+                                    setFieldValue(
+                                      'consumptionPrincipal',
+                                      value
+                                    );
+                                    if (value && value.IAMPrincipalName) {
                                       fetchRolePolicies(
                                         values.environmentUri,
-                                        value.IAMRoleName
+                                        value.IAMPrincipalName,
+                                        value.consumptionPrincipalType
                                       ).catch((e) =>
                                         dispatch({
                                           type: SET_ERROR,
@@ -619,7 +639,7 @@ export const RequestAccessModal = (props) => {
                                         })
                                       );
                                     } else {
-                                      setFieldValue('consumptionRole', '');
+                                      setFieldValue('consumptionPrincipal', '');
                                       setUnAttachedPolicyNames('');
                                     }
                                   }}
@@ -628,14 +648,14 @@ export const RequestAccessModal = (props) => {
                                       {...params}
                                       fullWidth
                                       error={Boolean(
-                                        touched.consumptionRole &&
-                                          errors.consumptionRole
+                                        touched.consumptionPrincipal &&
+                                          errors.consumptionPrincipal
                                       )}
                                       helperText={
-                                        touched.consumptionRole &&
-                                        errors.consumptionRole
+                                        touched.consumptionPrincipal &&
+                                        errors.consumptionPrincipal
                                       }
-                                      label="Consumption Role (optional)"
+                                      label="Consumption Principal (optional)"
                                       onChange={handleChange}
                                       variant="outlined"
                                     />
@@ -644,17 +664,17 @@ export const RequestAccessModal = (props) => {
                               ) : (
                                 <TextField
                                   error={Boolean(
-                                    touched.consumptionRole &&
-                                      errors.consumptionRole
+                                    touched.consumptionPrincipal &&
+                                      errors.consumptionPrincipal
                                   )}
                                   helperText={
-                                    touched.consumptionRole &&
-                                    errors.consumptionRole
+                                    touched.consumptionPrincipal &&
+                                    errors.consumptionPrincipal
                                   }
                                   fullWidth
                                   disabled
-                                  label="Consumption Role (optional)"
-                                  value="No additional consumption roles owned by this Team in this Environment."
+                                  label="Consumption Principal (optional)"
+                                  value="No additional consumption pricipals are owned by this Team in this Environment."
                                   variant="outlined"
                                 />
                               )}
@@ -719,8 +739,11 @@ export const RequestAccessModal = (props) => {
                         </CardContent>
                       </Box>
                     )}
-                    {!values.consumptionRole ||
-                    values.consumptionRole.dataallManaged ||
+                    {!values.consumptionPrincipal ||
+                    values.consumptionPrincipal.dataallManaged ===
+                      'FULLY_MANAGED' ||
+                    values.consumptionPrincipal.dataallManaged ===
+                      'EXTERNALLY_MANAGED' ||
                     isSharePolicyAttached ? (
                       <Box />
                     ) : (
@@ -742,25 +765,24 @@ export const RequestAccessModal = (props) => {
                                 color="textSecondary"
                                 component="p"
                                 variant="caption"
-                              ></Typography>
-                              {values.consumptionRole &&
-                              !(
-                                values.consumptionRole.dataallManaged ||
-                                isSharePolicyAttached ||
-                                values.attachMissingPolicies
-                              ) ? (
-                                <FormHelperText error>
-                                  Selected consumption role is managed by
-                                  customer, but the share policy{' '}
-                                  <strong>{unAttachedPolicyNames}</strong> is
-                                  not attached.
-                                  <br />
-                                  Please attach it or let Data.all attach it for
-                                  you.
-                                </FormHelperText>
-                              ) : (
-                                ''
-                              )}
+                              >
+                                {values.consumptionPrincipal &&
+                                values.consumptionPrincipal.dataallManaged ===
+                                  'PARTIALLY_MANAGED' &&
+                                !isSharePolicyAttached ? (
+                                  <FormHelperText error>
+                                    Selected consumption role is partially
+                                    managed by customer and the share policy{' '}
+                                    <strong>{unAttachedPolicyNames}</strong> is
+                                    not attached.
+                                    <br />
+                                    Please attach it or let Data.all attach it
+                                    for you.
+                                  </FormHelperText>
+                                ) : (
+                                  ''
+                                )}
+                              </Typography>
                             </div>
                           }
                         />
@@ -780,9 +802,9 @@ export const RequestAccessModal = (props) => {
                         disabled={
                           isSubmitting ||
                           loading ||
-                          (values.consumptionRole &&
+                          (values.consumptionPrincipal &&
                             !(
-                              values.consumptionRole.dataallManaged ||
+                              values.consumptionPrincipal.dataallManaged ||
                               isSharePolicyAttached ||
                               values.attachMissingPolicies
                             ))

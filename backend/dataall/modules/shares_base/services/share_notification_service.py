@@ -120,13 +120,13 @@ class ShareNotificationService:
 
         msg_intro = f"""Dear User, <br>
         
-        We are contacting you because a share requested by {email_id} failed because no new managed policy can be attached to your IAM role {self.share.principalRoleName}.
+        We are contacting you because a share requested by {email_id} failed because no new managed policy can be attached to your IAM role {self.share.principalName}.
         Please check the service quota for the number of managed policies that can be attached to a role in your aws account and increase the limit.
         For reference please take a look at this link - https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-quotas.html#reference_iam-quotas-entities.<br>
         Or please remove any unused managed policies from that role. <br>
         
     
-        Note - Previously made shares are not affected but any newly added share items or new shares on requestor role {self.share.principalRoleName} will be fail till the time you increase the IAM quota limit or detach any other managed policy from that role.
+        Note - Previously made shares are not affected but any newly added share items or new shares on requestor role {self.share.principalName} will be fail till the time you increase the IAM quota limit or detach any other managed policy from that role.
         """
 
         msg_end = """Your prompt attention in this matter is greatly appreciated.

@@ -426,7 +426,7 @@ def share(db):
                 groupUri=env_group.groupUri,
                 principalId=env_group.groupUri,
                 principalType=PrincipalType.Group.value,
-                principalRoleName=env_group.environmentIAMRoleName,
+                principalName=env_group.environmentIAMRoleName,
                 status=status,
                 expiryDate=expirationDate,
                 permissions=[permissions],

@@ -256,6 +256,16 @@ class SessionHelper:
             return None
 
     @staticmethod
+    def get_user_id(accountid, region, name):
+        session = SessionHelper.remote_session(accountid=accountid, region=region)
+        client = session.client('iam')
+        try:
+            response = client.get_user(UserName=name)
+            return response['User']['UserId']
+        except ClientError:
+            return None
+
+    @staticmethod
     def extract_account_from_role_arn(arn):
         """takes a role arn and returns its account id
         Args :

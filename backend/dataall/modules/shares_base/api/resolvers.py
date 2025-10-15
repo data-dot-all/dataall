@@ -85,7 +85,7 @@ def create_share_object(
         item_type=itemType,
         group_uri=input['groupUri'],
         principal_id=input['principalId'],
-        principal_role_name=input.get('principalRoleName'),
+        principal_name=input.get('principalName'),
         principal_type=input['principalType'],
         requestPurpose=input.get('requestPurpose'),
         attachMissingPolicies=input.get('attachMissingPolicies', False),
@@ -250,23 +250,31 @@ def resolve_principal(context: Context, source: ShareObject, **kwargs):
         if source.principalType in set(item.value for item in PrincipalType):
             environment = EnvironmentService.get_environment_by_uri(session, source.environmentUri)
             if source.principalType == PrincipalType.ConsumptionRole.value:
-                principal = EnvironmentService.get_environment_consumption_role(
+                principal = EnvironmentService.get_environment_consumption_principal(
                     session, source.principalId, source.environmentUri
                 )
-                principalName = f'{principal.consumptionRoleName} [{principal.IAMRoleArn}]'
+                principalName = f'{principal.consumptionPrincipalName} [{principal.IAMPrincipalArn}]'
+            elif source.principalType == PrincipalType.ConsumptionUser.value:
+                principal = EnvironmentService.get_environment_consumption_principal(
+                    session, source.principalId, source.environmentUri
+                )
+                principalName = f'{principal.consumptionPrincipalName} [{principal.IAMPrincipalArn}]'
             elif source.principalType == PrincipalType.Group.value:
                 principal = EnvironmentService.get_environment_group(session, source.groupUri, source.environmentUri)
+                principal.__setattr__('consumptionPrincipalType', 'ROLE')
                 principalName = f'{source.groupUri} [{principal.environmentIAMRoleArn}]'
             else:
-                principalName = f'Redshift Role [{source.principalRoleName}]'
+                principalName = f'Redshift Role [{source.principalName}]'
 
+            IAMPrincipalType = principal.consumptionPrincipalType
             return {
                 'principalName': principalName,
                 'principalId': source.principalId,
                 'principalType': source.principalType,
-                'principalRoleName': source.principalRoleName,
+                'principalRoleName': source.principalName,
                 'SamlGroupName': source.groupUri,
                 'environmentName': environment.label,
+                'IAMPrincipalType': IAMPrincipalType,
             }
 
 
@@ -286,6 +294,12 @@ def resolve_existing_shared_items(context: Context, source: ShareObject, **kwarg
     if not source:
         return None
     return ShareItemService.check_existing_shared_items(source)
+
+
+def resolve_role_policy_management(context, source: ShareObject):
+    if not source:
+        return 'Not Available'
+    return EnvironmentService.get_role_policy_management_type(source.principalType, source.principalId)
 
 
 def list_shareable_objects(context: Context, source: ShareObject, filter: dict = None):

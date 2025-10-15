@@ -35,6 +35,7 @@ import { VscChecklist } from 'react-icons/vsc';
 import {
   Defaults,
   DeleteObjectWithFrictionModal,
+  InfoIconWithToolTip,
   Label,
   Pager,
   RefreshTableMenu,
@@ -45,23 +46,25 @@ import {
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { isFeatureEnabled } from 'utils';
 import {
-  getConsumptionRolePolicies,
+  fetchEnums,
+  getConsumptionPrincipalPolicies,
   useClient,
   useFetchGroups
 } from 'services';
 import {
   generateEnvironmentAccessToken,
   getEnvironmentAssumeRoleUrl,
-  listAllEnvironmentConsumptionRoles,
+  listAllEnvironmentConsumptionPrincipals,
   listAllEnvironmentGroups,
-  removeConsumptionRoleFromEnvironment,
+  removeConsumptionPrincipalFromEnvironment,
   removeGroupFromEnvironment,
-  updateConsumptionRole
+  updateConsumptionPrincipal
 } from '../services';
-import { EnvironmentRoleAddForm } from './EnvironmentRoleAddForm';
+import { EnvironmentPrincipalAddForm } from './EnvironmentPrincipalAddForm';
 import { EnvironmentTeamInviteEditForm } from './EnvironmentTeamInviteEditForm';
 import { EnvironmentTeamInviteForm } from './EnvironmentTeamInviteForm';
 import { DataGrid, GridActionsCellItem, GridRowModes } from '@mui/x-data-grid';
+import { policyManagementInfoMap } from '../../constants';
 
 function TeamRow({
   team,
@@ -292,12 +295,17 @@ TeamRow.propTypes = {
   isTeamEditModalOpenId: PropTypes.string
 };
 
-export const IAMRolePolicyDataGridCell = ({ environmentUri, IAMRoleName }) => {
+export const IAMPrincipalPolicyDataGridCell = ({
+  environmentUri,
+  IAMPrincipalName,
+  IAMPrincipalType
+}) => {
   const [isLoading, setLoading] = useState(true);
   const [managedPolicyDetails, setManagedPolicyDetails] = useState(null);
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const client = useClient();
+  const [policyAttachStatus, setPolicyAttachStatus] = useState('Not Attached');
 
   useEffect(() => {
     if (client) {
@@ -311,13 +319,19 @@ export const IAMRolePolicyDataGridCell = ({ environmentUri, IAMRoleName }) => {
     setLoading(true);
     try {
       const response = await client.query(
-        getConsumptionRolePolicies({
+        getConsumptionPrincipalPolicies({
           environmentUri: environmentUri,
-          IAMRoleName: IAMRoleName
+          IAMPrincipalName: IAMPrincipalName,
+          IAMPrincipalType: IAMPrincipalType
         })
       );
       if (!response.errors) {
-        setManagedPolicyDetails(response.data.getConsumptionRolePolicies);
+        setManagedPolicyDetails(response.data.getConsumptionPrincipalPolicies);
+        setPolicyAttachStatus(
+          getIAMPolicyAttachementStatus(
+            response.data.getConsumptionPrincipalPolicies
+          )
+        );
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -328,27 +342,37 @@ export const IAMRolePolicyDataGridCell = ({ environmentUri, IAMRoleName }) => {
     }
   };
 
+  const getIAMPolicyTagColour = () => {
+    if (policyAttachStatus === 'N/A') return 'warning';
+    if (policyAttachStatus === 'Not Attached') return 'error';
+    if (policyAttachStatus === 'No Policies Present') return 'error';
+    return 'success';
+  };
+
+  const getIAMPolicyAttachementStatus = (managedPolicyDetails) => {
+    if (managedPolicyDetails.length === 0) {
+      return 'No Policies Present';
+    }
+    const is_policy_attach = managedPolicyDetails.map(
+      (policy) => policy.attached
+    );
+    if (is_policy_attach.every((policy) => policy === 'NOTAPPLICABLE')) {
+      return 'N/A';
+    }
+    if (is_policy_attach.some((policy) => policy === 'NOTATTACHED')) {
+      return 'Not Attached';
+    }
+    return 'Attached';
+  };
+
   return (
     <Box>
       {isLoading ? (
         <CircularProgress size={30} />
       ) : (
         <Box>
-          <Label
-            sx={{ ml: 5 }}
-            color={
-              managedPolicyDetails
-                .map((policy) => policy.attached)
-                .includes(false)
-                ? 'error'
-                : 'success'
-            }
-          >
-            {managedPolicyDetails
-              .map((policy) => policy.attached)
-              .includes(false)
-              ? 'Not Attached'
-              : 'Attached'}
+          <Label sx={{ ml: 5 }} color={getIAMPolicyTagColour()}>
+            {policyAttachStatus}
           </Label>
           <LoadingButton
             onClick={async () => {
@@ -372,9 +396,9 @@ export const IAMRolePolicyDataGridCell = ({ environmentUri, IAMRoleName }) => {
   );
 };
 
-IAMRolePolicyDataGridCell.propTypes = {
+IAMPrincipalPolicyDataGridCell.propTypes = {
   environmentUri: PropTypes.any,
-  IAMRoleName: PropTypes.any
+  IAMPrincipalName: PropTypes.any
 };
 
 export const EnvironmentTeams = ({ environment }) => {
@@ -394,6 +418,7 @@ export const EnvironmentTeams = ({ environment }) => {
   const [isDeleteRoleModalOpenId, setIsDeleteRoleModalOpen] = useState(0);
   const [isTeamEditModalOpenId, setIsTeamEditModalOpen] = useState('');
   const [isDeleteTeamModalOpenId, setIsDeleteTeamModalOpen] = useState('');
+  const [policyManagementOptions, setPolicyManagementOptions] = useState([]);
 
   const handleDeleteTeamModalOpen = (groupUri) => {
     setIsDeleteTeamModalOpen(groupUri);
@@ -452,17 +477,17 @@ export const EnvironmentTeams = ({ environment }) => {
     }
   }, [client, dispatch, environment, filter]);
 
-  const fetchRoles = useCallback(async () => {
+  const fetchPrincipals = useCallback(async () => {
     try {
       setLoadingRoles(true);
       const response = await client.query(
-        listAllEnvironmentConsumptionRoles({
+        listAllEnvironmentConsumptionPrincipals({
           environmentUri: environment.environmentUri,
           filter: filterRoles
         })
       );
       if (!response.errors) {
-        setRoles({ ...response.data.listAllEnvironmentConsumptionRoles });
+        setRoles({ ...response.data.listAllEnvironmentConsumptionPrincipals });
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -473,12 +498,12 @@ export const EnvironmentTeams = ({ environment }) => {
     }
   }, [client, dispatch, environment, filterRoles]);
 
-  const removeConsumptionRole = async (consumptionGroupUri) => {
+  const removeConsumptionRole = async (consumptionPrincipalUri) => {
     try {
       const response = await client.mutate(
-        removeConsumptionRoleFromEnvironment({
+        removeConsumptionPrincipalFromEnvironment({
           environmentUri: environment.environmentUri,
-          consumptionRoleUri: consumptionGroupUri
+          consumptionPrincipalUri: consumptionPrincipalUri
         })
       );
       if (!response.errors) {
@@ -489,7 +514,7 @@ export const EnvironmentTeams = ({ environment }) => {
           },
           variant: 'success'
         });
-        fetchRoles();
+        fetchPrincipals();
       } else {
         dispatch({ type: SET_ERROR, error: response.errors[0].message });
       }
@@ -498,28 +523,48 @@ export const EnvironmentTeams = ({ environment }) => {
     }
   };
 
-  const updateConsumptionRoleHandler = async (newRow) => {
+  const updateConsumptionPrincipalHandler = async (newRow) => {
     const response = await client.mutate(
-      updateConsumptionRole({
+      updateConsumptionPrincipal({
         environmentUri: environment.environmentUri,
-        consumptionRoleUri: newRow.consumptionRoleUri,
+        consumptionPrincipalUri: newRow.consumptionPrincipalUri,
         input: {
           groupUri: newRow.groupUri,
-          consumptionRoleName: newRow.consumptionRoleName
+          consumptionPrincipalName: newRow.consumptionPrincipalName,
+          dataallManaged: newRow.dataallManaged
         }
       })
     );
     if (!response.errors) {
-      enqueueSnackbar('Consumption Role was updated', {
+      enqueueSnackbar('Consumption Principal was updated', {
         anchorOrigin: {
           horizontal: 'right',
           vertical: 'top'
         },
         variant: 'success'
       });
-      fetchRoles();
+      fetchPrincipals();
     } else {
       throw new Error(response.errors[0].message);
+    }
+  };
+
+  const fetchPolicyManagementOptions = async () => {
+    const response = await fetchEnums(client, ['PolicyManagementOptions']);
+    if (response['PolicyManagementOptions'].length > 0) {
+      setPolicyManagementOptions(
+        response['PolicyManagementOptions'].map((elem) => {
+          return {
+            label: elem.value,
+            key: elem.name
+          };
+        })
+      );
+    } else {
+      dispatch({
+        type: SET_ERROR,
+        error: 'Could not fetch consumption role policy management options'
+      });
     }
   };
 
@@ -528,11 +573,21 @@ export const EnvironmentTeams = ({ environment }) => {
       fetchItems().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
-      fetchRoles().catch((e) =>
+      fetchPrincipals().catch((e) =>
+        dispatch({ type: SET_ERROR, error: e.message })
+      );
+      fetchPolicyManagementOptions().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
-  }, [client, filter.page, filterRoles.page, fetchItems, fetchRoles, dispatch]);
+  }, [
+    client,
+    filter.page,
+    filterRoles.page,
+    fetchItems,
+    fetchPrincipals,
+    dispatch
+  ]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
@@ -560,7 +615,7 @@ export const EnvironmentTeams = ({ environment }) => {
 
   const handleInputKeyupRoles = (event) => {
     if (event.code === 'Enter') {
-      fetchRoles().catch((e) =>
+      fetchPrincipals().catch((e) =>
         dispatch({ type: SET_ERROR, error: e.message })
       );
     }
@@ -599,8 +654,18 @@ export const EnvironmentTeams = ({ environment }) => {
   };
 
   const processRowUpdate = async (newRow) => {
-    await updateConsumptionRoleHandler(newRow);
+    await updateConsumptionPrincipalHandler(newRow);
     return newRow;
+  };
+
+  const formattedName = (unformattedPolicyMgmtName) => {
+    // Split name by "_"
+    return unformattedPolicyMgmtName
+      .split('_')
+      .map((word) => {
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      })
+      .join('-');
   };
 
   let { groupOptions } = useFetchGroups(environment);
@@ -728,11 +793,16 @@ export const EnvironmentTeams = ({ environment }) => {
       <Box sx={{ mt: 3 }}>
         <Card>
           <CardHeader
-            action={<RefreshTableMenu refresh={fetchRoles} />}
+            action={<RefreshTableMenu refresh={fetchPrincipals} />}
             title={
               <Box>
                 <SupervisedUserCircleRounded style={{ marginRight: '10px' }} />{' '}
-                Environment Consumption IAM roles
+                Environment Consumption IAM Principals
+                <InfoIconWithToolTip
+                  title={
+                    'Bring you own IAM Role/User (IAM Principals) and onboard it on data.all. You can use this IAM Role/User to create share on datasets in data.all'
+                  }
+                />
               </Box>
             }
           />
@@ -779,14 +849,15 @@ export const EnvironmentTeams = ({ environment }) => {
                 onClick={handleAddRoleModalOpen}
                 variant="contained"
               >
-                Add Consumption Role
+                Add Consumption Principal
               </Button>
               {isAddRoleModalOpen && (
-                <EnvironmentRoleAddForm
+                <EnvironmentPrincipalAddForm
                   environment={environment}
                   open
-                  reloadRoles={fetchRoles}
+                  reloadPrincipals={fetchPrincipals}
                   onClose={handleAddRoleModalClose}
+                  policyManagementOptions={policyManagementOptions}
                 />
               )}
             </Grid>
@@ -795,24 +866,37 @@ export const EnvironmentTeams = ({ environment }) => {
             <Box sx={{ minWidth: 600 }}>
               <DataGrid
                 autoHeight
-                getRowId={(node) => node.consumptionRoleUri}
+                getRowId={(node) => node.consumptionPrincipalUri}
                 rows={roles.nodes}
                 columns={[
                   { field: 'id', hide: true },
                   {
-                    field: 'consumptionRoleName',
+                    field: 'consumptionPrincipalName',
                     headerName: 'Name',
                     flex: 0.5,
                     editable: true
                   },
                   {
-                    field: 'IAMRoleArn',
-                    headerName: 'IAM Role',
+                    field: 'IAMPrincipalArn',
+                    headerName: 'IAM Principal',
                     flex: 1
                   },
                   {
+                    field: 'consumptionPrincipalType',
+                    headerName: 'IAM Principal Type',
+                    renderCell: (params) => {
+                      return (
+                        params.row.consumptionPrincipalType.charAt(0) +
+                        params.row.consumptionPrincipalType
+                          .slice(1)
+                          .toLowerCase()
+                      );
+                    },
+                    flex: 0.5
+                  },
+                  {
                     field: 'groupUri',
-                    headerName: 'Role Owner',
+                    headerName: 'Principal Owner',
                     flex: 0.5,
                     editable: true,
                     type: 'singleSelect',
@@ -821,23 +905,47 @@ export const EnvironmentTeams = ({ environment }) => {
                   {
                     field: 'dataallManaged',
                     headerName: 'Policy Management',
-                    valueGetter: (params) => {
-                      return `${
-                        params.row.dataallManaged
-                          ? 'Data.all managed'
-                          : 'Customer managed'
-                      }`;
+                    renderCell: (params) => {
+                      return (
+                        <span>
+                          {formattedName(params.row.dataallManaged)}
+                          <InfoIconWithToolTip
+                            title={
+                              <span style={{ fontSize: 'small' }}>
+                                {policyManagementInfoMap[
+                                  params.row.dataallManaged
+                                ] != null
+                                  ? policyManagementInfoMap[
+                                      params.row.dataallManaged
+                                    ]
+                                  : 'Invalid Option for policy management.'}
+                              </span>
+                            }
+                            size={1}
+                            placement={'right-start'}
+                          />
+                        </span>
+                      );
                     },
-                    flex: 0.6
+                    flex: 0.6,
+                    editable: true,
+                    type: 'singleSelect',
+                    valueOptions: policyManagementOptions.map((obj) => obj.key),
+                    valueFormatter: (value) => {
+                      return formattedName(value.value);
+                    }
                   },
                   {
                     field: 'policiesNames',
                     headerName: 'IAM Policies',
                     flex: 0.5,
                     renderCell: (params: GridRenderCellParams<any, Date>) => (
-                      <IAMRolePolicyDataGridCell
+                      <IAMPrincipalPolicyDataGridCell
                         environmentUri={params.row.environmentUri}
-                        IAMRoleName={params.row.IAMRoleArn.split('/').pop()}
+                        IAMPrincipalName={params.row.IAMPrincipalArn.split(
+                          '/'
+                        ).pop()}
+                        IAMPrincipalType={params.row.consumptionPrincipalType}
                       />
                     )
                   },
@@ -848,7 +956,7 @@ export const EnvironmentTeams = ({ environment }) => {
                     type: 'actions',
                     cellClassName: 'actions',
                     getActions: ({ id, ...props }) => {
-                      const name = props.row.consumptionRoleName;
+                      const name = props.row.consumptionPrincipalName;
                       const isInEditMode =
                         rowModesModel[id]?.mode === GridRowModes.Edit;
 

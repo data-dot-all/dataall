@@ -201,7 +201,7 @@ def test_get_share_principals(
 
     # Then, it should return
     assert manager.get_share_principals() == [
-        f'arn:aws:iam::{target_environment.AwsAccountId}:role/{share.principalRoleName}'
+        f'arn:aws:iam::{target_environment.AwsAccountId}:role/{share.principalName}'
     ]
     get_iam_role_arn_mock.assert_called_once()
 

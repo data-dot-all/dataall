@@ -4,6 +4,7 @@ from typing import Any, List, Dict
 from dataall.base.aws.iam import IAM
 from dataall.base.aws.service_quota import ServiceQuota
 from dataall.base.db.exceptions import AWSServiceQuotaExceeded
+from dataall.base.utils.consumption_principal_utils import EnvironmentIAMPrincipalType
 from dataall.base.utils.iam_policy_utils import (
     split_policy_statements_in_chunks,
     split_policy_with_resources_in_statements,
@@ -27,13 +28,23 @@ EMPTY_STATEMENT_SID = 'EmptyStatement'
 
 S3_ALLOWED_ACTIONS = ['s3:List*', 's3:Describe*', 's3:GetObject']
 IAM_SERVICE_NAME = 'AWS Identity and Access Management (IAM)'
-IAM_SERVICE_QUOTA_NAME = 'Managed policies per role'
+IAM_ROLE_SERVICE_QUOTA_NAME = 'Managed policies per role'
+IAM_USER_SERVICE_QUOTA_NAME = 'Managed policies per user'
 DEFAULT_MAX_ATTACHABLE_MANAGED_POLICIES_ACCOUNT = 10
 
 
 class S3SharePolicyService(ManagedPolicy):
-    def __init__(self, role_name, account, region, environmentUri, resource_prefix):
-        self.role_name = role_name
+    def __init__(
+        self,
+        principal_name,
+        account,
+        region,
+        environmentUri,
+        resource_prefix,
+        principal_type=EnvironmentIAMPrincipalType.ROLE.value,
+    ):
+        self.principal_name = principal_name
+        self.principal_type = principal_type
         self.account = account
         self.region = region
         self.environmentUri = environmentUri
@@ -74,7 +85,7 @@ class S3SharePolicyService(ManagedPolicy):
         # This function should be deprecated and removed in the future
         return NamingConventionService(
             target_label=f'env-{self.environmentUri}-share-policy',
-            target_uri=self.role_name,
+            target_uri=self.principal_name,
             pattern=NamingConventionPattern.IAM_POLICY,
             resource_prefix=self.resource_prefix,
         ).build_compliant_name()
@@ -86,7 +97,7 @@ class S3SharePolicyService(ManagedPolicy):
         """
         return NamingConventionService(
             target_label=f'env-{self.environmentUri}-share-policy',
-            target_uri=self.role_name,
+            target_uri=self.principal_name,
             pattern=NamingConventionPattern.IAM_POLICY,
             resource_prefix=self.resource_prefix,
         ).build_compliant_name_with_index()
@@ -94,7 +105,7 @@ class S3SharePolicyService(ManagedPolicy):
     def generate_indexed_policy_name(self, index: int = 0) -> str:
         return NamingConventionService(
             target_label=f'env-{self.environmentUri}-share-policy',
-            target_uri=self.role_name,
+            target_uri=self.principal_name,
             pattern=NamingConventionPattern.IAM_POLICY,
             resource_prefix=self.resource_prefix,
         ).build_compliant_name_with_index(index)
@@ -230,7 +241,7 @@ class S3SharePolicyService(ManagedPolicy):
             IAM.detach_policy_from_role(
                 account_id=self.account,
                 region=self.region,
-                role_name=self.role_name,
+                role_name=self.principal_name,
                 policy_name=old_managed_policy_name,
             )
 
@@ -300,7 +311,9 @@ class S3SharePolicyService(ManagedPolicy):
             self._create_empty_policies_with_indexes(indexes=missing_policies_indexes)
 
         # Check if managed policies can be attached to target requester role and new service policies do not exceed service quota limit
-        log.info('Checking service quota limit for number of managed policies which can be attached to role')
+        log.info(
+            f'Checking service quota limit for number of managed policies which can be attached to principal: {self.principal_name}'
+        )
         self._check_iam_managed_policy_attachment_limit(policy_document_chunks)
 
         # Check if the number of policies required are greater than currently present
@@ -353,7 +366,10 @@ class S3SharePolicyService(ManagedPolicy):
             if self.check_if_policy_exists(policy_name=policy_name):
                 if self.check_if_policy_attached(policy_name=policy_name):
                     IAM.detach_policy_from_role(
-                        account_id=self.account, region=self.region, role_name=self.role_name, policy_name=policy_name
+                        account_id=self.account,
+                        region=self.region,
+                        role_name=self.principal_name,
+                        policy_name=policy_name,
                     )
                 IAM.delete_managed_policy_non_default_versions(
                     account_id=self.account, region=self.region, policy_name=policy_name
@@ -397,11 +413,19 @@ class S3SharePolicyService(ManagedPolicy):
     def _check_iam_managed_policy_attachment_limit(self, policy_document_chunks):
         number_of_policies_needed = len(policy_document_chunks)
         policies_present = self.get_managed_policies()
-        managed_policies_attached_to_role = IAM.get_attached_managed_policies_to_role(
-            account_id=self.account, region=self.region, role_name=self.role_name
-        )
+        if self.principal_type == EnvironmentIAMPrincipalType.ROLE.value:
+            managed_policies_attached_to_principal = IAM.get_attached_managed_policies_to_role(
+                account_id=self.account, region=self.region, role_name=self.principal_name
+            )
+        elif self.principal_type == EnvironmentIAMPrincipalType.USER.value:
+            managed_policies_attached_to_principal = IAM.get_attached_managed_policies_to_user(
+                account_id=self.account, region=self.region, user_name=self.principal_name
+            )
+        else:
+            raise Exception('Unsupported Requestor Type detected')
+
         number_of_non_share_managed_policies_attached_to_role = len(
-            [policy for policy in managed_policies_attached_to_role if policy not in policies_present]
+            [policy for policy in managed_policies_attached_to_principal if policy not in policies_present]
         )
         log.info(
             f'number_of_non_share_managed_policies_attached_to_role: {number_of_non_share_managed_policies_attached_to_role}'
@@ -411,14 +435,14 @@ class S3SharePolicyService(ManagedPolicy):
         if number_of_policies_needed + number_of_non_share_managed_policies_attached_to_role > managed_iam_policy_quota:
             # Send an email notification to the requestors to increase the quota
             log.error(
-                f'Number of policies which can be attached to the role is more than the service quota limit: {managed_iam_policy_quota}'
+                f'Number of policies which can be attached to the principal {self.principal_type} is more than the service quota limit: {managed_iam_policy_quota}'
             )
             raise AWSServiceQuotaExceeded(
                 action='_check_iam_managed_policy_attachment_limit',
-                message=f'Number of policies which can be attached to the role is more than the service quota limit: {managed_iam_policy_quota}',
+                message=f'Number of policies which can be attached to the principal {self.principal_type} is more than the service quota limit: {managed_iam_policy_quota}',
             )
 
-        log.info(f'Role: {self.role_name} has capacity to attach managed policies')
+        log.info(f'Principal: {self.principal_name} has capacity to attach managed policies')
 
     def _get_managed_policy_quota(self):
         # Get the number of managed policies which can be attached to the IAM role
@@ -434,7 +458,16 @@ class S3SharePolicyService(ManagedPolicy):
         if service_code:
             service_quota_codes = service_quota_client.list_service_quota(service_code=service_code)
             for service_quota_cd in service_quota_codes:
-                if service_quota_cd.get('QuotaName') == IAM_SERVICE_QUOTA_NAME:
+                if (
+                    self.principal_type == EnvironmentIAMPrincipalType.ROLE.value
+                    and service_quota_cd.get('QuotaName') == IAM_ROLE_SERVICE_QUOTA_NAME
+                ):
+                    service_quota_code = service_quota_cd.get('QuotaCode')
+                    break
+                if (
+                    self.principal_type == EnvironmentIAMPrincipalType.USER.value
+                    and service_quota_cd.get('QuotaName') == IAM_USER_SERVICE_QUOTA_NAME
+                ):
                     service_quota_code = service_quota_cd.get('QuotaCode')
                     break
 
@@ -642,7 +675,7 @@ class S3SharePolicyService(ManagedPolicy):
         # This function can only be used for backwards compatibility where policies had statement[0] for s3
         # and statement[1] for KMS permissions
         try:
-            existing_policy = IAM.get_role_policy(self.account, self.region, self.role_name, policy_name)
+            existing_policy = IAM.get_role_policy(self.account, self.region, self.principal_name, policy_name)
             if existing_policy is not None:
                 kms_resources = (
                     existing_policy['Statement'][1]['Resource'] if len(existing_policy['Statement']) > 1 else []
@@ -657,10 +690,10 @@ class S3SharePolicyService(ManagedPolicy):
     def _delete_old_inline_policies(self):
         for policy_name in [OLD_IAM_S3BUCKET_ROLE_POLICY, OLD_IAM_ACCESS_POINT_ROLE_POLICY]:
             try:
-                existing_policy = IAM.get_role_policy(self.account, self.region, self.role_name, policy_name)
+                existing_policy = IAM.get_role_policy(self.account, self.region, self.principal_name, policy_name)
                 if existing_policy is not None:
                     log.info(f'Deleting inline policy: {policy_name}')
-                    IAM.delete_role_policy(self.account, self.region, self.role_name, policy_name)
+                    IAM.delete_role_policy(self.account, self.region, self.principal_name, policy_name)
                 else:
                     pass
             except Exception as e:

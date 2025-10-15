@@ -1,6 +1,6 @@
 from dataall.base.api import gql
 from dataall.base.api.constants import GraphQLEnumMapper, SortDirection
-
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 
 AwsEnvironmentInput = gql.InputType(
     name='AwsEnvironmentInput',
@@ -94,19 +94,19 @@ InviteGroupOnEnvironmentInput = gql.InputType(
     ],
 )
 
-AddConsumptionRoleToEnvironmentInput = gql.InputType(
-    name='AddConsumptionRoleToEnvironmentInput',
+AddConsumptionPrincipalToEnvironmentInput = gql.InputType(
+    name='AddConsumptionPrincipalToEnvironmentInput',
     arguments=[
-        gql.Argument('consumptionRoleName', gql.NonNullableType(gql.String)),
+        gql.Argument('consumptionPrincipalName', gql.NonNullableType(gql.String)),
         gql.Argument('groupUri', gql.NonNullableType(gql.String)),
-        gql.Argument('IAMRoleArn', gql.NonNullableType(gql.String)),
+        gql.Argument('IAMPrincipalArn', gql.NonNullableType(gql.String)),
         gql.Argument('environmentUri', gql.NonNullableType(gql.String)),
-        gql.Argument('dataallManaged', gql.NonNullableType(gql.Boolean)),
+        gql.Argument('dataallManaged', gql.NonNullableType(PolicyManagementOptions.toGraphQLEnum())),
     ],
 )
 
-ConsumptionRoleFilter = gql.InputType(
-    name='ConsumptionRoleFilter',
+ConsumptionPrincipalFilter = gql.InputType(
+    name='ConsumptionPrincipalFilter',
     arguments=[
         gql.Argument('term', gql.String),
         gql.Argument(name='page', type=gql.Integer),
@@ -115,10 +115,11 @@ ConsumptionRoleFilter = gql.InputType(
     ],
 )
 
-UpdateConsumptionRoleInput = gql.InputType(
-    name='UpdateConsumptionRoleInput',
+UpdateConsumptionPrincipalInput = gql.InputType(
+    name='UpdateConsumptionPrincipalInput',
     arguments=[
-        gql.Argument('consumptionRoleName', gql.String),
+        gql.Argument('consumptionPrincipalName', gql.String),
         gql.Argument('groupUri', gql.String),
+        gql.Argument('dataallManaged', gql.NonNullableType(PolicyManagementOptions.toGraphQLEnum())),
     ],
 )

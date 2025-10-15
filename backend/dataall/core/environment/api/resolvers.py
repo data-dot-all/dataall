@@ -57,12 +57,12 @@ def invite_group(context: Context, source, input):
     return environment
 
 
-def add_consumption_role(context: Context, source, input):
-    consumption_role = EnvironmentService.add_consumption_role(
+def add_consumption_principal(context: Context, source, input):
+    consumption_principal = EnvironmentService.add_consumption_principal(
         uri=input['environmentUri'],
         data=input,
     )
-    return consumption_role
+    return consumption_principal
 
 
 def update_group_permissions(context, source, input):
@@ -87,22 +87,22 @@ def remove_group(context: Context, source, environmentUri=None, groupUri=None):
     return environment
 
 
-def remove_consumption_role(context: Context, source, environmentUri=None, consumptionRoleUri=None):
-    status = EnvironmentService.remove_consumption_role(
-        uri=consumptionRoleUri,
+def remove_consumption_principal(context: Context, source, environmentUri=None, consumptionPrincipalUri=None):
+    status = EnvironmentService.remove_consumption_principal(
+        uri=consumptionPrincipalUri,
         env_uri=environmentUri,
     )
 
     return status
 
 
-def update_consumption_role(context: Context, source, environmentUri=None, consumptionRoleUri=None, input={}):
-    consumption_role = EnvironmentService.update_consumption_role(
-        uri=consumptionRoleUri,
+def update_consumption_principal(context: Context, source, environmentUri=None, consumptionPrincipalUri=None, input={}):
+    consumption_principal = EnvironmentService.update_consumption_principal(
+        uri=consumptionPrincipalUri,
         env_uri=environmentUri,
         input=input,
     )
-    return consumption_role
+    return consumption_principal
 
 
 def list_environment_invited_groups(context: Context, source, environmentUri=None, filter=None):
@@ -126,15 +126,15 @@ def list_all_environment_groups(context: Context, source, environmentUri=None, f
     )
 
 
-def list_environment_consumption_roles(context: Context, source, environmentUri=None, filter=None):
-    return EnvironmentService.paginated_user_environment_consumption_roles(
+def list_environment_consumption_principals(context: Context, source, environmentUri=None, filter=None):
+    return EnvironmentService.paginated_user_environment_consumption_principals(
         uri=environmentUri,
         data=filter,
     )
 
 
-def list_all_environment_consumption_roles(context: Context, source, environmentUri=None, filter=None):
-    return EnvironmentService.paginated_all_environment_consumption_roles(
+def list_all_environment_consumption_principals(context: Context, source, environmentUri=None, filter=None):
+    return EnvironmentService.paginated_all_environment_consumption_principals(
         uri=environmentUri,
         data=filter,
     )
@@ -159,8 +159,8 @@ def list_groups(context: Context, source, filter=None):
     return EnvironmentService.paginated_user_groups(filter)
 
 
-def list_consumption_roles(context: Context, source, filter=None):
-    return EnvironmentService.paginated_user_consumption_roles(filter)
+def list_consumption_principals(context: Context, source, filter=None):
+    return EnvironmentService.paginated_user_consumption_principals(filter)
 
 
 def list_environment_networks(context: Context, source, environmentUri=None, filter=None):
@@ -176,8 +176,10 @@ def get_parent_organization(context: Context, source, **kwargs):
 
 
 # used from getConsumptionRolePolicies query -- query resolver
-def get_consumption_role_policies(context: Context, source, environmentUri, IAMRoleName):
-    return EnvironmentService.resolve_consumption_role_policies(uri=environmentUri, IAMRoleName=IAMRoleName)
+def get_consumption_principal_policies(context: Context, source, environmentUri, IAMPrincipalName, IAMPrincipalType):
+    return EnvironmentService.resolve_consumption_principal_policies(
+        uri=environmentUri, IAMPrincipalName=IAMPrincipalName, IAMPrincipalType=IAMPrincipalType
+    )
 
 
 def resolve_environment_networks(context: Context, source, **kwargs):

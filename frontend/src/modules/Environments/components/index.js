@@ -6,7 +6,7 @@ export * from './EnvironmentListItem';
 export * from './EnvironmentNetworks';
 export * from './EnvironmentOverview';
 export * from './EnvironmentOwnedDatasets';
-export * from './EnvironmentRoleAddForm';
+export * from './EnvironmentPrincipalAddForm';
 export * from './EnvironmentSharedDatasets';
 export * from './EnvironmentSubscriptions';
 export * from './EnvironmentTeamInviteEditForm';

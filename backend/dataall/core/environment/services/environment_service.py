@@ -13,6 +13,8 @@ from dataall.base.utils import Parameter
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.context import get_context
 from dataall.base.db.exceptions import AWSResourceNotFound
+from dataall.base.utils.consumption_principal_utils import EnvironmentIAMPrincipalType
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 from dataall.core.organizations.db.organization_repositories import OrganizationRepository
 from dataall.core.permissions.services.environment_permissions import (
     ENABLE_ENVIRONMENT_SUBSCRIPTIONS,
@@ -21,7 +23,7 @@ from dataall.core.permissions.services.environment_permissions import (
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
 from dataall.core.activity.db.activity_models import Activity
-from dataall.core.environment.db.environment_models import EnvironmentParameter, ConsumptionRole
+from dataall.core.environment.db.environment_models import EnvironmentParameter, ConsumptionPrincipal
 from dataall.core.environment.db.environment_repositories import EnvironmentParameterRepository, EnvironmentRepository
 from dataall.core.environment.services.environment_resource_manager import EnvironmentResourceManager
 from dataall.core.permissions.db.permission.permission_repositories import PermissionRepository
@@ -46,19 +48,20 @@ from dataall.core.permissions.services import environment_permissions
 from dataall.core.permissions.services.tenant_permissions import MANAGE_ENVIRONMENTS
 from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.core.vpc.db.vpc_repositories import VpcRepository
+from dataall.modules.shares_base.services.shares_enums import PrincipalType
 
 log = logging.getLogger(__name__)
 
 
 class EnvironmentRequestValidationService:
     @staticmethod
-    def validate_update_consumption_role(data):
+    def validate_update_consumption_principal(data):
         if not data:
             raise exceptions.RequiredParameter('input')
         if not data.get('groupUri'):
             raise exceptions.RequiredParameter('groupUri')
-        if not data.get('consumptionRoleName'):
-            raise exceptions.RequiredParameter('consumptionRoleName')
+        if not data.get('consumptionPrincipalName'):
+            raise exceptions.RequiredParameter('consumptionPrincipalName')
 
     @staticmethod
     def validate_invite_params(data):
@@ -118,11 +121,11 @@ class EnvironmentRequestValidationService:
             )
 
     @staticmethod
-    def validate_consumption_role_params(data):
+    def validate_consumption_principal_params(data):
         if not data.get('groupUri'):
             raise exceptions.RequiredParameter('groupUri')
-        if not data.get('IAMRoleArn'):
-            raise exceptions.RequiredParameter('IAMRoleArn')
+        if not data.get('IAMPrincipalArn'):
+            raise exceptions.RequiredParameter('IAMPrincipalArn')
 
     @staticmethod
     def validate_org_group(org_uri, group, session):
@@ -397,15 +400,21 @@ class EnvironmentService:
                 env_group_iam_role_arn = f'arn:aws:iam::{environment.AwsAccountId}:role/{env_group_iam_role_name}'
                 env_role_imported = False
 
-            # If environment role is imported, then data.all should attach the policies at import time
-            # If environment role is created in environment stack, then data.all should attach the policies in the env stack
+            # If environment role is imported, then data.all should attach the policies at import time ( Fully Managed )
+            # If environment role is created in environment stack, then data.all should attach the policies in the env stack ( Partially Managed - Here policy will be created but won't be attached )
+            policy_management: str = (
+                PolicyManagementOptions.FULLY_MANAGED.value
+                if env_role_imported is True
+                else PolicyManagementOptions.PARTIALLY_MANAGED.value
+            )
             PolicyManager(
-                role_name=env_group_iam_role_name,
-                environmentUri=environment.environmentUri,
+                session=session,
                 account=environment.AwsAccountId,
                 region=environment.region,
+                environmentUri=environment.environmentUri,
                 resource_prefix=environment.resourcePrefix,
-            ).create_all_policies(managed=env_role_imported)
+                principal_name=env_group_iam_role_name,
+            ).create_all_policies(policy_management=policy_management)
 
             athena_workgroup = NamingConventionService(
                 target_uri=environment.environmentUri,
@@ -458,7 +467,7 @@ class EnvironmentService:
                     message=f'Team: {group} has created {group_env_objects_count} resources on this environment.',
                 )
 
-            group_env_consumption_roles = EnvironmentRepository.query_user_environment_consumption_roles(
+            group_env_consumption_roles = EnvironmentRepository.query_user_environment_consumption_principals(
                 session, [group], uri, {}
             ).all()
             if group_env_consumption_roles:
@@ -470,11 +479,12 @@ class EnvironmentService:
             group_membership = EnvironmentService.find_environment_group(session, group, environment.environmentUri)
 
             PolicyManager(
-                role_name=group_membership.environmentIAMRoleName,
-                environmentUri=environment.environmentUri,
+                session=session,
                 account=environment.AwsAccountId,
                 region=environment.region,
+                environmentUri=environment.environmentUri,
                 resource_prefix=environment.resourcePrefix,
+                principal_name=group_membership.environmentIAMRoleName,
             ).delete_all_policies()
 
             if group_membership:
@@ -559,92 +569,104 @@ class EnvironmentService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
     @ResourcePolicyService.has_resource_permission(environment_permissions.ADD_ENVIRONMENT_CONSUMPTION_ROLES)
-    def add_consumption_role(uri, data=None) -> (Environment, EnvironmentGroup):
-        EnvironmentRequestValidationService.validate_consumption_role_params(data)
+    def add_consumption_principal(uri, data=None) -> (Environment, EnvironmentGroup):
+        EnvironmentRequestValidationService.validate_consumption_principal_params(data)
 
         group: str = data['groupUri']
-        IAMRoleArn: str = data['IAMRoleArn']
+        IAMPrincipalArn: str = data['IAMPrincipalArn']
 
         with get_context().db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
 
-            role = IAM.get_role(environment.AwsAccountId, environment.region, IAMRoleArn)
-            if not role:
+            consumptionType = EnvironmentIAMPrincipalType.get_consumption_type(IAMPrincipalARN=IAMPrincipalArn)
+
+            principal = None
+            if consumptionType == EnvironmentIAMPrincipalType.ROLE.value:
+                principal = IAM.get_role(environment.AwsAccountId, environment.region, IAMPrincipalArn)
+            elif consumptionType == EnvironmentIAMPrincipalType.USER.value:
+                principal = IAM.get_user(environment.AwsAccountId, environment.region, IAMPrincipalArn)
+
+            if not principal:
                 raise exceptions.AWSResourceNotFound(
                     action='ADD_CONSUMPTION_ROLE',
-                    message=f'{IAMRoleArn} does not exist in this account',
+                    message=f'{IAMPrincipalArn} does not exist in this account',
                 )
 
-            alreadyAdded = EnvironmentRepository.find_consumption_roles_by_IAMArn(
-                session, environment.environmentUri, IAMRoleArn
+            alreadyAdded = EnvironmentRepository.find_consumption_principals_by_IAMArn(
+                session, environment.environmentUri, IAMPrincipalArn
             )
             if alreadyAdded:
                 raise exceptions.UnauthorizedOperation(
                     action='ADD_CONSUMPTION_ROLE',
-                    message=f'IAM role {IAMRoleArn} is already added to the environment {environment.name}',
+                    message=f'IAM principal {IAMPrincipalArn} is already added to the environment {environment.name}',
                 )
 
-            consumption_role = ConsumptionRole(
-                consumptionRoleName=data['consumptionRoleName'],
+            consumption_principal = ConsumptionPrincipal(
+                consumptionPrincipalName=data['consumptionPrincipalName'],
                 environmentUri=environment.environmentUri,
                 groupUri=group,
-                IAMRoleArn=IAMRoleArn,
-                IAMRoleName=IAMRoleArn.split('/')[-1],
-                dataallManaged=data.get('dataallManaged', True),
+                IAMPrincipalArn=IAMPrincipalArn,
+                IAMPrincipalName=IAMPrincipalArn.split('/')[-1],
+                dataallManaged=data.get('dataallManaged'),
+                consumptionPrincipalType=consumptionType,
             )
 
             PolicyManager(
-                role_name=consumption_role.IAMRoleName,
-                environmentUri=environment.environmentUri,
+                session=session,
                 account=environment.AwsAccountId,
                 region=environment.region,
+                environmentUri=environment.environmentUri,
                 resource_prefix=environment.resourcePrefix,
-            ).create_all_policies(managed=consumption_role.dataallManaged)
+                principal_name=consumption_principal.IAMPrincipalName,
+                principal_type=consumptionType,
+            ).create_all_policies(policy_management=consumption_principal.dataallManaged)
 
-            session.add(consumption_role)
+            session.add(consumption_principal)
             session.commit()
 
             ResourcePolicyService.attach_resource_policy(
                 session=session,
                 group=group,
-                resource_uri=consumption_role.consumptionRoleUri,
+                resource_uri=consumption_principal.consumptionPrincipalUri,
                 permissions=environment_permissions.CONSUMPTION_ROLE_ALL,
-                resource_type=ConsumptionRole.__name__,
+                resource_type=ConsumptionPrincipal.__name__,
             )
-            return consumption_role
+            return consumption_principal
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
     @ResourcePolicyService.has_resource_permission(environment_permissions.REMOVE_ENVIRONMENT_CONSUMPTION_ROLE)
-    def remove_consumption_role(uri, env_uri):
+    def remove_consumption_principal(uri, env_uri):
         with get_context().db_engine.scoped_session() as session:
-            consumption_role = EnvironmentService.get_environment_consumption_role(session, uri, env_uri)
+            consumption_principal = EnvironmentService.get_environment_consumption_principal(session, uri, env_uri)
             environment = EnvironmentService.get_environment_by_uri(session, env_uri)
 
             num_resources = EnvironmentResourceManager.count_consumption_role_resources(session, uri)
             if num_resources > 0:
                 raise exceptions.EnvironmentResourcesFound(
-                    action='Remove Consumption Role',
-                    message=f'Consumption role: {consumption_role.consumptionRoleName} has created {num_resources} resources on this environment.',
+                    action='Remove Consumption Principal',
+                    message=f'Consumption principal: {consumption_principal.consumptionPrincipalName} has created {num_resources} resources on this environment.',
                 )
 
-            if consumption_role:
+            if consumption_principal:
                 PolicyManager(
-                    role_name=consumption_role.IAMRoleName,
-                    environmentUri=environment.environmentUri,
+                    session=session,
                     account=environment.AwsAccountId,
                     region=environment.region,
+                    environmentUri=environment.environmentUri,
                     resource_prefix=environment.resourcePrefix,
+                    principal_name=consumption_principal.IAMPrincipalName,
+                    principal_type=consumption_principal.consumptionPrincipalType,
                 ).delete_all_policies()
 
                 ResourcePolicyService.delete_resource_policy(
                     session=session,
-                    group=consumption_role.groupUri,
-                    resource_uri=consumption_role.consumptionRoleUri,
-                    resource_type=ConsumptionRole.__name__,
+                    group=consumption_principal.groupUri,
+                    resource_uri=consumption_principal.consumptionPrincipalUri,
+                    resource_type=ConsumptionPrincipal.__name__,
                 )
 
-                session.delete(consumption_role)
+                session.delete(consumption_principal)
                 session.commit()
 
             return True
@@ -652,23 +674,44 @@ class EnvironmentService:
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_ENVIRONMENTS)
     @ResourcePolicyService.has_resource_permission(environment_permissions.REMOVE_ENVIRONMENT_CONSUMPTION_ROLE)
-    def update_consumption_role(uri, env_uri, input):
-        EnvironmentRequestValidationService.validate_update_consumption_role(input)
+    def update_consumption_principal(uri, env_uri, input):
+        EnvironmentRequestValidationService.validate_update_consumption_principal(input)
         with get_context().db_engine.scoped_session() as session:
-            consumption_role = EnvironmentService.get_environment_consumption_role(session, uri, env_uri)
-            if consumption_role:
+            consumption_principal = EnvironmentService.get_environment_consumption_principal(session, uri, env_uri)
+            if consumption_principal:
                 ResourcePolicyService.update_resource_policy(
                     session=session,
                     resource_uri=uri,
-                    resource_type=ConsumptionRole.__name__,
-                    old_group=consumption_role.groupUri,
+                    resource_type=ConsumptionPrincipal.__name__,
+                    old_group=consumption_principal.groupUri,
                     new_group=input['groupUri'],
                     new_permissions=environment_permissions.CONSUMPTION_ROLE_ALL,
                 )
                 for key, value in input.items():
-                    setattr(consumption_role, key, value)
+                    setattr(consumption_principal, key, value)
                 session.commit()
-            return consumption_role
+
+                # If the input consumption role is not Fully-Managed then attach the share policy if it exists
+                if consumption_principal.dataallManaged == PolicyManagementOptions.FULLY_MANAGED.value:
+                    environment: Environment = EnvironmentService.get_environment_by_uri(session, env_uri)
+                    share_policy_manager = PolicyManager(
+                        session=session,
+                        account=environment.AwsAccountId,
+                        region=environment.region,
+                        environmentUri=environment.environmentUri,
+                        resource_prefix=environment.resourcePrefix,
+                        principal_name=consumption_principal.IAMPrincipalName,
+                        principal_type=consumption_principal.consumptionPrincipalType,
+                    )
+                    for policy_manager in [
+                        Policy
+                        for Policy in share_policy_manager.initializedPolicies
+                        if Policy.policy_type == 'SharePolicy'
+                    ]:
+                        managed_policy_list = policy_manager.get_policies_unattached_to_principal()
+                        policy_manager.attach_policies(managed_policy_list)
+
+            return consumption_principal
 
     @staticmethod
     def paginated_user_environments(data=None) -> dict:
@@ -714,12 +757,12 @@ class EnvironmentService:
             ).to_dict()
 
     @staticmethod
-    def paginated_user_consumption_roles(data=None) -> dict:
+    def paginated_user_consumption_principals(data=None) -> dict:
         context = get_context()
         data = data if data is not None else {}
         with context.db_engine.scoped_session() as session:
             return paginate(
-                query=EnvironmentRepository.query_user_consumption_roles(
+                query=EnvironmentRepository.query_user_consumption_principals(
                     session, context.username, context.groups, data
                 ),
                 page=data.get('page', 1),
@@ -782,11 +825,11 @@ class EnvironmentService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(environment_permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
-    def paginated_user_environment_consumption_roles(uri, data=None) -> dict:
+    def paginated_user_environment_consumption_principals(uri, data=None) -> dict:
         data = data if data is not None else {}
         with get_context().db_engine.scoped_session() as session:
             return paginate(
-                query=EnvironmentRepository.query_user_environment_consumption_roles(
+                query=EnvironmentRepository.query_user_environment_consumption_principals(
                     session, get_context().groups, uri, data
                 ),
                 page=data.get('page', 1),
@@ -795,11 +838,11 @@ class EnvironmentService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(environment_permissions.LIST_ENVIRONMENT_CONSUMPTION_ROLES)
-    def paginated_all_environment_consumption_roles(uri, data=None) -> dict:
+    def paginated_all_environment_consumption_principals(uri, data=None) -> dict:
         data = data if data is not None else {}
         with get_context().db_engine.scoped_session() as session:
             return paginate(
-                query=EnvironmentRepository.query_all_environment_consumption_roles(session, uri, data),
+                query=EnvironmentRepository.query_all_environment_consumption_principals(session, uri, data),
                 page=data.get('page', 1),
                 page_size=data.get('pageSize', 10),
             ).to_dict()
@@ -807,6 +850,17 @@ class EnvironmentService:
     @staticmethod
     def get_consumption_role(session, uri) -> Query:
         return EnvironmentRepository.get_consumption_role(session, uri)
+
+    @staticmethod
+    def get_role_policy_management_type(principal_type: str, principal_id: str):
+        with get_context().db_engine.scoped_session() as session:
+            if principal_type == PrincipalType.ConsumptionRole.value:
+                consumption_role: ConsumptionPrincipal = EnvironmentService.get_consumption_role(
+                    session, uri=principal_id
+                )
+                return consumption_role.dataallManaged
+
+        return PolicyManagementOptions.FULLY_MANAGED.value
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(environment_permissions.LIST_ENVIRONMENT_NETWORKS)
@@ -835,11 +889,13 @@ class EnvironmentService:
         return env_group
 
     @staticmethod
-    def get_environment_consumption_role(session, role_uri, environment_uri) -> ConsumptionRole:
-        role = EnvironmentRepository.get_environment_consumption_role(session, role_uri, environment_uri)
-        if not role:
-            raise exceptions.ObjectNotFound('ConsumptionRoleUri', f'({role_uri},{environment_uri})')
-        return role
+    def get_environment_consumption_principal(session, principal_uri, environment_uri) -> ConsumptionPrincipal:
+        consumption_principal = EnvironmentRepository.get_environment_consumption_principal(
+            session, principal_uri, environment_uri
+        )
+        if not consumption_principal:
+            raise exceptions.ObjectNotFound('ConsumptionPrincipalUri', f'({principal_uri},{environment_uri})')
+        return consumption_principal
 
     @staticmethod
     def get_environment_by_uri(session, uri) -> Environment:
@@ -873,14 +929,16 @@ class EnvironmentService:
         with get_context().db_engine.scoped_session() as session:
             environment = EnvironmentService.get_environment_by_uri(session, uri)
             env_groups = EnvironmentRepository.query_environment_groups(session, uri)
-            env_roles = EnvironmentRepository.query_all_environment_consumption_roles(session, uri, None)
+            env_consumption_principals = EnvironmentRepository.query_all_environment_consumption_principals(
+                session, uri, None
+            )
 
             env_resources = 0
             for group in env_groups:
                 env_resources += EnvironmentResourceManager.count_group_resources(session, environment, group.groupUri)
-            for role in env_roles:
+            for principal in env_consumption_principals:
                 env_resources += EnvironmentResourceManager.count_consumption_role_resources(
-                    session, role.consumptionRoleUri
+                    session, principal.consumptionPrincipalUri
                 )
 
             if env_resources > 0:
@@ -897,11 +955,12 @@ class EnvironmentService:
                     StackStatus.DELETE_COMPLETE.value,
                 ]:
                     PolicyManager(
-                        role_name=environment.EnvironmentDefaultIAMRoleName,
-                        environmentUri=environment.environmentUri,
+                        session=session,
                         account=environment.AwsAccountId,
                         region=environment.region,
+                        environmentUri=environment.environmentUri,
                         resource_prefix=environment.resourcePrefix,
+                        principal_name=environment.EnvironmentDefaultIAMRoleName,
                     ).delete_all_policies()
 
                 KeyValueTagRepository.delete_key_value_tags(session, environment.environmentUri, 'environment')
@@ -917,8 +976,8 @@ class EnvironmentService:
                         group=group.groupUri,
                     )
 
-                for role in env_roles:
-                    session.delete(role)
+                for principal in env_consumption_principals:
+                    session.delete(principal)
 
                 return session.delete(environment), environment
 
@@ -1113,18 +1172,15 @@ class EnvironmentService:
 
     @staticmethod
     @ResourcePolicyService.has_resource_permission(environment_permissions.GET_ENVIRONMENT)
-    def resolve_consumption_role_policies(uri, IAMRoleName):
+    def resolve_consumption_principal_policies(uri, IAMPrincipalName, IAMPrincipalType):
         environment = EnvironmentService.find_environment_by_uri(uri=uri)
-        return PolicyManager(
-            role_name=IAMRoleName,
-            environmentUri=uri,
-            account=environment.AwsAccountId,
-            region=environment.region,
-            resource_prefix=environment.resourcePrefix,
-        ).get_all_policies()
-
-    @staticmethod
-    @ResourcePolicyService.has_resource_permission(environment_permissions.GET_ENVIRONMENT)
-    def get_consumption_role_by_name(uri, IAMRoleName):
         with get_context().db_engine.scoped_session() as session:
-            return EnvironmentRepository.get_environment_consumption_role_by_name(session, uri, IAMRoleName)
+            return PolicyManager(
+                session=session,
+                account=environment.AwsAccountId,
+                region=environment.region,
+                environmentUri=uri,
+                resource_prefix=environment.resourcePrefix,
+                principal_name=IAMPrincipalName,
+                principal_type=IAMPrincipalType,
+            ).get_all_policies()
