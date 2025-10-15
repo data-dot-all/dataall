@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime
-from logging import exception
 from typing import List
 
 from dataall.modules.shares_base.services.share_exceptions import PrincipalRoleNotFound
@@ -11,6 +10,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemStatus,
     ShareObjectActions,
     ShareItemActions,
+    PrincipalType,
 )
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_state_machines_repositories import ShareStatusRepository

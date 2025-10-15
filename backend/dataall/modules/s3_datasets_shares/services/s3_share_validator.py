@@ -1,5 +1,6 @@
 from dataall.base.db.exceptions import UnauthorizedOperation, InvalidInput
 from dataall.base.aws.iam import IAM
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.core.environment.db.environment_models import EnvironmentGroup, ConsumptionRole
 from dataall.core.environment.services.managed_iam_policies import PolicyManager
@@ -105,7 +106,7 @@ class S3ShareValidator(SharesValidatorInterface):
                 session, principal_id, environment.environmentUri
             )
             principal_role_name = consumption_role.IAMRoleName
-            managed = consumption_role.dataallManaged
+            managed = consumption_role.dataallManaged == PolicyManagementOptions.FULLY_MANAGED.value
 
         else:
             env_group: EnvironmentGroup = EnvironmentService.get_environment_group(
@@ -125,6 +126,7 @@ class S3ShareValidator(SharesValidatorInterface):
 
         log.info('Verifying data.all managed share IAM policy is attached to IAM role...')
         share_policy_manager = PolicyManager(
+            session=session,
             role_name=principal_role_name,
             environmentUri=environment.environmentUri,
             account=environment.AwsAccountId,
@@ -156,10 +158,6 @@ class S3ShareValidator(SharesValidatorInterface):
             # End of backwards compatibility
 
             unattached = policy_manager.get_policies_unattached_to_role()
-            if unattached and not managed and not attachMissingPolicies:
-                raise Exception(
-                    f'Required customer managed policies {policy_manager.get_policies_unattached_to_role()} are not attached to role {principal_role_name}'
-                )
-            elif unattached:
+            if unattached and (managed or attachMissingPolicies):
                 managed_policy_list = policy_manager.get_policies_unattached_to_role()
                 policy_manager.attach_policies(managed_policy_list)

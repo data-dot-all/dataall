@@ -3,6 +3,8 @@ import logging
 import json
 from abc import ABC, abstractmethod
 from dataall.base.aws.iam import IAM
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
+from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 
 logger = logging.getLogger(__name__)
 
@@ -93,14 +95,8 @@ class ManagedPolicy(ABC):
 
 
 class PolicyManager(object):
-    def __init__(
-        self,
-        role_name,
-        account,
-        region,
-        environmentUri,
-        resource_prefix,
-    ):
+    def __init__(self, session, account, region, environmentUri, resource_prefix, role_name):
+        self.session = session
         self.role_name = role_name
         self.account = account
         self.region = region
@@ -119,7 +115,7 @@ class PolicyManager(object):
             resource_prefix=self.resource_prefix,
         )
 
-    def create_all_policies(self, managed) -> bool:
+    def create_all_policies(self, policy_management: str) -> bool:
         """
         Manager that registers and calls all policies created by data.all modules and that
         need to be created for consumption roles and team roles
@@ -136,7 +132,7 @@ class PolicyManager(object):
                     policy=json.dumps(empty_policy),
                 )
 
-                if managed:
+                if policy_management == PolicyManagementOptions.FULLY_MANAGED.value:
                     IAM.attach_role_policy(
                         account_id=self.account,
                         region=self.region,
@@ -199,12 +195,27 @@ class PolicyManager(object):
                 if policy_manager.check_if_policy_exists(policy_name=old_managed_policy_name):
                     policy_name_list.append(old_managed_policy_name)
 
+            # Check if the role_name is registered as a consumption role.
+            # If its a consumption role with a "Externally Managed" policy management then 'attached' will be marked as 'N/A'
+            externally_managed_role: bool = False
+            role_arn = f'arn:aws:iam::{self.account}:role/{self.role_name}'
+            consumption_role_details = EnvironmentRepository.find_consumption_roles_by_IAMArn(
+                session=self.session, uri=self.environmentUri, arn=role_arn
+            )
+            if (
+                consumption_role_details
+                and consumption_role_details.dataallManaged == PolicyManagementOptions.EXTERNALLY_MANAGED.value
+            ):
+                externally_managed_role = True
+
             for policy_name in policy_name_list:
                 policy_dict = {
                     'policy_name': policy_name,
                     'policy_type': policy_manager.policy_type,
                     'exists': policy_manager.check_if_policy_exists(policy_name=policy_name),
-                    'attached': policy_manager.check_if_policy_attached(policy_name=policy_name),
+                    'attached': 'N/A'
+                    if externally_managed_role
+                    else policy_manager.check_if_policy_attached(policy_name=policy_name),
                 }
                 all_policies.append(policy_dict)
         logger.info(f'All policies currently added to role: {self.role_name} are: {str(all_policies)}')

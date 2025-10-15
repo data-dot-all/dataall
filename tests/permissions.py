@@ -1129,6 +1129,9 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('ShareObject', 'userRoleForShareObject'): TestData(
         resource_ignore=IgnoreReason.USERROLEINRESOURCE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),
+    field_id('ShareObject', 'policyManagement'): TestData(
+        resource_ignore=IgnoreReason.USERLIMITED, tenant_ignore=IgnoreReason.NOTREQUIRED
+    ),
     field_id('SharedDatabaseTableItem', 'sharedGlueDatabaseName'): TestData(
         resource_ignore=IgnoreReason.INTRAMODULE, tenant_ignore=IgnoreReason.NOTREQUIRED
     ),

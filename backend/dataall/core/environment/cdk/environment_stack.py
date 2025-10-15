@@ -454,32 +454,33 @@ class EnvironmentSetup(Stack):
             permissions=group_permissions,
         ).generate_policies()
 
-        external_managed_policies = []
-        policy_manager = PolicyManager(
-            environmentUri=self._environment.environmentUri,
-            resource_prefix=self._environment.resourcePrefix,
-            role_name=group.environmentIAMRoleName,
-            account=self._environment.AwsAccountId,
-            region=self._environment.region,
-        )
-        try:
-            managed_policies = policy_manager.get_all_policies()
-        except Exception as e:
-            logger.info(f'Not adding any managed policy because of exception: {e}')
-            # Known exception raised in first deployment because pivot role does not exist and cannot be assumed
-            managed_policies = []
-        for policy in managed_policies:
-            # If there is a managed policy that exist it should be attached to the IAM role
-            if policy.get('exists', False):
-                external_managed_policies.append(
-                    iam.ManagedPolicy.from_managed_policy_name(
-                        self,
-                        id=f'{self._environment.resourcePrefix}-managed-policy-{policy.get("policy_name")}',
-                        managed_policy_name=policy.get('policy_name'),
-                    )
-                )
-
         with self.engine.scoped_session() as session:
+            external_managed_policies = []
+            policy_manager = PolicyManager(
+                session=session,
+                account=self._environment.AwsAccountId,
+                region=self._environment.region,
+                environmentUri=self._environment.environmentUri,
+                resource_prefix=self._environment.resourcePrefix,
+                role_name=group.environmentIAMRoleName,
+            )
+            try:
+                managed_policies = policy_manager.get_all_policies()
+            except Exception as e:
+                logger.info(f'Not adding any managed policy because of exception: {e}')
+                # Known exception raised in first deployment because pivot role does not exist and cannot be assumed
+                managed_policies = []
+            for policy in managed_policies:
+                # If there is a managed policy that exist it should be attached to the IAM role
+                if policy.get('exists', False):
+                    external_managed_policies.append(
+                        iam.ManagedPolicy.from_managed_policy_name(
+                            self,
+                            id=f'{self._environment.resourcePrefix}-managed-policy-{policy.get("policy_name")}',
+                            managed_policy_name=policy.get('policy_name'),
+                        )
+                    )
+
             data_policy = S3Policy(
                 stack=self,
                 tag_key='Team',

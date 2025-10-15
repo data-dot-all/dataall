@@ -160,7 +160,6 @@ class EnvironmentRepository:
                 )
             )
         if filter and filter.get('groupUri'):
-            print('filter group')
             group = filter['groupUri']
             query = query.filter(
                 or_(
