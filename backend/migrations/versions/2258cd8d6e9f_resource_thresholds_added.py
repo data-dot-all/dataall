@@ -1,7 +1,7 @@
 """resource_thresholds_added
 
 Revision ID: 2258cd8d6e9f
-Revises: a1b2c3d4e5f7
+Revises: 89c3bfe59cad
 Create Date: 2024-08-22 12:31:38.465650
 
 """
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '2258cd8d6e9f'
-down_revision = 'a1b2c3d4e5f7'
+down_revision = '89c3bfe59cad'
 branch_labels = None
 depends_on = None
 
