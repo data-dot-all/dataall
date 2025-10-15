@@ -1,7 +1,9 @@
 """fix_mf_trigger_entity_type
+
 Revision ID: a1b2c3d4e5f7
 Revises: ba2da94739ab
 Create Date: 2025-10-03 12:00:00.000000
+
 """
 
 from alembic import op
