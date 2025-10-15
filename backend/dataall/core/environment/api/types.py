@@ -1,6 +1,8 @@
 from dataall.base.api import gql
-from dataall.base.utils.consumption_principal_utils import EnvironmentIAMPrincipalType, \
-    EnvironmentIAMPrincipalAttachmentStatus
+from dataall.base.utils.consumption_principal_utils import (
+    EnvironmentIAMPrincipalType,
+    EnvironmentIAMPrincipalAttachmentStatus,
+)
 
 from dataall.core.environment.api.resolvers import (
     get_environment_stack,

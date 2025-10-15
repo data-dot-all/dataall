@@ -3,8 +3,10 @@ import logging
 import json
 from abc import ABC, abstractmethod
 from dataall.base.aws.iam import IAM
-from dataall.base.utils.consumption_principal_utils import EnvironmentIAMPrincipalType, \
-    EnvironmentIAMPrincipalAttachmentStatus
+from dataall.base.utils.consumption_principal_utils import (
+    EnvironmentIAMPrincipalType,
+    EnvironmentIAMPrincipalAttachmentStatus,
+)
 from dataall.core.environment.db.environment_enums import PolicyManagementOptions
 from dataall.core.environment.db.environment_repositories import EnvironmentRepository
 

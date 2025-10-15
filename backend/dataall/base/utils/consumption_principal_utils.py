@@ -16,6 +16,7 @@ class EnvironmentIAMPrincipalType(GraphQLEnumMapper):
         if principal_type == 'user':
             return EnvironmentIAMPrincipalType.USER.value
 
+
 class EnvironmentIAMPrincipalAttachmentStatus(GraphQLEnumMapper):
     NOTAPPLICABLE = 'N/A'
     ATTACHED = 'Attached'
@@ -23,5 +24,8 @@ class EnvironmentIAMPrincipalAttachmentStatus(GraphQLEnumMapper):
 
     @staticmethod
     def get_policy_attachment_type(is_attached: bool):
-        return EnvironmentIAMPrincipalAttachmentStatus.ATTACHED.value if is_attached else EnvironmentIAMPrincipalAttachmentStatus.NOTATTACHED.value
-
+        return (
+            EnvironmentIAMPrincipalAttachmentStatus.ATTACHED.value
+            if is_attached
+            else EnvironmentIAMPrincipalAttachmentStatus.NOTATTACHED.value
+        )
