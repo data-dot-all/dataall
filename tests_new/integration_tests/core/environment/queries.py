@@ -210,9 +210,7 @@ def remove_group_from_env(client, env_uri, group_uri):
     return response.data.removeGroupFromEnvironment
 
 
-def add_consumption_role(
-    client, env_uri, group_uri, consumption_role_name, iam_role_arn, is_managed='Fully-Managed'
-):
+def add_consumption_role(client, env_uri, group_uri, consumption_role_name, iam_role_arn, is_managed='Fully-Managed'):
     query = {
         'operationName': 'addConsumptionRoleToEnvironment',
         'variables': {
