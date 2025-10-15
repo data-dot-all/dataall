@@ -50,13 +50,7 @@ def create_consumption_role(client, group, environment, environment_client, iam_
         iam_role_name,
         f'dataall-integration-tests-role-{environment.region}',
     )
-    return add_consumption_role(
-        client,
-        environment.environmentUri,
-        group,
-        cons_role_name,
-        role['Role']['Arn'],
-    )
+    return add_consumption_role(client, environment.environmentUri, group, cons_role_name, role['Role']['Arn'])
 
 
 # --------------SESSION PARAM FIXTURES----------------------------
@@ -73,7 +67,7 @@ def session_consumption_role_1(client5, group5, session_cross_acc_env_1, session
         'SessionConsRole1',
     )
     yield consumption_role
-    remove_consumption_role(client5, session_cross_acc_env_1.environmentUri, consumption_role.consumptionRoleUri)
+    remove_consumption_role(client5, session_cross_acc_env_1.environmentUri, consumption_role.consumptionPrincipalUri)
     iam_client = IAMClient(session=session_cross_acc_env_1_aws_client, region=session_cross_acc_env_1['region'])
     iam_client.delete_consumption_role(test_session_cons_role_name)
 
@@ -89,7 +83,9 @@ def session_consumption_role_2(client6, group6, persistent_cross_acc_env_1, pers
         'SessionConsRole2',
     )
     yield consumption_role
-    remove_consumption_role(client6, persistent_cross_acc_env_1.environmentUri, consumption_role.consumptionRoleUri)
+    remove_consumption_role(
+        client6, persistent_cross_acc_env_1.environmentUri, consumption_role.consumptionPrincipalUri
+    )
     iam_client = IAMClient(session=persistent_cross_acc_env_1_aws_client, region=persistent_cross_acc_env_1['region'])
     iam_client.delete_consumption_role(test_session_cons_role_name_2)
 
@@ -188,7 +184,7 @@ def session_share_consrole_1(
         dataset_or_item_params={'datasetUri': session_s3_dataset1.datasetUri},
         environmentUri=session_cross_acc_env_1.environmentUri,
         groupUri=group5,
-        principalId=session_consumption_role_1.consumptionRoleUri,
+        principalId=session_consumption_role_1.consumptionPrincipalUri,
         principalType='ConsumptionRole',
         requestPurpose='test create share object',
         attachMissingPolicies=True,
@@ -215,7 +211,7 @@ def session_share_consrole_2(
         dataset_or_item_params={'datasetUri': session_imported_sse_s3_dataset1.datasetUri},
         environmentUri=session_cross_acc_env_1.environmentUri,
         groupUri=group5,
-        principalId=session_consumption_role_1.consumptionRoleUri,
+        principalId=session_consumption_role_1.consumptionPrincipalUri,
         principalType='ConsumptionRole',
         requestPurpose='test create share object',
         attachMissingPolicies=True,
@@ -242,7 +238,7 @@ def session_share_consrole_3(
         dataset_or_item_params={'datasetUri': persistent_s3_dataset1.datasetUri},
         environmentUri=persistent_cross_acc_env_1.environmentUri,
         groupUri=group6,
-        principalId=session_consumption_role_2.consumptionRoleUri,
+        principalId=session_consumption_role_2.consumptionPrincipalUri,
         principalType='ConsumptionRole',
         requestPurpose='test create share object',
         attachMissingPolicies=True,
@@ -295,7 +291,7 @@ def new_share_param(
                 group5,
                 session_s3_dataset1,
                 session_cross_acc_env_1,
-                session_consumption_role_1.consumptionRoleUri,
+                session_consumption_role_1.consumptionPrincipalUri,
                 principal_type,
             )
         if share_type == 'session_persistent_dataset':
@@ -304,7 +300,7 @@ def new_share_param(
                 group6,
                 persistent_s3_dataset1,
                 persistent_cross_acc_env_1,
-                session_consumption_role_2.consumptionRoleUri,
+                session_consumption_role_2.consumptionPrincipalUri,
                 principal_type,
             )
 
@@ -503,7 +499,7 @@ def persistent_role_share_1(
         dataset_or_item_params={'datasetUri': persistent_s3_dataset1.datasetUri},
         environmentUri=persistent_cross_acc_env_1.environmentUri,
         groupUri=group5,
-        principalId=persistent_consumption_role_1.consumptionRoleUri,
+        principalId=persistent_consumption_role_1.consumptionPrincipalUri,
         principalType='ConsumptionRole',
         requestPurpose='create persistent share object',
         attachMissingPolicies=True,

@@ -2,7 +2,7 @@ from dataall.base.utils.naming_convention import NamingConventionPattern, Naming
 from dataall.core.environment.db.environment_models import (
     EnvironmentParameter,
     Environment,
-    ConsumptionRole,
+    ConsumptionPrincipal,
     EnvironmentGroup,
 )
 from sqlalchemy.sql import and_, or_
@@ -77,14 +77,14 @@ class EnvironmentRepository:
         return environment
 
     @staticmethod
-    def get_environment_consumption_role(session, role_uri, environment_uri) -> ConsumptionRole:
+    def get_environment_consumption_principal(session, principal_uri, environment_uri) -> ConsumptionPrincipal:
         return (
-            session.query(ConsumptionRole)
+            session.query(ConsumptionPrincipal)
             .filter(
                 (
                     and_(
-                        ConsumptionRole.consumptionRoleUri == role_uri,
-                        ConsumptionRole.environmentUri == environment_uri,
+                        ConsumptionPrincipal.consumptionPrincipalUri == principal_uri,
+                        ConsumptionPrincipal.environmentUri == environment_uri,
                     )
                 )
             )
@@ -109,65 +109,64 @@ class EnvironmentRepository:
     @staticmethod
     def get_consumption_role(session, uri):
         return (
-            session.query(ConsumptionRole)
+            session.query(ConsumptionPrincipal)
             .filter(
                 and_(
-                    ConsumptionRole.consumptionRoleUri == uri,
+                    ConsumptionPrincipal.consumptionPrincipalUri == uri,
                 )
             )
             .first()
         )
 
     @staticmethod
-    def find_consumption_roles_by_IAMArn(session, uri, arn):
+    def find_consumption_principals_by_IAMArn(session, uri, arn):
         return (
-            session.query(ConsumptionRole)
-            .filter(and_(ConsumptionRole.environmentUri == uri, ConsumptionRole.IAMRoleArn == arn))
+            session.query(ConsumptionPrincipal)
+            .filter(and_(ConsumptionPrincipal.environmentUri == uri, ConsumptionPrincipal.IAMPrincipalArn == arn))
             .first()
         )
 
     @staticmethod
-    def query_all_environment_consumption_roles(session, uri, filter) -> Query:
-        query = session.query(ConsumptionRole).filter(ConsumptionRole.environmentUri == uri)
+    def query_all_environment_consumption_principals(session, uri, filter) -> Query:
+        query = session.query(ConsumptionPrincipal).filter(ConsumptionPrincipal.environmentUri == uri)
         if filter and filter.get('term'):
             term = filter['term']
             query = query.filter(
                 or_(
-                    ConsumptionRole.consumptionRoleName.ilike('%' + term + '%'),
+                    ConsumptionPrincipal.consumptionPrincipalName.ilike('%' + term + '%'),
                 )
             )
         if filter and filter.get('groupUri'):
             group = filter['groupUri']
             query = query.filter(
                 or_(
-                    ConsumptionRole.groupUri == group,
+                    ConsumptionPrincipal.groupUri == group,
                 )
             )
-        return query.order_by(ConsumptionRole.consumptionRoleName)
+        return query.order_by(ConsumptionPrincipal.consumptionPrincipalName)
 
     @staticmethod
-    def query_user_environment_consumption_roles(session, groups, uri, filter) -> Query:
+    def query_user_environment_consumption_principals(session, groups, uri, filter) -> Query:
         query = (
-            session.query(ConsumptionRole)
-            .filter(ConsumptionRole.environmentUri == uri)
-            .filter(ConsumptionRole.groupUri.in_(groups))
+            session.query(ConsumptionPrincipal)
+            .filter(ConsumptionPrincipal.environmentUri == uri)
+            .filter(ConsumptionPrincipal.groupUri.in_(groups))
         )
         if filter and filter.get('term'):
             term = filter['term']
             query = query.filter(
                 or_(
-                    ConsumptionRole.consumptionRoleName.ilike('%' + term + '%'),
+                    ConsumptionPrincipal.consumptionPrincipalName.ilike('%' + term + '%'),
                 )
             )
         if filter and filter.get('groupUri'):
-            print('filter group')
             group = filter['groupUri']
             query = query.filter(
                 or_(
-                    ConsumptionRole.groupUri == group,
+                    ConsumptionPrincipal.groupUri == group,
                 )
             )
-        return query.order_by(ConsumptionRole.consumptionRoleName)
+        return query.order_by(ConsumptionPrincipal.consumptionPrincipalName)
 
     @staticmethod
     def query_environment_invited_groups(session, uri, filter) -> Query:
@@ -222,17 +221,17 @@ class EnvironmentRepository:
         return query.order_by(EnvironmentGroup.groupUri)
 
     @staticmethod
-    def query_user_consumption_roles(session, username, groups, filter) -> Query:
+    def query_user_consumption_principals(session, username, groups, filter) -> Query:
         query = (
-            session.query(ConsumptionRole)
-            .filter(ConsumptionRole.groupUri.in_(groups))
-            .distinct(ConsumptionRole.consumptionRoleName)
+            session.query(ConsumptionPrincipal)
+            .filter(ConsumptionPrincipal.groupUri.in_(groups))
+            .distinct(ConsumptionPrincipal.consumptionPrincipalName)
         )
         if filter and filter.get('term'):
             term = filter['term']
             query = query.filter(
                 or_(
-                    ConsumptionRole.consumptionRoleName.ilike('%' + term + '%'),
+                    ConsumptionPrincipal.consumptionPrincipalName.ilike('%' + term + '%'),
                 )
             )
         if filter and filter.get('groupUri'):
@@ -240,10 +239,10 @@ class EnvironmentRepository:
             group = filter['groupUri']
             query = query.filter(
                 or_(
-                    ConsumptionRole.groupUri == group,
+                    ConsumptionPrincipal.groupUri == group,
                 )
             )
-        return query.order_by(ConsumptionRole.consumptionRoleName)
+        return query.order_by(ConsumptionPrincipal.consumptionPrincipalName)
 
     @staticmethod
     def query_user_groups(session, username, groups, filter) -> Query:
@@ -317,11 +316,11 @@ class EnvironmentRepository:
     @staticmethod
     def get_environment_consumption_role_by_name(session, uri, IAMRoleName):
         return (
-            session.query(ConsumptionRole)
+            session.query(ConsumptionPrincipal)
             .filter(
                 and_(
-                    ConsumptionRole.environmentUri == uri,
-                    ConsumptionRole.IAMRoleName == IAMRoleName,
+                    ConsumptionPrincipal.environmentUri == uri,
+                    ConsumptionPrincipal.IAMPrincipalName == IAMRoleName,
                 )
             )
             .first()

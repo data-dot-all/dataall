@@ -733,32 +733,33 @@ def test_create_environment(db, client, org_fixture, user, group):
 
 def test_update_consumption_role(client, org_fixture, env_fixture, user, group, db, consumption_role):
     query = """
-        mutation updateConsumptionRole(
+        mutation updateConsumptionPrincipal(
             $environmentUri:String!,
-            $consumptionRoleUri:String!,
-            $input:UpdateConsumptionRoleInput
+            $consumptionPrincipalUri:String!,
+            $input:UpdateConsumptionPrincipalInput
         ){
-            updateConsumptionRole(
+            updateConsumptionPrincipal(
                 environmentUri:$environmentUri,
-                consumptionRoleUri: $consumptionRoleUri,
+                consumptionPrincipalUri: $consumptionPrincipalUri,
                 input:$input
             ){
-                consumptionRoleUri
-                consumptionRoleName
+                consumptionPrincipalUri
+                consumptionPrincipalName
                 environmentUri
                 groupUri
-                IAMRoleName
-                IAMRoleArn
+                IAMPrincipalName
+                IAMPrincipalArn
+                dataallManaged
             }
         }
     """
 
-    consumption_role_uri = consumption_role.data.addConsumptionRoleToEnvironment.consumptionRoleUri
+    consumption_principal_uri = consumption_role.data.addConsumptionPrincipalToEnvironment.consumptionPrincipalUri
 
     with db.scoped_session() as session:
         ResourcePolicyService.attach_resource_policy(
             session=session,
-            resource_uri=consumption_role_uri,
+            resource_uri=consumption_principal_uri,
             group=group.name,
             permissions=[REMOVE_ENVIRONMENT_CONSUMPTION_ROLE],
             resource_type=Environment.__name__,
@@ -769,10 +770,16 @@ def test_update_consumption_role(client, org_fixture, env_fixture, user, group, 
         username=user,
         groups=[group.name],
         environmentUri=env_fixture.environmentUri,
-        consumptionRoleUri=consumption_role_uri,
-        input={'consumptionRoleName': 'testRoleName', 'groupUri': 'testGroupUri'},
+        consumptionPrincipalUri=consumption_principal_uri,
+        # Update consumptionRoleName, groupUri and also the policy management ( dataallManaged )
+        input={
+            'consumptionPrincipalName': 'testRoleName',
+            'groupUri': 'testGroupUri',
+            'dataallManaged': 'PARTIALLY_MANAGED',
+        },
     )
 
     assert not response.errors
-    assert response.data.updateConsumptionRole.consumptionRoleName == 'testRoleName'
-    assert response.data.updateConsumptionRole.groupUri == 'testGroupUri'
+    assert response.data.updateConsumptionPrincipal.consumptionPrincipalName == 'testRoleName'
+    assert response.data.updateConsumptionPrincipal.groupUri == 'testGroupUri'
+    assert response.data.updateConsumptionPrincipal.dataallManaged == 'PARTIALLY_MANAGED'

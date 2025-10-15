@@ -26,7 +26,12 @@ def _columns(db, dataset_fixture, table_fixture) -> List[DatasetTableColumn]:
     yield cols
 
 
-def test_dataset_term_link_approval(db, client, t1, dataset_fixture, user, group):
+def test_dataset_term_link_approval(db, client, t1, dataset_fixture, user, group, module_mocker):
+    # Mock the validate_kms_key function to return True
+    module_mocker.patch(
+        'dataall.modules.s3_datasets.services.dataset_service.DatasetService.validate_kms_key', return_value=True
+    )
+
     response = client.query(
         """
         mutation UpdateDataset($datasetUri:String!,$input:ModifyDatasetInput){

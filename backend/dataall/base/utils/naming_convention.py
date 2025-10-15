@@ -8,7 +8,7 @@ class NamingConventionPattern(Enum):
         'regex': '[^a-zA-Z0-9-]',
         'separator': '-',
         'max_length': 63,
-        'valid_external_regex': '(?!(^xn--|.+-s3alias$))^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$',
+        'valid_external_regex': '^(?!(xn--|.+-s3alias$))(?!.*\.\.)[a-z0-9](?:[a-z0-9.-]{0,61}[a-z0-9])?$',
     }
     KMS = {'regex': '[^a-zA-Z0-9-]$', 'separator': '-', 'max_length': 63, 'valid_external_regex': '^[a-zA-Z0-9_-]+$'}
     IAM = {'regex': '[^a-zA-Z0-9-_]', 'separator': '-', 'max_length': 63}  # Role names up to 64 chars

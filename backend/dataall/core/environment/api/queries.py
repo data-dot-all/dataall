@@ -10,10 +10,10 @@ from dataall.core.environment.api.resolvers import (
     get_pivot_role_name,
     get_pivot_role_template,
     get_trust_account,
-    list_all_environment_consumption_roles,
+    list_all_environment_consumption_principals,
     list_all_environment_groups,
-    list_consumption_roles,
-    list_environment_consumption_roles,
+    list_consumption_principals,
+    list_environment_consumption_principals,
     list_environment_group_invitation_permissions,
     list_environment_groups,
     list_environment_invited_groups,
@@ -21,13 +21,13 @@ from dataall.core.environment.api.resolvers import (
     list_environments,
     list_groups,
     list_valid_environments,
-    get_consumption_role_policies,
+    get_consumption_principal_policies,
 )
 from dataall.core.environment.api.types import (
     Environment,
     EnvironmentSearchResult,
     EnvironmentSimplifiedSearchResult,
-    RoleManagedPolicy,
+    PrincipalManagedPolicy,
 )
 
 getTrustAccount = gql.QueryField(
@@ -140,34 +140,34 @@ listAllGroups = gql.QueryField(
     resolver=list_groups,
 )
 
-listAllConsumptionRoles = gql.QueryField(
-    name='listAllConsumptionRoles',
-    type=gql.Ref('ConsumptionRoleSearchResult'),
+listAllConsumptionPrincipals = gql.QueryField(
+    name='listAllConsumptionPrincipals',
+    type=gql.Ref('ConsumptionPrincipalSearchResult'),
     args=[
-        gql.Argument(name='filter', type=gql.Ref('ConsumptionRoleFilter')),
+        gql.Argument(name='filter', type=gql.Ref('ConsumptionPrincipalFilter')),
     ],
-    resolver=list_consumption_roles,
+    resolver=list_consumption_principals,
 )
 
-listEnvironmentConsumptionRoles = gql.QueryField(
-    name='listEnvironmentConsumptionRoles',
-    type=gql.Ref('ConsumptionRoleSearchResult'),
+listEnvironmentConsumptionPrincipals = gql.QueryField(
+    name='listEnvironmentConsumptionPrincipals',
+    type=gql.Ref('ConsumptionPrincipalSearchResult'),
     args=[
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='filter', type=gql.Ref('ConsumptionRoleFilter')),
+        gql.Argument(name='filter', type=gql.Ref('ConsumptionPrincipalFilter')),
     ],
-    resolver=list_environment_consumption_roles,
+    resolver=list_environment_consumption_principals,
 )
 
 
-listAllEnvironmentConsumptionRoles = gql.QueryField(
-    name='listAllEnvironmentConsumptionRoles',
-    type=gql.Ref('ConsumptionRoleSearchResult'),
+listAllEnvironmentConsumptionPrincipals = gql.QueryField(
+    name='listAllEnvironmentConsumptionPrincipals',
+    type=gql.Ref('ConsumptionPrincipalSearchResult'),
     args=[
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='filter', type=gql.Ref('ConsumptionRoleFilter')),
+        gql.Argument(name='filter', type=gql.Ref('ConsumptionPrincipalFilter')),
     ],
-    resolver=list_all_environment_consumption_roles,
+    resolver=list_all_environment_consumption_principals,
 )
 
 listEnvironmentGroupInvitationPermissions = gql.QueryField(
@@ -211,13 +211,14 @@ getPivotRoleName = gql.QueryField(
     test_scope='Environment',
 )
 
-getConsumptionRolePolicies = gql.QueryField(
-    name='getConsumptionRolePolicies',
+getConsumptionPrincipalPolicies = gql.QueryField(
+    name='getConsumptionPrincipalPolicies',
     args=[
         gql.Argument(name='environmentUri', type=gql.NonNullableType(gql.String)),
-        gql.Argument(name='IAMRoleName', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='IAMPrincipalName', type=gql.NonNullableType(gql.String)),
+        gql.Argument(name='IAMPrincipalType', type=gql.NonNullableType(gql.String)),
     ],
-    type=gql.ArrayType(RoleManagedPolicy),
-    resolver=get_consumption_role_policies,
+    type=gql.ArrayType(PrincipalManagedPolicy),
+    resolver=get_consumption_principal_policies,
     test_scope='Environment',
 )

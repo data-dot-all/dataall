@@ -83,7 +83,7 @@ export const ShareBoxListItem = ({ share }) => {
             }}
           >
             <Typography color="textPrimary" variant="body1">
-              Role name
+              Principal name
             </Typography>
             <Typography
               color="textSecondary"

@@ -122,7 +122,7 @@ class RedshiftShareRepository:
                 and_(
                     ShareObjectItem.status.in_(share_item_shared_states),
                     ShareObject.datasetUri == dataset_uri,
-                    ShareObject.principalRoleName == rs_role,
+                    ShareObject.principalName == rs_role,
                     ShareObject.principalId == connection_uri,
                 )
             )

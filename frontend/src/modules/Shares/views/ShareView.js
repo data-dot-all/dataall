@@ -55,7 +55,8 @@ import {
   useSettings,
   Label,
   SanitizedHTML,
-  UserModal
+  UserModal,
+  InfoIconWithToolTip
 } from 'design';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient } from 'services';
@@ -88,6 +89,7 @@ import { ShareSubmitModal } from '../components/ShareSubmitModal';
 import { useTheme } from '@mui/styles';
 import { UpdateExtensionReason } from '../components/ShareUpdateExtension';
 import CancelIcon from '@mui/icons-material/Close';
+import { policyManagementInfoMap } from '../../constants';
 
 const isReadOnlyShare = (share) => share.permissions.every((p) => p === 'Read');
 
@@ -959,6 +961,15 @@ const ShareView = () => {
     return null;
   }
 
+  const formatPolicyManagmentType = (unformattedPolicyMgmtName) => {
+    return unformattedPolicyMgmtName
+      .split('_') // Split string "FULLY_MANAGED", etc on "_"
+      .map((word) => {
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(); // Capitalize first word and lower case others
+      })
+      .join('-');
+  };
+
   return (
     <>
       <Helmet>
@@ -1345,7 +1356,10 @@ const ShareView = () => {
                               color="textSecondary"
                               variant="subtitle2"
                             >
-                              Principal
+                              Principal &nbsp;&nbsp;
+                              <Label color="warning">
+                                IAM {share.principal.IAMPrincipalType}
+                              </Label>
                             </Typography>
                           </ListItem>
                           <ListItem
@@ -1376,6 +1390,77 @@ const ShareView = () => {
                                   {share.principal.principalName || '-'}
                                 </span>
                               </Tooltip>
+                            </Typography>
+                          </ListItem>
+                          <ListItem
+                            disableGutters
+                            divider
+                            sx={{
+                              justifyContent: 'space-between',
+                              padding: 2
+                            }}
+                          >
+                            <Typography
+                              color="textSecondary"
+                              variant="subtitle2"
+                            >
+                              <Tooltip
+                                title={
+                                  <span>
+                                    IAM policy management indicates how much
+                                    control data.all has into creating and
+                                    attaching policies
+                                    <br />
+                                    <br />
+                                    1. Data.all fully managed - Data.all manages
+                                    creating, maintaining and also attaching the
+                                    policy <br />
+                                    <br />
+                                    2. Data.all partially managed - Data.all
+                                    will create the IAM policy but won't attach
+                                    policy to your consumption role. With this
+                                    option, data.all will indicate share to be
+                                    unhealthy if the data.all created policy is
+                                    not attached.
+                                    <br />
+                                    <br />
+                                    3. Externally Managed - Data.all will create
+                                    the IAM policy required for any share but it
+                                    will be incumbent on role owners to attach
+                                    it or use their own policy. With this
+                                    option, data.all will not indicate the share
+                                    to be unhealthy even if the policy is not
+                                    attached.
+                                  </span>
+                                }
+                              >
+                                Principal IAM Policy Management
+                              </Tooltip>
+                            </Typography>
+                            <Typography
+                              color="textPrimary"
+                              variant="body2"
+                              sx={{
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                WebkitBoxOrient: 'vertical',
+                                WebkitLineClamp: 2
+                              }}
+                            >
+                              <span>
+                                {formatPolicyManagmentType(
+                                  share.policyManagement
+                                )}{' '}
+                              </span>
+                              <InfoIconWithToolTip
+                                title={
+                                  policyManagementInfoMap[
+                                    share.policyManagement
+                                  ]
+                                }
+                                size={1}
+                              />
                             </Typography>
                           </ListItem>
                           <ListItem

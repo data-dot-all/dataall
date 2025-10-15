@@ -2,8 +2,16 @@ from typing import Dict
 
 import pytest
 
-from dataall.core.environment.db.environment_models import Environment, EnvironmentGroup, EnvironmentParameter
+from dataall.base.utils.consumption_principal_utils import EnvironmentIAMPrincipalType
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
+from dataall.core.environment.db.environment_models import (
+    Environment,
+    EnvironmentGroup,
+    EnvironmentParameter,
+    ConsumptionPrincipal,
+)
 from dataall.core.organizations.db.organization_models import Organization
+from dataall.core.permissions.services import environment_permissions
 from dataall.core.permissions.services.environment_permissions import ENVIRONMENT_ALL
 from dataall.core.permissions.services.organization_permissions import ORGANIZATION_ALL
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
@@ -41,6 +49,42 @@ def environment_group(db):
             )
             session.commit()
             return env_group
+
+    yield factory
+
+
+@pytest.fixture(scope='module')
+def consumption_role(db):
+    def factory(
+        environment: Environment,
+        group: str,
+        consumption_role_name='test123',
+        datallManaged=PolicyManagementOptions.FULLY_MANAGED.value,
+        consumptionPrincipalType=EnvironmentIAMPrincipalType.ROLE.value,
+    ) -> EnvironmentGroup:
+        with db.scoped_session() as session:
+            IAMRoleArn = f'arn:aws:iam::{environment.AwsAccountId}:role/{consumption_role_name}'
+            consumption_role: ConsumptionPrincipal = ConsumptionPrincipal(
+                consumptionPrincipalName=consumption_role_name,
+                environmentUri=environment.environmentUri,
+                groupUri=group,
+                IAMPrincipalName=IAMRoleArn,
+                IAMPrincipalArn=IAMRoleArn.split('/')[-1],
+                dataallManaged=datallManaged,
+                consumptionPrincipalType=consumptionPrincipalType,
+            )
+            session.add(consumption_role)
+            session.commit()
+
+            ResourcePolicyService.attach_resource_policy(
+                session=session,
+                group=group,
+                resource_uri=consumption_role.consumptionPrincipalUri,
+                permissions=environment_permissions.CONSUMPTION_ROLE_ALL,
+                resource_type=ConsumptionPrincipal.__name__,
+            )
+            session.commit()
+            return consumption_role
 
     yield factory
 

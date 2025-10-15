@@ -102,9 +102,13 @@ class DataSharingPivotRole(PivotRoleStatementSet):
                 actions=[
                     'ram:AcceptResourceShareInvitation',
                     'ram:RejectResourceShareInvitation',
-                    'ram:EnableSharingWithAwsOrganization',
                 ],
-                resources=['*'],
+                resources=['arn:aws:ram:*:*:resource-share-invitation/*'],  # Scoped
+                conditions={
+                    'ForAllValues:StringLike': {
+                        'ram:ResourceShareName': ['LakeFormation*', f'{self.env_resource_prefix}*']
+                    },
+                },
             ),
             iam.PolicyStatement(
                 sid='RamRead',

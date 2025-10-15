@@ -8,6 +8,7 @@ from dataall.base.aws.iam import IAM
 from dataall.base.aws.quicksight import QuicksightClient
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.db import exceptions
+from dataall.base.utils.consumption_principal_utils import EnvironmentIAMPrincipalType
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTable
 from dataall.modules.s3_datasets_shares.aws.glue_client import GlueClient
@@ -24,6 +25,7 @@ from dataall.modules.shares_base.services.shares_enums import (
     ShareItemActions,
     ShareItemHealthStatus,
     ShareObjectDataPermission,
+    PrincipalType,
 )
 from dataall.modules.shares_base.services.sharing_service import ShareData
 
@@ -80,6 +82,12 @@ class LFShareManager:
         self.share = share_data.share
         self.source_environment = share_data.source_environment
         self.target_environment = share_data.target_environment
+        self.target_principal_type = (
+            EnvironmentIAMPrincipalType.ROLE.value
+            if share_data.share.principalType
+            in [PrincipalType.ConsumptionRole.value, PrincipalType.Group.value, PrincipalType.RedshiftRole.value]
+            else EnvironmentIAMPrincipalType.USER.value
+        )
         # Set the source account details by checking if a catalog account exists
         self.source_account_id, self.source_account_region, self.source_database_name = (
             self.init_source_account_details()
@@ -113,21 +121,32 @@ class LFShareManager:
         Builds list of principals of the share request
         :return: List of principals' arns
         """
-        principal_iam_role_arn = IAM.get_role_arn_by_name(
-            account_id=self.target_environment.AwsAccountId,
-            region=self.target_environment.region,
-            role_name=self.share.principalRoleName,
-        )
-        if principal_iam_role_arn is None:
-            logger.info(
-                f'Principal IAM Role {self.share.principalRoleName} not found in {self.target_environment.AwsAccountId}'
+        principal_iam_arn = None
+        if self.target_principal_type == EnvironmentIAMPrincipalType.ROLE.value:
+            principal_iam_arn = IAM.get_role_arn_by_name(
+                account_id=self.target_environment.AwsAccountId,
+                region=self.target_environment.region,
+                role_name=self.share.principalName,
             )
-            logger.info('Try to build arn')
-            principal_iam_role_arn = (
-                f'arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.share.principalRoleName}'
+        elif self.target_principal_type == EnvironmentIAMPrincipalType.USER.value:
+            principal_iam_arn = IAM.get_user_arn_by_name(
+                account_id=self.target_environment.AwsAccountId,
+                region=self.target_environment.region,
+                user_name=self.share.principalName,
             )
+        else:
+            error = 'Unsupported principal type. Cannot proceed with LF sharing'
+            logger.error(error)
+            raise Exception(error)
 
-        return [principal_iam_role_arn]
+        if principal_iam_arn is None:
+            logger.info(
+                f'Principal IAM {self.target_principal_type} {self.share.principalName} not found in {self.target_environment.AwsAccountId}'
+            )
+            logger.info('Try to build arn. Defaulting to role type')
+            principal_iam_arn = f'arn:aws:iam::{self.target_environment.AwsAccountId}:role/{self.share.principalName}'
+
+        return [principal_iam_arn]
 
     def build_shared_db_name(self) -> tuple:
         """

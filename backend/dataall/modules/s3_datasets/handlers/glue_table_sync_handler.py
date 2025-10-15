@@ -39,6 +39,7 @@ class DatasetColumnGlueHandler:
                     'UpdateTime',
                     'CreatedBy',
                     'IsRegisteredWithLakeFormation',
+                    'IsMultiDialectView',
                 ]
             }
             all_columns = updated_table.get('StorageDescriptor', {}).get('Columns', []) + updated_table.get(

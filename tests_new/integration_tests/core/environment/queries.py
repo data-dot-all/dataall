@@ -1,3 +1,5 @@
+from dataall.core.environment.db.environment_enums import PolicyManagementOptions
+
 ENV_TYPE = """
 environmentUri
 created
@@ -210,7 +212,9 @@ def remove_group_from_env(client, env_uri, group_uri):
     return response.data.removeGroupFromEnvironment
 
 
-def add_consumption_role(client, env_uri, group_uri, consumption_role_name, iam_role_arn, is_managed=True):
+def add_consumption_role(
+    client, env_uri, group_uri, consumption_role_name, iam_role_arn, is_managed=PolicyManagementOptions.FULLY_MANAGED
+):
     query = {
         'operationName': 'addConsumptionRoleToEnvironment',
         'variables': {
@@ -264,7 +268,7 @@ def list_environment_consumption_roles(client, env_uri, filter):
         """,
     }
     response = client.query(query=query)
-    return response.data.listEnvironmentConsumptionRoles
+    return response.data.listEnvironmentConsumptionPrincipals
 
 
 def remove_consumption_role(client, env_uri, consumption_role_uri):
@@ -287,7 +291,7 @@ def remove_consumption_role(client, env_uri, consumption_role_uri):
         """,
     }
     response = client.query(query=query)
-    return response.data.removeConsumptionRoleFromEnvironment
+    return response.data.removeConsumptionPrincipalFromEnvironment
 
 
 def get_environment_access_token(client, env_uri, group_uri):

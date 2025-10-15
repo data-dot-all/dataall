@@ -737,6 +737,34 @@ const DatasetEditForm = (props) => {
                             </CardContent>
                           )}
                       </Card>
+                      {dataset.imported && (
+                        <Card sx={{ mb: 3 }}>
+                          <CardHeader title="KMS Configuration" />
+                          <CardContent>
+                            <TextField
+                              error={Boolean(
+                                touched.KmsAlias && errors.KmsAlias
+                              )}
+                              fullWidth
+                              helperText={touched.KmsAlias && errors.KmsAlias}
+                              label="Amazon KMS key Alias"
+                              name="KmsAlias"
+                              onBlur={handleBlur}
+                              onChange={handleChange}
+                              value={values.KmsAlias}
+                              variant="outlined"
+                              placeholder="Enter KMS key alias (if SSE-KMS encryption is used)"
+                            />
+                            <Box sx={{ mt: 2 }}>
+                              <Typography variant="body2" color="textSecondary">
+                                <strong>Note:</strong> If S3 bucket doesn't have
+                                a KMS key associated then put 'SSE-S3',
+                                otherwise put the appropriate KMS alias.
+                              </Typography>
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      )}
                       <Card>
                         <CardHeader title="Governance" />
                         <CardContent>

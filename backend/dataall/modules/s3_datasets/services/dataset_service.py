@@ -133,51 +133,53 @@ class DatasetService:
                     action=IMPORT_DATASET,
                     message=f'Dataset with bucket {dataset.S3BucketName} already exists',
                 )
-
         kms_alias = dataset.KmsAlias
+        DatasetService.validate_kms_key(dataset, kms_alias)
 
+        return True
+
+    @staticmethod
+    def validate_kms_key(dataset, kms_alias_for_validation):
         s3_encryption, kms_id_type, kms_id = S3DatasetClient(dataset).get_bucket_encryption()
-        if kms_alias not in [None, 'Undefined', '', 'SSE-S3']:  # user-defined KMS encryption
+        if kms_alias_for_validation not in [None, 'Undefined', '', 'SSE-S3']:  # user-defined KMS encryption
             if s3_encryption == 'AES256':
                 raise exceptions.InvalidInput(
                     param_name='KmsAlias',
-                    param_value=dataset.KmsAlias,
-                    constraint=f'empty, Bucket {dataset.S3BucketName} is encrypted with AWS managed key (SSE-S3). KmsAlias {kms_alias} should NOT be provided as input parameter.',
+                    param_value=kms_alias_for_validation,
+                    constraint=f'empty, Bucket {dataset.S3BucketName} is encrypted with AWS managed key (SSE-S3). KmsAlias {kms_alias_for_validation} should NOT be provided as input parameter.',
                 )
             NamingConventionService(
                 target_uri=dataset.datasetUri,
-                target_label=kms_alias,
+                target_label=kms_alias_for_validation,
                 pattern=NamingConventionPattern.KMS,
             ).validate_imported_name()
 
             key_exists = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).check_key_exists(
-                key_alias=f'alias/{kms_alias}'
+                key_alias=f'alias/{kms_alias_for_validation}'
             )
             if not key_exists:
                 raise exceptions.AWSResourceNotFound(
                     action=IMPORT_DATASET,
-                    message=f'KMS key with alias={kms_alias} cannot be found - Please check if KMS Key Alias exists in account {dataset.AwsAccountId}',
+                    message=f'KMS key with alias={kms_alias_for_validation} cannot be found - Please check if KMS Key Alias exists in account {dataset.AwsAccountId}',
                 )
 
-            key_matches = kms_id == kms_alias
+            key_matches = kms_id == kms_alias_for_validation
             if kms_id_type == 'key':
                 key_id = KmsClient(account_id=dataset.AwsAccountId, region=dataset.region).get_key_id(
-                    key_alias=f'alias/{kms_alias}'
+                    key_alias=f'alias/{kms_alias_for_validation}'
                 )
                 key_matches = key_id == kms_id
 
             if not key_matches:
                 raise exceptions.InvalidInput(
                     param_name='KmsAlias',
-                    param_value=dataset.KmsAlias,
+                    param_value=kms_alias_for_validation,
                     constraint=f'the KMS Alias of the KMS key used to encrypt the Bucket {dataset.S3BucketName}. Provide the correct KMS Alias as input parameter.',
                 )
 
         else:  # user-defined S3 encryption
             if s3_encryption != 'AES256':
                 raise exceptions.RequiredParameter(param_name='KmsAlias')
-
-        return True
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
@@ -307,8 +309,23 @@ class DatasetService:
                 )
 
                 if data.get('KmsAlias') not in ['Undefined'] and data.get('KmsAlias') != dataset.KmsAlias:
-                    dataset.KmsAlias = 'SSE-S3' if data.get('KmsAlias') == '' else data.get('KmsAlias')
-                    dataset.importedKmsKey = False if data.get('KmsAlias') == '' else True
+                    log.info(f'Validating the kms key with alias: {data.get("KmsAlias")}')
+                    DatasetService.validate_kms_key(dataset, data.get('KmsAlias'))
+                    new_kms_alias = (
+                        'SSE-S3'
+                        if (data.get('KmsAlias') == '' or data.get('KmsAlias') == 'SSE-S3')
+                        else data.get('KmsAlias')
+                    )
+                    dataset.KmsAlias = new_kms_alias
+                    dataset.importedKmsKey = (
+                        False if (data.get('KmsAlias') == '' or data.get('KmsAlias') == 'SSE-S3') else True
+                    )
+                    # Update the dataset bucket as well
+                    dataset_bucket = DatasetBucketRepository.get_dataset_bucket_for_dataset(session, dataset.datasetUri)
+                    dataset_bucket.KmsAlias = new_kms_alias
+                    dataset_bucket.importedKmsKey = (
+                        False if (data.get('KmsAlias') == '' or data.get('KmsAlias') == 'SSE-S3') else True
+                    )
 
                 if data.get('stewards') and data.get('stewards') != dataset.stewards:
                     if data.get('stewards') != dataset.SamlAdminGroupName:
