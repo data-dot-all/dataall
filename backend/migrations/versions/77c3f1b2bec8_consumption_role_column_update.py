@@ -1,7 +1,7 @@
 """Consumption role schema change and backfilling
 
 Revision ID: 77c3f1b2bec8
-Revises: af2e1362d4cb
+Revises: a1b2c3d4e5f7
 Create Date: 2025-02-05 11:05:55.782419
 
 """
@@ -20,7 +20,7 @@ from dataall.core.environment.db.environment_models import ConsumptionPrincipal
 
 # revision identifiers, used by Alembic.
 revision = '77c3f1b2bec8'
-down_revision = 'ba2da94739ab'
+down_revision = 'a1b2c3d4e5f7'
 branch_labels = None
 depends_on = None
 
