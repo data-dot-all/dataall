@@ -162,6 +162,10 @@ def list_datasets_owned_by_env_group(
     return DatasetService.list_datasets_owned_by_env_group(uri=environmentUri, group_uri=groupUri, data=filter)
 
 
+def list_s3_object_keys(context, source, datasetUri: str = None):
+    return DatasetService.list_s3_object_keys(uri=datasetUri)
+
+
 class RequestValidator:
     @staticmethod
     def validate_creation_request(data):

@@ -1,5 +1,10 @@
 import logging
 
+from dataall.core.resource_threshold.services.resource_threshold_service import ResourceThresholdService
+from dataall.modules.worksheets.aws.glue_client import GlueClient
+from dataall.modules.worksheets.aws.s3_client import S3Client
+from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
+from dataall.modules.worksheets.aws.bedrock_client import BedrockClient
 from dataall.core.activity.db.activity_models import Activity
 from dataall.core.environment.services.environment_service import EnvironmentService
 from dataall.base.db import exceptions
@@ -36,6 +41,8 @@ class WorksheetService:
     @TenantPolicyService.has_tenant_permission(MANAGE_WORKSHEETS)
     def create_worksheet(data=None) -> Worksheet:
         context = get_context()
+        with context.db_engine.scoped_session() as session:
+            context = get_context()
         if data['SamlAdminGroupName'] not in context.groups:
             raise exceptions.UnauthorizedOperation(
                 'CREATE_WORKSHEET', f'user {context.username} does not belong to group {data["SamlAdminGroupName"]}'
@@ -70,7 +77,7 @@ class WorksheetService:
                 resource_uri=worksheet.worksheetUri,
                 resource_type=Worksheet.__name__,
             )
-        return worksheet
+            return worksheet
 
     @staticmethod
     @TenantPolicyService.has_tenant_permission(MANAGE_WORKSHEETS)
@@ -151,3 +158,48 @@ class WorksheetService:
             )
 
             return AthenaClient.convert_query_output(cursor)
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
+    @ResourceThresholdService.check_invocation_count('nlq', 'modules.worksheets.features.nlq.max_count_per_day')
+    def run_nlq(uri, prompt, worksheetUri, db_name, table_names):
+        with get_context().db_engine.scoped_session() as session:
+            environment = EnvironmentService.get_environment_by_uri(session, uri)
+            worksheet = WorksheetService._get_worksheet_by_uri(session, worksheetUri)
+
+            env_group = EnvironmentService.get_environment_group(
+                session, worksheet.SamlAdminGroupName, environment.environmentUri
+            )
+
+        glue_client = GlueClient(
+            account_id=environment.AwsAccountId, region=environment.region, role=env_group.environmentIAMRoleArn
+        )
+
+        metadata = []
+        for table in table_names:
+            metadata.append(glue_client.get_table_metadata(database=db_name, table_name=table))
+
+        return BedrockClient().invoke_model_text_to_sql(prompt, '\n'.join(metadata))
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(RUN_ATHENA_QUERY)
+    @ResourceThresholdService.check_invocation_count('nlq', 'modules.worksheets.features.nlq.max_count_per_day')
+    def analyze_text_genai(uri, worksheetUri, prompt, datasetUri, key):
+        with get_context().db_engine.scoped_session() as session:
+            environment = EnvironmentService.get_environment_by_uri(session, uri)
+            worksheet = WorksheetService._get_worksheet_by_uri(session, worksheetUri)
+
+            env_group = EnvironmentService.get_environment_group(
+                session, worksheet.SamlAdminGroupName, environment.environmentUri
+            )
+
+            dataset = DatasetRepository.get_dataset_by_uri(session, datasetUri)
+
+        s3_client = S3Client(
+            account_id=environment.AwsAccountId,
+            region=environment.region,
+            role=env_group.environmentIAMRoleArn,
+        )
+
+        content = s3_client.get_content(dataset.S3BucketName, key)
+        return BedrockClient().invoke_model_process_text(prompt, content)
