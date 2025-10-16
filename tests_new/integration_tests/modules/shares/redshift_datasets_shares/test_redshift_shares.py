@@ -16,7 +16,7 @@ from integration_tests.modules.shares.queries import (
     reapply_share_items,
 )
 from integration_tests.modules.shares.redshift_datasets_shares.conftest import (
-    REDSHIFT_TEST_ROLE_NAME,
+    REDSHIFT_TEST_PRINCIPAL_NAME,
     REDSHIFT_PRINCIPAL_TYPE,
     REDSHIFT_ITEM_TYPE,
 )
@@ -240,7 +240,7 @@ def test_create_redshift_share_invalid_target_connection(
         dataset_or_item_params={'datasetUri': session_redshift_dataset_serverless.datasetUri},
         environmentUri=session_cross_acc_env_1.environmentUri,
         groupUri=group5,
-        principalRoleName=REDSHIFT_TEST_ROLE_NAME,
+        principalName=REDSHIFT_TEST_PRINCIPAL_NAME,
         principalId=session_connection_cluster_data_user.connectionUri,
         principalType=REDSHIFT_PRINCIPAL_TYPE,
         requestPurpose='Integration tests - Redshift shares',
@@ -261,7 +261,7 @@ def test_create_redshift_share_invalid_redshift_role(
         dataset_or_item_params={'datasetUri': session_redshift_dataset_serverless.datasetUri},
         environmentUri=session_cross_acc_env_1.environmentUri,
         groupUri=group5,
-        principalRoleName='doesnotexist',
+        principalName='doesnotexist',
         principalId=session_connection_cluster_admin.connectionUri,
         principalType=REDSHIFT_PRINCIPAL_TYPE,
         requestPurpose='Integration tests - Redshift shares',

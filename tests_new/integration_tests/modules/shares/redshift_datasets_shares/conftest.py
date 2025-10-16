@@ -13,7 +13,7 @@ from integration_tests.modules.shares.utils import check_share_ready
 
 REDSHIFT_PRINCIPAL_TYPE = 'RedshiftRole'  # Value from backend Enum
 REDSHIFT_ITEM_TYPE = 'RedshiftTable'  # Value from backend Enum
-REDSHIFT_TEST_ROLE_NAME = 'testrole'  # Created following instructions in README
+REDSHIFT_TEST_PRINCIPAL_NAME = 'testrole'  # Created following instructions in README
 
 log = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ def create_and_submit_share_request(client, dataset, rs_table, group, env, princ
         environmentUri=env.environmentUri,
         groupUri=group,
         principalId=principal_id,
-        principalRoleName=REDSHIFT_TEST_ROLE_NAME,
+        principalName=REDSHIFT_TEST_PRINCIPAL_NAME,
         principalType=REDSHIFT_PRINCIPAL_TYPE,
         requestPurpose='Integration tests - Redshift shares',
         attachMissingPolicies=False,

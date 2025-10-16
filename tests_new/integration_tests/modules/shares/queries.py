@@ -12,7 +12,7 @@ def create_share_object(
     permissions,
     requestPurpose=None,
     attachMissingPolicies=None,
-    principalRoleName=None,
+    principalName=None,
 ):
     query = {
         'operationName': 'createShareObject',
@@ -24,7 +24,7 @@ def create_share_object(
                 'environmentUri': environmentUri,
                 'groupUri': groupUri,
                 'principalId': principalId,
-                'principalRoleName': principalRoleName,
+                'principalName': principalName,
                 'principalType': principalType,
                 'requestPurpose': requestPurpose,
                 'attachMissingPolicies': attachMissingPolicies,
