@@ -2,7 +2,7 @@ Principal = """
           principalName
           principalType
           principalId
-          principalName
+          principalRoleName
           SamlGroupName
           environmentName
 """

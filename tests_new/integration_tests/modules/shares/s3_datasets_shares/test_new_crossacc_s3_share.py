@@ -179,7 +179,7 @@ def test_check_item_access(share_params_main):
 def test_unhealthy_items(share_params_main):
     client, group, env, env_client, role, share, _, integration_role_arn = share_params_main
     iam = env_client.resource('iam')
-    principal_role = iam.Role(share.principal.principalName)
+    principal_role = iam.Role(share.principal.principalRoleName)
     # break s3 by removing policies
     for policy in principal_role.attached_policies.all():
         if '/dataall-env-' in policy.arn and 'share-policy' in policy.arn:
