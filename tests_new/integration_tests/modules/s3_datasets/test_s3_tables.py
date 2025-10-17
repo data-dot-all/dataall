@@ -72,6 +72,7 @@ def test_preview_table(client1, tables_fixture_name, request):
     tables = request.getfixturevalue(tables_fixture_name)
     table_uri = tables[0].tableUri
     response = preview_table(client1, table_uri)
+    response.rows.sort()
     assert_that(len(response.rows)).is_equal_to(3)
     assert_that(response.rows[0]).contains('value12', 'value13')
 
