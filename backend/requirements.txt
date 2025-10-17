@@ -1,6 +1,6 @@
 ariadne==0.26.2
 aws-xray-sdk==2.4.3
-boto3==1.35.26
+boto3==1.40.48
 fastapi == 0.116.1
 nanoid==2.0.0
 opensearch-py==3.0.0
@@ -13,3 +13,6 @@ requests_aws4auth==1.1.1
 sqlalchemy==2.0.41
 alembic==1.16.4
 retrying==1.3.4
+langchain-aws==0.2.28
+langchain-core==0.3.69
+pydantic==2.10.0

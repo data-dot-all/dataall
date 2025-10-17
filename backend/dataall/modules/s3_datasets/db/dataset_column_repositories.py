@@ -1,5 +1,5 @@
 from operator import or_
-
+from sqlalchemy.orm import Query
 from dataall.base.db import paginate
 from dataall.base.db.exceptions import ObjectNotFound
 from dataall.modules.s3_datasets.db.dataset_models import DatasetTableColumn
@@ -19,8 +19,8 @@ class DatasetColumnRepository:
         session.commit()
 
     @staticmethod
-    def paginate_active_columns_for_table(session, table_uri: str, filter: dict):
-        q = (
+    def query_active_columns_for_table(session, table_uri: str) -> Query:
+        return (
             session.query(DatasetTableColumn)
             .filter(
                 DatasetTableColumn.tableUri == table_uri,
@@ -28,6 +28,10 @@ class DatasetColumnRepository:
             )
             .order_by(DatasetTableColumn.columnType.asc())
         )
+
+    @staticmethod
+    def paginate_active_columns_for_table(session, table_uri: str, filter: dict):
+        q = DatasetColumnRepository.query_active_columns_for_table(session, table_uri)
 
         if filter.get('filteredColumns'):
             q = q.filter(DatasetTableColumn.name.in_(filter['filteredColumns']))
@@ -42,3 +46,10 @@ class DatasetColumnRepository:
             ).order_by(DatasetTableColumn.columnType.asc())
 
         return paginate(query=q, page=filter.get('page', 1), page_size=filter.get('pageSize', 10)).to_dict()
+
+    @staticmethod
+    def list_active_columns_for_table(session, table_uri: str, limit=None):
+        q = DatasetColumnRepository.query_active_columns_for_table(session, table_uri)
+        if limit:
+            q = q.limit(limit)
+        return q.all()

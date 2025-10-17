@@ -101,6 +101,11 @@ upgrade-db: upgrade-pip install-backend
 	export PYTHONPATH=./backend && \
 	alembic -c backend/alembic.ini upgrade head
 
+history-db: upgrade-pip install-backend
+	pip install 'alembic'
+	export PYTHONPATH=./backend && \
+	alembic -c backend/alembic.ini history
+
 generate-migrations: upgrade-pip install-backend
 	pip install 'alembic'
 	export PYTHONPATH=./backend && \

@@ -19,6 +19,8 @@ from dataall.core.stacks.db.keyvaluetag_repositories import KeyValueTagRepositor
 from dataall.core.stacks.db.stack_repositories import StackRepository
 from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.tasks.db.task_models import Task
+
+from dataall.core.resource_threshold.services.resource_threshold_service import ResourceThresholdService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.modules.s3_datasets.db.dataset_bucket_repositories import DatasetBucketRepository
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
@@ -48,6 +50,7 @@ from dataall.modules.datasets_base.services.datasets_enums import DatasetRole
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset, DatasetTable
 from dataall.modules.datasets_base.db.dataset_models import DatasetBase
 from dataall.modules.datasets_base.services.dataset_service_interface import DatasetServiceInterface
+from dataall.modules.s3_datasets.aws.bedrock_metadata_client import BedrockClient
 
 log = logging.getLogger(__name__)
 
@@ -595,3 +598,30 @@ class DatasetService:
         for table_uri in tables:
             GlossaryRepository.delete_glossary_terms_links(session, table_uri, 'DatasetTable')
         GlossaryRepository.delete_glossary_terms_links(session, dataset_uri, 'Dataset')
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(GET_DATASET)
+    def list_dataset_tables_folders(uri, filter):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            return DatasetRepository.paginated_dataset_tables_folders(session, uri, filter)
+
+    @staticmethod
+    @TenantPolicyService.has_tenant_permission(MANAGE_DATASETS)
+    @ResourcePolicyService.has_resource_permission(UPDATE_DATASET)
+    @ResourceThresholdService.check_invocation_count(
+        'metadata', 'modules.s3_datasets.features.generate_metadata_ai.max_count_per_day'
+    )
+    def generate_metadata_for_dataset(uri, metadata_types):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            dataset = DatasetBaseRepository.get_dataset_by_uri(session, uri)
+            tables = DatasetRepository.get_dataset_tables(session, dataset.datasetUri, limit=50)
+            folders = DatasetLocationRepository.get_dataset_folders(session, dataset.datasetUri, limit=50)
+            metadata = BedrockClient().invoke_model_dataset_metadata(
+                metadata_types=metadata_types,
+                dataset=dataset,
+                tables=tables,
+                folders=folders,
+            )
+            return [{'targetUri': uri, 'targetType': 'S3_Dataset', **metadata}]

@@ -1,7 +1,11 @@
+import logging
+
 from dataall.modules.s3_datasets.indexers.dataset_indexer import DatasetIndexer
 from dataall.base.context import get_context
 from dataall.core.permissions.services.resource_policy_service import ResourcePolicyService
 from dataall.core.permissions.services.tenant_policy_service import TenantPolicyService
+
+from dataall.core.resource_threshold.services.resource_threshold_service import ResourceThresholdService
 from dataall.modules.catalog.db.glossary_repositories import GlossaryRepository
 from dataall.base.db.exceptions import ResourceAlreadyExists
 from dataall.modules.s3_datasets.services.dataset_service import DatasetService
@@ -18,6 +22,10 @@ from dataall.modules.s3_datasets.services.dataset_permissions import (
 from dataall.modules.s3_datasets.services.dataset_permissions import DATASET_FOLDER_READ, GET_DATASET_FOLDER
 from dataall.modules.s3_datasets.db.dataset_repositories import DatasetRepository
 from dataall.modules.s3_datasets.db.dataset_models import DatasetStorageLocation, S3Dataset
+from dataall.modules.s3_datasets.aws.bedrock_metadata_client import BedrockClient
+from dataall.modules.s3_datasets.aws.s3_dataset_client import S3DatasetClient
+
+log = logging.getLogger(__name__)
 
 
 class DatasetLocationService:
@@ -141,3 +149,19 @@ class DatasetLocationService:
         context = get_context()
         with context.db_engine.scoped_session() as session:
             return DatasetRepository.get_dataset_by_uri(session, folder.datasetUri)
+
+    @staticmethod
+    @ResourcePolicyService.has_resource_permission(UPDATE_DATASET_FOLDER, parent_resource=_get_dataset_uri)
+    @ResourceThresholdService.check_invocation_count(
+        'metadata', 'modules.s3_datasets.features.generate_metadata_ai.max_count_per_day'
+    )
+    def generate_metadata_for_folder(uri, metadata_types):
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            folder = DatasetLocationRepository.get_location_by_uri(session, uri)
+            dataset = DatasetRepository.get_dataset_by_uri(session, folder.datasetUri)
+            files = S3DatasetClient(dataset).list_bucket_files(folder.S3BucketName, folder.S3Prefix)
+            metadata = BedrockClient().invoke_model_folder_metadata(
+                metadata_types=metadata_types, folder=folder, files=[f['Key'] for f in files]
+            )
+            return [{'targetUri': uri, 'targetType': 'Folder', **metadata}]

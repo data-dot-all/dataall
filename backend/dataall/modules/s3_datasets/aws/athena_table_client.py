@@ -37,7 +37,7 @@ class AthenaTableClient:
         )
         cursor = connection.cursor()
 
-        sql = 'select * from {table_identifier} limit 50'.format(
+        sql = 'select * from {table_identifier} order by rand() limit 50'.format(
             table_identifier=sql_utils.Identifier(self._table.GlueDatabaseName, self._table.GlueTableName)
         )
         cursor.execute(sql)  # nosemgrep

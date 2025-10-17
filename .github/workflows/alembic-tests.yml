@@ -40,5 +40,7 @@ jobs:
           cache: 'pip'
       - name: Drop tables
         run: make drop-tables
+      - name: Show history
+        run: make history-db
       - name: Upgrade tables
         run: make upgrade-db
