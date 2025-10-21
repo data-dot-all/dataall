@@ -83,6 +83,7 @@ def test_preview_table_by_confidentiality(client2, tables_fixture_name, confiden
     table_uri = tables[0].tableUri
     if confidentiality in ['Unclassified']:
         response = preview_table(client2, table_uri)
+        response.rows.sort()
         assert_that(len(response.rows)).is_equal_to(3)
         assert_that(response.rows[0]).contains('value12', 'value13')
     else:
