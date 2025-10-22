@@ -698,6 +698,7 @@ class EnvironmentSetup(Stack):
                     'iam:DeleteRolePolicy',
                     'iam:DetachRolePolicy',
                     'iam:ListAttachedRolePolicies',
+                    'iam:UpdateAssumeRolePolicy',
                 ],
                 effect=iam.Effect.ALLOW,
                 resources=[
