@@ -105,9 +105,7 @@ class DataSharingPivotRole(PivotRoleStatementSet):
                 ],
                 resources=['arn:aws:ram:*:*:resource-share-invitation/*'],  # Scoped
                 conditions={
-                    'StringLike': {
-                        'ram:ResourceShareName': ['LakeFormation*', f'{self.env_resource_prefix}*']
-                    },
+                    'StringLike': {'ram:ResourceShareName': ['LakeFormation*', f'{self.env_resource_prefix}*']},
                 },
             ),
             iam.PolicyStatement(
