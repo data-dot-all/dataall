@@ -1,4 +1,4 @@
-import { Auth } from 'aws-amplify';
+import { fetchAuthSession } from 'aws-amplify/auth';
 import { useEffect, useState } from 'react';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useAuth } from 'authentication';
@@ -26,8 +26,8 @@ export const useToken = () => {
             if (!auth) throw Error('User Token Not Found !');
           }
         } else {
-          const session = await Auth.currentSession();
-          const t = await session.getAccessToken().getJwtToken();
+          const session = await fetchAuthSession();
+          const t = session.tokens.accessToken.toString();
           setToken(t);
         }
       } catch (error) {

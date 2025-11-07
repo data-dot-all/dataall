@@ -37,7 +37,7 @@
     "amazon-quicksight-embedding-sdk": "^1.18.1",
     "apexcharts": "^3.33.2",
     "apollo-boost": "^0.4.9",
-    "aws-amplify": "^5.3.14",
+    "aws-amplify": "^6.15.8",
     "braces": "3.0.3",
     "axios": "^1.12.1",
     "classnames": "^2.3.1",

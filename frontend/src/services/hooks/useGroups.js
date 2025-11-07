@@ -1,4 +1,4 @@
-import { Auth } from 'aws-amplify';
+import { fetchAuthSession } from 'aws-amplify/auth';
 import { useEffect, useState } from 'react';
 import { SET_ERROR, useDispatch } from 'globalErrors';
 import { useClient, getGroupsForUser } from 'services';
@@ -28,12 +28,11 @@ export const useGroups = () => {
         dispatch({ type: SET_ERROR, error: response.error });
       }
     } else {
-      const session = await Auth.currentSession();
-      const cognitoGroups = session.getIdToken().payload['cognito:groups'];
-      const samlGroups = session.getIdToken().payload['custom:saml.groups']
-        ? session
-            .getIdToken()
-            .payload['custom:saml.groups'].replaceAll('[', '')
+      const session = await fetchAuthSession();
+      const cognitoGroups = session.tokens.idToken.payload['cognito:groups'];
+      const samlGroups = session.tokens.idToken.payload['custom:saml.groups']
+        ? session.tokens.idToken.payload['custom:saml.groups']
+            .replaceAll('[', '')
             .replaceAll(']', '')
             .replace(/, /g, ',')
             .split(',')
