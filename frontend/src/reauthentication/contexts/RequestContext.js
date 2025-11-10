@@ -5,7 +5,7 @@ import { gql } from '@apollo/client';
 import { print } from 'graphql/language';
 import { useNavigate } from 'react-router';
 import { useSnackbar } from 'notistack';
-import { Auth } from 'aws-amplify';
+import { fetchUserAttributes } from 'aws-amplify/auth';
 import { useAuth, useToken } from 'authentication';
 
 // Create a context for API request headers
@@ -40,8 +40,8 @@ export const restoreRetryRequest = () => {
 
 export const retrieveCurrentUsername = async () => {
   try {
-    const user = await Auth.currentAuthenticatedUser();
-    return user.attributes.email;
+    const attrs = await fetchUserAttributes();
+    return attrs.email;
   } catch (err) {
     console.error(err);
     return null;

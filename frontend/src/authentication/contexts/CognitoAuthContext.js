@@ -1,25 +1,23 @@
-import { Auth, Amplify } from 'aws-amplify';
+import { Amplify } from 'aws-amplify';
 import PropTypes from 'prop-types';
 import { GenericAuthProvider } from './GenericAuthContext';
 import { RequestContextProvider } from 'reauthentication';
 
 Amplify.configure({
   Auth: {
-    mandatorySignIn: true,
-    region: process.env.REACT_APP_COGNITO_REGION,
-    userPoolId: process.env.REACT_APP_COGNITO_USER_POOL_ID,
-    userPoolWebClientId: process.env.REACT_APP_COGNITO_APP_CLIENT_ID,
-    redirectSignIn: process.env.REACT_APP_COGNITO_REDIRECT_SIGNIN,
-    redirectSignOut: process.env.REACT_APP_COGNITO_REDIRECT_SIGNOUT
-  }
-});
-
-Auth.configure({
-  oauth: {
-    domain: process.env.REACT_APP_COGNITO_DOMAIN,
-    redirectSignIn: process.env.REACT_APP_COGNITO_REDIRECT_SIGNIN,
-    redirectSignOut: process.env.REACT_APP_COGNITO_REDIRECT_SIGNOUT,
-    responseType: 'code'
+    Cognito: {
+      userPoolId: process.env.REACT_APP_COGNITO_USER_POOL_ID,
+      userPoolClientId: process.env.REACT_APP_COGNITO_APP_CLIENT_ID,
+      loginWith: {
+        oauth: {
+          domain: process.env.REACT_APP_COGNITO_DOMAIN,
+          scopes: [],
+          redirectSignIn: [process.env.REACT_APP_COGNITO_REDIRECT_SIGNIN],
+          redirectSignOut: [process.env.REACT_APP_COGNITO_REDIRECT_SIGNOUT],
+          responseType: 'code'
+        }
+      }
+    }
   }
 });
 
