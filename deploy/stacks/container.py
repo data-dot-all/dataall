@@ -209,6 +209,7 @@ class ContainerStack(pyNestedClass):
         self.add_omics_fetch_workflows_task()
         self.add_persistent_email_reminders_task()
         self.add_share_expiration_task()
+        self.add_notification_cleanup_task()
 
     @run_if(['modules.s3_datasets.active', 'modules.dashboards.active'])
     def add_catalog_indexer_task(self):
@@ -500,6 +501,27 @@ class ContainerStack(pyNestedClass):
                 string_value=scheduled_task.event_rule.rule_name,
             )
             self.ecs_task_definitions_families.append(scheduled_task.task_definition.family)
+
+    def add_notification_cleanup_task(self):
+        notification_cleanup_task, notification_cleanup_task_def = self.set_scheduled_task(
+            cluster=self.ecs_cluster,
+            command=[f'python{PYTHON_VERSION}', '-m', 'dataall.modules.notifications.tasks.notification_cleanup_task'],
+            container_id='container',
+            ecr_repository=self._ecr_repository,
+            environment=self.env_vars,
+            image_tag=self._cdkproxy_image_tag,
+            log_group=self.create_log_group(
+                self._envname, self._resource_prefix, log_group_name='notification-cleanup'
+            ),
+            schedule_expression=Schedule.expression('cron(0 8 ? * 2 *)'),  # Run at 8AM UTC (2AM CST) weekly on Monday
+            scheduled_task_id=f'{self._resource_prefix}-{self._envname}-notification-cleanup-schedule',
+            task_id=f'{self._resource_prefix}-{self._envname}-notification-cleanup',
+            task_role=self.task_role,
+            vpc=self._vpc,
+            security_group=self.scheduled_tasks_sg,
+            prod_sizing=self._prod_sizing,
+        )
+        self.ecs_task_definitions_families.append(notification_cleanup_task.task_definition.family)  
 
     def create_ecs_security_groups(self, envname, resource_prefix, vpc, vpce_connection, s3_prefix_list, lambdas):
         scheduled_tasks_sg = ec2.SecurityGroup(
