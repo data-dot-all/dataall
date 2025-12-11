@@ -7,6 +7,6 @@ PyYAML==6.0.2
 requests==2.32.4
 tabulate==0.8.9
 uvicorn==0.15.0
-werkzeug==3.0.6
+werkzeug==3.1.4
 git-remote-codecommit==1.16
 aws-ddk-core==1.4.1
