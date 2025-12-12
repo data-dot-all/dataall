@@ -9,6 +9,9 @@ on:
       - main-v2
       - v2m*
 
+permissions:
+  contents: read
+
 jobs:
   lint-check:
     runs-on: ubuntu-latest
