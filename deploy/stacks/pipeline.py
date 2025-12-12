@@ -336,7 +336,6 @@ class PipelineStack(Stack):
                     'codeartifact:GetAuthorizationToken',
                     'codeartifact:GetRepositoryEndpoint',
                     'codeartifact:ReadFromRepository',
-                    'codecommit:GitPull',
                     'ecr:GetDownloadUrlForLayer',
                     'ecr:BatchGetImage',
                     'ecr:BatchCheckLayerAvailability',
@@ -397,6 +396,15 @@ class PipelineStack(Stack):
                     ],
                     resources=[self.repo_connection_arn],
                 ),
+            )
+        else:
+            baseline_policy_statements.append(
+                iam.PolicyStatement(
+                    actions=[
+                        'codecommit:GitPull',
+                    ],
+                    resources=[f'arn:aws:codecommit:*:{self.account}:dataall'],
+                )
             )
 
         self.baseline_codebuild_policy = iam.ManagedPolicy(
