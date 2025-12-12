@@ -1,18 +1,18 @@
 ariadne==0.26.2
-aws-xray-sdk==2.4.3
-boto3==1.40.48
-fastapi == 0.116.1
+aws-xray-sdk==2.15.0
+boto3==1.42.8
+fastapi == 0.124.2
 nanoid==2.0.0
-opensearch-py==3.0.0
-PyAthena==2.3.0
+opensearch-py==3.1.0
+PyAthena==3.22.0
 psycopg2-binary>=2.9.9
 pyjwt==2.10.1
-PyYAML==6.0.2
-requests==2.32.4
-requests_aws4auth==1.1.1
-sqlalchemy==2.0.41
-alembic==1.16.4
-retrying==1.3.4
-langchain-aws==0.2.28
-langchain-core==0.3.80
-pydantic==2.10.0
+PyYAML==6.0.3
+requests==2.32.5
+requests_aws4auth==1.3.1
+sqlalchemy==2.0.45
+alembic==1.17.2
+retrying==1.4.2
+langchain-aws==1.1.0
+langchain-core==1.1.3
+pydantic==2.12.5
