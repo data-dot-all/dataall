@@ -11,6 +11,9 @@ on:
 env:
   envname: local
 
+permissions:
+  contents: read
+
 jobs:
   run-tests:
     runs-on: ubuntu-latest
