@@ -521,7 +521,7 @@ class ContainerStack(pyNestedClass):
             security_group=self.scheduled_tasks_sg,
             prod_sizing=self._prod_sizing,
         )
-        self.ecs_task_definitions_families.append(notification_cleanup_task.task_definition.family)  
+        self.ecs_task_definitions_families.append(notification_cleanup_task.task_definition.family)
 
     def create_ecs_security_groups(self, envname, resource_prefix, vpc, vpce_connection, s3_prefix_list, lambdas):
         scheduled_tasks_sg = ec2.SecurityGroup(

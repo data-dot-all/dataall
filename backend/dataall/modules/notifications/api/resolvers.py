@@ -35,5 +35,5 @@ def count_unread_notifications(context: Context, source):
     return NotificationService.count_unread_notifications()
 
 
-def mark_all_as_read(context: Context,source):
+def mark_all_as_read(context: Context, source):
     return NotificationService.mark_all_as_read()

@@ -81,23 +81,21 @@ class NotificationRepository:
         """Mark all unread notifications as read for a user in a single query"""
         updated_count = (
             session.query(models.Notification)
-            .filter(
-                or_(models.Notification.recipient == username, models.Notification.recipient.in_(groups))
-            )
+            .filter(or_(models.Notification.recipient == username, models.Notification.recipient.in_(groups)))
             .filter(models.Notification.is_read == False)
             .filter(models.Notification.deleted.is_(None))
             .update({'is_read': True}, synchronize_session=False)
         )
         session.commit()
         return updated_count
-    
+
     @staticmethod
     def mark_old_notifications_as_read(session, days_threshold=90):
         """
         Mark unreadnotifications older than days_threshold as read.
         """
         cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_threshold)
-        
+
         updated_count = (
             session.query(models.Notification)
             .filter(models.Notification.is_read == False)
@@ -105,6 +103,6 @@ class NotificationRepository:
             .filter(models.Notification.created < cutoff_date)
             .update({'is_read': True}, synchronize_session=False)
         )
-        
+
         session.commit()
         return updated_count

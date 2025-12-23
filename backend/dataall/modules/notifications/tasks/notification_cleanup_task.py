@@ -14,20 +14,19 @@ def cleanup_old_notifications(engine):
     A method used by the scheduled ECS Task to mark unread notifications older than 90 days as read.
     """
     DAYS_THRESHOLD = 90
-    
+
     with engine.scoped_session() as session:
         log.info('Running Notification Cleanup Task')
-        
+
         updated_count = NotificationRepository.mark_old_notifications_as_read(
-            session=session,
-            days_threshold=DAYS_THRESHOLD
+            session=session, days_threshold=DAYS_THRESHOLD
         )
-        
+
         if updated_count > 0:
             log.info(f'Successfully cleaned up {updated_count} old notifications')
         else:
             log.info('No old notifications found to clean up')
-        
+
         log.info('Completed Notification Cleanup Task')
 
 
