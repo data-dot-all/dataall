@@ -2,6 +2,7 @@ from sqlalchemy import func, and_, or_
 
 from dataall.modules.notifications.db import notification_models as models
 from dataall.base.db import paginate
+from datetime import datetime, timedelta, timezone
 
 
 class NotificationRepository:
@@ -74,3 +75,34 @@ class NotificationRepository:
     @staticmethod
     def get_notification(session, uri):
         return session.query(models.Notification).get(uri)
+
+    @staticmethod
+    def mark_all_unread_as_read(session, username, groups):
+        """Mark all unread notifications as read for a user in a single query"""
+        updated_count = (
+            session.query(models.Notification)
+            .filter(or_(models.Notification.recipient == username, models.Notification.recipient.in_(groups)))
+            .filter(models.Notification.is_read == False)
+            .filter(models.Notification.deleted.is_(None))
+            .update({'is_read': True}, synchronize_session=False)
+        )
+        session.commit()
+        return updated_count
+
+    @staticmethod
+    def mark_old_notifications_as_read(session, days_threshold=90):
+        """
+        Mark unreadnotifications older than days_threshold as read.
+        """
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_threshold)
+
+        updated_count = (
+            session.query(models.Notification)
+            .filter(models.Notification.is_read == False)
+            .filter(models.Notification.deleted.is_(None))
+            .filter(models.Notification.created < cutoff_date)
+            .update({'is_read': True}, synchronize_session=False)
+        )
+
+        session.commit()
+        return updated_count
