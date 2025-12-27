@@ -9,5 +9,8 @@ class EcsMetadataFormHandler:
     def notify_owners_of_enforcement(engine, task: Task):
         with engine.scoped_session() as session:
             MetadataFormEnforcementService.notify_owners_of_enforcement(
-                session=session, rule_uri=task.targetUri, mf_name=task.payload.get('mf_name', 'Unknown name')
+                session=session,
+                rule_uri=task.targetUri,
+                mf_name=task.payload.get('mf_name', 'Unknown name'),
+                mf_uri=task.payload.get('mf_uri', 'Unknown uri')
             )

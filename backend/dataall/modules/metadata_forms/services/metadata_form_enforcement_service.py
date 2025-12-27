@@ -1,3 +1,5 @@
+import os
+import logging
 from typing import List
 from dataall.base.context import get_context
 from dataall.base.db import exceptions, Engine
@@ -15,6 +17,7 @@ from dataall.modules.metadata_forms.db.enums import (
     MetadataFormEnforcementScope,
     MetadataFormEnforcementSeverity,
     ENTITY_SCOPE_BY_TYPE,
+    ENTITY_LINK_MAP,
 )
 from dataall.core.metadata_manager.metadata_form_entity_manager import (
     MetadataFormEntityTypes,
@@ -30,6 +33,8 @@ from dataall.modules.metadata_forms.services.metadata_form_permissions import (
     ENFORCE_METADATA_FORM,
 )
 from dataall.modules.notifications.db.notification_repositories import NotificationRepository
+
+log = logging.getLogger(__name__)
 
 
 class MetadataFormEnforcementRequestValidationService:
@@ -71,17 +76,36 @@ class MetadataFormEnforcementService:
         return data.get('homeEntity')
 
     @classmethod
-    def notify_owners_of_enforcement(cls, session, rule_uri: str, mf_name: str) -> bool:
+    def notify_owners_of_enforcement(cls, session, rule_uri: str, mf_name: str, mf_uri: str) -> bool:
         affected_entities = MetadataFormEnforcementService._get_affected_entities(session=session, uri=rule_uri)
         for entity in affected_entities:
-            if entity['owner']:
+            owner = entity.get('owner')
+
+            # Send in-app notification (popover)
+            if owner:
                 NotificationRepository.create_notification(
                     session,
-                    recipient=entity['owner'],
+                    recipient=owner,
                     target_uri=f'{entity["uri"]}|{entity["type"]}',
                     message=f'Usage of metadata form "{mf_name}" was enforced for {entity["uri"]} {entity["type"]}',
                     notification_type='METADATA_FORM_ENFORCED',
                 )
+
+            # Send notification by email
+            try:
+                # skip if the owner is an individual user
+                if entity['attached'] is None and "@" not in owner:
+                    MetadataFormEnforcementService.notify_entity_owner_by_email(
+                        session=session,
+                        mf_name=mf_name,
+                        mf_uri=mf_uri,
+                        entity=entity,
+                        recipient_groups_list=[owner]
+                    )
+            except Exception as e:
+                log.warning(f"Skipping invalid or missing owner group {owner}: {e}")
+                continue
+
         return True
 
     @staticmethod
@@ -98,7 +122,10 @@ class MetadataFormEnforcementService:
             task = Task(
                 targetUri=rule.uri,
                 action='metadata_form.enforcement.notify',
-                payload={'mf_name': mf.name},
+                payload={
+                    'mf_name': mf.name,
+                    'mf_uri': mf.uri
+                },
             )
             session.add(task)
             session.commit()
@@ -358,3 +385,64 @@ class MetadataFormEnforcementService:
                 r.metadataFormName = MetadataFormRepository.get_metadata_form(session, r.metadataFormUri).name
 
         return all_rules
+
+    @staticmethod
+    def notify_entity_owner_by_email(session, mf_name, mf_uri, entity, recipient_groups_list=None, recipient_email_ids=None):
+        """
+        Sends a one-time notification to entity owners when a new enforcement rule is created and their entities are affected.
+        """
+
+        try:
+            if recipient_groups_list is None:
+                recipient_groups_list = []
+            if recipient_email_ids is None:
+                recipient_email_ids = []
+
+            entity_type = entity["type"]
+            if entity_type in ENTITY_LINK_MAP:
+                entity_link = f'/console/{ENTITY_LINK_MAP[entity_type]}/{entity["uri"]}'
+            else:
+                entity_link = f'/console/metadata-forms/{mf_uri}'
+
+            entity_link_text = ''
+            if os.environ.get('frontend_domain_url'):
+                entity_link_text = (
+                    f'<br><br>Please visit data.all <a href="{os.environ.get("frontend_domain_url")}'
+                    f'{entity_link}">link</a> '
+                    f'to attach the required metadata form: "{mf_name}".'
+                )
+
+            subject = (
+                f'ACTION REQUIRED: Data.all | Metadata form "{mf_name}" required for {entity["type"]} {entity["uri"]}'
+            )
+
+            msg_intro = f"""Dear User, <br><br>
+                       The metadata form "{mf_name}" is required for your resource: {entity["uri"]} ({entity["type"]}). 
+                       """ + entity_link_text
+
+            msg_end = """<br><br>Your prompt attention in this matter is greatly appreciated.
+                     <br><br>Best regards,
+                     <br>The Data.all Team
+                     """
+
+            msg = msg_intro + msg_end
+
+            notification_task: Task = Task(
+                action='notification.service',
+                targetUri=entity["uri"],
+                payload={
+                    'notificationType': 'email',
+                    'subject': subject,
+                    'message': msg,
+                    'recipientGroupsList': recipient_groups_list,
+                    'recipientEmailList': recipient_email_ids,
+                },
+            )
+            session.add(notification_task)
+            session.commit()
+
+            Worker.queue(engine=get_context().db_engine, task_ids=[notification_task.taskUri])
+
+        except Exception as e:
+            err_msg = f"Failed to send notification email to affected entity owners: {e}"
+            log.exception(err_msg)
