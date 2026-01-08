@@ -69,3 +69,14 @@ class NotificationService:
             return NotificationRepository.count_unread_notifications(
                 session=session, username=context.username, groups=context.groups
             )
+
+    @staticmethod
+    def mark_all_as_read():
+        """Mark all unread notifications as read for the current user"""
+        context = get_context()
+        with context.db_engine.scoped_session() as session:
+            updated_count = NotificationRepository.mark_all_unread_as_read(
+                session=session, username=context.username, groups=context.groups
+            )
+            logger.info(f'Marked {updated_count} notifications as read for user {context.username}')
+            return updated_count
