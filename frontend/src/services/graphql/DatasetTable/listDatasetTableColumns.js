@@ -23,20 +23,6 @@ export const listDatasetTableColumns = ({ tableUri, filter }) => ({
           description
           typeName
           columnType
-          terms {
-            count
-            page
-            pages
-            nodes {
-              linkUri
-              term {
-                label
-                created
-                path
-                nodeUri
-              }
-            }
-          }
         }
       }
     }
