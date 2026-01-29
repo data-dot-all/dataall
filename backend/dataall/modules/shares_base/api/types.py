@@ -207,6 +207,8 @@ EnvironmentPublishedItem = gql.ObjectType(
         gql.Field(name='environmentUri', type=gql.NonNullableType(gql.String)),
         gql.Field(name='targetEnvironmentUri', type=gql.NonNullableType(gql.String)),
         gql.Field(name='principalId', type=gql.NonNullableType(gql.String)),
+        gql.Field(name='principalName', type=gql.String),
+        gql.Field(name='principalType', type=gql.String),
         gql.Field(name='environmentName', type=gql.NonNullableType(gql.String)),
         gql.Field(name='organizationUri', type=gql.NonNullableType(gql.String)),
         gql.Field(name='organizationName', type=gql.NonNullableType(gql.String)),

@@ -306,6 +306,7 @@ class ShareObjectRepository:
                 Environment.name.label('environmentName'),
                 ShareObject.created.label('created'),
                 ShareObject.principalId.label('principalId'),
+                ShareObject.principalName.label('principalName'),
                 ShareObject.principalType.label('principalType'),
                 ShareObject.environmentUri.label('targetEnvironmentUri'),
                 ShareObjectItem.itemType.label('itemType'),
