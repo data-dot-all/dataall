@@ -7,6 +7,6 @@ pytest-mock==3.15.1
 pytest-dependency==0.6.0
 requests==2.32.5
 dataclasses-json==0.6.7
-werkzeug==3.1.4
+werkzeug==3.1.5
 retrying==1.4.2
 requests-oauthlib==2.0.0
