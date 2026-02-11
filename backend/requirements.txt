@@ -14,5 +14,5 @@ sqlalchemy==2.0.45
 alembic==1.17.2
 retrying==1.4.2
 langchain-aws==1.1.0
-langchain-core==1.2.5
+langchain-core==1.2.11
 pydantic==2.12.5
