@@ -26,7 +26,7 @@ IAM_S3_ACCESS_POINTS_STATEMENT_SID = 'AccessPointsStatement'
 IAM_S3_BUCKETS_STATEMENT_SID = 'BucketStatement'
 EMPTY_STATEMENT_SID = 'EmptyStatement'
 
-S3_ALLOWED_ACTIONS = ['s3:List*', 's3:Describe*', 's3:GetObject']
+S3_ALLOWED_ACTIONS = ['s3:List*', 's3:Describe*', 's3:GetObject', 's3:GetObjectAttributes']
 IAM_SERVICE_NAME = 'AWS Identity and Access Management (IAM)'
 IAM_ROLE_SERVICE_QUOTA_NAME = 'Managed policies per role'
 IAM_USER_SERVICE_QUOTA_NAME = 'Managed policies per user'
@@ -635,7 +635,7 @@ class S3SharePolicyService(ManagedPolicy):
                 split_policy_with_resources_in_statements(
                     base_sid=f'{sid}S3',
                     effect='Allow',
-                    actions=['s3:List*', 's3:Describe*', 's3:GetObject'],
+                    actions=['s3:List*', 's3:Describe*', 's3:GetObject', 's3:GetObjectAttributes'],
                     resources=statement_resources,
                 )
             )
