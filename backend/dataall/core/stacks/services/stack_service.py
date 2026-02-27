@@ -90,12 +90,32 @@ class StackService:
                 )
                 return stack
 
-            cfn_task = StackService.save_describe_stack_task(session, env, stack, targetUri)
+            cfn_task = StackService.save_describe_stack_status_task(session, env, stack, targetUri)
             Worker.queue(engine=context.db_engine, task_ids=[cfn_task.taskUri])
         return stack
 
     @staticmethod
+    def save_describe_stack_status_task(session, environment, stack, target_uri):
+        """Light describe task for view path: only updates status (no resources, events, outputs)."""
+        cfn_task = Task(
+            targetUri=stack.stackUri,
+            action='cloudformation.stack.describe_status',
+            payload={
+                'accountid': environment.AwsAccountId,
+                'region': environment.region,
+                'role_arn': environment.CDKRoleArn,
+                'stack_name': stack.name,
+                'stackUri': stack.stackUri,
+                'targetUri': target_uri,
+            },
+        )
+        session.add(cfn_task)
+        session.commit()
+        return cfn_task
+
+    @staticmethod
     def save_describe_stack_task(session, environment, stack, target_uri):
+        """Full describe task: status, outputs, resources, events. Used when opening Stack tab."""
         cfn_task = Task(
             targetUri=stack.stackUri,
             action='cloudformation.stack.describe_resources',
