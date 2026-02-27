@@ -31,6 +31,8 @@ export const searchEnvironmentDataItems = ({ filter, environmentUri }) => ({
           itemName
           created
           principalId
+          principalName
+          principalType
         }
       }
     }
