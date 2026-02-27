@@ -560,6 +560,9 @@ EXPECTED_RESOLVERS: Mapping[str, TestData] = {
     field_id('Mutation', 'markNotificationAsRead'): TestData(
         tenant_ignore=IgnoreReason.APPSUPPORT, resource_ignore=IgnoreReason.CUSTOM, notification_recipient_perm=True
     ),
+    field_id('Mutation', 'markAllNotificationsAsRead'): TestData(
+        tenant_ignore=IgnoreReason.APPSUPPORT, resource_ignore=IgnoreReason.CUSTOM
+    ),
     field_id('Mutation', 'postFeedMessage'): TestData(
         tenant_ignore=IgnoreReason.APPSUPPORT, resource_perm=TARGET_TYPE_PERM
     ),

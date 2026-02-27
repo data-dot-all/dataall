@@ -20,15 +20,20 @@ import {
   countUnreadNotifications,
   listNotifications,
   markNotificationAsRead,
-  useClient
+  useClient,
+  markAllNotificationsAsRead
 } from 'services';
 import { BellIcon } from '../../icons';
 import { Defaults } from '../defaults';
+import { useSnackbar } from 'notistack';
+import { SET_ERROR, useDispatch } from 'globalErrors';
 
 export const NotificationsPopover = () => {
   const anchorRef = useRef(null);
   const [open, setOpen] = useState(false);
   const client = useClient();
+  const dispatch = useDispatch();
+  const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
   const [countInbox, setCountInbox] = useState(null);
@@ -86,13 +91,29 @@ export const NotificationsPopover = () => {
     markAsRead(notificiationUri);
   };
 
-  const clearNotifications = (idx) => {
-    let readNotifications = notifications;
-    setNotifications([]);
-    setCountInbox(0);
-    readNotifications.forEach((note) => {
-      markAsRead(note.notificationUri);
-    });
+  const clearNotifications = async () => {
+    try {
+      setLoading(true);
+      const response = await client.mutate(markAllNotificationsAsRead());
+      if (!response.errors) {
+        const updatedCount = response.data.markAllNotificationsAsRead;
+        setNotifications([]);
+        setCountInbox(0);
+        enqueueSnackbar(`Marked ${updatedCount} notifications as read`, {
+          anchorOrigin: {
+            horizontal: 'right',
+            vertical: 'top'
+          },
+          variant: 'success'
+        });
+      } else {
+        dispatch({ type: SET_ERROR, error: response.errors[0].message });
+      }
+    } catch (e) {
+      dispatch({ type: SET_ERROR, error: e.message });
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
