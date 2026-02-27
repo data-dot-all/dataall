@@ -282,7 +282,7 @@ def complete_access_bucket_policy(target_requester_arn, s3_bucket_name, owner_ro
                 'Sid': f'{DATAALL_READ_ONLY_SID}',
                 'Effect': 'Allow',
                 'Principal': {'AWS': [f'{target_requester_arn}']},
-                'Action': ['s3:List*', 's3:GetObject'],
+                'Action': ['s3:List*', 's3:GetObject', 's3:GetObjectAttributes'],
                 'Resource': [f'arn:aws:s3:::{s3_bucket_name}', f'arn:aws:s3:::{s3_bucket_name}/*'],
             },
         ],
@@ -439,7 +439,7 @@ def test_grant_role_bucket_policy_with_another_read_only_role(
             'Sid': f'{DATAALL_READ_ONLY_SID}',
             'Effect': 'Allow',
             'Principal': {'AWS': ['SomeTargetResourceArn']},
-            'Action': ['s3:List*', 's3:GetObject'],
+            'Action': ['s3:List*', 's3:GetObject', 's3:GetObjectAttributes'],
             'Resource': [f'arn:aws:s3:::someS3Bucket', f'arn:aws:s3:::someS3Bucket/*'],
         }
     )
@@ -517,9 +517,9 @@ def test_grant_s3_iam_access_with_no_policy(mocker, dataset2, share2_manager):
     # Return [] when first called, indicating that managed indexed policies don't exist, Once share_policy_service_mock_1.called is called then return some indexed managed policy
     mocker.patch(
         'dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern',
-        side_effect=lambda account_id, region, policy_filter_pattern: []
-        if not share_policy_service_mock_1.called
-        else ['policy-0'],
+        side_effect=lambda account_id, region, policy_filter_pattern: (
+            [] if not share_policy_service_mock_1.called else ['policy-0']
+        ),
     )
 
     share_policy_service_mock_2 = mocker.patch(
@@ -553,6 +553,7 @@ def test_grant_s3_iam_access_with_no_policy(mocker, dataset2, share2_manager):
         and 's3:List*' in iam_policy['Statement'][s3_index]['Action']
         and 's3:Describe*' in iam_policy['Statement'][s3_index]['Action']
         and 's3:GetObject' in iam_policy['Statement'][s3_index]['Action']
+        and 's3:GetObjectAttributes' in iam_policy['Statement'][s3_index]['Action']
     )
     assert (
         f'arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key'
@@ -629,6 +630,7 @@ def test_grant_s3_iam_access_with_empty_policy(mocker, dataset2, share2_manager)
         and 's3:List*' in iam_policy['Statement'][s3_index]['Action']
         and 's3:Describe*' in iam_policy['Statement'][s3_index]['Action']
         and 's3:GetObject' in iam_policy['Statement'][s3_index]['Action']
+        and 's3:GetObjectAttributes' in iam_policy['Statement'][s3_index]['Action']
     )
     assert (
         f'arn:aws:kms:{dataset2.region}:{dataset2.AwsAccountId}:key/kms-key'
@@ -1130,7 +1132,7 @@ def test_delete_target_role_bucket_policy_with_multiple_principals_in_policy(
                 f'arn:aws:iam::{target_environment.AwsAccountId}:role/{target_environment.EnvironmentDefaultIAMRoleName}',
             ]
         },
-        'Action': ['s3:List*', 's3:GetObject'],
+        'Action': ['s3:List*', 's3:GetObject', 's3:GetObjectAttributes'],
         'Resource': [f'arn:aws:s3:::{dataset2.S3BucketName}', f'arn:aws:s3:::{dataset2.S3BucketName}/*'],
     }
 
@@ -1174,7 +1176,7 @@ def test_delete_target_role_bucket_policy_with_one_principal_in_policy(
                 f'arn:aws:iam::{target_environment.AwsAccountId}:role/{target_environment.EnvironmentDefaultIAMRoleName}'
             ]
         },
-        'Action': ['s3:List*', 's3:GetObject'],
+        'Action': ['s3:List*', 's3:GetObject', 's3:GetObjectAttributes'],
         'Resource': [f'arn:aws:s3:::{dataset2.S3BucketName}', f'arn:aws:s3:::{dataset2.S3BucketName}/*'],
     }
 
@@ -1250,9 +1252,9 @@ def test_delete_target_role_access_no_policy_no_other_resources_shared(
     # Return [] when first called, indicating that managed indexed policies don't exist, Once share_policy_service_mock_1.called is called then return some indexed managed policy
     mocker.patch(
         'dataall.base.aws.iam.IAM.list_policy_names_by_policy_pattern',
-        side_effect=lambda account_id, region, policy_filter_pattern: []
-        if not share_policy_service_mock_1.called
-        else ['policy-0'],
+        side_effect=lambda account_id, region, policy_filter_pattern: (
+            [] if not share_policy_service_mock_1.called else ['policy-0']
+        ),
     )
 
     share_policy_service_mock_2 = mocker.patch(
@@ -1687,7 +1689,7 @@ def test_check_role_bucket_policy(
             'Sid': f'{DATAALL_READ_ONLY_SID}',
             'Effect': 'Allow',
             'Principal': {'AWS': [f'arn:aws:iam::{target_environment.AwsAccountId}:role/{share2.principalName}']},
-            'Action': ['s3:List*', 's3:GetObject'],
+            'Action': ['s3:List*', 's3:GetObject', 's3:GetObjectAttributes'],
             'Resource': [f'arn:aws:s3:::someS3Bucket', f'arn:aws:s3:::someS3Bucket/*'],
         }
     )
@@ -1712,7 +1714,7 @@ def test_check_role_bucket_policy_missing_role_principal(
             'Sid': f'{DATAALL_READ_ONLY_SID}',
             'Effect': 'Allow',
             'Principal': {'AWS': ['SomeTargetResourceArn']},
-            'Action': ['s3:List*', 's3:GetObject'],
+            'Action': ['s3:List*', 's3:GetObject', 's3:GetObjectAttributes'],
             'Resource': [f'arn:aws:s3:::someS3Bucket', f'arn:aws:s3:::someS3Bucket/*'],
         }
     )
@@ -1750,7 +1752,7 @@ def test_check_s3_iam_access(mocker, dataset2, share2_manager):
             {
                 'Sid': f'{IAM_S3_BUCKETS_STATEMENT_SID}S31',
                 'Effect': 'Allow',
-                'Action': ['s3:List*', 's3:Describe*', 's3:GetObject'],
+                'Action': ['s3:List*', 's3:Describe*', 's3:GetObject', 's3:GetObjectAttributes'],
                 'Resource': [f'arn:aws:s3:::{dataset2.S3BucketName}', f'arn:aws:s3:::{dataset2.S3BucketName}/*'],
             },
             {
@@ -1988,7 +1990,7 @@ def test_check_s3_iam_access_policy_externally_managed_consumption_role_not_atta
             {
                 'Sid': f'{IAM_S3_BUCKETS_STATEMENT_SID}S31',
                 'Effect': 'Allow',
-                'Action': ['s3:List*', 's3:GetObject', 's3:Describe*'],
+                'Action': ['s3:List*', 's3:Describe*', 's3:GetObject', 's3:GetObjectAttributes'],
                 'Resource': [f'arn:aws:s3:::{dataset2.S3BucketName}', f'arn:aws:s3:::{dataset2.S3BucketName}/*'],
             },
             {
@@ -2039,7 +2041,7 @@ def test_check_s3_iam_access_policy_partially_managed_consumption_role_not_attac
             {
                 'Sid': f'{IAM_S3_BUCKETS_STATEMENT_SID}S31',
                 'Effect': 'Allow',
-                'Action': ['s3:List*', 's3:GetObject', 's3:Describe*'],
+                'Action': ['s3:List*', 's3:Describe*', 's3:GetObject', 's3:GetObjectAttributes'],
                 'Resource': [f'arn:aws:s3:::{dataset2.S3BucketName}', f'arn:aws:s3:::{dataset2.S3BucketName}/*'],
             },
             {

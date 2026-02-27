@@ -5,6 +5,7 @@ from typing import List
 from aws_cdk import Stack, Tags, RemovalPolicy, Duration
 from aws_cdk import aws_codebuild as codebuild
 from aws_cdk import aws_codecommit as codecommit
+from aws_cdk import aws_codepipeline as codepipeline
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_kms as kms
@@ -182,6 +183,7 @@ class PipelineStack(Stack):
             self,
             f'{self.resource_prefix}-{self.git_branch}-cdkpipeline',
             pipeline_name=f'{self.resource_prefix}-pipeline-{self.git_branch}',
+            pipeline_type=codepipeline.PipelineType.V2,
             publish_assets_in_parallel=False,
             artifact_bucket=self.artifact_bucket,
             cross_account_keys=True,
@@ -251,6 +253,10 @@ class PipelineStack(Stack):
                 self.set_albfront_stage(target_env, repository_name)
 
         self.pipeline.build_pipeline()
+
+        # Set QUEUED execution mode on the underlying V2 pipeline
+        cfn_pipeline = self.pipeline.pipeline.node.default_child
+        cfn_pipeline.add_property_override('ExecutionMode', 'QUEUED')
 
         for construct in scope.node.find_all():
             if construct.node.path.endswith('CrossRegionCodePipelineReplicationBucket/Resource'):
