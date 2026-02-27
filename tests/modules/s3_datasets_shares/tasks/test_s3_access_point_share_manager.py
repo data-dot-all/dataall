@@ -591,7 +591,7 @@ def _generate_ap_policy_object(
             'Sid': f'{statement[0]}1',
             'Effect': 'Allow',
             'Principal': {'AWS': '*'},
-            'Action': 's3:GetObject',
+            'Action': ['s3:GetObject', 's3:GetObjectAttributes'],
             'Resource': [],
             'Condition': {'StringLike': {'aws:userId': [f'{statement[0]}:*']}},
         }
@@ -1065,7 +1065,7 @@ def test_delete_target_role_access_policy_with_remaining_statement(
             {
                 'Sid': f'{IAM_S3_ACCESS_POINTS_STATEMENT_SID}S31',
                 'Effect': 'Allow',
-                'Action': ['s3:List*', 's3:Describe*', 's3:GetObject'],
+                'Action': ['s3:List*', 's3:Describe*', 's3:GetObject', 's3:GetObjectAttributes'],
                 'Resource': ['arn:aws:s3:::UNRELATED_BUCKET_ARN'],
             },
             {
