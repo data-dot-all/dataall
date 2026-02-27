@@ -15,14 +15,14 @@ class GlueClient:
         self._account_id = account_id
         self._region = region
 
-    def create_database(self, location):
+    def create_database(self, location, description=None):
         try:
             log.info(f'Creating database {self._database} in account {self._account_id}...')
             existing_database = self.get_glue_database()
             if existing_database:
                 glue_database_created = True
             else:
-                self._create_glue_database(location)
+                self._create_glue_database(location, description=description)
                 glue_database_created = True
             log.info(f'Successfully created database {self._database} in account {self._account_id}')
             return glue_database_created
@@ -30,12 +30,13 @@ class GlueClient:
             log.error(f'Failed to create database {self._database} in account {self._account_id} due to {e}')
             raise e
 
-    def _create_glue_database(self, location):
+    def _create_glue_database(self, location, description=None):
         database = self._database
         try:
+            db_description = description or f'dataall database {database}'
             db_input = {
                 'Name': database,
-                'Description': 'dataall database {} '.format(database),
+                'Description': db_description,
                 'CreateTableDefaultPermissions': [],
             }
             if location:
