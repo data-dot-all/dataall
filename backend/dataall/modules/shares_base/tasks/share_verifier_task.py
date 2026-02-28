@@ -1,9 +1,11 @@
 import logging
 import os
 import sys
+from typing import List
+
 from dataall.modules.shares_base.db.share_object_repositories import ShareObjectRepository
 from dataall.modules.shares_base.db.share_object_models import ShareObject
-from dataall.modules.shares_base.services.shares_enums import ShareItemStatus
+from dataall.modules.shares_base.services.shares_enums import ShareItemStatus, ShareItemHealthStatus
 from dataall.modules.shares_base.services.sharing_service import SharingService
 from dataall.core.stacks.aws.ecs import Ecs
 
@@ -35,11 +37,20 @@ def verify_shares(engine):
         return processed_share_objects
 
 
-def trigger_reapply_task():
+def trigger_reapply_task(engine):
+    with engine.scoped_session() as session:
+        unhealthy_share_objects: List[ShareObject] = ShareObjectRepository.get_share_object_with_health_status(
+            session, ShareItemHealthStatus.Unhealthy.value
+        )
+        unhealthy_share_objects_uris: List[str] = [share_object.shareUri for share_object in unhealthy_share_objects]
+
+    context = {
+        {'name': 'shareUris', 'value': unhealthy_share_objects_uris},
+    }
     Ecs.run_ecs_task(
         task_definition_param='ecs/task_def_arn/share_reapplier',
         container_name_param='ecs/container/share_reapplier',
-        context=[],
+        context=context,
     )
 
 
@@ -49,4 +60,4 @@ if __name__ == '__main__':
     ENGINE = get_engine(envname=ENVNAME)
     processed_shares = verify_shares(engine=ENGINE)
     log.info(f'Finished verifying {len(processed_shares)} shares, triggering reapply...')
-    trigger_reapply_task()
+    trigger_reapply_task(ENGINE)
