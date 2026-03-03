@@ -11,6 +11,7 @@ from aws_cdk import (
     Duration,
     RemovalPolicy,
     CfnOutput,
+    Fn,
 )
 
 from .cdk_asset_trail import setup_cdk_asset_trail
@@ -30,6 +31,7 @@ class CloudfrontDistro(pyNestedClass):
         custom_waf_rules=None,
         tooling_account_id=None,
         backend_region=None,
+        custom_auth=None,
         **kwargs,
     ):
         super().__init__(scope, id, **kwargs)
@@ -166,6 +168,54 @@ class CloudfrontDistro(pyNestedClass):
             log_file_prefix='cloudfront-logs/frontend',
         )
 
+        # Add API Gateway behaviors for cookie-based authentication (when using custom_auth)
+        if custom_auth and backend_region:
+            # Get API Gateway URL from SSM parameter (set by backend stack)
+            api_gateway_url_param = ssm.StringParameter.from_string_parameter_name(
+                self,
+                'ApiGatewayUrlParam',
+                string_parameter_name=f'/dataall/{envname}/apiGateway/backendUrl',
+            )
+
+            # Extract API Gateway domain from URL (e.g., xyz123.execute-api.us-east-1.amazonaws.com)
+            # The URL format is: https://xyz123.execute-api.region.amazonaws.com/prod/
+            # We need to parse out just the domain part
+            api_gateway_origin = origins.HttpOrigin(
+                domain_name=Fn.select(2, Fn.split('/', api_gateway_url_param.string_value)),
+                origin_path='/prod',
+                protocol_policy=cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
+            )
+
+            # Add behavior for /auth/* routes (token exchange, userinfo, logout)
+            cloudfront_distribution.add_behavior(
+                path_pattern='/auth/*',
+                origin=api_gateway_origin,
+                cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
+                origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+                allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,
+                viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,
+            )
+
+            # Add behavior for /graphql/* routes
+            cloudfront_distribution.add_behavior(
+                path_pattern='/graphql/*',
+                origin=api_gateway_origin,
+                cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
+                origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+                allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,
+                viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,
+            )
+
+            # Add behavior for /search/* routes
+            cloudfront_distribution.add_behavior(
+                path_pattern='/search/*',
+                origin=api_gateway_origin,
+                cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
+                origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+                allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,
+                viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,
+            )
+
         ssm_distribution_id = ssm.StringParameter(
             self,
             f'SSMDistribution{envname}',
@@ -276,16 +326,12 @@ class CloudfrontDistro(pyNestedClass):
 
     @staticmethod
     def error_responses():
+        # Only intercept 404 for SPA routing (redirect to index.html)
+        # Do NOT intercept 403 - let API Gateway errors pass through
         return [
             cloudfront.ErrorResponse(
                 http_status=404,
-                response_http_status=404,
-                ttl=Duration.seconds(0),
-                response_page_path='/index.html',
-            ),
-            cloudfront.ErrorResponse(
-                http_status=403,
-                response_http_status=403,
+                response_http_status=200,
                 ttl=Duration.seconds(0),
                 response_page_path='/index.html',
             ),

@@ -47,18 +47,30 @@ export const useClient = () => {
   useEffect(() => {
     const initClient = async () => {
       const t = token;
+      const CUSTOM_AUTH = process.env.REACT_APP_CUSTOM_AUTH;
+
+      // Use relative URL for custom auth (CloudFront proxy), otherwise use env var
+      const graphqlUri = CUSTOM_AUTH
+        ? '/graphql/api'
+        : process.env.REACT_APP_GRAPHQL_API;
+
       const httpLink = new HttpLink({
-        uri: process.env.REACT_APP_GRAPHQL_API
+        uri: graphqlUri,
+        // Include credentials for cookie-based auth
+        credentials: CUSTOM_AUTH ? 'include' : 'same-origin'
       });
 
       const authLink = new ApolloLink((operation, forward) => {
-        operation.setContext({
-          headers: {
-            Authorization: t ? `Bearer ${t}` : '',
-            AccessKeyId: 'none',
-            SecretKey: 'none'
-          }
-        });
+        // For custom auth, cookies are sent automatically via credentials: 'include'
+        // For Cognito, use Authorization header
+        const headers = CUSTOM_AUTH
+          ? { AccessKeyId: 'none', SecretKey: 'none' }
+          : {
+              Authorization: t ? `Bearer ${t}` : '',
+              AccessKeyId: 'none',
+              SecretKey: 'none'
+            };
+        operation.setContext({ headers });
         return forward(operation);
       });
       const errorLink = onError(
