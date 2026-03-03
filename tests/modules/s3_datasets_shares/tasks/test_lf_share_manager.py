@@ -298,14 +298,90 @@ def test_grant_pivot_role_all_database_permissions_to_source_database(
     )
 
 
-def test_check_if_exists_and_create_shared_database_in_target(manager_with_mocked_clients, dataset1: S3Dataset):
+def test_check_if_exists_and_create_shared_database_in_target_with_source_description(
+    manager_with_mocked_clients, dataset1: S3Dataset
+):
+    """Test that source database description is retrieved and passed to create_database"""
     manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
     glue_client.create_database.return_value = True
+    glue_client.get_glue_database.return_value = {
+        'Database': {
+            'Name': dataset1.GlueDatabaseName,
+            'Description': 'Production customer data - PII encrypted',
+        }
+    }
     # When
     manager.check_if_exists_and_create_shared_database_in_target()
     # Then
+    glue_client.get_glue_database.assert_called_once()
     glue_client.create_database.assert_called_once()
-    glue_client.create_database.assert_called_with(location=f's3://{dataset1.S3BucketName}')
+    glue_client.create_database.assert_called_with(
+        location=f's3://{dataset1.S3BucketName}',
+        description='Production customer data - PII encrypted',
+    )
+
+
+def test_check_if_exists_and_create_shared_database_in_target_without_source_description(
+    manager_with_mocked_clients, dataset1: S3Dataset
+):
+    """Test that None description is passed when source database has no description"""
+    manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
+    glue_client.create_database.return_value = True
+    glue_client.get_glue_database.return_value = {
+        'Database': {
+            'Name': dataset1.GlueDatabaseName,
+        }
+    }
+    # When
+    manager.check_if_exists_and_create_shared_database_in_target()
+    # Then
+    glue_client.get_glue_database.assert_called_once()
+    glue_client.create_database.assert_called_once()
+    glue_client.create_database.assert_called_with(
+        location=f's3://{dataset1.S3BucketName}',
+        description=None,
+    )
+
+
+def test_check_if_exists_and_create_shared_database_in_target_source_db_not_found(
+    manager_with_mocked_clients, dataset1: S3Dataset
+):
+    """Test that None description is passed when source database doesn't exist"""
+    manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
+    glue_client.create_database.return_value = True
+    glue_client.get_glue_database.return_value = False
+    # When
+    manager.check_if_exists_and_create_shared_database_in_target()
+    # Then
+    glue_client.get_glue_database.assert_called_once()
+    glue_client.create_database.assert_called_once()
+    glue_client.create_database.assert_called_with(
+        location=f's3://{dataset1.S3BucketName}',
+        description=None,
+    )
+
+
+def test_check_if_exists_and_create_shared_database_in_target_empty_description(
+    manager_with_mocked_clients, dataset1: S3Dataset
+):
+    """Test that empty string description is passed through (fallback handled in GlueClient)"""
+    manager, lf_client, glue_client, mock_glue_client = manager_with_mocked_clients
+    glue_client.create_database.return_value = True
+    glue_client.get_glue_database.return_value = {
+        'Database': {
+            'Name': dataset1.GlueDatabaseName,
+            'Description': '',
+        }
+    }
+    # When
+    manager.check_if_exists_and_create_shared_database_in_target()
+    # Then
+    glue_client.get_glue_database.assert_called_once()
+    glue_client.create_database.assert_called_once()
+    glue_client.create_database.assert_called_with(
+        location=f's3://{dataset1.S3BucketName}',
+        description='',
+    )
 
 
 def test_grant_pivot_role_all_database_permissions_to_shared_database(

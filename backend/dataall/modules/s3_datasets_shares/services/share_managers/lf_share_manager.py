@@ -266,10 +266,19 @@ class LFShareManager:
         """
         Checks if shared database exists in target account
         Creates the shared database if it does not exist
+        Preserves source database description if available
         :return: boto3 glue create_database
         """
+        source_database = self.glue_client_in_source.get_glue_database()
+        source_description = None
+        if source_database:
+            source_description = source_database.get('Database', {}).get('Description')
 
-        database = self.glue_client_in_target.create_database(location=f's3://{self.dataset.S3BucketName}')
+        # Create database in target with source description
+        database = self.glue_client_in_target.create_database(
+            location=f's3://{self.dataset.S3BucketName}',
+            description=source_description,
+        )
         return database
 
     def grant_pivot_role_all_database_permissions_to_shared_database(self) -> True:
