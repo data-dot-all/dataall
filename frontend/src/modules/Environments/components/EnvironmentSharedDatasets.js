@@ -1,23 +1,25 @@
 import {
   Box,
+  Button,
   Card,
   CardHeader,
   Divider,
-  IconButton,
   InputAdornment,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-  TextField
+  TextField,
+  Tooltip
 } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
+import PeopleIcon from '@mui/icons-material/People';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
-  ArrowRightIcon,
   Defaults,
   Pager,
   RefreshTableMenu,
@@ -124,7 +126,7 @@ export const EnvironmentSharedDatasets = ({ environment }) => {
                 <TableCell>Name</TableCell>
                 <TableCell>Dataset</TableCell>
                 <TableCell>Environment</TableCell>
-                <TableCell>Shared with Team</TableCell>
+                <TableCell>Shared With</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -139,15 +141,83 @@ export const EnvironmentSharedDatasets = ({ environment }) => {
                       <TableCell>{item.itemName}</TableCell>
                       <TableCell>{item.datasetName}</TableCell>
                       <TableCell>{item.environmentName}</TableCell>
-                      <TableCell>{item.principalId}</TableCell>
                       <TableCell>
-                        <IconButton
-                          onClick={() => {
-                            navigate(`/console/s3-datasets/${item.datasetUri}`);
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.5
                           }}
                         >
-                          <ArrowRightIcon fontSize="small" />
-                        </IconButton>
+                          <Tooltip
+                            title={
+                              item.principalType === 'Group'
+                                ? 'Team'
+                                : 'Consumption Role'
+                            }
+                          >
+                            {item.principalType === 'Group' ? (
+                              <PeopleIcon fontSize="small" color="primary" />
+                            ) : (
+                              <VpnKeyIcon fontSize="small" color="secondary" />
+                            )}
+                          </Tooltip>
+                          <Tooltip
+                            title={
+                              item.principalType !== 'Group' &&
+                              item.principalName &&
+                              item.principalId
+                                ? item.principalId
+                                : ''
+                            }
+                            componentsProps={{
+                              tooltip: {
+                                sx: {
+                                  maxWidth: 'none'
+                                }
+                              }
+                            }}
+                          >
+                            <span>
+                              {item.principalName || item.principalId}
+                            </span>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          color="primary"
+                          size="small"
+                          variant="outlined"
+                          component="a"
+                          href={`/console/shares/${item.shareUri}`}
+                          onClick={(e) => {
+                            if (!e.ctrlKey && !e.metaKey) {
+                              e.preventDefault();
+                              navigate(`/console/shares/${item.shareUri}`);
+                            }
+                          }}
+                          sx={{ mr: 1 }}
+                        >
+                          View Share
+                        </Button>
+                        <Button
+                          color="primary"
+                          size="small"
+                          variant="outlined"
+                          component="a"
+                          href={`/console/s3-datasets/${item.datasetUri}`}
+                          onClick={(e) => {
+                            if (!e.ctrlKey && !e.metaKey) {
+                              e.preventDefault();
+                              navigate(
+                                `/console/s3-datasets/${item.datasetUri}`
+                              );
+                            }
+                          }}
+                        >
+                          View Dataset
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
