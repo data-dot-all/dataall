@@ -1,5 +1,6 @@
 import logging
 import os
+from http.cookies import SimpleCookie
 
 from requests import HTTPError
 
@@ -33,8 +34,6 @@ def lambda_handler(incoming_event, context):
 
     if cookie_header:
         # Parse cookies to find access_token
-        from http.cookies import SimpleCookie
-
         cookies = SimpleCookie()
         cookies.load(cookie_header)
         access_token_cookie = cookies.get('access_token')

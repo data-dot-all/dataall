@@ -251,7 +251,7 @@ class LambdaApiStack(pyNestedClass):
         if custom_domain and custom_domain.get('hosted_zone_name'):
             cloudfront_url = f'https://{custom_domain.get("hosted_zone_name")}'
         else:
-            cloudfront_url = 'https://d33cwb3mbo1ghp.cloudfront.net'  # Fallback for dev
+            cloudfront_url = ''  # Must be configured via custom_domain in cdk.json
 
         auth_handler_env = {
             'envname': envname,
@@ -906,7 +906,7 @@ class LambdaApiStack(pyNestedClass):
         if custom_domain and custom_domain.get('hosted_zone_name'):
             cors_origin = f'https://{custom_domain.get("hosted_zone_name")}'
         else:
-            cors_origin = 'https://d33cwb3mbo1ghp.cloudfront.net'  # Fallback for dev
+            cors_origin = ''  # Must be configured via custom_domain in cdk.json
 
         # Token exchange route - NO authorization (public endpoint for OAuth callback)
         token_exchange = auth.add_resource(

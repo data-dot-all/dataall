@@ -177,9 +177,10 @@ class CloudfrontDistro(pyNestedClass):
                 string_parameter_name=f'/dataall/{envname}/apiGateway/backendUrl',
             )
 
-            # Extract API Gateway domain from URL (e.g., xyz123.execute-api.us-east-1.amazonaws.com)
-            # The URL format is: https://xyz123.execute-api.region.amazonaws.com/prod/
-            # We need to parse out just the domain part
+            # Extract API Gateway domain from URL using CloudFormation intrinsic functions
+            # Input:  https://xyz123.execute-api.us-east-1.amazonaws.com/prod/
+            # Split by '/': ['https:', '', 'xyz123.execute-api.us-east-1.amazonaws.com', 'prod', '']
+            # Select index 2: 'xyz123.execute-api.us-east-1.amazonaws.com'
             api_gateway_origin = origins.HttpOrigin(
                 domain_name=Fn.select(2, Fn.split('/', api_gateway_url_param.string_value)),
                 origin_path='/prod',
