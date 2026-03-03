@@ -23,10 +23,34 @@ JWT_SERVICE = JWTServices(OPENID_CONFIG_PATH)
 
 
 def lambda_handler(incoming_event, context):
-    # Get the Token which is sent in the Authorization Header
+    # Get the Token - first try Cookie header, then Authorization header
     logger.debug(incoming_event)
-    auth_token = incoming_event['headers']['Authorization']
+    headers = incoming_event.get('headers', {})
+
+    # Try to get access_token from Cookie header first (for cookie-based auth)
+    auth_token = None
+    cookie_header = headers.get('Cookie') or headers.get('cookie', '')
+
+    if cookie_header:
+        # Parse cookies to find access_token
+        from http.cookies import SimpleCookie
+
+        cookies = SimpleCookie()
+        cookies.load(cookie_header)
+        access_token_cookie = cookies.get('access_token')
+        if access_token_cookie:
+            # Add Bearer prefix for consistency with existing validation
+            auth_token = f'Bearer {access_token_cookie.value}'
+            logger.debug('Using access_token from Cookie header')
+
+    # Fallback to Authorization header (for backward compatibility)
     if not auth_token:
+        auth_token = headers.get('Authorization') or headers.get('authorization')
+        if auth_token:
+            logger.debug('Using token from Authorization header')
+
+    if not auth_token:
+        logger.warning('No authentication token found in Cookie or Authorization header')
         return AuthServices.generate_deny_policy(incoming_event['methodArn'])
 
     # Validate User is Active with Proper Access Token
