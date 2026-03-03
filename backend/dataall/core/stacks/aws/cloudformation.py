@@ -4,9 +4,9 @@ import uuid
 from botocore.exceptions import ClientError
 
 from dataall.base.aws.sts import SessionHelper
+from dataall.base.utils import json_utils
 from dataall.core.stacks.db.stack_models import Stack
 from dataall.core.tasks.db.task_models import Task
-from dataall.base.utils import json_utils
 
 log = logging.getLogger(__name__)
 
@@ -69,6 +69,30 @@ class CloudFormation:
             return response['Stacks'][0]
         except ClientError as e:
             raise e
+
+    @staticmethod
+    def describe_stack_status(engine, task: Task):
+        """Light describe: only updates stack status (and stackid) from DescribeStacks. No resources, events, or outputs."""
+        try:
+            data = {
+                'accountid': task.payload['accountid'],
+                'region': task.payload['region'],
+                'stack_name': task.payload['stack_name'],
+            }
+            cfn_stack = CloudFormation._get_stack(**data)
+            stack_arn = cfn_stack['StackId']
+            status = cfn_stack['StackStatus']
+            with engine.scoped_session() as session:
+                stack: Stack = session.query(Stack).get(task.payload['stackUri'])
+                stack.status = status
+                stack.stackid = stack_arn
+                session.commit()
+        except ClientError as e:
+            with engine.scoped_session() as session:
+                stack: Stack = session.query(Stack).get(task.payload['stackUri'])
+                if not stack.error:
+                    stack.error = {'error': json_utils.to_string(e.response['Error']['Message'])}
+                session.commit()
 
     @staticmethod
     def describe_stack_resources(engine, task: Task):

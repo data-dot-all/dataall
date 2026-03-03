@@ -1,2 +1,2 @@
-aws-cdk-lib==2.208.0
+aws-cdk-lib==2.232.1
 aws-ddk-core==1.4.1

@@ -16,7 +16,7 @@ from dataall.modules.s3_datasets_shares.aws.s3_client import (
 from dataall.modules.shares_base.services.shares_enums import ShareObjectDataPermission
 
 SID_TO_ACTIONS = {
-    DATAALL_READ_ONLY_SID: ['s3:List*', 's3:GetObject'],
+    DATAALL_READ_ONLY_SID: ['s3:List*', 's3:GetObject', 's3:GetObjectAttributes'],
     DATAALL_WRITE_ONLY_SID: ['s3:PutObject'],
     DATAALL_MODIFY_ONLY_SID: ['s3:DeleteObject'],
     DATAALL_BUCKET_KMS_DECRYPT_SID: ['kms:Decrypt'],

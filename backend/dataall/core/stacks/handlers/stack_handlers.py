@@ -32,6 +32,11 @@ class StackHandlers:
         return {'status': 200, 'stackDeleted': True}
 
     @staticmethod
+    @Worker.handler(path='cloudformation.stack.describe_status')
+    def describe_stack_status(engine, task: Task):
+        CloudFormation.describe_stack_status(engine, task)
+
+    @staticmethod
     @Worker.handler(path='cloudformation.stack.describe_resources')
     def describe_stack_resources(engine, task: Task):
         CloudFormation.describe_stack_resources(engine, task)
