@@ -23,7 +23,7 @@ from aws_cdk import (
     BundlingOptions,
 )
 from cdk_klayers import Klayers
-from aws_cdk.aws_apigateway import EndpointType, SecurityPolicy
+from aws_cdk.aws_apigateway import DomainNameOptions, EndpointType, SecurityPolicy
 from aws_cdk.aws_certificatemanager import Certificate
 from aws_cdk.aws_ec2 import (
     InterfaceVpcEndpoint,
@@ -35,7 +35,6 @@ from aws_cdk.aws_ec2 import (
 from .pyNestedStack import pyNestedClass
 from .solution_bundling import SolutionBundling
 from .waf_rules import get_waf_rules
-from .runtime_options import PYTHON_LAMBDA_RUNTIME
 
 DEFAULT_API_RATE_LIMIT = 10000
 DEFAULT_API_BURST_LIMIT = 5000
@@ -159,6 +158,8 @@ class LambdaApiStack(pyNestedClass):
             api_handler_env['frontend_domain_url'] = f'https://{custom_domain.get("hosted_zone_name", None)}'
         if custom_auth:
             api_handler_env['custom_auth'] = custom_auth.get('provider', None)
+            api_handler_env['custom_auth_url'] = custom_auth.get('url', None)
+            api_handler_env['custom_auth_client'] = custom_auth.get('client_id', None)
         self.api_handler = _lambda.DockerImageFunction(
             self,
             'LambdaGraphQL',
@@ -242,6 +243,66 @@ class LambdaApiStack(pyNestedClass):
                 )
             )
 
+        # Auth handler Lambda for cookie-based authentication
+        self.auth_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-authhandler-dlq')
+        auth_handler_sg = self.create_lambda_sgs(envname, 'authhandler', resource_prefix, vpc)
+
+        # Get CloudFront URL from custom_domain config or use default
+        if custom_domain and custom_domain.get('hosted_zone_name'):
+            cloudfront_url = f'https://{custom_domain.get("hosted_zone_name")}'
+        else:
+            cloudfront_url = ''  # Must be configured via custom_domain in cdk.json
+
+        auth_handler_env = {
+            'envname': envname,
+            'LOG_LEVEL': log_level,
+            'CLOUDFRONT_URL': cloudfront_url,
+        }
+
+        # Add custom auth config for token exchange with Okta
+        if custom_auth:
+            auth_handler_env['CUSTOM_AUTH_URL'] = custom_auth.get('url', '')
+            auth_handler_env['CUSTOM_AUTH_CLIENT_ID'] = custom_auth.get('client_id', '')
+            auth_handler_env['CUSTOM_AUTH_REDIRECT_URL'] = custom_auth.get('redirect_url', cloudfront_url + '/callback')
+            # Pass claims mapping for user info extraction
+            claims_mapping = custom_auth.get('claims_mapping', {})
+            auth_handler_env['CLAIMS_MAPPING_EMAIL'] = claims_mapping.get('email', 'email')
+            auth_handler_env['CLAIMS_MAPPING_USER_ID'] = claims_mapping.get('user_id', 'sub')
+
+        self.auth_handler = _lambda.DockerImageFunction(
+            self,
+            'AuthHandler',
+            function_name=f'{resource_prefix}-{envname}-authhandler',
+            log_group=logs.LogGroup(
+                self,
+                'authhandlerloggroup',
+                log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-backend-authhandler',
+                retention=getattr(logs.RetentionDays, self.log_retention_duration),
+            ),
+            description='dataall auth handler for cookie-based authentication',
+            role=self.create_function_role(envname, resource_prefix, 'authhandler', pivot_role_name, vpc),
+            code=_lambda.DockerImageCode.from_ecr(
+                repository=ecr_repository, tag=image_tag, cmd=['auth_handler.handler']
+            ),
+            vpc=vpc,
+            security_groups=[auth_handler_sg],
+            memory_size=512 if prod_sizing else 256,
+            timeout=Duration.seconds(30),
+            environment=auth_handler_env,
+            environment_encryption=lambda_env_key,
+            dead_letter_queue_enabled=True,
+            dead_letter_queue=self.auth_handler_dlq,
+            on_failure=lambda_destination.SqsDestination(self.auth_handler_dlq),
+            tracing=_lambda.Tracing.ACTIVE,
+            logging_format=_lambda.LoggingFormat.JSON,
+            application_log_level_v2=getattr(_lambda.ApplicationLogLevel, log_level),
+        )
+
+        # Allow auth handler to access internet (for Okta API calls)
+        self.auth_handler.connections.allow_to(
+            ec2.Peer.any_ipv4(), ec2.Port.tcp(443), 'Allow NAT Internet Access for Okta'
+        )
+
         # Create the custom authorizer lambda
         custom_authorizer_assets = os.path.realpath(
             os.path.join(
@@ -283,7 +344,8 @@ class LambdaApiStack(pyNestedClass):
             )
 
         # Initialize Klayers
-        klayers = Klayers(self, python_version=PYTHON_LAMBDA_RUNTIME, region=self.region)
+        runtime = _lambda.Runtime.PYTHON_3_12
+        klayers = Klayers(self, python_version=runtime, region=self.region)
 
         # get the latest layer version for the cryptography package
         cryptography_layer = klayers.layer_version(self, 'cryptography')
@@ -303,7 +365,7 @@ class LambdaApiStack(pyNestedClass):
             code=_lambda.Code.from_asset(
                 path=custom_authorizer_assets,
                 bundling=BundlingOptions(
-                    image=PYTHON_LAMBDA_RUNTIME.bundling_image,
+                    image=_lambda.Runtime.PYTHON_3_9.bundling_image,
                     local=SolutionBundling(source_path=custom_authorizer_assets),
                 ),
             ),
@@ -314,7 +376,7 @@ class LambdaApiStack(pyNestedClass):
             environment_encryption=lambda_env_key,
             vpc=vpc,
             security_groups=[authorizer_fn_sg],
-            runtime=PYTHON_LAMBDA_RUNTIME,
+            runtime=runtime,
             layers=[cryptography_layer],
             logging_format=_lambda.LoggingFormat.JSON,
             application_log_level_v2=getattr(_lambda.ApplicationLogLevel, log_level),
@@ -368,6 +430,7 @@ class LambdaApiStack(pyNestedClass):
             user_pool,
             custom_auth,
             throttling_config,
+            custom_domain,
         )
 
         self.create_sns_topic(
@@ -540,6 +603,7 @@ class LambdaApiStack(pyNestedClass):
         user_pool,
         custom_auth,
         throttling_config,
+        custom_domain,
     ):
         api_deploy_options = apigw.StageOptions(
             throttling_rate_limit=throttling_config.get('global_rate_limit', DEFAULT_API_RATE_LIMIT),
@@ -563,6 +627,7 @@ class LambdaApiStack(pyNestedClass):
             resource_prefix,
             user_pool,
             custom_auth,
+            custom_domain,
         )
 
         # Create IP set if IP filtering enabled in CDK.json
@@ -623,6 +688,7 @@ class LambdaApiStack(pyNestedClass):
         resource_prefix,
         user_pool,
         custom_auth,
+        custom_domain,
     ):
         # Create a custom Authorizer
         custom_authorizer_role = iam.Role(
@@ -644,10 +710,13 @@ class LambdaApiStack(pyNestedClass):
             self,
             'CustomAuthorizer',
             handler=self.authorizer_fn,
-            identity_sources=[apigw.IdentitySource.header('Authorization')],
+            # Empty identity_sources allows Lambda to be invoked without specific headers
+            # This enables cookie-based auth where tokens come from Cookie header
+            identity_sources=[],
             authorizer_name=f'{resource_prefix}-{envname}-custom-authorizer',
             assume_role=custom_authorizer_role,
-            results_cache_ttl=Duration.minutes(1),
+            # Disable caching to ensure cookies are read on every request
+            results_cache_ttl=Duration.seconds(0),
         )
         if not internet_facing:
             if apig_vpce:
@@ -827,6 +896,64 @@ class LambdaApiStack(pyNestedClass):
             authorization_type=apigw.AuthorizationType.CUSTOM,
             request_validator=request_validator,
             request_models={'application/json': search_validation_model},
+        )
+
+        # Auth routes for cookie-based authentication
+        auth_integration = apigw.LambdaIntegration(self.auth_handler)
+        auth = gw.root.add_resource(path_part='auth')
+
+        # Get CloudFront URL for CORS (use custom domain if available)
+        if custom_domain and custom_domain.get('hosted_zone_name'):
+            cors_origin = f'https://{custom_domain.get("hosted_zone_name")}'
+        else:
+            cors_origin = ''  # Must be configured via custom_domain in cdk.json
+
+        # Token exchange route - NO authorization (public endpoint for OAuth callback)
+        token_exchange = auth.add_resource(
+            path_part='token-exchange',
+            default_cors_preflight_options=apigw.CorsOptions(
+                allow_methods=['POST', 'OPTIONS'],
+                allow_origins=[cors_origin],
+                allow_credentials=True,
+                allow_headers=['Content-Type'],
+            ),
+        )
+        token_exchange.add_method(
+            'POST',
+            auth_integration,
+            authorization_type=apigw.AuthorizationType.NONE,
+        )
+
+        # Logout route - NO authorization (needs to work even with expired tokens)
+        logout = auth.add_resource(
+            path_part='logout',
+            default_cors_preflight_options=apigw.CorsOptions(
+                allow_methods=['POST', 'OPTIONS'],
+                allow_origins=[cors_origin],
+                allow_credentials=True,
+                allow_headers=['Content-Type'],
+            ),
+        )
+        logout.add_method(
+            'POST',
+            auth_integration,
+            authorization_type=apigw.AuthorizationType.NONE,
+        )
+
+        # Userinfo route - NO authorization (Lambda reads cookies and validates)
+        userinfo = auth.add_resource(
+            path_part='userinfo',
+            default_cors_preflight_options=apigw.CorsOptions(
+                allow_methods=['GET', 'OPTIONS'],
+                allow_origins=[cors_origin],
+                allow_credentials=True,
+                allow_headers=['Content-Type'],
+            ),
+        )
+        userinfo.add_method(
+            'GET',
+            auth_integration,
+            authorization_type=apigw.AuthorizationType.NONE,
         )
 
         apigateway_log_group = logs.LogGroup(
