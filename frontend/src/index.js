@@ -15,8 +15,6 @@ import { reportWebVitals } from './reportWebVitals';
 import * as serviceWorker from './serviceWorker';
 import { SnackbarProvider } from 'notistack';
 
-
-
 ReactDOM.render(
   <StrictMode>
     <HelmetProvider>

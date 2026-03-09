@@ -81,15 +81,31 @@ const Callback = () => {
 
   if (error) {
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 8 }}>
-        <Typography color="error" variant="h6">Authentication Error</Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          mt: 8
+        }}
+      >
+        <Typography color="error" variant="h6">
+          Authentication Error
+        </Typography>
         <Typography color="textSecondary">{error}</Typography>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 8 }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        mt: 8
+      }}
+    >
       <CircularProgress />
       <Typography sx={{ mt: 2 }}>Completing sign in...</Typography>
     </Box>
