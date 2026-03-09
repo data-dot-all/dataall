@@ -1,5 +1,5 @@
 const base64URLEncode = (buffer) =>
-    btoa(String.fromCharCode(...new Uint8Array(buffer)))
+  btoa(String.fromCharCode(...new Uint8Array(buffer)))
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=/g, '');

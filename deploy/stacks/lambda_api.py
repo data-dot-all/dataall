@@ -1,5 +1,6 @@
 import json
 import os
+from .runtime_options import PYTHON_LAMBDA_RUNTIME
 
 from aws_cdk import (
     aws_iam as iam,
@@ -101,8 +102,19 @@ class LambdaApiStack(pyNestedClass):
                         resources=['*'],
                         effect=iam.Effect.ALLOW,
                         principals=[iam.ServicePrincipal(f'logs.{self.region}.amazonaws.com')],
-                        actions=['kms:Encrypt', 'kms:Decrypt', 'kms:ReEncrypt*', 'kms:GenerateDataKey*', 'kms:CreateGrant', 'kms:DescribeKey'],
-                        conditions={'ArnLike': {'kms:EncryptionContext:aws:logs:arn': f'arn:aws:logs:{self.region}:{self.account}:log-group:*'}},
+                        actions=[
+                            'kms:Encrypt',
+                            'kms:Decrypt',
+                            'kms:ReEncrypt*',
+                            'kms:GenerateDataKey*',
+                            'kms:CreateGrant',
+                            'kms:DescribeKey',
+                        ],
+                        conditions={
+                            'ArnLike': {
+                                'kms:EncryptionContext:aws:logs:arn': f'arn:aws:logs:{self.region}:{self.account}:log-group:*'
+                            }
+                        },
                     ),
                 ],
             ),
@@ -374,7 +386,7 @@ class LambdaApiStack(pyNestedClass):
             )
 
         # Initialize Klayers
-        runtime = _lambda.Runtime.PYTHON_3_9
+        runtime = PYTHON_LAMBDA_RUNTIME
         klayers = Klayers(self, python_version=runtime, region=self.region)
 
         # get the latest layer version for the cryptography package
@@ -395,7 +407,7 @@ class LambdaApiStack(pyNestedClass):
             code=_lambda.Code.from_asset(
                 path=custom_authorizer_assets,
                 bundling=BundlingOptions(
-                    image=_lambda.Runtime.PYTHON_3_9.bundling_image,
+                    image=PYTHON_LAMBDA_RUNTIME.bundling_image,
                     local=SolutionBundling(source_path=custom_authorizer_assets),
                 ),
             ),
