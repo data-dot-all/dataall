@@ -169,7 +169,7 @@ class CloudfrontDistro(pyNestedClass):
         )
 
         # Add API Gateway behaviors for cookie-based authentication (when using custom_auth)
-        if custom_auth and backend_region:
+        if custom_auth:
             # Get API Gateway URL from SSM parameter (set by backend stack)
             api_gateway_url_param = ssm.StringParameter.from_string_parameter_name(
                 self,

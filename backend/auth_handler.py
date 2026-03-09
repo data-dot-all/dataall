@@ -4,6 +4,7 @@ import os
 import urllib.request
 import urllib.parse
 import base64
+import binascii
 from http.cookies import SimpleCookie
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,8 @@ def handler(event, context):
     elif path == '/auth/userinfo' and method == 'GET':
         return userinfo_handler(event)
     else:
-        return error_response(404, 'Not Found', event)
+        return error_response(404, 'Auth endpoint not found. Valid routes: /auth/token-exchange, /auth/logout, /auth/userinfo', event)
+
 
 
 def error_response(status_code, message, event=None):
@@ -38,6 +40,10 @@ def error_response(status_code, message, event=None):
 def get_cors_headers(event):
     """Get CORS headers for response"""
     cloudfront_url = os.environ.get('CLOUDFRONT_URL', '')
+
+    if not cloudfront_url:
+        logger.debug('CLOUDFRONT_URL not set - authentication endpoints will reject cross-origin requests')
+
     return {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': cloudfront_url,
@@ -161,7 +167,13 @@ def userinfo_handler(event):
         if len(parts) != 3:
             return error_response(401, 'Invalid token format', event)
 
+
+        # Decode JWT payload (middle part of token)
+        # JWT format: header.payload.signature (base64url encoded)
         payload = parts[1]
+
+        # Base64 requires padding to be multiple of 4 characters
+        # URL-safe base64 in JWTs often omits padding, so we add it back
         padding = 4 - len(payload) % 4
         if padding != 4:
             payload += '=' * padding
@@ -187,6 +199,12 @@ def userinfo_handler(event):
             ),
         }
 
+    except (binascii.Error, ValueError) as e:
+        logger.error(f'Failed to decode JWT payload: {str(e)}')
+        return error_response(401, 'Invalid token', event)
+    except json.JSONDecodeError as e:
+        logger.error(f'Failed to parse JWT claims: {str(e)}')
+        return error_response(401, 'Invalid token', event)
     except Exception as e:
         logger.error(f'Userinfo error: {str(e)}')
         return error_response(500, 'Internal server error', event)
