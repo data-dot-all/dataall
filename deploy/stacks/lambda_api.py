@@ -82,6 +82,32 @@ class LambdaApiStack(pyNestedClass):
 
         image_tag = f'lambdas-{image_tag}'
 
+        # Create KMS key for CloudWatch Logs encryption
+        logs_kms_key = kms.Key(
+            self,
+            f'{resource_prefix}-{envname}-logs-key',
+            removal_policy=RemovalPolicy.DESTROY,
+            alias=f'{resource_prefix}-{envname}-logs-key',
+            enable_key_rotation=True,
+            policy=iam.PolicyDocument(
+                statements=[
+                    iam.PolicyStatement(
+                        resources=['*'],
+                        effect=iam.Effect.ALLOW,
+                        principals=[iam.AccountPrincipal(account_id=self.account)],
+                        actions=['kms:*'],
+                    ),
+                    iam.PolicyStatement(
+                        resources=['*'],
+                        effect=iam.Effect.ALLOW,
+                        principals=[iam.ServicePrincipal(f'logs.{self.region}.amazonaws.com')],
+                        actions=['kms:Encrypt', 'kms:Decrypt', 'kms:ReEncrypt*', 'kms:GenerateDataKey*', 'kms:CreateGrant', 'kms:DescribeKey'],
+                        conditions={'ArnLike': {'kms:EncryptionContext:aws:logs:arn': f'arn:aws:logs:{self.region}:{self.account}:log-group:*'}},
+                    ),
+                ],
+            ),
+        )
+
         lambda_env_key = kms.Key(
             self,
             f'{resource_prefix}-lambda-env-var-key',
@@ -280,6 +306,7 @@ class LambdaApiStack(pyNestedClass):
                 'authhandlerloggroup',
                 log_group_name=f'/aws/lambda/{resource_prefix}-{envname}-backend-authhandler',
                 retention=getattr(logs.RetentionDays, self.log_retention_duration),
+                encryption_key=logs_kms_key,
             ),
             description='dataall auth handler for cookie-based authentication',
             role=self.create_function_role(envname, resource_prefix, 'authhandler', pivot_role_name, vpc),
@@ -290,6 +317,7 @@ class LambdaApiStack(pyNestedClass):
             security_groups=[auth_handler_sg],
             memory_size=512 if prod_sizing else 256,
             timeout=Duration.seconds(30),
+            reserved_concurrent_executions=100,  # Limit concurrent executions for cost control
             environment=auth_handler_env,
             environment_encryption=lambda_env_key,
             dead_letter_queue_enabled=True,
@@ -914,6 +942,7 @@ class LambdaApiStack(pyNestedClass):
             cors_origin = ''  # Must be configured via custom_domain or custom_auth.cloudfront_url
 
         # Token exchange route - NO authorization (public endpoint for OAuth callback)
+        # checkov:skip=CKV_AWS_59: Auth endpoints intentionally public - protected by WAF, CORS, and Lambda validation
         token_exchange = auth.add_resource(
             path_part='token-exchange',
             default_cors_preflight_options=apigw.CorsOptions(
@@ -930,6 +959,7 @@ class LambdaApiStack(pyNestedClass):
         )
 
         # Logout route - NO authorization (needs to work even with expired tokens)
+        # checkov:skip=CKV_AWS_59: Auth endpoints intentionally public - protected by WAF, CORS, and Lambda validation
         logout = auth.add_resource(
             path_part='logout',
             default_cors_preflight_options=apigw.CorsOptions(
@@ -946,6 +976,7 @@ class LambdaApiStack(pyNestedClass):
         )
 
         # Userinfo route - NO authorization (Lambda reads cookies and validates)
+        # checkov:skip=CKV_AWS_59: Auth endpoints intentionally public - protected by WAF, CORS, and Lambda validation
         userinfo = auth.add_resource(
             path_part='userinfo',
             default_cors_preflight_options=apigw.CorsOptions(
