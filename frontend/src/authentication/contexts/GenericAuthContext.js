@@ -1,14 +1,8 @@
 import { createContext, useEffect, useReducer } from 'react';
 import { SET_ERROR } from 'globalErrors';
 import PropTypes from 'prop-types';
-import {
-  fetchAuthSession,
-  fetchUserAttributes,
-  signInWithRedirect,
-  signOut
-} from 'aws-amplify/auth';
+import { Auth } from 'aws-amplify';
 import { generatePKCE, generateState } from '../../utils';
-
 
 const CUSTOM_AUTH = process.env.REACT_APP_CUSTOM_AUTH;
 
@@ -121,14 +115,11 @@ export const GenericAuthProvider = (props) => {
         short_id: user.sub
       };
     } else {
-      const [session, attrs] = await Promise.all([
-        fetchAuthSession(),
-        fetchUserAttributes()
-      ]);
+      const user = await Auth.currentAuthenticatedUser();
       return {
-        email: attrs.email,
-        id_token: session.tokens.idToken.toString(),
-        access_token: session.tokens.accessToken.toString(),
+        email: user.attributes.email,
+        id_token: user.signInUserSession.idToken.jwtToken,
+        access_token: user.signInUserSession.accessToken.jwtToken,
         short_id: 'none'
       };
     }
@@ -155,12 +146,9 @@ export const GenericAuthProvider = (props) => {
 
         window.location.href = `${process.env.REACT_APP_CUSTOM_AUTH_URL}/v1/authorize?${params}`;
       } else {
-        await signInWithRedirect();
+        await Auth.federatedSignIn();
       }
     } catch (error) {
-      if (error.name === 'UserAlreadyAuthenticatedException') {
-        return;
-      }
       console.error('Failed to authenticate user', error);
     }
   };
@@ -169,7 +157,12 @@ export const GenericAuthProvider = (props) => {
     try {
       if (CUSTOM_AUTH) {
         // Use relative URL - CloudFront proxies to API Gateway (same-origin)
-        await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+        const response = await fetch('/auth/logout', {
+          method: 'POST',
+          credentials: 'include'
+        });
+        const data = await response.json();
+
         dispatch({
           type: 'LOGOUT',
           payload: {
@@ -178,9 +171,15 @@ export const GenericAuthProvider = (props) => {
           }
         });
         sessionStorage.clear();
-        window.location.href = window.location.origin;
+
+        // Redirect to Okta logout to end SSO session, or homepage as fallback
+        if (data.logout_url) {
+          window.location.href = data.logout_url;
+        } else {
+          window.location.href = window.location.origin;
+        }
       } else {
-        await signOut({ global: true });
+        await Auth.signOut({ global: true });
         dispatch({
           type: 'LOGOUT',
           payload: {
@@ -210,7 +209,7 @@ export const GenericAuthProvider = (props) => {
         console.error('Failed to ReAuth', error);
       }
     } else {
-      await signOut({ global: true });
+      await Auth.signOut({ global: true });
       dispatch({
         type: 'REAUTH',
         payload: {

@@ -23,8 +23,9 @@ def handler(event, context):
     elif path == '/auth/userinfo' and method == 'GET':
         return userinfo_handler(event)
     else:
-        return error_response(404, 'Auth endpoint not found. Valid routes: /auth/token-exchange, /auth/logout, /auth/userinfo', event)
-
+        return error_response(
+            404, 'Auth endpoint not found. Valid routes: /auth/token-exchange, /auth/logout, /auth/userinfo', event
+        )
 
 
 def error_response(status_code, message, event=None):
@@ -40,7 +41,6 @@ def error_response(status_code, message, event=None):
 def get_cors_headers(event):
     """Get CORS headers for response"""
     cloudfront_url = os.environ.get('CLOUDFRONT_URL', '')
-
     if not cloudfront_url:
         logger.debug('CLOUDFRONT_URL not set - authentication endpoints will reject cross-origin requests')
 
@@ -132,7 +132,18 @@ def build_cookies(tokens):
 
 
 def logout_handler(event):
-    """Clear all auth cookies"""
+    """Clear all auth cookies and return Okta logout URL"""
+    # Get id_token from cookie for Okta logout
+    cookie_header = event.get('headers', {}).get('Cookie') or event.get('headers', {}).get('cookie', '')
+    cookies_in = SimpleCookie()
+    cookies_in.load(cookie_header)
+
+    id_token = None
+    id_token_cookie = cookies_in.get('id_token')
+    if id_token_cookie:
+        id_token = id_token_cookie.value
+
+    # Clear all auth cookies
     cookies = []
     for cookie_name in ['access_token', 'id_token', 'refresh_token']:
         cookie = SimpleCookie()
@@ -141,18 +152,34 @@ def logout_handler(event):
         cookie[cookie_name]['max-age'] = 0
         cookies.append(cookie[cookie_name].OutputString())
 
+    # Build Okta logout URL if we have the id_token
+    logout_url = None
+    okta_url = os.environ.get('CUSTOM_AUTH_URL', '')
+    post_logout_uri = os.environ.get('CLOUDFRONT_URL', '')
+
+    if id_token and okta_url and post_logout_uri:
+        logout_params = urllib.parse.urlencode(
+            {
+                'id_token_hint': id_token,
+                'post_logout_redirect_uri': post_logout_uri,
+            }
+        )
+        logout_url = f'{okta_url}/v1/logout?{logout_params}'
+
     return {
         'statusCode': 200,
         'headers': get_cors_headers(event),
         'multiValueHeaders': {'Set-Cookie': cookies},
-        'body': json.dumps({'success': True}),
+        'body': json.dumps({'success': True, 'logout_url': logout_url}),
     }
 
 
 def userinfo_handler(event):
     """Return user info from id_token cookie"""
     try:
+        # Check both 'Cookie' and 'cookie' - API Gateway may normalize header casing
         cookie_header = event.get('headers', {}).get('Cookie') or event.get('headers', {}).get('cookie', '')
+
         cookies = SimpleCookie()
         cookies.load(cookie_header)
 
@@ -162,14 +189,12 @@ def userinfo_handler(event):
 
         id_token = id_token_cookie.value
 
-        # Decode JWT payload
+        # Decode JWT payload (middle part of token)
+        # JWT format: header.payload.signature (base64url encoded)
         parts = id_token.split('.')
         if len(parts) != 3:
             return error_response(401, 'Invalid token format', event)
 
-
-        # Decode JWT payload (middle part of token)
-        # JWT format: header.payload.signature (base64url encoded)
         payload = parts[1]
 
         # Base64 requires padding to be multiple of 4 characters
