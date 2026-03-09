@@ -1,5 +1,6 @@
 import json
 import os
+from .runtime_options import PYTHON_LAMBDA_RUNTIME
 
 from aws_cdk import (
     aws_iam as iam,
@@ -344,7 +345,7 @@ class LambdaApiStack(pyNestedClass):
             )
 
         # Initialize Klayers
-        runtime = _lambda.Runtime.PYTHON_3_12
+        runtime = PYTHON_LAMBDA_RUNTIME
         klayers = Klayers(self, python_version=runtime, region=self.region)
 
         # get the latest layer version for the cryptography package
@@ -712,6 +713,7 @@ class LambdaApiStack(pyNestedClass):
             handler=self.authorizer_fn,
             # Empty identity_sources allows Lambda to be invoked without specific headers
             # This enables cookie-based auth where tokens come from Cookie header
+            # and also auth with Authorization header (for Cognito users)
             identity_sources=[],
             authorizer_name=f'{resource_prefix}-{envname}-custom-authorizer',
             assume_role=custom_authorizer_role,

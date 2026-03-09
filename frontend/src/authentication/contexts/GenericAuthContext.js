@@ -7,7 +7,8 @@ import {
   signInWithRedirect,
   signOut
 } from 'aws-amplify/auth';
-import { generatePKCE, generateState } from '../../utils/pkce';
+import { generatePKCE, generateState } from '../../utils';
+
 
 const CUSTOM_AUTH = process.env.REACT_APP_CUSTOM_AUTH;
 
