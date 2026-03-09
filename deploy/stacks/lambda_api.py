@@ -1,6 +1,5 @@
 import json
 import os
-from .runtime_options import PYTHON_LAMBDA_RUNTIME
 
 from aws_cdk import (
     aws_iam as iam,
@@ -248,11 +247,13 @@ class LambdaApiStack(pyNestedClass):
         self.auth_handler_dlq = self.set_dlq(f'{resource_prefix}-{envname}-authhandler-dlq')
         auth_handler_sg = self.create_lambda_sgs(envname, 'authhandler', resource_prefix, vpc)
 
-        # Get CloudFront URL from custom_domain config or use default
+        # Get CloudFront URL - priority: custom_domain > custom_auth.cloudfront_url
         if custom_domain and custom_domain.get('hosted_zone_name'):
             cloudfront_url = f'https://{custom_domain.get("hosted_zone_name")}'
+        elif custom_auth and custom_auth.get('cloudfront_url'):
+            cloudfront_url = custom_auth.get('cloudfront_url')
         else:
-            cloudfront_url = ''  # Must be configured via custom_domain in cdk.json
+            cloudfront_url = ''  # Must be configured via custom_domain or custom_auth.cloudfront_url
 
         auth_handler_env = {
             'envname': envname,
@@ -345,7 +346,7 @@ class LambdaApiStack(pyNestedClass):
             )
 
         # Initialize Klayers
-        runtime = PYTHON_LAMBDA_RUNTIME
+        runtime = _lambda.Runtime.PYTHON_3_9
         klayers = Klayers(self, python_version=runtime, region=self.region)
 
         # get the latest layer version for the cryptography package
@@ -904,11 +905,13 @@ class LambdaApiStack(pyNestedClass):
         auth_integration = apigw.LambdaIntegration(self.auth_handler)
         auth = gw.root.add_resource(path_part='auth')
 
-        # Get CloudFront URL for CORS (use custom domain if available)
+        # Get CloudFront URL for CORS - priority: custom_domain > custom_auth.cloudfront_url
         if custom_domain and custom_domain.get('hosted_zone_name'):
             cors_origin = f'https://{custom_domain.get("hosted_zone_name")}'
+        elif custom_auth and custom_auth.get('cloudfront_url'):
+            cors_origin = custom_auth.get('cloudfront_url')
         else:
-            cors_origin = ''  # Must be configured via custom_domain in cdk.json
+            cors_origin = ''  # Must be configured via custom_domain or custom_auth.cloudfront_url
 
         # Token exchange route - NO authorization (public endpoint for OAuth callback)
         token_exchange = auth.add_resource(
