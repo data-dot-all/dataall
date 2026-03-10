@@ -205,6 +205,12 @@
                     ]
                 },
                 {
+                    "resource": "AWS::ApiGateway::Method.dataalldevapiauthlogoutPOST89141B56",
+                    "check_ids": [
+                        "CKV_AWS_59"
+                    ]
+                },
+                {
                     "resource": "AWS::ApiGateway::Method.dataalldevapiauthuserinfoGET9388EE8D",
                     "check_ids": [
                         "CKV_AWS_59"
