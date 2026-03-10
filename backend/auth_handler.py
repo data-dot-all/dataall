@@ -206,6 +206,13 @@ def userinfo_handler(event):
         decoded = base64.urlsafe_b64decode(payload)
         claims = json.loads(decoded)
 
+        # Check if token is expired
+        import time
+
+        exp = claims.get('exp')
+        if exp and int(exp) < int(time.time()):
+            return error_response(401, 'Token expired', event)
+
         email_claim = os.environ.get('CLAIMS_MAPPING_EMAIL', 'email')
         user_id_claim = os.environ.get('CLAIMS_MAPPING_USER_ID', 'sub')
 
@@ -220,6 +227,7 @@ def userinfo_handler(event):
                     'email': email,
                     'name': claims.get('name', email),
                     'sub': user_id,
+                    'exp': exp,  # Include expiration time for frontend to set up timer
                 }
             ),
         }

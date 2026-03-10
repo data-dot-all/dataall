@@ -1,4 +1,4 @@
-import { createContext, useEffect, useReducer } from 'react';
+import { createContext, useEffect, useReducer, useRef } from 'react';
 import { SET_ERROR } from 'globalErrors';
 import PropTypes from 'prop-types';
 import { Auth } from 'aws-amplify';
@@ -65,6 +65,7 @@ export const GenericAuthContext = createContext({
 export const GenericAuthProvider = (props) => {
   const { children } = props;
   const [state, dispatch] = useReducer(reducer, initialState);
+  const expirationTimerRef = useRef(null);
 
   useEffect(() => {
     const initialize = async () => {
@@ -98,7 +99,43 @@ export const GenericAuthProvider = (props) => {
     };
 
     initialize().catch((e) => dispatch({ type: SET_ERROR, error: e.message }));
+
+    // Cleanup: clear expiration timer on unmount
+    return () => {
+      if (expirationTimerRef.current) {
+        clearTimeout(expirationTimerRef.current);
+      }
+    };
   }, []);
+
+  const setupExpirationTimer = (exp) => {
+    // Clear any existing timer
+    if (expirationTimerRef.current) {
+      clearTimeout(expirationTimerRef.current);
+      expirationTimerRef.current = null;
+    }
+
+    if (!exp) return;
+
+    // Calculate time until expiration (exp is in seconds, Date.now() is in ms)
+    const expiresAt = exp * 1000;
+    const now = Date.now();
+    const timeUntilExpiry = expiresAt - now;
+
+    // If already expired, logout immediately
+    if (timeUntilExpiry <= 0) {
+      logout();
+      return;
+    }
+
+    // Set timer to logout when token expires (with 30s buffer for network latency)
+    const bufferMs = 30 * 1000;
+    const timerMs = Math.max(timeUntilExpiry - bufferMs, 0);
+
+    expirationTimerRef.current = setTimeout(() => {
+      logout();
+    }, timerMs);
+  };
 
   const getAuthenticatedUser = async () => {
     if (CUSTOM_AUTH) {
@@ -108,6 +145,12 @@ export const GenericAuthProvider = (props) => {
       });
       if (!response.ok) throw Error('User not authenticated');
       const user = await response.json();
+
+      // Set up expiration timer if exp claim is present
+      if (user.exp) {
+        setupExpirationTimer(user.exp);
+      }
+
       return {
         email: user.email,
         id_token: 'cookie',
@@ -155,6 +198,12 @@ export const GenericAuthProvider = (props) => {
 
   const logout = async () => {
     try {
+      // Clear expiration timer
+      if (expirationTimerRef.current) {
+        clearTimeout(expirationTimerRef.current);
+        expirationTimerRef.current = null;
+      }
+
       if (CUSTOM_AUTH) {
         // Use relative URL - CloudFront proxies to API Gateway (same-origin)
         const response = await fetch('/auth/logout', {
