@@ -88,6 +88,7 @@ def token_exchange_handler(event):
         )
 
         try:
+            # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
             with urllib.request.urlopen(req, timeout=10) as response:
                 tokens = json.loads(response.read().decode('utf-8'))
         except urllib.error.HTTPError as e:

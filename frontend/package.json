@@ -146,7 +146,8 @@
     "glob": "10.5.0",
     "minimatch": "10.2.4",
     "qs": "6.15.0",
-    "serialize-javascript": "^7.0.3"
+    "serialize-javascript": "^7.0.3",
+    "underscore": "^1.13.8"
   },
   "devDependencies": {
     "env-cmd": "^10.1.0",
