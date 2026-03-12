@@ -70,6 +70,11 @@ def token_exchange_handler(event):
         if not okta_url or not client_id:
             return error_response(500, 'Missing Okta configuration', event)
 
+        # Validate URL scheme to prevent file:// or other dangerous schemes
+        if not okta_url.startswith('https://'):
+            logger.error(f'Invalid CUSTOM_AUTH_URL scheme: {okta_url}')
+            return error_response(500, 'Invalid authentication configuration', event)
+
         # Call Okta token endpoint
         token_url = f'{okta_url}/v1/token'
         token_data = {
