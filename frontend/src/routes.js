@@ -13,6 +13,9 @@ const Loadable = (Component) => (props) =>
 
 // Authentication pages
 const Login = Loadable(lazy(() => import('./authentication/views/Login')));
+const Callback = Loadable(
+  lazy(() => import('./authentication/views/Callback'))
+);
 
 // Error pages
 const NotFound = Loadable(
@@ -206,6 +209,10 @@ const routes = [
             <Login />
           </GuestGuard>
         )
+      },
+      {
+        path: 'callback',
+        element: <Callback />
       }
     ]
   },
