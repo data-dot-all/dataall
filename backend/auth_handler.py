@@ -110,13 +110,43 @@ def token_exchange_handler(event):
         return error_response(500, 'Internal server error', event)
 
 
+def get_token_expiry(token):
+    """Extract exp claim from JWT token"""
+    import time
+
+    try:
+        parts = token.split('.')
+        if len(parts) != 3:
+            return None
+        payload = parts[1]
+        padding = 4 - len(payload) % 4
+        if padding != 4:
+            payload += '=' * padding
+        decoded = base64.urlsafe_b64decode(payload)
+        claims = json.loads(decoded)
+        exp = claims.get('exp')
+        if exp:
+            # Return seconds until expiration
+            return max(0, int(exp) - int(time.time()))
+    except Exception:
+        pass
+    return None
+
+
 def build_cookies(tokens):
     """Build httpOnly cookies for tokens"""
     cookies = []
     secure = True
     httponly = True
     samesite = 'Lax'
-    max_age = 3600  # 1 hour
+
+    # Get max_age from token's exp claim, fallback to 1 hour
+    max_age = 3600
+    id_token = tokens.get('id_token')
+    if id_token:
+        token_ttl = get_token_expiry(id_token)
+        if token_ttl:
+            max_age = token_ttl
 
     for token_name in ['access_token', 'id_token']:
         if tokens.get(token_name):
