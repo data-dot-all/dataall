@@ -68,8 +68,17 @@ const Callback = () => {
         sessionStorage.removeItem('pkce_verifier');
         sessionStorage.removeItem('pkce_state');
 
-        // Redirect to app
-        navigate('/console/environments', { replace: true });
+        // Fetch user info to verify cookies are set correctly
+        const userInfoResponse = await fetch('/auth/userinfo', {
+          credentials: 'include'
+        });
+
+        if (!userInfoResponse.ok) {
+          throw new Error('Failed to fetch user info after login');
+        }
+
+        // Full page reload to re-initialize auth context with new cookies
+        window.location.href = '/console/environments';
       } catch (err) {
         console.error('Callback error:', err);
         setError(err.message);

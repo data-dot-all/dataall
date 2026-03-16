@@ -1,7 +1,12 @@
 import { createContext, useEffect, useReducer, useRef } from 'react';
 import { SET_ERROR } from 'globalErrors';
 import PropTypes from 'prop-types';
-import { Auth } from 'aws-amplify';
+import {
+  fetchAuthSession,
+  fetchUserAttributes,
+  signInWithRedirect,
+  signOut
+} from 'aws-amplify/auth';
 import { generatePKCE, generateState } from '../../utils';
 
 const CUSTOM_AUTH = process.env.REACT_APP_CUSTOM_AUTH;
@@ -158,11 +163,12 @@ export const GenericAuthProvider = (props) => {
         short_id: user.sub
       };
     } else {
-      const user = await Auth.currentAuthenticatedUser();
+      const session = await fetchAuthSession();
+      const userAttributes = await fetchUserAttributes();
       return {
-        email: user.attributes.email,
-        id_token: user.signInUserSession.idToken.jwtToken,
-        access_token: user.signInUserSession.accessToken.jwtToken,
+        email: userAttributes.email,
+        id_token: session.tokens?.idToken?.toString() || '',
+        access_token: session.tokens?.accessToken?.toString() || '',
         short_id: 'none'
       };
     }
@@ -189,7 +195,7 @@ export const GenericAuthProvider = (props) => {
 
         window.location.href = `${process.env.REACT_APP_CUSTOM_AUTH_URL}/v1/authorize?${params}`;
       } else {
-        await Auth.federatedSignIn();
+        await signInWithRedirect();
       }
     } catch (error) {
       console.error('Failed to authenticate user', error);
@@ -228,7 +234,7 @@ export const GenericAuthProvider = (props) => {
           window.location.href = window.location.origin;
         }
       } else {
-        await Auth.signOut({ global: true });
+        await signOut({ global: true });
         dispatch({
           type: 'LOGOUT',
           payload: {
@@ -258,7 +264,7 @@ export const GenericAuthProvider = (props) => {
         console.error('Failed to ReAuth', error);
       }
     } else {
-      await Auth.signOut({ global: true });
+      await signOut({ global: true });
       dispatch({
         type: 'REAUTH',
         payload: {
