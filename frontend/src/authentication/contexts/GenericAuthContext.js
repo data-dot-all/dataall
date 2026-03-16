@@ -127,19 +127,49 @@ export const GenericAuthProvider = (props) => {
     const now = Date.now();
     const timeUntilExpiry = expiresAt - now;
 
-    // If already expired, logout immediately
+    // If already expired, redirect to login immediately
     if (timeUntilExpiry <= 0) {
-      logout();
+      handleSessionExpired();
       return;
     }
 
-    // Set timer to logout when token expires (with 30s buffer for network latency)
+    // Set timer to handle expiration (with 30s buffer for network latency)
     const bufferMs = 30 * 1000;
     const timerMs = Math.max(timeUntilExpiry - bufferMs, 0);
 
     expirationTimerRef.current = setTimeout(() => {
-      logout();
+      handleSessionExpired();
     }, timerMs);
+  };
+
+  const handleSessionExpired = async () => {
+    // Clear expiration timer
+    if (expirationTimerRef.current) {
+      clearTimeout(expirationTimerRef.current);
+      expirationTimerRef.current = null;
+    }
+
+    // Try to clear cookies (ignore errors if already expired)
+    try {
+      await fetch('/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (error) {
+      // Ignore - cookies may already be expired
+    }
+
+    dispatch({
+      type: 'LOGOUT',
+      payload: {
+        isAuthenticated: false,
+        user: null
+      }
+    });
+    sessionStorage.clear();
+
+    // Redirect to homepage which will show login page
+    window.location.href = window.location.origin;
   };
 
   const getAuthenticatedUser = async () => {
@@ -252,7 +282,18 @@ export const GenericAuthProvider = (props) => {
   const reauth = async () => {
     if (CUSTOM_AUTH) {
       try {
-        await logout();
+        // Clear expiration timer
+        if (expirationTimerRef.current) {
+          clearTimeout(expirationTimerRef.current);
+          expirationTimerRef.current = null;
+        }
+
+        // Clear cookies via backend (but don't redirect to Okta logout)
+        await fetch('/auth/logout', {
+          method: 'POST',
+          credentials: 'include'
+        });
+
         dispatch({
           type: 'REAUTH',
           payload: {
@@ -260,6 +301,10 @@ export const GenericAuthProvider = (props) => {
             requestInfo: null
           }
         });
+        sessionStorage.clear();
+
+        // Trigger new login flow
+        await login();
       } catch (error) {
         console.error('Failed to ReAuth', error);
       }
