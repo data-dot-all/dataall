@@ -16,6 +16,7 @@ EnvironmentDefaultIAMRoleArn
 EnvironmentDefaultIAMRoleName
 EnvironmentDefaultIAMRoleImported
 resourcePrefix
+PermissionsBoundaryPolicyArn
 subscriptionsEnabled
 subscriptionsProducersTopicImported
 subscriptionsConsumersTopicImported
@@ -51,7 +52,7 @@ parameters {
 """
 
 
-def create_environment(client, name, group, organizationUri, awsAccountId, region, tags):
+def create_environment(client, name, group, organizationUri, awsAccountId, region, tags, PermissionsBoundaryPolicyArn=None):
     query = {
         'operationName': 'CreateEnvironment',
         'variables': {
@@ -65,6 +66,7 @@ def create_environment(client, name, group, organizationUri, awsAccountId, regio
                 'tags': tags,
                 'type': 'IntegrationTesting',
                 'parameters': [],
+                'PermissionsBoundaryPolicyArn': PermissionsBoundaryPolicyArn,
             }
         },
         'query': f"""
