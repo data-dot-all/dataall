@@ -9,7 +9,7 @@ from integration_tests.core.environment.global_conftest import create_env
 
 log = logging.getLogger(__name__)
 
-BOUNDARY_ARN = 'arn:aws:iam::aws:policy/PowerUserAccess'
+BOUNDARY_ARN = 'arn:aws:iam::aws:policy/AdministratorAccess'
 
 
 def test_create_environment_with_permissions_boundary(client1, group1, org1, testdata):
