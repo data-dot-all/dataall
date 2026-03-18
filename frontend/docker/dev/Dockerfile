@@ -1,4 +1,4 @@
-FROM public.ecr.aws/docker/library/node:18-slim
+FROM public.ecr.aws/docker/library/node:22-slim
 
 ARG CONTAINER_USER=cuser
 ARG CONTAINER_USER_GROUP=cuser
