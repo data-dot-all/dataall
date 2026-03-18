@@ -241,12 +241,12 @@ export const GenericAuthProvider = (props) => {
       }
 
       if (CUSTOM_AUTH) {
-        // Use relative URL - CloudFront proxies to API Gateway (same-origin)
-        const response = await fetch('/auth/logout', {
+        // Silent logout - clears cookies but keeps Okta SSO session active
+        // This matches the previous behavior using react-oidc-context's signoutSilent()
+        await fetch('/auth/logout', {
           method: 'POST',
           credentials: 'include'
         });
-        const data = await response.json();
 
         dispatch({
           type: 'LOGOUT',
@@ -257,12 +257,8 @@ export const GenericAuthProvider = (props) => {
         });
         sessionStorage.clear();
 
-        // Redirect to Okta logout to end SSO session, or homepage as fallback
-        if (data.logout_url) {
-          window.location.href = data.logout_url;
-        } else {
-          window.location.href = window.location.origin;
-        }
+        // Redirect to homepage (login page)
+        window.location.href = window.location.origin;
       } else {
         await signOut({ global: true });
         dispatch({
