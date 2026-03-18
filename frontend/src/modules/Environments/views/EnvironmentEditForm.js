@@ -100,8 +100,7 @@ const EnvironmentEditForm = (props) => {
             tags: values.tags,
             description: values.description,
             resourcePrefix: values.resourcePrefix,
-            PermissionsBoundaryPolicyArn:
-              values.PermissionsBoundaryPolicyArn,
+            PermissionsBoundaryPolicyArn: values.PermissionsBoundaryPolicyArn,
             vpcId: values.vpcId,
             subnetIds: values.subnetIds,
             parameters: [
