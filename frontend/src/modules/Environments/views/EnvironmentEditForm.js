@@ -100,6 +100,8 @@ const EnvironmentEditForm = (props) => {
             tags: values.tags,
             description: values.description,
             resourcePrefix: values.resourcePrefix,
+            PermissionsBoundaryPolicyArn:
+              values.PermissionsBoundaryPolicyArn,
             vpcId: values.vpcId,
             subnetIds: values.subnetIds,
             parameters: [
@@ -246,7 +248,9 @@ const EnvironmentEditForm = (props) => {
                 dashboardsEnabled:
                   env.parameters['dashboardsEnabled'] === 'true',
                 omicsEnabled: env.parameters['omicsEnabled'] === 'true',
-                resourcePrefix: env.resourcePrefix
+                resourcePrefix: env.resourcePrefix,
+                PermissionsBoundaryPolicyArn:
+                  env.PermissionsBoundaryPolicyArn || ''
               }}
               validationSchema={Yup.object().shape({
                 label: Yup.string()
@@ -415,6 +419,18 @@ const EnvironmentEditForm = (props) => {
                               onBlur={handleBlur}
                               onChange={handleChange}
                               value={values.resourcePrefix}
+                              variant="outlined"
+                            />
+                          </CardContent>
+                          <CardContent>
+                            <TextField
+                              fullWidth
+                              label="(Optional) IAM Permissions Boundary ARN"
+                              placeholder="(Optional) ARN of the IAM permissions boundary policy to apply to all roles"
+                              name="PermissionsBoundaryPolicyArn"
+                              onBlur={handleBlur}
+                              onChange={handleChange}
+                              value={values.PermissionsBoundaryPolicyArn}
                               variant="outlined"
                             />
                           </CardContent>
