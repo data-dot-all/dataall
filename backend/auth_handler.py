@@ -168,17 +168,7 @@ def build_cookies(tokens):
 
 
 def logout_handler(event):
-    """Clear all auth cookies and return Okta logout URL"""
-    # Get id_token from cookie for Okta logout
-    cookie_header = event.get('headers', {}).get('Cookie') or event.get('headers', {}).get('cookie', '')
-    cookies_in = SimpleCookie()
-    cookies_in.load(cookie_header)
-
-    id_token = None
-    id_token_cookie = cookies_in.get('id_token')
-    if id_token_cookie:
-        id_token = id_token_cookie.value
-
+    """Clear all auth cookies (silent logout - does not end Okta SSO session)"""
     # Clear all auth cookies
     cookies = []
     for cookie_name in ['access_token', 'id_token', 'refresh_token']:
@@ -188,25 +178,17 @@ def logout_handler(event):
         cookie[cookie_name]['max-age'] = 0
         cookies.append(cookie[cookie_name].OutputString())
 
-    # Build Okta logout URL if we have the id_token
-    logout_url = None
-    okta_url = os.environ.get('CUSTOM_AUTH_URL', '')
-    post_logout_uri = os.environ.get('CLOUDFRONT_URL', '')
-
-    if id_token and okta_url and post_logout_uri:
-        logout_params = urllib.parse.urlencode(
-            {
-                'id_token_hint': id_token,
-                'post_logout_redirect_uri': post_logout_uri,
-            }
-        )
-        logout_url = f'{okta_url}/v1/logout?{logout_params}'
+    # Note: We intentionally do NOT redirect to Okta's logout endpoint.
+    # This matches the previous behavior using react-oidc-context's signoutSilent(),
+    # which clears local tokens but keeps the Okta SSO session active.
+    # This allows users to re-login seamlessly without re-entering credentials
+    # if their Okta session is still valid.
 
     return {
         'statusCode': 200,
         'headers': get_cors_headers(event),
         'multiValueHeaders': {'Set-Cookie': cookies},
-        'body': json.dumps({'success': True, 'logout_url': logout_url}),
+        'body': json.dumps({'success': True}),
     }
 
 
