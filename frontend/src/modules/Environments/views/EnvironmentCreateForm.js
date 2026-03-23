@@ -173,6 +173,7 @@ const EnvironmentCreateForm = (props) => {
           description: values.description,
           region: values.region,
           EnvironmentDefaultIAMRoleArn: values.EnvironmentDefaultIAMRoleArn,
+          PermissionsBoundaryPolicyArn: values.PermissionsBoundaryPolicyArn,
           resourcePrefix: values.resourcePrefix,
           vpcId: values.vpcId,
           subnetIds: values.subnetIds,
@@ -440,6 +441,7 @@ const EnvironmentCreateForm = (props) => {
                 pipelinesEnabled: isModuleEnabled(ModuleNames.DATAPIPELINES),
                 omicsEnabled: isModuleEnabled(ModuleNames.OMICS),
                 EnvironmentDefaultIAMRoleArn: '',
+                PermissionsBoundaryPolicyArn: '',
                 resourcePrefix: 'dataall',
                 vpcId: '',
                 subnetIds: []
@@ -1025,6 +1027,18 @@ EOF`;
                                 onBlur={handleBlur}
                                 onChange={handleChange}
                                 value={values.EnvironmentDefaultIAMRoleArn}
+                                variant="outlined"
+                              />
+                            </CardContent>
+                            <CardContent>
+                              <TextField
+                                fullWidth
+                                label="(Optional) IAM Permissions Boundary ARN"
+                                placeholder="(Optional) ARN of the IAM permissions boundary policy to apply to all roles"
+                                name="PermissionsBoundaryPolicyArn"
+                                onBlur={handleBlur}
+                                onChange={handleChange}
+                                value={values.PermissionsBoundaryPolicyArn}
                                 variant="outlined"
                               />
                             </CardContent>

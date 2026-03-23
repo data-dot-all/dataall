@@ -26,7 +26,9 @@ log = logging.getLogger(__name__)
 
 
 @contextmanager
-def create_env(client, env_name, group, org_uri, account_id, region, tags=[], retain=False):
+def create_env(
+    client, env_name, group, org_uri, account_id, region, tags=[], retain=False, PermissionsBoundaryPolicyArn=None
+):
     env = None
     errors = False
     try:
@@ -38,6 +40,7 @@ def create_env(client, env_name, group, org_uri, account_id, region, tags=[], re
             awsAccountId=account_id,
             region=region,
             tags=tags,
+            PermissionsBoundaryPolicyArn=PermissionsBoundaryPolicyArn,
         )
         check_stack_ready(client, env.environmentUri, env.stack.stackUri)
         env = get_environment(client, env.environmentUri)
@@ -78,7 +81,14 @@ For this reason they must stay immutable as changes to them will affect the rest
 def session_env1(client1, group1, group5, org1, session_id, testdata):
     envdata = testdata.envs['session_env1']
     with create_env(
-        client1, 'session_env1', group1, org1.organizationUri, envdata.accountId, envdata.region, tags=[session_id]
+        client1,
+        'session_env1',
+        group1,
+        org1.organizationUri,
+        envdata.accountId,
+        envdata.region,
+        tags=[session_id],
+        PermissionsBoundaryPolicyArn='arn:aws:iam::aws:policy/AdministratorAccess',
     ) as env:
         invite_group_on_env(client1, env.environmentUri, group5, ['CREATE_DATASET', 'CREATE_SHARE_OBJECT'])
         yield env

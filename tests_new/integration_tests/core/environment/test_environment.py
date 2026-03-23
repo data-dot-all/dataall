@@ -3,6 +3,8 @@ from datetime import datetime
 
 from assertpy import assert_that
 
+from integration_tests.aws_clients.iam import IAMClient
+from integration_tests.aws_clients.sts import STSClient
 from integration_tests.core.environment.queries import (
     get_environment,
     update_environment,
@@ -121,3 +123,15 @@ def test_add_consumption_role_unauthorized(client2, session_env2, group1):
 
 def test_create_crossaccount_env(client5, session_cross_acc_env_1, group5):
     assert_that(session_cross_acc_env_1.stack.status).is_in('CREATE_COMPLETE', 'UPDATE_COMPLETE')
+
+
+def test_env_permissions_boundary(client1, session_env1):
+    env = get_environment(client1, session_env1.environmentUri)
+    boundary_arn = 'arn:aws:iam::aws:policy/AdministratorAccess'
+    assert_that(env.PermissionsBoundaryPolicyArn).is_equal_to(boundary_arn)
+
+    role_arn = f'arn:aws:iam::{env.AwsAccountId}:role/dataall-integration-tests-role-{env.region}'
+    session = STSClient(role_arn=role_arn, region=env.region).get_refreshable_session()
+    iam_client = IAMClient(session=session, region=env.region)
+    role = iam_client.get_role(env.EnvironmentDefaultIAMRoleName)
+    assert_that(role['Role']['PermissionsBoundary']['PermissionsBoundaryArn']).is_equal_to(boundary_arn)

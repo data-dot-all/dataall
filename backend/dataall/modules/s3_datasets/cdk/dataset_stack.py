@@ -7,6 +7,7 @@ from aws_cdk import (
     aws_iam as iam,
     aws_ssm as ssm,
     aws_glue as glue,
+    Aspects,
     Stack,
     Duration,
     CfnResource,
@@ -27,6 +28,7 @@ from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.modules.s3_datasets.aws.lf_dataset_client import LakeFormationDatasetClient
 from dataall.modules.s3_datasets.db.dataset_models import S3Dataset
 from dataall.base.utils.cdk_nag_utils import CDKNagUtil
+from dataall.core.environment.cdk.permissions_boundary_aspect import PermissionsBoundaryAspect
 from dataall.base.config import config
 
 
@@ -597,5 +599,8 @@ class DatasetStack(Stack):
             Tags.of(self).add('Classification', dataset.confidentiality)
 
         TagsUtil.add_tags(stack=self, model=S3Dataset, target_type='dataset')
+
+        if env.PermissionsBoundaryPolicyArn:
+            Aspects.of(self).add(PermissionsBoundaryAspect(env.PermissionsBoundaryPolicyArn))
 
         CDKNagUtil.check_rules(self)

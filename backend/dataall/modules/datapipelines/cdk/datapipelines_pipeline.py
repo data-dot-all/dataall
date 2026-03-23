@@ -4,7 +4,7 @@ import shutil
 import subprocess
 from typing import List
 
-from aws_cdk import aws_codebuild as codebuild, Stack, RemovalPolicy, CfnOutput
+from aws_cdk import aws_codebuild as codebuild, Aspects, Stack, RemovalPolicy, CfnOutput
 from aws_cdk import aws_codecommit as codecommit
 from aws_cdk import aws_codepipeline as codepipeline
 from aws_cdk import aws_codepipeline_actions as codepipeline_actions
@@ -23,6 +23,7 @@ from dataall.core.stacks.services.runtime_stacks_tagging import TagsUtil
 from dataall.modules.datapipelines.db.datapipelines_models import DataPipeline, DataPipelineEnvironment
 from dataall.modules.datapipelines.db.datapipelines_repositories import DatapipelinesRepository
 from dataall.base.utils.cdk_nag_utils import CDKNagUtil
+from dataall.core.environment.cdk.permissions_boundary_aspect import PermissionsBoundaryAspect
 from dataall.base.utils.shell_utils import CommandSanitizer
 
 logger = logging.getLogger(__name__)
@@ -396,6 +397,9 @@ class PipelineStack(Stack):
         )
 
         TagsUtil.add_tags(stack=self, model=DataPipeline, target_type='pipeline')
+
+        if pipeline_environment.PermissionsBoundaryPolicyArn:
+            Aspects.of(self).add(PermissionsBoundaryAspect(pipeline_environment.PermissionsBoundaryPolicyArn))
 
         CDKNagUtil.check_rules(self)
 

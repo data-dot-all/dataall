@@ -37,6 +37,16 @@ export const EnvironmentConsoleAccess = ({ environment }) => {
           {environment.EnvironmentDefaultIAMRoleArn}
         </Typography>
       </CardContent>
+      {environment.PermissionsBoundaryPolicyArn && (
+        <CardContent>
+          <Typography color="textSecondary" variant="subtitle2">
+            IAM Permissions Boundary
+          </Typography>
+          <Typography color="textPrimary" variant="body2">
+            {environment.PermissionsBoundaryPolicyArn}
+          </Typography>
+        </CardContent>
+      )}
     </Card>
   );
 };

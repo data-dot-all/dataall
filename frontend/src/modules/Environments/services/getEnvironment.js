@@ -23,6 +23,7 @@ export const getEnvironment = ({ environmentUri }) => ({
         EnvironmentDefaultIAMRoleName
         EnvironmentDefaultIAMRoleImported
         resourcePrefix
+        PermissionsBoundaryPolicyArn
         subscriptionsEnabled
         subscriptionsProducersTopicImported
         subscriptionsConsumersTopicImported

@@ -248,6 +248,7 @@ class EnvironmentService:
                 EnvironmentDefaultIAMRoleArn=data.get('EnvironmentDefaultIAMRoleArn', 'unknown'),
                 CDKRoleArn=f'arn:aws:iam::{data.get("AwsAccountId")}:role/{cdk_role_name}',
                 resourcePrefix=data.get('resourcePrefix'),
+                PermissionsBoundaryPolicyArn=data.get('PermissionsBoundaryPolicyArn', ''),
             )
 
             session.add(env)
@@ -343,6 +344,8 @@ class EnvironmentService:
                 environment.tags = data.get('tags')
             if data.get('resourcePrefix'):
                 environment.resourcePrefix = data.get('resourcePrefix')
+            if 'PermissionsBoundaryPolicyArn' in data:
+                environment.PermissionsBoundaryPolicyArn = data.get('PermissionsBoundaryPolicyArn', '')
 
             EnvironmentService._update_env_parameters(session, environment, data)
 
