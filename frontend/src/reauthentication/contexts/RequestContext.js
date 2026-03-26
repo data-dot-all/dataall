@@ -17,6 +17,7 @@ export const useRequestContext = () => {
 };
 
 const REQUEST_INFO_KEY = 'requestInfo';
+const REAUTH_SESSION_KEY = 'reauth_session';
 const REAUTH_TTL = process.env.REACT_APP_REAUTH_TTL
   ? parseInt(process.env.REACT_APP_REAUTH_TTL, 10)
   : 5;
@@ -69,11 +70,25 @@ export const RequestContextProvider = (props) => {
   useEffect(() => {
     if (client) {
       const restoredRequestInfo = restoreRetryRequest();
+      // For httpOnly cookie auth, check if we're returning from a reauth session
+      // by comparing the stored reauth_session marker
+      const currentSession = sessionStorage.getItem(REAUTH_SESSION_KEY);
+      const isReauthReturn =
+        restoredRequestInfo &&
+        restoredRequestInfo.reauth_session &&
+        currentSession !== restoredRequestInfo.reauth_session;
+
+      // For non-cookie auth, use the original token comparison
+      const isTokenChanged =
+        restoredRequestInfo &&
+        restoredRequestInfo.id_token !== 'cookie' &&
+        token !== restoredRequestInfo.id_token;
+
       // If request info is restored from previous user session
       if (
         restoredRequestInfo &&
         restoredRequestInfo.timestamp &&
-        token !== restoredRequestInfo.id_token
+        (isReauthReturn || isTokenChanged)
       ) {
         const currentTime = new Date();
         const reauthTime = new Date(
