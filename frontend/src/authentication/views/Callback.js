@@ -77,8 +77,28 @@ const Callback = () => {
           throw new Error('Failed to fetch user info after login');
         }
 
+        // Check if there's a pending reauth request to redirect back to
+        let redirectPath = '/console/environments';
+        try {
+          const storedRequestInfo = localStorage.getItem('requestInfo');
+          if (storedRequestInfo) {
+            const requestInfo = JSON.parse(storedRequestInfo);
+            const operationName =
+              requestInfo.requestInfo?.operationName?.toLowerCase() || '';
+            // For delete operations, don't redirect to the deleted resource
+            // The RequestContext will handle the retry and show success message
+            if (operationName.includes('delete')) {
+              redirectPath = '/console/environments';
+            } else if (requestInfo.pathname) {
+              redirectPath = requestInfo.pathname;
+            }
+          }
+        } catch (e) {
+          // Ignore parsing errors, use default redirect
+        }
+
         // Full page reload to re-initialize auth context with new cookies
-        window.location.href = '/console/environments';
+        window.location.href = redirectPath;
       } catch (err) {
         console.error('Callback error:', err);
         setError(err.message);

@@ -4,8 +4,6 @@ import { useRequestContext } from 'reauthentication';
 import { useLocation } from 'react-router-dom';
 import React, { useEffect } from 'react';
 
-const REAUTH_SESSION_KEY = 'reauth_session';
-
 export const ReAuthModal = () => {
   const { user, reAuthStatus, requestInfo, reauth, dispatch } = useAuth();
   const { storeRequestInfo, clearRequestInfo } = useRequestContext();
@@ -28,17 +26,12 @@ export const ReAuthModal = () => {
       const pathname = location.pathname;
       const username = user.name;
       const id_token = user.id_token;
-      // Generate a unique session marker for httpOnly cookie auth
-      const reauth_session = Date.now().toString();
-      // Store the current session marker so we can detect when user returns
-      sessionStorage.setItem(REAUTH_SESSION_KEY, reauth_session);
       storeRequestInfo({
         requestInfo,
         timestamp,
         pathname,
         username,
-        id_token,
-        reauth_session
+        id_token
       });
     }
   }, [reAuthStatus, requestInfo]);

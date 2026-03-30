@@ -246,6 +246,7 @@ def userinfo_handler(event):
                     'name': claims.get('name', email),
                     'sub': user_id,
                     'exp': exp,  # Include expiration time for frontend to set up timer
+                    'auth_time': claims.get('auth_time'),  # Include auth_time for reauth detection
                 }
             ),
         }

@@ -186,10 +186,14 @@ export const GenericAuthProvider = (props) => {
         setupExpirationTimer(user.exp);
       }
 
+      // Use auth_time as token identifier for reauth detection
+      // auth_time changes after each authentication, enabling retry detection
+      const tokenId = user.auth_time ? `cookie_${user.auth_time}` : 'cookie';
+
       return {
         email: user.email,
-        id_token: 'cookie',
-        access_token: 'cookie',
+        id_token: tokenId,
+        access_token: tokenId,
         short_id: user.sub
       };
     } else {
@@ -204,7 +208,7 @@ export const GenericAuthProvider = (props) => {
     }
   };
 
-  const login = async () => {
+  const login = async (forceReauth = false) => {
     try {
       if (CUSTOM_AUTH) {
         const { verifier, challenge } = await generatePKCE();
@@ -222,6 +226,12 @@ export const GenericAuthProvider = (props) => {
           code_challenge_method: 'S256',
           state
         });
+
+        // Force re-authentication if requested (for reauth flow)
+        // This ensures user must enter credentials again, getting a new auth_time
+        if (forceReauth) {
+          params.append('prompt', 'login');
+        }
 
         window.location.href = `${process.env.REACT_APP_CUSTOM_AUTH_URL}/v1/authorize?${params}`;
       } else {
@@ -299,8 +309,10 @@ export const GenericAuthProvider = (props) => {
         });
         sessionStorage.clear();
 
-        // Trigger new login flow
-        await login();
+        // Trigger new login flow with forceReauth=true
+        // This adds prompt=login to force Okta to re-authenticate,
+        // generating a new auth_time which enables retry detection
+        await login(true);
       } catch (error) {
         console.error('Failed to ReAuth', error);
       }
