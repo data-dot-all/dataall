@@ -193,6 +193,43 @@
                     ]
                 },
                 {
+                    "resource": "AWS::ApiGateway::Method.dataalldevapiauthtokenexchangePOSTD92E005E",
+                    "check_ids": [
+                        "CKV_AWS_59"
+                    ]
+                },
+                {
+                    "resource": "AWS::ApiGateway::Method.dataalldevapiauthlogoutPOST5A8B3C2D",
+                    "check_ids": [
+                        "CKV_AWS_59"
+                    ]
+                },
+                {
+                    "resource": "AWS::ApiGateway::Method.dataalldevapiauthlogoutPOST89141B56",
+                    "check_ids": [
+                        "CKV_AWS_59"
+                    ]
+                },
+                {
+                    "resource": "AWS::ApiGateway::Method.dataalldevapiauthuserinfoGET9388EE8D",
+                    "check_ids": [
+                        "CKV_AWS_59"
+                    ]
+                },
+                {
+                    "resource": "AWS::Lambda::Function.AuthHandler9DC767B7",
+                    "check_ids": [
+                        "CKV_AWS_115",
+                        "CKV_AWS_116"
+                    ]
+                },
+                {
+                    "resource": "AWS::Logs::LogGroup.authhandlerloggroup",
+                    "check_ids": [
+                        "CKV_AWS_158"
+                    ]
+                },
+                {
                     "resource": "AWS::Lambda::Function.AWSWorkerAA1523CA",
                     "check_ids": [
                         "CKV_AWS_115"

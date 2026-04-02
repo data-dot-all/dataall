@@ -37,7 +37,7 @@ export const ReAuthModal = () => {
   }, [reAuthStatus, requestInfo]);
 
   return (
-    <Dialog maxWidth="md" fullWidth open={reAuthStatus}>
+    <Dialog maxWidth="md" fullWidth open={reAuthStatus} sx={{ zIndex: 99999 }}>
       <Box sx={{ p: 3 }}>
         <Typography
           align="center"
