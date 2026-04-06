@@ -70,6 +70,9 @@ export const RequestContextProvider = (props) => {
     if (client) {
       const restoredRequestInfo = restoreRetryRequest();
       // If request info is restored from previous user session
+      // Token comparison works for both:
+      // - Cognito: actual JWT tokens change after reauth
+      // - httpOnly cookies: token includes auth_time which changes after reauth
       if (
         restoredRequestInfo &&
         restoredRequestInfo.timestamp &&
