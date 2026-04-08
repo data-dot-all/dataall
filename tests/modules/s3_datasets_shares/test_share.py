@@ -1127,6 +1127,8 @@ def list_datasets_published_in_environment(client, user, group, environmentUri):
                     itemName
                     created
                     principalId
+                    principalName
+                    principalType
                 }
             }
         }
