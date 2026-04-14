@@ -102,6 +102,8 @@ Resources:
               - 'iam:List*'
               - 'iam:UpdateAssumeRolePolicy'
               - 'iam:PutRolePolicy'
+              - 'iam:PutRolePermissionsBoundary'
+              - 'iam:DeleteRolePermissionsBoundary'
             Resource:
               - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/${EnvironmentResourcePrefix}*'
               - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${EnvironmentResourcePrefix}*'
