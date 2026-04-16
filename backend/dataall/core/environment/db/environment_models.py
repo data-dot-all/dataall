@@ -43,6 +43,8 @@ class Environment(Resource, Base):
     subscriptionsConsumersTopicName = Column(String)
     subscriptionsConsumersTopicImported = Column(Boolean, default=False)
 
+    PermissionsBoundaryPolicyArn = Column(String, nullable=True)
+
     def uri(self):
         return self.environmentUri
 

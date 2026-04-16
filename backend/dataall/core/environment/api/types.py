@@ -105,6 +105,7 @@ Environment = gql.ObjectType(
         gql.Field('EnvironmentDefaultBucketName', type=gql.String),
         gql.Field('EnvironmentLogsBucketName', type=gql.String),
         gql.Field('EnvironmentDefaultAthenaWorkGroup', type=gql.String),
+        gql.Field('PermissionsBoundaryPolicyArn', type=gql.String),
         gql.Field(
             name='networks',
             type=gql.ArrayType(gql.Ref('Vpc')),

@@ -11,6 +11,7 @@ from aws_cdk import (
     aws_sns_subscriptions as sns_subs,
     aws_kms as kms,
     aws_athena,
+    Aspects,
     RemovalPolicy,
     CfnOutput,
     Stack,
@@ -32,6 +33,7 @@ from dataall.base import db
 from dataall.base.aws.parameter_store import ParameterStoreManager
 from dataall.base.aws.sts import SessionHelper
 from dataall.base.utils.cdk_nag_utils import CDKNagUtil
+from dataall.core.environment.cdk.permissions_boundary_aspect import PermissionsBoundaryAspect
 
 logger = logging.getLogger(__name__)
 
@@ -403,6 +405,9 @@ class EnvironmentSetup(Stack):
             extension.extent(self)
 
         TagsUtil.add_tags(stack=self, model=Environment, target_type='environment')
+
+        if self._environment.PermissionsBoundaryPolicyArn:
+            Aspects.of(self).add(PermissionsBoundaryAspect(self._environment.PermissionsBoundaryPolicyArn))
 
         CDKNagUtil.check_rules(self)
 
