@@ -68,7 +68,7 @@
     "react-scripts": "^5.0.1",
     "simplebar": "^5.3.6",
     "simplebar-react": "^2.3.6",
-    "uuid": "^10.0.0",
+    "uuid": "^14.0.0",
     "web-vitals": "^2.1.4",
     "yup": "^0.32.11",
     "webpack": "^5.94.0",
