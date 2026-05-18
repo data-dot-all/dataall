@@ -61,7 +61,7 @@ class DataSharingPivotRole(PivotRoleStatementSet):
                 effect=iam.Effect.ALLOW,
                 actions=['ram:TagResource'],
                 resources=['*'],
-                conditions={'ForAllValues:StringLike': {'ram:ResourceShareName': ['LakeFormation*']}},
+                conditions={'StringLike': {'ram:ResourceShareName': ['LakeFormation*']}},
             ),
             iam.PolicyStatement(
                 sid='RamCreateResource',
@@ -80,7 +80,7 @@ class DataSharingPivotRole(PivotRoleStatementSet):
                 actions=['ram:UpdateResourceShare'],
                 resources=[f'arn:aws:ram:*:{self.account}:resource-share/*'],
                 conditions={
-                    'ForAllValues:StringLike': {'ram:ResourceShareName': ['LakeFormation*']},
+                    'StringLike': {'ram:ResourceShareName': ['LakeFormation*']},
                 },
             ),
             iam.PolicyStatement(
@@ -88,7 +88,7 @@ class DataSharingPivotRole(PivotRoleStatementSet):
                 effect=iam.Effect.ALLOW,
                 actions=['ram:AssociateResourceShare', 'ram:DisassociateResourceShare'],
                 resources=[f'arn:aws:ram:*:{self.account}:resource-share/*'],
-                conditions={'ForAllValues:StringLike': {'ram:ResourceShareName': ['LakeFormation*']}},
+                conditions={'StringLike': {'ram:ResourceShareName': ['LakeFormation*']}},
             ),
             iam.PolicyStatement(
                 sid='RamDeleteResource',
@@ -105,9 +105,7 @@ class DataSharingPivotRole(PivotRoleStatementSet):
                 ],
                 resources=['arn:aws:ram:*:*:resource-share-invitation/*'],  # Scoped
                 conditions={
-                    'ForAllValues:StringLike': {
-                        'ram:ResourceShareName': ['LakeFormation*', f'{self.env_resource_prefix}*']
-                    },
+                    'StringLike': {'ram:ResourceShareName': ['LakeFormation*', f'{self.env_resource_prefix}*']},
                 },
             ),
             iam.PolicyStatement(
